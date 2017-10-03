@@ -1,3 +1,9 @@
 This is a project
 
 {{content}}
+
+{% for image in site.static_files %}
+    {% if image.path contains 'what/time-fight' and image.path contains '.jpg' %}
+        <img src="{{ site.baseurl }}{{ image.path }}" alt="image" />
+    {% endif %}
+{% endfor %}
