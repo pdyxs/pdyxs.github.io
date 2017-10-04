@@ -1,9 +1,19 @@
+---
+extensions:
+ - .jpg
+ - .png
+---
+{% include header.html %}
 This is a project
 
 {{content}}
 
 {% for image in site.static_files %}
-    {% if image.path contains 'what/time-fight' and image.path contains '.jpg' %}
-        <img src="{{ site.baseurl }}{{ image.path }}" alt="image" />
+    {% if layout.extensions contains image.extname %}
+      {% if image.path contains page.url %}
+          <img src="{{ site.baseurl }}{{ image.path }}" alt="image" />
+          {{ page.captions[image.name] }}
+      {% endif %}
     {% endif %}
 {% endfor %}
+{% include footer.html %}

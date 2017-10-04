@@ -1,0 +1,16 @@
+<nav class="navbar fixed-top navbar-expand-sm navbar-dark bg-alphablack">
+  <a class="navbar-brand" href="/">PDYXS.wtf</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav ml-auto">
+      {% for link in site.data.nav.links %}
+      <li class="nav-item">
+        <a class="nav-link" href="/{{link}}">{{link}}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</nav>

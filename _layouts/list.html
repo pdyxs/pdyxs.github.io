@@ -1,0 +1,11 @@
+List
+
+<p>{{content}}</p>
+
+{% for place in site.pages %}
+  {% if place.url contains page.url %}
+  {% if place != page %}
+  <a href="{{place.url}}">{{place.title}}</a>
+  {% endif %}
+  {% endif %}
+{% endfor %}
