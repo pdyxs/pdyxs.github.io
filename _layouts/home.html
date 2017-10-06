@@ -1,10 +1,12 @@
 {% include header.html %}
 {% include nav.html %}
 
+{% assign projects = site.pages | sort: 'priority' | reverse %}
+
 <div id="carouselFeatured" class="w-100 h-100 slide" data-ride="carousel">
   <ol class="carousel-indicators">
     {% assign hasFirst = false %}
-    {% for page in site.pages | sort: priority %}
+    {% for page in projects %}
       {% if page.feature %}
         <li data-target="#carouselFeatured" data-slide-to="0"
           {% if hasFirst == false %}
@@ -16,7 +18,7 @@
   </ol>
   <div class="carousel-inner">
     {% assign hasFirst = false %}
-    {% for page in site.pages | sort: priority %}
+    {% for page in projects %}
       {% if page.feature %}
         <div class="carousel-item
           {% if hasFirst == false %}active
@@ -24,21 +26,21 @@
           {% endif %}"
           style="background-image: url('{{page.url}}{{page.feature}}')">
           <div class="rounded bg-alphablack carousel-caption d-none d-md-block">
-            <h3>{{page.title}}</h3>
+            <h3><a class="text-light" href="{{page.url}}">{{page.title}}</a></h3>
             <p>{{page.tag}}</p>
           </div>
         </div>
       {% endif %}
     {% endfor %}
   </div>
-  <a class="carousel-control-prev" href="#carouselFeatured" role="button" data-slide="prev">
+  <!-- <a class="carousel-control-prev" href="#carouselFeatured" role="button" data-slide="prev">
     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
     <span class="sr-only">Previous</span>
   </a>
   <a class="carousel-control-next" href="#carouselFeatured" role="button" data-slide="next">
     <span class="carousel-control-next-icon" aria-hidden="true"></span>
     <span class="sr-only">Next</span>
-  </a>
+  </a> -->
 </div>
 
 {{content}}

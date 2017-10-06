@@ -2,3 +2,14 @@
 layout: home
 title: home
 ---
+
+<div class="container-fluid mt-5">
+  <div class="jumbotron col-md-5 bg-alphablack text-light">
+  {% for link in site.data.nav.links %}
+    <h2>
+      <a class="text-light" href="{{link.url}}">{{link.text}}</a>
+      <small class="text-muted">{{link.desc}}</small>
+    </h2>
+  {% endfor %}
+  </div>
+</div>

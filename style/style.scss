@@ -15,11 +15,20 @@ body {
 }
 
 .bg-alphablack {
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0,0,0,0.8);
+}
+
+div.card-img-top {
+  height: 10em;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 #carouselFeatured {
   position: fixed;
+  top: 0;
+  z-index: -1;
 
   .carousel-inner {
     height: 100%;

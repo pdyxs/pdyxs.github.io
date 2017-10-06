@@ -1,8 +1,18 @@
 ---
 links:
-  - who
-  - what
-  - when
-  - where
-  - why
+  - text: who
+    url: /who/
+    desc: I am
+  - text: what
+    url: /what/
+    desc: I make
+  - text: where
+    url: /where/
+    desc: you can find me
+  - text: when
+    url: /when/
+    desc: is a question you could ask
+  - text: why
+    url: /why/
+    desc: I do these things
 ---

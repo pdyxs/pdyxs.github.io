@@ -1,0 +1,15 @@
+{% assign pages = site.pages | sort: 'priority' | reverse %}
+<div class="row">
+{% for place in pages %}
+  {% if place.url contains page.url and place != page and place.tags contains include.tag %}
+  <div class="col-lg-3 col-md-4 mb-3">
+  <div class="card">
+    <div class="card-img-top" style="background-image: url('{{place.url}}/{{place.feature}}')"></div>
+    <div class="card-body">
+      <h4 class="card-title"><a href="{{place.url}}">{{place.title}}</a></h4>
+      <p class="card-text">{{place.tag}}</p>
+    </div>
+  </div></div>
+  {% endif %}
+{% endfor %}
+</div>

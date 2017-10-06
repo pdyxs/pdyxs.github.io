@@ -1,11 +1,19 @@
-List
+{% include header.html %}
+{% include nav.html %}
 
-<p>{{content}}</p>
+<div class="container-fluid mt-2">
 
-{% for place in site.pages %}
-  {% if place.url contains page.url %}
-  {% if place != page %}
-  <a href="{{place.url}}">{{place.title}}</a>
-  {% endif %}
-  {% endif %}
-{% endfor %}
+  <div class="lead">{{content}}</div>
+
+  <h2>What I'm working on now</h2>
+  {% include list.html tag='development' %}
+
+  <h2>Science Works</h2>
+  {% include list.html tag='science' %}
+
+  <h2>Other Works</h2>
+  {% include list.html tag='other' %}
+
+</div>
+
+{% include footer.html %}
