@@ -2,16 +2,17 @@
 {% include nav.html %}
 
 <div class="container-fluid mt-2">
+  <h2>{{page.title}}</h2>
 
   <div class="lead">{{content}}</div>
 
-  <h2>What I'm working on now</h2>
+  <h3>Currently in Development</h3>
   {% include list.html tag='development' %}
 
-  <h2>Science Works</h2>
+  <h3>Science Works</h3>
   {% include list.html tag='science' %}
 
-  <h2>Other Works</h2>
+  <h3>Other Works</h3>
   {% include list.html tag='other' %}
 
 </div>

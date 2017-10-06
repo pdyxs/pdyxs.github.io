@@ -1,0 +1,15 @@
+{% include gallery-image.html path=page.feature name=page.feature %}
+
+{% for image in page.images %}
+  {% if page.feature != image %}
+    {% include gallery-image.html path=image name=image %}
+  {% endif %}
+{% endfor %}
+
+{% for image in site.static_files %}
+{% unless page.feature == image.name or page.images contains image.name %}
+{% if layout.extensions contains image.extname and image.path contains page.url %}
+  {% include gallery-image.html path=image.path name="image.name" %}
+{% endif %}
+{% endunless %}
+{% endfor %}
