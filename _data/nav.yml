@@ -1,18 +1,19 @@
 ---
 links:
-  - text: who
+  - text: Who
     url: /who/
-    desc: I am
-  - text: what
+  - text: What
     url: /what/
-    desc: I make
-  - text: where
+  - text: Where
     url: /where/
-    desc: you can find me
-  - text: when
+  - text: When
     url: /when/
-    desc: is a question you could ask
-  - text: why
+  - text: Why
     url: /why/
-    desc: I do these things
+subtitles:
+  Who: I am
+  What: I make
+  Where: you can find me
+  When: is a question you could ask
+  Why: I do these things
 ---

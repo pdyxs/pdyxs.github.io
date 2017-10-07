@@ -7,8 +7,8 @@ title: home
   <div class="jumbotron col-md-5 bg-alphablack text-light">
   {% for link in site.data.nav.links %}
     <h2>
-      <a class="text-light" href="{{link.url}}">{{link.text}}</a>
-      <small class="text-muted">{{link.desc}}</small>
+      <a class="text-light" href="{{link.url}}">{{link.text | downcase}}</a>
+      <small class="text-muted">{{site.data.nav.subtitles[link.text]}}</small>
     </h2>
   {% endfor %}
   </div>

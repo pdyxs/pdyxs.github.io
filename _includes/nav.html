@@ -11,7 +11,7 @@
       {% if page.url contains link.url %}
         active
       {% endif %}">
-        <a class="nav-link" href="{{link.url}}">{{link.text}}</a>
+        <a class="nav-link" href="{{link.url}}">{{link.text | downcase}}</a>
       </li>
       {% endfor %}
     </ul>
