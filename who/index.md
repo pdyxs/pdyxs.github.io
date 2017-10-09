@@ -2,7 +2,7 @@
 layout: basic
 title: Who
 ---
-<img class="img-fluid float-right rounded mr-3" style="max-width: 120px;" alt="Photo of Paul Sztajer" title="Me, in portrait" src="profile.jpg" />
+<img class="img-fluid float-right rounded ml-3" style="max-width: 120px;" alt="Photo of Paul Sztajer" title="Me, in portrait" src="profile.jpg" />
 
 I am Paul Sztajer, an interactive artist who tends to develop works that illuminate complexity, especially in the realm of science.
 
