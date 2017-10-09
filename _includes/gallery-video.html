@@ -1,0 +1,9 @@
+<figure class="video-wrapper figure border rounded pb-2 pt-3 px-3">
+  <div class="figure-img img-fluid rounded">
+    <img src='data:image/gif;base64,R0lGODlhEAAJAIAAAP///wAAACwAAAAAEAAJAAACCoSPqcvtD6OclBUAOw=='>
+    <iframe src="{{include.url}}" frameborder="0" allowfullscreen></iframe>
+    {% if page.captions[include.url] %}
+      <figcaption class="figure-caption">{{ page.captions[include.url] }}</figcaption>
+    {% endif %}
+  </div>
+</figure>

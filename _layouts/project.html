@@ -11,7 +11,43 @@ extensions:
 <div class="row">
   <div class="col-md-6">
     <h2>{{page.title}}</h2>
+    <p class="lead">{{page.tag}}</p>
+
+    <dl class="row">
+      {% for def in page.definitions %}
+      <dt class="col-sm-3">{{def.head}}</dt>
+      <dd class="col-sm-9">
+        {{def.text}}
+        {% for text in def.texts %}
+          <p class="mb-1">{{text}}</p>
+        {% endfor %}
+      </dd>
+      {% endfor %}
+    </dl>
+
+    <p class="text-center">
+    {% for action in page.actions %}
+      <a role="button" href="{{action.url}}" target="_blank" class="btn btn-dark">
+        {{action.text}}
+      </a>
+    {% endfor %}
+    </p>
+
     {{content}}
+
+    {% for quote in page.quotes %}
+    <blockquote class="blockquote">
+      <p class="mb-0">{{quote.quote}}</p>
+      <footer class="blockquote-footer">
+        {{quote.by}}
+        {% if quote.in %} in
+          <a href="{{quote.in.url}}" target="_blank">
+            <cite title="{{quote.in.text}}">{{quote.in.text}}</cite>
+          </a>
+        {% endif %}
+      </footer>
+    </blockquote>
+    {% endfor %}
   </div>
   <div class="col-md-6">
   {% include gallery.html %}

@@ -1,10 +1,16 @@
-{% include gallery-image.html path=page.feature name=page.feature %}
-
 {% for image in page.images %}
-  {% if page.feature != image %}
+  {% if image contains "https://www.youtube.com" or image contains "https://www.facebook.com" %}
+    {% include gallery-video.html url=image %}
+  {% else %}
     {% include gallery-image.html path=image name=image %}
   {% endif %}
 {% endfor %}
+
+{% if page.feature %}
+{% unless page.images contains page.feature %}
+  {% include gallery-image.html path=page.feature name=page.feature %}
+{% endunless %}
+{% endif %}
 
 {% for image in site.static_files %}
 {% unless page.feature == image.name or page.images contains image.name %}

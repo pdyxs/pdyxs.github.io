@@ -1,4 +1,6 @@
-<figure class="figure">
+<figure class="figure border rounded pb-2 pt-3 px-3">
   <img class="figure-img img-fluid rounded" src="{{ site.baseurl }}{{ include.path }}" alt="image" />
-  <figcaption class="figure-caption">{{ page.captions[include.name] }}</figcaption>
+  {% if page.captions[include.name] %}
+    <figcaption class="figure-caption">{{ page.captions[include.name] }}</figcaption>
+  {% endif %}
 </figure>

@@ -41,3 +41,25 @@ div.card-img-top {
     background-repeat: no-repeat;
   }
 }
+
+.video-wrapper {
+  width: 100%;
+
+  .figure-img {
+    position: relative;
+
+    img {
+      display: block;
+      height: auto;
+      width: 100%;
+    }
+
+    iframe {
+      height: 100%;
+      left: 0;
+      position: absolute;
+      top: 0;
+      width: 100%;
+    }
+  }
+}
