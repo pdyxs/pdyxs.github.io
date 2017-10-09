@@ -27,6 +27,8 @@ definitions:
       - Caitlin Fisher
       - Blair Morrison
       - Angus Hamilton
+  - head: Role
+    text: Interaction Design, Development
   - head: Exhibited at
     text: Vivid Sydney, 2015
 ---
