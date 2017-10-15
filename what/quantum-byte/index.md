@@ -7,7 +7,7 @@ tags:
   - development
   - interactive
 priority: 20170801
-feature: circuit.png
+thumbnail: circuit.png
 actions:
   - text: Play Latest Build
     url: https://developer.cloud.unity3d.com/share/WJDRbh7rhz/

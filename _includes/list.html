@@ -1,7 +1,7 @@
 {% assign pages = site.pages | sort: 'priority' | reverse %}
 <div class="row">
 {% for place in pages %}
-  {% if place.url contains page.url and place != page and place.tags contains include.tag %}
+  {% if place.url contains page.url and place.url != page.url %}
   <div class="col-lg-3 col-md-4 mb-3">
   <div class="card">
     {% if place.thumbnail %}
