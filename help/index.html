@@ -1,0 +1,45 @@
+---
+noindex: true
+layout: basic
+title: In Case of Emergency
+health:
+  - head: Blood Type
+    text: ok
+  - head: Organ Donor
+    text: Yes
+  - head: Vaccines
+    texts:
+      - Boostrix (Diptheria, Tetanus, Whooping Cough), April 2017
+      - Stamaril (Yellow Fever), 13 Nov 2017
+      - Imojev (Japanese Encephalitis), 13 Nov 2017
+  - head: Allergies
+    text: None
+  - head: Other
+    text: Lactose Intolerant
+currentContacts:
+  - Australia
+contacts:
+  Australia:
+    - head: Name
+      text: Zev Sztajer
+    - head: Phone Number
+      text: +61 414 457 195
+    - head: Email
+      text: zvs888@gmail.com
+---
+<div class="container-fluid mt-2">
+<div class="row">
+<div class="col-md-6">
+  <h3>Emergency Contacts</h3>
+  {% for location in page.currentContacts %}
+    <h4>Contact in {{location}}</h4>
+    {% assign list = page.contacts[location] %}
+    {% include definitions.html list=list %}
+  {% endfor %}
+</div>
+<div class="col-md-6">
+  <h3>Health Information</h3>
+  {% include definitions.html list=page.health %}
+</div>
+</div>
+</div>

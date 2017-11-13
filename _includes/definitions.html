@@ -1,0 +1,14 @@
+<dl class="row">
+  {% for def in include.list %}
+  <dt class="col-sm-3">{{def.head}}</dt>
+  <dd class="col-sm-9">
+    {{def.text}}
+    {% for text in def.texts %}
+      <p class="mb-1">{{text}}</p>
+    {% endfor %}
+    {% for link in def.links %}
+      <p class="mb-1"><a href="{{link.url}}">{{link.text}}</a></p>
+    {% endfor %}
+  </dd>
+  {% endfor %}
+</dl>
