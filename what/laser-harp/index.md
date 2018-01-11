@@ -16,8 +16,12 @@ definitions:
     text: Waves
   - head: Medium
     text: Installation artwork
+    usein:
+      - cv
   - head: Developed By
     text: The Sydney University Optics Student Chapter
+    usein:
+      - cv
   - head: Developed With
     texts:
       - Owen Brasier
@@ -29,8 +33,12 @@ definitions:
       - Angus Hamilton
   - head: Role
     text: Interaction Design, Development
+    usein:
+      - cv
   - head: Exhibited at
     text: Vivid Sydney, 2015
+    usein:
+      - cv
 ---
 The Laser Harp is a musical instrument which combines light, sound and interactive art.
 

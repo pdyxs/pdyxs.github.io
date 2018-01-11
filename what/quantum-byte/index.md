@@ -1,7 +1,7 @@
 ---
 layout: project
-title: Quantum Byte
-tag: Quantum Computing as a dating simulator simulator
+title: Completely Accurate Thought Simulator
+tag: Getting players to program Quantum Computers by delving into the inner thoughts of cats.
 tags:
   - science
   - development
@@ -27,8 +27,12 @@ definitions:
     text: Quantum Computing
   - head: Platform(s)
     text: Some combination of Web, iOS, Android, Standalone
+    usein:
+      - cv
   - head: Release
-    text: January 2019
+    text: Q1 2019
+    usein:
+      - cv
   - head: Being developed with
     text: Daniel Keogh
   - head: Academic Advisor

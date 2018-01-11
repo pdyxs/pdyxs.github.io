@@ -1,7 +1,7 @@
 ---
 layout: project
 title: Art Heist
-tag: An interactive theatre caper
+tag: An interactive theatre caper, where teams of four must plan and execute a plan to steal a painting from an art gallery
 tags:
   - other
   - installation
@@ -13,12 +13,18 @@ thumbnail: outside.jpg
 definitions:
   - head: Medium
     text: Escape Room/Interactive Theatre
+    usein:
+      - cv
   - head: Developed By
     text: Jetpack Theatre Collective
   - head: Role
     text: Game Designer
+    usein:
+      - cv
   - head: Season
-    text: May-August 2017
+    text: May-August 2017, Dulwich Hill, Sydney
+    usein:
+      - cv
 actions:
   - text: Website
     url: https://www.jetpacktheatre.com/art-heist/
@@ -28,10 +34,14 @@ quotes:
     in:
       text: The Brag
       url: http://thebrag.com/art-heist-morphs-friends-oceans-eleven
+    usein:
+      - cv
   - quote: "If you have the opportunity to experience it you’d be crazy not to."
     in:
       text: Escape Me
       url: https://escapeme.net/2017/07/09/jetpack-theatre-art-heist/#more-276
+    usein:
+      - cv
 ---
 Sydney’s newest immersive escape room.
 

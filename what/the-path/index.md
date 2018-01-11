@@ -12,14 +12,20 @@ definitions:
     text: Genetic Taxonomy
   - head: Medium
     text: Data visualisation, artwork
+    usein:
+      - cv
   - head: Data Source
     text: The Open Tree of Life
   - head: Released
     text: February 2016
+    usein:
+      - cv
   - head: Exhibited at
     texts:
       - Art Heist, 2016
       - Art Attacks the Little Guy, 2016
+    usein:
+      - cv
 ---
 The Path is a visualisation of the draft publication of the [Open Tree of Life](http://opentreeoflife.org){:target="_blank"}, a database of 2.3 million species and their genetic origins published in September 2015.
 

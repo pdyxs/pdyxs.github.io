@@ -14,7 +14,7 @@ extensions:
     <p class="lead">{{page.tag}}</p>
 
     {% include definitions.html list=page.definitions %}
-    
+
     <p class="text-center">
     {% for action in page.actions %}
       <a role="button" href="{{action.url}}" target="_blank" class="btn btn-dark">
@@ -25,19 +25,7 @@ extensions:
 
     {{content}}
 
-    {% for quote in page.quotes %}
-    <blockquote class="blockquote">
-      <p class="mb-0">{{quote.quote}}</p>
-      <footer class="blockquote-footer">
-        {{quote.by}}
-        {% if quote.in %} in
-          <a href="{{quote.in.url}}" target="_blank">
-            <cite title="{{quote.in.text}}">{{quote.in.text}}</cite>
-          </a>
-        {% endif %}
-      </footer>
-    </blockquote>
-    {% endfor %}
+    {% include quotes.html quotes=page.quotes %}
   </div>
   <div class="col-md-6">
   {% include gallery.html %}

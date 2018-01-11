@@ -1,0 +1,22 @@
+{% for quote in include.quotes %}
+{% assign show = false %}
+{% if quote.usein contains include.context %}
+  {% assign show = true %}
+{% endif %}
+{% unless include.context %}
+  {% assign show = true %}
+{% endunless %}
+{% if show %}
+<blockquote class="blockquote">
+  <p class="mb-0">{{quote.quote}}</p>
+  <footer class="blockquote-footer">
+    {{quote.by}}
+    {% if quote.in %} in
+      <a href="{{quote.in.url}}" target="_blank">
+        <cite title="{{quote.in.text}}">{{quote.in.text}}</cite>
+      </a>
+    {% endif %}
+  </footer>
+</blockquote>
+{% endif %}
+{% endfor %}

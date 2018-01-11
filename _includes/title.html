@@ -1,4 +1,8 @@
 <h2>
-  {{page.title}}
-  <small class="text-muted">{{site.data.nav.subtitles[page.title]}}</small>
+  {{include.title}}
+  <small class="text-muted">{% if include.subtitle %}
+    {{include.subtitle}}
+  {% else %}
+    {{site.data.nav.subtitles[include.title]}}
+  {% endif %}</small>
 </h2>

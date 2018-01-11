@@ -2,11 +2,6 @@
 layout: basic
 title: Where
 ---
-I'll be in Sydney, Australia until October 22. Then, I go to Melbourne, Australia.
-
-If you're in either of those places, or are interested in collaborating, get in touch!
-
-### Getting in touch
 The best way to contact me is to [email me at paul@sztajer.org](mailto:paul@sztajer.org).
 
 ### Social places

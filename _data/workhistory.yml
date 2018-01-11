@@ -1,0 +1,20 @@
+---
+ppp:
+  - head: When
+    text: February 2017-May 2017 (continuing as a contractor)
+    usein:
+      - cv
+  - head: Roles
+    text: Designer, Product Owner, Developer
+    usein:
+      - cv
+seethrough:
+  - head: When
+    text: March 2012-Present
+    usein:
+      - cv
+  - head: Roles
+    text: Founder, Producer
+    usein:
+      - cv
+---

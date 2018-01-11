@@ -20,6 +20,8 @@ quotes:
     in:
       text: The Guardian
       url: http://theguardian.com/culture/australia-culture-blog/2013/aug/19/ten-best-australian-indie-video-games/
+    usein:
+      - cv
   - quote: "Without a doubt, Particulars was the highlight of PAX for me. It’s an exceptional game."
     by: Daniel Wilks, Editor of Hyper Magazine
   - quote: "its challenging levels interspersed with a sobering side story make this indie title a wondrous creation that’s simple on the outside, but deep in its execution"
@@ -52,10 +54,16 @@ definitions:
     text: Sub-atomic particle physics
   - head: Platform(s)
     text: Standalone (PC, Mac, Linux)
+    usein:
+      - cv
   - head: Release
     text: November 2014
+    usein:
+      - cv
   - head: Developed by
     text: SeeThrough Studios
+    usein:
+      - cv
   - head: Published by
     text: Surprise Attack
   - head: Roles
@@ -64,12 +72,16 @@ definitions:
       - Lead Designer
       - Programmer
       - Writer
+    usein:
+      - cv
   - head: Accolades
     texts:
       - Winner, Best Narrative, Freeplay Awards 2013
       - Winner, Best Audio Design, Freeplay Awards 2013
       - Winner, Sydney Indie Showcase, iFest 2013
       - Finalist, Best Audio Design, Australian Game Development Awards, 2013
+    usein:
+      - cv
 ---
 Particulars is a game based on the science of sub-atomic particle physics. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
 
