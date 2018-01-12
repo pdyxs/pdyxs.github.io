@@ -21,19 +21,14 @@ sitemap: false
 <table>
 {% for place in pages %}
 {% if place.url contains 'what' and place.url != '/what/' %}
-  {% if place.thumbnail %}
-    {% assign thumb = place.thumbnail %}
-  {% else %}
-    {% assign thumb = place.feature %}
-  {% endif %}
   <tr class="project">
     <td>
       <div class="project-img"
-           style="background-image:url('{{place.url}}/{{thumb}}')" />
+           style="background-image:url('{{place.url}}/{{place.image}}')" />
     </td>
     <td class="content">
       <h3>{{place.title}}</h3>
-      <p>{{place.tag}}</p>
+      <p>{{place.description}}</p>
       {% include definitions.html list=place.definitions context="cv" %}
       {% include quotes.html quotes=place.quotes context="cv" %}
     </td>

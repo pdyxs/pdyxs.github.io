@@ -1,7 +1,7 @@
 ---
 layout: project
 title: Art Heist
-tag: An interactive theatre caper, where teams of four must plan and execute a plan to steal a painting from an art gallery
+description: An interactive theatre caper, where teams of four must plan and execute a plan to steal a painting from an art gallery
 tags:
   - other
   - installation
@@ -9,7 +9,7 @@ priority: 20170601
 images:
   - https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FJetpackTheatre%2Fvideos%2F1038102896289787%2F&show_text=0
   - outside
-thumbnail: outside
+image: outside.jpg
 definitions:
   - head: Medium
     text: Escape Room/Interactive Theatre

@@ -1,13 +1,13 @@
 ---
 layout: project
 title: Completely Accurate Thought Simulator
-tag: Getting players to program Quantum Computers by delving into the inner thoughts of cats.
+description: Getting players to program Quantum Computers by delving into the inner thoughts of cats.
 tags:
   - science
   - development
   - interactive
 priority: 20170801
-thumbnail: circuit
+image: circuit.jpg
 actions:
   - text: Play Latest Build
     url: https://developer.cloud.unity3d.com/share/WJDRbh7rhz/

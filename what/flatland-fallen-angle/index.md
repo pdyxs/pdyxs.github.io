@@ -1,9 +1,10 @@
 ---
 layout: project
 title: "Flatland: Fallen Angle"
-tag: A neo-noir adventure set in a two-dimensional world
+description: A neo-noir adventure set in a two-dimensional world
 images:
   - https://www.youtube.com/embed/NY7sIlyq5Zg
+image: Flatland1.jpg
 feature: Flatland1
 tags:
   - game

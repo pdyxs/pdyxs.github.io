@@ -1,11 +1,12 @@
 ---
 layout: project
 title: The Laser Harp
-tag: An interactive artwork celebrating the International Year of Light
+description: An interactive artwork celebrating the International Year of Light
 captions:
   crowd: The Laser Harp installed at Walsh Bay during Vivid 2015
 images:
   - overview_trees
+image: crowd.jpg
 feature: crowd
 tags:
   - science

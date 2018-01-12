@@ -1,10 +1,11 @@
 ---
 layout: project
 title: Unstoppabot
-tag: A hybrid of an infinite runner and a puzzle game, coupled with sarcastic wit
+description: A hybrid of an infinite runner and a puzzle game, coupled with sarcastic wit
 images:
   - https://www.youtube.com/embed/BZxVzL2ssms
 feature: Unstoppabot1
+image: Unstoppabot1.jpg
 tags:
   - game
 priority: 20130300

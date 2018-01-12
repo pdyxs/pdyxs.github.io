@@ -1,8 +1,9 @@
 ---
 layout: project
 title: The Path
-tag: An artwork about life and the paths it ventured down
+description: An artwork about life and the paths it ventured down
 feature: the_path_2500x1250
+image: the_path_2500x1250.jpg
 tags:
   - science
   - visualisation

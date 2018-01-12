@@ -4,17 +4,12 @@
   {% if place.url contains page.url and place.url != page.url %}
   <div class="col-lg-3 col-md-4 mb-3">
   <div class="card">
-    {% if place.thumbnail %}
-      {% assign thumb = "thumb/" | append: place.thumbnail | append: ".jpg" %}
-    {% else %}
-      {% assign thumb = "thumb/" | append: place.feature | append: ".jpg" %}
-    {% endif %}
     <div class="card-img-top"
-      style="background-image: url('{{place.url}}/{{thumb}}')">
+      style="background-image: url('{{place.url}}/thumb/{{place.image}}')">
     </div>
     <div class="card-body">
       <h4 class="card-title"><a href="{{place.url}}">{{place.title}}</a></h4>
-      <p class="card-text">{{place.tag}}</p>
+      <p class="card-text">{{place.description}}</p>
     </div>
   </div></div>
   {% endif %}
