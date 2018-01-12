@@ -2,9 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>PDYXS | {{page.title}}</title>
-  <meta name="description" content="Paul Sztajer's website" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>PDYXS | {{page.title | capitalize }}</title>
 
   {% if page.noindex %}
     <meta name="robots" content="noindex">
@@ -25,6 +23,6 @@
     gtag('config', 'UA-107758570-1');
   </script>
 
-  {% seo %}
+  {% seo title=false %}
 </head>
 <body>
