@@ -7,21 +7,21 @@ tags:
   - development
   - interactive
 priority: 20170801
-thumbnail: circuit.png
+thumbnail: circuit
 actions:
   - text: Play Latest Build
     url: https://developer.cloud.unity3d.com/share/WJDRbh7rhz/
   - text: Read the Development blog
     url: https://medium.com/tag/qbyte/latest
 captions:
-  circuit.png: A screenshot of the current quantum circuit builder
-  entangled-drinks.png: An early experiment using beer-drinking as a quantum computing metaphor
-  beer.png: From when we were using beer sales as a metaphor
-  dating.png: An exploration of dating stories as a metaphor for quantum circuits
+  circuit: A screenshot of the current quantum circuit builder
+  entangled-drinks: An early experiment using beer-drinking as a quantum computing metaphor
+  beer: From when we were using beer sales as a metaphor
+  dating: An exploration of dating stories as a metaphor for quantum circuits
 images:
-  - dating.png
-  - entangled-drinks.png
-  - beer.png
+  - dating
+  - entangled-drinks
+  - beer
 definitions:
   - head: Topic
     text: Quantum Computing

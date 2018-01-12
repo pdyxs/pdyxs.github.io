@@ -4,7 +4,7 @@ title: "Flatland: Fallen Angle"
 tag: A neo-noir adventure set in a two-dimensional world
 images:
   - https://www.youtube.com/embed/NY7sIlyq5Zg
-feature: Flatland1.png
+feature: Flatland1
 tags:
   - game
 priority: 20120200

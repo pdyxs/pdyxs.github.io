@@ -1,4 +1,4 @@
-<img class="img-fluid float-right rounded ml-3" style="max-width: 120px;" alt="Photo of Paul Sztajer" title="Me, in portrait" src="/who/profile.jpg" />
+<img class="img-fluid float-right rounded ml-3" style="max-width: 120px;" alt="Photo of Paul Sztajer" title="Me, in portrait" src="/who/thumb/profile.jpg" />
 
 I am Paul Sztajer, an interactive artist who tends to develop works that illuminate complexity, especially in the realm of science.
 

@@ -5,9 +5,9 @@
   <div class="col-lg-3 col-md-4 mb-3">
   <div class="card">
     {% if place.thumbnail %}
-      {% assign thumb = place.thumbnail %}
+      {% assign thumb = "thumb/" | append: place.thumbnail | append: ".jpg" %}
     {% else %}
-      {% assign thumb = place.feature %}
+      {% assign thumb = "thumb/" | append: place.feature | append: ".jpg" %}
     {% endif %}
     <div class="card-img-top"
       style="background-image: url('{{place.url}}/{{thumb}}')">

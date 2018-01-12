@@ -2,7 +2,7 @@
 layout: project
 title: Particulars
 tag: A minimalist meditation on the chaos of life, the universe and sub-atomic particle physics
-feature: 5-1b.png
+feature: 5-1b
 tags:
   - science
   - game
@@ -32,23 +32,23 @@ quotes:
 images:
   - https://www.youtube.com/embed/ILsgP2vX6Po
   - https://www.youtube.com/embed/S7Oo97kO3rc
-  - comic-d.png
-  - 1-6b.png
-  - 1-10b.png
-  - 1-12b.png
-  - comic-b.png
-  - 2-12c.png
-  - 2-7b.png
-  - 2-9a.png
-  - comic-a.png
-  - 3-10b.png
-  - 3-3d.png
-  - 4-11b.png
-  - comic-c.png
-  - 4-8a.png
-  - 5-1b.png
-  - 5-5b.png
-  - comic-e.png
+  - comic-d
+  - 1-6b
+  - 1-10b
+  - 1-12b
+  - comic-b
+  - 2-12c
+  - 2-7b
+  - 2-9a
+  - comic-a
+  - 3-10b
+  - 3-3d
+  - 4-11b
+  - comic-c
+  - 4-8a
+  - 5-1b
+  - 5-5b
+  - comic-e
 definitions:
   - head: Topic
     text: Sub-atomic particle physics

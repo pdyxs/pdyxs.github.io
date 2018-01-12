@@ -2,20 +2,22 @@
   {% if image contains "https://www.youtube.com" or image contains "https://www.facebook.com" %}
     {% include gallery-video.html url=image %}
   {% else %}
-    {% include gallery-image.html path=image name=image %}
+    {% assign path = "gallery/" | append: image | append: ".jpg" %}
+    {% include gallery-image.html path=path name=image %}
   {% endif %}
 {% endfor %}
 
 {% if page.feature %}
 {% unless page.images contains page.feature %}
-  {% include gallery-image.html path=page.feature name=page.feature %}
+  {% assign path = "gallery/" | append: page.feature | append: ".jpg" %}
+  {% include gallery-image.html path=path name=page.feature %}
 {% endunless %}
 {% endif %}
 
 {% for image in site.static_files %}
-{% unless page.feature == image.name or page.images contains image.name %}
-{% if layout.extensions contains image.extname and image.path contains page.url %}
-  {% include gallery-image.html path=image.path name="image.name" %}
+{% unless page.feature == image.basename or page.images contains image.basename %}
+{% if layout.extensions contains image.extname and image.path contains page.url and image.path contains "gallery" %}
+  {% include gallery-image.html path=image.path name="image.basename" %}
 {% endif %}
 {% endunless %}
 {% endfor %}

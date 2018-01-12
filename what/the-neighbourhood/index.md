@@ -2,7 +2,7 @@
 layout: project
 title: The Neighbourhood
 tag: An artwork about stars and our place amongst them
-feature: the_neighbourhood_2500x1250.jpg
+feature: the_neighbourhood_2500x1250
 tags:
   - science
   - visualisation

@@ -4,7 +4,7 @@ title: Unstoppabot
 tag: A hybrid of an infinite runner and a puzzle game, coupled with sarcastic wit
 images:
   - https://www.youtube.com/embed/BZxVzL2ssms
-feature: Unstoppabot1.png
+feature: Unstoppabot1
 tags:
   - game
 priority: 20130300

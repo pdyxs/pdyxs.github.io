@@ -8,8 +8,8 @@ tags:
 priority: 20170601
 images:
   - https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FJetpackTheatre%2Fvideos%2F1038102896289787%2F&show_text=0
-  - outside.jpg
-thumbnail: outside.jpg
+  - outside
+thumbnail: outside
 definitions:
   - head: Medium
     text: Escape Room/Interactive Theatre
