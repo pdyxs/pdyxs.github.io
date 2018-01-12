@@ -1,5 +1,11 @@
 <h2>
+  {% if include.link %}
+    <a class="text-light" href={{include.link}}>
+  {% endif %}
   {{include.title}}
+  {% if include.link %}
+    </a>
+  {% endif %}
   <small class="text-muted">{% if include.subtitle %}
     {{include.subtitle}}
   {% else %}

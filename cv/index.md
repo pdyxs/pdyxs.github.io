@@ -1,11 +1,12 @@
 ---
 layout: printable
 title: CV
+sitemap: false
 ---
-<h1>Paul Sztajer - Interactive Artist</h1>
+<h1>Paul Sztajer</h1>
 <p style="float: right">
-  <a href="mailto:paul@sztajer.org">paul@sztajer.org</a>
-
+  <a href="mailto:paul@sztajer.org">paul@sztajer.org</a><br />
+  +61 2 8091 4516
 </p>
 <p>All this and more can be found at <a href="http://pdyxs.wtf">pdyxs.wtf</a></p>
 
