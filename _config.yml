@@ -2,7 +2,7 @@ plugins:
   - jekyll-sitemap
   - jekyll-seo-tag
 title: Paul Sztajer (PDYXS)
-url: pdyxs.wtf
+url: http://pdyxs.wtf
 author: paul
 twitter:
   username: pdyxs
@@ -16,3 +16,4 @@ social:
     - http://medium.com/@pdyxs
     - http://linkedin.com/in/pdyxs
     - https://github.com/pdyxs
+google-site-verification: google62ea18a3dcb04445.html
