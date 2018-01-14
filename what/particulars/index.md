@@ -51,12 +51,14 @@ images:
   - 5-5b
   - comic-e
 definitions:
+  - head: Medium
+    text: Video Game
+    usein:
+      - cv
   - head: Topic
     text: Sub-atomic particle physics
   - head: Platform(s)
     text: Standalone (PC, Mac, Linux)
-    usein:
-      - cv
   - head: Release
     text: November 2014
     usein:

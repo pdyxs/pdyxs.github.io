@@ -1,7 +1,7 @@
 ---
 layout: project
 title: Completely Accurate Thought Simulator
-description: Getting players to program Quantum Computers by delving into the inner thoughts of cats.
+description: A game that teaches players to program a Quantum Computer, by having them tell stories about the inner thoughts of cats.
 tags:
   - science
   - development
@@ -23,12 +23,14 @@ images:
   - entangled-drinks
   - beer
 definitions:
+  - head: Medium
+    text: Video Game
+    usein:
+      - cv
   - head: Topic
     text: Quantum Computing
   - head: Platform(s)
-    text: Some combination of Web, iOS, Android, Standalone
-    usein:
-      - cv
+    text: Web, iOS, Standalone
   - head: Release
     text: Q1 2019
     usein:

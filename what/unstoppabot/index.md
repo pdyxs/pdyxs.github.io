@@ -1,7 +1,7 @@
 ---
 layout: project
 title: Unstoppabot
-description: A hybrid of an infinite runner and a puzzle game, coupled with sarcastic wit
+description: A hybrid of an infinitely running bot and a puzzle game, complemented with sarcastic wit
 images:
   - https://www.youtube.com/embed/BZxVzL2ssms
 feature: Unstoppabot1

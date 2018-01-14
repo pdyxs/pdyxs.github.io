@@ -125,13 +125,14 @@
 
 .project {
   page-break-inside: avoid;
+  margin-bottom: 1cm;
 
   .project-img {
-    // width:
     height: 5cm;
     width: 7cm;
-    background-size: cover;
-    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
   }
 
   td {

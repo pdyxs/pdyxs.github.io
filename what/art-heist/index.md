@@ -1,7 +1,7 @@
 ---
 layout: project
 title: Art Heist
-description: An interactive theatre caper, where teams of four must plan and execute a plan to steal a painting from an art gallery
+description: An interactive theatre experience where teams of four develop and execute a plan to steal a painting from an art gallery
 tags:
   - other
   - installation
