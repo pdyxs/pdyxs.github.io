@@ -1,0 +1,31 @@
+---
+layout: basic
+title: Why
+---
+<div class="lead">
+<p>I write a blog over on <a href="http://medium.com/@pdyxs" target="_blank">Medium</a>, much of which explores why I make what I make.</p>
+</div>
+
+<div class="row">
+{% for post in site.posts %}
+<div class="col-lg-3 col-md-4 mb-3">
+<div class="card">
+  {% if post.image %}
+  <div class="card-img-top"
+    style="background-image: url('{{post.image}}')">
+  </div>
+  {% endif %}
+  <div class="card-body">
+    <h4 class="card-title">
+      {% if post.canonical_url %}
+        <a href="{{ post.canonical_url }}">
+      {% else %}
+        <a href="{{ post.url }}">
+      {% endif %}
+      {{ post.title }}</a>
+    </h4>
+    <p class="card-text">{{post.description}}</p>
+  </div>
+</div></div>
+{% endfor %}
+</div>
