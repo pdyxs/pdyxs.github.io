@@ -3,6 +3,8 @@ layout: post
 title: "QByte Devlog - Taking the Measure"
 date: 2017-09-19 17:00:00 +0100
 categories: why
+tags:
+  - quantum-byte
 description: Making quantum measurements work in the QByte engine
 canonical_url: 'https://medium.com/seethrough-studios/qbyte-devlog-taking-the-measure-fb06de96d368'
 image: https://cdn-images-1.medium.com/max/5464/1*-erHcYtTXrYO-Ohor5hFxg@2x.jpeg

@@ -127,12 +127,17 @@
   page-break-inside: avoid;
   margin-bottom: 1cm;
 
-  .project-img {
+  .img-wrap {
     height: 5cm;
-    width: 7cm;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center top;
+    overflow: hidden;
+
+    .project-img {
+      height: 7cm;
+      width: 7cm;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center top;
+    }
   }
 
   td {

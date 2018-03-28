@@ -3,6 +3,8 @@ layout: post
 title: "QByte Devlog - Cycles and Cul-de-sacs"
 date: 2017-11-06 17:00:00 +0100
 categories: why
+tags:
+  - quantum-byte
 description: Getting lost in the quantum (but also the actual) desert
 canonical_url: 'https://medium.com/seethrough-studios/qbyte-devlog-cycles-and-cul-de-sacs-2a0c361845a2'
 image: https://cdn-images-1.medium.com/max/8064/1*0oGIuQ6un8Cyur9c7wbULg@2x.jpeg

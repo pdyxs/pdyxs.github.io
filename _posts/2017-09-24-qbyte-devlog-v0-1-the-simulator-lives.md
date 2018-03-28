@@ -3,6 +3,8 @@ layout: post
 title: "QByte Devlog - v0.1: The Simulator Lives!"
 date: 2017-09-19 17:00:00 +0100
 categories: why
+tags:
+  - quantum-byte
 description: How I got to v0.1 of QByte
 canonical_url: 'https://medium.com/seethrough-studios/qbyte-devlog-v0-1-the-simulator-lives-5daf39c52b44'
 image: https://cdn-images-1.medium.com/max/5464/1*nHg1vN01bgrmHaa3YghUbQ@2x.png

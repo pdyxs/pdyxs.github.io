@@ -3,29 +3,46 @@ layout: basic
 title: Why
 ---
 <div class="lead">
-<p>I write a blog over on <a href="http://medium.com/@pdyxs" target="_blank">Medium</a>, much of which explores why I make what I make.</p>
+  <p>I create in order to explore and communicate, to find new perspectives on
+  this world and to pass those on.</p>
 </div>
 
 <div class="row">
-{% for post in site.posts %}
-<div class="col-lg-3 col-md-4 mb-3">
-<div class="card">
-  {% if post.image %}
-  <div class="card-img-top"
-    style="background-image: url('{{post.image}}')">
+  <div class="col-md-6">
+    <h3>Social Media Feed</h3>
+    <p>
+      My social media feed (<a target="_blank" href="http://instagram.com/pdyxs">instagram</a>,
+        <a target="_blank" href="http://twitter.com/pdyxs">twitter</a>) contains short thoughts about
+        design, culture and the places that I have visited.
+    </p>
+    <div id="pixlee_container"></div><script type="text/javascript">window.PixleeAsyncInit = function() {Pixlee.init({apiKey:'WbVVG6hDp57Qv9XjKlbU'});Pixlee.addSimpleWidget({widgetId:'2931'});};</script><script src="//instafeed.assets.pixlee.com/assets/pixlee_widget_1_0_0.js"></script>
   </div>
-  {% endif %}
-  <div class="card-body">
-    <h4 class="card-title">
-      {% if post.canonical_url %}
-        <a href="{{ post.canonical_url }}">
-      {% else %}
-        <a href="{{ post.url }}">
+
+  <div class="col-md-6">
+    <h3>Blog</h3>
+    <p>I write a blog over on <a href="http://medium.com/@pdyxs" target="_blank">Medium</a>, much of which explores why I make what I make.</p>
+    <div class="row">
+    {% for post in site.posts %}
+    <div class="col-lg-6 col-md-12 mb-3">
+    <div class="card">
+      {% if post.image %}
+      <div class="card-img-top"
+        style="background-image: url('{{post.image}}')">
+      </div>
       {% endif %}
-      {{ post.title }}</a>
-    </h4>
-    <p class="card-text">{{post.description}}</p>
+      <div class="card-body">
+        <h4 class="card-title">
+          {% if post.canonical_url %}
+            <a href="{{ post.canonical_url }}" target="_blank">{{ post.title }}</a>
+            <a hidden href="{{ post.url }}">{{ post.title }}</a>
+          {% else %}
+            <a href="{{ post.url }}">{{ post.title }}</a>
+          {% endif %}
+        </h4>
+        <p class="card-text">{{post.description}}</p>
+      </div>
+    </div></div>
+    {% endfor %}
+    </div>
   </div>
-</div></div>
-{% endfor %}
 </div>

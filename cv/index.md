@@ -23,8 +23,10 @@ sitemap: false
 {% if place.url contains 'what' and place.url != '/what/' %}
   <tr class="project">
     <td>
+      <div class="img-wrap">
       <div class="project-img"
-           style="background-image:url('{{place.url}}/{{place.image}}')" />
+           style="background-image:url('{{place.url}}/{{place.image}}')">
+      </div></div>
     </td>
     <td class="content">
       <h3>{{place.title}}</h3>
