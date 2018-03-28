@@ -18,7 +18,8 @@ Whist, by [AΦE](http://www.aoiesteban.com/), has been the highlight of my Fring
 Whist is a VR dance piece. Audience members are placed in a space with a number of sculptures, which they briefly explore before donning a Gear VR headset.
 
 While in VR, there are basically 2 modes: search and watch. In search mode, the screen just shows the phone’s camera output with an overlay of a sculpture that you have to find and go to. When you get there, you’re transported into a 360 video, that features dance and Freudian imagery. Once the video ends, you’re given a new sculpture to find.
-> I definitely should have taken a photo of the setup, and that photo would have gone here, and that could have been really useful for your understanding of the show… whoops
+
+*I definitely should have taken a photo of the setup, and that photo would have gone here, and that could have been really useful for your understanding of the show… whoops*
 
 Each person’s journey through Whist is different: your path depends on where you look in each video. At the end, you get given a number corresponding to your path, and you can look up that number on the website to find out what your gaze says about you... according to Freudian psychology I guess?
 

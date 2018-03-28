@@ -52,5 +52,6 @@ Having said that, part of the design challenge of making a Citizen Science game 
 In today’s world of large data sets, there’s likely huge swaths of science that could really use the large-scale human power that citizen science can provide, and there’s a lot of people in the world who’d benefit from being a part of scientific research, even if it’s in a small way.
 
 In many cases, the skills that are needed to make these things work are cross-discipline: a combination of domain knowledge, design, academic rigour, science communication and software engineering. Hopefully, this sheds a bit of light on what these projects entail, and leads to some great projects.
-> ***On that note…***
-> Part of the reason I put this article together is that there’s [currently funding available for Citizen Science projects in Australia](https://www.business.gov.au/assistance/inspiring-australia-science-engagement/citizen-science-grants), which means that collaborating on such a project is suddenly much more feasible. So if you see this and have an idea for a project, please [get in touch](http://pdyxs.wtf/contact/)!
+
+***On that note…***
+Part of the reason I put this article together is that there’s [currently funding available for Citizen Science projects in Australia](https://www.business.gov.au/assistance/inspiring-australia-science-engagement/citizen-science-grants), which means that collaborating on such a project is suddenly much more feasible. So if you see this and have an idea for a project, please [get in touch](http://pdyxs.wtf/contact/)!

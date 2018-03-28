@@ -64,16 +64,16 @@ And then you realise “Damn, it’s been forever since I wrote anything and so 
 of my ability to do that seems to be slipping away, and also it’s time for some
 goddamned catharsis!”. So you write a blog post.
 
-> \* *For those wondering what this magical direction is, it’s working on [artistic
+\* *For those wondering what this magical direction is, it’s working on [artistic
 representations of science](http://pdyxs.org/artworks/). Which is super broad
 (and includes games/‘interactive stuff’), but it nicely unifies the works I’ve
 had the most passion for (and broad is kinda the point). I’ll post more specific
 stuff about the directions I’m going further down the line.*
 
-> \*\* *“But of course that’s what you’re passionate about! I could’ve told you that
+\*\* *“But of course that’s what you’re passionate about! I could’ve told you that
 years ago!”. Yeah, whoops.*
 
-> \*\*\* *If you were looking for a salient, useful take-away from this post, sorry.
+\*\*\* *If you were looking for a salient, useful take-away from this post, sorry.
 The best I’ve got is ‘hang in there, other people deal with this too’. Also,
 sometimes the voices in your head have a point, and sometimes they’re full of
 shit. Life is complicated like that.*

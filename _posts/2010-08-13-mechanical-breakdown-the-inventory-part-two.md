@@ -3,7 +3,7 @@ layout: post
 title: "Mechanical Breakdown: The Inventory (Part 2)"
 date: 2010-08-13 17:00:00 +1000
 categories: why
-description: 
+description:
 image: https://i.kinja-img.com/gawker-media/image/upload/s--RM7HIhsy--/c_fit,fl_progressive,q_80,w_320/18j38dsj7ymsbjpg.jpg
 canonical_url: https://kotaku.com/5612149/mechanical-breakdown-the-inventory
 ---
@@ -24,6 +24,8 @@ More on all that, as soon as you 'use' the 'more' key.The Loot/Carry Dichotomy
 > (Many games have a) 'carried inventory' system, where you have a limited set of tools available for combat, and a secondary 'loot inventory' system... (whose) primary purpose seems to be the acquisition of wealth.
 >
 > [*MosaicIris*](http://mozaiciris.deviantart.com/)*,* [*Comment from Mechanical Breakdown: The Inventory (Part I)*](http://www.fabula-ex-machina.org/?p=202#comment-56)
+> {:.blockquote-footer}
+{:.blockquote}
 
 An inventory might be a place to store and access items, but there are underlying gameplay reasons for doing so that should be explored. MosaicIris hits the nail on the head in recognising two major gameplay modes of inventory use: as items to carry and use; and as a way to horde and accumulate wealth. Only the carry mode is found in many FPS's, with the loot mode joining it in games with a higher RPG element.
 
@@ -36,6 +38,8 @@ This dichotomy between different modes represents the different pace of the acco
 > inventory can be made redundant by ergonomics... Collect an item, then whenever you have to use it on the thing you have to use it on. Just press the use key.
 >
 > [*Jimmy Baird*](http://www.gamasutra.com/blogs/author/JimmyBaird/2780/)*, [Inventory](http://www.gamasutra.com/blogs/JimmyBaird/20100212/4400/Inventory.php)*
+> {:.blockquote-footer}
+{:.blockquote}
 
 Jimmy Baird here speaks to an issue which is perpetuated mostly by carried inventories, but which plagues games in general as a result. The fact is that for twitch gaming to occur, the items you use have to be easy to use, meaning that a primary, 'verb this' button (ie. left click or trigger) is quite appropriate. Even if there is a secondary use option, you want this to be similarly easily accessible, and so the buttons for this use (secondary mouse button) are based on the ergonomics rather than the actual function of the object.
 
@@ -46,6 +50,8 @@ The problem here seems to be one of agency versus ergonomics, but the Blade Runn
 > This is not an inventory designed to help organize items that the main character will use to overcome puzzles. The clue database is designed to organize evidence that the player will use to piece together the game's mysteries.
 >
 > [*Michael McBride-Carpenter*](http://www.gamasutra.com/blogs/author/MichelMcBrideCharpentier/357/)*, [The Blade Runner Game -- Clues and Inventory](http://www.gamasutra.com/blogs/MichelMcBrideCharpentier/20090702/3438/The_Blade_Runner_Game__Clues_and_Inventory.php)*
+> {:.blockquote-footer}
+{:.blockquote}
 
 In terms of gameplay, this certainly leads to a much slower pace, as much of the game's action becomes based in the deductive reasoning of the player's mind rather than on the screen. Yet if this is the intent of the game, it can work wonderfully, allowing the agency of the how to use an object occur within a player's mind. Sure, the in-game character has no choice in how they use the object, but how you choose to interpret that object becomes paramount.
 
@@ -54,6 +60,8 @@ Another solution that's being explored at present is that of context-sensitive c
 > Sure it is slightly more realistic that I should only be able to carry around 16 axes in Diablo, but it introduces a new concern into the game: having to constantly return to base to cash in and empty my inventory for more.
 >
 > *Daniel McCusker,* [*Comment from Mechanical Breakdown: The Inventory (Part I)*](http://www.fabula-ex-machina.org/?p=202#comment-53)
+> {:.blockquote-footer}
+{:.blockquote}
 
 Loot is, in a nutshell, a problem. The idea of being able to loot corpses to earn a living is, in itself, not really a problem, as the anti-heroic aspects of this can be an interesting commentary on how a hero would or wouldn't be able to survive in today's capitalist society. The economy of a game as a result of this loot is a separate issue, which can be well or badly handled entirely separately to the inventory system itself. The problem isn't within either of these elements that define loot, but is rather the emergent conflicts between loot and both pacing and reality.
 
@@ -66,6 +74,8 @@ This might lead you to believe that the limits of inventory systems need to be l
 > the most natural and realistic way to profit from a kill is to loot the corpse, but if your character has a realistic carrying limit then you can only fully profit from a handful of kills before your loot-inventory is full.
 >
 > [*MosaicIris*](http://mozaiciris.deviantart.com/)*,* [*Comment from Mechanical Breakdown: The Inventory (Part I)*](http://www.fabula-ex-machina.org/?p=202#comment-56)
+> {:.blockquote-footer}
+{:.blockquote}
 
 In short, the reason why we don't ever see realistic carry limits is because they'd break gameplay. In fact, you can choose exactly how often a game will break its regular flow to go into 'sell my loot' mode by how big its inventory is, and anything in the realm of realism is simply too small for gameplay to function.
 
@@ -76,6 +86,8 @@ We need limited inventories to stop item clutter more than to enforce reality, w
 > Dumping all the food so you can haul a piano across the country says a lot about your character... mainly that you're either crazy or an idiot, but still, it can be fun to play that role.
 >
 > [*MyDroidDestroyed*](http://twitter.com/DroidDestroyed)*,* [*Comment from Mechanical Breakdown: The Inventory (Part I)*](http://www.fabula-ex-machina.org/?p=202#comment-54)
+> {:.blockquote-footer}
+{:.blockquote}
 
 This is where inventory shines: its ability to let us tell a game about our character, and for that game to respond in kind. Right now, it's hard to tell games narrative facts about your character: you can give it stats about a character's physical attributes, but backstory's a bit harder to fill in.
 
@@ -88,6 +100,8 @@ Another story element that the inventory falls into is that of home and where yo
 > With no permanent storage, there's no sense of anywhere being a home for us, so we're encouraged to move forwards.
 >
 > [*Nick Dinicola*](http://www.popmatters.com/pm/archive/contributor/412)*, [I am a Traveler: Inventory Management](http://www.popmatters.com/pm/post/120724-i-am-a-traveler-inventory-management-in-borderlands-and-dragon-age/)*
+> {:.blockquote-footer}
+{:.blockquote}
 
 Home, in gaming terms, is a place where you can store your stuff such that it can't be stolen. As games without permanent storage portray the players as travellers, so do games with permanent storage create a surrogate home for the player character. The theme of home and what it means is incredibly important to the inventory, which has a somewhat materialistic view of what a home is.Interface
 
