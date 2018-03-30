@@ -6,6 +6,7 @@ categories: why
 description:
 canonical_url: http://www.seethroughstudios.com/2013/08/getting-social-part-1-fear-of-the-internet/
 image: https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/08/Afraid_of_Twitter.jpeg?w=360
+source: seethroughstudios
 ---
 I'm just going to put it out there: I'm scared of the internet.
 

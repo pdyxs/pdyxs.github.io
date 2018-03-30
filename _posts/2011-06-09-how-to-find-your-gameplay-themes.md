@@ -3,8 +3,9 @@ layout: post
 title: "How to Find your Gameplay Themes"
 date: 2011-06-09 17:00:00 +1000
 categories: why
-description: 
+description:
 canonical_url: https://www.gamasutra.com/blogs/PaulSztajer/20110609/89605/How_to_Find_your_Gameplay_Themes.php
+source: gamasutra
 ---
 One of the best ways to tap into the sheer storytelling power of video games is to utilise your gameplay to help tell your story. This synergy hooks the players' individual actions into the narrative, amping up the effectiveness of your message.
 

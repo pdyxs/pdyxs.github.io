@@ -8,6 +8,7 @@ tags:
   - flatland-fallen-angle
 canonical_url: https://www.kotaku.com.au/2012/02/the-seethrough-diaries-the-hour-of-pain/
 image: https://edge.alluremedia.com.au/m/k/2012/02/diary-2-1.jpg
+source: kotaku
 ---
 [![](https://edge.alluremedia.com.au/m/k/2012/02/diary-2-1.jpg)](https://edge.alluremedia.com.au/m/k/2012/02/diary-2-1.jpg){:target="_blank"}
 

@@ -5,6 +5,7 @@ date: 2016-12-07 17:00:00 +1000
 categories: why
 description: A look at the main types of citizen science project, and some steps you can take to identify good problems for a citizen science project.
 canonical_url: 'https://artplusmarketing.com/finding-the-right-problems-for-citizen-science-24e454669b0'
+source: medium
 ---
 
 Citizen Science is something I’ve been interested in for a few years — there’s some great opportunities to create games that create actual impact in the world, while also educating the general public in scientific principles and methodology.

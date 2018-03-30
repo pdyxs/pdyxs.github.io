@@ -8,6 +8,7 @@ tags:
   - flatland-fallen-angle
 canonical_url: https://www.gamasutra.com/blogs/PaulSztajer/20120709/173778/Holding_things_up_in_two_dimensions_The_Pillars_of_Flatland.php
 image: https://i1.wp.com/www.seethroughstudios.com/wp-content/uploads/2012/07/Screen-Shot-2012-07-09-at-10.34.56-PM.png?resize=300%2C215 "Screen Shot 2012-07-09 at 10.34.56 PM"
+source: gamasutra
 ---
 The weekend before last, I went to Canberra iFest as a speaker (I'll get a summary of that talk and the slides up shortly!). As a part of that, I saw a talk by Daniel Fisher of [Halfbrick](http://halfbrick.com/){:target="_blank"} about their design process, where he said, amongst other gems, that one of their key processes is to decide what the 'three pillars' of their game is. That is, the three things that wholly describe and are wholly important to their game look, feel, sound, taste and smell, possible sans the taste and smell.
 

@@ -7,6 +7,7 @@ tags:
   - flatland-fallen-angle
 description:
 canonical_url: https://www.gamasutra.com/blogs/PaulSztajer/20110909/90176/Of_Shapes_and_Flies_A_Ludum_Dare_Double_Bill_Postmortem.php
+source: gamasutra
 ---
 **Paul**: As you may have seen, James and I both took part in Ludum Dare a few weekends back, where James made [Web of Flies](http://www.ludumdare.com/compo/ludum-dare-21/?action=rate&uid=4413){:target="_blank"}, and I '[Escape from Flatland: An~~Romance~~ Adventure of ~~Many~~ Two Dimensions](http://www.ludumdare.com/compo/ludum-dare-21/?action=rate&uid=2440){:target="_blank"}'. It was an adventure of coding, design, learning new things, and crazy shape (**James**: and spider web!) physics. It was the most fulfilling 48 hour game challenge either of us have done (this was James' 2nd LD and my 4th), and the resulting games speak to that.
 

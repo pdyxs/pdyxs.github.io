@@ -6,6 +6,7 @@ categories: why
 description:
 canonical_url: http://www.seethroughstudios.com/2013/07/innovations-in-games-my-thoughts/
 image: https://i1.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/07/539690_568598346508143_2027712395_n.jpg?w=851
+source: seethroughstudios
 ---
 Yesterday, I was in a panel at PAX Australia on the topic: "Games Can Be Anything -- Are We Seeing Enough Innovation or Not, and Why?". In preparation for the panel, the moderator (the amazing Epona Schweer) asked me to write up some of my thoughts. I ended up writing something of a mini-essay, which I've edited into readable form below.
 

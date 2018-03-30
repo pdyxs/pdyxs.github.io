@@ -1,0 +1,14 @@
+---
+seethroughstudios:
+  name: SeeThrough Studios
+  logo: "/content/logos/seethroughstudios.png"
+kotaku:
+  name: Kotaku
+  logo: "/content/logos/kotaku.png"
+medium:
+  name: Medium
+  logo: "/content/logos/Medium.png"
+gamasutra:
+  name: Gamasutra
+  logo: "/content/logos/gamasutra.png"
+---

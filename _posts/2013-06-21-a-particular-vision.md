@@ -8,6 +8,7 @@ tags:
   - particulars
 canonical_url: http://www.seethroughstudios.com/2013/06/a-particular-vision-what-i-want-particulars-and-all-our-games-to-do/
 image: https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/06/stairs.png?resize=220%2C300
+source: seethroughstudios
 ---
 Last night, I was having drinks with a couple of devs after an [IGDA Sydney](https://www.facebook.com/groups/SydneyIGDA/){:target="_blank"} event (a [panel about games and narrative](http://www.mcvpacific.com/news/read/narrative-in-games-talk-at-qantm-well-received/0117510){:target="_blank"} which was quite excellent). These devs had played the current build of Particulars, and I started talking about my vision for the rest of the game.
 

@@ -8,6 +8,7 @@ tags:
 description: A deep dive into how I've chosen how to visualise quantum states
 canonical_url: 'https://medium.com/seethrough-studios/its-probably-complicated-visualising-the-states-of-a-quantum-computer-9fe38a12df72'
 image: https://cdn-images-1.medium.com/max/2612/1*WbLTltM__ycs1ob6nJtVAg.png
+source: medium
 ---
 
 *This is a devlog for the project QByte, but rather than a straight devlog, I’m taking a topic I’ve encountered and delving into it. At the end, I’ll do a brief run-down of my last couple of weeks.*

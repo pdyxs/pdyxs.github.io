@@ -5,6 +5,7 @@ date: 2016-11-19 17:00:00 +1000
 categories: why
 description: Why we need more responsive data visualisations
 canonical_url: 'https://medium.com/@pdyxs/data-that-listens-the-need-for-more-responsive-data-visualisation-2527b092d169'
+source: medium
 ---
 ## The need for more responsive data visualisation
 

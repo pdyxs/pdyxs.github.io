@@ -8,6 +8,7 @@ tags:
   - particulars
 canonical_url: https://www.gamasutra.com/blogs/PaulSztajer/20130324/189171/The_15_Steps_of_Particulars_Preproduction.php
 image: https://i2.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/03/Screen-Shot-2013-02-12-at-10.46.35-AM.png?resize=300%2C187
+source: gamasutra
 ---
 I think it's fair to say that Particulars has had a particularly long development history: the project started in mid 2011, was put on hiatus while funding was found, continued hiatus while other projects completed and is finally rearing its physics-soaked head again in 2013.
 

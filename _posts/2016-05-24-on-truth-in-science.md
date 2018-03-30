@@ -5,6 +5,7 @@ date: 2016-05-24 17:00:00 +1000
 categories: why
 description: How science treats concepts of truth, and how this causes massive problems for science communication
 canonical_url: 'https://medium.com/@pdyxs/on-truth-in-science-d1fbdb432d60'
+source: medium
 ---
 I’ve been thinking a lot about truth in science, or more specifically, about the fuzziness of scientific truth.
 

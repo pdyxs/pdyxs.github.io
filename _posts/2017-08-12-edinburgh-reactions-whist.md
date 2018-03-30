@@ -5,6 +5,7 @@ date: 2017-08-12 17:00:00 +0100
 categories: why
 description: A reaction to an interactive theatre piece I saw in Edinburgh
 canonical_url: 'https://medium.com/@pdyxs/edinburgh-reactions-whist-c52f0c5067bc'
+source: medium
 ---
 
 # Edinburgh Reactions: Whist

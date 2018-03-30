@@ -8,6 +8,7 @@ tags:
 description: Getting lost in the quantum (but also the actual) desert
 canonical_url: 'https://medium.com/seethrough-studios/qbyte-devlog-cycles-and-cul-de-sacs-2a0c361845a2'
 image: https://cdn-images-1.medium.com/max/8064/1*0oGIuQ6un8Cyur9c7wbULg@2x.jpeg
+source: medium
 ---
 
 *You can find the current build of QByte [here](https://developer.cloud.unity3d.com/share/-1a8nk7OAz/). It’s really an in-between build, so expect some broken-ness.*

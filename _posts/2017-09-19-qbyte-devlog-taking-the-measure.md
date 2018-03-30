@@ -8,6 +8,7 @@ tags:
 description: Making quantum measurements work in the QByte engine
 canonical_url: 'https://medium.com/seethrough-studios/qbyte-devlog-taking-the-measure-fb06de96d368'
 image: https://cdn-images-1.medium.com/max/5464/1*-erHcYtTXrYO-Ohor5hFxg@2x.jpeg
+source: medium
 ---
 
 *You can find the latest build for QByte [here](https://developer.cloud.unity3d.com/share/ZJTngRQaoM/). Feedback is always appreciated!*

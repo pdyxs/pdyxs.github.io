@@ -5,6 +5,7 @@ date: 2011-08-05 17:00:00 +1000
 categories: why
 description:
 canonical_url: https://www.gamasutra.com/blogs/PaulSztajer/20110805/89949/The_HalfCinderella_Why_Gameplay_never_leaves_the_Ball.php
+source: gamasutra
 ---
 So I was thinking about Kurt Vonnegut's [lecture on the shapes of stories](http://www.youtube.com/watch?v=oP3c1h8v2ZQ "Shapes of Stories"){:target="_blank"} again, and it occurred to me that the ludonarrative* arc of most games is good at going up on the Good/Ill Fortune graph, but very bad at going down it. In fact, most ludonarratives are a cut-down version of the Cinderella story that ends at 11:59pm.
 

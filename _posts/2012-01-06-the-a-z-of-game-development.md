@@ -8,6 +8,7 @@ tags:
   - game-engine-podcast
 canonical_url: https://www.kotaku.com.au/2012/01/the-a-z-of-game-development/
 image: https://edge.alluremedia.com.au/m/k/2012/01/classroom.jpg
+source: kotaku
 ---
 *At the end of 2011, seven game developers from six different studios sat together to record a podcast. The theme they were given was the top tips for game development, and over the course of the recording they pooled together their experience to come up with 26 pieces of advice that every developer should at least consider. I realised that there was a wealth of knowledge being shared, and that someone should write it down in an article. This is that article.*
 

@@ -8,6 +8,7 @@ tags:
   - particulars
 canonical_url: http://www.seethroughstudios.com/2014/05/inspiration-and-emulation-the-drive-to-create/
 image: https://i2.wp.com/www.seethroughstudios.com/wp-content/uploads/2014/05/inspiration-and-emulation-the-drive-to-create-jw.jpg?w=600
+source: seethroughstudios
 ---
 I've been doing a fair bit of reflection about Particulars lately. We've been planning the final stages of the game's development, forcing me to really think about what's important in the game, and why we've made it this way.
 
