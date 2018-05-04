@@ -2,4 +2,4 @@
 
 I'm Paul Sztajer, an interactive artist. I develop works that illuminate complex systems and ideas, particularly in the realm of science.
 
-I studied Physics and Software Engineering at University, and produced sketch comedy shows in my free time. Since then, I’ve dived into the world of games (starting [SeeThrough Studios](seethroughstudios.com) along the way) and education (working at [3P Learning](3plearning.com) as a designer of science and maths educational software).
+I studied Physics and Software Engineering at University, and produced sketch comedy shows in my free time. Since then, I’ve dived into the world of games (starting [SeeThrough Studios](seethroughstudios.com) along the way) and education (working at [3P Learning](3plearning.com) as a designer and developer of science and maths educational software).

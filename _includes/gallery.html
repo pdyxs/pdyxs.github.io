@@ -1,11 +1,12 @@
 {% for image in page.images %}
-  {% if image contains "https://www.youtube.com" or image contains "https://www.facebook.com" %}
+  {% if image contains "https://www.youtube.com" or image contains "https://www.facebook.com" or image contains "https://player.vimeo.com/video" %}
     {% include gallery-video.html url=image %}
   {% else %}
     {% assign path = "gallery/" | append: image | append: ".jpg" %}
     {% include gallery-image.html path=path name=image %}
   {% endif %}
 {% endfor %}
+<script src="https://player.vimeo.com/api/player.js"></script>
 
 {% if page.feature %}
 {% unless page.images contains page.feature %}

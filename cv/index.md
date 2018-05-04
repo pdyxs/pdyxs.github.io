@@ -5,13 +5,16 @@ sitemap: false
 ---
 <h1>Paul Sztajer</h1>
 <p style="float: right">
-  <a href="mailto:paul@sztajer.org">paul@sztajer.org</a><br />
-  +61 2 8091 4516
+  <a href="mailto:talk@pdyxs.wtf">talk@pdyxs.wtf</a><br />
+  +1 415 494 9798
 </p>
 <p>All this and more can be found at <a href="http://pdyxs.wtf">pdyxs.wtf</a></p>
 
 {% include title.html title="Who" %}
 {% include aboutme.md %}
+
+{% include title.html title="What" subtitle="I can do" %}
+{% include definitions.html list=site.data.skills.all %}
 
 {% include title.html title="Where" subtitle="I've worked" %}
 {% include workhistory.md %}

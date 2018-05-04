@@ -1,0 +1,15 @@
+---
+all:
+  - head: Games and Education
+    text: Systems design, level design, pedagogy, board game design, gamification
+    usein:
+      - cv
+  - head: Product Development
+    text: Product Management, UX Design, Scrum/Agile processes
+    usein:
+      - cv
+  - head: Programming
+    text: Primarily C# (Unity) and Javascipt (React/Angular). Have worked in Java, C, C++, python, php and more
+    usein:
+      - cv
+---
