@@ -1,6 +1,14 @@
 <figure class="series-wrapper figure border rounded pb-2 pt-3 px-3">
   <div class="figure-img img-fluid rounded">
-    <iframe src="{{include.url}}" frameborder="0" allowfullscreen></iframe>
+    <div class="series">
+      <a class="top" href="{{include.url}}" target="_blank" class="w-100"></a>
+      <iframe src="{{include.url}}" frameborder="0" allowfullscreen></iframe>
+      <a class="bottom" href="https://medium.com/@pdyxs" target="_blank" class="w-100"></a>
+    </div>
+    <div class="series-link">
+      <a href="{{include.url}}" target="_blank" class="w-100"></a>
+      <iframe src="{{include.url}}" frameborder="0" allowfullscreen></iframe>
+    </div>
     {% if page.captions[include.url] %}
       <figcaption class="figure-caption">{{ page.captions[include.url] }}</figcaption>
     {% endif %}

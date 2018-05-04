@@ -46,14 +46,48 @@ div.card-img-top {
   }
 }
 
+$series-max-width: 1326px;
 .series-wrapper {
   width: 100%;
 
-  iframe {
-    width: 100%;
-    min-height: 600px;
-    @media (max-width: 1327px) {
+  .series {
+    @media (max-width: $series-max-width) {
       display: none;
+    }
+
+    iframe {
+      width: 100%;
+      min-height: 600px;
+    }
+
+    a {
+      width: 100%;
+      &.top {
+        position: absolute;
+        min-height: 80px;
+      }
+      &.bottom {
+        position: relative;
+        display: block;
+        min-height: 80px;
+        margin-top: -80px;
+      }
+    }
+  }
+
+  .series-link {
+    @media (min-width: $series-max-width + 1px) {
+      display: none;
+    }
+
+    iframe {
+      width: 100%;
+      min-height: 400px;
+    }
+
+    a {
+      position: absolute;
+      min-height: 200px;
     }
   }
 
