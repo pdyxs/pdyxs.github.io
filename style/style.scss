@@ -46,6 +46,19 @@ div.card-img-top {
   }
 }
 
+.series-wrapper {
+  width: 100%;
+
+  iframe {
+    width: 100%;
+    min-height: 600px;
+    @media (max-width: 1327px) {
+      display: none;
+    }
+  }
+
+}
+
 .video-wrapper {
   width: 100%;
 

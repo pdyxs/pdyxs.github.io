@@ -1,12 +1,20 @@
+{% assign containsVimeo = false %}
 {% for image in page.images %}
   {% if image contains "https://www.youtube.com" or image contains "https://www.facebook.com" or image contains "https://player.vimeo.com/video" %}
+    {% if image contains "https://player.vimeo.com/video" %}
+      {% assign containsVimeo = true %}
+    {% endif %}
     {% include gallery-video.html url=image %}
+  {% elsif image contains "https://medium.com/series/" %}
+    {% include gallery-series.html url=image %}
   {% else %}
     {% assign path = "gallery/" | append: image | append: ".jpg" %}
     {% include gallery-image.html path=path name=image %}
   {% endif %}
 {% endfor %}
+{% if containsVimeo == true %}
 <script src="https://player.vimeo.com/api/player.js"></script>
+{% endif %}
 
 {% if page.feature %}
 {% unless page.images contains page.feature %}
