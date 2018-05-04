@@ -8,6 +8,7 @@ image: Flatland1.jpg
 feature: Flatland1
 tags:
   - game
+  - released
 priority: 20120200
 quotes:
   - quote: "it’s atmospheric, smart and does a great job of the unusual melange of simple line-art, breathless Pac Man-esque outrunning of foes and a doomy, nuanced narrative."

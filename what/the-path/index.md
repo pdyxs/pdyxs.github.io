@@ -7,6 +7,7 @@ image: the_path_2500x1250.jpg
 tags:
   - science
   - visualisation
+  - released
 priority: 20160200
 definitions:
   - head: Topic

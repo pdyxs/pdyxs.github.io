@@ -1,6 +1,11 @@
 ---
 layout: list
 title: What
+lists:
+  - name: Projects in Development
+    tag: development
+  - name: Released Projects
+    tag: released
 ---
 I make works that about science, complexity and interactivity (and often all three).
 

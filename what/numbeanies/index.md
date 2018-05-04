@@ -6,6 +6,7 @@ image: cover.jpg
 tags:
   - education
   - game
+  - released
   - ar
 priority: 20180400
 actions:

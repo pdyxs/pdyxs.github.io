@@ -6,8 +6,12 @@
 
   <div class="lead">{{content}}</div>
 
-  <h3>Projects</h3>
-  {% include list.html %}
+  {% for list in page.lists %}
+  <div class="mt-4">
+    <h3>{{ list.name }}</h3>
+    {% include list.html tag=list.tag %}
+  </div>
+  {% endfor %}
 
 </div>
 

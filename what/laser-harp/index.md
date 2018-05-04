@@ -10,6 +10,7 @@ image: crowd.jpg
 feature: crowd
 tags:
   - science
+  - released
   - installation
 priority: 20150600
 definitions:

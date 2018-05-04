@@ -4,6 +4,7 @@ title: Art Heist
 description: An interactive theatre experience where teams of four develop and execute a plan to steal a painting from an art gallery
 tags:
   - other
+  - released
   - installation
 priority: 20170601
 images:

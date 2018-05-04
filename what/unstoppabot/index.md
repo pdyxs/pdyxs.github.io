@@ -8,6 +8,7 @@ feature: Unstoppabot1
 image: Unstoppabot1.jpg
 tags:
   - game
+  - released
 priority: 20130300
 definitions:
   - head: Medium

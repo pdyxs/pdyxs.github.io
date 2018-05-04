@@ -7,6 +7,7 @@ image: the_neighbourhood_2500x1250.jpg
 tags:
   - science
   - visualisation
+  - released
 priority: 20160201
 definitions:
   - head: Topic
