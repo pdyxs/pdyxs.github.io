@@ -24,6 +24,8 @@ sitemap: false
 <table>
 {% for place in pages %}
 {% if place.url contains 'what' and place.url != '/what/' %}
+{% if place.tags contains 'nocv' %}
+{% else %}
   <tr class="project">
     <td>
       <div class="img-wrap">
@@ -38,6 +40,7 @@ sitemap: false
       {% include quotes.html quotes=place.quotes context="cv" %}
     </td>
   </tr>
+{% endif %}
 {% endif %}
 {% endfor %}
 </table>
