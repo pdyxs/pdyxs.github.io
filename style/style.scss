@@ -131,3 +131,70 @@ $series-max-width: 1326px;
     margin-left: 1em !important;
   }
 }
+
+.story {
+  position: absolute;
+  bottom: 1em;
+  top: 3.5rem;
+  left: 0;
+  right: 0;
+
+  .card {
+    height: 75vh;
+    overflow: hidden;
+
+    .card-body {
+      overflow: scroll;
+    }
+  }
+
+  .carousel-control-next {
+    right: -9%;
+    .carousel-control-next-icon {
+      background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 8 8'%3E%3Cpath d='M1.5 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E");
+    }
+  }
+
+  .carousel-control-prev {
+    left: -8%;
+    .carousel-control-prev-icon {
+      background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 8 8'%3E%3Cpath d='M4 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E");
+    }
+  }
+
+  .carousel-indicators {
+    bottom: -45px;
+    li {
+      width: 18px;
+      height: 18px;
+
+      &.email {
+        text-indent: 0;
+        text-align: center;
+        font-size: 18px;
+        background-color: white;
+        border-radius: 0;
+        top: -4px;
+        color: rgba(0,0,0,0.5);
+        &.active {
+          color: #000;
+        }
+      }
+
+      &.page {
+        background-color: rgba(0,0,0,0.5);
+        border-radius: 9px;
+
+        &.active {
+          background-color: #000;
+        }
+      }
+    }
+  }
+
+  .link {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}

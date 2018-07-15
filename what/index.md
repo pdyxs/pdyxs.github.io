@@ -8,5 +8,3 @@ lists:
     tag: released
 ---
 I make works about science, complexity and interactivity.
-
-I'm currently looking for more ways to collaborate with scientists, artists and science communicators. If that's you, please [get in touch](/where)!
