@@ -25,7 +25,7 @@
         <div class="carousel-inner">
           <div class="carousel-item active">
             <div class="card">
-              <img class="card-img-top" src="images/{{page.image}}" alt="Card image cap" />
+              <img class="card-img-top" src="images/{{page.image}}" />
               <div class="card-body mh-30">
                 {{content}}
               </div>
@@ -36,7 +36,7 @@
             {% if place.draft != true and place.url contains page.url and place.url != page.url %}
               <div class="carousel-item">
                 <div class="card">
-                  <img class="card-img-top" src="images/{{place.image}}" alt="Card image cap" />
+                  <img class="card-img-top" src="images/{{place.image}}" />
                   <div class="card-body mh-30">
                     {{place.content}}
                   </div>
