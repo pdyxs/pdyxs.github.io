@@ -74,4 +74,16 @@
   </div>
 </div>
 
+<script>
+function r(f){/in/.test(document.readyState)?setTimeout('r('+f+')',9):f()}
+// use like
+r(function(){
+  var number = parseInt(window.location.hash.substring(1));
+  console.log(number);
+  if (number !== NaN && number > 0) {
+    $("#storyCarousel").carousel(number);
+  }
+});
+</script>
+
 {% include footer.html %}
