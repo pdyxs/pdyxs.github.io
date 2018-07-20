@@ -25,7 +25,7 @@
         <div class="carousel-inner">
           <div class="carousel-item active">
             <div class="card">
-              <img class="card-img-top" src="images/{{page.image}}" />
+              <img class="card-img-top" src="{{page.url}}/image.png" />
               <div class="card-body mh-30">
                 {{content}}
               </div>
@@ -36,8 +36,9 @@
             {% if place.draft != true and place.url contains page.url and place.url != page.url %}
               <div class="carousel-item">
                 <div class="card">
-                  <img class="card-img-top" src="images/{{place.image}}" />
+                  <img class="card-img-top" src="{{place.url}}/image.png" />
                   <div class="card-body mh-30">
+                    <a target="{{i}}"><h2 class="d-none">{{place.title}}</h2></a>
                     {{place.content}}
                   </div>
                 </div>
@@ -79,10 +80,19 @@ function r(f){/in/.test(document.readyState)?setTimeout('r('+f+')',9):f()}
 // use like
 r(function(){
   var number = parseInt(window.location.hash.substring(1));
-  console.log(number);
   if (number !== NaN && number > 0) {
     $("#storyCarousel").carousel(number);
+  } else if (window.location.hash === '#end') {
+    $("#storyCarousel").carousel({{i}});
   }
+
+  $('#storyCarousel').on('slide.bs.carousel', function (e) {
+    if (e.to === {{i}}) {
+      window.location.hash = '#end';
+    } else {
+      window.location.hash = '#' + e.to;
+    }
+  });
 });
 </script>
 

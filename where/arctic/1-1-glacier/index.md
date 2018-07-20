@@ -1,7 +1,6 @@
 ---
 layout: story
 title: Glaciers
-image: 1-1-glacier-small.png
 ---
 Glaciers are literally rivers of ice, forming over decades and flowing over centuries, but in many ways they are just rivers. This is the place where two glaciers meet: and just like when two rivers meet, there’s turbulence. You can see the same wave-like interference pattern that you get in water as the two bodies of ice smash into each other. My guess is that the only reason that glaciers form different (and generally more jagged) shapes to watery rivers is that gravity runs much faster in relation to the flow speed of a glacier.
 
