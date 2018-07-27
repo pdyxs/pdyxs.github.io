@@ -1,0 +1,30 @@
+{% include header.html %}
+{% include nav.html %}
+{% assign pages = site.pages | sort: 'priority' | reverse %}
+
+<div class="container-fluid mt-2" id="{{page.w}}">
+  <!-- {% for place in pages %}
+    {% if place.w == page.w and place.url != page.url %}
+      <button class="btn btn-primary" type="button" data-toggle="collapse"
+        data-target="#{{place.title|slugify}}" aria-expanded="true" aria-controls="{{place.title|slugify}}">
+        {{page.title}} {{place.title}}
+      </button>
+    {% endif %}
+  {% endfor %} -->
+
+  {% for place in pages %}
+    {% if place.w == page.w and place.url != page.url %}
+      <div id="{{place.title|slugify}}" class="collapse show" data-parent="#{{page.w}}">
+        {% include title.html title=page.title subtitle=place.title %}
+        {{ place.content | markdownify }}
+        {% if place.ilayout %}
+          {% include {{ place.ilayout }} place=place %}
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  {{content}}
+</div>
+
+{% include footer.html %}

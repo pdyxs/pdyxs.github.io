@@ -1,7 +1,6 @@
 ---
 layout: story
 title: Flowers
-draft: true
 ---
 While we were visiting the surge glacier, we saw some of the first flowers starting to bloom as the landscape thawed in the never-ending sunlight. We saw more and more of them throughout the trip.
 
