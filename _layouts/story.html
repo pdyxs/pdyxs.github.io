@@ -1,6 +1,6 @@
 {% include header.html %}
 {% include nav.html %}
-{% assign pages = site.pages %}
+{% assign pages = site.pages | sort: 'url' %}
 
 <div class="story">
   <div class="container pt-2">
