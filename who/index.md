@@ -1,10 +1,5 @@
 ---
-layout: basic
+layout: w
+w: who
 title: Who
 ---
-{% include aboutme.md %}
-
-I was born and raised in Australia, but recently realised that the rest of the world was a place I need to discover. I've since lived as a digital nomad, which has been just about as ridiculous as you'd expect.
-
-#### Who I've worked for
-{% include workhistory.md %}
