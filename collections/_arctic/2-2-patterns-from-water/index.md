@@ -1,5 +1,4 @@
 ---
-layout: story
 title: Trees in the Ground
 draft: true
 dates:

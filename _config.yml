@@ -17,3 +17,14 @@ social:
     - http://linkedin.com/in/pdyxs
     - https://github.com/pdyxs
 google-site-verification: google62ea18a3dcb04445.html
+collections_dir: collections
+collections:
+  arctic:
+    output: true
+defaults:
+  - scope:
+      path: ""
+      type: arctic
+    values:
+      category: arctic
+      layout: story-item

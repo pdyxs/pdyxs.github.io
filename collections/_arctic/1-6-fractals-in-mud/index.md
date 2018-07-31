@@ -1,5 +1,4 @@
 ---
-layout: story
 title: Fractals in the Mud
 date: 2018-06-13
 draft: true

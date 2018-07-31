@@ -1,5 +1,4 @@
 ---
-layout: story
 title: Glaciers
 date: 2018-06-16
 ---

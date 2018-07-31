@@ -1,5 +1,4 @@
 ---
-layout: story
 title: The sound of glaciers
 date: 2018-06-16
 draft: true

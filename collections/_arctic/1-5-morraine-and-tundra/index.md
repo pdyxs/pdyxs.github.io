@@ -1,5 +1,4 @@
 ---
-layout: story
 title: Moraine and Tundra
 date: 2018-06-13
 ---

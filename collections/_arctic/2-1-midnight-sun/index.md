@@ -1,5 +1,4 @@
 ---
-layout: story
 title: The Midnight Sun
 draft: true
 date: 2018-06-18

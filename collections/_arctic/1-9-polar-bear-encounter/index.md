@@ -1,5 +1,4 @@
 ---
-layout: story
 title: Polar Bear Encounter
 date: 2018-06-17
 draft: true

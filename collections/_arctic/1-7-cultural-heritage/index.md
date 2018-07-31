@@ -1,5 +1,4 @@
 ---
-layout: story
 title: Cultural Heritage
 draft: true
 date: 2018-06-17

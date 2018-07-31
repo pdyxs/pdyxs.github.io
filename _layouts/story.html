@@ -1,6 +1,8 @@
 {% include header.html %}
 {% include nav.html %}
-{% assign pages = site.pages | sort: 'url' %}
+
+{% assign coll = site.collections | where: "label", page.collection | first %}
+{% assign collection = coll.docs | sort: 'url' %}
 
 <div class="story">
   <div class="container pt-2">
@@ -10,11 +12,10 @@
 
       <div id="storyCarousel" class="col-lg-6 col-md-8 col-10 carousel slide" data-interval="false">
         <ol class="carousel-indicators">
-          <li class="page active" data-target="#storyCarousel" data-slide-to="0"></li>
-          {% assign i = 1 %}
-          {% for place in pages %}
-            {% if place.draft != true and place.url contains page.url and place.url != page.url %}
-              <li class="page" data-target="#storyCarousel" data-slide-to="{{i}}"></li>
+          {% assign i = 0 %}
+          {% for place in collection %}
+            {% if place.draft != true %}
+              <li class="page" id="indicator-{{i}}" data-target="#storyCarousel" data-slide-to="{{i}}"></li>
               {% assign i = i | plus: 1 %}
             {% endif %}
           {% endfor %}
@@ -23,27 +24,14 @@
           </li>
         </ol>
         <div class="carousel-inner">
-          <div class="carousel-item active">
-            <div class="card">
-              <img class="card-img-top" src="{{page.url}}/image.png" />
-              <div class="card-body mh-30">
-                {{content}}
+          {% assign i = 0 %}
+          {% for place in collection %}
+            {% if place.draft != true %}
+              <div id="item-{{i}}" class="carousel-item">
+                <a target="{{i}}"></a>
+                {{place.output}}
+                {% assign i = i | plus: 1 %}
               </div>
-            </div>
-          </div>
-          {% assign i = 1 %}
-          {% for place in pages %}
-            {% if place.draft != true and place.url contains page.url and place.url != page.url %}
-              <div class="carousel-item">
-                <div class="card">
-                  <img class="card-img-top" src="{{place.url}}/image.png" />
-                  <div class="card-body mh-30">
-                    <a target="{{i}}"><h2 class="d-none">{{place.title}}</h2></a>
-                    {{place.content}}
-                  </div>
-                </div>
-              </div>
-              {% assign i = i | plus: 1 %}
             {% endif %}
           {% endfor %}
           <div class="carousel-item">
@@ -76,10 +64,15 @@ function r(f){/in/.test(document.readyState)?setTimeout('r('+f+')',9):f()}
 r(function(){
   var number = parseInt(window.location.hash.substring(1));
   if (number !== NaN && number > 0) {
-    $("#storyCarousel").carousel(number);
+    // $("#storyCarousel").carousel(number);
   } else if (window.location.hash === '#end') {
-    $("#storyCarousel").carousel({{i}});
+    number = {{i}};
+    // $("#storyCarousel").carousel({{i}});
+  } else {
+    number = 0;
   }
+  $("#item-" + number).addClass("active");
+  $("#indicator-" + number).addClass("active");
 
   $('#storyCarousel').on('slide.bs.carousel', function (e) {
     if (e.to === {{i}}) {

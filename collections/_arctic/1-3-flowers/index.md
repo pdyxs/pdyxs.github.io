@@ -1,5 +1,4 @@
 ---
-layout: story
 title: Flowers
 date: 2018-06-12
 ---

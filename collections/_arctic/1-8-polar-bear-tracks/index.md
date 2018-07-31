@@ -1,5 +1,4 @@
 ---
-layout: story
 title: Polar Bear Tracks
 date: 2018-06-20
 draft: true

@@ -1,5 +1,4 @@
 ---
-layout: story
 title: Melting Rocks
 date: 2018-06-24
 draft: true
