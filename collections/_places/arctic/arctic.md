@@ -1,6 +1,5 @@
 ---
-collection: arctic
-layout: story
+icollection: arctic
 title: The Arctic Circle
 image: image.png
 tags:

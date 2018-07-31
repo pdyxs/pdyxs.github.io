@@ -1,7 +1,10 @@
+{% assign splurl = include.place.url | remove: '/index' | split: '/' %}
+{% assign spath = "/" | append: include.place.collection | append: "/" | append: splurl.last %}
+
 <div class="col-lg-3 col-md-4 mb-3">
 <div class="card">
   <div class="card-img-top"
-    style="background-image: url('{{include.place.url}}/thumb/{{include.place.image}}')">
+    style="background-image: url('{{spath}}/thumb/{{include.place.image}}')">
   </div>
   <div class="card-body">
     <h4 class="card-title"><a href="{{include.place.url}}">{{include.place.title}}</a></h4>

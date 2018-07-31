@@ -2,6 +2,6 @@
 title: I'm making
 w: what
 ilayout: list.html
-tag: development
+icollection: currentprojects
 priority: 50
 ---

@@ -1,3 +1,6 @@
+{% assign splurl = page.url | remove: '/index' | split: '/' %}
+{% assign spath = "/" | append: page.collection | append: "/" | append: splurl.last %}
+
 {% assign containsVimeo = false %}
 {% for image in page.images %}
   {% if image contains "https://www.youtube.com" or image contains "https://www.facebook.com" or image contains "https://player.vimeo.com/video" %}
@@ -8,7 +11,7 @@
   {% elsif image contains "https://medium.com/series/" %}
     {% include gallery-series.html url=image %}
   {% else %}
-    {% assign path = "gallery/" | append: image | append: ".jpg" %}
+    {% assign path = spath | append: "/gallery/" | append: image | append: ".jpg" %}
     {% include gallery-image.html path=path name=image %}
   {% endif %}
 {% endfor %}
@@ -18,15 +21,19 @@
 
 {% if page.feature %}
 {% unless page.images contains page.feature %}
-  {% assign path = "gallery/" | append: page.feature | append: ".jpg" %}
+  {% assign path = spath | append: "/gallery/" | append: page.feature | append: ".jpg" %}
   {% include gallery-image.html path=path name=page.feature %}
 {% endunless %}
 {% endif %}
 
-{% for image in site.static_files %}
+{% assign coll = site.collections | where: "label", page.collection | first %}
+{% assign files = coll.files | sort: 'url' %}
+
+{% for image in files %}
 {% unless page.feature == image.basename or page.images contains image.basename %}
-{% if layout.extensions contains image.extname and image.path contains page.url and image.path contains "gallery" %}
-  {% include gallery-image.html path=image.path name="image.basename" %}
+{% if layout.extensions contains image.extname and image.path contains splurl.last and image.path contains "gallery" %}
+  {% assign ipath = spath | append: "/gallery/" | append: image.basename | append: image.extname %}
+  {% include gallery-image.html path=ipath name="image.basename" %}
 {% endif %}
 {% endunless %}
 {% endfor %}

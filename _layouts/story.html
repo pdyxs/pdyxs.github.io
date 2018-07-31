@@ -1,7 +1,7 @@
 {% include header.html %}
 {% include nav.html %}
 
-{% assign coll = site.collections | where: "label", page.collection | first %}
+{% assign coll = site.collections | where: "label", page.icollection | first %}
 {% assign collection = coll.docs | sort: 'url' %}
 
 <div class="story">

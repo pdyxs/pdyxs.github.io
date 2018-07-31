@@ -21,6 +21,12 @@ collections_dir: collections
 collections:
   arctic:
     output: true
+  pastprojects:
+    output: true
+  currentprojects:
+    output: true
+  places:
+    output: true
 defaults:
   - scope:
       path: ""
@@ -28,3 +34,27 @@ defaults:
     values:
       category: arctic
       layout: story-item
+  - scope:
+      path: ""
+      type: pastprojects
+    values:
+      layout: project
+      permalink: /what/projects/:title
+  - scope:
+      path: ""
+      type: currentprojects
+    values:
+      layout: project
+      permalink: /what/projects/:title
+  - scope:
+      path: ""
+      type: places
+    values:
+      layout: story
+      permalink: /where/:title
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      permalink: /what/blog/:title

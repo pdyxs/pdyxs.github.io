@@ -1,18 +1,10 @@
-{% assign pages = site.pages | sort: 'priority' | reverse %}
+{% assign coll = site.collections | where: "label", include.place.icollection | first %}
+{% if coll.docs.size > 0 %}
+{% assign pages = coll.docs | sort: 'priority' | reverse %}
+
 <div class="row">
 {% for place in pages %}
-  {% if include.place.tag %}
-    {% if place.tags contains include.place.tag %}
-      {% include page-card.html place=place %}
-    {% endif %}
-  {% else if place.url contains page.url and place.url != page.url %}
-    {% if include.tag %}
-      {% if place.tags contains include.tag %}
-        {% include page-card.html place=place %}
-      {% endif %}
-    {% else %}
-      {% include page-card.html place=place %}
-    {% endif %}
-  {% endif %}
+  {% include page-card.html place=place %}
 {% endfor %}
 </div>
+{% endif %}
