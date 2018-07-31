@@ -6,9 +6,9 @@
   <div class="container pt-2">
     <h1 class="text-center">{{page.title}}</h1>
     <div class="row">
-      <div class="col-md-3 col-1"></div>
+      <div class="col-lg-3 col-md-2 col-1"></div>
 
-      <div id="storyCarousel" class="col-md-6 col-10 carousel slide" data-interval="false">
+      <div id="storyCarousel" class="col-lg-6 col-md-8 col-10 carousel slide" data-interval="false">
         <ol class="carousel-indicators">
           <li class="page active" data-target="#storyCarousel" data-slide-to="0"></li>
           {% assign i = 1 %}
@@ -51,12 +51,7 @@
               <div class="card-body mh-30">
                 <h2>To be continued...</h2>
                 To recieve email updates to this story and others, subscribe to my mailing list here.
-                <form class="mt-2" style="border:1px solid #ccc;padding:3px;text-align:center;" action="https://tinyletter.com/pdyxs" method="post" target="popupwindow" onsubmit="window.open('https://tinyletter.com/pdyxs', 'popupwindow', 'scrollbars=yes,width=800,height=600');return true">
-                  <p><label for="tlemail">Enter your email address</label></p>
-                  <p><input type="text" style="width:140px" name="email" id="tlemail" /></p>
-                  <input type="hidden" value="1" name="embed"/><input type="submit" value="Subscribe" />
-                  <p><a href="https://tinyletter.com" target="_blank">powered by TinyLetter</a></p>
-                </form>
+                {% include mailing-list.html %}
               </div>
             </div>
           </div>
