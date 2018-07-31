@@ -2,11 +2,21 @@
 layout: home
 title: home
 ---
-
 <div class="container-fluid mt-5">
   <div class="jumbotron col-md-5 bg-alphablack text-light">
   {% for link in site.data.nav.links %}
-   {% include title.html title=link.text link=link.url %}
+    {% assign coll = site.collections | where: "label", link.w | first %}
+    {% assign questions = coll.docs | sort: 'priority' | reverse %}
+    <div class="carousel slide carousel-fade" data-ride="carousel" data-interval="{{link.interval}}">
+      {% for question in questions %}
+      <div class="carousel-item{% if forloop.first %} active{% endif %}">
+        <h2><a class="text-light" href="/{{link.w}}#{{question.title | slugify}}">
+          {{link.text}}
+          <small class="text-muted">{{question.title}}</small>
+        </a></h2>
+      </div>
+      {% endfor %}
+    </div>
   {% endfor %}
   </div>
 </div>

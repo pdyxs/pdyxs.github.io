@@ -1,7 +1,6 @@
 ---
 title: I've written
-w: what
-ilayout: bloglist.html
+layout: bloglist
 priority: 1
 ---
 I've had many blogs over the years - currently I'm writing at

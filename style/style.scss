@@ -34,6 +34,25 @@ div.card-img-top {
   background-repeat: no-repeat;
 }
 
+.home-questions {
+  height: 2.5em;
+
+  .carousel-questions {
+    .carousel-item {
+      width: 300px;
+      position: absolute;
+      left: .3em;
+      top: .26em;
+      &.active {
+        display: inline-block !important;
+      }
+      &.carousel-item-next {
+        display: inline-block !important;
+      }
+    }
+  }
+}
+
 #carouselFeatured {
   position: fixed;
   top: 0;

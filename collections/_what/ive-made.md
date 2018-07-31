@@ -1,7 +1,6 @@
 ---
 title: I've made
-w: what
-ilayout: list.html
+layout: list
 icollection: pastprojects
 priority: 100
 ---

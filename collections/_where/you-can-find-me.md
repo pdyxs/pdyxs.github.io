@@ -1,6 +1,5 @@
 ---
 title: you can find me
-w: where
 priority: 2
 ---
 The best way to contact me is to [email me at paul@sztajer.org](mailto:paul@sztajer.org).

@@ -8,10 +8,10 @@
     <ul class="navbar-nav ml-auto">
       {% for link in site.data.nav.links %}
       <li class="nav-item
-      {% if page.url contains link.url %}
+      {% if page.url contains link.w %}
         active
       {% endif %}">
-        <a class="nav-link" href="{{link.url}}">{{link.text | downcase}}</a>
+        <a class="nav-link" href="/{{link.w}}">{{link.text | downcase}}</a>
       </li>
       {% endfor %}
     </ul>

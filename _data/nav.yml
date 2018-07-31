@@ -1,19 +1,18 @@
 ---
 links:
   - text: Who
-    url: /who/
+    w: who
+    interval: 6200
   - text: What
-    url: /what/
+    w: what
+    interval: 5500
   - text: Where
-    url: /where/
+    w: where
+    interval: 4300
   - text: When
-    url: /when/
+    w: when
+    interval: 5900
   - text: Why
-    url: /why/
-subtitles:
-  Who: I am
-  What: I make
-  Where: you can find me
-  When: I've done things
-  Why: I do these things
+    w: why
+    interval: 7300
 ---

@@ -1,6 +1,5 @@
 ---
 title: I am
-w: who
 priority: 100
 ---
 {% include aboutme.md %}

@@ -1,62 +1,42 @@
 {% include header.html %}
 {% include nav.html %}
-{% assign pages = site.pages | sort: 'priority' | reverse %}
+
+{% assign coll = site.collections | where: "label", page.w | first %}
+{% assign pages = coll.docs | sort: 'priority' | reverse %}
 
 <div class="container mt-2" id="{{page.w}}">
   <div class="row text-center questions">
     <div class="mx-auto d-none d-md-block">
-    {% assign first = true %}
     {% for place in pages %}
-      {% if place.w == page.w and place.url != page.url %}
-        <div class="btn-group mt-1" role="group">
-          <button type="button" disabled class="btn btn-outline-secondary">
-            {{page.title}}
-          </button>
-          <button type="button"
-            id="{{place.title|slugify}}-button"
-            {% if first %}
-              disabled
-              class="btn btn-primary"
-              {% assign first = false %}
-            {% else %}
-              class="btn btn-primary collapsed"
-            {% endif %}
-            type="button" data-toggle="collapse"
-            data-target="#{{place.title|slugify}}"
-            aria-expanded="true"
-            aria-controls="{{place.title|slugify}}">
-            {{place.title}}
-          </button>
-        </div>
-      {% endif %}
+      <div class="btn-group mt-1" role="group">
+        <button type="button" disabled class="btn btn-outline-secondary">
+          {{page.title}}
+        </button>
+        <button type="button"
+          id="{{place.title|slugify}}-button"
+          class="btn btn-primary collapsed"
+          type="button" data-toggle="collapse"
+          data-target="#{{place.title|slugify}}"
+          aria-expanded="true"
+          aria-controls="{{place.title|slugify}}">
+          {{place.title}}
+        </button>
+      </div>
     {% endfor %}
     </div>
 
     <div class="mx-auto d-md-none">
       <div class="dropdown">
-            <div class="btn-group mt-1" role="group">
-              <button type="button" disabled class="btn btn-outline-secondary">
-                {{page.title}}
-              </button>
-        {% assign first = true %}
-        {% for place in pages %}
-          {% if place.w == page.w and place.url != page.url %}
-          {% if first %} {% assign first = false %}
-              <button class="btn btn-primary dropdown-toggle selected-question"
-                  type="button" id="{{page.w}}-dropdown" data-toggle="dropdown"
-                  aria-haspopup="true" aria-expanded="false">
-                {{place.title}}
-              </button>
+          <div class="btn-group mt-1" role="group">
+            <button type="button" disabled class="btn btn-outline-secondary">
+              {{page.title}}
+            </button>
+            <button class="btn btn-primary dropdown-toggle selected-question"
+                type="button" id="{{page.w}}-dropdown" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+            </button>
             <div class="dropdown-menu" aria-labelledby="{{page.w}}-dropdown">
-              <button class="dropdown-item btn btn-link"
-                disabled
-                id="{{place.title|slugify}}-dropdown"
-                data-toggle="collapse"
-                data-target="#{{place.title|slugify}}"
-                aria-expanded="true"
-                aria-controls="{{place.title|slugify}}"
-                href="#">{{place.title}}</button>
-          {% else %}
+            {% for place in pages %}
               <button class="dropdown-item btn btn-link"
                 id="{{place.title|slugify}}-dropdown"
                 data-toggle="collapse"
@@ -64,39 +44,22 @@
                 aria-expanded="true"
                 aria-controls="{{place.title|slugify}}"
                 href="#">{{place.title}}</button>
-          {% endif %}
-          {% endif %}
-        {% endfor %}
+            {% endfor %}
             </div>
           </div>
       </div>
     </div>
   </div>
 
-  {% assign first = true %}
   {% for place in pages %}
-    {% if place.w == page.w and place.url != page.url %}
       <div id="{{place.title|slugify}}"
-        {% if first %}
-          {% assign first = false %}
-          class="answer collapse show"
-        {% else %}
-          class="answer collapse"
-        {% endif %}
+        class="answer collapse"
         data-parent="#{{page.w}}">
-        {% include title.html title=page.title subtitle=place.title %}
-        {{ place.content | markdownify }}
-        {% if place.ilayout %}
-          {% include {{ place.ilayout }} place=place %}
-        {% endif %}
-        {% if place.mlayout %}
-          {% capture myinclude %}
-            {% include {{ place.mlayout }} place=place %}
-          {% endcapture %}
-          {{ myinclude | markdownify }}
-        {% endif %}
+        <a target="{{place.title|slugify}}">
+          {% include title.html title=page.title subtitle=place.title %}
+        </a>
+        {{ place.output }}
       </div>
-    {% endif %}
   {% endfor %}
 
   {{content}}
@@ -105,7 +68,6 @@
 {% include footer.html %}
 
 <script>
-
 $('#{{page.w}}').on('hide.bs.collapse', function(t) {
   $('#' + t.target.id + '-button').attr('disabled', false);
   $('#' + t.target.id + '-dropdown').attr('disabled', false);
@@ -116,5 +78,20 @@ $('#{{page.w}}').on('show.bs.collapse', function(t) {
   button.attr('disabled', true);
   $('#' + t.target.id + '-dropdown').attr('disabled', true);
   $('#{{page.w}}-dropdown').html(button.html());
+  window.location.hash = "#" + t.target.id;
 });
+
+var target = $('.answer').first().attr('id');
+if (window.location.hash.length > 1 &&
+    $(window.location.hash).length == 1) {
+  target = window.location.hash.substr(1);
+} else {
+  window.location.hash = "#" + target;
+}
+$('#' + target).addClass('show');
+var button = $('#' + target + '-button');
+button.attr('disabled', true);
+button.removeClass('collapsed');
+$('#' + target + '-dropdown').attr('disabled', true);
+$('#{{page.w}}-dropdown').html(button.html());
 </script>

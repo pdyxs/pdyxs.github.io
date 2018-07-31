@@ -7,7 +7,7 @@ description:
 tags:
   - unstoppabot
 canonical_url: http://www.seethroughstudios.com/2013/03/launching-the-bot/
-image: /what/unstoppabot/gallery/Unstoppabot1.jpg
+image: /pastprojects/unstoppabot/gallery/Unstoppabot1.jpg
 source: seethroughstudios
 ---
 Launching a game is tiring. Launching a game where the launch doesn't really work is exhausting, especially when those who actually play the game seem to really like it.
