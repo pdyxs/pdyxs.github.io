@@ -12,27 +12,21 @@
 
       <div id="storyCarousel" class="col-lg-6 col-md-8 col-10 carousel slide" data-interval="false">
         <ol class="carousel-indicators">
-          {% assign i = 0 %}
           {% for place in collection %}
-            {% if place.draft != true %}
-              <li class="page" id="indicator-{{i}}" data-target="#storyCarousel" data-slide-to="{{i}}"></li>
-              {% assign i = i | plus: 1 %}
-            {% endif %}
+            <li class="page" id="indicator-{{forloop.index0}}"
+                data-target="#storyCarousel"
+                data-slide-to="{{forloop.index0}}"></li>
           {% endfor %}
-          <li class="email" data-target="#storyCarousel" data-slide-to="{{i}}">
+          <li class="email" data-target="#storyCarousel" data-slide-to="{{collection.size}}">
             <i class="far fa-envelope-square"></i>
           </li>
         </ol>
         <div class="carousel-inner">
-          {% assign i = 0 %}
           {% for place in collection %}
-            {% if place.draft != true %}
-              <div id="item-{{i}}" class="carousel-item">
-                <a target="{{i}}"></a>
-                {{place.output}}
-                {% assign i = i | plus: 1 %}
-              </div>
-            {% endif %}
+            <div id="item-{{forloop.index0}}" class="carousel-item">
+              <a target="{{forloop.index0}}"></a>
+              {{place.output}}
+            </div>
           {% endfor %}
           <div class="carousel-item">
             <div class="card">
@@ -66,7 +60,7 @@ r(function(){
   if (number !== NaN && number > 0) {
     // $("#storyCarousel").carousel(number);
   } else if (window.location.hash === '#end') {
-    number = {{i}};
+    number = {{collection.size}};
     // $("#storyCarousel").carousel({{i}});
   } else {
     number = 0;
@@ -75,7 +69,7 @@ r(function(){
   $("#indicator-" + number).addClass("active");
 
   $('#storyCarousel').on('slide.bs.carousel', function (e) {
-    if (e.to === {{i}}) {
+    if (e.to === {{collection.size}}) {
       window.location.hash = '#end';
     } else {
       window.location.hash = '#' + e.to;

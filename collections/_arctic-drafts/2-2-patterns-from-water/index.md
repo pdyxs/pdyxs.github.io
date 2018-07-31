@@ -1,6 +1,5 @@
 ---
 title: Trees in the Ground
-draft: true
 dates:
   - 2018-06-22
   - 2018-06-23

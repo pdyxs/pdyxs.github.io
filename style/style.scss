@@ -146,11 +146,7 @@ $series-max-width: 1326px;
 
   .card {
     height: 75vh;
-    overflow: hidden;
-
-    .card-body {
-      overflow: scroll;
-    }
+    overflow: scroll;
   }
 
   .carousel-control-next {
