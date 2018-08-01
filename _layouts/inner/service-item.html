@@ -1,4 +1,23 @@
-<div class="card text-center">
+<div class="card text-center service-item">
   <h3 class="card-header text-white bg-primary">{{page.title}}</h3>
-  {{page.content}}
+  <div class="card-body p-3">
+    {{page.content}}
+  </div>
+  <div class="list-group list-group-flush">
+    <div class="list-group-item bg-secondary text-light lead">With this you can:</div>
+    {% for value in page.value %}
+      <div class="list-group-item">{{value}}</div>
+    {% endfor %}
+    <div class="list-group-item p-1"></div>
+    <div class="list-group-item bg-secondary text-light lead">Examples:</div>
+    {% for example in page.examples %}
+      {% assign project = site.pastprojects | where_exp: 'item', 'item.url contains example' | first %}
+      <div class="list-group-item lead example" style="background-image: url('/pastprojects/{{example}}/thumb/{{project.image}}')">
+        <a class="text-light p-2 rounded bg-alphablack-5" href="{{project.url}}">{{ project.title }}</a>
+      </div>
+    {% endfor %}
+    <a href="/how#you-can-contact-me" class="list-group-item list-group-item-action active">
+      Contact me for more info
+    </a>
+  </div>
 </div>

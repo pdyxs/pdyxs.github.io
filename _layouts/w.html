@@ -5,7 +5,7 @@
 {% assign pages = coll.docs | sort: 'priority' | reverse %}
 
 <div class="container mt-2" id="{{page.w}}">
-  <div class="row text-center questions">
+  <div class="row text-center questions mb-3">
     <div class="mx-auto d-none d-md-block">
     {% for place in pages %}
       <div class="btn-group mt-1" role="group">
