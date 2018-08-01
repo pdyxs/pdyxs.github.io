@@ -19,9 +19,6 @@ social:
 google-site-verification: google62ea18a3dcb04445.html
 collections_dir: collections
 collections:
-  w:
-    output: true
-    permalink: /:title
   arctic:
     output: true
   pastprojects:
@@ -30,6 +27,8 @@ collections:
     output: true
   places:
     output: true
+  services:
+    output: false
   who:
     output: false
   what:
@@ -40,13 +39,15 @@ collections:
     output: false
   why:
     output: false
+  how:
+    output: false
 defaults:
   - scope:
       path: ""
       type: arctic
     values:
       category: arctic
-      layout: story-item
+      layout: inner/story-item
   - scope:
       path: ""
       type: pastprojects
@@ -71,3 +72,8 @@ defaults:
     values:
       layout: post
       permalink: /what/blog/:title
+  - scope:
+      path: ""
+      type: services
+    values:
+      layout: inner/service-item

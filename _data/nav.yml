@@ -15,4 +15,7 @@ links:
   - text: Why
     w: why
     interval: 7300
+  - text: How
+    w: how
+    interval: 6500
 ---

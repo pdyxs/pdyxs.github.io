@@ -1,6 +1,6 @@
 ---
 title: I've been
-layout: list
+layout: inner/list
 icollection: places
 priority: 100
 ---

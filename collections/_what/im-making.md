@@ -1,6 +1,6 @@
 ---
 title: I'm making
-layout: list
+layout: inner/list
 icollection: currentprojects
 priority: 50
 ---

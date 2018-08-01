@@ -1,6 +1,6 @@
 ---
 title: I've written
-layout: bloglist
+layout: inner/bloglist
 priority: 1
 ---
 I've had many blogs over the years - currently I'm writing at

@@ -23,6 +23,49 @@
         </button>
       </div>
     {% endfor %}
+      <form class="form-inline d-inline-block"
+        action="https://getsimpleform.com/messages?form_api_token=74d3ef7c011705a088d446e29a329297"
+        method="post">
+        <input type='hidden' name='redirect_to'
+          value='http://pdyxs.wtf/question-submitted.html' />
+        <div class="input-group" style="top: 0.25rem;" role="group">
+          <div class="input-group-prepend">
+            <span class="input-group-text bg-white text-black-50">
+              {{page.title}}
+            </span>
+          </div>
+          <input type="text" class="d-none" name="w" value="{{page.title}}" />
+          <input id="question-form-content" type="text" name="question" class="form-control" />
+
+          <div class="input-group-append dropdown">
+            <div class="dropdown-menu dropdown-menu-right px-4 py-3 mt-0 border-top-0"
+              aria-labelledby="question-form-dropdown">
+              <div class="form-group mb-2">
+                <label for="question-email-input">Add your email so I can reply to your question</label>
+                <input type="email" name="email" class="form-control mt-1" id="question-email-input" placeholder="email@example.com">
+              </div>
+              <div class="form-check mb-2 d-none" id="question-form-subscribe">
+                <input class="form-check-input" type="checkbox" id="question-subscribe-check">
+                <input class="d-none" type="text" value="false" name="subscribe" id="question-subscribe-text" />
+                <label class="form-check-label" for="question-subscribe-check">
+                  Get updates about my work and website
+                </label>
+              </div>
+              <div class="text-center">
+                <input id="question-form-submit" type="submit"
+                  class="btn btn-primary"
+                  value="Send the Question!" />
+              </div>
+            </div>
+            <button class="btn btn-primary" disabled type="button" id="question-form-dropdown"
+              data-toggle="dropdown"
+              aria-haspopup="true" aria-expanded="false">
+              ?
+            </button>
+          </div>
+        </div>
+      </form>
+
     </div>
 
     <div class="mx-auto d-md-none">
@@ -68,6 +111,48 @@
 {% include footer.html %}
 
 <script>
+var qcontent = $('#question-form-content');
+var qsubmit = $('#question-form-dropdown');
+qcontent.on('input',function(t) {
+  if (qcontent.val().length > 0) {
+    qsubmit.attr('disabled', false);
+  } else {
+    qsubmit.attr('disabled', true);
+  }
+});
+
+var qemail = $('#question-email-input');
+var qsubscribe = $('#question-form-subscribe');
+qemail.on('input',function(t) {
+  if (qemail.val().length > 0) {
+    qsubscribe.removeClass('d-none');
+  } else {
+    qsubscribe.addClass('d-none');
+  }
+});
+
+var subcheck = $('#question-subscribe-check');
+subcheck.change(function() {
+  $('#question-subscribe-text').val(subcheck.is(":checked") ? 'true' : 'false');
+});
+
+$(function() {
+    $('.dropdown').on({
+        "click": function(event) {
+          if ($(event.target).closest('.dropdown-toggle').length) {
+            $(this).data('closable', true);
+          } else {
+            $(this).data('closable', false);
+          }
+        },
+        "hide.bs.dropdown": function(event) {
+          hide = $(this).data('closable');
+          $(this).data('closable', true);
+          return hide;
+        }
+    });
+});
+
 $('#{{page.w}}').on('hide.bs.collapse', function(t) {
   $('#' + t.target.id + '-button').attr('disabled', false);
   $('#' + t.target.id + '-dropdown').attr('disabled', false);

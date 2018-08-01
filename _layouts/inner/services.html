@@ -1,0 +1,11 @@
+{% assign coll = site.collections | where: "label", page.icollection | first %}
+{% assign pages = coll.docs | sort: 'priority' | reverse %}
+
+{{page.content}}
+<div class="row">
+{% for place in pages %}
+  <div class="col-lg-4">
+    {{ place.output }}
+  </div>
+{% endfor %}
+</div>
