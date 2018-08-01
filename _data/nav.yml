@@ -2,20 +2,20 @@
 links:
   - text: Who
     w: who
-    interval: 6200
+    interval: 8200
   - text: What
     w: what
-    interval: 5500
+    interval: 13500
   - text: Where
     w: where
-    interval: 4300
+    interval: 5300
   - text: When
     w: when
-    interval: 5900
+    interval: 9900
   - text: Why
     w: why
-    interval: 7300
-  - text: How
+    interval: 11300
+  - text: hoW
     w: how
-    interval: 6500
+    interval: 26500
 ---

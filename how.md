@@ -1,5 +1,5 @@
 ---
 layout: w
 w: how
-title: How
+title: hoW
 ---
