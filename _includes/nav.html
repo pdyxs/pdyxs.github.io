@@ -7,11 +7,22 @@
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav ml-auto">
       {% for link in site.data.nav.links %}
-      <li class="nav-item
+      {% assign coll = site.collections | where: "label", link.w | first %}
+      {% assign questions = coll.docs | sort: 'priority' | reverse %}
+      <li class="nav-item dropdown btn-group
       {% if page.url contains link.w %}
         active
       {% endif %}">
-        <a class="nav-link" href="/{{link.w}}">{{link.text | downcase}}</a>
+        <a class="nav-link pr-0" href="/{{link.w}}">{{link.text | downcase}}</a>
+        <a class="d-none d-md-inline nav-link dropdown-toggle dropdown-toggle-split"
+            id="navbar-{{link.w}}-dropdown"
+            data-toggle="dropdown" aria-haspopup="true"
+            aria-expanded="false" href="#"></a>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbar-{{link.w}}-dropdown">
+          {% for question in questions %}
+            <a class="dropdown-item" href="/{{link.w}}#{{question.title | slugify}}">{{question.title}}</a>
+          {% endfor %}
+        </div>
       </li>
       {% endfor %}
     </ul>
