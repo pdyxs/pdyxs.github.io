@@ -6,7 +6,39 @@
 
 <div class="story">
   <div class="container pt-2">
-    <h1 class="text-center">{{page.title}}</h1>
+    <h1 class="text-center mb-0 mb-sm-2">{{page.title}}</h1>
+    <div class="row">
+      <div class="col-lg-3 col-md-2 col-1"></div>
+      <div class="col-lg-6 col-md-8 col-10">
+        <table class="table table-sm m-0">
+          <tr>
+            {% for adate in page.dates %}
+              {% assign date = adate | date_to_string | split: ' ' %}
+              {% assign month = date[1] %}
+
+              {% if month != lastmonth %}
+                {% if lastmonth %}
+            <td class="small text-center py-0" colspan="{{i}}">{{lastmonth}} {{year}}</td>
+                {% endif %}
+                {% assign lastmonth = month %}
+                {% assign year = date.last %}
+                {% assign i = 1 %}
+              {% else %}
+                {% assign i = i | plus: 1 %}
+              {% endif %}
+            {% endfor %}
+            <td class="small text-center py-0" colspan="{{i}}">{{lastmonth}} {{year}}</td>
+          </tr>
+          <tr>
+            {% for adate in page.dates %}
+              {% assign date = adate | date_to_string | split: ' ' %}
+              {% assign day = date.first %}
+            <td class="smaller text-center" id="date-{{adate}}">{{day}}</td>
+            {% endfor %}
+          </tr>
+        </table>
+      </div>
+    </div>
     <div class="row">
       <div class="col-lg-3 col-md-2 col-1"></div>
 
@@ -23,12 +55,12 @@
         </ol>
         <div class="carousel-inner">
           {% for place in collection %}
-            <div id="item-{{forloop.index0}}" class="carousel-item">
+            <div id="item-{{forloop.index0}}" date="{{place.photo-date}}" class="text-justify carousel-item">
               <a target="{{forloop.index0}}"></a>
               {{place.output}}
             </div>
           {% endfor %}
-          <div class="carousel-item">
+          <div id="item-{{collection.size}}" class="carousel-item">
             <div class="card">
               <div class="card-body mh-30">
                 <h2>To be continued...</h2>
@@ -61,19 +93,37 @@ r(function(){
     // $("#storyCarousel").carousel(number);
   } else if (window.location.hash === '#end') {
     number = {{collection.size}};
+    $('.carousel-control-next').addClass('d-none');
     // $("#storyCarousel").carousel({{i}});
   } else {
     number = 0;
+    $('.carousel-control-prev').addClass('d-none');
   }
+
   $("#item-" + number).addClass("active");
   $("#indicator-" + number).addClass("active");
+  $('#date-' + $("#item-" + number).attr('date')).addClass('table-dark');
 
   $('#storyCarousel').on('slide.bs.carousel', function (e) {
     if (e.to === {{collection.size}}) {
+      $('.carousel-control-next').addClass('d-none');
       window.location.hash = '#end';
     } else {
       window.location.hash = '#' + e.to;
     }
+
+    if (e.from === {{collection.size}}) {
+      $('.carousel-control-next').removeClass('d-none');
+    }
+    if (e.from === 0) {
+      $('.carousel-control-prev').removeClass('d-none');
+    }
+    if (e.to === 0) {
+      $('.carousel-control-prev').addClass('d-none');
+    }
+
+    $('#date-' + $("#item-" + e.from).attr('date')).removeClass('table-dark');
+    $('#date-' + $("#item-" + e.to).attr('date')).addClass('table-dark');
   });
 });
 </script>

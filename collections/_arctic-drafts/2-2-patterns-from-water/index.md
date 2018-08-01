@@ -1,6 +1,7 @@
 ---
 title: Trees in the Ground
-dates:
+photo-date: 2018-06-22
+photo-dates:
   - 2018-06-22
   - 2018-06-23
 ---

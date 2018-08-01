@@ -1,6 +1,6 @@
 ---
 title: Flowers
-date: 2018-06-12
+photo-date: 2018-06-12
 ---
 While we were visiting the surge glacier, we saw some of the first flowers starting to bloom as the landscape thawed in the never-ending sunlight. We saw more and more of them throughout the trip.
 

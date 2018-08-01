@@ -11,12 +11,27 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
 }
 
+@media (max-width: 768px) {
+  html {
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+}
+
 .btn.btn-primary.collapsed {
   background-color: theme-color("secondary");
 }
 
 body {
   font-family: 'Quicksand', sans-serif;
+}
+
+.table {
+  .smaller {
+    padding: 0.1rem !important;
+    font-size: 60%
+  }
 }
 
 img.org-logo {
@@ -158,6 +173,10 @@ $series-max-width: 1326px;
 
   .card {
     height: 75vh;
+
+    @media (max-width: 768px) {
+      height: 70vh;
+    }
     overflow: scroll;
   }
 
@@ -181,14 +200,25 @@ $series-max-width: 1326px;
       width: 18px;
       height: 18px;
 
+      @media (max-width: 400px) {
+        height: 5px;
+        top: -1.2rem;
+      }
+
       &.email {
         text-indent: 0;
         text-align: center;
         font-size: 18px;
-        background-color: white;
+        background-color: transparent;
         border-radius: 0;
         top: -4px;
         color: rgba(0,0,0,0.5);
+
+        @media (max-width: 400px) {
+          top: -1.6rem;
+          font-size: 13px;
+        }
+
         &.active {
           color: #000;
         }

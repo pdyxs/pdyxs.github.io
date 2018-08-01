@@ -1,6 +1,6 @@
 ---
 title: Polar Bear Encounter
-date: 2018-06-17
+photo-date: 2018-06-17
 ---
 We were exploring an area near a mostly-destroyed Swedish cabin, about a 15 minute walk from the landing area, where we’d left our life jackets. I’d been doing some writing in a quiet area when I was called back to the centre of the area. There were a few islands near the chunk of land that we were on, and on the furthest one (which was also closest to the life jackets) was a polar bear.
 
