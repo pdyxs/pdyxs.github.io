@@ -166,6 +166,10 @@ $('#{{page.w}}').on('show.bs.collapse', function(t) {
   window.location.hash = "#" + t.target.id;
 });
 
+$(window).on('hashchange', function() {
+  console.log(window.location.hash);
+});
+
 var target = $('.answer').first().attr('id');
 if (window.location.hash.length > 1 &&
     $(window.location.hash).length == 1) {
