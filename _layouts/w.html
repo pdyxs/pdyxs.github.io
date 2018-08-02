@@ -37,7 +37,7 @@
           <input type="text" class="d-none" name="w" value="{{page.title}}" />
           <input id="question-form-content" type="text" name="question" class="form-control" />
 
-          <div class="input-group-append dropdown">
+          <div class="input-group-append dropdown question-dropdown">
             <div class="dropdown-menu dropdown-menu-right px-4 py-3 mt-0 border-top-0"
               aria-labelledby="question-form-dropdown">
               <div class="form-group mb-2">
@@ -137,7 +137,7 @@ subcheck.change(function() {
 });
 
 $(function() {
-    $('.dropdown').on({
+    $('.dropdown.question-dropdown').on({
         "click": function(event) {
           if ($(event.target).closest('.dropdown-toggle').length) {
             $(this).data('closable', true);
