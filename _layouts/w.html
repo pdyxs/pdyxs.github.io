@@ -167,7 +167,7 @@ $('#{{page.w}}').on('show.bs.collapse', function(t) {
 });
 
 $(window).on('hashchange', function() {
-  console.log(window.location.hash);
+  $("#" + window.location.hash.substr(1)).collapse('show');
 });
 
 var target = $('.answer').first().attr('id');
