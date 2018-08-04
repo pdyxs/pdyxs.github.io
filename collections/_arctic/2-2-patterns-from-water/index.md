@@ -4,6 +4,7 @@ photo-date: 2018-06-22
 photo-dates:
   - 2018-06-22
   - 2018-06-23
+date: 2018-08-08 15:00:00 +1000
 ---
 These two images were taken on different days: the top was taken on a beach; and the bottom is a piece of coastline we sailed past the next day.
 
