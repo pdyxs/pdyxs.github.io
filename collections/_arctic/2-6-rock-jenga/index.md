@@ -1,7 +1,7 @@
 ---
 title: Rock Jenga
 photo-date: 2018-06-22
-date: 2018-08-13 15:00:00 +1000
+date: 2018-08-17 04:00:00 +1000
 ---
 The rules of Rock Jenga:
 * You can play Rock Jenga whenever there's lots of rocks around. Ideally, there's a good combination of smaller and bigger rocks to play with.

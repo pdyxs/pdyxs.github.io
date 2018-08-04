@@ -1,7 +1,7 @@
 ---
 title: The Northernmost Rock
 photo-date: 2018-06-19
-date: 2018-08-11 15:00:00 +1000
+date: 2018-08-15 04:00:00 +1000
 ---
 We were incredibly lucky on this trip: the wind and weather allowed us to sail all the way up to Rossøya: the northernmost rock in Svalbard. It's part of Sjuøyane, a small group of at least seven islands helpfully called "Seven islands".
 

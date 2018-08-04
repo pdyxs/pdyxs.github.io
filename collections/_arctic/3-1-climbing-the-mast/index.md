@@ -1,7 +1,7 @@
 ---
 title: Climbing the Mast
 photo-date: 2018-06-21
-date: 2018-08-14 15:00:00 +1000
+date: 2018-08-19 15:00:00 +1000
 ---
 While on board, we were allowed (after signing a waiver or two) to climb the mast of the Antigua. You get a harness and 2 clips that you have to constantly move as you move up and down the rigging.
 

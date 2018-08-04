@@ -1,7 +1,7 @@
 ---
 title: The World's Northernmost ATM
 photo-date: 2018-06-25
-date: 2018-08-17 15:00:00 +1000
+date: 2018-08-24 04:00:00 +1000
 ---
 At the end of the trip, we returned to Longyearbyen, home of the World's Northernmost ATM, the World's Northernmost Church, and a bar called Svalbar.
 

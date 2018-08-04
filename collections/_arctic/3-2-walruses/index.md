@@ -1,7 +1,7 @@
 ---
 title: Walruses
 photo-date: 2018-06-23
-date: 2018-08-15 15:00:00 +1000
+date: 2018-08-20 04:00:00 +1000
 ---
 It was an afternoon, and the Antigua was engulfed with fog. The zodiac left with our guides and disappeared into nothingness, and we joked about never seeing them again. The fog cleared a bit to reveal a spit of land, before reclaiming it once more. We were told that the guides had found a landing spot, and that there was ‘wildlife’ nearby. It was important that we stayed quiet.
 
