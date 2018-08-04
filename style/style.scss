@@ -164,6 +164,36 @@ $series-max-width: 1326px;
   }
 }
 
+#map {
+  .ocean {
+    fill: #5050A0;
+  }
+  .countries path {
+    stroke: rgb(50, 50, 50);
+    stroke-linejoin: round;
+    stroke-width:0.1;
+    fill: #66b588;
+    stroke-opacity: 1;
+  }
+  .places {
+    svg {
+      overflow: visible;
+      path {
+        fill: #888888;
+      }
+      &:hover {
+        path {
+          fill: white;
+        }
+      }
+    }
+    .place {
+      fill: black;
+      r: 1;
+    }
+  }
+}
+
 .story {
   position: absolute;
   bottom: 1em;
@@ -205,14 +235,14 @@ $series-max-width: 1326px;
         top: -1.2rem;
       }
 
-      &.email {
+      &.page-icon {
         text-indent: 0;
         text-align: center;
         font-size: 18px;
         background-color: transparent;
         border-radius: 0;
         top: -4px;
-        color: rgba(0,0,0,0.5);
+        color: rgba(0,0,0,0.3);
 
         @media (max-width: 400px) {
           top: -1.6rem;
@@ -225,7 +255,7 @@ $series-max-width: 1326px;
       }
 
       &.page {
-        background-color: rgba(0,0,0,0.5);
+        background-color: rgba(0,0,0,0.3);
         border-radius: 9px;
 
         &.active {

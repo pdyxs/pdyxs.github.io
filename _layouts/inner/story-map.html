@@ -1,0 +1,82 @@
+
+<div class="card">
+  <svg class="w-100 h-100" viewBox="-100 -100 200 200" id="map" />
+</div>
+<script src="/js/d3/d3.v5.min.js"></script>
+<script src="/js/d3/topojson@3"></script>
+<script>
+const mapdata = {% include geojson/{{page.map}}.geo.json %};
+</script>
+<script>
+const places = {% include maps/{{page.collection}}/places.json %};
+</script>
+<script>
+var scale = 100 * {{page.scale}};
+
+var projection =
+  d3.geoOrthographic()
+    .scale(scale)
+    .translate([0,0])
+    .rotate([-{{page.longitude}}, -{{page.latitude}}])
+    .clipAngle(90);
+var path = d3.geoPath().projection(projection).pointRadius(1.5);
+
+var svg = d3.select("#map");
+svg.append("circle")
+  .attr("cx", 0)
+  .attr("cy", 0)
+  .attr("r", scale)
+  .classed("ocean", true);
+
+svg.append("g").attr("class", "countries")
+  .selectAll("path")
+    .data(mapdata.features).enter()
+  .append("path")
+    .attr('id', function(d) { return d.id; })
+    .attr("d", path);
+
+var placeGroup = svg.append("g").attr("class", "places");
+placeGroup
+  .selectAll("g")
+  .data(places.features).enter()
+  .append("g")
+    .attr("id", function(d) { return d.id; })
+    .each(function(d, i) {
+      d3.xml('/svgs/' + d.properties.icon + '.svg')
+        .then(function(fragment) {
+          var svgNode = fragment
+                  .getElementsByTagName("svg")[0];
+          var newViewBox = [
+            svgNode.viewBox.baseVal.width/2,
+            svgNode.viewBox.baseVal.height/2,
+            svgNode.viewBox.baseVal.width,
+            svgNode.viewBox.baseVal.height
+          ];
+          var group = placeGroup.select('#' + d.id);
+          group.node().appendChild(svgNode);
+          var icon = group.select('svg');
+
+          icon
+            .attr("x", function(nd) { return projection(d.geometry.coordinates)[0]; })
+            .attr("y", function(nd) { return projection(d.geometry.coordinates)[1]; })
+            .attr("viewBox", '' + newViewBox.join(' ') )
+            .attr("width", 10)
+            .attr("height", 10)
+            .on('mouseover', function(d) {
+              icon.attr('width', 12).attr('height', 12);
+            })
+            .on('mouseout', function(d) {
+              icon.attr('width', 10).attr('height', 10);
+            })
+            .append("rect")
+              .attr('width', svgNode.viewBox.baseVal.width)
+              .attr('height', svgNode.viewBox.baseVal.height)
+              .attr('fill', 'transparent');
+        });
+    })
+    // .attr("class", function(d) {
+    //   return "place type-" + d.properties.type;
+    // })
+    //
+
+</script>

@@ -43,13 +43,17 @@
       <div class="col-lg-3 col-md-2 col-1"></div>
 
       <div id="storyCarousel" class="col-lg-6 col-md-8 col-10 carousel slide" data-interval="false">
-        <ol class="carousel-indicators">
+        <ol class="carousel-indicators mx-0">
           {% for place in collection %}
-            <li class="page" id="indicator-{{forloop.index0}}"
+            <li class="page{% if place.icon %}-icon{% endif %}" id="indicator-{{forloop.index0}}"
                 data-target="#storyCarousel"
-                data-slide-to="{{forloop.index0}}"></li>
+                data-slide-to="{{forloop.index0}}">
+                {% if place.icon %}
+                  <i class="far fa-{{place.icon}}"></i>
+                {% endif %}
+            </li>
           {% endfor %}
-          <li class="email" data-target="#storyCarousel" data-slide-to="{{collection.size}}">
+          <li class="email page-icon" data-target="#storyCarousel" data-slide-to="{{collection.size}}">
             <i class="far fa-envelope-square"></i>
           </li>
         </ol>

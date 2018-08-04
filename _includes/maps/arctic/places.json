@@ -1,0 +1,148 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "longyearbyen",
+      "type": "Feature",
+      "properties": {
+        "name": "Longyearbyen",
+        "type": "Town",
+        "icon": "building"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 15.6267, 78.2232 ]
+      }
+    },
+    {
+      "id": "yoldiabukta",
+      "type": "Feature",
+      "properties": {
+        "name": "Yoldiabukta",
+        "type": "Anchor",
+        "icon": "anchor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 14.39638889, 78.50083333 ]
+      }
+    },
+    {
+      "id": "wahlenbergbreen",
+      "type": "Feature",
+      "properties": {
+        "name": "Wahlenbergbreen",
+        "type": "Landing",
+        "icon": "walking"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 14.26861111, 78.48555556 ]
+      }
+    },
+    {
+      "id": "flintholmen",
+      "type": "Feature",
+      "properties": {
+        "name": "Flintholmen",
+        "type": "Anchor",
+        "icon": "anchor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 14.57444444, 78.63694444 ]
+      }
+    },
+    {
+      "id": "bohemanflya",
+      "type": "Feature",
+      "properties": {
+        "name": "Bohemanflya",
+        "type": "Anchor",
+        "icon": "anchor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 14.78416667, 78.36861111 ]
+      }
+    },
+    {
+      "id": "havhestbreen",
+      "type": "Feature",
+      "properties": {
+        "name": "Havhestbreen",
+        "type": "Anchor",
+        "icon": "anchor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 11.43555556, 79.61750000 ]
+      }
+    },
+    {
+      "id": "frambukta",
+      "type": "Feature",
+      "properties": {
+        "name": "Frambukta",
+        "type": "Anchor",
+        "icon": "anchor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 11.15000000, 79.71805556 ]
+      }
+    },
+    {
+      "id": "raudfjordbreen",
+      "type": "Feature",
+      "properties": {
+        "name": "Raudfjordbreen",
+        "type": "Anchor",
+        "icon": "anchor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 12.26861111, 79.65111111 ]
+      }
+    },
+    {
+      "id": "mosselbukta",
+      "type": "Feature",
+      "properties": {
+        "name": "Mosselbukta",
+        "type": "Anchor",
+        "icon": "anchor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 15.98583333, 79.88416667 ]
+      }
+    },
+    {
+      "id": "isflakbukta",
+      "type": "Feature",
+      "properties": {
+        "name": "Isflakbukta",
+        "type": "Anchor",
+        "icon": "anchor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 20.92416667, 80.69027778 ]
+      }
+    },
+    {
+      "id": "rossøya",
+      "type": "Feature",
+      "properties": {
+        "name": "Rossøya",
+        "type": "Anchor",
+        "icon": "anchor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 20.34305556, 80.84000000 ]
+      }
+    }
+  ]
+}
