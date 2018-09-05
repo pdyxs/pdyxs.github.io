@@ -1,6 +1,12 @@
 ---
 ---
 #galaxy {
+  width: 60vh;
+  height: 60vh;
+  max-width: 90vw;
+  max-height: 90vw;
+  overflow: visible;
+
   .star {
     stroke: rgba(255,255,255,0.2);
     stroke-width: 0.2;
