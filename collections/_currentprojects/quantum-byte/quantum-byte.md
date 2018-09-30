@@ -32,8 +32,6 @@ definitions:
     text: Quantum Computing
   - head: Platform(s)
     text: Web, iOS, Standalone
-  - head: Release
-    text: Q1 2019
     usein:
       - cv
   - head: Scientific Advisor
