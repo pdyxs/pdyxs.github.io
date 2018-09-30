@@ -4,6 +4,7 @@ title: The Path
 description: "An artwork about life and the paths it ventured down, generated from the Open Tree of Life: a database of 2.3 million species and their genetic origins"
 feature: the_path_2500x1250
 image: the_path_2500x1250.jpg
+portfolio: the_path_2500x1250.jpg
 tags:
   - science
   - visualisation

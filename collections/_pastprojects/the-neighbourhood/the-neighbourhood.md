@@ -4,6 +4,7 @@ title: The Neighbourhood
 description: An artwork about stars and our place amongst them, generated from the 8912 stars visible from Earth with the naked eye
 feature: the_neighbourhood_2500x1250
 image: the_neighbourhood_2500x1250.jpg
+portfolio: the_neighbourhood_2500x1250.jpg
 tags:
   - science
   - visualisation

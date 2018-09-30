@@ -1,0 +1,41 @@
+---
+noindex: true
+layout: basic
+sitemap: false
+title: Artistic Support Material
+projects:
+  - art-heist
+  - the-neighbourhood
+  - the-path
+  - particulars
+---
+{% assign coll = site.collections | where: "label", "pastprojects" | first %}
+<h3 class="text-muted"><small>Australia Council Career Development Grant</small></h3>
+All this and more can be found in my <a href="/what#i-ve-made">portfolio</a>.
+<div class="row mt-2">
+  {% for projectslug in page.projects %}
+  {% for project in coll.docs %}
+  {% if project.slug == projectslug %}
+  <div class="col-md-12 mb-2">
+    <div class="card">
+      {% if project.portfolio contains "https://www.youtube.com" or project.portfolio contains "https://www.facebook.com" or project.portfolio contains "https://player.vimeo.com/video" %}
+        {% if project.portfolio contains "https://player.vimeo.com/video" %}
+          {% assign containsVimeo = true %}
+        {% endif %}
+        {% include portfolio-video.html url=project.portfolio %}
+      {% else %}
+        {% assign path = '/pastprojects/' | append: project.slug | append: "/" | append: project.portfolio %}
+        {% include portfolio-image.html path=path name=image %}
+      {% endif %}
+      <div class="card-body">
+        <h4 class="card-title"><a href="{{project.url}}">
+          {{project.title}}
+        </a></h4>
+        <p class="card-text">{{project.content}}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+  {% endfor %}
+</div>

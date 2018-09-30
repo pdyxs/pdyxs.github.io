@@ -2,6 +2,7 @@
 layout: printable
 title: CV
 sitemap: false
+noindex: true
 ---
 <h1>Paul Sztajer</h1>
 <p style="float: right">

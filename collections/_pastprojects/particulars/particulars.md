@@ -51,6 +51,7 @@ images:
   - 5-1b
   - 5-5b
   - comic-e
+portfolio: https://www.youtube.com/embed/S7Oo97kO3rc
 definitions:
   - head: Medium
     text: Video Game
