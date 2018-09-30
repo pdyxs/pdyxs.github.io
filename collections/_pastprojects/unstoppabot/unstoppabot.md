@@ -9,6 +9,7 @@ image: Unstoppabot1.jpg
 tags:
   - game
   - released
+  - noshortcv
 priority: 20130300
 definitions:
   - head: Medium

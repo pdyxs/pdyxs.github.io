@@ -24,7 +24,7 @@ sitemap: false
 {% assign pages = coll.docs | sort: 'priority' | reverse %}
 <table>
 {% for place in pages %}
-{% if place.tags contains 'nocv' %}
+{% if place.tags contains 'nocv' or place.tags contains 'noshortcv' %}
 {% else %}
   <tr class="project">
     <td>

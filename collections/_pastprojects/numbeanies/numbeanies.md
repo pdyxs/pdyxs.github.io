@@ -8,6 +8,7 @@ tags:
   - game
   - released
   - ar
+  - noshortcv
 priority: 20180400
 actions:
   - text: Get on the iOS App Store
