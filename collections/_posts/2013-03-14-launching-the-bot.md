@@ -6,7 +6,6 @@ categories: why
 description:
 tags:
   - unstoppabot
-canonical_url: http://www.seethroughstudios.com/2013/03/launching-the-bot/
 image: /pastprojects/unstoppabot/gallery/Unstoppabot1.jpg
 source: seethroughstudios
 ---

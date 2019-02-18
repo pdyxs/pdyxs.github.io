@@ -6,7 +6,6 @@ categories: why
 description:
 tags:
   - particulars
-canonical_url: http://www.seethroughstudios.com/2014/05/inspiration-and-emulation-the-drive-to-create/
 image: https://i2.wp.com/www.seethroughstudios.com/wp-content/uploads/2014/05/inspiration-and-emulation-the-drive-to-create-jw.jpg?w=600
 source: seethroughstudios
 ---

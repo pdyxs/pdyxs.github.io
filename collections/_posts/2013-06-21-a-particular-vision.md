@@ -6,7 +6,6 @@ categories: why
 description:
 tags:
   - particulars
-canonical_url: http://www.seethroughstudios.com/2013/06/a-particular-vision-what-i-want-particulars-and-all-our-games-to-do/
 image: https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/06/stairs.png?resize=220%2C300
 source: seethroughstudios
 ---

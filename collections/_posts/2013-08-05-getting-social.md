@@ -4,7 +4,6 @@ title: "Getting Social, Part 1: Fear of the Internet"
 date: 2013-08-05 17:00:00 +1000
 categories: why
 description:
-canonical_url: http://www.seethroughstudios.com/2013/08/getting-social-part-1-fear-of-the-internet/
 image: https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/08/Afraid_of_Twitter.jpeg?w=360
 source: seethroughstudios
 ---

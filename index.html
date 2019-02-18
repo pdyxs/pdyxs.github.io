@@ -3,7 +3,7 @@ layout: home
 title: home
 ---
 <div class="container-fluid mt-5">
-  <div class="jumbotron col-md-5 bg-alphablack text-light">
+  <div class="jumbotron col-lg-5 col-md-7 bg-alphablack text-light d-inline-block">
   {% for link in site.data.nav.links %}
     {% assign coll = site.collections | where: "label", link.w | first %}
     {% assign questions = coll.docs | sort: 'priority' | reverse %}
@@ -18,5 +18,17 @@ title: home
       {% endfor %}
     </div>
   {% endfor %}
+  </div>
+  <div class="jumbotron p-3 col-md-3 float-right bg-alphablack text-light d-inline-block">
+    <p class="lead">Latest Blog Post:</p>
+    {% assign post = site.posts.first %}
+    <p class="text-muted">
+      {% if post.canonical_url %}
+        <a href="{{ post.canonical_url }}" target="_blank">{{ post.title }}</a>
+        <a hidden href="{{ post.url }}">{{ post.title }}</a>
+      {% else %}
+        <a href="{{ post.url }}">{{ post.title }}</a>
+      {% endif %}
+    </p>
   </div>
 </div>

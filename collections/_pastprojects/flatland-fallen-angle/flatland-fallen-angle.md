@@ -47,4 +47,4 @@ actions:
   - text: Download for Free
     url: http://www.seethroughstudios.com/games/#flatland
 ---
-Based on a 19th century novella, Flatland: Fallen Angle is a noir tale of revenge, political uprising, and breaking your enemies into tiny pieces! Set in a world of only two dimensions, the player takes on the role of a once-powerful polygon – now reduced to a lowly triangle – who will do whatever it takes to reclaim his stolen sides.
+Based on a 19th century novella, *Flatland: Fallen Angle* is a noir tale of revenge, political uprising, and breaking your enemies into tiny pieces! Set in a world of only two dimensions, the player takes on the role of a once-powerful polygon – now reduced to a lowly triangle – who will do whatever it takes to reclaim his stolen sides.
