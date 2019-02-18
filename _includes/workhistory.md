@@ -1,3 +1,14 @@
+##### Equal Reality
+{% include definitions.html list=site.data.workhistory.equalreality %}
+Equal Reality is a social enterprise which creates diversity and inclusion training in virtual reality, allowing its users to live the experiences of minorities and experience bias firsthand. I've primarily worked at Equal Reality as a developer, upgrading their design tools to allow them to release them to external creators.
+
+##### Dot
+{% include definitions.html list=site.data.workhistory.dot %}
+Dot is a startup, working on things that haven't been released yet. I prototyped a location-based game to help launch their platform.
+
+##### Plan A
+{% include definitions.html list=site.data.workhistory.plana %}
+Plan A is a social enterprise based in Berlin, which runs a data-driven crowdfunding platform for climate change. I did some early design and prototyping work for Plan A's [platform](https://plana.earth), and helped them to determine the technology requirements of the platform.
 
 ##### 3P Learning
 {% include definitions.html list=site.data.workhistory.ppp %}
