@@ -95,14 +95,14 @@
   </div>
 
   {% for place in pages %}
-      <div id="{{place.title|slugify}}"
-        class="answer collapse"
-        data-parent="#{{page.w}}">
-        <a target="{{place.title|slugify}}">
-          {% include title.html title=page.title subtitle=place.title %}
-        </a>
-        {{ place.output }}
-      </div>
+    <div id="{{place.title|slugify}}"
+      class="answer collapse"
+      data-parent="#{{page.w}}">
+      <a target="{{place.title|slugify}}">
+        {% include title.html title=page.title subtitle=place.title %}
+      </a>
+      {{ place.output }}
+    </div>
   {% endfor %}
 
   {{content}}
