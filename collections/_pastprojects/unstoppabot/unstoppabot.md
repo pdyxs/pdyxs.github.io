@@ -31,4 +31,4 @@ definitions:
     usein:
       - cv
 ---
-Based on a 19th century novella, Flatland: Fallen Angle is a noir tale of revenge, political uprising, and breaking your enemies into tiny pieces! Set in a world of only two dimensions, the player takes on the role of a once-powerful polygon – now reduced to a lowly triangle – who will do whatever it takes to reclaim his stolen sides.
+Unstoppabot is a hybrid of an infinite runner and a puzzle game, revolving around a robot that cannot stop, but which needs help to get past various traps and terrain. The game was released for iPhone and iPad.
