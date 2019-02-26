@@ -27,6 +27,12 @@ body {
   font-family: 'Quicksand', sans-serif;
 }
 
+.answer .answer-target {
+  display: block;
+  margin-top: -150px;
+  padding-top: 150px;
+}
+
 .table {
   .smaller {
     padding: 0.1rem !important;
