@@ -11,7 +11,7 @@ noindex: true
 </p>
 <p>All this and more can be found at <a href="http://pdyxs.wtf">pdyxs.wtf</a></p>
 
-{% include title.html title="Who" %}
+{% include title.html title="Who" subtitle="I am" %}
 {% include aboutme.md %}
 
 {% include title.html title="What" subtitle="I can do" %}
