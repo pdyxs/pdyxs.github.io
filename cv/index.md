@@ -18,7 +18,7 @@ noindex: true
 {% include definitions.html list=site.data.skills.all %}
 
 {% include title.html title="Where" subtitle="I've worked" %}
-{% include workhistory.md %}
+{% include workhistory.html %}
 
 {% include title.html title="What" subtitle="I've made" %}
 {% assign coll = site.collections | where: "label", "pastprojects" | first %}
@@ -28,13 +28,13 @@ noindex: true
 {% if place.tags contains 'nocv' %}
 {% else %}
   <tr class="project">
-    <td>
+    <td class="pt-3">
       <div class="img-wrap">
       <div class="project-img"
-           style="background-image:url('/pastprojects/{{place.slug}}/{{place.image}}')">
+           style="background-image:url('/pastprojects/{{place.slug}}/thumb/{{place.image}}')">
       </div></div>
     </td>
-    <td class="content">
+    <td class="content pt-2">
       <h3>{{place.title}}</h3>
       <p>{{place.description}}</p>
       {% include definitions.html list=place.definitions context="cv" %}

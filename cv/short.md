@@ -18,7 +18,7 @@ noindex: true
 {% include definitions.html list=site.data.skills.all %}
 
 {% include title.html title="Where" subtitle="I've worked" %}
-{% include workhistory.md %}
+{% include workhistory.html %}
 
 {% include title.html title="What" subtitle="I've made" %}
 {% assign coll = site.collections | where: "label", "pastprojects" | first %}

@@ -127,6 +127,10 @@ h2 {
   }
 }
 
+.card {
+  page-break-inside: avoid;
+}
+
 .project {
   page-break-inside: avoid;
   margin-bottom: 1cm;
