@@ -1,7 +1,7 @@
 ---
 all:
   - head: Games and Education
-    text: Systems design, level design, pedagogy, board game design, gamification
+    text: Systems design, level design, instructional design, pedagogy, board game design, gamification
     usein:
       - cv
   - head: Product Development
@@ -9,7 +9,7 @@ all:
     usein:
       - cv
   - head: Programming
-    text: Primarily C# (Unity) and Javascipt (React/Angular). Have worked in Java, C, C++, python, php and more
+    text: Primarily C# (Unity) and Javascipt (React/D3). Have worked in Java, C, C++, python, php and more
     usein:
       - cv
 ---
