@@ -1,7 +1,7 @@
 {% include header.html %}
 {% include nav_blank.html %}
 
-{% assign projects = site.pastprojects | sort: 'priority' | reverse %}
+{% assign projects = site.currentprojects | concat: site.pastprojects | sort: 'priority' | reverse %}
 
 <div id="carouselFeatured" class="carousel w-100 h-100 slide" data-ride="carousel">
   <ol class="carousel-indicators">
@@ -26,7 +26,7 @@
           {% if hasFirst == false %}active
             {% assign hasFirst = true %}
           {% endif %}"
-          style="background-image: url('/pastprojects/{{page.slug}}/{{page.feature}}.jpg')">
+          style="background-image: url('/{{page.collection}}/{{page.slug}}/{{page.feature}}.jpg')">
           <div class="rounded bg-alphablack carousel-caption d-none d-md-block">
             <h3><a class="text-light" href="{{page.url}}">{{page.title}}</a></h3>
             <p>{{page.description}}</p>

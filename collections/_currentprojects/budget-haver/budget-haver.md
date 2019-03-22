@@ -10,7 +10,7 @@ tags:
 images:
   - icon
 image: icon.jpg
-feature: icon.jpg
+feature: icon
 definitions:
   - head: Medium
     text: Productivity App
