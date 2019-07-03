@@ -22,6 +22,8 @@ collections_dir: collections
 collections:
   arctic:
     output: true
+  galapagos:
+    output: true
   pastprojects:
     output: true
   currentprojects:
@@ -50,6 +52,12 @@ defaults:
       type: arctic
     values:
       category: arctic
+      layout: inner/story-item
+  - scope:
+      path: ""
+      type: galapagos
+    values:
+      category: galapagos
       layout: inner/story-item
   - scope:
       path: ""
