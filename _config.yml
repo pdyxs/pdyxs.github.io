@@ -42,6 +42,8 @@ collections:
     output: false
   how:
     output: false
+  workhistory:
+    output: true
 defaults:
   - scope:
       path: ""

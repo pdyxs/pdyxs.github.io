@@ -1,59 +1,11 @@
-<div class="card my-2`">
-  <div class="card-body">
-    <h5>Equal Reality</h5>
-    {% include definitions.html list=site.data.workhistory.equalreality %}
-    Equal Reality is a social enterprise which creates diversity and
-    inclusion training in virtual reality, allowing its users to live the
-    experiences of minorities and experience bias firsthand. I've
-    primarily worked at Equal Reality as a developer, upgrading their
-    design tools to allow them to release them to external creators.
-  </div>
-</div>
-
+{% assign coll = site.collections | where: "label", "workhistory" | first %}
+{% assign workplaces = coll.docs | sort: 'priority' | reverse %}
+{% for workplace in workplaces %}
 <div class="card my-2">
   <div class="card-body">
-    <h5>Dot</h5>
-    {% include definitions.html list=site.data.workhistory.dot %}
-    Dot is a startup, working on things that haven't been released yet.
-    I prototyped a location-based game to help launch their platform.
+    <h5>{{workplace.title}}</h5>
+    {% include definitions.html list=workplace.definitions %}
+    {{workplace.content}}
   </div>
 </div>
-
-<div class="card my-2">
-  <div class="card-body">
-    <h5>Plan A</h5>
-    {% include definitions.html list=site.data.workhistory.plana %}
-    Plan A is a social enterprise based in Berlin, which runs a data-driven
-    crowdfunding platform for climate change. I did some early design and
-    prototyping work for Plan A's
-    <a href="https://plana.earth" target="_blank">platform</a>,
-    and helped them to determine the technology requirements of the platform.
-  </div>
-</div>
-
-<div class="card my-2">
-  <div class="card-body">
-    <h5>3P Learning</h5>
-    {% include definitions.html list=site.data.workhistory.ppp %}
-    <p>3P Learning is an Australian education technology company which develops
-      games and interactive media to teach school students across all age
-      groups. During my time there, I've worked on IntoScience and Mathletics
-      as a designer, developer, product owner and product manager.</p>
-
-    Once I started travelling, I continued to work for 3P Learning as a
-      Freelancer. As a part of that, I designed and developed
-      <a href="https://pdyxs.wtf/what/projects/numbeanies">Numbeanies</a>.
-  </div>
-</div>
-
-<div class="card my-2">
-  <div class="card-body">
-    <h5>SeeThrough Studios</h5>
-    {% include definitions.html list=site.data.workhistory.seethrough %}
-    <p>SeeThrough Studios is an independent game development studio. Completed
-      projects include
-      <a href="https://pdyxs.wtf/what/projects/flatland-fallen-angle">Flatland: Fallen Angle</a>,
-      <a href="https://pdyxs.wtf/what/projects/unstoppabot">Unstoppabot</a> and
-      <a href="https://pdyxs.wtf/what/projects/particulars">Particulars</a>.</p>
-  </div>
-</div>
+{% endfor %}
