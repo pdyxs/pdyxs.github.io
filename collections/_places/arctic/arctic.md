@@ -25,4 +25,5 @@ dates:
   - 2018-06-26
   - 2018-06-27
 priority: 20182706
+finished: true
 ---

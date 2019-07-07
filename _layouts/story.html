@@ -7,6 +7,7 @@
 <div class="story">
   <div class="container pt-2">
     <h1 class="text-center mb-0 mb-sm-2">{{page.title}}</h1>
+    {% if page.dates %}
     <div class="row">
       <div class="col-lg-3 col-md-2 col-1"></div>
       <div class="col-lg-6 col-md-8 col-10">
@@ -39,6 +40,7 @@
         </table>
       </div>
     </div>
+    {% endif %}
     <div class="row">
       <div class="col-lg-3 col-md-2 col-1"></div>
 
@@ -59,16 +61,22 @@
         </ol>
         <div class="carousel-inner">
           {% for place in collection %}
-            <div id="item-{{forloop.index0}}" date="{{place.photo-date}}" class="text-justify carousel-item">
+            {% assign slugArray = place.id | split: '/' | reverse %}
+            <div id="item-{{slugArray[1]}}" date="{{place.photo-date}}" class="text-justify carousel-item item-{{forloop.index0}}">
               <a target="{{forloop.index0}}"></a>
               {{place.output}}
             </div>
           {% endfor %}
-          <div id="item-{{collection.size}}" class="carousel-item">
+          <div id="item-end" class="carousel-item item-{{collection.size}}">
             <div class="card">
               <div class="card-body mh-30">
-                <h2>To be continued...</h2>
-                To recieve email updates to this story and others, subscribe to my mailing list here.
+                {% if page.finished %}
+                  <h2>Thanks for reading!</h2>
+                  If you'd like to be notified when I write more stories like this, subscribe to my mailing list here.
+                {% else %}
+                  <h2>To be continued...</h2>
+                  To recieve email updates to this story and others, subscribe to my mailing list here.
+                {% endif %}
                 {% include mailing-list.html %}
               </div>
             </div>
@@ -92,28 +100,39 @@
 function r(f){/in/.test(document.readyState)?setTimeout('r('+f+')',9):f()}
 // use like
 r(function(){
-  var number = parseInt(window.location.hash.substring(1));
-  if (number !== NaN && number > 0) {
-    // $("#storyCarousel").carousel(number);
-  } else if (window.location.hash === '#end') {
+  var location = window.location.hash.substring(1);
+  var number = parseInt(location);
+
+  if (location === 'end') {
     number = {{collection.size}};
     $('.carousel-control-next').addClass('d-none');
     // $("#storyCarousel").carousel({{i}});
-  } else {
-    number = 0;
-    $('.carousel-control-prev').addClass('d-none');
   }
 
-  $("#item-" + number).addClass("active");
-  $("#indicator-" + number).addClass("active");
-  $('#date-' + $("#item-" + number).attr('date')).addClass('table-dark');
+  if (location === '') {
+    number = 0;
+  }
+
+  if (number === NaN) {
+    $("#item-" + location).addClass("active");
+    // $("#indicator-" + number).addClass("active");
+    $('#date-' + $("#item-" + location).attr('date')).addClass('table-dark');
+  } else {
+    $(".item-" + number).addClass("active");
+    $("#indicator-" + number).addClass("active");
+    $('#date-' + $(".item-" + number).attr('date')).addClass('table-dark');
+  }
+
+  if ($(".item-0").hasClass('active')) {
+    $('.carousel-control-prev').addClass('d-none');
+  }
 
   $('#storyCarousel').on('slide.bs.carousel', function (e) {
     if (e.to === {{collection.size}}) {
       $('.carousel-control-next').addClass('d-none');
       window.location.hash = '#end';
     } else {
-      window.location.hash = '#' + e.to;
+      window.location.hash = '#' + $(".item-" + e.to).attr("id").substring("item-".length);
     }
 
     if (e.from === {{collection.size}}) {
@@ -126,8 +145,8 @@ r(function(){
       $('.carousel-control-prev').addClass('d-none');
     }
 
-    $('#date-' + $("#item-" + e.from).attr('date')).removeClass('table-dark');
-    $('#date-' + $("#item-" + e.to).attr('date')).addClass('table-dark');
+    $('#date-' + $(".item-" + e.from).attr('date')).removeClass('table-dark');
+    $('#date-' + $(".item-" + e.to).attr('date')).addClass('table-dark');
   });
 });
 </script>

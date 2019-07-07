@@ -24,11 +24,19 @@ collections:
     output: true
   galapagos:
     output: true
+  fatecardgame:
+    output: true
+  drafts:
+    output: true
   pastprojects:
     output: true
   currentprojects:
     output: true
+  futureprojects:
+    output: true
   places:
+    output: true
+  stories:
     output: true
   services:
     output: false
@@ -67,6 +75,12 @@ defaults:
       permalink: /what/projects/:title
   - scope:
       path: ""
+      type: futureprojects
+    values:
+      layout: project
+      permalink: /what/projects/:title
+  - scope:
+      path: ""
       type: currentprojects
     values:
       layout: project
@@ -77,6 +91,17 @@ defaults:
     values:
       layout: story
       permalink: /where/:title
+  - scope:
+      path: ""
+      type: stories
+    values:
+      layout: story
+      permalink: /stories/:title
+  - scope:
+      path: ""
+      type: drafts
+    values:
+      permalink: /drafts/:title
   - scope:
       path: ""
       type: posts
