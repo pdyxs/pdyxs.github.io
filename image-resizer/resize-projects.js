@@ -13,24 +13,12 @@ const getImages = p => {
 function buildImages(file, subpath) {
   return (err) => {
     if (err) return;
-    fs.access(path.join(subpath,"gallery",file), fs.constants.F_OK,
-      (err) => {
-        if (err) {
-          resize(path.resolve(path.join(subpath, file)),
-            path.resolve(path.join(subpath,"gallery",file)),
-            1024);
-        }
-      }
-    );
-    fs.access(path.join(subpath,"thumb",file), fs.constants.F_OK,
-      (err) => {
-        if (err) {
-          resize(path.resolve(path.join(subpath, file)),
-            path.resolve(path.join(subpath,"thumb",file)),
-            1024);
-        }
-      }
-    );
+    resize(path.resolve(path.join(subpath, file)),
+      path.resolve(path.join(subpath,"gallery",file)),
+      1024);
+    resize(path.resolve(path.join(subpath, file)),
+      path.resolve(path.join(subpath,"thumb",file)),
+      500);
   }
 }
 

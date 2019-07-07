@@ -7,8 +7,9 @@ const getSubdirs = p => fs.readdirSync(p).filter(f => fs.statSync(path.join(p, f
 function buildImages(file, subpath) {
   return (err) => {
     if (err) return;
-    resize(path.resolve(file), path.resolve(subpath + "/image.png"), 600, 600);
-    resize(path.resolve(file), path.resolve(subpath + "/social.png"), 1080, 1080);
+
+    resize(path.resolve(file), path.resolve(path.join(subpath, "image.png")), 600, 600);
+    resize(path.resolve(file), path.resolve(path.join(subpath, "social.png")), 1080, 1080);
   }
 }
 
