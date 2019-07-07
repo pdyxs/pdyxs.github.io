@@ -1,4 +1,3 @@
-future: false
 plugins:
   - jekyll-sitemap
   - jekyll-seo-tag
@@ -8,6 +7,8 @@ author: paul
 twitter:
   username: pdyxs
 logo: /who/profile.jpg
+exclude:
+  - image-resizer
 social:
   name: Paul Sztajer
   links:
@@ -66,6 +67,12 @@ defaults:
       type: galapagos
     values:
       category: galapagos
+      layout: inner/story-item
+  - scope:
+      path: ""
+      type: fatecardgame
+    values:
+      category: fatecardgame
       layout: inner/story-item
   - scope:
       path: ""

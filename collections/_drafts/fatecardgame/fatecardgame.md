@@ -1,7 +1,7 @@
 ---
 layout: story
 icollection: fatecardgame
-title: Unintitled Fate Game
+title: In Fate's Hands
 description: A game where one player is Fate, and they hold all the cards.
 tags:
   - analog
