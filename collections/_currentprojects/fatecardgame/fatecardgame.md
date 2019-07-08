@@ -8,6 +8,7 @@ tags:
   - development
   - interactive
 priority: 20190701
+image: original.png
 definitions:
   - head: Medium
     text: Card Game
