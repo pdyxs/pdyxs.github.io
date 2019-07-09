@@ -1,1 +1,3 @@
-*.png text !filter !merge !diff
+*.jpg binary
+*.png binary
+*.gif binary
