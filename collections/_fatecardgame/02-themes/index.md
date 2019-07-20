@@ -1,5 +1,6 @@
 ---
 title: Themes
+published: false
 video: true
 ---
 There’s been a fair few themes for “In Fate’s Hands” over the years. It began as an Indiana Jones-esque adventure game about an artefact called ‘The Feet of Fate’. At one point, it was a game about survival in the wilderness. Fairly recently, the game was themeless, with a scenario card (pictured above) dictating the theme secretly to the Mortals, because Fate doesn’t know or care about what the Mortals are actually doing).

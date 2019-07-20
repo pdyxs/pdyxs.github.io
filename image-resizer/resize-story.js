@@ -21,10 +21,6 @@ function buildVideos(files, subpath) {
     resolvedFiles,
     path.resolve(path.join(subpath, "social.mp4")),
     { size: '1920x?' }
-  )).then(() => buildVideo(
-    resolvedFiles,
-    path.resolve(path.join(subpath, "image.webm")),
-    { size: '640x?', format: 'webm' }
   ));
 }
 
@@ -47,7 +43,7 @@ if (process.argv.length >= 3)
     }
 
     var videoFiles = _.filter(files, f => _.startsWith(f, "original-"));
-    if (videoFiles.length > 0) {
+    if (videoFiles.length > 0 && !_.includes(files, "image.mp4")) {
       buildVideos(_.map(videoFiles, f => path.join(subpath, f)), subpath);
     }
   }
