@@ -1,5 +1,10 @@
 <div class="card">
-  <img class="card-img-top" src="{{page.url | remove:'index.html'}}/image.png" />
+  {% if page.video %}
+    <video class="card-img-top" src="{{page.url | remove:'index.html'}}/image.mp4" controls autoplay>
+    </video>
+  {% else %}
+    <img class="card-img-top" src="{{page.url | remove:'index.html'}}/image.png" />
+  {% endif %}
   <div class="card-body mh-30">
     <h2 class="d-none">{{page.title}}</h2>
     {{page.content}}
