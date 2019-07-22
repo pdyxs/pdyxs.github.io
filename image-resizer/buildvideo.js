@@ -12,17 +12,39 @@ var videoOptions = {
 }
 
 function buildVideo(images, output, config) {
-  images = _.map(images, (image, i) => ({
-    path: image,
-    loop: i == 0 ? 2 : 10
-  }));
-  images.push({
-    path: images[0].path,
-    loop: 8
-  });
+  var allImages = _.reduce(images, (currentImages, image, image_index) => {
+    var filename = _.last(image.split("/")).split(".")[0];
+    var filename_chunks = filename.split("-");
+    var repeatCount = 0;
+    for (var chunk_index = 1; chunk_index < filename_chunks.length; ++chunk_index) {
+      var chunk = filename_chunks[chunk_index];
+      if (_.endsWith(chunk, "s")) {
+        if (currentImages.length <= repeatCount) {
+          currentImages.push([]);
+        }
+        currentImages[repeatCount].push({
+          path: image,
+          loop: Number(chunk.substring(0, chunk.length - 1))
+        });
+        repeatCount++;
+      }
+    }
+    if (repeatCount == 0) {
+      if (currentImages.length == 0) {
+        currentImages.push([]);
+      }
+      currentImages[repeatCount].push({
+        path: image,
+        loop: 10
+      });
+    }
+    return currentImages;
+  }, []);
+
+  allImages = _.flatten(allImages);
   config = _.assign(videoOptions, config);
   return new Promise((resolve, reject) => {
-    videoshow(images, config)
+    videoshow(allImages, config)
       .save(output)
       .on('error', function (err, stdout, stderr) {
         console.error('Error:', err);
