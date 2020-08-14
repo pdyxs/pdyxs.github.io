@@ -10,6 +10,7 @@ tags:
   - game
   - released
   - noshortcv
+  - nocv
 priority: 20130300
 definitions:
   - head: Medium

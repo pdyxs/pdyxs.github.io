@@ -6,6 +6,7 @@ tags:
   - released
   - game
   - game-jam
+  - nocv
 priority: 20190126
 images:
   - wheretheheartis

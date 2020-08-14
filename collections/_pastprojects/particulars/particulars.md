@@ -2,6 +2,7 @@
 layout: project
 title: Particulars
 description: A minimalist meditation on the chaos of life, the universe and sub-atomic particle physics
+cvdescription: Particulars is a video game based on the mechanics of high-energy physics, allowing players to viscerally experience the fundamental particles and forces that make up our universe. I'm particularly proud of the way that the game presents information about the particles, densely packing a large amount of information into a small space while highlighting what's important to the player.
 image: 5-1b.jpg
 feature: 5-1b
 tags:
@@ -65,6 +66,10 @@ definitions:
     text: November 2014
     usein:
       - cv
+  - head: Technology
+    text: Unity
+    usein:
+      - cv
   - head: Developed by
     text: SeeThrough Studios
     usein:
@@ -72,11 +77,7 @@ definitions:
   - head: Published by
     text: Surprise Attack
   - head: Roles
-    texts:
-      - Producer
-      - Lead Designer
-      - Programmer
-      - Writer
+    text: Producer, Lead Designer, Programmer, Writer
     usein:
       - cv
   - head: Accolades

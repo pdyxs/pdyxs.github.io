@@ -2,6 +2,7 @@
 layout: project
 title: "Numbeanies: Number Forest"
 description: An augmented reality app to help children learn numeracy using physical cards and adorable numbeanies
+cvdescription: This game was a great collaboration between an artist, designer and developer (myself). I built it using an architecture that empowered the designer without sacrificing stability and reliability.
 image: cover.jpg
 tags:
   - education
@@ -26,6 +27,10 @@ definitions:
     text: Numeracy (Kindergarten level)
   - head: Platform(s)
     text: iOS (iPad only)
+  - head: Technology
+    text: Unity
+    usein:
+      - cv
   - head: Release
     text: February 2018
     usein:
@@ -35,9 +40,7 @@ definitions:
     usein:
       - cv
   - head: Roles
-    texts:
-      - Designer
-      - Developer
+    text: Designer, Developer
     usein:
       - cv
 ---

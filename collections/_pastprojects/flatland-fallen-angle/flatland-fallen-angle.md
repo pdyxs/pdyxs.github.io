@@ -9,6 +9,7 @@ feature: Flatland1
 tags:
   - game
   - released
+  - nocv
   - noshortcv
 priority: 20120200
 quotes:

@@ -17,6 +17,10 @@ definitions:
     text: Data visualisation, artwork
     usein:
       - cv
+  - head: Technology
+    text: Python, Unity
+    usein:
+      - cv
   - head: Data Source
     text: The HIPPARCOS main star catalog
   - head: Released

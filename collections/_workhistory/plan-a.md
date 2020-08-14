@@ -10,5 +10,6 @@ definitions:
     usein:
       - cv
 priority: 201806
+nocv: true
 ---
 Plan A is a social enterprise based in Berlin, which runs a data-driven crowdfunding platform for climate change. I did some early design and prototyping work for Plan A's <a href="https://plana.earth" target="_blank">platform</a>, and helped them to determine the technology requirements of the platform.

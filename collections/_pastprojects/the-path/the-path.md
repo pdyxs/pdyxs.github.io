@@ -19,6 +19,10 @@ definitions:
       - cv
   - head: Data Source
     text: The Open Tree of Life
+  - head: Technology
+    text: Python, MySQL
+    usein:
+      - cv
   - head: Released
     text: February 2016
     usein:

@@ -1,11 +1,32 @@
 {% assign coll = site.collections | where: "label", "workhistory" | first %}
 {% assign workplaces = coll.docs | sort: 'priority' | reverse %}
 {% for workplace in workplaces %}
-<div class="card my-2">
-  <div class="card-body">
-    <h5>{{workplace.title}}</h5>
-    {% include definitions.html list=workplace.definitions %}
-    {{workplace.content}}
+{% if workplace.nocv %}
+{% else %}
+<div class="card">
+  <div class="card-body py-2">
+    {% if workplace.image %}
+    <table>
+      <tr class="project">
+        <td class="pt-3">
+          <div class="img-wrap">
+          <div class="project-img"
+               style="background-image:url('/workhistory/{{workplace.image}}'); background-size: {{workplace.imgSize}}; height: {{workplace.imgHeight}}">
+          </div></div>
+        </td>
+        <td class="content pt-2">
+          <h5>{{workplace.title}}</h5>
+          {% include definitions.html list=workplace.definitions %}
+          {{workplace.content}}
+        </td>
+      </tr>
+    </table>
+    {% else %}
+      <h5>{{workplace.title}}</h5>
+      {% include definitions.html list=workplace.definitions %}
+      {{workplace.content}}
+    {% endif %}
   </div>
 </div>
+{% endif %}
 {% endfor %}

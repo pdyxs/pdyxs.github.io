@@ -2,6 +2,7 @@
 layout: project
 title: Art Heist
 description: An interactive theatre experience where teams of four develop and execute a plan to steal a painting from an art gallery
+cvdescription: Art Heist is an interactive theatre experience where teams of four develop and execute a daring plan to steal a painting from an art gallery.
 tags:
   - other
   - released
@@ -20,7 +21,7 @@ definitions:
   - head: Developed By
     text: Jetpack Theatre Collective
   - head: Role
-    text: Game Designer
+    text: Game Designer, technology developer (arduino, Unity)
     usein:
       - cv
   - head: Season
