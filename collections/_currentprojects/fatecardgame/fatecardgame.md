@@ -1,7 +1,7 @@
 ---
 layout: story
 icollection: fatecardgame
-title: In Fate's Hands
+title: The Odysseys
 description: A game where one player is Fate, and they hold all the cards.
 tags:
   - analog
