@@ -15,8 +15,6 @@ actions:
     url: http://store.steampowered.com/app/259470/Particulars/
   - text: Buy on Humble Store
     url: https://www.humblebundle.com/store/particulars
-  - text: Go to Website
-    url: http://particularsgame.com
 quotes:
   - quote: "I haven’t cried playing a video game before; it’s not like it’s a habit. But there’s something about the loneliness of being a down quark all alone in a subatomic space that really underlined the joy in finding an anti-down quark to combine with."
     by: Grant Howitt
