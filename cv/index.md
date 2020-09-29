@@ -15,7 +15,7 @@ references:
   - head: Daniel Keogh
     texts:
       - Head of the Creative Content Team at 3P Learning (2018)
-      - 0437 253 566
+      - +61 437 253 566
     links:
       - text: Daniel.Keogh@UNSW.edu.au
         url: Daniel.Keogh@UNSW.edu.au
@@ -40,7 +40,6 @@ references:
 {% include definitions.html list=page.references %}
 
 {% include title.html title="What" subtitle="I've made" %}
-Please find extra resources about these projects in the 'Portfolio' folder.
 {% assign coll = site.collections | where: "label", "pastprojects" | first %}
 {% assign pages = coll.docs | sort: 'priority' | reverse %}
 <table>
