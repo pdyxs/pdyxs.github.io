@@ -71,18 +71,6 @@
           var url = "https://discordapp.com/api/webhooks/762818216338653184/Fk_8oiiK2Gbr9xGOuVittd58zRZ485Wri8DnnZsRDdA4_6sKfVp2Swm7B_Lcwy4CpvEw";
           xhr.open("POST", url, true);
           xhr.setRequestHeader("Content-type", "application/json");
-          console.log({
-            content: "Question from " + data.get("email"),
-            "embeds": [
-              {
-                "title": data.get("w") + " " + data.get("question"),
-                "color": 16758784,
-                "footer": {
-                  "text": "Subscribe: " + data.get("subscribe"),
-                }
-              }
-            ]
-          });
           var data = JSON.stringify({
             content: "Question from " + data.get("email"),
             "embeds": [
