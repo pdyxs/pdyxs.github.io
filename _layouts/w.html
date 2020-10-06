@@ -24,10 +24,8 @@
       </div>
     {% endfor %}
       <form class="form-inline d-inline-block"
-        action="https://getsimpleform.com/messages?form_api_token=74d3ef7c011705a088d446e29a329297"
-        method="post">
-        <input type='hidden' name='redirect_to'
-          value='http://pdyxs.wtf/question-submitted.html' />
+        action="#"
+        onsubmit="doSubmitQuestionForm(this); return false">
         <div class="input-group" style="top: 0.25rem;" role="group">
           <div class="input-group-prepend">
             <span class="input-group-text bg-white text-black-50">
@@ -65,6 +63,45 @@
           </div>
         </div>
       </form>
+
+      <script>
+        function doSubmitQuestionForm(form) {
+          var data = new FormData(form);
+          xhr = new XMLHttpRequest();
+          var url = "https://discordapp.com/api/webhooks/762818216338653184/Fk_8oiiK2Gbr9xGOuVittd58zRZ485Wri8DnnZsRDdA4_6sKfVp2Swm7B_Lcwy4CpvEw";
+          xhr.open("POST", url, true);
+          xhr.setRequestHeader("Content-type", "application/json");
+          console.log({
+            content: "Question from " + data.get("email"),
+            "embeds": [
+              {
+                "title": data.get("w") + " " + data.get("question"),
+                "color": 16758784,
+                "footer": {
+                  "text": "Subscribe: " + data.get("subscribe"),
+                }
+              }
+            ]
+          });
+          var data = JSON.stringify({
+            content: "Question from " + data.get("email"),
+            "embeds": [
+              {
+                "title": data.get("w") + " " + data.get("question"),
+                "color": 16758784,
+                "footer": {
+                  "text": "Subscribe: " + data.get("subscribe"),
+                }
+              }
+            ]
+          });
+          xhr.send(data);
+          setTimeout(function() {
+            window.location.href = "http://pdyxs.wtf/question-submitted.html";
+          }, 500);
+
+        }
+      </script>
 
     </div>
 

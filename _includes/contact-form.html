@@ -1,9 +1,6 @@
 <div class="card">
-<form class="form card-body"
-  action="https://getsimpleform.com/messages?form_api_token=74d3ef7c011705a088d446e29a329297"
-  method="post">
-  <input type='hidden' name='redirect_to'
-    value='http://pdyxs.wtf/contact-submitted.html' />
+<form class="form card-body" action="#"
+  onsubmit="doSubmitContactForm(this); return false">
   <div class="form-group">
     <label for="contact-email-input">Your Email</label>
     <input type="email" name="email" class="form-control" id="contact-email-input" placeholder="email@example.com">
@@ -18,3 +15,27 @@
     value="Send" />
 </form>
 </div>
+
+<script>
+  function doSubmitContactForm(form) {
+    var data = new FormData(form);
+    xhr = new XMLHttpRequest();
+    var url = "https://discordapp.com/api/webhooks/762818216338653184/Fk_8oiiK2Gbr9xGOuVittd58zRZ485Wri8DnnZsRDdA4_6sKfVp2Swm7B_Lcwy4CpvEw";
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-type", "application/json");
+    var data = JSON.stringify({
+      content: "Message from " + data.get("email"),
+      "embeds": [
+        {
+          "description": data.get("content"),
+          "color": 7506394
+        }
+      ]
+    });
+    xhr.send(data);
+
+    setTimeout(function() {
+      window.location.href = "http://pdyxs.wtf/contact-submitted.html";
+    }, 500);
+  }
+</script>
