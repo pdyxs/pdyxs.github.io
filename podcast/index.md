@@ -114,7 +114,7 @@ I've made three 'alpha' podcasts, to try out the sorts of things I could talk ab
         </div>
       </div>
       <div class="form-check">
-        <input class="form-check-input" name="subscribe" type="checkbox" checked value="" id="subscribe">
+        <input class="form-check-input" name="subscribe" type="checkbox" checked>
         <label class="form-check-label" for="subscribe">
           Click here if you want to get updates on what I'm doing, including when the podcast comes out
         </label>
@@ -136,7 +136,7 @@ I've made three 'alpha' podcasts, to try out the sorts of things I could talk ab
     var url = "https://discordapp.com/api/webhooks/762818216338653184/Fk_8oiiK2Gbr9xGOuVittd58zRZ485Wri8DnnZsRDdA4_6sKfVp2Swm7B_Lcwy4CpvEw";
     xhr.open("POST", url, true);
     xhr.setRequestHeader("Content-type", "application/json");
-    var data = JSON.stringify({
+    var jsonString = JSON.stringify({
       content: "Podcast Feedback from " + data.get("name") + " (" + data.get("email") + "):",
       "embeds": [
         {
@@ -160,17 +160,17 @@ I've made three 'alpha' podcasts, to try out the sorts of things I could talk ab
           "fields": [
             {
               "name": "Feedback",
-              "value": data.get("overallFeedback")
+              "value": data.get("overallFeedback").length > 0 ? data.get("overallFeedback") : "(none)"
             }
           ],
           "color": 15746887,
           "footer": {
-            "text": "Subscribe: " + data.get("subscribe")
+            "text": "Subscribe: " + (data.get("subscribe") == "on")
           }
         }
       ]
     });
-    xhr.send(data);
+    xhr.send(jsonString);
 
     setTimeout(function() {
       window.location.href = "http://pdyxs.wtf/podcast/submitted";
