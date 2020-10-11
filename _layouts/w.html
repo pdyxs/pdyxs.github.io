@@ -70,6 +70,9 @@
           xhr = new XMLHttpRequest();
           var url = "https://discordapp.com/api/webhooks/762818216338653184/Fk_8oiiK2Gbr9xGOuVittd58zRZ485Wri8DnnZsRDdA4_6sKfVp2Swm7B_Lcwy4CpvEw";
           xhr.open("POST", url, true);
+          xhr.onreadystatechange = function() {
+            window.location.href = "http://pdyxs.wtf/question-submitted.html";
+          };
           xhr.setRequestHeader("Content-type", "application/json");
           var data = JSON.stringify({
             content: "Question from " + data.get("email"),
@@ -84,9 +87,6 @@
             ]
           });
           xhr.send(data);
-          setTimeout(function() {
-            window.location.href = "http://pdyxs.wtf/question-submitted.html";
-          }, 500);
 
         }
       </script>

@@ -136,6 +136,9 @@ I've made three 'alpha' podcasts, to try out the sorts of things I could talk ab
     var url = "https://discordapp.com/api/webhooks/762818216338653184/Fk_8oiiK2Gbr9xGOuVittd58zRZ485Wri8DnnZsRDdA4_6sKfVp2Swm7B_Lcwy4CpvEw";
     xhr.open("POST", url, true);
     xhr.setRequestHeader("Content-type", "application/json");
+    xhr.onreadystatechange = function() {
+      window.location.href = "http://pdyxs.wtf/podcast/submitted";
+    };
     var jsonString = JSON.stringify({
       content: "Podcast Feedback from " + data.get("name") + " (" + data.get("email") + "):",
       "embeds": [
@@ -171,9 +174,5 @@ I've made three 'alpha' podcasts, to try out the sorts of things I could talk ab
       ]
     });
     xhr.send(jsonString);
-
-    setTimeout(function() {
-      window.location.href = "http://pdyxs.wtf/podcast/submitted";
-    }, 500);
   }
 </script>
