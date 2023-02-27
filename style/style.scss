@@ -1,14 +1,16 @@
 ---
 ---
+
 @import "bootstrap/bootstrap";
-// @import url('https://fonts.googleapis.com/css?family=Quicksand:400,700');
 
 @font-face {
-  font-family: 'Quicksand';
+  font-family: "Quicksand";
   font-style: normal;
   font-weight: 400;
-  src: local('Quicksand Regular'), local('Quicksand-Regular'), url('/style/font.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+  src: local("Quicksand Regular"), local("Quicksand-Regular"),
+    url("/style/font.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC,
+    U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
 }
 
 @media (max-width: 768px) {
@@ -24,7 +26,7 @@
 }
 
 body {
-  font-family: 'Quicksand', sans-serif;
+  font-family: "Quicksand", sans-serif;
 }
 
 .answer .answer-target {
@@ -36,7 +38,7 @@ body {
 .table {
   .smaller {
     padding: 0.1rem !important;
-    font-size: 60%
+    font-size: 60%;
   }
 }
 
@@ -45,13 +47,13 @@ img.org-logo {
 }
 
 .bg-alphablack {
-  background-color: rgba(0,0,0,0.8);
+  background-color: rgba(0, 0, 0, 0.8);
 }
 .bg-alphablack-5 {
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 .bg-alphablack-3 {
-  background-color: rgba(0,0,0,0.3);
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 div.card-img-top {
@@ -128,7 +130,6 @@ $series-max-width: 1326px;
       min-height: 200px;
     }
   }
-
 }
 
 .video-wrapper {
@@ -172,12 +173,12 @@ $series-max-width: 1326px;
 
 #map {
   .ocean {
-    fill: #5050A0;
+    fill: #5050a0;
   }
   .countries path {
     stroke: rgb(50, 50, 50);
     stroke-linejoin: round;
-    stroke-width:0.1;
+    stroke-width: 0.1;
     fill: #66b588;
     stroke-opacity: 1;
   }
@@ -250,7 +251,7 @@ $series-max-width: 1326px;
         background-color: transparent;
         border-radius: 0;
         top: -4px;
-        color: rgba(0,0,0,0.3);
+        color: rgba(0, 0, 0, 0.3);
 
         @media (max-width: 400px) {
           top: -1.6rem;
@@ -263,7 +264,7 @@ $series-max-width: 1326px;
       }
 
       &.page {
-        background-color: rgba(0,0,0,0.3);
+        background-color: rgba(0, 0, 0, 0.3);
         border-radius: 9px;
 
         &.active {

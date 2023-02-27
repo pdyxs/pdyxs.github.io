@@ -3,6 +3,7 @@ plugins:
   - jekyll-seo-tag
 title: Paul Sztajer (PDYXS)
 url: http://pdyxs.wtf
+encoding: utf-8
 author: paul
 twitter:
   username: pdyxs
