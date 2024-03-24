@@ -5,12 +5,12 @@
     {% if workplace.image %}
     <table>
       <tr class="project">
-        <td class="pt-3">
+        <td class="pt-3 d-none d-md-table-cell">
           <div class="img-wrap">
             <div class="project-img" style="background-image:url('/workhistory/{{workplace.image}}');"></div>
           </div>
         </td>
-        <td class="content pt-2">
+        <td class="content pt-2 pl-md-4">
           <h5>{{workplace.title}}</h5>
           {% include definitions.html list=workplace.definitions %} {{workplace.content}}
         </td>
