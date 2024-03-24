@@ -2,42 +2,5 @@
 title: I am
 priority: 150
 ---
-<script>
-  trips = [
-    {
-      place: "in Lima, Peru",
-      start: moment("18-02-2019", "DD-MM-YYYY")
-    },
-    {
-      place: "in Cusco, Peru",
-      start: moment("23-02-2019", "DD-MM-YYYY")
-    },
-    {
-      place: "somewhere in Peru, Bolivia or Chile",
-      start: moment("28-02-2019", "DD-MM-YYYY")
-    },
-    {
-      place: "in Sydney, Australia",
-      start: moment("18-03-2019", "DD-MM-YYYY")
-    },
-    {
-      place: "in Perth, Australia",
-      start: moment("10-04-2019", "DD-MM-YYYY")
-    }
-  ];
-  $(document).ready(function() {
-    var now = moment();
-    for (var i = 0; i != trips.length; ++i) {
-      if (now.isAfter(trips[i].start) && (i+1 == trips.length || now.isBefore(trips[i+1].start))) {
-        $("#where-i-am-place").html(trips[i].place);
-        if (i+1 == trips.length) {
-          $("#where-i-am-until").html("an unknown time");
-        } else {
-          $("#where-i-am-until").html(trips[i+1].start.format("[the] Do [of] MMMM YYYY"));
-        }
-        break;
-      }
-    }
-  });
-</script>
-<p>I'm currently <span id="where-i-am-place"></span>. I'll be here until <span id="where-i-am-until"></span>.</p>
+
+<p>I've been back in Sydney, Australia, since early 2020, and I'll be here for the forseeable future.</p>

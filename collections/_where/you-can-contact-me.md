@@ -1,7 +1,8 @@
 ---
 title: you can contact me
-priority: 2
+priority: 200
 ---
+
 The best way to contact me is to [email me at talk@pdyxs.wtf](mailto:talk@pdyxs.wtf), or just fill out the form below.
 
 <div class="row">

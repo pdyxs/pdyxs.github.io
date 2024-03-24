@@ -7,10 +7,8 @@
   font-family: "Quicksand";
   font-style: normal;
   font-weight: 400;
-  src: local("Quicksand Regular"), local("Quicksand-Regular"),
-    url("/style/font.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC,
-    U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+  src: local("Quicksand Regular"), local("Quicksand-Regular"), url("/style/font.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
 }
 
 @media (max-width: 768px) {
@@ -27,6 +25,7 @@
 
 body {
   font-family: "Quicksand", sans-serif;
+  background-color: transparent;
 }
 
 .answer .answer-target {
@@ -83,6 +82,16 @@ div.card-img-top {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+  }
+
+  .carousel-caption {
+    padding: 20px;
+  }
+
+  .carousel-control-next,
+  .carousel-control-prev {
+    margin-left: -15%;
+    margin-right: -15%;
   }
 }
 
@@ -278,5 +287,26 @@ $series-max-width: 1326px;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
+  }
+}
+
+.project {
+  .img-wrap {
+    overflow: hidden;
+
+    .project-img {
+      height: 8em;
+      width: 8em;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center top;
+    }
+  }
+
+  td {
+    vertical-align: top;
+    &.content {
+      padding-left: 1cm;
+    }
   }
 }

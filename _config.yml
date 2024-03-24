@@ -52,8 +52,6 @@ collections:
     output: false
   why:
     output: false
-  how:
-    output: false
   workhistory:
     output: true
 defaults:

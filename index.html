@@ -2,39 +2,23 @@
 layout: home
 title: home
 ---
+
 <div class="container-fluid mt-5">
   <div class="jumbotron col-lg-5 col-md-7 bg-alphablack text-light d-inline-block">
-  {% for link in site.data.nav.links %}
-    {% assign coll = site.collections | where: "label", link.w | first %}
-    {% assign questions = coll.docs | sort: 'priority' | reverse %}
+    {% for link in site.data.nav.links %} {% assign coll = site.collections | where: "label", link.w | first %} {%
+    assign questions = coll.docs | sort: 'priority' | reverse %}
     <div class="carousel slide carousel-fade" data-ride="carousel" data-interval="{{link.interval}}">
       {% for question in questions %}
       <div class="carousel-item{% if forloop.first %} active{% endif %}">
-        <h2><a class="text-light" href="/{{link.w}}#{{question.title | slugify}}">
-          {{link.text}}
-          <small class="text-muted">{{question.title}}</small>
-        </a></h2>
+        <h2>
+          <a class="text-light" href="/{{link.w}}#{{question.title | slugify}}">
+            {{link.text}}
+            <small class="text-muted">{{question.title}}</small>
+          </a>
+        </h2>
       </div>
       {% endfor %}
     </div>
-  {% endfor %}
-  </div>
-  <div class="col-md-3 float-right d-inline-block">
-    <div class="p-3 jumbotron bg-alphablack text-light">
-      <p class="lead">Latest Blog Post:</p>
-      {% assign post = site.posts.first %}
-      <p class="text-muted">
-        {% if post.canonical_url %}
-          <a href="{{ post.canonical_url }}" target="_blank">{{ post.title }}</a>
-          <a hidden href="{{ post.url }}">{{ post.title }}</a>
-        {% else %}
-          <a href="{{ post.url }}">{{ post.title }}</a>
-        {% endif %}
-      </p>
-      <p class="text-center">
-        <a href="http://eepurl.com/dC-cU1" target="_blank"
-          class="btn btn-primary">Get Updates</a>
-      </p>
-    </div>
+    {% endfor %}
   </div>
 </div>
