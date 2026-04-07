@@ -10,7 +10,7 @@ const action = z.object({
 
 const quote = z.object({
   quote: z.string(),
-  by: z.string(),
+  by: z.string().optional(),
   in: z.object({
     text: z.string(),
     url: z.string(),
@@ -82,13 +82,20 @@ const projects = defineCollection({
 const stories = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/stories' }),
   schema: z.object({
-    title: z.string(),
+    // title is optional: map cards and other non-text cards may not have one
+    title: z.string().optional(),
     // series: matches the source collection name ('arctic', 'galapagos', 'fatecardgame')
     series: z.string(),
     // order: chapter position within the series (0-indexed, from filename prefix)
     order: z.number(),
     date: z.coerce.date().optional(),
     icon: z.string().optional(),
+    published: z.boolean().optional(),
+    // map card fields
+    map: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    scale: z.number().optional(),
   }),
 });
 

@@ -14,5 +14,8 @@
   "dependencies": {
     "@astrojs/rss": "^4.0.18",
     "astro": "^6.1.4"
+  },
+  "devDependencies": {
+    "gray-matter": "^4.0.3"
   }
 }
