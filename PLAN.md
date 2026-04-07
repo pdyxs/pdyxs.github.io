@@ -17,7 +17,7 @@ Get Astro deploying to pdyxs.wtf via GitHub Actions before touching any content.
 - [x] Create Astro project (blank template) in a new branch (`astro-rebuild`)
 - [x] Configure `@astrojs/rss` — RSS feed is foundational for Substack cross-posting
 - [ ] Set up Cloudflare Pages preview (see below) and verify build pipeline works
-- [ ] Add Substack subscribe embed/widget to the site (existing newsletter)
+- [ ] Add Substack subscribe embed/widget to the site (existing newsletter) ← deferred: need embed code
 - [ ] Confirm Substack subscribe flow works from the site
 - [ ] Set up GitHub Actions deploy to GitHub Pages when ready to cut over to pdyxs.wtf
 
