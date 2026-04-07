@@ -14,15 +14,35 @@ Fediverse, social) is distribution on top of it.
 
 Get Astro deploying to pdyxs.wtf via GitHub Actions before touching any content.
 
-- [ ] Create Astro project (blank template) in a new branch
-- [ ] Set up GitHub Actions workflow to build and deploy to GitHub Pages
-- [ ] Verify deploy pipeline works end-to-end (including CNAME/custom domain)
-- [ ] Configure `@astrojs/rss` — RSS feed is foundational for Substack cross-posting
+- [x] Create Astro project (blank template) in a new branch (`astro-rebuild`)
+- [x] Configure `@astrojs/rss` — RSS feed is foundational for Substack cross-posting
+- [ ] Set up Cloudflare Pages preview (see below) and verify build pipeline works
 - [ ] Add Substack subscribe embed/widget to the site (existing newsletter)
 - [ ] Confirm Substack subscribe flow works from the site
+- [ ] Set up GitHub Actions deploy to GitHub Pages when ready to cut over to pdyxs.wtf
 
-**Done when:** A "hello world" Astro site is live at pdyxs.wtf, the RSS feed is
-live, and the Substack subscribe widget is embedded.
+**Done when:** A "hello world" Astro site is live at the preview URL, the RSS feed
+is live, and the Substack subscribe widget is embedded.
+
+### Preview deployment: Cloudflare Pages
+
+To test without touching the live site, use Cloudflare Pages as a preview environment:
+
+1. Push `astro-rebuild` branch to GitHub
+2. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → Workers & Pages → Create application → Pages
+3. Connect to GitHub → select `pdyxs/pdyxs.github.io` repo
+4. Configure build:
+   - **Branch:** `astro-rebuild`
+   - **Build command:** `npm run build`
+   - **Build output:** `dist`
+5. Deploy — Cloudflare will give a `*.pages.dev` URL for testing
+
+No DNS changes needed. The live site at pdyxs.wtf is unaffected.
+
+**Cutting over to pdyxs.wtf (when ready):**
+- Re-add the GitHub Actions workflow (already written, just deleted for safety)
+- In GitHub repo Settings → Pages → Source: set to GitHub Actions
+- Update the Cloudflare Pages branch or delete it once Pages is live
 
 ---
 
