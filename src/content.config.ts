@@ -111,6 +111,38 @@ const work = defineCollection({
   }),
 });
 
+// ─── Tags ─────────────────────────────────────────────────────────────────────
+//
+// Tag metadata for the connective tissue of the card navigation model.
+// Each .yaml file's slug is the canonical tag identifier.
+//
+// Tag links in content point to a tag slug rather than a specific card.
+// At render time, the system resolves a tag link to the highest-priority card
+// for that tag, using the `featured` list first, then falling back to
+// content `priority` fields.
+//
+// Aliases let content authors use variant spellings freely — the migration
+// script normalises all tag references to canonical slugs, but aliases
+// also provide a runtime fallback for any that slip through.
+
+const tags = defineCollection({
+  loader: glob({ pattern: '**/*.yaml', base: './src/content/tags' }),
+  schema: z.object({
+    // canonical display name (slug is the file name, e.g. 'quantum-computing')
+    name: z.string(),
+    // aliases: other names/spellings that resolve to this tag
+    // e.g. ['quantum', 'quantum computing', 'QC']
+    aliases: z.array(z.string()).default([]),
+    // related: slugs of other tags for tag-to-tag traversal in navigation
+    related: z.array(z.string()).default([]),
+    description: z.string().optional(),
+    // featured: ordered content IDs to surface first when resolving a tag link.
+    // Format: 'collection/slug', e.g. 'projects/particulars', 'posts/why-portal'
+    // If empty, falls back to the content item with the highest priority value.
+    featured: z.array(z.string()).default([]),
+  }),
+});
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 
-export const collections = { posts, projects, stories, work };
+export const collections = { posts, projects, stories, work, tags };
