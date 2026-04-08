@@ -1,0 +1,266 @@
+/* ── Custom properties ─────────────────────────────────────────── */
+
+:root {
+  --color-bg:         #0f0f0f;
+  --color-surface:    #1a1a1a;
+  --color-border:     #2e2e2e;
+  --color-text:       #e8e8e8;
+  --color-text-muted: #888;
+  --color-accent:     #c8a96e;   /* warm gold — adjustable */
+  --color-link:       #7bb3d4;
+
+  --font-body:    'Georgia', serif;
+  --font-ui:      system-ui, -apple-system, sans-serif;
+
+  --radius:       6px;
+  --space-xs:     0.375rem;
+  --space-sm:     0.75rem;
+  --space-md:     1.25rem;
+  --space-lg:     2rem;
+  --space-xl:     3.5rem;
+
+  --max-width:    720px;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-size: 17px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  line-height: 1.65;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 var(--space-sm);
+}
+
+p { margin: 0 0 var(--space-md); }
+p:last-child { margin-bottom: 0; }
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+ul, ol { padding-left: 1.4em; margin: 0 0 var(--space-md); }
+li { margin-bottom: var(--space-xs); }
+
+img { max-width: 100%; height: auto; display: block; }
+
+/* ── Layout ────────────────────────────────────────────────────── */
+
+.site-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+}
+
+/* ── Card ──────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-md) var(--space-lg);
+}
+
+/* ── Accordion (details/summary) ───────────────────────────────── */
+
+.accordion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.accordion-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.accordion-panel summary {
+  list-style: none;
+  cursor: pointer;
+  padding: var(--space-md) var(--space-lg);
+  font-family: var(--font-ui);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  user-select: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.accordion-panel summary::-webkit-details-marker { display: none; }
+
+.accordion-panel summary::after {
+  content: '+';
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: var(--color-accent);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.accordion-panel[open] > summary {
+  color: var(--color-accent);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.accordion-panel[open] > summary::after {
+  transform: rotate(45deg);
+}
+
+.accordion-panel summary:hover {
+  background: color-mix(in srgb, var(--color-surface) 80%, var(--color-accent) 20%);
+}
+
+.accordion-body {
+  padding: var(--space-lg);
+  background: var(--color-bg);
+}
+
+/* ── Project list ──────────────────────────────────────────────── */
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-lg);
+}
+
+.project-list:last-child { margin-bottom: 0; }
+
+.project-item .project-title {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: var(--space-xs);
+}
+
+.project-item .project-desc {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.project-item .project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+/* ── Post list ─────────────────────────────────────────────────── */
+
+.post-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-lg);
+}
+
+.post-list:last-child { margin-bottom: 0; }
+
+.post-item {
+  display: flex;
+  gap: var(--space-md);
+  align-items: baseline;
+}
+
+.post-item time {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Tag pill ──────────────────────────────────────────────────── */
+
+.tag {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* ── Section heading within accordion body ─────────────────────── */
+
+.section-heading {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  margin: 0 0 var(--space-md);
+}
+
+.section-heading:not(:first-child) {
+  margin-top: var(--space-xl);
+}
+
+/* ── Site header ───────────────────────────────────────────────── */
+
+.site-header {
+  padding: var(--space-xl) var(--space-md) var(--space-lg);
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.site-title {
+  font-family: var(--font-ui);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 var(--space-xs);
+}
+
+.site-tagline {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Site footer ───────────────────────────────────────────────── */
+
+.site-footer {
+  text-align: center;
+  padding: var(--space-lg) var(--space-md);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+}

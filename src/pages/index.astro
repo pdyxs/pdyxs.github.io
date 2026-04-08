@@ -1,17 +1,89 @@
 ---
+import { getCollection, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
 
+// Load accordion panels from the cards collection, ordered by their order field
+const panels = (await getCollection('cards', c => c.data.panel != null))
+  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
+
+// What panel: surface projects and recent posts
+const projects = (await getCollection('projects'))
+  .sort((a, b) => (b.data.priority ?? 0) - (a.data.priority ?? 0));
+
+const currentProjects = projects.filter(p => p.data.status === 'current');
+const pastProjects    = projects.filter(p => p.data.status === 'past');
+
+const recentPosts = (await getCollection('posts'))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 8);
+
+// Render each card's markdown body
+const rendered = Object.fromEntries(
+  await Promise.all(panels.map(async p => [p.id, await render(p)]))
+);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base>
+  <header class="site-header">
+    <h1 class="site-title">pdyxs.wtf</h1>
+    <p class="site-tagline">Paul Sztajer — Software Engineer & Creative Technologist</p>
+  </header>
+
+  <main class="site-main">
+    <div class="accordion">
+      {panels.map(panel => {
+        const { Content } = rendered[panel.id];
+        const isWhat = panel.data.panel === 'What';
+
+        return (
+          <details class="accordion-panel">
+            <summary>{panel.data.panel}</summary>
+            <div class="accordion-body">
+              <Content />
+
+              {isWhat && (
+                <>
+                  {currentProjects.length > 0 && (
+                    <>
+                      <p class="section-heading">I'm making</p>
+                      <ul class="project-list">
+                        {currentProjects.map(p => (
+                          <li class="project-item">
+                            <p class="project-title">{p.data.title}</p>
+                            <p class="project-desc">{p.data.description}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  <p class="section-heading">I've made</p>
+                  <ul class="project-list">
+                    {pastProjects.map(p => (
+                      <li class="project-item">
+                        <p class="project-title">{p.data.title}</p>
+                        <p class="project-desc">{p.data.description}</p>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <p class="section-heading">I've written</p>
+                  <ul class="post-list">
+                    {recentPosts.map(p => (
+                      <li class="post-item">
+                        <time datetime={p.data.date.toISOString()}>
+                          {p.data.date.toLocaleDateString('en-AU', { year: 'numeric', month: 'short' })}
+                        </time>
+                        <span>{p.data.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          </details>
+        );
+      })}
+    </div>
+  </main>
+</Base>

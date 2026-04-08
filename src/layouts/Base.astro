@@ -1,0 +1,31 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = 'pdyxs.wtf', description } = Astro.props;
+const pageTitle = title === 'pdyxs.wtf' ? title : `${title} — pdyxs.wtf`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title="pdyxs.wtf" href="/rss.xml" />
+  </head>
+  <body>
+    <div class="site-wrapper">
+      <slot />
+      <footer class="site-footer">
+        <a href="/">pdyxs.wtf</a> · <a href="/rss.xml">RSS</a>
+      </footer>
+    </div>
+  </body>
+</html>

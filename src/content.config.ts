@@ -118,6 +118,24 @@ const work = defineCollection({
   }),
 });
 
+// ─── Cards ────────────────────────────────────────────────────────────────────
+//
+// Standalone cards that don't belong to another collection.
+// Includes the 5 accordion entry-point cards (who/what/where/when/why).
+
+const cards = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/cards' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    tags: z.array(z.string()).default([]),
+    // order: position in the accordion (lower = first)
+    order: z.number().optional(),
+    // panel: marks this card as an accordion entry point with this label
+    panel: z.string().optional(),
+  }),
+});
+
 // ─── Tags ─────────────────────────────────────────────────────────────────────
 //
 // Tag metadata for the connective tissue of the card navigation model.
@@ -152,4 +170,4 @@ const tags = defineCollection({
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 
-export const collections = { posts, projects, stories, work, tags };
+export const collections = { posts, projects, stories, work, tags, cards };
