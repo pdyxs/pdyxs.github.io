@@ -31,12 +31,12 @@ const rendered = Object.fromEntries(
 
   <main class="site-main">
     <div class="accordion">
-      {panels.map(panel => {
+      {panels.map((panel, i) => {
         const { Content } = rendered[panel.id];
         const isWhat = panel.data.panel === 'What';
 
         return (
-          <details class="accordion-panel">
+          <details class="accordion-panel" open={i === 0 || undefined}>
             <summary>{panel.data.panel}</summary>
             <div class="accordion-body">
               <Content />
@@ -87,3 +87,15 @@ const rendered = Object.fromEntries(
     </div>
   </main>
 </Base>
+
+<script>
+  // Exclusive accordion: close siblings when a panel opens
+  const panels = document.querySelectorAll<HTMLDetailsElement>('.accordion-panel');
+  panels.forEach(panel => {
+    panel.addEventListener('toggle', () => {
+      if (panel.open) {
+        panels.forEach(other => { if (other !== panel) other.open = false; });
+      }
+    });
+  });
+</script>
