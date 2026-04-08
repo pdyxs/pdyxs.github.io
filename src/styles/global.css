@@ -1,13 +1,13 @@
 /* ── Custom properties ─────────────────────────────────────────── */
 
 :root {
-  --color-bg:         #0f0f0f;
-  --color-surface:    #1a1a1a;
-  --color-border:     #2e2e2e;
-  --color-text:       #e8e8e8;
-  --color-text-muted: #888;
-  --color-accent:     #c8a96e;   /* warm gold — adjustable */
-  --color-link:       #7bb3d4;
+  --color-bg:         #faf9f7;
+  --color-surface:    #ffffff;
+  --color-border:     #e0ddd8;
+  --color-text:       #1a1a1a;
+  --color-text-muted: #777;
+  --color-accent:     #8b5e2a;   /* warm brown — adjustable */
+  --color-link:       #2a6496;
 
   --font-body:    'Georgia', serif;
   --font-ui:      system-ui, -apple-system, sans-serif;
