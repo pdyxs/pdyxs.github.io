@@ -1,0 +1,35 @@
+---
+export const partial = true;
+
+import { getCollection, render } from 'astro:content';
+import { getAllCards } from '../../lib/cards';
+
+export async function getStaticPaths() {
+  const cards = await getAllCards();
+  return cards.map(c => ({ params: { path: c.uid } }));
+}
+
+const { path } = Astro.params;
+const parts = path!.split('/');
+const collection = parts[0];
+const id = parts.slice(1).join('/');
+
+const entries = await getCollection(collection as any);
+const entry = entries.find((e: any) => e.id === id);
+const rendered = entry ? await render(entry as any) : null;
+const Content = rendered?.Content;
+---
+
+<div class="stack-card" data-uid={path}>
+  <div class="stack-card-header">
+    <h2 class="stack-card-title">{entry?.data.title}</h2>
+    <button class="stack-card-close" aria-label="Close">×</button>
+  </div>
+  <div class="stack-card-body">
+    {Content
+      ? <Content />
+      : entry?.data.description
+        ? <p>{entry.data.description}</p>
+        : null}
+  </div>
+</div>

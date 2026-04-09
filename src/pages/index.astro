@@ -2,99 +2,151 @@
 import { getCollection, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
 
-// Load accordion panels from the cards collection, ordered by their order field
 const panels = (await getCollection('cards', c => c.data.panel != null))
   .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
 
-// What panel: surface projects and recent posts
-const projects = (await getCollection('projects'))
-  .sort((a, b) => (b.data.priority ?? 0) - (a.data.priority ?? 0));
-
-const currentProjects = projects.filter(p => p.data.status === 'current');
-const pastProjects    = projects.filter(p => p.data.status === 'past');
-
-const recentPosts = (await getCollection('posts'))
-  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-  .slice(0, 8);
-
-// Render each card's markdown body
 const rendered = Object.fromEntries(
   await Promise.all(panels.map(async p => [p.id, await render(p)]))
 );
 ---
 
 <Base>
-  <header class="site-header">
-    <h1 class="site-title">pdyxs.wtf</h1>
-    <p class="site-tagline">Paul Sztajer — Software Engineer & Creative Technologist</p>
-  </header>
+  <div id="homepage">
+    <header class="site-header">
+      <h1 class="site-title">pdyxs.wtf</h1>
+      <p class="site-tagline">Paul Sztajer — Software Engineer & Creative Technologist</p>
+    </header>
 
-  <main class="site-main">
-    <div class="accordion">
-      {panels.map((panel, i) => {
-        const { Content } = rendered[panel.id];
-        const isWhat = panel.data.panel === 'What';
+    <main class="site-main">
+      <div class="accordion">
+        {panels.map((panel, i) => {
+          const { Content } = rendered[panel.id];
+          return (
+            <details class="accordion-panel" data-card-uid={`cards/${panel.id}`} open={i === 0 || undefined}>
+              <summary>
+                <b>{panel.data.panel!.split(' ')[0]}</b>
+                {' ' + panel.data.panel!.split(' ').slice(1).join(' ')}
+              </summary>
+              <div class="accordion-body">
+                <Content />
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </main>
+  </div>
 
-        return (
-          <details class="accordion-panel" open={i === 0 || undefined}>
-            <summary>{panel.data.panel}</summary>
-            <div class="accordion-body">
-              <Content />
-
-              {isWhat && (
-                <>
-                  {currentProjects.length > 0 && (
-                    <>
-                      <p class="section-heading">I'm making</p>
-                      <ul class="project-list">
-                        {currentProjects.map(p => (
-                          <li class="project-item">
-                            <p class="project-title">{p.data.title}</p>
-                            <p class="project-desc">{p.data.description}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-
-                  <p class="section-heading">I've made</p>
-                  <ul class="project-list">
-                    {pastProjects.map(p => (
-                      <li class="project-item">
-                        <p class="project-title">{p.data.title}</p>
-                        <p class="project-desc">{p.data.description}</p>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <p class="section-heading">I've written</p>
-                  <ul class="post-list">
-                    {recentPosts.map(p => (
-                      <li class="post-item">
-                        <time datetime={p.data.date.toISOString()}>
-                          {p.data.date.toLocaleDateString('en-AU', { year: 'numeric', month: 'short' })}
-                        </time>
-                        <span>{p.data.title}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          </details>
-        );
-      })}
-    </div>
-  </main>
+  <div id="card-stack" hidden></div>
 </Base>
 
 <script>
-  // Exclusive accordion: close siblings when a panel opens
-  const panels = document.querySelectorAll<HTMLDetailsElement>('.accordion-panel');
-  panels.forEach(panel => {
+  const homepage = document.getElementById('homepage')!;
+  const cardStack = document.getElementById('card-stack')!;
+
+  function showStack() {
+    homepage.hidden = true;
+    cardStack.hidden = false;
+  }
+
+  function showHomepage() {
+    cardStack.replaceChildren();
+    cardStack.hidden = true;
+    homepage.hidden = false;
+  }
+
+  function collapseCard(card: Element) {
+    card.classList.add('stack-card--collapsed');
+    card.classList.remove('stack-card--active');
+  }
+
+  function expandCard(card: Element) {
+    card.classList.remove('stack-card--collapsed');
+    card.classList.add('stack-card--active');
+  }
+
+  async function fetchCard(url: string): Promise<Element | null> {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = (await res.text()).trim();
+    return tmp.firstElementChild;
+  }
+
+  async function pushCard(url: string, sourceUid?: string) {
+    // If entering the stack from the accordion, prepend the source panel as a collapsed card
+    if (sourceUid && cardStack.children.length === 0) {
+      const sourceCard = await fetchCard(`/card/${sourceUid}`);
+      if (sourceCard) {
+        collapseCard(sourceCard);
+        cardStack.appendChild(sourceCard);
+      }
+    }
+
+    // Collapse all currently active cards
+    cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
+
+    const card = await fetchCard(url);
+    if (!card) return;
+
+    expandCard(card);
+    cardStack.appendChild(card);
+    showStack();
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // All stack interactions via a single delegated listener
+  cardStack.addEventListener('click', e => {
+    const target = e.target as Element;
+
+    // Close button on the active card
+    const closeBtn = target.closest('.stack-card-close');
+    if (closeBtn) {
+      const card = closeBtn.closest('.stack-card')!;
+      const prev = card.previousElementSibling;
+      card.remove();
+      if (cardStack.children.length === 0) {
+        showHomepage();
+      } else if (prev) {
+        expandCard(prev);
+      }
+      return;
+    }
+
+    // Card listing item → push that card
+    const listItem = target.closest<HTMLElement>('[data-push-card]');
+    if (listItem) {
+      pushCard(`/card/${listItem.dataset.pushCard}`);
+      return;
+    }
+
+    // Collapsed card header → navigate back to it
+    const collapsedCard = target.closest('.stack-card--collapsed');
+    if (collapsedCard) {
+      while (collapsedCard.nextElementSibling) {
+        collapsedCard.nextElementSibling.remove();
+      }
+      expandCard(collapsedCard);
+      return;
+    }
+  });
+
+  // tag: links — global, works in accordion and stack cards
+  document.addEventListener('click', e => {
+    const link = (e.target as Element).closest<HTMLAnchorElement>('a[href^="tag:"]');
+    if (!link) return;
+    e.preventDefault();
+    const slug = link.getAttribute('href')!.slice(4);
+    const sourceUid = link.closest<HTMLElement>('.accordion-panel')?.dataset.cardUid;
+    pushCard(`/tag/${slug}`, sourceUid);
+  });
+
+  // Exclusive accordion
+  const accordionPanels = document.querySelectorAll<HTMLDetailsElement>('.accordion-panel');
+  accordionPanels.forEach(panel => {
     panel.addEventListener('toggle', () => {
       if (panel.open) {
-        panels.forEach(other => { if (other !== panel) other.open = false; });
+        accordionPanels.forEach(other => { if (other !== panel) other.open = false; });
       }
     });
   });

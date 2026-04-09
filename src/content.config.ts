@@ -30,6 +30,7 @@ const posts = defineCollection({
     date: z.coerce.date(),
     description: z.string().optional(),
     tags: z.array(z.string()).default([]),
+    renderer: z.string().optional(),
     // image: URL or relative path
     image: z.string().optional(),
     // canonical_url: original URL when post was cross-posted from Medium etc.
@@ -52,6 +53,7 @@ const projects = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
+    renderer: z.string().optional(),
     // cvDescription: longer description for the CV page
     cvDescription: z.string().optional(),
     status: z.enum(['past', 'current', 'future']),
@@ -133,6 +135,7 @@ const cards = defineCollection({
     order: z.number().optional(),
     // panel: marks this card as an accordion entry point with this label
     panel: z.string().optional(),
+    renderer: z.string().optional(),
   }),
 });
 
@@ -168,6 +171,27 @@ const tags = defineCollection({
   }),
 });
 
+// ─── Puzzles ──────────────────────────────────────────────────────────────────
+//
+// Logic puzzles and sudoku variants published on logic-masters.de
+
+const puzzles = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/puzzles' }),
+  schema: z.object({
+    title: z.string(),
+    date: z.coerce.date(),
+    // url: canonical Logic Masters Deutschland page
+    url: z.string().url(),
+    // sudokupad_url: direct link to play the puzzle in SudokuPad
+    sudokupad_url: z.string().url().optional(),
+    // image: preview image served from Logic Masters
+    image: z.string().url().optional(),
+    difficulty: z.string(),
+    puzzle_type: z.string().optional(),
+    tags: z.array(z.string()).default(['puzzles']),
+  }),
+});
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 
-export const collections = { posts, projects, stories, work, tags, cards };
+export const collections = { posts, projects, stories, work, tags, cards, puzzles };

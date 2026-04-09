@@ -1,0 +1,9 @@
+name: Puzzles
+aliases:
+  - puzzle
+  - sudoku
+related:
+  - game-design
+description: >
+  Puzzle design and construction — logic puzzles, sudoku variants, and the craft of making something satisfyingly solvable.
+featured: []
