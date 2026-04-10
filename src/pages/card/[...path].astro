@@ -1,14 +1,24 @@
 ---
-export const partial = true;
-
 import { getCollection, render } from 'astro:content';
 import { getAllCards } from '../../lib/cards';
+import Base from '../../layouts/Base.astro';
 import CardHeader from '../../components/CardHeader.astro';
+import StackNav from '../../components/StackNav.astro';
+import GenericRenderer from '../../components/card-renderers/GenericRenderer.astro';
+import TagRenderer from '../../components/card-renderers/TagRenderer.astro';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
-  return cards.map(c => ({ params: { path: c.uid } }));
+  const tags = await getCollection('tag');
+  return [
+    ...cards.map(c => ({ params: { path: c.uid } })),
+    ...tags.map(t => ({ params: { path: `tag/${t.id}` } })),
+  ];
 }
+
+const COLLECTION_RENDERERS: Record<string, any> = {
+  tag: TagRenderer,
+};
 
 const { path } = Astro.params;
 const parts = path!.split('/');
@@ -19,17 +29,25 @@ const entries = await getCollection(collection as any);
 const entry = entries.find((e: any) => e.id === id);
 const rendered = entry ? await render(entry as any) : null;
 const Content = rendered?.Content;
+
+const rendererName: string | undefined = (entry?.data as any)?.renderer;
+const Renderer =
+  (rendererName ? COLLECTION_RENDERERS[rendererName] : null) ??
+  COLLECTION_RENDERERS[collection] ??
+  GenericRenderer;
 ---
 
-<div class="stack-card" data-uid={path}>
-  <CardHeader title={entry?.data.title ?? ''} titleSuffix={entry?.data.titleSuffix}>
-    <button class="stack-card-close" aria-label="Close">×</button>
-  </CardHeader>
-  <div class="stack-card-body">
-    {Content
-      ? <Content />
-      : entry?.data.description
-        ? <p>{entry.data.description}</p>
-        : null}
+<Base title={entry?.data.title}>
+  <div id="homepage" hidden></div>
+  <div id="card-stack">
+    <div class="stack-card stack-card--active" data-uid={path}>
+      <CardHeader title={entry?.data.title ?? ''} titleSuffix={(entry?.data as any)?.titleSuffix}>
+        <button class="stack-card-close" aria-label="Close">×</button>
+      </CardHeader>
+      <div class="stack-card-body">
+        <Renderer {entry} {Content} />
+      </div>
+    </div>
   </div>
-</div>
+  <StackNav />
+</Base>

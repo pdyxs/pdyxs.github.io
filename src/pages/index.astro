@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import CardHeader from '../components/CardHeader.astro';
+import StackNav from '../components/StackNav.astro';
 
 const panels = (await getCollection('cards', c => c.data.panel === true))
   .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
@@ -40,143 +41,8 @@ const rendered = Object.fromEntries(
   </div>
 
   <div id="card-stack" hidden></div>
+  <StackNav />
 </Base>
-
-<script>
-  const homepage = document.getElementById('homepage')!;
-  const cardStack = document.getElementById('card-stack')!;
-
-  function showStack() {
-    homepage.hidden = true;
-    cardStack.hidden = false;
-  }
-
-  function showHomepage() {
-    cardStack.replaceChildren();
-    cardStack.hidden = true;
-    homepage.hidden = false;
-  }
-
-  function collapseCard(card: Element) {
-    card.classList.add('stack-card--collapsed');
-    card.classList.remove('stack-card--active');
-  }
-
-  function expandCard(card: Element) {
-    card.classList.remove('stack-card--collapsed');
-    card.classList.add('stack-card--active');
-  }
-
-  async function fetchCard(url: string): Promise<Element | null> {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const tmp = document.createElement('div');
-    tmp.innerHTML = (await res.text()).trim();
-    return tmp.firstElementChild;
-  }
-
-  function urlToUid(url: string): string {
-    if (url.startsWith('/card/')) return url.slice('/card/'.length);
-    if (url.startsWith('/tag/')) return 'tag:' + url.slice('/tag/'.length);
-    return url;
-  }
-
-  async function pushCard(url: string, sourceUid?: string) {
-    // If entering the stack from the accordion, prepend the source panel as a collapsed card
-    if (sourceUid && cardStack.children.length === 0) {
-      const sourceCard = await fetchCard(`/card/${sourceUid}`);
-      if (sourceCard) {
-        collapseCard(sourceCard);
-        cardStack.appendChild(sourceCard);
-      }
-    }
-
-    // If the target is already in the stack, navigate to it without pruning
-    const uid = urlToUid(url);
-    const existingCard = cardStack.querySelector(`[data-uid="${uid}"]`);
-    if (existingCard) {
-      cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
-      expandCard(existingCard);
-      showStack();
-      existingCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      return;
-    }
-
-    // New card: prune everything after the active card, then push
-    const activeCard = cardStack.querySelector('.stack-card--active');
-    if (activeCard) {
-      while (activeCard.nextElementSibling) {
-        activeCard.nextElementSibling.remove();
-      }
-      collapseCard(activeCard);
-    } else {
-      cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
-    }
-
-    const card = await fetchCard(url);
-    if (!card) return;
-
-    expandCard(card);
-    cardStack.appendChild(card);
-    showStack();
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-
-  // All stack interactions via a single delegated listener
-  cardStack.addEventListener('click', e => {
-    const target = e.target as Element;
-
-    // Close button on the active card
-    const closeBtn = target.closest('.stack-card-close');
-    if (closeBtn) {
-      const card = closeBtn.closest('.stack-card')!;
-      const prev = card.previousElementSibling;
-      card.remove();
-      if (cardStack.children.length === 0) {
-        showHomepage();
-      } else if (prev) {
-        expandCard(prev);
-      }
-      return;
-    }
-
-    // Card listing item → push that card
-    const listItem = target.closest<HTMLElement>('[data-push-card]');
-    if (listItem) {
-      pushCard(`/card/${listItem.dataset.pushCard}`);
-      return;
-    }
-
-    // Collapsed card header → activate it, keeping the rest of the stack intact
-    const collapsedCard = target.closest('.stack-card--collapsed');
-    if (collapsedCard) {
-      cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
-      expandCard(collapsedCard);
-      collapsedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      return;
-    }
-  });
-
-  // tag: links — global, works in accordion and stack cards
-  document.addEventListener('click', e => {
-    const link = (e.target as Element).closest<HTMLAnchorElement>('a[href^="tag:"]');
-    if (!link) return;
-    e.preventDefault();
-    const slug = link.getAttribute('href')!.slice(4);
-    const sourceUid = link.closest<HTMLElement>('.accordion-panel')?.dataset.cardUid;
-    pushCard(`/tag/${slug}`, sourceUid);
-  });
-
-  // Exclusive accordion
-  const accordionPanels = document.querySelectorAll<HTMLDetailsElement>('.accordion-panel');
-  accordionPanels.forEach(panel => {
-    panel.addEventListener('toggle', () => {
-      if (panel.open) {
-        accordionPanels.forEach(other => { if (other !== panel) other.open = false; });
-      }
-    });
-  });
-</script>
 
 <style>
   .accordion {

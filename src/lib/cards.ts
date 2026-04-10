@@ -8,6 +8,7 @@ const COLLECTION_DEFAULTS: Record<string, string> = {
   puzzles: 'puzzle',
   stories: 'story',
   work: 'work',
+  tag: 'tag',
 };
 
 export type CardMeta = {
@@ -26,11 +27,12 @@ function resolveRenderer(collection: string, data: { renderer?: string }): strin
 }
 
 export async function getAllCards(): Promise<CardMeta[]> {
-  const [cards, posts, projects, puzzles] = await Promise.all([
+  const [cards, posts, projects, puzzles, tags] = await Promise.all([
     getCollection('cards'),
     getCollection('posts'),
     getCollection('projects'),
     getCollection('puzzles'),
+    getCollection('tag'),
   ]);
 
   return [
@@ -71,6 +73,15 @@ export async function getAllCards(): Promise<CardMeta[]> {
       date: p.data.date,
       tags: p.data.tags,
       renderer: resolveRenderer('puzzles', p.data),
+    })),
+    ...tags.map(t => ({
+      uid: `tag/${t.id}`,
+      collection: 'tag',
+      id: t.id,
+      title: t.data.name,
+      description: t.data.description,
+      tags: [],
+      renderer: resolveRenderer('tag', t.data),
     })),
   ];
 }

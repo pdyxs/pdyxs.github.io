@@ -1,0 +1,16 @@
+---
+import type { RenderResult } from 'astro:content';
+
+interface Props {
+  entry: { data: { description?: string } } | undefined;
+  Content: RenderResult['Content'] | undefined;
+}
+
+const { entry, Content } = Astro.props;
+---
+
+{Content
+  ? <Content />
+  : entry?.data.description
+    ? <p>{entry.data.description}</p>
+    : null}

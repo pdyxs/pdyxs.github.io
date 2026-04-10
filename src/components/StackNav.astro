@@ -1,0 +1,232 @@
+---
+// StackNav: card stack navigation logic.
+// Include this component on any page that hosts a #card-stack element.
+// On index.astro (has #homepage): toggles between accordion and stack.
+// On full-page card routes (no #homepage): closing the last card goes to /.
+---
+
+<script>
+  const homepage = document.getElementById('homepage');
+  const cardStack = document.getElementById('card-stack')!;
+
+  function showStack() {
+    if (homepage) homepage.hidden = true;
+    cardStack.hidden = false;
+  }
+
+  function showHomepage() {
+    cardStack.replaceChildren();
+    cardStack.hidden = true;
+    if (homepage) {
+      homepage.hidden = false;
+    } else {
+      window.location.href = '/';
+    }
+  }
+
+  function collapseCard(card: Element) {
+    card.classList.add('stack-card--collapsed');
+    card.classList.remove('stack-card--active');
+  }
+
+  function expandCard(card: Element) {
+    card.classList.remove('stack-card--collapsed');
+    card.classList.add('stack-card--active');
+  }
+
+  async function fetchCard(url: string): Promise<Element | null> {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = (await res.text()).trim();
+    return tmp.querySelector('.stack-card');
+  }
+
+  function uidToFetchUrl(uid: string): string {
+    return `/card/${uid}`;
+  }
+
+  function urlToUid(url: string): string {
+    if (url.startsWith('/card/')) return url.slice('/card/'.length);
+    return url;
+  }
+
+  // Build the URL for the current stack state and push it into history.
+  function updateUrl() {
+    const cards = Array.from(cardStack.children);
+    if (cards.length === 0) {
+      history.pushState(null, '', '/');
+      return;
+    }
+    const activeCard = cardStack.querySelector('.stack-card--active') ?? cards[cards.length - 1];
+    const activeUid = (activeCard as HTMLElement).dataset.uid!;
+    const activeIndex = cards.indexOf(activeCard);
+    const fromUids = cards.slice(0, activeIndex).map(c => (c as HTMLElement).dataset.uid!);
+    const toUids = cards.slice(activeIndex + 1).map(c => (c as HTMLElement).dataset.uid!);
+
+    const basePath = `/card/${activeUid}`;
+    const params = new URLSearchParams();
+    if (fromUids.length) params.set('from', fromUids.join(','));
+    if (toUids.length) params.set('to', toUids.join(','));
+    const query = params.toString();
+    history.pushState(null, '', query ? `${basePath}?${query}` : basePath);
+  }
+
+  async function pushCard(url: string, sourceUid?: string) {
+    // If entering the stack from the accordion, prepend the source panel as a collapsed card
+    if (sourceUid && cardStack.children.length === 0) {
+      const sourceCard = await fetchCard(uidToFetchUrl(sourceUid));
+      if (sourceCard) {
+        collapseCard(sourceCard);
+        cardStack.appendChild(sourceCard);
+      }
+    }
+
+    // If the target is already in the stack, navigate to it without pruning
+    const uid = urlToUid(url);
+    const existingCard = cardStack.querySelector(`[data-uid="${uid}"]`);
+    if (existingCard) {
+      cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
+      expandCard(existingCard);
+      showStack();
+      existingCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      updateUrl();
+      return;
+    }
+
+    // New card: prune everything after the active card, then push
+    const activeCard = cardStack.querySelector('.stack-card--active');
+    if (activeCard) {
+      while (activeCard.nextElementSibling) {
+        activeCard.nextElementSibling.remove();
+      }
+      collapseCard(activeCard);
+    } else {
+      cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
+    }
+
+    const card = await fetchCard(url);
+    if (!card) return;
+
+    expandCard(card);
+    cardStack.appendChild(card);
+    showStack();
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    updateUrl();
+  }
+
+  // Reconstruct the stack from ?from= and ?to= query params.
+  async function initFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const fromUids = params.get('from')?.split(',').filter(Boolean) ?? [];
+    const toUids = params.get('to')?.split(',').filter(Boolean) ?? [];
+    if (fromUids.length === 0 && toUids.length === 0) return;
+
+    // Insert 'from' cards as collapsed before the active card
+    const activeCard = cardStack.querySelector('.stack-card--active');
+    for (const uid of fromUids) {
+      const card = await fetchCard(uidToFetchUrl(uid));
+      if (card) {
+        collapseCard(card);
+        if (activeCard) {
+          cardStack.insertBefore(card, activeCard);
+        } else {
+          cardStack.appendChild(card);
+        }
+      }
+    }
+
+    // Insert 'to' cards as collapsed after the active card
+    for (const uid of toUids) {
+      const card = await fetchCard(uidToFetchUrl(uid));
+      if (card) {
+        collapseCard(card);
+        cardStack.appendChild(card);
+      }
+    }
+  }
+
+  // All stack interactions via a single delegated listener
+  cardStack.addEventListener('click', e => {
+    const target = e.target as Element;
+
+    // Close button on the active card
+    const closeBtn = target.closest('.stack-card-close');
+    if (closeBtn) {
+      const card = closeBtn.closest('.stack-card')!;
+      const prev = card.previousElementSibling;
+      card.remove();
+      if (cardStack.children.length === 0) {
+        showHomepage();
+        history.pushState(null, '', '/');
+      } else if (prev) {
+        expandCard(prev);
+        updateUrl();
+      }
+      return;
+    }
+
+    // Card listing item → push that card
+    const listItem = target.closest<HTMLElement>('[data-push-card]');
+    if (listItem) {
+      pushCard(uidToFetchUrl(listItem.dataset.pushCard!));
+      return;
+    }
+
+    // Collapsed card header → activate it, keeping the rest of the stack intact
+    const collapsedCard = target.closest('.stack-card--collapsed');
+    if (collapsedCard) {
+      cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
+      expandCard(collapsedCard);
+      collapsedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      updateUrl();
+      return;
+    }
+  });
+
+  // tag: links — global, works in accordion and stack cards
+  document.addEventListener('click', e => {
+    const link = (e.target as Element).closest<HTMLAnchorElement>('a[href^="tag:"]');
+    if (!link) return;
+    e.preventDefault();
+    const slug = link.getAttribute('href')!.slice(4);
+    const sourceUid = link.closest<HTMLElement>('.accordion-panel')?.dataset.cardUid;
+    pushCard(`/card/tag/${slug}`, sourceUid);
+  });
+
+  // Exclusive accordion
+  const accordionPanels = document.querySelectorAll<HTMLDetailsElement>('.accordion-panel');
+  accordionPanels.forEach(panel => {
+    panel.addEventListener('toggle', () => {
+      if (panel.open) {
+        accordionPanels.forEach(other => { if (other !== panel) other.open = false; });
+      }
+    });
+  });
+
+  // Handle browser back/forward
+  window.addEventListener('popstate', async () => {
+    cardStack.replaceChildren();
+    const path = window.location.pathname;
+    if (path === '/' || path === '') {
+      showHomepage();
+      return;
+    }
+    if (path.startsWith('/card/')) {
+      const activeUid = path.slice('/card/'.length);
+      const activeCard = await fetchCard(uidToFetchUrl(activeUid));
+      if (activeCard) {
+        expandCard(activeCard);
+        cardStack.appendChild(activeCard);
+        showStack();
+        await initFromUrl();
+      }
+    }
+  });
+
+  // On load: if the stack has a pre-rendered active card, hydrate from/to context
+  if (cardStack.querySelector('.stack-card--active')) {
+    showStack();
+    initFromUrl();
+  }
+</script>

@@ -1,58 +1,13 @@
 ---
-export const partial = true;
-
 import { getCollection } from 'astro:content';
-import { getAllCards } from '../../lib/cards';
-import CardHeader from '../../components/CardHeader.astro';
 
 export async function getStaticPaths() {
   const tags = await getCollection('tag');
   return tags.map(t => ({
     params: { slug: t.id },
-    props: { tag: t },
   }));
 }
 
-const { tag } = Astro.props;
-const allCards = await getAllCards();
-
-// Match cards by canonical slug, display name, or any alias
-const canonicals = new Set([
-  tag.id,
-  tag.data.name.toLowerCase(),
-  ...tag.data.aliases.map((a: string) => a.toLowerCase()),
-]);
-
-const matching = allCards
-  .filter(c => c.tags.some(t => canonicals.has(t.toLowerCase())))
-  .sort((a, b) => {
-    if (!a.date && !b.date) return 0;
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return b.date.getTime() - a.date.getTime();
-  });
+const { slug } = Astro.params;
+return Astro.redirect(`/card/tag/${slug}`, 301);
 ---
-
-<div class="stack-card" data-uid={`tag:${tag.id}`}>
-  <CardHeader title={tag.data.name}>
-    <button class="stack-card-close" aria-label="Close">×</button>
-  </CardHeader>
-  <div class="stack-card-body">
-    {tag.data.description && <p class="tag-description">{tag.data.description}</p>}
-    {matching.length > 0 ? (
-      <ul class="card-listing">
-        {matching.map(card => (
-          <li class="card-listing-item" data-push-card={card.uid}>
-            <div class="card-listing-header">
-              <p class="card-listing-title">{card.title}</p>
-              {card.date && <time class="card-listing-date" datetime={card.date.toISOString()}>{card.date.toLocaleDateString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' })}</time>}
-            </div>
-            {card.description && <p class="card-listing-desc">{card.description}</p>}
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <p>No items tagged with this yet.</p>
-    )}
-  </div>
-</div>
