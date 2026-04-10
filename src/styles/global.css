@@ -8,8 +8,9 @@
   --color-text:       #000000;
   --color-text-muted: #555555;
 
-  --font-body:    'Georgia', serif;
-  --font-ui:      system-ui, -apple-system, sans-serif;
+  --font-body:    'Montserrat', system-ui, sans-serif;
+  --font-ui:      'Montserrat', system-ui, sans-serif;
+  --font-heading: 'Saira Stencil', system-ui, sans-serif;
 
   --font-size-base: 18px;
   --radius:       0px;          /* sharp corners suit e-ink */
@@ -42,8 +43,8 @@ body {
 }
 
 h1, h2, h3, h4 {
-  font-family: var(--font-ui);
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-weight: 400;
   line-height: 1.2;
   margin: 0 0 var(--space-sm);
 }
@@ -92,67 +93,6 @@ strong { font-weight: 700; }
   padding: var(--space-md) var(--space-lg);
 }
 
-/* ── Accordion (details/summary) ───────────────────────────────── */
-
-.accordion {
-  display: flex;
-  flex-direction: column;
-  border: var(--border-width) solid var(--color-border);
-}
-
-.accordion-panel {
-  border-bottom: var(--border-width) solid var(--color-border);
-}
-
-.accordion-panel:last-child {
-  border-bottom: none;
-}
-
-.accordion-panel summary {
-  list-style: none;
-  cursor: pointer;
-  padding: var(--space-md) var(--space-lg);
-  font-family: var(--font-ui);
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text);
-  background: var(--color-surface);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  user-select: none;
-}
-
-.accordion-panel summary::-webkit-details-marker { display: none; }
-
-.accordion-panel summary::after {
-  content: '+';
-  font-size: 1.5rem;
-  font-weight: 300;
-  font-family: var(--font-ui);
-  flex-shrink: 0;
-  line-height: 1;
-  transition: transform 0.15s;
-}
-
-.accordion-panel[open] > summary {
-  border-bottom: var(--border-width) solid var(--color-border);
-}
-
-.accordion-panel[open] > summary::after {
-  transform: rotate(45deg);
-}
-
-.accordion-panel summary:hover {
-  background: #f0f0f0;
-}
-
-.accordion-body {
-  padding: var(--space-lg);
-}
 
 /* ── Project list ──────────────────────────────────────────────── */
 
@@ -236,10 +176,9 @@ strong { font-weight: 700; }
 /* ── Section heading within accordion body ─────────────────────── */
 
 .section-heading {
-  font-family: var(--font-ui);
+  font-family: var(--font-heading);
   font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
+  font-weight: 400;
   letter-spacing: 0.1em;
   color: var(--color-text);
   margin: 0 0 var(--space-md);
@@ -261,9 +200,9 @@ strong { font-weight: 700; }
 }
 
 .site-title {
-  font-family: var(--font-ui);
+  font-family: var(--font-heading);
   font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 700;
+  font-weight: 400;
   color: var(--color-text);
   margin: 0 0 var(--space-xs);
 }
@@ -284,28 +223,20 @@ strong { font-weight: 700; }
   padding: var(--space-lg) var(--space-md);
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 0;
 }
 
 .stack-card {
   border: var(--border-width) solid var(--color-border);
 }
 
-.stack-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: var(--border-width) solid var(--color-border);
+.stack-card + .stack-card {
+  border-top: none;
 }
 
-.stack-card-title {
-  font-family: var(--font-ui);
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin: 0;
+
+.stack-card > .card-header {
+  border-bottom: var(--border-width) solid var(--color-border);
 }
 
 .stack-card-close {
@@ -329,12 +260,12 @@ strong { font-weight: 700; }
 .stack-card--collapsed .stack-card-body { display: none; }
 .stack-card--collapsed .stack-card-close { display: none; }
 
-.stack-card--collapsed .stack-card-header {
+.stack-card--collapsed .card-header {
   border-bottom: none;
   cursor: pointer;
 }
 
-.stack-card--collapsed .stack-card-header::after {
+.stack-card--collapsed .card-header::after {
   content: '+';
   font-size: 1.5rem;
   font-weight: 300;
@@ -342,7 +273,7 @@ strong { font-weight: 700; }
   line-height: 1;
 }
 
-.stack-card--collapsed:hover .stack-card-header { background: #f0f0f0; }
+.stack-card--collapsed:hover .card-header { background: #f0f0f0; }
 
 /* ── Tag listing (inside a stack card) ──────────────────────────── */
 
@@ -376,8 +307,8 @@ strong { font-weight: 700; }
 }
 
 .card-listing-title {
-  font-family: var(--font-ui);
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-weight: 400;
   font-size: 0.95rem;
   margin-bottom: var(--space-xs);
 }

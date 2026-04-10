@@ -1,6 +1,7 @@
 ---
 title: What
-panel: What I do
+panel: true
+titleSuffix: " I do"
 order: 2
 description: Projects and writing — games, education, interactive art, science communication
 tags:

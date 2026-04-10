@@ -1,6 +1,7 @@
 ---
 title: Who
-panel: Who I am
+panel: true
+titleSuffix: " I am"
 order: 1
 description: Paul Sztajer — Software Engineer and Creative Technologist
 tags:

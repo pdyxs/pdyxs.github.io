@@ -1,0 +1,33 @@
+---
+interface Props {
+  title: string;
+  titleSuffix?: string;
+}
+const { title, titleSuffix } = Astro.props;
+---
+<div class="card-header">
+  <span class="card-header-title"><b>{title}</b>{titleSuffix}</span>
+  <slot />
+</div>
+
+<style>
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--color-text);
+    background: var(--color-surface);
+    user-select: none;
+  }
+
+  :global(.stack-card--collapsed) .card-header {
+    font-size: 0.75em;
+    padding: var(--space-xs) var(--space-lg);
+  }
+</style>

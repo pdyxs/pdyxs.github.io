@@ -1,6 +1,7 @@
 ---
 title: When
-panel: When I've done it
+panel: true
+titleSuffix: " I've done it"
 order: 4
 description: A timeline of work and activity
 tags:

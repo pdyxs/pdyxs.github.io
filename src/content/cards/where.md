@@ -1,6 +1,7 @@
 ---
 title: Where
-panel: Where to find me
+panel: true
+titleSuffix: " to find me"
 order: 3
 description: How to find and contact Paul Sztajer
 tags:

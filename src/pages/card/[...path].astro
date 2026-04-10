@@ -3,6 +3,7 @@ export const partial = true;
 
 import { getCollection, render } from 'astro:content';
 import { getAllCards } from '../../lib/cards';
+import CardHeader from '../../components/CardHeader.astro';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
@@ -21,10 +22,9 @@ const Content = rendered?.Content;
 ---
 
 <div class="stack-card" data-uid={path}>
-  <div class="stack-card-header">
-    <h2 class="stack-card-title">{entry?.data.title}</h2>
+  <CardHeader title={entry?.data.title ?? ''} titleSuffix={entry?.data.titleSuffix}>
     <button class="stack-card-close" aria-label="Close">×</button>
-  </div>
+  </CardHeader>
   <div class="stack-card-body">
     {Content
       ? <Content />

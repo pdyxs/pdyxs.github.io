@@ -3,6 +3,7 @@ export const partial = true;
 
 import { getCollection } from 'astro:content';
 import { getAllCards } from '../../lib/cards';
+import CardHeader from '../../components/CardHeader.astro';
 
 export async function getStaticPaths() {
   const tags = await getCollection('tags');
@@ -33,10 +34,9 @@ const matching = allCards
 ---
 
 <div class="stack-card" data-uid={`tag:${tag.id}`}>
-  <div class="stack-card-header">
-    <h2 class="stack-card-title">{tag.data.name}</h2>
+  <CardHeader title={tag.data.name}>
     <button class="stack-card-close" aria-label="Close">×</button>
-  </div>
+  </CardHeader>
   <div class="stack-card-body">
     {tag.data.description && <p class="tag-description">{tag.data.description}</p>}
     {matching.length > 0 ? (

@@ -133,8 +133,10 @@ const cards = defineCollection({
     tags: z.array(z.string()).default([]),
     // order: position in the accordion (lower = first)
     order: z.number().optional(),
-    // panel: marks this card as an accordion entry point with this label
-    panel: z.string().optional(),
+    // panel: marks this card as a homepage accordion entry point
+    panel: z.boolean().optional(),
+    // titleSuffix: non-bold text appended after the title in headings (e.g. " I do" → "**What** I do")
+    titleSuffix: z.string().optional(),
     renderer: z.string().optional(),
   }),
 });

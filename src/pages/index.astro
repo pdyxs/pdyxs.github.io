@@ -1,8 +1,9 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import CardHeader from '../components/CardHeader.astro';
 
-const panels = (await getCollection('cards', c => c.data.panel != null))
+const panels = (await getCollection('cards', c => c.data.panel === true))
   .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
 
 const rendered = Object.fromEntries(
@@ -24,8 +25,9 @@ const rendered = Object.fromEntries(
           return (
             <details class="accordion-panel" data-card-uid={`cards/${panel.id}`} open={i === 0 || undefined}>
               <summary>
-                <b>{panel.data.panel!.split(' ')[0]}</b>
-                {' ' + panel.data.panel!.split(' ').slice(1).join(' ')}
+                <CardHeader title={panel.data.title} titleSuffix={panel.data.titleSuffix}>
+                  <span class="accordion-indicator" aria-hidden="true">+</span>
+                </CardHeader>
               </summary>
               <div class="accordion-body">
                 <Content />
@@ -73,6 +75,12 @@ const rendered = Object.fromEntries(
     return tmp.firstElementChild;
   }
 
+  function urlToUid(url: string): string {
+    if (url.startsWith('/card/')) return url.slice('/card/'.length);
+    if (url.startsWith('/tag/')) return 'tag:' + url.slice('/tag/'.length);
+    return url;
+  }
+
   async function pushCard(url: string, sourceUid?: string) {
     // If entering the stack from the accordion, prepend the source panel as a collapsed card
     if (sourceUid && cardStack.children.length === 0) {
@@ -83,8 +91,27 @@ const rendered = Object.fromEntries(
       }
     }
 
-    // Collapse all currently active cards
-    cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
+    // If the target is already in the stack, navigate to it without pruning
+    const uid = urlToUid(url);
+    const existingCard = cardStack.querySelector(`[data-uid="${uid}"]`);
+    if (existingCard) {
+      cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
+      expandCard(existingCard);
+      showStack();
+      existingCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+
+    // New card: prune everything after the active card, then push
+    const activeCard = cardStack.querySelector('.stack-card--active');
+    if (activeCard) {
+      while (activeCard.nextElementSibling) {
+        activeCard.nextElementSibling.remove();
+      }
+      collapseCard(activeCard);
+    } else {
+      cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
+    }
 
     const card = await fetchCard(url);
     if (!card) return;
@@ -120,13 +147,12 @@ const rendered = Object.fromEntries(
       return;
     }
 
-    // Collapsed card header → navigate back to it
+    // Collapsed card header → activate it, keeping the rest of the stack intact
     const collapsedCard = target.closest('.stack-card--collapsed');
     if (collapsedCard) {
-      while (collapsedCard.nextElementSibling) {
-        collapsedCard.nextElementSibling.remove();
-      }
+      cardStack.querySelectorAll('.stack-card--active').forEach(collapseCard);
       expandCard(collapsedCard);
+      collapsedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
   });
@@ -151,3 +177,52 @@ const rendered = Object.fromEntries(
     });
   });
 </script>
+
+<style>
+  .accordion {
+    display: flex;
+    flex-direction: column;
+    border: var(--border-width) solid var(--color-border);
+  }
+
+  .accordion-panel {
+    border-bottom: var(--border-width) solid var(--color-border);
+  }
+
+  .accordion-panel:last-child {
+    border-bottom: none;
+  }
+
+  .accordion-panel summary {
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .accordion-panel summary::-webkit-details-marker { display: none; }
+
+  .accordion-panel[open] > summary :global(.card-header) {
+    border-bottom: var(--border-width) solid var(--color-border);
+  }
+
+  .accordion-panel summary:hover :global(.card-header) {
+    background: #f0f0f0;
+  }
+
+  .accordion-indicator {
+    font-size: 1.5rem;
+    font-weight: 300;
+    font-family: var(--font-ui);
+    flex-shrink: 0;
+    line-height: 1;
+    transition: transform 0.15s;
+    display: inline-block;
+  }
+
+  .accordion-panel[open] .accordion-indicator {
+    transform: rotate(45deg);
+  }
+
+  .accordion-body {
+    padding: var(--space-lg);
+  }
+</style>

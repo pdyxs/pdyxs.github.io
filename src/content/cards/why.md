@@ -1,6 +1,7 @@
 ---
 title: Why
-panel: Why is this like this
+panel: true
+titleSuffix: " is this like this"
 order: 5
 description: Why this site is designed the way it is
 tags:
