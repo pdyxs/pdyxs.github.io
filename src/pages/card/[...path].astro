@@ -37,13 +37,15 @@ const Renderer =
   (rendererName ? COLLECTION_RENDERERS[rendererName] : null) ??
   COLLECTION_RENDERERS[collection] ??
   GenericRenderer;
+
+const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name ?? '';
 ---
 
-<Base title={entry?.data.title}>
+<Base title={title}>
   <div id="homepage" hidden></div>
   <div id="card-stack">
     <div class="stack-card stack-card--active" data-uid={path}>
-      <CardHeader title={entry?.data.title ?? ''} titleSuffix={(entry?.data as any)?.titleSuffix}>
+      <CardHeader {title} titleSuffix={(entry?.data as any)?.titleSuffix}>
         <button class="stack-card-close" aria-label="Close">×</button>
       </CardHeader>
       <div class="stack-card-body">
