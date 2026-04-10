@@ -6,6 +6,7 @@ import CardHeader from '../../components/CardHeader.astro';
 import StackNav from '../../components/StackNav.astro';
 import GenericRenderer from '../../components/card-renderers/GenericRenderer.astro';
 import TagRenderer from '../../components/card-renderers/TagRenderer.astro';
+import PuzzleRenderer from '../../components/card-renderers/PuzzleRenderer.astro';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
@@ -18,6 +19,7 @@ export async function getStaticPaths() {
 
 const COLLECTION_RENDERERS: Record<string, any> = {
   tag: TagRenderer,
+  puzzles: PuzzleRenderer,
 };
 
 const { path } = Astro.params;

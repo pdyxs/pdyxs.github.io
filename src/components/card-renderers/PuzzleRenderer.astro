@@ -1,0 +1,40 @@
+---
+import type { RenderResult } from 'astro:content';
+
+interface Props {
+  entry: {
+    data: {
+      title: string;
+      image?: string;
+      puzzle_type?: string;
+      difficulty: string;
+      date: Date;
+      url: string;
+      sudokupad_url?: string;
+    };
+  } | undefined;
+  Content: RenderResult['Content'] | undefined;
+}
+
+const { entry, Content } = Astro.props;
+if (!entry) return;
+
+const { data } = entry;
+const playUrl = data.sudokupad_url ?? data.url;
+---
+
+{data.image && (
+  <img src={data.image} alt={`Preview of ${data.title}`} class="puzzle-image" />
+)}
+<dl class="puzzle-meta">
+  {data.puzzle_type && <><dt>Type</dt><dd>{data.puzzle_type}</dd></>}
+  <dt>Difficulty</dt><dd>{data.difficulty}</dd>
+  <dt>Published</dt><dd>{data.date.toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
+</dl>
+{Content && <Content />}
+<div class="puzzle-actions">
+  <a href={playUrl} target="_blank" rel="noopener noreferrer" class="puzzle-play-link">Play puzzle →</a>
+  {data.sudokupad_url && (
+    <a href={data.url} target="_blank" rel="noopener noreferrer" class="puzzle-lmd-link">Logic Masters page</a>
+  )}
+</div>
