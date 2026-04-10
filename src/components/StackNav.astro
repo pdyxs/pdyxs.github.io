@@ -156,12 +156,13 @@
       const card = closeBtn.closest('.stack-card')!;
       const prev = card.previousElementSibling;
       card.remove();
-      if (cardStack.children.length === 0) {
-        showHomepage();
-        history.pushState(null, '', '/');
-      } else if (prev) {
+      if (prev) {
         expandCard(prev);
         updateUrl();
+      } else {
+        cardStack.replaceChildren();
+        showHomepage();
+        history.pushState(null, '', '/');
       }
       return;
     }
