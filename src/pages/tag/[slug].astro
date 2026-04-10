@@ -6,7 +6,7 @@ import { getAllCards } from '../../lib/cards';
 import CardHeader from '../../components/CardHeader.astro';
 
 export async function getStaticPaths() {
-  const tags = await getCollection('tags');
+  const tags = await getCollection('tag');
   return tags.map(t => ({
     params: { slug: t.id },
     props: { tag: t },

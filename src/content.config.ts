@@ -141,7 +141,7 @@ const cards = defineCollection({
   }),
 });
 
-// ─── Tags ─────────────────────────────────────────────────────────────────────
+// ─── Tag ──────────────────────────────────────────────────────────────────────
 //
 // Tag metadata for the connective tissue of the card navigation model.
 // Each .yaml file's slug is the canonical tag identifier.
@@ -155,8 +155,8 @@ const cards = defineCollection({
 // script normalises all tag references to canonical slugs, but aliases
 // also provide a runtime fallback for any that slip through.
 
-const tags = defineCollection({
-  loader: glob({ pattern: '**/*.yaml', base: './src/content/tags' }),
+const tag = defineCollection({
+  loader: glob({ pattern: '**/*.yaml', base: './src/content/tag' }),
   schema: z.object({
     // canonical display name (slug is the file name, e.g. 'quantum-computing')
     name: z.string(),
@@ -196,4 +196,4 @@ const puzzles = defineCollection({
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 
-export const collections = { posts, projects, stories, work, tags, cards, puzzles };
+export const collections = { posts, projects, stories, work, tag, cards, puzzles };
