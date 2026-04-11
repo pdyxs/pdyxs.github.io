@@ -27,7 +27,7 @@
   function showHomepage() {
     cardStack.replaceChildren();
     cardStack.hidden = true;
-    if (homepage) {
+    if (homepage && homepage.children.length > 0) {
       homepage.hidden = false;
     } else {
       window.location.href = '/';
@@ -270,8 +270,10 @@
     }
   });
 
-  // On load: if the stack has a pre-rendered active card, hydrate from/to context
-  if (cardStack.querySelector('.stack-card--active')) {
+  // On load: if the stack has a pre-rendered active card, open its body and hydrate from/to context
+  const preRenderedActive = cardStack.querySelector('.stack-card--active');
+  if (preRenderedActive) {
+    preRenderedActive.querySelector<HTMLElement>('.body-wrapper')?.classList.add('open');
     showStack();
     initFromUrl();
   }
