@@ -1,8 +1,8 @@
 # Feature: Front Page Panel Links + Card Transition Animations
 
-**Status:** ARCHITECTURE
+**Status:** IN PROGRESS
 **Created:** 2026-04-11
-**Updated:** 2026-04-11
+**Updated:** 2026-04-11 (split approved)
 
 ## Context
 
@@ -85,11 +85,16 @@ flowchart LR
 
 - [ ] `src/components/StackNav.astro` (the `<script>` block)
   - Changes:
+    - [ ] Update top-of-file comment: "toggles between panel links and stack" (accordion removed)
     - [ ] Remove `sourceUid` parameter and the block that prepends a collapsed source card in `pushCard`
-    - [ ] In `pushCard(url)`: pre-fetch card; set `view-transition-name: panel-card-open` on both the clicked `.card-link` outer div and the fetched `.stack-card` outer div; call `startViewTransition`; after `vt.finished` clear the names and call `bodyWrapper.classList.add('open')`
-    - [ ] In close button handler: call `bodyWrapper.classList.remove('open')`; wait for `transitionend`; set `view-transition-name: panel-card-close` on both `.stack-card` and matching `.card-link`; call `startViewTransition` with `showHomepage()`; after `finished` clear names
+    - [ ] In `pushCard(url)`:
+      - Feature-detect: `if (document.startViewTransition)` — use VT path; else call `showStack()` directly (instant fallback)
+      - VT path: get clicked `.card-link` element; pre-fetch card; set `view-transition-name: panel-card-open` on both the clicked `.card-link` and the fetched `.stack-card`; call `startViewTransition`; after `vt.finished` clear names and call `card.querySelector('.body-wrapper').classList.add('open')`
+    - [ ] In close button handler:
+      - When `prev` exists: existing behaviour (expand prev, updateUrl) — no VT
+      - When no `prev` (last card, returning to homepage): call `bodyWrapper.classList.remove('open')`; wait for `transitionend`; find matching `card-link` via `document.querySelector('.card-link[data-push-card="/card/${uid}"]')`; set `view-transition-name: panel-card-close` on both `.stack-card` and the matching `.card-link`; call `startViewTransition` with `showHomepage()`; after `finished` clear names. Instant fallback if no `startViewTransition`.
     - [ ] Remove the "exclusive accordion" block at the bottom
-    - [ ] Remove `sourceUid` passing from the `tag:` link click handler
+    - [ ] In `tag:` click handler: remove entire `sourceUid` variable declaration and the second argument from `pushCard` call
 
 - [ ] `src/styles/global.css`
   - Changes:
@@ -103,16 +108,24 @@ flowchart LR
     - [ ] Add `.stack-card-body-inner` style: `padding: var(--space-lg)`
     - [ ] Add `.stack-card > .card-header` override: `border: none; border-bottom: var(--border-width) solid var(--color-border)`
 
-- [ ] All card renderer components (`GenericRenderer.astro`, `TagRenderer.astro`, `PuzzleRenderer.astro`) and `card/[...path].astro`
+- [ ] `CLAUDE.md`
+  - Add a new `## Architecture` section with two subsections documenting patterns introduced by this feature:
+    - **Card body expand/collapse**: the `body-wrapper` grid trick (`display: grid; grid-template-rows: 0fr → 1fr` with `overflow: hidden; min-height: 0` on the grid child and padding on an inner `.stack-card-body-inner` element). Mandatory for any future card renderer that needs animated expand/collapse.
+    - **View Transition names**: never set `view-transition-name` in HTML (conflicts when multiple cards are visible). Inject via JS before `startViewTransition()` and clear after `.finished`. Use distinct names per direction: `panel-card-open` and `panel-card-close`.
+  - Should be added alongside the StackNav implementation step (where the patterns are first introduced).
+
+- [ ] `src/pages/card/[...path].astro`
   - Changes:
-    - [ ] Wrap the `.stack-card-body` content in `<div class="stack-card-body-inner">` so padding lives on the inner element, not the grid child
+    - [ ] Wrap the existing `<div class="stack-card-body">` in an outer `<div class="body-wrapper">`
+    - [ ] Add `<div class="stack-card-body-inner">` inside `.stack-card-body` (padding moves here from global `.stack-card-body` rule)
+  - Note: renderer components (`GenericRenderer`, `TagRenderer`, `PuzzleRenderer`) require no changes — they output raw content; padding is solely from `card/[...path].astro` via the global `.stack-card-body` rule
 
 ## Dependencies
 
 - **`CardHeader.astro`** — used inside `CardLink`; no changes needed to the component itself
 - **`StackNav.astro`** — handles all push/pop/transition logic; sole consumer of `data-push-card` and VT calls
-- **`/card/[...path].astro`** — fetch target for card HTML; needs `body-wrapper` + `body-inner` wrapping
-- **`GenericRenderer.astro`, `TagRenderer.astro`, `PuzzleRenderer.astro`** — need inner padding wrapper
+- **`/card/[...path].astro`** — fetch target for card HTML; receives `body-wrapper` + `body-inner` wrapping (the only place these wrappers are added)
+- **`GenericRenderer.astro`, `TagRenderer.astro`, `PuzzleRenderer.astro`** — no changes required; raw content is wrapped by `card/[...path].astro`
 
 ## Unknowns & Experiments
 
@@ -137,7 +150,77 @@ flowchart LR
   - Two distinct VT names (`panel-card-open` / `panel-card-close`) eliminate the need for a class-toggle timing hack.
 - **Impact**: Architecture decisions 3–5 and 9 added; Structure section substantially updated.
 
+## Sub-Features
+
+### Sub-Feature 1: Replace Accordion + CardLink
+**Status:** IMPLEMENTING
+**Depends on:** none
+**Branch:** astro-rebuild
+**Test Cases:**
+- Manual browser test:
+  - [ ] Homepage renders 5 panel links (not accordion)
+  - [ ] Clicking a panel link opens the card (instant toggle, no animation)
+  - [ ] Closing the last card returns to homepage (instant)
+  - [ ] Tag links still push cards correctly
+  - [ ] Card body renders without broken layout (no double-border, correct padding)
+**Acceptance:** Homepage shows 5 styled clickable panel links; clicking any opens its card and closing it returns to homepage — all instant, no JS errors in console.
+
+**Structure items:**
+- `src/components/CardLink.astro`
+  - [ ] New component: renders `div.card-link[data-push-card]` with `CardHeader` inside
+  - [ ] Props: `uid: string`, `title: string`, `titleSuffix?: string`
+  - [ ] Scoped styles: `cursor: pointer`, hover background
+- `src/pages/index.astro`
+  - [ ] Remove `render()` calls and `rendered` map
+  - [ ] Replace `<div class="accordion">` + `<details>` markup with `<nav class="panel-links">` containing one `<CardLink>` per panel
+  - [ ] Remove all accordion-specific scoped CSS
+  - [ ] Add `.panel-links` and `.panel-links .card-link` scoped styles
+  - [ ] Import `CardLink` component
+- `src/pages/card/[...path].astro`
+  - [ ] Wrap existing `<div class="stack-card-body">` in `<div class="body-wrapper">`
+  - [ ] Add `<div class="stack-card-body-inner">` inside `.stack-card-body`
+- `src/styles/global.css`
+  - [ ] Add `.card-link` base styles: `cursor: pointer`, display block
+  - [ ] Add `.body-wrapper` styles: `display: grid; grid-template-rows: 0fr; transition: grid-template-rows 300ms ease-out`
+  - [ ] Add `.body-wrapper.open` style: `grid-template-rows: 1fr`
+  - [ ] Update `.stack-card-body`: remove `padding`, add `overflow: hidden; min-height: 0`
+  - [ ] Add `.stack-card-body-inner` style: `padding: var(--space-lg)`
+  - [ ] Add `.stack-card > .card-header` override: `border: none; border-bottom: var(--border-width) solid var(--color-border)`
+- `src/components/StackNav.astro`
+  - [ ] Update top-of-file comment: "toggles between panel links and stack"
+  - [ ] Remove `sourceUid` parameter and source-card prepend block from `pushCard`
+  - [ ] Remove "exclusive accordion" block
+  - [ ] Remove `sourceUid` variable from `tag:` click handler
+
+### Sub-Feature 2: View Transition Animations + Documentation
+**Status:** PENDING
+**Depends on:** Sub-Feature 1
+**Branch:** (filled in by /build)
+**Test Cases:**
+- Manual browser test (Chrome/Edge):
+  - [ ] Clicking a panel link shows morph animation (link grows into card)
+  - [ ] Closing the last card shows reverse morph (card shrinks back to panel link)
+  - [ ] Body content grows in after `vt.finished` (not during VT)
+- Manual browser test (Firefox/Safari):
+  - [ ] Clicking a panel link opens card instantly (no animation, no errors)
+  - [ ] Closing last card returns to homepage instantly
+**Acceptance:** In a VT-capable browser, panel link morphs into full card on open and back on close. In non-VT browsers, instant toggle. No console errors in either case.
+
+**Structure items:**
+- `src/components/StackNav.astro`
+  - [ ] In `pushCard(url)`: feature-detect `document.startViewTransition`; VT path sets `view-transition-name: panel-card-open` on clicked `.card-link` and fetched `.stack-card`, calls `startViewTransition`, after `vt.finished` clears names and calls `body-wrapper.classList.add('open')`; instant fallback calls `showStack()` directly
+  - [ ] In close button handler (no `prev` case): call `bodyWrapper.classList.remove('open')`; wait for `transitionend`; find matching `.card-link[data-push-card="/card/${uid}"]`; set `view-transition-name: panel-card-close` on `.stack-card` and matching `.card-link`; call `startViewTransition` with `showHomepage()`; after `finished` clear names; instant fallback if no `startViewTransition`
+- `src/styles/global.css`
+  - [ ] Add `::view-transition-group(panel-card-open)` and `::view-transition-group(panel-card-close)` rules: `z-index: 1; animation-duration: 300ms; animation-timing-function: ease-in-out`
+  - [ ] Add `::view-transition-old/new(panel-card-open/close)` duration rules
+  - [ ] Add `::view-transition-old/new(root)` duration rules
+- `CLAUDE.md`
+  - [ ] Add `## Architecture` section documenting body-wrapper grid pattern
+  - [ ] Add VT naming convention: never set in HTML, inject via JS, clear after `.finished`, distinct names per direction
+
 ## Notes
 
 - 2026-04-11: Initial architecture discussion. Accordion replaced with 5 `CardLink` panel links. `CardLink` is generic — used on homepage and inside card bodies for in-stack pushes. View Transitions API provides morph animation; progressive fallback is instant toggle. Source-card prepend behaviour removed. Two experiments needed before implementation.
 - 2026-04-11: All experiments resolved through iterative test-page exploration. Architecture confirmed with significant refinements: VT name on outer container, body grows via CSS grid trick after `vt.finished`, border fix required. Ready for plan review.
+- 2026-04-11: Split approved. 2 sub-features: SF1 structural changes (CardLink, homepage, body-wrapper, StackNav cleanup), SF2 VT animations + docs. Status → IN PROGRESS.
+- 2026-04-11: Plan review complete. Corrections applied: (1) renderer components removed from Modified Files — only `card/[...path].astro` needs the body-wrapper/body-inner wrapping; (2) StackNav close handler clarified — VT animation only when returning to homepage (no `prev` case); (3) missing lookup selectors added (`.card-link[data-push-card="..."]` for matching, `card.querySelector('.body-wrapper')` for grow target); (4) `startViewTransition` feature-detection guard made explicit; (5) `tag:` click handler — full `sourceUid` variable removed as dead code; (6) StackNav top-of-file comment updated. New CLAUDE.md `## Architecture` section added to plan, documenting `body-wrapper` pattern and VT naming convention. Status → SPLITTING.
