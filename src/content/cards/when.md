@@ -2,7 +2,7 @@
 title: When
 panel: true
 titleSuffix: " I've done it"
-order: 4
+order: 3
 description: A timeline of work and activity
 tags:
   - timeline

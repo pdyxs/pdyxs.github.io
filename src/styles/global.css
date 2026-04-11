@@ -3,6 +3,7 @@
 :root {
   --color-bg:         #ffffff;
   --color-surface:    #ffffff;
+  --color-bg-stripes: #555555;
   --color-border:     #000000;
   --color-border-light: #999999;
   --color-text:       #000000;

@@ -2,7 +2,7 @@
 title: Where
 panel: true
 titleSuffix: " to find me"
-order: 3
+order: 4
 description: How to find and contact Paul Sztajer
 tags:
   - contact

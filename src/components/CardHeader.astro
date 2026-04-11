@@ -22,12 +22,31 @@ const { title, titleSuffix } = Astro.props;
     font-weight: 400;
     letter-spacing: 0.04em;
     color: var(--color-text);
-    background: var(--color-surface);
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 18px,
+      var(--color-bg-stripes) 19px,
+      var(--color-bg-stripes) 20px
+    );
     user-select: none;
+  }
+
+  .card-header-title,
+  :global(.card-header > *) {
+    background: white;
+    padding: 0 2px;
   }
 
   :global(.stack-card--collapsed) .card-header {
     font-size: 0.75em;
     padding: var(--space-xs) var(--space-lg);
+    background: var(--color-surface);
+  }
+
+  :global(.stack-card--collapsed) .card-header-title,
+  :global(.stack-card--collapsed .card-header > *) {
+    background: none;
+    padding: 0;
   }
 </style>
