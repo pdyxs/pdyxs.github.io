@@ -1,6 +1,6 @@
 # Feature: Front Page Panel Links + Card Transition Animations
 
-**Status:** COMPLETE
+**Status:** ARCHIVED
 **Created:** 2026-04-11
 **Updated:** 2026-04-11 (split approved)
 
@@ -225,4 +225,5 @@ flowchart LR
 - 2026-04-11: Split approved. 2 sub-features: SF1 structural changes (CardLink, homepage, body-wrapper, StackNav cleanup), SF2 VT animations + docs. Status → IN PROGRESS.
 - 2026-04-11: sf-1 (Replace Accordion + CardLink) passed. body-wrapper open class must be managed by expandCard/collapseCard for instant-toggle mode.
 - 2026-04-11: sf-2 (View Transition Animations + Documentation) passed. Several fixes during build: async click handler required for await in close VT path; startViewTransition needs runtime feature-detection via cast; panel-links styles moved to global.css so injected homepage renders correctly; homepage fetched on close from direct card URL to enable reverse VT. Status → COMPLETE.
+- 2026-04-11: Feature archived. Plan retained for reference.
 - 2026-04-11: Plan review complete. Corrections applied: (1) renderer components removed from Modified Files — only `card/[...path].astro` needs the body-wrapper/body-inner wrapping; (2) StackNav close handler clarified — VT animation only when returning to homepage (no `prev` case); (3) missing lookup selectors added (`.card-link[data-push-card="..."]` for matching, `card.querySelector('.body-wrapper')` for grow target); (4) `startViewTransition` feature-detection guard made explicit; (5) `tag:` click handler — full `sourceUid` variable removed as dead code; (6) StackNav top-of-file comment updated. New CLAUDE.md `## Architecture` section added to plan, documenting `body-wrapper` pattern and VT naming convention. Status → SPLITTING.
