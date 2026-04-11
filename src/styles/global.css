@@ -281,6 +281,20 @@ strong { font-weight: 700; }
   display: block;
 }
 
+.panel-links {
+  display: flex;
+  flex-direction: column;
+  border: var(--border-width) solid var(--color-border);
+}
+
+.panel-links .card-link {
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.panel-links .card-link:last-child {
+  border-bottom: none;
+}
+
 .body-wrapper {
   display: grid;
   grid-template-rows: 0fr;

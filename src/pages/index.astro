@@ -32,18 +32,3 @@ const panels = (await getCollection('cards', c => c.data.panel === true))
   <StackNav />
 </Base>
 
-<style>
-  .panel-links {
-    display: flex;
-    flex-direction: column;
-    border: var(--border-width) solid var(--color-border);
-  }
-
-  .panel-links :global(.card-link) {
-    border-bottom: var(--border-width) solid var(--color-border);
-  }
-
-  .panel-links :global(.card-link:last-child) {
-    border-bottom: none;
-  }
-</style>
