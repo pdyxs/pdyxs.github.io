@@ -27,7 +27,7 @@
   function showHomepage() {
     cardStack.replaceChildren();
     cardStack.hidden = true;
-    if (homepage && homepage.children.length > 0) {
+    if (homepage) {
       homepage.hidden = false;
     } else {
       window.location.href = '/';
@@ -185,16 +185,29 @@
       } else {
         // Last card: VT morph back to panel link
         const uid = card.dataset.uid!;
+
+        // If homepage is empty (direct URL / after refresh), fetch and inject it first
+        if (homepage && homepage.children.length === 0) {
+          const res = await fetch('/');
+          if (res.ok) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = await res.text();
+            const fetched = tmp.querySelector('#homepage');
+            if (fetched) homepage.innerHTML = fetched.innerHTML;
+          }
+        }
+
+        // Collapse body first (in parallel with any fetch above via early start)
+        const bodyWrapper = card.querySelector<HTMLElement>('.body-wrapper');
+        if (bodyWrapper) {
+          bodyWrapper.classList.remove('open');
+          await new Promise<void>(resolve => {
+            bodyWrapper.addEventListener('transitionend', () => resolve(), { once: true });
+          });
+        }
+
         const matchingLink = homepage?.querySelector<HTMLElement>(`.card-link[data-push-card="${uid}"]`);
         if (matchingLink && startVT) {
-          // Collapse body first, then VT
-          const bodyWrapper = card.querySelector<HTMLElement>('.body-wrapper');
-          if (bodyWrapper) {
-            bodyWrapper.classList.remove('open');
-            await new Promise<void>(resolve => {
-              bodyWrapper.addEventListener('transitionend', () => resolve(), { once: true });
-            });
-          }
           setVTName(card, 'panel-card-close');
           setVTName(matchingLink, 'panel-card-close');
           const vt = startVT(() => {
@@ -205,7 +218,7 @@
           await vt.finished;
           clearVTName(matchingLink);
         } else {
-          // Instant fallback
+          // Instant fallback (no VT support, or fetch failed)
           card.remove();
           showHomepage();
           history.pushState(null, '', '/');
