@@ -153,7 +153,7 @@ flowchart LR
 ## Sub-Features
 
 ### Sub-Feature 1: Replace Accordion + CardLink
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Depends on:** none
 **Branch:** astro-rebuild
 **Test Cases:**
@@ -193,9 +193,9 @@ flowchart LR
   - [ ] Remove `sourceUid` variable from `tag:` click handler
 
 ### Sub-Feature 2: View Transition Animations + Documentation
-**Status:** PENDING
+**Status:** IMPLEMENTING
 **Depends on:** Sub-Feature 1
-**Branch:** (filled in by /build)
+**Branch:** astro-rebuild
 **Test Cases:**
 - Manual browser test (Chrome/Edge):
   - [ ] Clicking a panel link shows morph animation (link grows into card)
@@ -223,4 +223,5 @@ flowchart LR
 - 2026-04-11: Initial architecture discussion. Accordion replaced with 5 `CardLink` panel links. `CardLink` is generic — used on homepage and inside card bodies for in-stack pushes. View Transitions API provides morph animation; progressive fallback is instant toggle. Source-card prepend behaviour removed. Two experiments needed before implementation.
 - 2026-04-11: All experiments resolved through iterative test-page exploration. Architecture confirmed with significant refinements: VT name on outer container, body grows via CSS grid trick after `vt.finished`, border fix required. Ready for plan review.
 - 2026-04-11: Split approved. 2 sub-features: SF1 structural changes (CardLink, homepage, body-wrapper, StackNav cleanup), SF2 VT animations + docs. Status → IN PROGRESS.
+- 2026-04-11: sf-1 (Replace Accordion + CardLink) passed. body-wrapper open class must be managed by expandCard/collapseCard for instant-toggle mode.
 - 2026-04-11: Plan review complete. Corrections applied: (1) renderer components removed from Modified Files — only `card/[...path].astro` needs the body-wrapper/body-inner wrapping; (2) StackNav close handler clarified — VT animation only when returning to homepage (no `prev` case); (3) missing lookup selectors added (`.card-link[data-push-card="..."]` for matching, `card.querySelector('.body-wrapper')` for grow target); (4) `startViewTransition` feature-detection guard made explicit; (5) `tag:` click handler — full `sourceUid` variable removed as dead code; (6) StackNav top-of-file comment updated. New CLAUDE.md `## Architecture` section added to plan, documenting `body-wrapper` pattern and VT naming convention. Status → SPLITTING.
