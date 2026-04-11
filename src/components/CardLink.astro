@@ -1,0 +1,26 @@
+---
+import CardHeader from './CardHeader.astro';
+
+interface Props {
+  uid: string;
+  title: string;
+  titleSuffix?: string;
+}
+const { uid, title, titleSuffix } = Astro.props;
+---
+<div
+  class="card-link"
+  data-push-card={uid}
+>
+  <CardHeader {title} {titleSuffix} />
+</div>
+
+<style>
+  .card-link {
+    cursor: pointer;
+  }
+
+  .card-link:hover :global(.card-header) {
+    background: #f0f0f0;
+  }
+</style>

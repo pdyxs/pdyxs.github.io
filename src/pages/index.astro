@@ -1,15 +1,11 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import CardHeader from '../components/CardHeader.astro';
+import CardLink from '../components/CardLink.astro';
 import StackNav from '../components/StackNav.astro';
 
 const panels = (await getCollection('cards', c => c.data.panel === true))
   .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
-
-const rendered = Object.fromEntries(
-  await Promise.all(panels.map(async p => [p.id, await render(p)]))
-);
 ---
 
 <Base>
@@ -20,23 +16,15 @@ const rendered = Object.fromEntries(
     </header>
 
     <main class="site-main">
-      <div class="accordion">
-        {panels.map((panel, i) => {
-          const { Content } = rendered[panel.id];
-          return (
-            <details class="accordion-panel" data-card-uid={`cards/${panel.id}`} open={i === 0 || undefined}>
-              <summary>
-                <CardHeader title={panel.data.title} titleSuffix={panel.data.titleSuffix}>
-                  <span class="accordion-indicator" aria-hidden="true">+</span>
-                </CardHeader>
-              </summary>
-              <div class="accordion-body">
-                <Content />
-              </div>
-            </details>
-          );
-        })}
-      </div>
+      <nav class="panel-links">
+        {panels.map(panel => (
+          <CardLink
+            uid={`cards/${panel.id}`}
+            title={panel.data.title}
+            titleSuffix={panel.data.titleSuffix}
+          />
+        ))}
+      </nav>
     </main>
   </div>
 
@@ -45,50 +33,17 @@ const rendered = Object.fromEntries(
 </Base>
 
 <style>
-  .accordion {
+  .panel-links {
     display: flex;
     flex-direction: column;
     border: var(--border-width) solid var(--color-border);
   }
 
-  .accordion-panel {
+  .panel-links :global(.card-link) {
     border-bottom: var(--border-width) solid var(--color-border);
   }
 
-  .accordion-panel:last-child {
+  .panel-links :global(.card-link:last-child) {
     border-bottom: none;
-  }
-
-  .accordion-panel summary {
-    list-style: none;
-    cursor: pointer;
-  }
-
-  .accordion-panel summary::-webkit-details-marker { display: none; }
-
-  .accordion-panel[open] > summary :global(.card-header) {
-    border-bottom: var(--border-width) solid var(--color-border);
-  }
-
-  .accordion-panel summary:hover :global(.card-header) {
-    background: #f0f0f0;
-  }
-
-  .accordion-indicator {
-    font-size: 1.5rem;
-    font-weight: 300;
-    font-family: var(--font-ui);
-    flex-shrink: 0;
-    line-height: 1;
-    transition: transform 0.15s;
-    display: inline-block;
-  }
-
-  .accordion-panel[open] .accordion-indicator {
-    transform: rotate(45deg);
-  }
-
-  .accordion-body {
-    padding: var(--space-lg);
   }
 </style>

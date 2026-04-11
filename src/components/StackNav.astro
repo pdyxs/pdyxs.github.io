@@ -1,7 +1,7 @@
 ---
 // StackNav: card stack navigation logic.
 // Include this component on any page that hosts a #card-stack element.
-// On index.astro (has #homepage): toggles between accordion and stack.
+// On index.astro (has #homepage): toggles between panel links and stack.
 // On full-page card routes (no #homepage): closing the last card goes to /.
 ---
 
@@ -72,16 +72,7 @@
     history.pushState(null, '', query ? `${basePath}?${query}` : basePath);
   }
 
-  async function pushCard(url: string, sourceUid?: string) {
-    // If entering the stack from the accordion, prepend the source panel as a collapsed card
-    if (sourceUid && cardStack.children.length === 0) {
-      const sourceCard = await fetchCard(uidToFetchUrl(sourceUid));
-      if (sourceCard) {
-        collapseCard(sourceCard);
-        cardStack.appendChild(sourceCard);
-      }
-    }
-
+  async function pushCard(url: string) {
     // If the target is already in the stack, navigate to it without pruning
     const uid = urlToUid(url);
     const existingCard = cardStack.querySelector(`[data-uid="${uid}"]`);
@@ -185,24 +176,22 @@
     }
   });
 
-  // tag: links — global, works in accordion and stack cards
+  // Homepage panel links — delegated listener on #homepage
+  if (homepage) {
+    homepage.addEventListener('click', e => {
+      const target = e.target as Element;
+      const link = target.closest<HTMLElement>('[data-push-card]');
+      if (link) pushCard(uidToFetchUrl(link.dataset.pushCard!));
+    });
+  }
+
+  // tag: links — global, works in panel links and stack cards
   document.addEventListener('click', e => {
     const link = (e.target as Element).closest<HTMLAnchorElement>('a[href^="tag:"]');
     if (!link) return;
     e.preventDefault();
     const slug = link.getAttribute('href')!.slice(4);
-    const sourceUid = link.closest<HTMLElement>('.accordion-panel')?.dataset.cardUid;
-    pushCard(`/card/tag/${slug}`, sourceUid);
-  });
-
-  // Exclusive accordion
-  const accordionPanels = document.querySelectorAll<HTMLDetailsElement>('.accordion-panel');
-  accordionPanels.forEach(panel => {
-    panel.addEventListener('toggle', () => {
-      if (panel.open) {
-        accordionPanels.forEach(other => { if (other !== panel) other.open = false; });
-      }
-    });
+    pushCard(`/card/tag/${slug}`);
   });
 
   // Handle browser back/forward

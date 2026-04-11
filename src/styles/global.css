@@ -237,6 +237,7 @@ strong { font-weight: 700; }
 
 
 .stack-card > .card-header {
+  border: none;
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
@@ -254,7 +255,27 @@ strong { font-weight: 700; }
 
 .stack-card-close:hover { font-weight: 700; }
 
+.card-link {
+  cursor: pointer;
+  display: block;
+}
+
+.body-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms ease-out;
+}
+
+.body-wrapper.open {
+  grid-template-rows: 1fr;
+}
+
 .stack-card-body {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.stack-card-body-inner {
   padding: var(--space-lg);
 }
 
