@@ -215,6 +215,27 @@ strong { font-weight: 700; }
   font-family: var(--font-ui);
 }
 
+/* ── View Transitions ──────────────────────────────────────────── */
+
+::view-transition-group(panel-card-open),
+::view-transition-group(panel-card-close) {
+  z-index: 1;
+  animation-duration: 300ms;
+  animation-timing-function: ease-in-out;
+}
+
+::view-transition-old(panel-card-open),
+::view-transition-new(panel-card-open),
+::view-transition-old(panel-card-close),
+::view-transition-new(panel-card-close) {
+  animation-duration: 300ms;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
+}
+
 /* ── Card stack ────────────────────────────────────────────────── */
 
 #card-stack {

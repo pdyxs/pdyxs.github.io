@@ -74,7 +74,7 @@
     history.pushState(null, '', query ? `${basePath}?${query}` : basePath);
   }
 
-  async function pushCard(url: string) {
+  async function pushCard(url: string, clickedLink?: Element | null) {
     // If the target is already in the stack, navigate to it without pruning
     const uid = urlToUid(url);
     const existingCard = cardStack.querySelector(`[data-uid="${uid}"]`);
@@ -101,9 +101,30 @@
     const card = await fetchCard(url);
     if (!card) return;
 
-    expandCard(card);
-    cardStack.appendChild(card);
-    showStack();
+    if (clickedLink && document.startViewTransition) {
+      // VT path: morph panel link → stack card
+      // Set names before VT (card is still detached)
+      (clickedLink as HTMLElement).style.viewTransitionName = 'panel-card-open';
+      card.style.viewTransitionName = 'panel-card-open';
+      // Mark active but keep body collapsed for VT snapshot
+      card.classList.add('stack-card--active');
+      card.classList.remove('stack-card--collapsed');
+      const vt = document.startViewTransition(() => {
+        cardStack.appendChild(card);
+        showStack();
+      });
+      await vt.finished;
+      (clickedLink as HTMLElement).style.viewTransitionName = '';
+      card.style.viewTransitionName = '';
+      // Body grows after VT completes
+      card.querySelector<HTMLElement>('.body-wrapper')?.classList.add('open');
+    } else {
+      // Instant fallback
+      expandCard(card);
+      cardStack.appendChild(card);
+      showStack();
+    }
+
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     updateUrl();
   }
@@ -146,16 +167,40 @@
     // Close button on the active card
     const closeBtn = target.closest('.stack-card-close');
     if (closeBtn) {
-      const card = closeBtn.closest('.stack-card')!;
+      const card = closeBtn.closest<HTMLElement>('.stack-card')!;
       const prev = card.previousElementSibling;
-      card.remove();
       if (prev) {
+        card.remove();
         expandCard(prev);
         updateUrl();
       } else {
-        cardStack.replaceChildren();
-        showHomepage();
-        history.pushState(null, '', '/');
+        // Last card: VT morph back to panel link
+        const uid = card.dataset.uid!;
+        const matchingLink = homepage?.querySelector<HTMLElement>(`.card-link[data-push-card="${uid}"]`);
+        if (matchingLink && document.startViewTransition) {
+          // Collapse body first, then VT
+          const bodyWrapper = card.querySelector<HTMLElement>('.body-wrapper');
+          if (bodyWrapper) {
+            bodyWrapper.classList.remove('open');
+            await new Promise<void>(resolve => {
+              bodyWrapper.addEventListener('transitionend', () => resolve(), { once: true });
+            });
+          }
+          card.style.viewTransitionName = 'panel-card-close';
+          matchingLink.style.viewTransitionName = 'panel-card-close';
+          const vt = document.startViewTransition(() => {
+            card.remove();
+            showHomepage();
+            history.pushState(null, '', '/');
+          });
+          await vt.finished;
+          matchingLink.style.viewTransitionName = '';
+        } else {
+          // Instant fallback
+          card.remove();
+          showHomepage();
+          history.pushState(null, '', '/');
+        }
       }
       return;
     }
@@ -183,7 +228,7 @@
     homepage.addEventListener('click', e => {
       const target = e.target as Element;
       const link = target.closest<HTMLElement>('[data-push-card]');
-      if (link) pushCard(uidToFetchUrl(link.dataset.pushCard!));
+      if (link) pushCard(uidToFetchUrl(link.dataset.pushCard!), link.closest('.card-link'));
     });
   }
 
