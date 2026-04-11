@@ -27,11 +27,13 @@
   function collapseCard(card: Element) {
     card.classList.add('stack-card--collapsed');
     card.classList.remove('stack-card--active');
+    card.querySelector<HTMLElement>('.body-wrapper')?.classList.remove('open');
   }
 
   function expandCard(card: Element) {
     card.classList.remove('stack-card--collapsed');
     card.classList.add('stack-card--active');
+    card.querySelector<HTMLElement>('.body-wrapper')?.classList.add('open');
   }
 
   async function fetchCard(url: string): Promise<Element | null> {
