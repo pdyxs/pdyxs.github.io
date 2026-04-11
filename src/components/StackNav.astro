@@ -9,6 +9,16 @@
   const homepage = document.getElementById('homepage');
   const cardStack = document.getElementById('card-stack')!;
 
+  type VTResult = { finished: Promise<void> };
+  const startVT = ((document as any).startViewTransition?.bind(document)) as ((cb: () => void) => VTResult) | undefined;
+
+  function setVTName(el: Element, name: string) {
+    (el as HTMLElement).style.setProperty('view-transition-name', name);
+  }
+  function clearVTName(el: Element) {
+    (el as HTMLElement).style.removeProperty('view-transition-name');
+  };
+
   function showStack() {
     if (homepage) homepage.hidden = true;
     cardStack.hidden = false;
@@ -101,21 +111,20 @@
     const card = await fetchCard(url);
     if (!card) return;
 
-    if (clickedLink && document.startViewTransition) {
+    if (clickedLink && startVT) {
       // VT path: morph panel link → stack card
-      // Set names before VT (card is still detached)
-      (clickedLink as HTMLElement).style.viewTransitionName = 'panel-card-open';
-      card.style.viewTransitionName = 'panel-card-open';
+      setVTName(clickedLink, 'panel-card-open');
+      setVTName(card, 'panel-card-open');
       // Mark active but keep body collapsed for VT snapshot
       card.classList.add('stack-card--active');
       card.classList.remove('stack-card--collapsed');
-      const vt = document.startViewTransition(() => {
+      const vt = startVT(() => {
         cardStack.appendChild(card);
         showStack();
       });
       await vt.finished;
-      (clickedLink as HTMLElement).style.viewTransitionName = '';
-      card.style.viewTransitionName = '';
+      clearVTName(clickedLink);
+      clearVTName(card);
       // Body grows after VT completes
       card.querySelector<HTMLElement>('.body-wrapper')?.classList.add('open');
     } else {
@@ -161,7 +170,7 @@
   }
 
   // All stack interactions via a single delegated listener
-  cardStack.addEventListener('click', e => {
+  cardStack.addEventListener('click', async e => {
     const target = e.target as Element;
 
     // Close button on the active card
@@ -177,7 +186,7 @@
         // Last card: VT morph back to panel link
         const uid = card.dataset.uid!;
         const matchingLink = homepage?.querySelector<HTMLElement>(`.card-link[data-push-card="${uid}"]`);
-        if (matchingLink && document.startViewTransition) {
+        if (matchingLink && startVT) {
           // Collapse body first, then VT
           const bodyWrapper = card.querySelector<HTMLElement>('.body-wrapper');
           if (bodyWrapper) {
@@ -186,15 +195,15 @@
               bodyWrapper.addEventListener('transitionend', () => resolve(), { once: true });
             });
           }
-          card.style.viewTransitionName = 'panel-card-close';
-          matchingLink.style.viewTransitionName = 'panel-card-close';
-          const vt = document.startViewTransition(() => {
+          setVTName(card, 'panel-card-close');
+          setVTName(matchingLink, 'panel-card-close');
+          const vt = startVT(() => {
             card.remove();
             showHomepage();
             history.pushState(null, '', '/');
           });
           await vt.finished;
-          matchingLink.style.viewTransitionName = '';
+          clearVTName(matchingLink);
         } else {
           // Instant fallback
           card.remove();
