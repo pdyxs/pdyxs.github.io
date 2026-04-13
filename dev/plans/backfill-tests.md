@@ -156,7 +156,7 @@ Automated tests: 3 tests — existing proof-of-life test + `renders nothing when
 
 ### SF3 — PuzzleRenderer tests
 
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Depends on:** SF1 (for `fakePuzzleEntry`)
 **Acceptance test:** no
 
