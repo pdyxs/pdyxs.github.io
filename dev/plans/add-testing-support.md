@@ -182,17 +182,19 @@ flowchart LR
 ## Sub-Features
 
 ### SF1: Test Infrastructure
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Depends on:** none
 
 **Test Cases:** none — verified by `npm test` exit code only
 
 **Structure items:**
 - `src/test/setup.ts`
-  - [ ] Empty hook file; anchors future global setup
+  - [x] Empty hook file; anchors future global setup
 - `package.json`
-  - [ ] Add script: `"test": "vitest run"`
-  - [ ] Add script: `"test:watch": "vitest"`
+  - [x] Add script: `"test": "vitest run"`
+  - [x] Add script: `"test:watch": "vitest"`
+- `vitest.config.ts`
+  - [x] Added `include: ['src/**/*.test.ts']`, `setupFiles`, `passWithNoTests: true`
 
 **Testing:** Run `npm test` — should exit cleanly with 0 tests found (or "No test files found").
 **Acceptance test:** no
