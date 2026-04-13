@@ -1,6 +1,6 @@
 # Feature: Add Testing Support
 
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 **Created:** 2026-04-11
 **Updated:** 2026-04-13
 
@@ -177,6 +177,7 @@ flowchart LR
 - 2026-04-13: Plan review complete. Three issues fixed: (1) `COLLECTION_RENDERERS` moved from page file to new `src/lib/renderers.ts` — makes it testable and fixes CLAUDE.md convention violation; (2) unit test targets redesigned to match what's actually exported (`COLLECTION_DEFAULTS` ↔ `COLLECTION_RENDERERS` cross-check); (3) proof-of-life assertion corrected from "title" to "description" (`GenericRenderer` renders `description`, not `title`). Structure updated to reflect experiment artefacts (`vitest.config.ts`, `src/test/vitest-env.ts`) already created. CLAUDE.md update scope expanded to cover `renderers.ts` and testing conventions.
 - 2026-04-13: Splitting. Skill context approach revised: use global `~/.claude/skills/<skill>/context/astro-web.md` (platform-invariant type context) rather than project-local files. Build and test skills updated in SF4 to support `context/<type>.md` loading step. Status → SPLITTING.
 - 2026-04-13: Split approved. 4 sub-features: SF1 (test infrastructure), SF2 (renderer registry), SF3 (proof-of-life tests), SF4 (skill integration & docs). SF1 and SF2 are independent; SF3 depends on both; SF4 depends on SF3. Status → IN PROGRESS.
+- 2026-04-13: All sub-features accepted. Status → COMPLETE.
 - 2026-04-13: Review passed — architecture, principles, test coverage (post-split). Fixed: duplicate Architecture Decision 9 renumbered to 10; `**Files:**` → `**Structure items:**` with checkboxes; `**Test Cases:**` added to all SFs; `**Depends on:** —` → `none` for SF1/SF2.
 
 ## Sub-Features
