@@ -1,5 +1,5 @@
 ---
-import { getAllCards } from '../../lib/cards';
+import { getAllCards, getCardsForTag } from '../../lib/cards';
 
 interface Props {
   entry: {
@@ -17,21 +17,7 @@ const { entry } = Astro.props;
 if (!entry) return;
 
 const allCards = await getAllCards();
-
-const canonicals = new Set([
-  entry.id,
-  entry.data.name.toLowerCase(),
-  ...entry.data.aliases.map((a: string) => a.toLowerCase()),
-]);
-
-const matching = allCards
-  .filter(c => c.tags.some(t => canonicals.has(t.toLowerCase())))
-  .sort((a, b) => {
-    if (!a.date && !b.date) return 0;
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return b.date.getTime() - a.date.getTime();
-  });
+const matching = getCardsForTag(entry, allCards);
 ---
 
 {entry.data.description && <p class="tag-description">{entry.data.description}</p>}

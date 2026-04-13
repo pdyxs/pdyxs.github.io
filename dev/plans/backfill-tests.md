@@ -127,7 +127,7 @@ flowchart LR
 
 ### SF1 — Foundation: Fixtures + `getCardsForTag` extraction
 
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Depends on:** —
 **Acceptance test:** no
 
