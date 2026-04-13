@@ -1,6 +1,6 @@
 # Feature: Add Testing Support
 
-**Status:** ARCHITECTURE
+**Status:** IN PROGRESS
 **Created:** 2026-04-11
 **Updated:** 2026-04-13
 
@@ -28,7 +28,7 @@ The project currently has no test framework. This blocks TDD for new features (e
 
 9. **`/build` and `/test` skill integration via project-local context files** — create `.claude/skills/build/context/server.md` and `.claude/skills/test/context/server.md` in this project, overriding the global Godot-specific ones. They tell the skills to run `npm test` after each sub-feature (`/build`) and on the integration branch before acceptance (`/test`). This is how regression testing enters the feature-development pipeline.
 
-9. **No CI gate, no Playwright, no backfill** — local-only, unit + component DOM tests only, and existing functionality gets its own follow-up plan.
+10. **No CI gate, no Playwright, no backfill** — local-only, unit + component DOM tests only, and existing functionality gets its own follow-up plan.
 
 ## System Diagram
 
@@ -175,3 +175,94 @@ flowchart LR
 - 2026-04-11: Initial plan. Scope confirmed with user: Vitest + happy-dom + Container API, co-located tests, two proof-of-life tests, `/build` and `/test` skill integration via project-local context files. Out of scope: pure-logic extraction from StackNav, backfilling tests for existing code, Playwright, CI. Two unknowns queued: Container + `astro:content` interaction, and happy-dom coverage for eventual StackNav component tests. Skill-resolution behaviour (whether project-local `.claude/skills/*/context/server.md` actually overrides globals) is trusted on soft evidence — will become clear during `/build` if it's a problem. Status → EXPERIMENTING. Run `/experiment add-testing-support` to resolve the two unknowns before plan review.
 - 2026-04-13: All experiments resolved. Architecture confirmed with addenda: (1) a custom Vitest environment (`src/test/vitest-env.ts`) is required — built-in `happy-dom` sets `viteEnvironment: "client"` which breaks `.astro` SSR imports; (2) `element.animate()` is absent from this happy-dom version — future StackNav tests must guard animation calls. `vitest`, `@vitest/ui`, and `happy-dom` installed. Status → ARCHITECTURE. Ready for `/plan-feature add-testing-support` to do final review and `/split`.
 - 2026-04-13: Plan review complete. Three issues fixed: (1) `COLLECTION_RENDERERS` moved from page file to new `src/lib/renderers.ts` — makes it testable and fixes CLAUDE.md convention violation; (2) unit test targets redesigned to match what's actually exported (`COLLECTION_DEFAULTS` ↔ `COLLECTION_RENDERERS` cross-check); (3) proof-of-life assertion corrected from "title" to "description" (`GenericRenderer` renders `description`, not `title`). Structure updated to reflect experiment artefacts (`vitest.config.ts`, `src/test/vitest-env.ts`) already created. CLAUDE.md update scope expanded to cover `renderers.ts` and testing conventions.
+- 2026-04-13: Splitting. Skill context approach revised: use global `~/.claude/skills/<skill>/context/astro-web.md` (platform-invariant type context) rather than project-local files. Build and test skills updated in SF4 to support `context/<type>.md` loading step. Status → SPLITTING.
+- 2026-04-13: Split approved. 4 sub-features: SF1 (test infrastructure), SF2 (renderer registry), SF3 (proof-of-life tests), SF4 (skill integration & docs). SF1 and SF2 are independent; SF3 depends on both; SF4 depends on SF3. Status → IN PROGRESS.
+- 2026-04-13: Review passed — architecture, principles, test coverage (post-split). Fixed: duplicate Architecture Decision 9 renumbered to 10; `**Files:**` → `**Structure items:**` with checkboxes; `**Test Cases:**` added to all SFs; `**Depends on:** —` → `none` for SF1/SF2.
+
+## Sub-Features
+
+### SF1: Test Infrastructure
+**Status:** IMPLEMENTING
+**Depends on:** none
+
+**Test Cases:** none — verified by `npm test` exit code only
+
+**Structure items:**
+- `src/test/setup.ts`
+  - [ ] Empty hook file; anchors future global setup
+- `package.json`
+  - [ ] Add script: `"test": "vitest run"`
+  - [ ] Add script: `"test:watch": "vitest"`
+
+**Testing:** Run `npm test` — should exit cleanly with 0 tests found (or "No test files found").
+**Acceptance test:** no
+
+---
+
+### SF2: Renderer Registry
+**Status:** PENDING
+**Depends on:** none
+
+**Test Cases:** none — verified by acceptance (browser) only; automated coverage arrives in SF3
+
+**Structure items:**
+- `src/lib/renderers.ts`
+  - [ ] `COLLECTION_RENDERERS: Record<string, AstroComponentFactory>` — maps `tag` → `TagRenderer`, `puzzles` → `PuzzleRenderer`
+- `src/pages/card/[...path].astro`
+  - [ ] Remove inline `COLLECTION_RENDERERS` definition (lines 20–23)
+  - [ ] Add `import { COLLECTION_RENDERERS } from '../../lib/renderers'`
+
+**Testing:** Hit a tag card and a puzzle card in the browser and confirm they render correctly. Hit a posts card (generic renderer) and confirm it also renders. The refactor should be invisible to the user.
+**Acceptance test:** yes
+
+---
+
+### SF3: Proof-of-Life Tests
+**Status:** PENDING
+**Depends on:** SF1, SF2
+
+**Test Cases:**
+- `src/lib/cards.test.ts`:
+  - [ ] `all non-generic COLLECTION_DEFAULTS keys present in COLLECTION_RENDERERS`: imports both registries; asserts every key in `COLLECTION_DEFAULTS` whose renderer name is not `'generic'` exists as a key in `COLLECTION_RENDERERS`
+  - [ ] `explicit renderers resolve correctly and generic collections are absent`: asserts `COLLECTION_RENDERERS['tag'] === TagRenderer`, `COLLECTION_RENDERERS['puzzles'] === PuzzleRenderer`, and `'posts' in COLLECTION_RENDERERS === false`
+- `src/components/card-renderers/_proof-of-life.test.ts`:
+  - [ ] `GenericRenderer renders description text`: creates Container, calls `renderToString(GenericRenderer, { props: { entry: fakeEntry({ description: 'hello world' }) } })`, parses HTML, asserts `'hello world'` appears in output
+
+**Structure items:**
+- `src/test/fixtures.ts`
+  - [ ] `fakeEntry(overrides?)` — returns minimal `{ data: { description?: string } }`
+  - [ ] `fakeContent()` — returns `undefined`
+- `src/lib/cards.test.ts`
+  - [ ] Test 1: cross-check `COLLECTION_DEFAULTS` → `COLLECTION_RENDERERS` (catches unregistered names)
+  - [ ] Test 2: explicit renderer identity + generic fallthrough confirmed
+- `src/components/card-renderers/_proof-of-life.test.ts`
+  - [ ] Render `GenericRenderer` via Container with `fakeEntry`; assert `description` text in output
+
+**Testing:** Run `npm test` — must pass with exactly 3 tests across 2 files.
+**Acceptance test:** no
+
+---
+
+### SF4: Skill Integration & Documentation
+**Status:** PENDING
+**Depends on:** SF3
+
+**Test Cases:** none — verified by acceptance (skill invocation) only
+
+**Structure items:**
+- `~/.claude/skills/build/SKILL.md`
+  - [ ] Add `context/<type>.md` loading step between platform and type+platform steps
+- `~/.claude/skills/test/SKILL.md`
+  - [ ] Add `context/<type>.md` loading step between platform and type+platform steps
+- `~/.claude/skills/build/context/astro-web.md`
+  - [ ] After each sub-feature: run `npm test`; failure is a code issue, blocks progression
+- `~/.claude/skills/test/context/astro-web.md`
+  - [ ] Step 1: run `npm test`; acceptance: browser checklist from sub-feature `**Testing:**` fields
+- `.claude/project.md`
+  - [ ] `name`, `type: astro-web`, `plans: dev/plans/`
+- `CLAUDE.md`
+  - [ ] Add `## Testing` section (test location, run commands, custom environment rationale, `element.animate()` guard, Container API pattern, pure-logic contract)
+  - [ ] Update `COLLECTION_RENDERERS` reference in Conventions to `src/lib/renderers.ts`
+
+**Testing:** Run `/build` on a plan in a separate project and confirm it picks up the `astro-web` context and runs `npm test` after each sub-feature. Confirm `.claude/project.md` type resolves correctly.
+**Acceptance test:** yes
