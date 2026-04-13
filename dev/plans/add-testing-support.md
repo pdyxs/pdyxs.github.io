@@ -220,7 +220,7 @@ flowchart LR
 ---
 
 ### SF3: Proof-of-Life Tests
-**Status:** PENDING
+**Status:** IMPLEMENTING
 **Depends on:** SF1, SF2
 
 **Test Cases:**
