@@ -202,17 +202,17 @@ flowchart LR
 ---
 
 ### SF2: Renderer Registry
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Depends on:** none
 
 **Test Cases:** none — verified by acceptance (browser) only; automated coverage arrives in SF3
 
 **Structure items:**
 - `src/lib/renderers.ts`
-  - [ ] `COLLECTION_RENDERERS: Record<string, AstroComponentFactory>` — maps `tag` → `TagRenderer`, `puzzles` → `PuzzleRenderer`
+  - [x] `COLLECTION_RENDERERS: Record<string, AstroComponentFactory>` — maps `tag` → `TagRenderer`, `puzzles` → `PuzzleRenderer`
 - `src/pages/card/[...path].astro`
-  - [ ] Remove inline `COLLECTION_RENDERERS` definition (lines 20–23)
-  - [ ] Add `import { COLLECTION_RENDERERS } from '../../lib/renderers'`
+  - [x] Remove inline `COLLECTION_RENDERERS` definition (lines 20–23)
+  - [x] Add `import { COLLECTION_RENDERERS } from '../../lib/renderers'`
 
 **Testing:** Hit a tag card and a puzzle card in the browser and confirm they render correctly. Hit a posts card (generic renderer) and confirm it also renders. The refactor should be invisible to the user.
 **Acceptance test:** yes
