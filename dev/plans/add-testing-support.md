@@ -202,7 +202,7 @@ flowchart LR
 ---
 
 ### SF2: Renderer Registry
-**Status:** PENDING
+**Status:** IMPLEMENTING
 **Depends on:** none
 
 **Test Cases:** none — verified by acceptance (browser) only; automated coverage arrives in SF3
