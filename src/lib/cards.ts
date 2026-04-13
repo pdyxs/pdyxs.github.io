@@ -22,6 +22,26 @@ export type CardMeta = {
   renderer: string;
 };
 
+export function getCardsForTag(
+  entry: { id: string; data: { name: string; aliases: string[] } },
+  allCards: CardMeta[]
+): CardMeta[] {
+  const canonicals = new Set([
+    entry.id,
+    entry.data.name.toLowerCase(),
+    ...entry.data.aliases.map((a: string) => a.toLowerCase()),
+  ]);
+
+  return allCards
+    .filter(c => c.tags.some(t => canonicals.has(t.toLowerCase())))
+    .sort((a, b) => {
+      if (!a.date && !b.date) return 0;
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return b.date.getTime() - a.date.getTime();
+    });
+}
+
 function resolveRenderer(collection: string, data: { renderer?: string }): string {
   return data.renderer ?? COLLECTION_DEFAULTS[collection] ?? 'card';
 }
