@@ -1,7 +1,7 @@
 import { getCollection } from 'astro:content';
 
 // Default renderer per collection — override per-card with `renderer` in frontmatter
-const COLLECTION_DEFAULTS: Record<string, string> = {
+export const COLLECTION_DEFAULTS: Record<string, string> = {
   cards: 'card',
   posts: 'post',
   projects: 'project',

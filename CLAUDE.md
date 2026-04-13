@@ -90,7 +90,7 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 
 ### Renderer registration is mandatory
 
-Any new content collection must appear in `COLLECTION_DEFAULTS` (`src/lib/cards.ts`); any new renderer component in `COLLECTION_RENDERERS`. Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
+Any new content collection must appear in `COLLECTION_DEFAULTS` (`src/lib/cards.ts`); any new renderer component in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
 
 ### Canonical tag slugs in content; aliases only in tag YAML
 
@@ -99,6 +99,44 @@ Aliases in `src/content.config.ts` tag schema are a runtime safety net, not a fe
 ### CSS-first responsive, no JS breakpoint detection
 
 Layout responds to viewport via media queries. `matchMedia` in JS is reserved for cases where *interaction state itself* differs by breakpoint (e.g. a desktop-only peek state), not for layout switching. Document the exception narrowly when it applies.
+
+## Testing
+
+### Test location and commands
+
+Tests are co-located with source as `src/**/*.test.ts`. Shared utilities live in `src/test/`.
+
+```bash
+npm test          # run once (CI / regression gate)
+npm run test:watch  # watch mode during development
+```
+
+### Custom Vitest environment
+
+The config (`vitest.config.ts`) uses a custom environment at `src/test/vitest-env.ts` named `astro-happy-dom`. This is required because the built-in `happy-dom` Vitest environment sets `viteEnvironment: "client"`, causing the Astro Vite plugin to return browser stubs for `.astro` imports instead of real SSR component factories. The custom environment sets `viteEnvironment: "ssr"` while still providing happy-dom DOM globals.
+
+**Never rename this file to `happy-dom`** — that name is hardcoded in Vitest to use `viteEnvironment: "client"`.
+
+### DOM API gaps in happy-dom
+
+- `document.startViewTransition` — not available; VT paths must be guarded and tested via instant-fallback branch only.
+- `element.animate()` — not available in this happy-dom version; future StackNav tests that exercise animation paths must guard with `typeof el.animate === 'function'`.
+
+### Component tests
+
+Use `experimental_AstroContainer` from `astro/container` to render `.astro` components in isolation:
+
+```ts
+import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+const container = await AstroContainer.create();
+const html = await container.renderToString(MyComponent, { props: { ... } });
+```
+
+Parse the returned HTML string with `document.createElement('div')` + `innerHTML` and assert against `textContent` or DOM queries.
+
+### Pure logic and testability
+
+The "pure logic must be extractable from DOM handlers" invariant (see Invariants) is also the testing contract: any function that decides *what* should happen must take plain data in and return plain data out. Extract it to `src/lib/` so it can be imported and tested without DOM setup. The DOM applier that writes the result is not unit-tested directly.
 
 ## Workflow
 
