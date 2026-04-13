@@ -220,25 +220,27 @@ flowchart LR
 ---
 
 ### SF3: Proof-of-Life Tests
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Depends on:** SF1, SF2
 
 **Test Cases:**
 - `src/lib/cards.test.ts`:
-  - [ ] `all non-generic COLLECTION_DEFAULTS keys present in COLLECTION_RENDERERS`: imports both registries; asserts every key in `COLLECTION_DEFAULTS` whose renderer name is not `'generic'` exists as a key in `COLLECTION_RENDERERS`
-  - [ ] `explicit renderers resolve correctly and generic collections are absent`: asserts `COLLECTION_RENDERERS['tag'] === TagRenderer`, `COLLECTION_RENDERERS['puzzles'] === PuzzleRenderer`, and `'posts' in COLLECTION_RENDERERS === false`
+  - [x] `all non-generic COLLECTION_DEFAULTS keys present in COLLECTION_RENDERERS`: imports both registries; asserts every key in `COLLECTION_DEFAULTS` whose renderer name is not `'generic'` exists as a key in `COLLECTION_RENDERERS`
+  - [x] `explicit renderers resolve correctly and generic collections are absent`: asserts `COLLECTION_RENDERERS['tag'] === TagRenderer`, `COLLECTION_RENDERERS['puzzles'] === PuzzleRenderer`, and `'posts' in COLLECTION_RENDERERS === false`
 - `src/components/card-renderers/_proof-of-life.test.ts`:
-  - [ ] `GenericRenderer renders description text`: creates Container, calls `renderToString(GenericRenderer, { props: { entry: fakeEntry({ description: 'hello world' }) } })`, parses HTML, asserts `'hello world'` appears in output
+  - [x] `GenericRenderer renders description text`: creates Container, calls `renderToString(GenericRenderer, { props: { entry: fakeEntry({ description: 'hello world' }) } })`, parses HTML, asserts `'hello world'` appears in output
 
 **Structure items:**
 - `src/test/fixtures.ts`
-  - [ ] `fakeEntry(overrides?)` — returns minimal `{ data: { description?: string } }`
-  - [ ] `fakeContent()` — returns `undefined`
+  - [x] `fakeEntry(overrides?)` — returns minimal `{ data: { description?: string } }`
+  - [x] `fakeContent()` — returns `undefined`
+- `src/lib/cards.ts`
+  - [x] Export `COLLECTION_DEFAULTS` (needed by unit test)
 - `src/lib/cards.test.ts`
-  - [ ] Test 1: cross-check `COLLECTION_DEFAULTS` → `COLLECTION_RENDERERS` (catches unregistered names)
-  - [ ] Test 2: explicit renderer identity + generic fallthrough confirmed
+  - [x] Test 1: cross-check `COLLECTION_DEFAULTS` → `COLLECTION_RENDERERS` (catches unregistered names)
+  - [x] Test 2: explicit renderer identity + generic fallthrough confirmed
 - `src/components/card-renderers/_proof-of-life.test.ts`
-  - [ ] Render `GenericRenderer` via Container with `fakeEntry`; assert `description` text in output
+  - [x] Render `GenericRenderer` via Container with `fakeEntry`; assert `description` text in output
 
 **Testing:** Run `npm test` — must pass with exactly 3 tests across 2 files.
 **Acceptance test:** no
