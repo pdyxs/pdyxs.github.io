@@ -248,7 +248,7 @@ flowchart LR
 ---
 
 ### SF4: Skill Integration & Documentation
-**Status:** PENDING
+**Status:** IMPLEMENTING
 **Depends on:** SF3
 
 **Test Cases:** none — verified by acceptance (skill invocation) only
