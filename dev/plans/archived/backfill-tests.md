@@ -1,6 +1,6 @@
 # Feature: Backfill Tests
 
-**Status:** COMPLETE
+**Status:** ARCHIVED
 **Created:** 2026-04-13
 **Updated:** 2026-04-13
 
@@ -292,3 +292,4 @@ classDiagram
 - 2026-04-13: Review passed — architecture, principles, codebase opportunities (2026-04-13). Hardcoded colors in CardHeader/CardLink noted but left for light-dark-mode plan. Diagram gap fixed: fakeTagEntry → cards.test.ts connection added. Status → SPLITTING.
 - 2026-04-13: Split approved — 4 SFs, all automated-only. SF1→SF3 dependency (fakePuzzleEntry). Status → IN PROGRESS.
 - 2026-04-13: All sub-features accepted. 26 tests passing across 5 test files. Status → COMPLETE.
+- 2026-04-13: Feature archived. Plan retained for reference.
