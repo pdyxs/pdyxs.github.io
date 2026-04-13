@@ -1,6 +1,6 @@
 # Feature: Add Testing Support
 
-**Status:** EXPERIMENTING
+**Status:** ARCHITECTURE
 **Created:** 2026-04-11
 **Updated:** 2026-04-11
 
@@ -131,17 +131,18 @@ flowchart LR
 - **Unknown**: Does `experimental_AstroContainer.renderToString()` work for components that import from `astro:content`, when run under Vitest outside of an Astro build? Renderers like `GenericRenderer` don't themselves call `getCollection()`, but if any transitively-imported module does, Vitest may fail to resolve the `astro:content` virtual module.
 - **Risk**: If it fails, component tests for renderers with content-collection dependencies are blocked until we either (a) mock `astro:content` in `vitest.config.ts`, (b) run `astro build` as a pretest step to populate the content DB, or (c) restrict component tests to "leaf" components that don't touch content. Unit tests are unaffected.
 - **Experiment**: Add a minimal Vitest + Container setup on a throwaway branch. Render `GenericRenderer` with a fake entry. Observe: does `astro:content` resolve? If not, what's the error? Try option (a) first — a lightweight mock via `vi.mock('astro:content', ...)`.
-- **Result**: pending
-- **Impact**: If (a) works, the plan stands. If we need (b) or (c), Architecture Decision 6 narrows (component test scope reduced to leaf renderers) and `package.json` scripts change to include a prebuild step.
+- **Result**: CONFIRMED — Container API works end-to-end. `astro:content` type import (`import type { RenderResult }`) is erased at build time and causes no issues. The blocker was a different one: the built-in `happy-dom` Vitest environment sets `viteEnvironment: "client"`, causing the Astro Vite plugin to return a browser stub for `.astro` imports instead of the real SSR component factory. Fix: create a custom Vitest environment (`src/test/vitest-env.ts`) that provides happy-dom DOM globals but sets `viteEnvironment: "ssr"`. With that in place, `GenericRenderer` renders correctly and returns expected HTML.
+- **Impact**: Architecture Decision 2 requires an addendum: a custom Vitest environment file (`src/test/vitest-env.ts`) is needed, named `astro-happy-dom`, that wraps happy-dom globals with `viteEnvironment: "ssr"`. The `vitest.config.ts` points to this file as the environment. `vitest`, `@vitest/ui`, and `happy-dom` are already installed. `getViteConfig` from `astro/config` is used as the config helper.
 
 ### happy-dom coverage for real StackNav component tests
 
 - **Unknown**: When we eventually (in a later plan) extract pure logic from `StackNav.astro` and write component tests that click handlers, does happy-dom provide enough DOM surface to exercise the non-VT paths? Specifically: `element.animate()`, `scrollIntoView()`, event delegation on `#card-stack`, and classList toggling. `document.startViewTransition` is known to be missing from both shims — those code paths must be guarded and tested via the instant-fallback branch only.
 - **Risk**: If happy-dom has unexpected gaps for the non-VT paths, we'd need to either stub more of the DOM or switch to jsdom (one-line change). This wouldn't block this plan — it would land on whichever downstream plan first writes a StackNav component test.
 - **Experiment**: On the same throwaway branch, write a minimal component test that simulates a click on a fake `.stack-card` element and asserts that a class toggle happens. Use the current inline StackNav script logic (pasted, not imported) just to probe what happy-dom supports. This is a *probe*, not a real test — it gets deleted after.
-- **Result**: pending
-- **Impact**: If happy-dom holds up, Decision 2 stands. If it falls over on something load-bearing, switch `environment` in `vitest.config.ts` to `jsdom` and add `jsdom` as a devDep.
+- **Result**: CONFIRMED with a gap. classList toggling, click event delegation, `scrollIntoView()` (no-op, no throw), CSS custom properties via inline style, and querySelector/querySelectorAll all work. `element.animate()` is **not available** in this happy-dom version — future StackNav tests that exercise animation paths will need a `typeof el.animate === 'function'` guard. The non-animation paths (which is the testable surface anyway — VT paths are excluded by design) are fully covered.
+- **Impact**: Decision 2 stands. One addendum: document that `element.animate()` is absent from happy-dom; StackNav tests must guard animation calls. This is consistent with the existing note about `document.startViewTransition` being unavailable.
 
 ## Notes
 
 - 2026-04-11: Initial plan. Scope confirmed with user: Vitest + happy-dom + Container API, co-located tests, two proof-of-life tests, `/build` and `/test` skill integration via project-local context files. Out of scope: pure-logic extraction from StackNav, backfilling tests for existing code, Playwright, CI. Two unknowns queued: Container + `astro:content` interaction, and happy-dom coverage for eventual StackNav component tests. Skill-resolution behaviour (whether project-local `.claude/skills/*/context/server.md` actually overrides globals) is trusted on soft evidence — will become clear during `/build` if it's a problem. Status → EXPERIMENTING. Run `/experiment add-testing-support` to resolve the two unknowns before plan review.
+- 2026-04-13: All experiments resolved. Architecture confirmed with addenda: (1) a custom Vitest environment (`src/test/vitest-env.ts`) is required — built-in `happy-dom` sets `viteEnvironment: "client"` which breaks `.astro` SSR imports; (2) `element.animate()` is absent from this happy-dom version — future StackNav tests must guard animation calls. `vitest`, `@vitest/ui`, and `happy-dom` installed. Status → ARCHITECTURE. Ready for `/plan-feature add-testing-support` to do final review and `/split`.

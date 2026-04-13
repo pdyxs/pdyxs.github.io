@@ -16,6 +16,9 @@
     "astro": "^6.1.4"
   },
   "devDependencies": {
-    "gray-matter": "^4.0.3"
+    "@vitest/ui": "^4.1.4",
+    "gray-matter": "^4.0.3",
+    "happy-dom": "^20.8.9",
+    "vitest": "^4.1.4"
   }
 }
