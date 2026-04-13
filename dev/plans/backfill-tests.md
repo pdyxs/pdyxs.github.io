@@ -1,6 +1,6 @@
 # Feature: Backfill Tests
 
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 **Created:** 2026-04-13
 **Updated:** 2026-04-13
 
@@ -291,3 +291,4 @@ classDiagram
 - 2026-04-13: Plan created. Scope: regression coverage for all built components except StackNav (deferred to horizontal-card-stack). TagRenderer component test skipped — getAllCards() hits astro:content at runtime; pure logic extracted to getCardsForTag() in cards.ts instead. Status → ARCHITECTURE.
 - 2026-04-13: Review passed — architecture, principles, codebase opportunities (2026-04-13). Hardcoded colors in CardHeader/CardLink noted but left for light-dark-mode plan. Diagram gap fixed: fakeTagEntry → cards.test.ts connection added. Status → SPLITTING.
 - 2026-04-13: Split approved — 4 SFs, all automated-only. SF1→SF3 dependency (fakePuzzleEntry). Status → IN PROGRESS.
+- 2026-04-13: All sub-features accepted. 26 tests passing across 5 test files. Status → COMPLETE.
