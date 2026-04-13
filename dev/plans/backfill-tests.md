@@ -143,7 +143,7 @@ Automated tests: unit tests for `getCardsForTag` covering tag-id match, name mat
 
 ### SF2 — GenericRenderer tests
 
-**Status:** TODO
+**Status:** IMPLEMENTING
 **Depends on:** —
 **Acceptance test:** no
 
