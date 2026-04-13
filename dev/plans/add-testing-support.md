@@ -2,7 +2,7 @@
 
 **Status:** ARCHITECTURE
 **Created:** 2026-04-11
-**Updated:** 2026-04-11
+**Updated:** 2026-04-13
 
 ## Context
 
@@ -24,7 +24,9 @@ The project currently has no test framework. This blocks TDD for new features (e
 
 7. **This plan does not extract any logic from `StackNav.astro`** — pure-logic extraction is a prerequisite for testing StackNav, but it belongs to whichever feature plan needs it (e.g. `horizontal-card-stack`'s `updateStackLayout()`). This plan only sets up the infrastructure.
 
-8. **`/build` and `/test` skill integration via project-local context files** — create `.claude/skills/build/context/server.md` and `.claude/skills/test/context/server.md` in this project, overriding the global Godot-specific ones. They tell the skills to run `npm test` after each sub-feature (`/build`) and on the integration branch before acceptance (`/test`). This is how regression testing enters the feature-development pipeline.
+8. **`COLLECTION_RENDERERS` moves to `src/lib/renderers.ts`** — CLAUDE.md says the renderer registry belongs in lib, but it currently lives inline in `src/pages/card/[...path].astro`. A new `renderers.ts` file holds the component-to-collection mapping. `cards.ts` stays free of component imports (it's pure data/logic). The page imports from `renderers.ts`. This also makes the registry testable without reaching into a page file.
+
+9. **`/build` and `/test` skill integration via project-local context files** — create `.claude/skills/build/context/server.md` and `.claude/skills/test/context/server.md` in this project, overriding the global Godot-specific ones. They tell the skills to run `npm test` after each sub-feature (`/build`) and on the integration branch before acceptance (`/test`). This is how regression testing enters the feature-development pipeline.
 
 9. **No CI gate, no Playwright, no backfill** — local-only, unit + component DOM tests only, and existing functionality gets its own follow-up plan.
 
@@ -35,17 +37,20 @@ flowchart LR
   subgraph Runner
     Vitest["vitest [runner]"]
     Config["vitest.config.ts [config]"]
+    Env["src/test/vitest-env.ts [env]"]
     Setup["src/test/setup.ts [hooks]"]
     Fixtures["src/test/fixtures.ts [factories]"]
     Config --> Vitest
+    Env --> Vitest
     Setup --> Vitest
   end
   subgraph Tests
     UnitTest["src/lib/cards.test.ts [unit]"]
-    ComponentTest["src/components/_proof-of-life.test.ts [component]"]
+    ComponentTest["src/components/card-renderers/_proof-of-life.test.ts [component]"]
   end
   subgraph Code
     Cards["src/lib/cards.ts [pure logic]"]
+    Renderers["src/lib/renderers.ts [registry]"]
     Renderer["GenericRenderer.astro [component]"]
   end
   subgraph Skills
@@ -59,6 +64,7 @@ flowchart LR
   Vitest -->|"discovers *.test.ts"| UnitTest
   Vitest -->|"discovers *.test.ts"| ComponentTest
   UnitTest -->|"imports"| Cards
+  UnitTest -->|"imports"| Renderers
   ComponentTest -->|"Container.renderToString(entry: FakeEntry)"| Renderer
   Fixtures -->|"FakeEntry"| ComponentTest
   NpmTest -->|"invokes"| Vitest
@@ -68,61 +74,83 @@ flowchart LR
 
 ### New Files
 
-- [ ] `vitest.config.ts`
-  - Environment: `happy-dom`
+- [x] `vitest.config.ts` *(created during experiments)*
+  - Uses `getViteConfig` from `astro/config` as the config helper
+  - Environment: `./src/test/vitest-env.ts` (custom — see below)
   - Globals on (`describe`, `it`, `expect` without imports)
   - Setup file: `src/test/setup.ts`
-  - Path aliases inherited from `tsconfig.json`
   - Include pattern: `src/**/*.test.ts`
 
+- [x] `src/test/vitest-env.ts` *(created during experiments)*
+  - Custom Vitest environment named `astro-happy-dom`
+  - Sets `viteEnvironment: 'ssr'` — required so the Astro Vite plugin compiles `.astro` files as SSR component factories rather than returning browser stubs
+  - Provides happy-dom DOM globals via `populateGlobal` (same setup as the built-in `happy-dom` environment)
+  - **Must not be renamed to `happy-dom`** — that name is hardcoded in Vitest to use `viteEnvironment: 'client'`
+
 - [ ] `src/test/setup.ts`
-  - Empty initial hook file; exists to anchor future global test setup (e.g. resetting happy-dom state between tests if needed)
+  - Empty initial hook file; exists to anchor future global test setup
 
 - [ ] `src/test/fixtures.ts`
-  - `fakeEntry(collection, overrides)` — returns a minimal content-collection entry shape that satisfies the renderer prop contract
-  - `fakeContent()` — returns a stub `Content` Astro component (or `undefined` to exercise the no-content path)
-  - One factory per collection as needed; start with a generic one
+  - `fakeEntry(overrides?)` — returns a minimal object satisfying `{ data: { description?: string } }` for use as a `GenericRenderer` prop
+  - `fakeContent()` — returns `undefined` (exercises the no-content path); extend later if a Content stub is needed
+
+- [ ] `src/lib/renderers.ts`
+  - `COLLECTION_RENDERERS: Record<string, AstroComponentFactory>` — maps collection names and renderer name strings to the actual component. Mirrors `COLLECTION_DEFAULTS` in `cards.ts` but holds the component references
+  - Contains: `{ tag: TagRenderer, puzzles: PuzzleRenderer }` — collections not listed fall through to `GenericRenderer` at the call site
+  - Imported by `src/pages/card/[...path].astro` (replacing its inline definition) and by `src/lib/cards.test.ts`
 
 - [ ] `src/lib/cards.test.ts`
-  - Test 1: every key in `COLLECTION_DEFAULTS` resolves to a registered renderer in `COLLECTION_RENDERERS`
-  - Test 2: the renderer-dispatch fallback chain (explicit renderer → collection default → `GenericRenderer`) returns the expected component for a representative collection
+  - Test 1: every key in `COLLECTION_DEFAULTS` (from `cards.ts`) that has a non-generic renderer is present in `COLLECTION_RENDERERS` (from `renderers.ts`) — catches unregistered renderer names
+  - Test 2: collections with explicit renderers (`tag` → `TagRenderer`, `puzzles` → `PuzzleRenderer`) resolve to the right component via `COLLECTION_RENDERERS`; a collection without a special renderer (`posts`) is absent from `COLLECTION_RENDERERS` (confirming it falls through to `GenericRenderer` at the call site)
   - Pure logic only — no DOM, no Container
 
-- [ ] `src/components/_proof-of-life.test.ts`
-  - Renders `GenericRenderer` via `experimental_AstroContainer.create()` with a fake entry
-  - Parses the returned HTML with happy-dom
-  - Asserts: the entry title appears in the output, and the expected wrapper class exists
+- [ ] `src/components/card-renderers/_proof-of-life.test.ts`
+  - Renders `GenericRenderer` via `experimental_AstroContainer` from `astro/container` with a fake entry
+  - Parses the returned HTML string using `document.createElement('div')` + `innerHTML`
+  - Asserts: the entry `description` text appears in the rendered output (not `title` — `GenericRenderer` renders `description`, not `title`)
   - Confirms the component-testing path works end-to-end
 
 - [ ] `.claude/skills/build/context/server.md`
-  - Project-local override of the global Godot server context
-  - `/build` runs `npm test` after each sub-feature; failure blocks progression (treated as a code issue, same pattern as the global file uses for GUT)
-  - No APK/artifact section — Astro preview is handled by the existing systemd service
+  - Project-local override of the global server context
+  - After each sub-feature: run `npm test`; failure is treated as a code issue (blocks progression)
+  - No build/install section — Astro preview is handled by the existing systemd service
 
 - [ ] `.claude/skills/test/context/server.md`
-  - Project-local override of the global Godot server context
-  - `/test` runs `npm test` on the integration branch before acceptance
-  - Acceptance prompt pattern: combines sub-feature `**Acceptance:**` fields into a checklist the user confirms in a browser (since UI behaviour isn't unit-testable)
+  - Project-local override of the global server context
+  - Before acceptance: run `npm test` on the integration branch
+  - Acceptance prompt: combine sub-feature `**Acceptance:**` fields into a browser checklist (UI behaviour is not unit-testable)
 
 ### Modified Files
 
+- [ ] `src/lib/cards.ts`
+  - Changes:
+    - [ ] No functional changes — `COLLECTION_DEFAULTS` and `resolveRenderer` stay as-is; `resolveRenderer` remains unexported (tests don't need it directly)
+
+- [ ] `src/pages/card/[...path].astro`
+  - Changes:
+    - [ ] Remove inline `COLLECTION_RENDERERS` definition (lines 20–23)
+    - [ ] Add `import { COLLECTION_RENDERERS } from '../../lib/renderers'`
+
 - [ ] `package.json`
   - Changes:
-    - [ ] Add devDependencies: `vitest`, `happy-dom`, `@astrojs/check` (if not present, for type-checking in tests)
+    - [x] `vitest`, `@vitest/ui`, `happy-dom` added as devDependencies *(done during experiments)*
     - [ ] Add script: `"test": "vitest run"`
     - [ ] Add script: `"test:watch": "vitest"`
 
 - [ ] `CLAUDE.md`
   - Changes:
-    - [ ] Add a `## Testing` section documenting: where tests live (`src/**/*.test.ts`), how to run them (`npm test` / `npm run test:watch`), the DOM environment (happy-dom), the component-test pattern (Container API), and the "pure logic must be extractable" invariant's concrete testing contract
+    - [ ] Add `## Testing` section: where tests live (`src/**/*.test.ts`), how to run (`npm test` / `npm run test:watch`), why the custom environment is required (`viteEnvironment: 'ssr'`), `element.animate()` guard note, component-test pattern (`experimental_AstroContainer`), and the concrete testing contract for the "pure logic must be extractable" invariant
+    - [ ] Update `COLLECTION_RENDERERS` reference in Conventions to say `src/lib/renderers.ts`
 
 ## Dependencies
 
-- **`src/lib/cards.ts`** — existing pure logic; first unit test target. No changes expected.
-- **`src/components/GenericRenderer.astro`** — existing component; first component test target. No changes expected.
-- **`astro:content`** — the content collection module; flagged as an unknown (see below). May require mocking or build-step dependency in the Vitest environment.
-- **`/build` and `/test` skills** — integration via project-local context files. Assumes project-local skill context resolution works; if it turns out not to, we'll need a different integration point, but the plan doesn't change shape.
-- **`horizontal-card-stack` plan (downstream)** — will be the first real consumer of this infrastructure, extracting `updateStackLayout()` as pure logic and testing it. This plan must land first.
+- **`src/lib/cards.ts`** — provides `COLLECTION_DEFAULTS`; no functional changes.
+- **`src/pages/card/[...path].astro`** — loses its inline `COLLECTION_RENDERERS`; imports from `src/lib/renderers.ts` instead.
+- **`src/components/card-renderers/GenericRenderer.astro`** — first component test target. No changes.
+- **`src/components/card-renderers/TagRenderer.astro`, `PuzzleRenderer.astro`** — imported by `renderers.ts`.
+- **`astro:content`** — `type`-only import in `GenericRenderer`; erased at build time, no runtime resolution needed.
+- **`/build` and `/test` skills** — integration via project-local context files. Skill-context resolution (project-local overrides global) is trusted on soft evidence; if it fails, this is the first plan to surface it.
+- **`horizontal-card-stack` plan (downstream)** — first real consumer; will extract `updateStackLayout()` as pure logic and test it. This plan must land first.
 
 ## Unknowns & Experiments
 
@@ -146,3 +174,4 @@ flowchart LR
 
 - 2026-04-11: Initial plan. Scope confirmed with user: Vitest + happy-dom + Container API, co-located tests, two proof-of-life tests, `/build` and `/test` skill integration via project-local context files. Out of scope: pure-logic extraction from StackNav, backfilling tests for existing code, Playwright, CI. Two unknowns queued: Container + `astro:content` interaction, and happy-dom coverage for eventual StackNav component tests. Skill-resolution behaviour (whether project-local `.claude/skills/*/context/server.md` actually overrides globals) is trusted on soft evidence — will become clear during `/build` if it's a problem. Status → EXPERIMENTING. Run `/experiment add-testing-support` to resolve the two unknowns before plan review.
 - 2026-04-13: All experiments resolved. Architecture confirmed with addenda: (1) a custom Vitest environment (`src/test/vitest-env.ts`) is required — built-in `happy-dom` sets `viteEnvironment: "client"` which breaks `.astro` SSR imports; (2) `element.animate()` is absent from this happy-dom version — future StackNav tests must guard animation calls. `vitest`, `@vitest/ui`, and `happy-dom` installed. Status → ARCHITECTURE. Ready for `/plan-feature add-testing-support` to do final review and `/split`.
+- 2026-04-13: Plan review complete. Three issues fixed: (1) `COLLECTION_RENDERERS` moved from page file to new `src/lib/renderers.ts` — makes it testable and fixes CLAUDE.md convention violation; (2) unit test targets redesigned to match what's actually exported (`COLLECTION_DEFAULTS` ↔ `COLLECTION_RENDERERS` cross-check); (3) proof-of-life assertion corrected from "title" to "description" (`GenericRenderer` renders `description`, not `title`). Structure updated to reflect experiment artefacts (`vitest.config.ts`, `src/test/vitest-env.ts`) already created. CLAUDE.md update scope expanded to cover `renderers.ts` and testing conventions.
