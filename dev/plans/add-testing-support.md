@@ -248,25 +248,27 @@ flowchart LR
 ---
 
 ### SF4: Skill Integration & Documentation
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Depends on:** SF3
 
 **Test Cases:** none — verified by acceptance (skill invocation) only
 
 **Structure items:**
 - `~/.claude/skills/build/SKILL.md`
-  - [ ] Add `context/<type>.md` loading step between platform and type+platform steps
+  - [x] Add `context/<type>.md` loading step between platform and type+platform steps
 - `~/.claude/skills/test/SKILL.md`
-  - [ ] Add `context/<type>.md` loading step between platform and type+platform steps
+  - [x] Add `context/<type>.md` loading step between platform and type+platform steps
+- `~/.claude/skills/implement-subfeature/SKILL.md`
+  - [x] Same addition (had same pattern)
 - `~/.claude/skills/build/context/astro-web.md`
-  - [ ] After each sub-feature: run `npm test`; failure is a code issue, blocks progression
+  - [x] After each sub-feature: run `npm test`; failure is a code issue, blocks progression
 - `~/.claude/skills/test/context/astro-web.md`
-  - [ ] Step 1: run `npm test`; acceptance: browser checklist from sub-feature `**Testing:**` fields
+  - [x] Step 1: run `npm test`; acceptance: browser checklist from sub-feature `**Testing:**` fields
 - `.claude/project.md`
-  - [ ] `name`, `type: astro-web`, `plans: dev/plans/`
+  - [x] `name`, `type: astro-web`, `plans: dev/plans/`
 - `CLAUDE.md`
-  - [ ] Add `## Testing` section (test location, run commands, custom environment rationale, `element.animate()` guard, Container API pattern, pure-logic contract)
-  - [ ] Update `COLLECTION_RENDERERS` reference in Conventions to `src/lib/renderers.ts`
+  - [x] Add `## Testing` section (test location, run commands, custom environment rationale, `element.animate()` guard, Container API pattern, pure-logic contract)
+  - [x] Update `COLLECTION_RENDERERS` reference in Conventions to `src/lib/renderers.ts`
 
 **Testing:** Run `/build` on a plan in a separate project and confirm it picks up the `astro-web` context and runs `npm test` after each sub-feature. Confirm `.claude/project.md` type resolves correctly.
 **Acceptance test:** yes
