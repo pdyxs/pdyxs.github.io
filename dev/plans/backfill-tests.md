@@ -169,7 +169,7 @@ Automated tests: 9 tests covering undefined-entry guard, sudokupad_url/url fallb
 
 ### SF4 — CardHeader + CardLink tests
 
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Depends on:** —
 **Acceptance test:** no
 
