@@ -3,7 +3,6 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import CardLink from '../components/CardLink.astro';
 import StackNav from '../components/StackNav.astro';
-import ThemeToggle from '../components/ThemeToggle.astro';
 
 const panels = (await getCollection('cards', c => c.data.panel === true))
   .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
@@ -12,7 +11,6 @@ const panels = (await getCollection('cards', c => c.data.panel === true))
 <Base>
   <div id="homepage">
     <header class="site-header">
-      <ThemeToggle />
       <h1 class="site-title">pdyxs.wtf</h1>
       <p class="site-tagline">Paul Sztajer — Software Engineer & Creative Technologist</p>
     </header>
@@ -33,12 +31,4 @@ const panels = (await getCollection('cards', c => c.data.panel === true))
   <div id="card-stack" hidden></div>
   <StackNav />
 </Base>
-
-<style>
-  :global(.site-header) :global(#theme-toggle) {
-    position: absolute;
-    top: var(--space-sm);
-    right: var(--space-md);
-  }
-</style>
 

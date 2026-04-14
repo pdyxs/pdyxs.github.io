@@ -202,7 +202,13 @@
         if (bodyWrapper) {
           bodyWrapper.classList.remove('open');
           await new Promise<void>(resolve => {
-            bodyWrapper.addEventListener('transitionend', () => resolve(), { once: true });
+            function onEnd(e: Event) {
+              if ((e as TransitionEvent).propertyName === 'grid-template-rows') {
+                bodyWrapper!.removeEventListener('transitionend', onEnd);
+                resolve();
+              }
+            }
+            bodyWrapper.addEventListener('transitionend', onEnd);
           });
         }
 

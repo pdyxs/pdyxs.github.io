@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import ThemeToggle from '../components/ThemeToggle.astro';
 
 interface Props {
   title?: string;
@@ -43,8 +44,8 @@ const pageTitle = title === 'pdyxs.wtf' ? title : `${title} — pdyxs.wtf`;
     <div class="site-wrapper">
       <slot />
       <footer class="site-footer">
-        <slot name="footer-toggle" />
-        <a href="/">pdyxs.wtf</a> · <a href="/rss.xml">RSS</a>
+        <div class="footer-toggle"><ThemeToggle /></div>
+        <span><a href="/">pdyxs.wtf</a> · <a href="/rss.xml">RSS</a></span>
       </footer>
     </div>
   </body>

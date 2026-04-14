@@ -5,7 +5,6 @@ import Base from '../../layouts/Base.astro';
 import CardHeader from '../../components/CardHeader.astro';
 import StackNav from '../../components/StackNav.astro';
 import GenericRenderer from '../../components/card-renderers/GenericRenderer.astro';
-import ThemeToggle from '../../components/ThemeToggle.astro';
 import { COLLECTION_RENDERERS } from '../../lib/renderers';
 
 export async function getStaticPaths() {
@@ -37,7 +36,6 @@ const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name 
 ---
 
 <Base title={title}>
-  <ThemeToggle slot="footer-toggle" />
   <div id="homepage" hidden></div>
   <div id="card-stack">
     <div class="stack-card stack-card--active" data-uid={path}>
