@@ -206,6 +206,7 @@ strong { font-weight: 700; }
 /* ── Site header ───────────────────────────────────────────────── */
 
 .site-header {
+  position: relative;
   padding: var(--space-xl) var(--space-md) var(--space-lg);
   max-width: var(--max-width);
   margin: 0 auto;
@@ -460,6 +461,10 @@ strong { font-weight: 700; }
 /* ── Site footer ───────────────────────────────────────────────── */
 
 .site-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
   text-align: center;
   padding: var(--space-lg) var(--space-md);
   font-family: var(--font-ui);
