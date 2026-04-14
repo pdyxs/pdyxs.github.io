@@ -40,7 +40,10 @@ html[data-theme="dark"] {
 
 /* ── Reset ─────────────────────────────────────────────────────── */
 
-*, *::before, *::after { box-sizing: border-box; }
+*, *::before, *::after {
+  box-sizing: border-box;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
 
 html {
   font-size: var(--font-size-base);
