@@ -111,7 +111,7 @@ flowchart LR
 
 ### SF-01 — Dark palette + token cleanup
 
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Acceptance test:** no
 
 CSS-only preparation: add the `--color-bg-hover` token, introduce the `html[data-theme="dark"]` override block with the full dark palette, and purge the three remaining hardcoded light colors so every surface resolves through a token.

@@ -8,6 +8,7 @@
   --color-border-light: #999999;
   --color-text:       #000000;
   --color-text-muted: #555555;
+  --color-bg-hover:   #f0f0f0;
 
   --font-body:    'Montserrat', system-ui, sans-serif;
   --font-ui:      'Montserrat', system-ui, sans-serif;
@@ -24,6 +25,17 @@
   --space-xl:     3.5rem;
 
   --max-width:    680px;
+}
+
+html[data-theme="dark"] {
+  --color-bg:           #1a1a1a;
+  --color-surface:      #242424;
+  --color-bg-stripes:   #888888;
+  --color-border:       #c0c0c0;
+  --color-border-light: #555555;
+  --color-text:         #e0e0e0;
+  --color-text-muted:   #aaaaaa;
+  --color-bg-hover:     #2d2d2d;
 }
 
 /* ── Reset ─────────────────────────────────────────────────────── */
@@ -330,7 +342,7 @@ strong { font-weight: 700; }
   line-height: 1;
 }
 
-.stack-card--collapsed:hover .card-header { background: #f0f0f0; }
+.stack-card--collapsed:hover .card-header { background: var(--color-bg-hover); }
 
 /* ── Tag listing (inside a stack card) ──────────────────────────── */
 
@@ -354,7 +366,7 @@ strong { font-weight: 700; }
   margin-bottom: 0;
 }
 
-.card-listing-item:hover { background: #f0f0f0; }
+.card-listing-item:hover { background: var(--color-bg-hover); }
 
 .card-listing-header {
   display: flex;
