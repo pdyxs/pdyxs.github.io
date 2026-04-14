@@ -474,5 +474,4 @@ strong { font-weight: 700; }
 .footer-toggle {
   display: flex;
   justify-content: center;
-  margin-bottom: var(--space-sm);
 }
