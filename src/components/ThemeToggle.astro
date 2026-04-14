@@ -1,0 +1,139 @@
+---
+---
+<div class="theme-toggle" id="theme-toggle">
+  <button aria-label="Light" data-theme-btn="light">
+    <!-- Sun icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"/>
+      <line x1="12" y1="2" x2="12" y2="5"/>
+      <line x1="12" y1="19" x2="12" y2="22"/>
+      <line x1="2" y1="12" x2="5" y2="12"/>
+      <line x1="19" y1="12" x2="22" y2="12"/>
+      <line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/>
+      <line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/>
+      <line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/>
+      <line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/>
+    </svg>
+  </button>
+  <button aria-label="System" data-theme-btn="system">
+    <!-- Monitor icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
+      <rect x="2" y="3" width="20" height="14"/>
+      <line x1="8" y1="21" x2="16" y2="21"/>
+      <line x1="12" y1="17" x2="12" y2="21"/>
+    </svg>
+  </button>
+  <button aria-label="Dark" data-theme-btn="dark">
+    <!-- Moon icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  </button>
+</div>
+
+<style>
+  .theme-toggle {
+    position: fixed;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    display: flex;
+    border: var(--border-width) solid var(--color-border);
+    background: var(--color-surface);
+    z-index: 100;
+  }
+
+  .theme-toggle button {
+    background: none;
+    border: none;
+    border-right: var(--border-width) solid var(--color-border);
+    cursor: pointer;
+    padding: var(--space-xs);
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .theme-toggle button:last-child {
+    border-right: none;
+  }
+
+  .theme-toggle button:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text);
+  }
+
+  .theme-toggle button[data-active="true"] {
+    color: var(--color-text);
+    background: var(--color-bg-hover);
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var toggle = document.getElementById('theme-toggle');
+    if (!toggle) return;
+
+    function getActiveButton(pref) {
+      if (pref === 'light') return 'light';
+      if (pref === 'dark') return 'dark';
+      return 'system';
+    }
+
+    function resolveTheme(pref, systemDark) {
+      if (pref === 'light') return 'light';
+      if (pref === 'dark') return 'dark';
+      return systemDark ? 'dark' : 'light';
+    }
+
+    function updateActiveButton(active) {
+      toggle.querySelectorAll('button').forEach(function (btn) {
+        btn.dataset.active = String(btn.dataset.themeBtn === active);
+      });
+    }
+
+    var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    var _mediaListener = null;
+
+    function attachMediaListener() {
+      if (_mediaListener) return;
+      _mediaListener = function (e) {
+        var pref = localStorage.getItem('theme');
+        if (!pref || pref === 'system') {
+          document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
+        }
+      };
+      mediaQuery.addEventListener('change', _mediaListener);
+    }
+
+    function detachMediaListener() {
+      if (!_mediaListener) return;
+      mediaQuery.removeEventListener('change', _mediaListener);
+      _mediaListener = null;
+    }
+
+    // Set initial active button state
+    var initialPref = localStorage.getItem('theme');
+    updateActiveButton(getActiveButton(initialPref));
+
+    toggle.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-theme-btn]');
+      if (!btn) return;
+
+      var newPref = btn.dataset.themeBtn;
+
+      if (newPref === 'system') {
+        localStorage.removeItem('theme');
+        attachMediaListener();
+      } else {
+        localStorage.setItem('theme', newPref);
+        detachMediaListener();
+      }
+
+      var systemDark = mediaQuery.matches;
+      document.documentElement.dataset.theme = resolveTheme(newPref === 'system' ? null : newPref, systemDark);
+      updateActiveButton(newPref);
+    });
+  })();
+</script>

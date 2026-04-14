@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveTheme } from './theme';
+import { resolveTheme, getActiveButton } from './theme';
 
 describe('resolveTheme', () => {
   it('returns light when preference is light, system dark', () => {
@@ -32,5 +32,23 @@ describe('resolveTheme', () => {
 
   it('returns light when preference is null and system is light', () => {
     expect(resolveTheme(null, false)).toBe('light');
+  });
+});
+
+describe('getActiveButton', () => {
+  it('returns light when preference is light', () => {
+    expect(getActiveButton('light')).toBe('light');
+  });
+
+  it('returns dark when preference is dark', () => {
+    expect(getActiveButton('dark')).toBe('dark');
+  });
+
+  it('returns system when preference is system', () => {
+    expect(getActiveButton('system')).toBe('system');
+  });
+
+  it('returns system when preference is null', () => {
+    expect(getActiveButton(null)).toBe('system');
   });
 });

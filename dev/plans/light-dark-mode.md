@@ -171,7 +171,7 @@ Introduce the synchronous theme-resolution path: a pure helper in `src/lib/theme
 
 ### SF-03 — ThemeToggle component
 
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Acceptance test:** yes
 
 Add the user-facing toggle: a fixed top-right three-button group (Sun / Monitor / Moon) that writes the preference to `localStorage`, re-resolves `data-theme`, and manages the `matchMedia` listener when crossing the system boundary.
