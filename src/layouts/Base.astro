@@ -22,6 +22,22 @@ const pageTitle = title === 'pdyxs.wtf' ? title : `${title} — pdyxs.wtf`;
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;700&family=Saira+Stencil&display=swap" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title="pdyxs.wtf" href="/rss.xml" />
+    <script is:inline>
+      (function () {
+        var pref = localStorage.getItem('theme');
+        var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var resolved = (pref === 'light') ? 'light' : (pref === 'dark') ? 'dark' : (systemDark ? 'dark' : 'light');
+        document.documentElement.dataset.theme = resolved;
+
+        if (!pref || pref === 'system') {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+            if (!localStorage.getItem('theme') || localStorage.getItem('theme') === 'system') {
+              document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
+            }
+          });
+        }
+      })();
+    </script>
   </head>
   <body>
     <div class="site-wrapper">
