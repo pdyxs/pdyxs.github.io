@@ -138,7 +138,7 @@ CSS-only preparation: add the `--color-bg-hover` token, introduce the `html[data
 
 ### SF-02 — Anti-FOUC theme init in Base.astro
 
-**Status:** IMPLEMENTING
+**Status:** DONE
 **Acceptance test:** yes
 
 Introduce the synchronous theme-resolution path: a pure helper in `src/lib/theme.ts`, an inline `<head>` script that sets `data-theme` before first paint, and a `matchMedia` listener that keeps the page in sync when the preference is `system`. This is the first SF where dark mode is visible in the browser.
@@ -171,7 +171,7 @@ Introduce the synchronous theme-resolution path: a pure helper in `src/lib/theme
 
 ### SF-03 — ThemeToggle component
 
-**Status:** PENDING
+**Status:** IMPLEMENTING
 **Acceptance test:** yes
 
 Add the user-facing toggle: a fixed top-right three-button group (Sun / Monitor / Moon) that writes the preference to `localStorage`, re-resolves `data-theme`, and manages the `matchMedia` listener when crossing the system boundary.
