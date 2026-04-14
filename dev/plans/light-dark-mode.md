@@ -1,6 +1,6 @@
 # Feature: Light / Dark Mode
 
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 **Created:** 2026-04-11
 **Updated:** 2026-04-14
 
@@ -211,4 +211,5 @@ Add the user-facing toggle: a fixed top-right three-button group (Sun / Monitor 
 
 - 2026-04-11: Initial architecture. Three-state toggle (light/system/dark). Inline SVG icons with `currentColor`. Anti-FOUC inline script in `<head>`. Soft dark palette. No external dependencies.
 - 2026-04-11: Review complete. Fixed toggle active state to read from localStorage (not data-theme). Made CardLink.astro a definite change. Added CLAUDE.md update as plan item. Status → SPLITTING.
+- 2026-04-14: All sub-features accepted.
 - 2026-04-14: Split into three sub-features (palette/tokens → init + FOUC → toggle component). SF-01 has `Acceptance test: no` — its visual surface is exercised transitively by SF-02's in-browser acceptance test, which is the first point where dark mode is actually reachable. Pure helpers (`resolveTheme`, `getActiveButton`) extracted to new `src/lib/theme.ts` for unit testing; the inline `<head>` script in SF-02 must duplicate the resolution logic because it cannot import modules — the unit tests on the module serve as the reference. Status → IN PROGRESS.
