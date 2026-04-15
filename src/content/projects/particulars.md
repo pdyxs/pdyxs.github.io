@@ -69,6 +69,6 @@ cvDescription: >-
   information into a small space while highlighting what's important to the
   player.
 ---
-Particulars is a game based on the science of sub-atomic particle physics. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
+Particulars is a game based on the science of sub-atomic [[Sub-atomic Particle Physics]]. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
 
 The game follows the story of a young physicist Alison, as she navigates the forces affecting her life.

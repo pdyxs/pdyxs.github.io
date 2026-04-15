@@ -1,8 +1,11 @@
+---
+type: plan
+status: ARCHIVED
+created: 2026-04-11
+updated: 2026-04-14
+---
 # Feature: Light / Dark Mode
 
-**Status:** ARCHIVED
-**Created:** 2026-04-11
-**Updated:** 2026-04-14
 
 ## Context
 
@@ -111,7 +114,6 @@ flowchart LR
 
 ### SF-01 — Dark palette + token cleanup
 
-**Status:** DONE
 **Acceptance test:** no
 
 CSS-only preparation: add the `--color-bg-hover` token, introduce the `html[data-theme="dark"]` override block with the full dark palette, and purge the three remaining hardcoded light colors so every surface resolves through a token.
@@ -138,7 +140,6 @@ CSS-only preparation: add the `--color-bg-hover` token, introduce the `html[data
 
 ### SF-02 — Anti-FOUC theme init in Base.astro
 
-**Status:** DONE
 **Acceptance test:** yes
 
 Introduce the synchronous theme-resolution path: a pure helper in `src/lib/theme.ts`, an inline `<head>` script that sets `data-theme` before first paint, and a `matchMedia` listener that keeps the page in sync when the preference is `system`. This is the first SF where dark mode is visible in the browser.
@@ -171,7 +172,6 @@ Introduce the synchronous theme-resolution path: a pure helper in `src/lib/theme
 
 ### SF-03 — ThemeToggle component
 
-**Status:** DONE
 **Acceptance test:** yes
 
 Add the user-facing toggle: a fixed top-right three-button group (Sun / Monitor / Moon) that writes the preference to `localStorage`, re-resolves `data-theme`, and manages the `matchMedia` listener when crossing the system boundary.

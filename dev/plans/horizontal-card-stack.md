@@ -1,8 +1,12 @@
+---
+type: plan
+status: EXPERIMENTING
+needs_human: false
+created: 2026-04-11
+updated: 2026-04-11
+---
 # Feature: Horizontal Card Stack on Desktop
 
-**Status:** EXPERIMENTING
-**Created:** 2026-04-11
-**Updated:** 2026-04-11
 
 ## Context
 

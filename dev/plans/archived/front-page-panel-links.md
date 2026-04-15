@@ -1,8 +1,11 @@
+---
+type: plan
+status: ARCHIVED
+created: 2026-04-11
+updated: 2026-04-11 (split approved)
+---
 # Feature: Front Page Panel Links + Card Transition Animations
 
-**Status:** ARCHIVED
-**Created:** 2026-04-11
-**Updated:** 2026-04-11 (split approved)
 
 ## Context
 
@@ -153,7 +156,6 @@ flowchart LR
 ## Sub-Features
 
 ### Sub-Feature 1: Replace Accordion + CardLink
-**Status:** DONE
 **Depends on:** none
 **Branch:** astro-rebuild
 **Test Cases:**
@@ -193,7 +195,6 @@ flowchart LR
   - [ ] Remove `sourceUid` variable from `tag:` click handler
 
 ### Sub-Feature 2: View Transition Animations + Documentation
-**Status:** DONE
 **Depends on:** Sub-Feature 1
 **Branch:** astro-rebuild
 **Test Cases:**

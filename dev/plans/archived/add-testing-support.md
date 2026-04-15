@@ -1,8 +1,11 @@
+---
+type: plan
+status: ARCHIVED
+created: 2026-04-11
+updated: 2026-04-13
+---
 # Feature: Add Testing Support
 
-**Status:** ARCHIVED
-**Created:** 2026-04-11
-**Updated:** 2026-04-13
 
 ## Context
 
@@ -184,7 +187,6 @@ flowchart LR
 ## Sub-Features
 
 ### SF1: Test Infrastructure
-**Status:** DONE
 **Depends on:** none
 
 **Test Cases:** none — verified by `npm test` exit code only
@@ -204,7 +206,6 @@ flowchart LR
 ---
 
 ### SF2: Renderer Registry
-**Status:** DONE
 **Depends on:** none
 
 **Test Cases:** none — verified by acceptance (browser) only; automated coverage arrives in SF3
@@ -222,7 +223,6 @@ flowchart LR
 ---
 
 ### SF3: Proof-of-Life Tests
-**Status:** DONE
 **Depends on:** SF1, SF2
 
 **Test Cases:**
@@ -250,7 +250,6 @@ flowchart LR
 ---
 
 ### SF4: Skill Integration & Documentation
-**Status:** DONE
 **Depends on:** SF3
 
 **Test Cases:** none — verified by acceptance (skill invocation) only

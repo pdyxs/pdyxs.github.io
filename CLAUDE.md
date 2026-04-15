@@ -62,13 +62,15 @@ Clearing is mandatory, not advisory — leaving a name set after the transition 
 
 These are load-bearing. Plans and experiments must respect them; violating any of them is a refactor, not a local change.
 
+Global architecture principles (View→Logic one-way, events over direct calls, module independence, pure decisions / thin effects, single source of truth for state) live in `~/.claude/rules/architecture.md`. The project-specific invariants below are how those principles land here, plus constraints unique to this codebase.
+
 ### StackNav owns all card-stack mutations
 
 Any code that pushes, collapses, expands, reorders, or hides cards goes through `src/components/StackNav.astro`. Renderers and other scripts must not reach into `#card-stack` directly. This keeps the VT lifecycle, state classes, and layout updates in one place.
 
-### Class-based card state is the single source of truth
+### Card state lives in classes, not JS variables
 
-`stack-card--active` and `stack-card--collapsed` define a card's state. `.body-wrapper.open` is derived from that state, not tracked in parallel. Never duplicate card state in JS variables, `dataset`, or additional classes.
+`stack-card--active` and `stack-card--collapsed` are the authoritative representation of a card's state; `.body-wrapper.open` is derived from it. This is the "single source of truth" global rule applied to DOM classes — never shadow card state into JS variables, `dataset` entries, or parallel classes.
 
 ### Stable selector contract
 
@@ -87,10 +89,6 @@ It's the round-trip key between DOM and `/card/...` fetches. Don't improvise the
 ### One stack mutation = one layout update
 
 Any function that changes which cards exist or which is active calls the single layout updater (`updateStackLayout()` once added) at the end. Don't let callers piecemeal-update `--stack-index`, overflow state, or similar.
-
-### Pure logic must be extractable from DOM handlers
-
-Functions that decide *what* should happen (which cards hide, what `--stack-index` each gets, which renderer handles a collection) take plain data as input and return plain data. A thin DOM applier writes the result. This is the contract that makes the logic testable — mixing reads, decisions, and writes in the same function is a bug, not a style choice.
 
 ## Conventions
 
@@ -146,7 +144,7 @@ Parse the returned HTML string with `document.createElement('div')` + `innerHTML
 
 ### Pure logic and testability
 
-The "pure logic must be extractable from DOM handlers" invariant (see Invariants) is also the testing contract: any function that decides *what* should happen must take plain data in and return plain data out. Extract it to `src/lib/` so it can be imported and tested without DOM setup. The DOM applier that writes the result is not unit-tested directly.
+The "decisions are pure, effects are thin" global rule (`~/.claude/rules/architecture.md`) is also this project's testing contract. Decision functions are extracted to `src/lib/` so they can be imported and tested without DOM setup. The thin DOM applier that writes the result is not unit-tested directly — the decision function is where the logic (and the test coverage) lives.
 
 ## Workflow
 

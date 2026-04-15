@@ -1,8 +1,11 @@
+---
+type: plan
+status: ARCHIVED
+created: 2026-04-13
+updated: 2026-04-13
+---
 # Feature: Backfill Tests
 
-**Status:** ARCHIVED
-**Created:** 2026-04-13
-**Updated:** 2026-04-13
 
 ## Context
 
@@ -127,7 +130,6 @@ flowchart LR
 
 ### SF1 — Foundation: Fixtures + `getCardsForTag` extraction
 
-**Status:** DONE
 **Depends on:** —
 **Acceptance test:** no
 
@@ -143,7 +145,6 @@ Automated tests: unit tests for `getCardsForTag` covering tag-id match, name mat
 
 ### SF2 — GenericRenderer tests
 
-**Status:** DONE
 **Depends on:** —
 **Acceptance test:** no
 
@@ -156,7 +157,6 @@ Automated tests: 3 tests — existing proof-of-life test + `renders nothing when
 
 ### SF3 — PuzzleRenderer tests
 
-**Status:** DONE
 **Depends on:** SF1 (for `fakePuzzleEntry`)
 **Acceptance test:** no
 
@@ -169,7 +169,6 @@ Automated tests: 9 tests covering undefined-entry guard, sudokupad_url/url fallb
 
 ### SF4 — CardHeader + CardLink tests
 
-**Status:** DONE
 **Depends on:** —
 **Acceptance test:** no
 
