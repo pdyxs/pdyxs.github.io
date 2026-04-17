@@ -121,8 +121,8 @@ flowchart LR
 - **Unknown**: The existing `.card-header` uses `display: flex; align-items: center; justify-content: space-between` with an inner title span and a slot. Applying `writing-mode: vertical-rl` to a flex container has specific implications (flex main axis becomes vertical in vertical writing mode). Can we keep the same `CardHeader` component and just flip writing mode, or does the horizontal layout require a restructured header variant?
 - **Risk**: If the rotated header looks broken or unreadable, we'd need a dedicated collapsed-horizontal header variant — larger structural change.
 - **Experiment**: Create a minimal test page with a single `.stack-card.stack-card--collapsed` inside a horizontal `#card-stack`, apply `writing-mode: vertical-rl` (or alternatively `transform: rotate(-90deg)` with compensating width/height), and observe: does the title read bottom-to-top cleanly? Does the striped background render correctly rotated? Is the border visually consistent with the active card's header border?
-- **Result**: _pending_
-- **Impact**: If confirmed, Architecture Decision 3 stands as-is. If broken, introduce a horizontal-variant header (probably a new slot in `CardHeader` or a dedicated `.card-header--vertical` class).
+- **Result**: CONFIRMED — `writing-mode: vertical-rl` works cleanly. Title reads top-to-bottom, looks good at the 48px strip width. Stripes must be reoriented to `to right` direction in this mode. Title needs `background: var(--color-surface)` to sit above stripes. Collapsed card needs `display: flex; flex-direction: column` so header fills height via `flex: 1` (not driven by text length). Header `border-bottom` must be removed in horizontal mode (card outer border already provides it).
+- **Impact**: None. Architecture Decision 3 stands as-is.
 
 ### Stagger with `translateY` on flex children
 
