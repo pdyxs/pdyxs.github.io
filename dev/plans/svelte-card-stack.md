@@ -1,7 +1,8 @@
 ---
 type: plan
-status: DESIGNING
+status: EXPERIMENTING
 needs_human: false
+milestone: desktop-card-stack
 created: 2026-04-18
 updated: 2026-04-18
 ---
