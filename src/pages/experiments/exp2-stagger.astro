@@ -1,0 +1,320 @@
+---
+// EXPERIMENT 2 — stagger via ::after pseudo-element illusion
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="Exp 2: stagger illusion">
+  <main class="exp-main">
+    <h1>Exp 2 — Stagger via <code>::after</code> illusion</h1>
+    <p class="exp-note">
+      Each collapsed strip's <code>::after</code> draws two lines: a horizontal top edge
+      extending right, and a short vertical right border dropping down by <code>--stagger</code>
+      to meet the next strip's top. Strips are absolutely positioned so they fill the active
+      card's height.
+    </p>
+
+    <div class="exp-label">stagger 8px — 3 collapsed</div>
+    <div class="fan-row" style="--stagger:8px; --n:3">
+      <div class="fan-inner">
+        <div class="fan-corner" style="--i:0"></div>
+        <div class="fan-strip" style="--i:0"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Alpha Project</span></div></div>
+        <div class="fan-corner" style="--i:1"></div>
+        <div class="fan-strip" style="--i:1"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Beta Initiative</span></div></div>
+        <div class="fan-corner" style="--i:2"></div>
+        <div class="fan-strip" style="--i:2"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Gamma Work</span></div></div>
+        <div class="fan-active">
+          <div class="fan-hdr"><span class="fan-title">Delta — Active</span><button class="fan-close">×</button></div>
+          <div class="fan-body"><p>Active card body. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exp-label">stagger 12px — 3 collapsed</div>
+    <div class="fan-row" style="--stagger:12px; --n:3">
+      <div class="fan-inner">
+        <div class="fan-corner" style="--i:0"></div>
+        <div class="fan-strip" style="--i:0"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Alpha Project</span></div></div>
+        <div class="fan-corner" style="--i:1"></div>
+        <div class="fan-strip" style="--i:1"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Beta Initiative</span></div></div>
+        <div class="fan-corner" style="--i:2"></div>
+        <div class="fan-strip" style="--i:2"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Gamma Work</span></div></div>
+        <div class="fan-active">
+          <div class="fan-hdr"><span class="fan-title">Delta — Active</span><button class="fan-close">×</button></div>
+          <div class="fan-body"><p>Active card body. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exp-label">stagger 16px — 3 collapsed</div>
+    <div class="fan-row" style="--stagger:16px; --n:3">
+      <div class="fan-inner">
+        <div class="fan-corner" style="--i:0"></div>
+        <div class="fan-strip" style="--i:0"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Alpha Project</span></div></div>
+        <div class="fan-corner" style="--i:1"></div>
+        <div class="fan-strip" style="--i:1"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Beta Initiative</span></div></div>
+        <div class="fan-corner" style="--i:2"></div>
+        <div class="fan-strip" style="--i:2"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Gamma Work</span></div></div>
+        <div class="fan-active">
+          <div class="fan-hdr"><span class="fan-title">Delta — Active</span><button class="fan-close">×</button></div>
+          <div class="fan-body"><p>Active card body. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exp-label">stagger 8px — 5 collapsed (stress test)</div>
+    <div class="fan-row" style="--stagger:8px; --n:5">
+      <div class="fan-inner">
+        {['Alpha','Beta','Gamma','Delta','Epsilon'].map((t, i) => (
+          <>
+            <div class="fan-corner" style={`--i:${i}`}></div>
+            <div class="fan-strip" style={`--i:${i}`}><div class="fan-hdr fan-hdr--vert"><span class="fan-title">{t}</span></div></div>
+          </>
+        ))}
+        <div class="fan-active">
+          <div class="fan-hdr"><span class="fan-title">Zeta — Active</span><button class="fan-close">×</button></div>
+          <div class="fan-body"><p>5 collapsed. Does the stagger stack get too tall?</p><p>Lorem ipsum dolor sit amet.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exp-label">Option A — symmetric upward fan (both sides peek above)</div>
+    <div class="fan-row" style="--stagger:8px; --n:2; --m:2">
+      <div class="fan-inner">
+        <div class="fan-corner" style="--i:0"></div>
+        <div class="fan-strip" style="--i:0"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Alpha</span></div></div>
+        <div class="fan-corner" style="--i:1"></div>
+        <div class="fan-strip" style="--i:1"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Beta</span></div></div>
+        <div class="fan-active">
+          <div class="fan-hdr"><span class="fan-title">Gamma — Active</span><button class="fan-close">×</button></div>
+          <div class="fan-body"><p>Option A: both sides fan upward.</p></div>
+        </div>
+        <div class="fan-strip-ra" style="--j:1"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Delta</span></div></div>
+        <div class="fan-corner-ra" style="--j:1"></div>
+        <div class="fan-strip-ra" style="--j:0"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Epsilon</span></div></div>
+        <div class="fan-corner-ra" style="--j:0"></div>
+      </div>
+    </div>
+
+    <div class="exp-label">Option C — flat right indicator (no stagger on right)</div>
+    <div class="fan-row" style="--stagger:8px; --n:2; --m:0">
+      <div class="fan-inner">
+        <div class="fan-corner" style="--i:0"></div>
+        <div class="fan-strip" style="--i:0"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Alpha</span></div></div>
+        <div class="fan-corner" style="--i:1"></div>
+        <div class="fan-strip" style="--i:1"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Beta</span></div></div>
+        <div class="fan-active" style="margin-right: calc(48px - var(--border-width))">
+          <div class="fan-hdr"><span class="fan-title">Gamma — Active</span><button class="fan-close">×</button></div>
+          <div class="fan-body"><p>Option C: right side is a single flat strip.</p></div>
+        </div>
+        <div class="fan-strip-rc"><div class="fan-hdr fan-hdr--vert"><span class="fan-title">Delta / Epsilon</span></div></div>
+      </div>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .exp-main {
+    padding: var(--space-lg) var(--space-md);
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: 1.1rem;
+    border-bottom: var(--border-width) solid var(--color-border);
+    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .exp-note {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .exp-label {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-ui);
+    margin-bottom: var(--space-xs);
+    margin-top: var(--space-lg);
+  }
+
+  /* ── Outer wrapper: padding-top reserves space for strips peeking up ── */
+
+  .fan-row {
+    padding-top: calc(var(--n) * var(--stagger, 8px));
+    padding-bottom: calc(var(--m, 0) * var(--stagger, 8px));
+    overflow-x: clip;
+    margin-bottom: var(--space-xl);
+  }
+
+  /* ── Inner flex container: sets height via active card; strips absolute ── */
+
+  .fan-inner {
+    position: relative;   /* containing block for absolutely-positioned strips */
+    display: flex;
+    flex-direction: row;
+    overflow: visible;    /* strips overflow upward into fan-row's padding area */
+  }
+
+  /* ── Collapsed strip ──────────────────────────────────────────────── */
+
+  .fan-strip {
+    position: absolute;
+    width: 48px;
+    top: calc((var(--i) - var(--n)) * var(--stagger, 8px));
+    /* bottom also staggers so each card appears the same height, just shifted up */
+    bottom: calc((var(--n) - var(--i)) * var(--stagger, 8px));
+    left: calc(var(--i) * 48px);
+    z-index: calc(var(--i) + 1);
+    border: var(--border-width) solid var(--color-border);
+    background: var(--color-surface);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* L-shape corner: horizontal top edge + short vertical jog, both staggered from right */
+  .fan-corner {
+    position: absolute;
+    left: calc((var(--i) + 1) * 48px - var(--border-width));
+    top: calc((var(--i) - var(--n)) * var(--stagger, 8px));
+    /* right = right-strip area + (n-i)*stagger offset from the active card's right edge */
+    right: calc(var(--m, 0) * 48px + (var(--n) - var(--i)) * var(--stagger, 8px));
+    height: var(--stagger, 8px);
+    border-top: var(--border-width) solid var(--color-border);
+    border-right: var(--border-width) solid var(--color-border);
+    z-index: calc(var(--i) + 1);
+  }
+
+  /* ── Option A: right strips also peek upward (symmetric with left) ── */
+
+  .fan-strip-ra {
+    position: absolute;
+    width: 48px;
+    right: calc(var(--j) * 48px);
+    /* mirrors left-strip formula: j=0 rightmost/farthest peeks most */
+    top: calc((var(--j) - var(--m)) * var(--stagger, 8px));
+    bottom: calc((var(--m) - var(--j)) * var(--stagger, 8px));
+    z-index: calc(var(--j) + 1);
+    border: var(--border-width) solid var(--color-border);
+    background: var(--color-surface);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Symmetric corner: top border + left jog (mirrors fan-corner's right jog) */
+  .fan-corner-ra {
+    position: absolute;
+    left: calc(var(--n) * 48px + (var(--m) - var(--j)) * var(--stagger, 8px));
+    right: calc((var(--j) + 1) * 48px - var(--border-width));
+    top: calc((var(--j) - var(--m)) * var(--stagger, 8px));
+    height: var(--stagger, 8px);
+    border-top: var(--border-width) solid var(--color-border);
+    border-left: var(--border-width) solid var(--color-border);
+    z-index: calc(var(--j) + 1);
+  }
+
+  /* ── Option C: single flat right strip, no stagger ────────────────── */
+
+  .fan-strip-rc {
+    position: absolute;
+    width: 48px;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    border: var(--border-width) solid var(--color-border);
+    background: var(--color-surface);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Active card: in flow, sets fan-inner height ────────────────── */
+
+  .fan-active {
+    /* shift left/right by 1px so borders overlap (not double) the adjacent strip borders */
+    margin-left: calc(var(--n) * 48px - var(--border-width));
+    margin-right: max(calc(var(--m, 0) * 48px - var(--border-width)), 0px);
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    z-index: calc(var(--n) + 1);
+    border: var(--border-width) solid var(--color-border);
+    background: var(--color-surface);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Headers ──────────────────────────────────────────────────────── */
+
+  .fan-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 18px,
+      var(--color-bg-stripes) 19px, var(--color-bg-stripes) 20px
+    );
+    border-bottom: var(--border-width) solid var(--color-border);
+  }
+
+  .fan-title {
+    background: var(--color-surface);
+    padding: 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fan-hdr--vert {
+    writing-mode: vertical-rl;
+    flex: 1;
+    border-bottom: none;
+    justify-content: flex-start;
+    align-items: center;
+    padding: var(--space-md) var(--space-xs);
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0px, transparent 18px,
+      var(--color-bg-stripes) 19px, var(--color-bg-stripes) 20px
+    );
+    overflow: hidden;
+  }
+
+  .fan-hdr--vert .fan-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Body ─────────────────────────────────────────────────────────── */
+
+  .fan-body {
+    padding: var(--space-md) var(--space-lg);
+    font-size: 0.9rem;
+    flex: 1;
+  }
+
+  .fan-body p { margin: 0 0 var(--space-sm); }
+  .fan-body p:last-child { margin: 0; }
+
+  .fan-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.4rem;
+    font-weight: 300;
+    font-family: var(--font-ui);
+    line-height: 1;
+    padding: 0;
+    color: var(--color-text);
+    flex-shrink: 0;
+  }
+</style>

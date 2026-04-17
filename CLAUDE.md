@@ -150,7 +150,9 @@ The "decisions are pure, effects are thin" global rule (`~/.claude/rules/archite
 
 ### Experiments live on dev-only routes
 
-`/experiment` should create throwaway pages under `src/pages/_experiments/` with synthetic fixtures (e.g. 10 fake cards for an overflow experiment). Don't prototype by mutating production components and reverting.
+`/experiment` should create throwaway pages under `src/pages/experiments/` with synthetic fixtures (e.g. 10 fake cards for an overflow experiment). Don't prototype by mutating production components and reverting.
+
+Note: Astro excludes directories starting with `_` from routing, so `_experiments` does **not** work — use `experiments` (no underscore).
 
 ### Plans must name the selectors and CSS variables they touch
 
