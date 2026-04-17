@@ -20,7 +20,7 @@ No Svelte or `@astrojs/svelte` is currently installed — this plan adds both.
 
 2. **`CardStack.svelte` is a Svelte island with `client:load`** — all card-stack interactivity lives in this component. The `StackNav.astro` wrapper becomes a thin shell that renders `<CardStack client:load />` (and passes the pre-rendered active card data if present). The JS `<script>` block in `StackNav.astro` is removed entirely once the migration is done.
 
-3. **Card stack state is a Svelte store (`writable`)** — the authoritative stack state is a `writable<StackState>` store defined in `src/lib/card-stack-store.ts`. `StackState` is a plain data object containing the ordered list of card UIDs and which UID is active. The Svelte component derives its render tree from this store. This is the single source of truth — no parallel DOM class tracking.
+3. **Card stack state is a Svelte store (`writable`)** — the authoritative stack state is a `writable<StackState>` store defined in `src/stores/card-stack-store.ts`. `StackState` is a plain data object containing the ordered list of card UIDs and which UID is active. The Svelte component derives its render tree from this store. This is the single source of truth — no parallel DOM class tracking.
 
 4. **`computeStackLayout()` is a pure function in `src/lib/stack-layout.ts`** — it takes `StackState` and returns `LayoutResult` (which cards are visible, which are hidden, whether overflow is needed, what `--stack-index` each card gets). No DOM access. Fully unit-testable without a browser. The Svelte component calls `computeStackLayout()` in a `$derived` expression and applies the result to the DOM via bindings.
 
@@ -99,7 +99,7 @@ flowchart LR
 - [ ] `src/lib/stack-layout.test.ts`
   - Tests for `computeStackLayout()`: zero cards, one active, multiple with collapsed, overflow threshold
 
-- [ ] `src/lib/card-stack-store.ts`
+- [ ] `src/stores/card-stack-store.ts`
   - `writable<StackState>` Svelte store
   - Exported `stackStore` for use by `CardStack.svelte`
   - Helper functions: `pushToStack`, `removeFromStack`, `activateCard` — all return new `StackState` (pure), applied by the component
@@ -136,6 +136,12 @@ flowchart LR
 - **`src/lib/cards.ts`** — unchanged; still the card data layer for SSR routes
 - **`vitest.config.ts` / `src/test/vitest-env.ts`** — unchanged; `stack-layout.ts` tests run in the existing happy-dom environment
 
+## Tracked Items
+
+- [ ] **CLAUDE.md update needed (post-build):** Update the "StackNav owns all card-stack mutations" invariant to name `CardStack.svelte` as the new single-owner and note that `StackNav.astro` is a thin shell.
+- [ ] **CLAUDE.md update needed (post-build):** Replace the "Card state lives in classes, not JS variables" invariant with a new statement: the Svelte store in `src/stores/card-stack-store.ts` is the authoritative state; CSS classes (`stack-card--active`, `stack-card--collapsed`) are applied by `CardStack.svelte` as a derived effect and are styling contracts only.
+- [ ] **CLAUDE.md update needed (post-build):** Add a new pattern under Architecture: "Svelte islands" — document that `CardStack.svelte` uses `client:load`, that Svelte store files live in `src/stores/` (not `src/lib/`), and that `src/lib/` remains framework-agnostic pure TS.
+
 ## Unknowns & Experiments
 
 ### Svelte 5 + `@html` for fetched card fragments
@@ -157,5 +163,6 @@ flowchart LR
 ## Notes
 
 - 2026-04-18: Initial plan. Prerequisite migration for `horizontal-card-stack`. Migrates card stack from vanilla-JS StackNav script to a Svelte 5 island, introduces `computeStackLayout()` as a pure function in `src/lib/stack-layout.ts`, and uses a Svelte store as the single source of truth for stack state. Two experiments queued: `{@html}` script execution behaviour, and VT callback flush timing with Svelte 5 reactivity.
+- 2026-04-18: Review ran (--prog) — checked architecture, principles, codebase improvement, new patterns. Auto-applied: moved `card-stack-store.ts` from `src/lib/` to `src/stores/` (Svelte import breaks lib purity convention); added Tracked Items for three CLAUDE.md updates (StackNav ownership reword, card-state-in-classes supersession, Svelte island pattern documentation). Surfaced: 3 must-address judgement findings (hasHomepage prop determination at SSR time, activeHtml serialisation complexity, store location).
 </content>
 </invoke>
