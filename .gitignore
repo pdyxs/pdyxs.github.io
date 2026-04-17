@@ -4,3 +4,8 @@ node_modules/
 .env.*
 !.env.example
 .astro/
+
+# Dev files live in Obsidian vault
+dev/plans/
+dev/bugs/
+dev/milestones/
