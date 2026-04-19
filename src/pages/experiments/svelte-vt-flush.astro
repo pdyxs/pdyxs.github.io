@@ -1,0 +1,16 @@
+---
+// EXPERIMENT: Svelte 5 reactivity flush timing inside VT callback
+import VtFlushTest from '../../components/experiments/VtFlushTest.svelte';
+---
+<html>
+<head><title>Exp: Svelte VT flush</title></head>
+<body>
+  <h1>Experiment: VT callback flush timing</h1>
+  <p>
+    Click <strong>WITHOUT flushSync</strong> first. Check the log:<br/>
+    - If "DOM li count" inside the callback matches expected → Svelte flushes synchronously (no flushSync needed).<br/>
+    - If count is one behind → Svelte batches asynchronously (flushSync required).
+  </p>
+  <VtFlushTest client:load />
+</body>
+</html>
