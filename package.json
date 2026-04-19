@@ -15,7 +15,9 @@
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",
-    "astro": "^6.1.4"
+    "@astrojs/svelte": "^8.0.5",
+    "astro": "^6.1.4",
+    "svelte": "^5.55.4"
   },
   "devDependencies": {
     "@vitest/ui": "^4.1.4",
