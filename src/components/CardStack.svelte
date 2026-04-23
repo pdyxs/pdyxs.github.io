@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick, untrack } from 'svelte';
+  import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
   import { stackStore, pushToStack, removeFromStack, activateCard as activateCardFn } from '../stores/card-stack-store';
   import { computeStackLayout } from '../lib/stack-layout';
@@ -12,6 +12,9 @@
   let { activeUid, activeHtml }: Props = $props();
 
   let cardHtmlCache = $state(new Map<string, string>());
+  // UIDs to skip body-open in $effect during VT push (body opens after vt.finished)
+  let skipBodyOpen = new Set<string>();
+  let startVT: ((cb: () => void) => { finished: Promise<void> }) | undefined;
 
   // Seed store from SSR prop once at mount — untrack to silence reactive-capture warning.
   untrack(() => {
@@ -32,11 +35,12 @@
       el.classList.toggle('stack-card--collapsed', card.isCollapsed);
       el.style.setProperty('--stack-index', String(card.stackIndex));
       const bw = el.querySelector<HTMLElement>('.body-wrapper');
-      if (bw) bw.classList.toggle('open', card.isActive);
+      // During VT push, suppress body-open until vt.finished
+      if (bw) bw.classList.toggle('open', card.isActive && !skipBodyOpen.has(card.uid));
     }
   });
 
-  // --- Interaction helpers ---
+  // --- Helpers ---
 
   function uidToFetchUrl(uid: string): string {
     return `/card/${uid}`;
@@ -76,7 +80,7 @@
     history.pushState(null, '', query ? `${basePath}?${query}` : basePath);
   }
 
-  async function pushCard(url: string) {
+  async function pushCard(url: string, clickedLink?: Element | null) {
     const uid = urlToUid(url);
     const state = get(stackStore);
 
@@ -93,20 +97,46 @@
     const ok = await fetchAndCacheCard(uid);
     if (!ok) return;
 
-    // Prune everything after the active card, then push
-    stackStore.update(s => {
-      const activeIdx = s.activeUid
-        ? s.cards.findIndex(c => c.uid === s.activeUid)
-        : s.cards.length - 1;
-      const base = activeIdx >= 0 ? { ...s, cards: s.cards.slice(0, activeIdx + 1) } : s;
-      return pushToStack(base, uid);
-    });
+    const doUpdate = () => {
+      stackStore.update(s => {
+        const activeIdx = s.activeUid
+          ? s.cards.findIndex(c => c.uid === s.activeUid)
+          : s.cards.length - 1;
+        const base = activeIdx >= 0 ? { ...s, cards: s.cards.slice(0, activeIdx + 1) } : s;
+        return pushToStack(base, uid);
+      });
+    };
 
     const homepage = document.getElementById('homepage');
-    if (homepage) homepage.hidden = true;
+
+    if (clickedLink && startVT) {
+      // VT path: panel link morphs into stack card
+      skipBodyOpen.add(uid);
+      (clickedLink as HTMLElement).style.viewTransitionName = 'panel-card-open';
+
+      const vt = startVT(() => {
+        flushSync(doUpdate);
+        const newCard = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
+        if (newCard) newCard.style.viewTransitionName = 'panel-card-open';
+        if (homepage) homepage.hidden = true;
+      });
+
+      await vt.finished;
+      skipBodyOpen.delete(uid);
+      (clickedLink as HTMLElement).style.viewTransitionName = '';
+      const newCard = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
+      if (newCard) {
+        newCard.style.viewTransitionName = '';
+        newCard.querySelector<HTMLElement>('.body-wrapper')?.classList.add('open');
+      }
+    } else {
+      // Instant fallback
+      doUpdate();
+      if (homepage) homepage.hidden = true;
+      await tick();
+    }
 
     updateUrl();
-    await tick();
     document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`)
       ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -145,14 +175,31 @@
         }
       }
 
-      stackStore.update(s => removeFromStack(s, uid));
+      const matchingLink = homepage?.querySelector<HTMLElement>(`.card-link[data-push-card="${uid}"]`);
 
-      if (homepage) {
-        homepage.hidden = false;
+      if (matchingLink && startVT && el) {
+        // VT path: stack card morphs back to panel link
+        el.style.viewTransitionName = 'panel-card-close';
+        matchingLink.style.viewTransitionName = 'panel-card-close';
+
+        const vt = startVT(() => {
+          flushSync(() => stackStore.update(s => removeFromStack(s, uid)));
+          if (homepage) homepage.hidden = false;
+          history.pushState(null, '', '/');
+        });
+
+        await vt.finished;
+        matchingLink.style.viewTransitionName = '';
       } else {
-        window.location.href = '/';
+        // Instant fallback
+        stackStore.update(s => removeFromStack(s, uid));
+        if (homepage) {
+          homepage.hidden = false;
+        } else {
+          window.location.href = '/';
+        }
+        history.pushState(null, '', '/');
       }
-      history.pushState(null, '', '/');
     } else {
       stackStore.update(s => removeFromStack(s, uid));
       updateUrl();
@@ -192,6 +239,7 @@
   }
 
   onMount(() => {
+    startVT = (document as any).startViewTransition?.bind(document);
     const homepage = document.getElementById('homepage');
 
     // If SSR-seeded card present, hide homepage
@@ -231,7 +279,9 @@
 
     function onHomepageClick(e: MouseEvent) {
       const link = (e.target as Element).closest<HTMLElement>('[data-push-card]');
-      if (link?.dataset.pushCard) pushCard(uidToFetchUrl(link.dataset.pushCard));
+      if (link?.dataset.pushCard) {
+        pushCard(uidToFetchUrl(link.dataset.pushCard), link.closest('.card-link'));
+      }
     }
     homepage?.addEventListener('click', onHomepageClick);
 
