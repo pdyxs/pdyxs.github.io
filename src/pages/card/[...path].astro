@@ -37,12 +37,12 @@ const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name 
 
 <Base title={title}>
   <div id="homepage" hidden></div>
-  <div id="card-stack">
+  <StackNav activeUid={path}>
     <div class="stack-card stack-card--active" data-uid={path}>
       <CardHeader {title} titleSuffix={(entry?.data as any)?.titleSuffix}>
         <button class="stack-card-close" aria-label="Close">×</button>
       </CardHeader>
-      <div class="body-wrapper">
+      <div class="body-wrapper open">
         <div class="stack-card-body">
           <div class="stack-card-body-inner">
             <Renderer {entry} {Content} />
@@ -50,6 +50,5 @@ const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name 
         </div>
       </div>
     </div>
-  </div>
-  <StackNav />
+  </StackNav>
 </Base>
