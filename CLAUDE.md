@@ -58,23 +58,31 @@ Setting a name on a detached node before appending it inside the `startViewTrans
 
 Clearing is mandatory, not advisory — leaving a name set after the transition will collide with the next one. Instant-fallback paths (when VT is unsupported or skipped) must not depend on the VT to open the body; the `.open` class transition handles that independently.
 
+### Svelte islands
+
+Interactive components use Svelte 5 (runes syntax) with `client:load`. Key conventions:
+
+- Svelte store files live in `src/stores/` — not `src/lib/`. The `src/lib/` directory is framework-agnostic pure TypeScript.
+- `CardStack.svelte` is the only Svelte island currently. New islands follow the same shape: `$state` for local reactive state, `$derived` for computed values, `$effect` for thin DOM side effects that can't be done with template bindings.
+- `{@html}` silently drops `<script>` tags in injected HTML strings. Future card renderers must not rely on inline scripts — renderer interactivity must be a Svelte component or a global delegated listener, not an inline `<script>` in the rendered HTML fragment.
+
 ## Invariants
 
 These are load-bearing. Plans and experiments must respect them; violating any of them is a refactor, not a local change.
 
 Global architecture principles (View→Logic one-way, events over direct calls, module independence, pure decisions / thin effects, single source of truth for state) live in `~/.claude/rules/architecture.md`. The project-specific invariants below are how those principles land here, plus constraints unique to this codebase.
 
-### StackNav owns all card-stack mutations
+### CardStack.svelte owns all card-stack mutations
 
-Any code that pushes, collapses, expands, reorders, or hides cards goes through `src/components/StackNav.astro`. Renderers and other scripts must not reach into `#card-stack` directly. This keeps the VT lifecycle, state classes, and layout updates in one place.
+Any code that pushes, collapses, expands, reorders, or hides cards goes through `src/components/CardStack.svelte`. `src/components/StackNav.astro` is a thin Astro shell that renders `<CardStack client:load />` — it has no `<script>` block. Renderers and other scripts must not reach into `#card-stack` directly. This keeps the VT lifecycle, state, and layout updates in one place.
 
-### Card state lives in classes, not JS variables
+### Svelte store is the authoritative card-stack state
 
-`stack-card--active` and `stack-card--collapsed` are the authoritative representation of a card's state; `.body-wrapper.open` is derived from it. This is the "single source of truth" global rule applied to DOM classes — never shadow card state into JS variables, `dataset` entries, or parallel classes.
+The `writable<StackState>` store in `src/stores/card-stack-store.ts` is the single source of truth for which cards are in the stack and which is active. `CardStack.svelte` derives CSS classes (`stack-card--active`, `stack-card--collapsed`) and layout state from the store via `$derived` and applies them via `$effect`. The CSS classes are styling contracts only — never query them in JS to infer state.
 
 ### Stable selector contract
 
-These class names are a JS API, not styling hooks — renaming any of them is a StackNav refactor, not a CSS change:
+These class names are a CSS/layout contract — renaming any of them is a CardStack.svelte + CSS refactor, not a local change:
 
 - `#card-stack`
 - `.stack-card`, `.stack-card--active`, `.stack-card--collapsed`
@@ -86,9 +94,9 @@ These class names are a JS API, not styling hooks — renaming any of them is a 
 
 It's the round-trip key between DOM and `/card/...` fetches. Don't improvise the format at call sites.
 
-### One stack mutation = one layout update
+### Layout is reactive, not imperatively called
 
-Any function that changes which cards exist or which is active calls the single layout updater (`updateStackLayout()` once added) at the end. Don't let callers piecemeal-update `--stack-index`, overflow state, or similar.
+`CardStack.svelte` derives layout via `$derived(computeStackLayout($stackStore))`. Any store mutation automatically triggers a re-derivation and `$effect` re-run — no explicit layout update call is needed or allowed. Don't add explicit `computeStackLayout()` calls to event handlers; update the store and let reactivity handle the rest.
 
 ## Conventions
 
