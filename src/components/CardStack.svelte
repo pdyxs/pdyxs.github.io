@@ -14,6 +14,8 @@
   let cardHtmlCache = $state(new Map<string, string>());
   // UIDs to skip body-open in $effect during VT push (body opens after vt.finished)
   let skipBodyOpen = new Set<string>();
+  let overflowElLeft = $state<HTMLElement | null>(null);
+  let overflowElRight = $state<HTMLElement | null>(null);
   let startVT: ((cb: () => void) => { finished: Promise<void> }) | undefined;
 
   // Seed store from SSR prop once at mount — untrack to silence reactive-capture warning.
@@ -332,6 +334,11 @@
       {@html cardHtmlCache.get(item.uid) ?? ''}
     {:else if item.kind === 'fan-corner'}
       <div class="fan-corner" style="--i:{item.i}; --n:{item.n}"></div>
+    {:else if item.kind === 'overflow'}
+      <div
+        class="stack-overflow stack-overflow--{item.side}"
+        style="--stack-index:{item.stackIndex}; --i:{item.stackIndex}; --n:{layout.numLeftCollapsed}"
+      >⋯</div>
     {/if}
   {/each}
 </div>
