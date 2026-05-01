@@ -1,0 +1,305 @@
+---
+// EXPERIMENT: Fan-corner layout with real .stack-card CSS + CSS custom properties
+// Tests whether the absolute-positioning approach from exp2-stagger works when
+// integrated with the existing .stack-card class structure.
+//
+// Key questions:
+// 1. Does position:absolute on .stack-card--collapsed work at the 681px breakpoint?
+// 2. Do fan corners (L-shaped absolute divs) work using --stack-index / --total-collapsed?
+// 3. Does the active card (flex in-flow child) correctly set container height?
+//
+// View at viewport width > 681px to see the horizontal layout.
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="Exp: fan-corner with real card CSS">
+  <main class="exp-main">
+    <h1>Fan-corner: real <code>.stack-card</code> CSS + custom properties</h1>
+    <p class="exp-note">
+      View at &gt;681px. Each example manually sets <code>--stack-index</code> and
+      <code>--total-collapsed</code> to simulate what <code>CardStack.svelte</code>'s
+      <code>$effect</code> would set. Fan corners are sibling divs rendered between cards.
+    </p>
+
+    <!-- ── Example 1: 2 collapsed + 1 active ─────────────────────────── -->
+
+    <div class="exp-label">2 collapsed + 1 active (--total-collapsed: 2)</div>
+    <div class="exp-stack" style="--total-collapsed: 2">
+      <!-- fan-corner for collapsed card 0 -->
+      <div class="fan-corner" style="--i:0; --n:2"></div>
+      <!-- collapsed card 0 -->
+      <div class="stack-card stack-card--collapsed" data-uid="test/alpha" style="--stack-index:0">
+        <div class="card-header">
+          <span class="card-header-title"><b>Alpha Project</b></span>
+        </div>
+        <div class="body-wrapper">
+          <div class="stack-card-body">
+            <div class="stack-card-body-inner">Alpha body</div>
+          </div>
+        </div>
+      </div>
+      <!-- fan-corner for collapsed card 1 -->
+      <div class="fan-corner" style="--i:1; --n:2"></div>
+      <!-- collapsed card 1 -->
+      <div class="stack-card stack-card--collapsed" data-uid="test/beta" style="--stack-index:1">
+        <div class="card-header">
+          <span class="card-header-title"><b>Beta Initiative</b></span>
+        </div>
+        <div class="body-wrapper">
+          <div class="stack-card-body">
+            <div class="stack-card-body-inner">Beta body</div>
+          </div>
+        </div>
+      </div>
+      <!-- active card (in-flow flex child) -->
+      <div class="stack-card stack-card--active" data-uid="test/gamma" style="--stack-index:2">
+        <div class="card-header">
+          <span class="card-header-title"><b>Gamma — Active</b></span>
+          <button class="stack-card-close">×</button>
+        </div>
+        <div class="body-wrapper open">
+          <div class="stack-card-body">
+            <div class="stack-card-body-inner">
+              <p>Active card body. This card sets the container height.</p>
+              <p>The collapsed cards above should be absolutely positioned, peeking above the container.</p>
+              <p>Fan corners draw L-shaped connectors between strip tops.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Example 2: 3 collapsed + 1 active ─────────────────────────── -->
+
+    <div class="exp-label">3 collapsed + 1 active (--total-collapsed: 3)</div>
+    <div class="exp-stack" style="--total-collapsed: 3">
+      <div class="fan-corner" style="--i:0; --n:3"></div>
+      <div class="stack-card stack-card--collapsed" data-uid="test/a" style="--stack-index:0">
+        <div class="card-header"><span class="card-header-title"><b>Alpha</b></span></div>
+        <div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner">A</div></div></div>
+      </div>
+      <div class="fan-corner" style="--i:1; --n:3"></div>
+      <div class="stack-card stack-card--collapsed" data-uid="test/b" style="--stack-index:1">
+        <div class="card-header"><span class="card-header-title"><b>Beta Initiative</b></span></div>
+        <div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner">B</div></div></div>
+      </div>
+      <div class="fan-corner" style="--i:2; --n:3"></div>
+      <div class="stack-card stack-card--collapsed" data-uid="test/c" style="--stack-index:2">
+        <div class="card-header"><span class="card-header-title"><b>Gamma Work</b></span></div>
+        <div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner">C</div></div></div>
+      </div>
+      <div class="stack-card stack-card--active" data-uid="test/d" style="--stack-index:3">
+        <div class="card-header">
+          <span class="card-header-title"><b>Delta — Active</b></span>
+          <button class="stack-card-close">×</button>
+        </div>
+        <div class="body-wrapper open">
+          <div class="stack-card-body">
+            <div class="stack-card-body-inner">
+              <p>3 collapsed cards. Fan corners at 8px stagger.</p>
+              <p>Left edge of this card should be flush with the right edge of the last collapsed strip.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Example 3: Overflow slot in place of middle cards ─────────── -->
+
+    <div class="exp-label">Overflow: 3 visible slots (first + ⋯ + last + active)</div>
+    <div class="exp-stack" style="--total-collapsed: 3">
+      <div class="fan-corner" style="--i:0; --n:3"></div>
+      <div class="stack-card stack-card--collapsed" data-uid="test/aa" style="--stack-index:0">
+        <div class="card-header"><span class="card-header-title"><b>Alpha (first)</b></span></div>
+        <div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner">A</div></div></div>
+      </div>
+      <div class="fan-corner" style="--i:1; --n:3"></div>
+      <!-- Overflow marker in the middle slot -->
+      <div class="stack-overflow stack-card--collapsed" style="--stack-index:1; --i:1; --n:3">
+        <div class="card-header" style="justify-content: center; writing-mode: vertical-rl; flex: 1; border-bottom: none; background: var(--color-surface)">
+          <span style="font-size: 1.2rem; color: var(--color-text-muted); letter-spacing: 0.1em">⋯</span>
+        </div>
+      </div>
+      <div class="fan-corner" style="--i:2; --n:3"></div>
+      <div class="stack-card stack-card--collapsed" data-uid="test/bb" style="--stack-index:2">
+        <div class="card-header"><span class="card-header-title"><b>Epsilon (last)</b></span></div>
+        <div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner">E</div></div></div>
+      </div>
+      <div class="stack-card stack-card--active" data-uid="test/cc" style="--stack-index:3">
+        <div class="card-header">
+          <span class="card-header-title"><b>Zeta — Active</b></span>
+          <button class="stack-card-close">×</button>
+        </div>
+        <div class="body-wrapper open">
+          <div class="stack-card-body">
+            <div class="stack-card-body-inner">
+              <p>Overflow: first + ⋯ + last + active. Middle cards (Beta, Gamma, Delta) are hidden.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</Base>
+
+<style>
+  /* Card header base styles — CardHeader.astro styles are scoped so don't apply to raw HTML divs */
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--color-text);
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 18px,
+      var(--color-bg-stripes) 19px, var(--color-bg-stripes) 20px
+    );
+    user-select: none;
+  }
+
+  .card-header-title,
+  .card-header > * {
+    background: var(--color-surface);
+    padding: 0 2px;
+  }
+
+  .exp-main {
+    padding: var(--space-lg) var(--space-md);
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: 1.1rem;
+    border-bottom: var(--border-width) solid var(--color-border);
+    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .exp-note {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .exp-label {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-ui);
+    margin-bottom: var(--space-xs);
+    margin-top: var(--space-xl);
+  }
+
+  /* Wrapper for each example: reserve padding-top for strips peeking above */
+  .exp-stack {
+    padding-top: calc(var(--total-collapsed, 0) * 8px);
+    margin-bottom: var(--space-xl);
+    overflow-x: clip;
+  }
+
+  /* ── Desktop horizontal layout (≥681px only) ─────────────────────── */
+
+  @media (min-width: 681px) {
+    /* Container: position:relative so absolute children can reference it */
+    .exp-stack {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      overflow: visible;
+      max-width: none;
+    }
+
+    /* Collapsed cards: absolutely positioned within padding-top area, staggered tops */
+    .exp-stack .stack-card--collapsed {
+      position: absolute;
+      width: 48px;
+      /* top: 0 = container outer edge; strip i sits i*8px below that, within padding-top */
+      top: calc(var(--stack-index, 0) * 8px);
+      bottom: 0;
+      left: calc(var(--stack-index, 0) * 48px);
+      z-index: calc(var(--stack-index, 0) + 1);
+      display: flex;
+      flex-direction: column;
+      border: var(--border-width) solid var(--color-border);
+      background: var(--color-surface);
+    }
+
+    /* Active card: in-flow flex child, leaves room for collapsed strips on left */
+    .exp-stack .stack-card--active {
+      margin-left: calc(var(--total-collapsed, 0) * 48px - var(--border-width));
+      flex: 1;
+      min-width: 0;
+      z-index: calc(var(--total-collapsed, 0) + 1);
+      position: relative;
+      /* Restore border-top removed by .stack-card + .stack-card rule */
+      border-top: var(--border-width) solid var(--color-border);
+    }
+
+    /* Collapsed card header: vertical text */
+    .exp-stack .stack-card--collapsed > .card-header {
+      writing-mode: vertical-rl;
+      flex: 1;
+      border-bottom: none;
+      justify-content: flex-start;
+      align-items: center;
+      padding: var(--space-md) var(--space-xs);
+      /* Stripes horizontal in vertical writing mode */
+      background: repeating-linear-gradient(
+        to right,
+        transparent 0px, transparent 18px,
+        var(--color-bg-stripes) 19px, var(--color-bg-stripes) 20px
+      );
+      overflow: hidden;
+    }
+
+    /* Title background on vertical header (sits on top of stripes) */
+    .exp-stack .stack-card--collapsed > .card-header :global(.card-header-title),
+    .exp-stack .stack-card--collapsed > .card-header > span {
+      background: var(--color-surface);
+      padding: 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Remove top border between adjacent cards in horizontal mode */
+    .exp-stack .stack-card--collapsed {
+      border-top: var(--border-width) solid var(--color-border) !important;
+    }
+
+    /* Fan corner: L-shape connector between adjacent strip tops */
+    .fan-corner {
+      position: absolute;
+      /* starts at the right edge of the strip to the left */
+      left: calc((var(--i) + 1) * 48px - var(--border-width));
+      /* top: same coordinate space as strip (i * 8px from container outer top) */
+      top: calc(var(--i) * 8px);
+      /* right: distance from container right, one stagger unit per step from the right */
+      right: calc((var(--n) - var(--i)) * 8px);
+      height: 8px;
+      border-top: var(--border-width) solid var(--color-border);
+      border-right: var(--border-width) solid var(--color-border);
+      z-index: calc(var(--i) + 1);
+    }
+
+    /* Overflow marker: same absolute positioning as collapsed strips */
+    .stack-overflow {
+      position: absolute;
+      width: 48px;
+      top: calc(var(--i, 0) * 8px);
+      bottom: 0;
+      left: calc(var(--i, 0) * 48px);
+      z-index: calc(var(--i, 0) + 1);
+      display: flex;
+      flex-direction: column;
+      border: var(--border-width) solid var(--color-border);
+      background: var(--color-surface);
+      cursor: pointer;
+    }
+  }
+</style>
