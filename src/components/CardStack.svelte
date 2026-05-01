@@ -28,12 +28,16 @@
   const hasCards = $derived($stackStore.cards.length > 0);
 
   $effect(() => {
+    document.getElementById('card-stack')
+      ?.style.setProperty('--num-left-collapsed', String(layout.numLeftCollapsed));
+
     for (const card of layout.visible) {
       const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(card.uid)}"]`);
       if (!el) continue;
       el.classList.toggle('stack-card--active', card.isActive);
       el.classList.toggle('stack-card--collapsed', card.isCollapsed);
       el.style.setProperty('--stack-index', String(card.stackIndex));
+      el.dataset.side = card.side;
       const bw = el.querySelector<HTMLElement>('.body-wrapper');
       // During VT push, suppress body-open until vt.finished
       if (bw) bw.classList.toggle('open', card.isActive && !skipBodyOpen.has(card.uid));
@@ -323,7 +327,11 @@
 </script>
 
 <div id="card-stack" hidden={!hasCards}>
-  {#each layout.visible as card (card.uid)}
-    {@html cardHtmlCache.get(card.uid) ?? ''}
+  {#each layout.renderItems as item (item.kind === 'card' ? 'card-' + item.uid : item.kind === 'fan-corner' ? 'fc-' + item.forUid : 'overflow-' + item.side)}
+    {#if item.kind === 'card'}
+      {@html cardHtmlCache.get(item.uid) ?? ''}
+    {:else if item.kind === 'fan-corner'}
+      <div class="fan-corner" style="--i:{item.i}; --n:{item.n}"></div>
+    {/if}
   {/each}
 </div>

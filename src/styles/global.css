@@ -347,6 +347,101 @@ strong { font-weight: 700; }
 
 .stack-card--collapsed:hover .card-header { background: var(--color-bg-hover); }
 
+/* Fan corner — desktop-only; hidden at mobile */
+.fan-corner {
+  display: none;
+}
+
+/* ── Desktop card stack (≥681px) ─────────────────────────────────── */
+
+@media (min-width: 681px) {
+  #card-stack {
+    position: relative;
+    flex-direction: row;
+    max-width: none;
+    margin: 0;
+    padding: calc(var(--num-left-collapsed, 0) * 8px) 0 0;
+    overflow-x: clip;
+  }
+
+  /* Restore top border removed by mobile .stack-card + .stack-card rule */
+  #card-stack .stack-card {
+    border-top: var(--border-width) solid var(--color-border);
+  }
+
+  /* Left collapsed: absolutely positioned, staggered above active card */
+  #card-stack .stack-card[data-side="left"] {
+    position: absolute;
+    width: 48px;
+    top: calc(var(--stack-index, 0) * 8px);
+    bottom: 0;
+    left: calc(var(--stack-index, 0) * 48px);
+    z-index: calc(var(--stack-index, 0) + 1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Active card: takes remaining width after left strips */
+  #card-stack .stack-card[data-side="active"] {
+    flex: 1;
+    min-width: 0;
+    /* max(0px, ...) prevents negative margin when there are no left strips */
+    margin-left: max(0px, calc(var(--num-left-collapsed, 0) * 48px - var(--border-width)));
+    position: relative;
+    z-index: calc(var(--num-left-collapsed, 0) + 1);
+  }
+
+  /* Right collapsed: in-flow flex children, fixed width */
+  #card-stack .stack-card[data-side="right"] {
+    width: 48px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Collapsed headers: vertical text with horizontal stripes */
+  #card-stack .stack-card--collapsed > .card-header {
+    writing-mode: vertical-rl;
+    flex: 1;
+    justify-content: flex-start;
+    align-items: center;
+    padding: var(--space-md) var(--space-xs);
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0px, transparent 18px,
+      var(--color-bg-stripes) 19px, var(--color-bg-stripes) 20px
+    );
+    overflow: hidden;
+  }
+
+  /* Hide mobile '+' expand indicator */
+  #card-stack .stack-card--collapsed .card-header::after {
+    display: none;
+  }
+
+  /* Card title text sits on top of stripes in vertical header */
+  #card-stack .stack-card--collapsed .card-header-title {
+    background: var(--color-surface);
+    padding: 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Fan corner: L-shaped connector between adjacent strip tops */
+  .fan-corner {
+    display: block;
+    position: absolute;
+    left: calc((var(--i) + 1) * 48px - var(--border-width));
+    top: calc(var(--i) * 8px);
+    right: calc((var(--n) - var(--i)) * 8px);
+    height: 8px;
+    border-top: var(--border-width) solid var(--color-border);
+    border-right: var(--border-width) solid var(--color-border);
+    z-index: calc(var(--i) + 1);
+  }
+}
+
 /* ── Tag listing (inside a stack card) ──────────────────────────── */
 
 .tag-description {
