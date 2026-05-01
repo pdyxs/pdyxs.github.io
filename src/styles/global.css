@@ -351,18 +351,57 @@ strong { font-weight: 700; }
 
 /* Overflow strip — slim indicator for hidden cards */
 .stack-overflow {
+  position: relative;
   border: var(--border-width) solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1.2rem;
   color: var(--color-text-muted);
   background: var(--color-surface);
   padding: var(--space-xs);
 }
 
+.stack-overflow-label {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
 .stack-overflow:hover {
+  background: var(--color-bg-hover);
+}
+
+.stack-overflow-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  z-index: 100;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.stack-overflow-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+}
+
+.stack-overflow-item:last-child {
+  border-bottom: none;
+}
+
+.stack-overflow-item:hover {
   background: var(--color-bg-hover);
 }
 
@@ -464,6 +503,20 @@ strong { font-weight: 700; }
   .stack-overflow.stack-overflow--right {
     width: 48px;
     flex-shrink: 0;
+  }
+
+  .stack-overflow--left .stack-overflow-panel {
+    top: 0;
+    left: calc(100% - var(--border-width));
+    right: auto;
+    min-width: 200px;
+  }
+
+  .stack-overflow--right .stack-overflow-panel {
+    top: 0;
+    right: calc(100% - var(--border-width));
+    left: auto;
+    min-width: 200px;
   }
 
   /* Fan corner: L-shaped connector between adjacent strip tops */
