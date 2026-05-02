@@ -269,7 +269,11 @@ strong { font-weight: 700; }
 
 .stack-card ~ .stack-card,
 .stack-card ~ .stack-overflow,
-.stack-overflow ~ .stack-card {
+.stack-overflow ~ .stack-card,
+.stack-card ~ .active-card-col .stack-card,
+.stack-overflow ~ .active-card-col .stack-card,
+.active-card-col ~ .stack-card,
+.active-card-col ~ .stack-overflow {
   border-top: none;
 }
 
@@ -405,6 +409,11 @@ strong { font-weight: 700; }
   background: var(--color-bg-hover);
 }
 
+/* Mobile: inner wrapper is transparent to layout */
+.card-stack-inner {
+  display: contents;
+}
+
 /* Fan corner — desktop-only; hidden at mobile */
 .fan-corner {
   display: none;
@@ -416,10 +425,19 @@ strong { font-weight: 700; }
   #card-stack {
     position: relative;
     flex-direction: row;
+    justify-content: center;
     max-width: none;
     margin: 0;
-    padding: calc(var(--num-left-collapsed, 0) * 8px) 0 0;
+    padding: 0 0 var(--space-lg);
     overflow-x: clip;
+  }
+
+  .card-stack-inner {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    padding-top: calc(var(--num-left-collapsed, 0) * 8px);
+    padding-left: calc(var(--num-left-collapsed, 0) * 48px);
   }
 
   /* Restore top border removed by mobile .stack-card + .stack-card rule */
@@ -439,12 +457,19 @@ strong { font-weight: 700; }
     flex-direction: column;
   }
 
-  /* Active card: takes remaining width after left strips */
-  #card-stack .stack-card[data-side="active"] {
-    flex: 1;
+  /* Wrapper for active card — width is viewport-derived up to max-width */
+  .active-card-col {
+    width: min(
+      var(--max-width),
+      calc(100vw - var(--num-left-collapsed, 0) * 48px - var(--num-right-collapsed, 0) * 48px)
+    );
+    flex-shrink: 0;
     min-width: 0;
-    /* max(0px, ...) prevents negative margin when there are no left strips */
-    margin-left: max(0px, calc(var(--num-left-collapsed, 0) * 48px - var(--border-width)));
+  }
+
+  /* Active card fills its wrapper column */
+  #card-stack .stack-card[data-side="active"] {
+    min-width: 0;
     position: relative;
     z-index: calc(var(--num-left-collapsed, 0) + 1);
   }
@@ -500,6 +525,10 @@ strong { font-weight: 700; }
     z-index: calc(var(--stack-index, 0) + 1);
   }
 
+  .stack-overflow.stack-overflow--left.stack-overflow--expanded {
+    z-index: 100;
+  }
+
   .stack-overflow.stack-overflow--right {
     width: 48px;
     flex-shrink: 0;
@@ -525,7 +554,12 @@ strong { font-weight: 700; }
     position: absolute;
     left: calc((var(--i) + 1) * 48px - var(--border-width));
     top: calc(var(--i) * 8px);
-    right: calc((var(--n) - var(--i)) * 8px);
+    width: calc(
+      (var(--n) - var(--i) - 1) * 48px
+      + min(var(--max-width), 100vw - var(--n) * 48px - var(--num-right-collapsed, 0) * 48px)
+      - (var(--n) - var(--i)) * 8px
+      + var(--border-width)
+    );
     height: 8px;
     border-top: var(--border-width) solid var(--color-border);
     border-right: var(--border-width) solid var(--color-border);

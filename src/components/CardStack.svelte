@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
-  import { stackStore, pushToStack, removeFromStack, activateCard as activateCardFn } from '../stores/card-stack-store';
+  import { stackStore, pushToStack, activateCard as activateCardFn } from '../stores/card-stack-store';
   import { computeStackLayout } from '../lib/stack-layout';
 
   interface Props {
@@ -31,8 +31,9 @@
   const hasCards = $derived($stackStore.cards.length > 0);
 
   $effect(() => {
-    document.getElementById('card-stack')
-      ?.style.setProperty('--num-left-collapsed', String(layout.numLeftCollapsed));
+    const stackEl = document.getElementById('card-stack');
+    stackEl?.style.setProperty('--num-left-collapsed', String(layout.numLeftCollapsed));
+    stackEl?.style.setProperty('--num-right-collapsed', String(layout.numRightCollapsed));
 
     for (const card of layout.visible) {
       const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(card.uid)}"]`);
@@ -180,11 +181,14 @@
 
   async function closeCard(uid: string) {
     const state = get(stackStore);
-    const isLastCard = state.cards.length === 1;
+    const idx = state.cards.findIndex(c => c.uid === uid);
+    if (idx === -1) return;
+
+    const newCards = state.cards.slice(0, idx);
     const homepage = document.getElementById('homepage');
 
-    if (isLastCard) {
-      // Collapse body before removing (for smooth animation)
+    if (newCards.length === 0) {
+      // Stack becomes empty — return to homepage
       const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
       const bw = el?.querySelector<HTMLElement>('.body-wrapper');
       if (bw) {
@@ -197,7 +201,7 @@
             }
           };
           bw.addEventListener('transitionend', onEnd);
-          setTimeout(resolve, 400); // fallback if transition doesn't fire
+          setTimeout(resolve, 400);
         });
       }
 
@@ -215,12 +219,11 @@
       const matchingLink = homepage?.querySelector<HTMLElement>(`.card-link[data-push-card="${uid}"]`);
 
       if (matchingLink && startVT && el) {
-        // VT path: stack card morphs back to panel link
         el.style.viewTransitionName = 'panel-card-close';
         matchingLink.style.viewTransitionName = 'panel-card-close';
 
         const vt = startVT(() => {
-          flushSync(() => stackStore.update(s => removeFromStack(s, uid)));
+          flushSync(() => stackStore.set({ cards: [], activeUid: null }));
           if (homepage) homepage.hidden = false;
           history.pushState(null, '', '/');
         });
@@ -228,8 +231,7 @@
         await vt.finished;
         matchingLink.style.viewTransitionName = '';
       } else {
-        // Instant fallback
-        stackStore.update(s => removeFromStack(s, uid));
+        stackStore.set({ cards: [], activeUid: null });
         if (homepage) {
           homepage.hidden = false;
         } else {
@@ -238,14 +240,13 @@
         history.pushState(null, '', '/');
       }
     } else {
-      stackStore.update(s => removeFromStack(s, uid));
+      // Trim stack to cards before the closed card, activate the new last card
+      const newActiveUid = newCards[newCards.length - 1].uid;
+      stackStore.update(s => ({ ...s, cards: newCards, activeUid: newActiveUid }));
       updateUrl();
       await tick();
-      const activeUid = get(stackStore).activeUid;
-      if (activeUid) {
-        document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(activeUid)}"]`)
-          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
+      document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(newActiveUid)}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
 
@@ -360,8 +361,13 @@
 </script>
 
 <div id="card-stack" hidden={!hasCards}>
+  <div class="card-stack-inner">
   {#each layout.renderItems as item (item.kind === 'card' ? 'card-' + item.uid : item.kind === 'fan-corner' ? 'fc-' + item.forUid : 'overflow-' + item.side)}
-    {#if item.kind === 'card'}
+    {#if item.kind === 'card' && item.side === 'active'}
+      <div class="active-card-col">
+        {@html cardHtmlCache.get(item.uid) ?? ''}
+      </div>
+    {:else if item.kind === 'card'}
       {@html cardHtmlCache.get(item.uid) ?? ''}
     {:else if item.kind === 'fan-corner'}
       <div class="fan-corner" style="--i:{item.i}; --n:{item.n}"></div>
@@ -411,4 +417,5 @@
       </div>
     {/if}
   {/each}
+  </div>
 </div>

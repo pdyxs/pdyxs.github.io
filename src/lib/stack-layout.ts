@@ -26,6 +26,7 @@ export interface LayoutResult {
   needsOverflow: boolean;
   renderItems: RenderItem[];
   numLeftCollapsed: number;
+  numRightCollapsed: number;
 }
 
 export const STAGGER_PX = 8;
@@ -34,7 +35,7 @@ export function computeStackLayout(state: StackState): LayoutResult {
   const { cards, activeUid } = state;
 
   if (cards.length === 0) {
-    return { visible: [], overflowUids: [], needsOverflow: false, renderItems: [], numLeftCollapsed: 0 };
+    return { visible: [], overflowUids: [], needsOverflow: false, renderItems: [], numLeftCollapsed: 0, numRightCollapsed: 0 };
   }
 
   let activeIdx = activeUid ? cards.findIndex(c => c.uid === activeUid) : -1;
@@ -116,5 +117,5 @@ export function computeStackLayout(state: StackState): LayoutResult {
   const overflowUids = [...leftHiddenUids, ...rightHiddenUids];
   const needsOverflow = L > 2 || R > 2;
 
-  return { visible, overflowUids, needsOverflow, renderItems, numLeftCollapsed };
+  return { visible, overflowUids, needsOverflow, renderItems, numLeftCollapsed, numRightCollapsed: rightSlots.length };
 }
