@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
-  import { stackStore, pushToStack, removeFromStack, activateCard as activateCardFn } from '../stores/card-stack-store';
+  import { stackStore, pushToStack, activateCard as activateCardFn } from '../stores/card-stack-store';
   import { computeStackLayout } from '../lib/stack-layout';
 
   interface Props {
@@ -14,6 +14,9 @@
   let cardHtmlCache = $state(new Map<string, string>());
   // UIDs to skip body-open in $effect during VT push (body opens after vt.finished)
   let skipBodyOpen = new Set<string>();
+  let overflowElLeft = $state<HTMLElement | null>(null);
+  let overflowElRight = $state<HTMLElement | null>(null);
+  let overflowOpen = $state<'left' | 'right' | false>(false);
   let startVT: ((cb: () => void) => { finished: Promise<void> }) | undefined;
 
   // Seed store from SSR prop once at mount — untrack to silence reactive-capture warning.
@@ -28,16 +31,33 @@
   const hasCards = $derived($stackStore.cards.length > 0);
 
   $effect(() => {
+    const stackEl = document.getElementById('card-stack');
+    stackEl?.style.setProperty('--num-left-collapsed', String(layout.numLeftCollapsed));
+    stackEl?.style.setProperty('--num-right-collapsed', String(layout.numRightCollapsed));
+
     for (const card of layout.visible) {
       const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(card.uid)}"]`);
       if (!el) continue;
       el.classList.toggle('stack-card--active', card.isActive);
       el.classList.toggle('stack-card--collapsed', card.isCollapsed);
       el.style.setProperty('--stack-index', String(card.stackIndex));
+      el.dataset.side = card.side;
       const bw = el.querySelector<HTMLElement>('.body-wrapper');
       // During VT push, suppress body-open until vt.finished
       if (bw) bw.classList.toggle('open', card.isActive && !skipBodyOpen.has(card.uid));
     }
+  });
+
+  $effect(() => {
+    if (!overflowOpen) return;
+    function dismissHandler(e: MouseEvent) {
+      const path = e.composedPath();
+      if (overflowElLeft && path.includes(overflowElLeft)) return;
+      if (overflowElRight && path.includes(overflowElRight)) return;
+      overflowOpen = false;
+    }
+    document.addEventListener('click', dismissHandler, { capture: true });
+    return () => document.removeEventListener('click', dismissHandler, { capture: true });
   });
 
   // --- Helpers ---
@@ -48,6 +68,24 @@
 
   function urlToUid(url: string): string {
     return url.startsWith('/card/') ? url.slice('/card/'.length) : url;
+  }
+
+  function getCardTitle(uid: string): string {
+    const html = cardHtmlCache.get(uid);
+    if (!html) return uid;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.querySelector('.card-header-title')?.textContent?.trim() ?? uid;
+  }
+
+  function toggleOverflow(side: 'left' | 'right') {
+    overflowOpen = overflowOpen === side ? false : side;
+  }
+
+  function activateHidden(uid: string) {
+    stackStore.update(s => activateCardFn(s, uid));
+    overflowOpen = false;
+    updateUrl();
   }
 
   async function fetchAndCacheCard(uid: string): Promise<boolean> {
@@ -143,11 +181,14 @@
 
   async function closeCard(uid: string) {
     const state = get(stackStore);
-    const isLastCard = state.cards.length === 1;
+    const idx = state.cards.findIndex(c => c.uid === uid);
+    if (idx === -1) return;
+
+    const newCards = state.cards.slice(0, idx);
     const homepage = document.getElementById('homepage');
 
-    if (isLastCard) {
-      // Collapse body before removing (for smooth animation)
+    if (newCards.length === 0) {
+      // Stack becomes empty — return to homepage
       const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
       const bw = el?.querySelector<HTMLElement>('.body-wrapper');
       if (bw) {
@@ -160,7 +201,7 @@
             }
           };
           bw.addEventListener('transitionend', onEnd);
-          setTimeout(resolve, 400); // fallback if transition doesn't fire
+          setTimeout(resolve, 400);
         });
       }
 
@@ -178,12 +219,11 @@
       const matchingLink = homepage?.querySelector<HTMLElement>(`.card-link[data-push-card="${uid}"]`);
 
       if (matchingLink && startVT && el) {
-        // VT path: stack card morphs back to panel link
         el.style.viewTransitionName = 'panel-card-close';
         matchingLink.style.viewTransitionName = 'panel-card-close';
 
         const vt = startVT(() => {
-          flushSync(() => stackStore.update(s => removeFromStack(s, uid)));
+          flushSync(() => stackStore.set({ cards: [], activeUid: null }));
           if (homepage) homepage.hidden = false;
           history.pushState(null, '', '/');
         });
@@ -191,8 +231,7 @@
         await vt.finished;
         matchingLink.style.viewTransitionName = '';
       } else {
-        // Instant fallback
-        stackStore.update(s => removeFromStack(s, uid));
+        stackStore.set({ cards: [], activeUid: null });
         if (homepage) {
           homepage.hidden = false;
         } else {
@@ -201,14 +240,13 @@
         history.pushState(null, '', '/');
       }
     } else {
-      stackStore.update(s => removeFromStack(s, uid));
+      // Trim stack to cards before the closed card, activate the new last card
+      const newActiveUid = newCards[newCards.length - 1].uid;
+      stackStore.update(s => ({ ...s, cards: newCards, activeUid: newActiveUid }));
       updateUrl();
       await tick();
-      const activeUid = get(stackStore).activeUid;
-      if (activeUid) {
-        document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(activeUid)}"]`)
-          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
+      document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(newActiveUid)}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
 
@@ -323,7 +361,61 @@
 </script>
 
 <div id="card-stack" hidden={!hasCards}>
-  {#each layout.visible as card (card.uid)}
-    {@html cardHtmlCache.get(card.uid) ?? ''}
+  <div class="card-stack-inner">
+  {#each layout.renderItems as item (item.kind === 'card' ? 'card-' + item.uid : item.kind === 'fan-corner' ? 'fc-' + item.forUid : 'overflow-' + item.side)}
+    {#if item.kind === 'card' && item.side === 'active'}
+      <div class="active-card-col">
+        {@html cardHtmlCache.get(item.uid) ?? ''}
+      </div>
+    {:else if item.kind === 'card'}
+      {@html cardHtmlCache.get(item.uid) ?? ''}
+    {:else if item.kind === 'fan-corner'}
+      <div class="fan-corner" style="--i:{item.i}; --n:{item.n}"></div>
+    {:else if item.kind === 'overflow' && item.side === 'left'}
+      <div
+        class="stack-overflow stack-overflow--left"
+        class:stack-overflow--expanded={overflowOpen === 'left'}
+        style="--stack-index:{item.stackIndex}; --i:{item.stackIndex}; --n:{layout.numLeftCollapsed}"
+        bind:this={overflowElLeft}
+        role="button"
+        tabindex="0"
+        onclick={() => toggleOverflow('left')}
+        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOverflow('left'); } }}
+      >
+        <span class="stack-overflow-label">⋯</span>
+        {#if overflowOpen === 'left'}
+          <div class="stack-overflow-panel">
+            {#each item.hiddenUids as uid}
+              <button class="stack-overflow-item" onclick={(e) => { e.stopPropagation(); activateHidden(uid); }}>
+                {getCardTitle(uid)}
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {:else if item.kind === 'overflow' && item.side === 'right'}
+      <div
+        class="stack-overflow stack-overflow--right"
+        class:stack-overflow--expanded={overflowOpen === 'right'}
+        style="--stack-index:{item.stackIndex}"
+        bind:this={overflowElRight}
+        role="button"
+        tabindex="0"
+        onclick={() => toggleOverflow('right')}
+        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOverflow('right'); } }}
+      >
+        <span class="stack-overflow-label">⋯</span>
+        {#if overflowOpen === 'right'}
+          <div class="stack-overflow-panel">
+            {#each item.hiddenUids as uid}
+              <button class="stack-overflow-item" onclick={(e) => { e.stopPropagation(); activateHidden(uid); }}>
+                {getCardTitle(uid)}
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {/if}
   {/each}
+  </div>
 </div>
