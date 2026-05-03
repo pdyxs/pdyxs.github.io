@@ -47,12 +47,13 @@ function resolveRenderer(collection: string, data: { renderer?: string }): strin
 }
 
 export async function getAllCards(): Promise<CardMeta[]> {
-  const [cards, posts, projects, puzzles, tags] = await Promise.all([
+  const [cards, posts, projects, puzzles, tags, stories] = await Promise.all([
     getCollection('cards'),
     getCollection('posts'),
     getCollection('projects'),
     getCollection('puzzles'),
     getCollection('tag'),
+    getCollection('stories'),
   ]);
 
   return [
@@ -103,5 +104,16 @@ export async function getAllCards(): Promise<CardMeta[]> {
       tags: [],
       renderer: resolveRenderer('tag', t.data),
     })),
+    ...stories
+      .filter(s => import.meta.env.DEV || s.data.published !== false)
+      .map(s => ({
+        uid: `stories/${s.id}`,
+        collection: 'stories',
+        id: s.id,
+        title: s.data.title ?? s.data.series,
+        date: s.data.date,
+        tags: [],
+        renderer: resolveRenderer('stories', s.data),
+      })),
   ];
 }
