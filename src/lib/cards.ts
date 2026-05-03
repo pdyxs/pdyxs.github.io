@@ -47,13 +47,14 @@ function resolveRenderer(collection: string, data: { renderer?: string }): strin
 }
 
 export async function getAllCards(): Promise<CardMeta[]> {
-  const [cards, posts, projects, puzzles, tags, stories] = await Promise.all([
+  const [cards, posts, projects, puzzles, tags, stories, work] = await Promise.all([
     getCollection('cards'),
     getCollection('posts'),
     getCollection('projects'),
     getCollection('puzzles'),
     getCollection('tag'),
     getCollection('stories'),
+    getCollection('work'),
   ]);
 
   return [
@@ -115,5 +116,13 @@ export async function getAllCards(): Promise<CardMeta[]> {
         tags: [],
         renderer: resolveRenderer('stories', s.data),
       })),
+    ...work.map(w => ({
+      uid: `work/${w.id}`,
+      collection: 'work',
+      id: w.id,
+      title: w.data.title,
+      tags: [],
+      renderer: resolveRenderer('work', w.data),
+    })),
   ];
 }
