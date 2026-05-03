@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
-  import { stackStore, pushToStack, activateCard as activateCardFn } from '../stores/card-stack-store';
+  import { stackStore, pushToStack, activateCard as activateCardFn, replaceActiveSlot } from '../stores/card-stack-store';
   import { computeStackLayout } from '../lib/stack-layout';
 
   interface Props {
@@ -100,10 +100,11 @@
     return true;
   }
 
-  function updateUrl() {
+  function updateUrl(method: 'push' | 'replace' = 'push') {
     const state = get(stackStore);
+    const historyFn = method === 'replace' ? history.replaceState.bind(history) : history.pushState.bind(history);
     if (state.cards.length === 0) {
-      history.pushState(null, '', '/');
+      historyFn(null, '', '/');
       return;
     }
     const active = state.activeUid ?? state.cards[state.cards.length - 1].uid;
@@ -115,7 +116,15 @@
     if (fromUids.length) params.set('from', fromUids.join(','));
     if (toUids.length) params.set('to', toUids.join(','));
     const query = params.toString();
-    history.pushState(null, '', query ? `${basePath}?${query}` : basePath);
+    historyFn(null, '', query ? `${basePath}?${query}` : basePath);
+  }
+
+  async function replaceSlot(url: string) {
+    const uid = urlToUid(url);
+    const ok = await fetchAndCacheCard(uid);
+    if (!ok) return;
+    stackStore.update(s => replaceActiveSlot(s, uid));
+    updateUrl('replace');
   }
 
   async function pushCard(url: string, clickedLink?: Element | null) {
@@ -297,6 +306,12 @@
       if (closeBtn) {
         const card = closeBtn.closest<HTMLElement>('.stack-card');
         if (card?.dataset.uid) closeCard(card.dataset.uid);
+        return;
+      }
+
+      const replaceItem = target.closest<HTMLElement>('[data-replace-slot]');
+      if (replaceItem?.dataset.replaceSlot) {
+        replaceSlot(uidToFetchUrl(replaceItem.dataset.replaceSlot));
         return;
       }
 

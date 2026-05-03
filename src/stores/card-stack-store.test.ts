@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pushToStack, removeFromStack, activateCard } from './card-stack-store';
+import { pushToStack, removeFromStack, activateCard, replaceActiveSlot } from './card-stack-store';
 import type { StackState } from '../lib/stack-layout';
 
 const emptyState: StackState = { cards: [], activeUid: null };
@@ -58,5 +58,40 @@ describe('activateCard', () => {
     const result = activateCard(state, 'b');
     expect(result.cards).toEqual(state.cards);
     expect(result.activeUid).toBe('b');
+  });
+});
+
+describe('replaceActiveSlot', () => {
+  it('replaceActiveSlot_swaps_active: single-card stack — uid and activeUid updated to newUid', () => {
+    const state: StackState = { cards: [{ uid: 'stories/arctic/00' }], activeUid: 'stories/arctic/00' };
+    const result = replaceActiveSlot(state, 'stories/arctic/01');
+    expect(result.cards).toEqual([{ uid: 'stories/arctic/01' }]);
+    expect(result.activeUid).toBe('stories/arctic/01');
+  });
+
+  it('replaceActiveSlot_mid_stack: active card in middle — only that slot swapped, order preserved', () => {
+    const state: StackState = {
+      cards: [{ uid: 'tag/travel' }, { uid: 'stories/arctic/00' }, { uid: 'cards/who' }],
+      activeUid: 'stories/arctic/00',
+    };
+    const result = replaceActiveSlot(state, 'stories/arctic/01');
+    expect(result.cards).toEqual([
+      { uid: 'tag/travel' },
+      { uid: 'stories/arctic/01' },
+      { uid: 'cards/who' },
+    ]);
+    expect(result.activeUid).toBe('stories/arctic/01');
+  });
+
+  it('replaceActiveSlot_noop_if_no_active: activeUid null — state returned unchanged', () => {
+    const state: StackState = { cards: [{ uid: 'stories/arctic/00' }], activeUid: null };
+    const result = replaceActiveSlot(state, 'stories/arctic/01');
+    expect(result).toBe(state);
+  });
+
+  it('replaceActiveSlot_noop_if_not_found: activeUid not in cards — state returned unchanged', () => {
+    const state: StackState = { cards: [{ uid: 'stories/arctic/00' }], activeUid: 'stories/arctic/99' };
+    const result = replaceActiveSlot(state, 'stories/arctic/01');
+    expect(result).toBe(state);
   });
 });
