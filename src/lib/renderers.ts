@@ -6,3 +6,5 @@ export const COLLECTION_RENDERERS: Record<string, AstroComponentFactory> = {
   tag: TagRenderer,
   puzzles: PuzzleRenderer,
 };
+
+export const NAV_RENDERERS: Record<string, AstroComponentFactory> = {};
