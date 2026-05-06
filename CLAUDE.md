@@ -108,6 +108,10 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 
 Any new content collection must appear in `COLLECTION_DEFAULTS` (`src/lib/cards.ts`); any new renderer component in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
 
+### Nav renderer pattern (`NAV_RENDERERS`)
+
+Collections that need custom navigation (e.g. prev/next chapter buttons, position indicators) register a nav renderer in `NAV_RENDERERS` (`src/lib/renderers.ts`). A nav renderer owns the full card shell — header and body structure — and receives the content renderer as `<slot />`. It is responsible for rendering `<CardHeader>` (or a custom header), the `.body-wrapper` / `.stack-card-body` structure, and any footer nav. Props passed by `card/[...path].astro`: `title`, `titleSuffix`, `entry`, `allEntries`.
+
 ### Canonical tag slugs in content; aliases only in tag YAML
 
 Aliases in `src/content.config.ts` tag schema are a runtime safety net, not a feature to rely on. Content should always link to canonical slugs; aliased links in content are a data bug.

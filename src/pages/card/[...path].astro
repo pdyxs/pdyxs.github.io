@@ -5,7 +5,7 @@ import Base from '../../layouts/Base.astro';
 import CardHeader from '../../components/CardHeader.astro';
 import StackNav from '../../components/StackNav.astro';
 import GenericRenderer from '../../components/card-renderers/GenericRenderer.astro';
-import { COLLECTION_RENDERERS } from '../../lib/renderers';
+import { COLLECTION_RENDERERS, NAV_RENDERERS } from '../../lib/renderers';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
@@ -33,22 +33,32 @@ const Renderer =
   GenericRenderer;
 
 const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name ?? '';
+const titleSuffix: string | undefined = (entry?.data as any)?.titleSuffix;
+const NavRenderer = NAV_RENDERERS[collection] ?? null;
 ---
 
 <Base title={title}>
   <div id="homepage" hidden></div>
   <StackNav activeUid={path}>
     <div class="stack-card stack-card--active" data-uid={path}>
-      <CardHeader {title} titleSuffix={(entry?.data as any)?.titleSuffix}>
-        <button class="stack-card-close" aria-label="Close">×</button>
-      </CardHeader>
-      <div class="body-wrapper open">
-        <div class="stack-card-body">
-          <div class="stack-card-body-inner">
-            <Renderer {entry} {Content} />
+      {NavRenderer ? (
+        <NavRenderer {title} {titleSuffix} {entry} allEntries={entries}>
+          <Renderer {entry} {Content} />
+        </NavRenderer>
+      ) : (
+        <>
+          <CardHeader {title} {titleSuffix}>
+            <button class="stack-card-close" aria-label="Close">×</button>
+          </CardHeader>
+          <div class="body-wrapper open">
+            <div class="stack-card-body">
+              <div class="stack-card-body-inner">
+                <Renderer {entry} {Content} />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   </StackNav>
 </Base>

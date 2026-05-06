@@ -23,3 +23,12 @@ export function removeFromStack(state: StackState, uid: string): StackState {
 export function activateCard(state: StackState, uid: string): StackState {
   return { ...state, activeUid: uid };
 }
+
+export function replaceActiveSlot(state: StackState, newUid: string): StackState {
+  if (!state.activeUid) return state;
+  const idx = state.cards.findIndex(c => c.uid === state.activeUid);
+  if (idx === -1) return state;
+  const newCards = [...state.cards];
+  newCards[idx] = { uid: newUid };
+  return { cards: newCards, activeUid: newUid };
+}
