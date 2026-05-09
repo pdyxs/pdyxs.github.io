@@ -6,7 +6,6 @@ sudokupad_url: https://sudokupad.app/pdyxs/recounting-the-rooms
 image: https://logic-masters.de/Dateien/bild.php?data=84549576-37731-3030304d30392d31
 difficulty: Level 2 (Easy)
 tags:
-  - puzzles
 ---
 
 This is a direct sequel to Recounting the Counting, this time adding numbered rooms into the mix!

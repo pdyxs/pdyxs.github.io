@@ -7,7 +7,6 @@ image: https://logic-masters.de/Dateien/bild.php?data=aa897ad7-36483-3030304c383
 difficulty: Level 2 (Easy)
 puzzle_type: Wordoku
 tags:
-  - puzzles
 ---
 
 This is a hybrid between a sudoku puzzle and a word puzzle, which is aiming to integrate both skills.
