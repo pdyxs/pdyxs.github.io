@@ -45,11 +45,13 @@ if (isDev) {
 
   const tagLinkRe = /\[.*?\]\(tag:([^)]+)\)/g;
   const pushCardRe = /data-push-card="([^"]+)"/g;
+  const collectionLinkRe = /\[.*?\]\(collection:([^)?]+)(?:\?[^)]+)?\)/g;
 
-  function extractLinks(body: string): { tags: string[]; pushCards: string[] } {
+  function extractLinks(body: string): { tags: string[]; pushCards: string[]; collections: string[] } {
     return {
       tags: [...body.matchAll(tagLinkRe)].map(m => m[1]),
       pushCards: [...body.matchAll(pushCardRe)].map(m => m[1]),
+      collections: [...body.matchAll(collectionLinkRe)].map(m => m[1]),
     };
   }
 
@@ -70,7 +72,7 @@ if (isDev) {
     reachableUids.add(uid);
 
     const body = bodyByUid.get(uid) ?? '';
-    const { tags, pushCards } = extractLinks(body);
+    const { tags, pushCards, collections } = extractLinks(body);
 
     for (const slug of tags) {
       const tag = tagBySlug.get(slug);
@@ -87,6 +89,15 @@ if (isDev) {
 
     for (const pushUid of pushCards) {
       if (!reachableUids.has(pushUid)) queue.push(pushUid);
+    }
+
+    // collection: links — the collection view card is reachable, and so is every
+    // card in that collection (the view shows them all).
+    for (const collectionUid of collections) {
+      reachableUids.add(collectionUid);
+      for (const c of allCards.filter(c => c.collection === collectionUid)) {
+        if (!reachableUids.has(c.uid)) queue.push(c.uid);
+      }
     }
   }
 
