@@ -8,9 +8,6 @@ const isDev = import.meta.env.DEV;
 
 type AuditData = {
   panels: { id: string; title: string }[];
-  reachableByTag: { tagId: string; tagName: string; cards: CardMeta[] }[];
-  unreachableTags: { id: string; name: string }[];
-  brokenTagLinks: string[];
   reachableCards: CardMeta[];
   unreachableCards: CardMeta[];
   totalCards: number;
@@ -40,7 +37,6 @@ if (isDev) {
   for (const e of stories)  bodyByUid.set(`stories/${e.id}`,  (e as any).body ?? '');
   for (const e of work)     bodyByUid.set(`work/${e.id}`,     (e as any).body ?? '');
 
-  const cardByUid = new Map(allCards.map(c => [c.uid, c]));
   const tagBySlug = new Map(allTags.map(t => [t.id, t]));
 
   const tagLinkRe = /\[.*?\]\(tag:([^)]+)\)/g;
@@ -57,9 +53,7 @@ if (isDev) {
 
   // BFS through the navigation graph
   const reachableUids = new Set<string>();
-  const reachableTagSlugs = new Set<string>();
-  const brokenTagLinks = new Set<string>();
-  const reachableByTagMap = new Map<string, CardMeta[]>();
+  const visitedTagSlugs = new Set<string>();
 
   const panels = (await getCollection('cards', c => c.data.panel === true))
     .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
@@ -75,14 +69,11 @@ if (isDev) {
     const { tags, pushCards, collections } = extractLinks(body);
 
     for (const slug of tags) {
+      if (visitedTagSlugs.has(slug)) continue;
+      visitedTagSlugs.add(slug);
       const tag = tagBySlug.get(slug);
-      if (!tag) { brokenTagLinks.add(slug); continue; }
-      if (reachableTagSlugs.has(slug)) continue;
-      reachableTagSlugs.add(slug);
-      reachableUids.add(`tag/${slug}`);
-      const tagCards = getCardsForTag(tag, allCards);
-      reachableByTagMap.set(slug, tagCards);
-      for (const c of tagCards) {
+      if (!tag) continue;
+      for (const c of getCardsForTag(tag, allCards)) {
         if (!reachableUids.has(c.uid)) queue.push(c.uid);
       }
     }
@@ -101,19 +92,8 @@ if (isDev) {
     }
   }
 
-  const unreachableTags = allTags
-    .filter(t => !reachableTagSlugs.has(t.id))
-    .map(t => ({ id: t.id, name: t.data.name }));
-
   audit = {
     panels: panels.map(p => ({ id: p.id, title: p.data.title })),
-    reachableByTag: [...reachableByTagMap.entries()].map(([slug, cards]) => ({
-      tagId: slug,
-      tagName: tagBySlug.get(slug)!.data.name,
-      cards,
-    })),
-    unreachableTags,
-    brokenTagLinks: [...brokenTagLinks],
     reachableCards: allCards.filter(c => reachableUids.has(c.uid)),
     unreachableCards: allCards.filter(c => !reachableUids.has(c.uid)),
     totalCards: allCards.length,
@@ -156,41 +136,6 @@ if (isDev) {
             )
           }
         </section>
-
-        <section>
-          <h2>Unlinked Tags ({audit.unreachableTags.length})</h2>
-          <p class="hint">Tags that exist but aren't reachable from any panel.</p>
-          {audit.unreachableTags.length === 0
-            ? <p class="all-good">All tags are reachable.</p>
-            : (
-              <ul class="tag-list">
-                {audit.unreachableTags.map(t => (
-                  <li><a href={`/card/tag/${t.id}`}>{t.name}</a> <code>{t.id}</code></li>
-                ))}
-              </ul>
-            )
-          }
-        </section>
-
-        {audit.brokenTagLinks.length > 0 && (
-          <section>
-            <h2>Broken Tag Links</h2>
-            <p class="hint">tag: links in card bodies pointing to non-existent tag entries.</p>
-            <ul>{audit.brokenTagLinks.map(s => <li><code>{s}</code></li>)}</ul>
-          </section>
-        )}
-
-        <section>
-          <h2>Reachable Cards by Tag</h2>
-          {audit.reachableByTag.map(r => (
-            <details>
-              <summary>{r.tagName} — {r.cards.length} cards</summary>
-              <ul>
-                {r.cards.map(c => <li><a href={`/card/${c.uid}`}>{c.title}</a> <code>{c.uid}</code></li>)}
-              </ul>
-            </details>
-          ))}
-        </section>
       </>
     )}
   </div>
@@ -210,22 +155,10 @@ if (isDev) {
   .summary { font-size: 1.1rem; margin-bottom: var(--space-lg); }
   .unreachable-count { color: var(--color-danger, #c0392b); margin-left: var(--space-sm); }
 
-  .hint { font-size: 0.9rem; opacity: 0.7; margin: 0 0 var(--space-sm); }
-
   table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   th { text-align: left; padding: var(--space-xs) var(--space-sm); border-bottom: 2px solid var(--color-border); }
   td { padding: var(--space-xs) var(--space-sm); border-bottom: 1px solid var(--color-border); }
   .collection { opacity: 0.6; }
-
-  .tag-list { list-style: none; padding: 0; }
-  .tag-list li { padding: var(--space-xs) 0; }
-  .tag-list code { opacity: 0.6; font-size: 0.85em; margin-left: var(--space-xs); }
-
-  details { margin: var(--space-xs) 0; }
-  summary { cursor: pointer; padding: var(--space-xs) 0; }
-  details ul { list-style: none; padding: 0 0 0 var(--space-lg); }
-  details li { padding: 2px 0; font-size: 0.9rem; }
-  details code { opacity: 0.6; font-size: 0.85em; margin-left: var(--space-xs); }
 
   .all-good { color: var(--color-success, #27ae60); }
 </style>
