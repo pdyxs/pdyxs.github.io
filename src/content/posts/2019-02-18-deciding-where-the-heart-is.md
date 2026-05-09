@@ -2,6 +2,7 @@
 title: 'Deciding Where the Heart Is: A Global Game Jam 2019 ''game'' postmortem'
 date: '2019-02-18 13:00:00 -0500'
 tags:
+  - writing
   - where-the-heart-is
 description: A postmortem of my Global Game Jam project
 canonical_url: 'https://medium.com/@pdyxs/deciding-where-the-heart-is-4484b5476fa1'

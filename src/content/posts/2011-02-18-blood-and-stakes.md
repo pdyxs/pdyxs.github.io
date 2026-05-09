@@ -1,7 +1,8 @@
 ---
 title: Blood and Stakes
 date: '2011-02-18 17:00:00 +1000'
-tags: []
+tags:
+  - writing
 ---
 It happens on a walk home after a long day's work. I'm listening to an episode of [Irrational Interviews](http://itunes.apple.com/us/podcast/irrational-interviews/id380486802){:target="_blank"} as I pass through the exit of the university car park: in particular, to an episode with [Brian Michael Bendis](http://en.wikipedia.org/wiki/Brian_Michael_Bendis){:target="_blank"}, comic writer extraordinaire. A short conversation within the episode barely latches onto my mind. I furiously rewind the podcast as memories of a recent conversation come flooding back.
 

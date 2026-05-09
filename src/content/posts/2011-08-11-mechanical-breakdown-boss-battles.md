@@ -4,7 +4,8 @@ date: '2011-08-11 17:00:00 +1000'
 canonical_url: >-
   https://www.gamasutra.com/blogs/PaulSztajer/20110811/89988/Mechanical_Breakdown_Boss_Battles_and_other_Climactic_Events.php
 source: gamasutra
-tags: []
+tags:
+  - writing
 ---
 In a Mechanical Breakdown, I look at a particular mechanic utilised in games and examine when it works and when it doesn't, from both the gameplay and the narrative perspective*. The goal is to use existing opinions from around the internet and my own experience to find new ways of looking at existing mechanics.
 

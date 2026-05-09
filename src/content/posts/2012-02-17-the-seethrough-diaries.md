@@ -2,6 +2,7 @@
 title: 'The SeeThrough Diaries: The Hour Of Pain'
 date: '2012-02-17 17:00:00 +1000'
 tags:
+  - writing
   - flatland-fallen-angle
 canonical_url: 'https://www.kotaku.com.au/2012/02/the-seethrough-diaries-the-hour-of-pain/'
 image: 'https://edge.alluremedia.com.au/m/k/2012/02/diary-2-1.jpg'

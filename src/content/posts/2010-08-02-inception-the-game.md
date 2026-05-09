@@ -1,7 +1,8 @@
 ---
 title: 'Inception: The Game?'
 date: '2010-08-02 17:00:00 +1000'
-tags: []
+tags:
+  - writing
 ---
 After watching Inception, one of my friends mentioned that one of the great qualities of the movie was that it was something that was completely suited to the medium: that no other medium could capture the ideas and story posed by Christopher Nolan's film as well as film itself. In this I agree -- while the specific action could be described by a novel, in a radio play or (and I kinda want to see this) in a musical, none of these mediums are as effective at telling this particular story as the filmic one.
 

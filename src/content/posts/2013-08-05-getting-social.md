@@ -4,7 +4,8 @@ date: '2013-08-05 17:00:00 +1000'
 image: >-
   https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/08/Afraid_of_Twitter.jpeg?w=360
 source: seethroughstudios
-tags: []
+tags:
+  - writing
 ---
 I'm just going to put it out there: I'm scared of the internet.
 

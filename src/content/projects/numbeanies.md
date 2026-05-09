@@ -5,6 +5,8 @@ description: >-
   and adorable numbeanies
 image: cover.jpg
 tags:
+  - games
+  - analog-games
   - education
   - game
   - released

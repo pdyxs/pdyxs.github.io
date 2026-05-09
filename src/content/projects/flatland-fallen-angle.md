@@ -6,6 +6,7 @@ images:
 image: Flatland1.jpg
 feature: Flatland1
 tags:
+  - games
   - game
   - released
   - nocv

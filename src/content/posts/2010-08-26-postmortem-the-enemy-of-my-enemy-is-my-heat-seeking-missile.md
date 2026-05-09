@@ -2,7 +2,8 @@
 title: 'Postmortem: “The Enemy Of My Enemy Is My Heat-Seeking Missile”'
 date: '2010-08-26 17:00:00 +1000'
 image: 'http://www.ludumdare.com/compo/wp-content/uploads/2010/08/IMG_0088.JPG'
-tags: []
+tags:
+  - writing
 ---
 So its been a couple of days since my game went up, and I thought it was high time I did a post-mortem. To give a bit of background: this is my 2nd flash game ever (number 3 is in the works), and was my first time doing a Ludum Dare, so I'm fairly new to the whole experience. Overall (spoiler alert!) it was an awesome experience that I'm looking forward to repeating(end spoiler).
 
