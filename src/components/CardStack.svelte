@@ -358,7 +358,15 @@
       const colLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="collection:"]');
       if (colLink) {
         e.preventDefault();
-        pushCard(`/card/${colLink.getAttribute('href')!.slice(11)}`);
+        const colHref = colLink.getAttribute('href')!.slice(11);
+        const qIdx = colHref.indexOf('?');
+        const colUid = qIdx === -1 ? colHref : colHref.slice(0, qIdx);
+        if (qIdx !== -1) {
+          const colLinkParams: Record<string, string> = {};
+          new URLSearchParams(colHref.slice(qIdx + 1)).forEach((v, k) => { colLinkParams[k] = v; });
+          cardParams.set(colUid, colLinkParams);
+        }
+        pushCard(`/card/${colUid}`);
         return;
       }
     }
