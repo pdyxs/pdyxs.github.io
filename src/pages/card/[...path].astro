@@ -5,12 +5,14 @@ import Base from '../../layouts/Base.astro';
 import CardHeader from '../../components/CardHeader.astro';
 import StackNav from '../../components/StackNav.astro';
 import GenericRenderer from '../../components/card-renderers/GenericRenderer.astro';
-import { COLLECTION_RENDERERS, NAV_RENDERERS } from '../../lib/renderers';
+import { COLLECTION_RENDERERS, NAV_RENDERERS, COLLECTION_VIEW_RENDERERS } from '../../lib/renderers';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
   const tags = await getCollection('tag');
   return [
+    { params: { path: 'posts' } },
+    { params: { path: 'projects' } },
     ...cards.map(c => ({ params: { path: c.uid } })),
     ...tags.map(t => ({ params: { path: `tag/${t.id}` } })),
   ];
@@ -21,10 +23,19 @@ const parts = path!.split('/');
 const collection = parts[0];
 const id = parts.slice(1).join('/');
 
-const entries = await getCollection(collection as any);
-const entry = entries.find((e: any) => e.id === id);
-const rendered = entry ? await render(entry as any) : null;
-const Content = rendered?.Content;
+const isCollectionView = id === '';
+const CollectionViewRenderer = isCollectionView ? (COLLECTION_VIEW_RENDERERS[collection] ?? null) : null;
+
+let entries: any[] = [];
+let entry: any = null;
+let Content: any = null;
+
+if (!isCollectionView) {
+  entries = await getCollection(collection as any);
+  entry = entries.find((e: any) => e.id === id);
+  const rendered = entry ? await render(entry as any) : null;
+  Content = rendered?.Content;
+}
 
 const rendererName: string | undefined = (entry?.data as any)?.renderer;
 const Renderer =
@@ -34,14 +45,16 @@ const Renderer =
 
 const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name ?? '';
 const titleSuffix: string | undefined = (entry?.data as any)?.titleSuffix;
-const NavRenderer = NAV_RENDERERS[collection] ?? null;
+const NavRenderer = !isCollectionView ? (NAV_RENDERERS[collection] ?? null) : null;
 ---
 
 <Base title={title}>
   <div id="homepage" hidden></div>
   <StackNav activeUid={path}>
     <div class="stack-card stack-card--active" data-uid={path}>
-      {NavRenderer ? (
+      {CollectionViewRenderer ? (
+        <CollectionViewRenderer />
+      ) : NavRenderer ? (
         <NavRenderer {title} {titleSuffix} {entry} allEntries={entries}>
           <Renderer {entry} {Content} />
         </NavRenderer>
