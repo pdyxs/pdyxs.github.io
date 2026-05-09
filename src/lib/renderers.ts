@@ -5,6 +5,7 @@ import WorkRenderer from '../components/card-renderers/WorkRenderer.astro';
 import SeriesNavRenderer from '../components/card-renderers/SeriesNavRenderer.astro';
 import PostsRenderer from '../components/card-renderers/PostsRenderer.astro';
 import ProjectsRenderer from '../components/card-renderers/ProjectsRenderer.astro';
+import PuzzlesRenderer from '../components/card-renderers/PuzzlesRenderer.astro';
 
 export const COLLECTION_RENDERERS: Record<string, AstroComponentFactory> = {
   tag: TagRenderer,
@@ -19,4 +20,5 @@ export const NAV_RENDERERS: Record<string, AstroComponentFactory> = {
 export const COLLECTION_VIEW_RENDERERS: Record<string, AstroComponentFactory> = {
   posts: PostsRenderer,
   projects: ProjectsRenderer,
+  puzzles: PuzzlesRenderer,
 };

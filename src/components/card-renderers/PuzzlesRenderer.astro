@@ -1,0 +1,23 @@
+---
+import { getCollection } from 'astro:content';
+import { getAllCards } from '../../lib/cards';
+import { getAvailableTagsForCards } from '../../lib/collection-views';
+import CardHeader from '../CardHeader.astro';
+import CollectionBrowser from '../CollectionBrowser.svelte';
+
+const allCards = await getAllCards();
+const allTags = await getCollection('tag');
+const puzzleCards = allCards.filter(c => c.collection === 'puzzles');
+const availableTags = getAvailableTagsForCards(puzzleCards, allTags);
+---
+
+<CardHeader title="Puzzles">
+  <button class="stack-card-close" aria-label="Close">×</button>
+</CardHeader>
+<div class="body-wrapper open">
+  <div class="stack-card-body">
+    <div class="stack-card-body-inner">
+      <CollectionBrowser client:load entries={puzzleCards} {availableTags} title="Puzzles" uid="puzzles" />
+    </div>
+  </div>
+</div>
