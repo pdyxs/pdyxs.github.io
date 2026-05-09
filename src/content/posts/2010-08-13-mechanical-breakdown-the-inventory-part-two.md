@@ -5,7 +5,8 @@ image: >-
   https://i.kinja-img.com/gawker-media/image/upload/s--RM7HIhsy--/c_fit,fl_progressive,q_80,w_320/18j38dsj7ymsbjpg.jpg
 canonical_url: 'https://kotaku.com/5612149/mechanical-breakdown-the-inventory'
 source: kotaku
-tags: []
+tags:
+  - writing
 ---
 ![](https://i.kinja-img.com/gawker-media/image/upload/s--RM7HIhsy--/c_fit,fl_progressive,q_80,w_320/18j38dsj7ymsbjpg.jpg)
 

@@ -7,6 +7,7 @@ feature: the_path_2500x1250
 image: the_path_2500x1250.jpg
 portfolio: the_path_2500x1250.jpg
 tags:
+  - data-art
   - science
   - visualisation
   - released

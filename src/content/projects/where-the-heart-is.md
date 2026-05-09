@@ -2,6 +2,7 @@
 title: Where the Heart Is
 description: A reflection on globalised life
 tags:
+  - games
   - released
   - game
   - game-jam

@@ -4,6 +4,7 @@ description: >-
   A minimalistic budgeting app, focusing on helping you to control your everyday
   spending
 tags:
+  - software-engineering
   - development
   - budgeting
   - visualisation

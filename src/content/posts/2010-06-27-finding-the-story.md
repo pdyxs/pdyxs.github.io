@@ -1,7 +1,8 @@
 ---
 title: 'Finding The Story: Blurring The Line Between Content Use And Creation'
 date: '2010-06-27 17:00:00 +1000'
-tags: []
+tags:
+  - writing
 ---
 Over the last few weeks, I've been working on an interactive project that focuses on the line between story consumption and creation, and it's made me reflect on how games utilise and blur this line.
 

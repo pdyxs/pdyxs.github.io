@@ -6,6 +6,7 @@ description: >-
 image: 5-1b.jpg
 feature: 5-1b
 tags:
+  - games
   - science
   - released
   - game

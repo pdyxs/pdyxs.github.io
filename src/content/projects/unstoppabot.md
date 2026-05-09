@@ -8,6 +8,7 @@ images:
 feature: Unstoppabot1
 image: Unstoppabot1.jpg
 tags:
+  - games
   - game
   - released
   - noshortcv

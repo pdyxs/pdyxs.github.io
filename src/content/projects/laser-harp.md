@@ -6,6 +6,7 @@ images:
 image: crowd.jpg
 feature: crowd
 tags:
+  - data-art
   - science
   - released
   - installation

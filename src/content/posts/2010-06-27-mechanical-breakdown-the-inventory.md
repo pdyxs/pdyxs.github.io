@@ -1,7 +1,8 @@
 ---
 title: 'Mechanical Breakdown: The Inventory (Part 1)'
 date: '2010-06-27 17:00:00 +1000'
-tags: []
+tags:
+  - writing
 ---
 This time, I want to do something a little different with the Mechanical Breakdown. After last week's [RTS article](/why/2010/06/20/mechanical-breakdown-the-rts.html) and [followup on Achron](/why/2010/06/23/achron-real-time-just-got-complicated.html), I was struck by just how much there can be to a mechanic (not to mention a genre). In particular, the RTS article took me an entire weekend to scribe, and yet it felt incredibly unfinished by its end. So instead of trying to exhaustively examine a mechanic myself, I'm wanting to try a more collaborative approach to the Mechanical Breakdown.
 

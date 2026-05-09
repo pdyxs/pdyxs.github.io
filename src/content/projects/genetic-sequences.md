@@ -2,6 +2,7 @@
 title: Genetic Sequences
 description: An exploration of the structures of genetic sequences
 tags:
+  - data-art
   - development
   - science
   - visualisation

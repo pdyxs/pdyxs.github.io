@@ -2,6 +2,7 @@
 title: 'A Particular Vision: What I want Particulars (and all our games) to do'
 date: '2013-06-21 17:00:00 +1000'
 tags:
+  - writing
   - particulars
 image: >-
   https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/06/stairs.png?resize=220%2C300

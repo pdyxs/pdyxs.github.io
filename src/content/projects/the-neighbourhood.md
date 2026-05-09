@@ -7,6 +7,7 @@ feature: the_neighbourhood_2500x1250
 image: the_neighbourhood_2500x1250.jpg
 portfolio: the_neighbourhood_2500x1250.jpg
 tags:
+  - data-art
   - science
   - visualisation
   - released

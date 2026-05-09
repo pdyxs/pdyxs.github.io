@@ -16,7 +16,9 @@ images:
   - howtoplay
   - whatthingsare
 status: past
-tags: []
+tags:
+  - games
+  - analog-games
 medium: Hybrid digital/physical board game
 cvDescription: >-
   This game was an experiment in form: using a website to run what is otherwise
