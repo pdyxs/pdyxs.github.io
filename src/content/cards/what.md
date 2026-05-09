@@ -11,4 +11,4 @@ I've worked in the fields of [software engineering](tag:software-engineering), [
 
 I've made [digital games](tag:games), [analog games](tag:analog-games), [interactive theatre](tag:interactive-theatre), [data artworks](tag:data-art) and [sudoku puzzles](tag:puzzles).
 
-I've written about [design](tag:design), development and about [my travels](tag:travel). Read my [writing](tag:writing).
+I've written about [design](tag:design), development and about [my travels](tag:travel). Read my [writing](collection:posts) or browse all [projects](collection:projects).
