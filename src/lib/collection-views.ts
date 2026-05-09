@@ -8,7 +8,10 @@ export function getAvailableTagsForCards(
   allTags: CollectionEntry<'tag'>[]
 ): TagOption[] {
   return allTags
-    .map(tag => ({ id: tag.id, name: tag.data.name, count: getCardsForTag(tag, cards).length }))
+    .map(tag => {
+      const matching = getCardsForTag(tag, cards);
+      return { id: tag.id, name: tag.data.name, count: matching.length, uids: matching.map(c => c.uid) };
+    })
     .filter(t => t.count > 0)
     .sort((a, b) => b.count - a.count);
 }

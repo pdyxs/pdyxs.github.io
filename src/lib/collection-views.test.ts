@@ -5,12 +5,13 @@ import { fakeCardMeta, fakeTagEntry } from '../test/fixtures';
 
 describe('getAvailableTagsForCards', () => {
   it('getAvailableTagsForCards_includes_tags_with_matches', () => {
-    const tag = fakeTagEntry({ id: 'games', name: 'Games', aliases: ['game'] });
+    const tag = fakeTagEntry({ id: 'games', name: 'Games', aliases: [] });
     const card = fakeCardMeta({ tags: ['games'] });
     const result = getAvailableTagsForCards([card], [tag]);
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('games');
     expect(result[0].count).toBe(1);
+    expect(result[0].uids).toEqual([card.uid]);
   });
 
   it('getAvailableTagsForCards_excludes_empty_tags', () => {
@@ -37,13 +38,14 @@ describe('getAvailableTagsForCards', () => {
 describe('filterCardsByTag', () => {
   it('filterCardsByTag_null_returns_all', () => {
     const cards = [fakeCardMeta({ uid: 'p/1' }), fakeCardMeta({ uid: 'p/2' })];
-    expect(filterCardsByTag(cards, null)).toEqual(cards);
+    expect(filterCardsByTag(cards, null, [])).toEqual(cards);
   });
 
   it('filterCardsByTag_filters_to_matching_tag', () => {
     const match = fakeCardMeta({ uid: 'p/1', tags: ['games'] });
     const noMatch = fakeCardMeta({ uid: 'p/2', tags: ['education'] });
-    const result = filterCardsByTag([match, noMatch], 'games');
+    const gamesTag = { id: 'games', name: 'Games', count: 1, uids: ['p/1'] };
+    const result = filterCardsByTag([match, noMatch], 'games', [gamesTag]);
     expect(result).toEqual([match]);
   });
 });

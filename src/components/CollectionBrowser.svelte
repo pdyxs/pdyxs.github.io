@@ -12,7 +12,7 @@
   let { entries, availableTags, title, uid }: Props = $props();
 
   let activeFilter = $state<string | null>(null);
-  const filteredEntries = $derived(filterCardsByTag(entries, activeFilter));
+  const filteredEntries = $derived(filterCardsByTag(entries, activeFilter, availableTags));
 
   function dispatchCardParam(filter: string | null) {
     document.dispatchEvent(new CustomEvent('cardparam', {
