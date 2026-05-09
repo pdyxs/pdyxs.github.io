@@ -16,7 +16,7 @@ type AuditData = {
 let audit: AuditData | null = null;
 
 if (isDev) {
-  const allCards = await getAllCards();
+  const allCards = (await getAllCards()).filter(c => c.collection !== 'tag');
 
   // Build uid → raw body map from all collections that have markdown
   const [cards, posts, projects, puzzles, stories, work] = await Promise.all([
