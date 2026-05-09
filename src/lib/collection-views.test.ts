@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { getAvailableTagsForCards, filterCardsByTag } from './collection-views';
+import { getAvailableTagsForCards } from './collection-views';
+import { filterCardsByTag } from './collection-browser';
 import { fakeCardMeta, fakeTagEntry } from '../test/fixtures';
 
 describe('getAvailableTagsForCards', () => {

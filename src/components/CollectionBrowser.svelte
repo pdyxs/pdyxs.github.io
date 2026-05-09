@@ -1,11 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { CardMeta } from '../lib/cards';
-  import type { TagOption } from '../lib/collection-views';
-  import { filterCardsByTag } from '../lib/collection-views';
+  import { type TagOption, type CardDisplay, filterCardsByTag } from '../lib/collection-browser';
 
   interface Props {
-    entries: CardMeta[];
+    entries: CardDisplay[];
     availableTags: TagOption[];
     title: string;
     uid: string;
