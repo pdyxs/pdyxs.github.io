@@ -3,6 +3,7 @@
   import { get } from 'svelte/store';
   import { stackStore, pushToStack, activateCard as activateCardFn, replaceActiveSlot } from '../stores/card-stack-store';
   import { computeStackLayout } from '../lib/stack-layout';
+  import { parseUidEntry, serializeUidEntry } from '../lib/card-url-params';
 
   interface Props {
     activeUid?: string;
@@ -12,6 +13,7 @@
   let { activeUid, activeHtml }: Props = $props();
 
   let cardHtmlCache = $state(new Map<string, string>());
+  let cardParams = new Map<string, Record<string, string>>();
   // UIDs to skip body-open in $effect during VT push (body opens after vt.finished)
   let skipBodyOpen = new Set<string>();
   let overflowElLeft = $state<HTMLElement | null>(null);
@@ -113,8 +115,11 @@
     const toUids = state.cards.slice(activeIndex + 1).map(c => c.uid);
     const basePath = `/card/${active}`;
     const params = new URLSearchParams();
-    if (fromUids.length) params.set('from', fromUids.join(','));
-    if (toUids.length) params.set('to', toUids.join(','));
+    if (fromUids.length) params.set('from', fromUids.map(u => serializeUidEntry(u, cardParams.get(u) ?? {})).join(','));
+    if (toUids.length) params.set('to', toUids.map(u => serializeUidEntry(u, cardParams.get(u) ?? {})).join(','));
+    for (const [k, v] of Object.entries(cardParams.get(active) ?? {})) {
+      if (v != null) params.set(k, v);
+    }
     const query = params.toString();
     historyFn(null, '', query ? `${basePath}?${query}` : basePath);
   }
@@ -193,6 +198,7 @@
     const idx = state.cards.findIndex(c => c.uid === uid);
     if (idx === -1) return;
 
+    cardParams.delete(uid);
     const newCards = state.cards.slice(0, idx);
     const homepage = document.getElementById('homepage');
 
@@ -261,13 +267,15 @@
 
   async function initFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const fromUids = params.get('from')?.split(',').filter(Boolean) ?? [];
-    const toUids = params.get('to')?.split(',').filter(Boolean) ?? [];
-    if (!fromUids.length && !toUids.length) return;
+    const fromEntries = params.get('from')?.split(',').filter(Boolean) ?? [];
+    const toEntries = params.get('to')?.split(',').filter(Boolean) ?? [];
+    if (!fromEntries.length && !toEntries.length) return;
 
-    for (const uid of fromUids) {
+    for (const entry of fromEntries) {
+      const { uid, params: entryParams } = parseUidEntry(entry);
       const ok = await fetchAndCacheCard(uid);
       if (ok) {
+        if (Object.keys(entryParams).length > 0) cardParams.set(uid, entryParams);
         stackStore.update(s => {
           const activeIdx = s.cards.findIndex(c => c.uid === s.activeUid);
           const newCards = activeIdx >= 0
@@ -277,9 +285,11 @@
         });
       }
     }
-    for (const uid of toUids) {
+    for (const entry of toEntries) {
+      const { uid, params: entryParams } = parseUidEntry(entry);
       const ok = await fetchAndCacheCard(uid);
       if (ok) {
+        if (Object.keys(entryParams).length > 0) cardParams.set(uid, entryParams);
         stackStore.update(s => ({ ...s, cards: [...s.cards, { uid }] }));
       }
     }
@@ -339,13 +349,34 @@
     homepage?.addEventListener('click', onHomepageClick);
 
     function onDocumentClick(e: MouseEvent) {
-      const link = (e.target as Element).closest<HTMLAnchorElement>('a[href^="tag:"]');
-      if (!link) return;
-      e.preventDefault();
-      const slug = link.getAttribute('href')!.slice(4);
-      pushCard(`/card/tag/${slug}`);
+      const tagLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="tag:"]');
+      if (tagLink) {
+        e.preventDefault();
+        pushCard(`/card/tag/${tagLink.getAttribute('href')!.slice(4)}`);
+        return;
+      }
+      const colLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="collection:"]');
+      if (colLink) {
+        e.preventDefault();
+        pushCard(`/card/${colLink.getAttribute('href')!.slice(11)}`);
+        return;
+      }
     }
     document.addEventListener('click', onDocumentClick);
+
+    function onCardParam(e: Event) {
+      const { uid, params } = (e as CustomEvent<{ uid: string; params: Record<string, string | null> }>).detail;
+      const filtered = Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v != null)
+      ) as Record<string, string>;
+      if (Object.keys(filtered).length === 0) {
+        cardParams.delete(uid);
+      } else {
+        cardParams.set(uid, filtered);
+      }
+      updateUrl('replace');
+    }
+    document.addEventListener('cardparam', onCardParam);
 
     async function onPopstate() {
       stackStore.set({ cards: [], activeUid: null });
@@ -370,6 +401,7 @@
       cardStackEl.removeEventListener('click', onStackClick);
       homepage?.removeEventListener('click', onHomepageClick);
       document.removeEventListener('click', onDocumentClick);
+      document.removeEventListener('cardparam', onCardParam);
       window.removeEventListener('popstate', onPopstate);
     };
   });
