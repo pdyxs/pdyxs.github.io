@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import { getAllCards, getCardsForTag } from '../../lib/cards';
+import { getAllCards } from '../../lib/cards';
 import type { CardMeta } from '../../lib/cards';
 
 const isDev = import.meta.env.DEV;
@@ -17,7 +17,6 @@ let audit: AuditData | null = null;
 
 if (isDev) {
   const allCards = await getAllCards();
-  const allTags = await getCollection('tag');
 
   // Build uid → raw body map from all collections that have markdown
   const [cards, posts, projects, puzzles, stories, work] = await Promise.all([
@@ -37,15 +36,11 @@ if (isDev) {
   for (const e of stories)  bodyByUid.set(`stories/${e.id}`,  (e as any).body ?? '');
   for (const e of work)     bodyByUid.set(`work/${e.id}`,     (e as any).body ?? '');
 
-  const tagBySlug = new Map(allTags.map(t => [t.id, t]));
-
-  const tagLinkRe = /\[.*?\]\(tag:([^)]+)\)/g;
   const pushCardRe = /data-push-card="([^"]+)"/g;
   const collectionLinkRe = /\[.*?\]\(collection:([^)?]+)(?:\?[^)]+)?\)/g;
 
-  function extractLinks(body: string): { tags: string[]; pushCards: string[]; collections: string[] } {
+  function extractLinks(body: string): { pushCards: string[]; collections: string[] } {
     return {
-      tags: [...body.matchAll(tagLinkRe)].map(m => m[1]),
       pushCards: [...body.matchAll(pushCardRe)].map(m => m[1]),
       collections: [...body.matchAll(collectionLinkRe)].map(m => m[1]),
     };
@@ -53,7 +48,6 @@ if (isDev) {
 
   // BFS through the navigation graph
   const reachableUids = new Set<string>();
-  const visitedTagSlugs = new Set<string>();
 
   const panels = (await getCollection('cards', c => c.data.panel === true))
     .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
@@ -66,17 +60,7 @@ if (isDev) {
     reachableUids.add(uid);
 
     const body = bodyByUid.get(uid) ?? '';
-    const { tags, pushCards, collections } = extractLinks(body);
-
-    for (const slug of tags) {
-      if (visitedTagSlugs.has(slug)) continue;
-      visitedTagSlugs.add(slug);
-      const tag = tagBySlug.get(slug);
-      if (!tag) continue;
-      for (const c of getCardsForTag(tag, allCards)) {
-        if (!reachableUids.has(c.uid)) queue.push(c.uid);
-      }
-    }
+    const { pushCards, collections } = extractLinks(body);
 
     for (const pushUid of pushCards) {
       if (!reachableUids.has(pushUid)) queue.push(pushUid);
