@@ -1,11 +1,16 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import CardLink from '../components/CardLink.astro';
 import StackNav from '../components/StackNav.astro';
+import FrontPage from '../components/FrontPage.svelte';
+import { getAllCards } from '../lib/cards';
+import { FRONTPAGE_CONFIG } from '../content/frontpage';
 
-const panels = (await getCollection('cards', c => c.data.panel === true))
-  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
+const allCards = await getAllCards();
+
+const serialisedCards = allCards.map(card => ({
+  ...card,
+  date: card.date?.toISOString() ?? null,
+}));
 ---
 
 <Base>
@@ -16,18 +21,13 @@ const panels = (await getCollection('cards', c => c.data.panel === true))
     </header>
 
     <main class="site-main">
-      <nav class="panel-links">
-        {panels.map(panel => (
-          <CardLink
-            uid={`cards/${panel.id}`}
-            title={panel.data.title}
-            titleSuffix={panel.data.titleSuffix}
-          />
-        ))}
-      </nav>
+      <FrontPage
+        client:load
+        config={FRONTPAGE_CONFIG}
+        cards={serialisedCards}
+      />
     </main>
   </div>
 
   <StackNav />
 </Base>
-
