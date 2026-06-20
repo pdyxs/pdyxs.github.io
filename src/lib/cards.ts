@@ -1,4 +1,8 @@
 import { getCollection } from 'astro:content';
+import { ORG_HISTORY } from '../data/org-history';
+import { lookupOrgForDate, injectWhoTags } from './who-tags';
+import { TRAVEL_LOG } from '../data/travel-log';
+import { lookupLocationForDate, injectWhereTags } from './where-tags';
 
 // Default renderer per collection — override per-card with `renderer` in frontmatter
 export const COLLECTION_DEFAULTS: Record<string, string> = {
@@ -74,7 +78,10 @@ export async function getAllCards(): Promise<CardMeta[]> {
       title: p.data.title,
       description: p.data.description,
       date: p.data.date,
-      tags: p.data.tags,
+      tags: injectWhereTags(
+        injectWhoTags(p.data.tags, lookupOrgForDate(p.data.date, ORG_HISTORY)),
+        lookupLocationForDate(p.data.date, TRAVEL_LOG),
+      ),
       renderer: resolveRenderer('posts', p.data),
     })),
     ...projects.map(p => ({
@@ -93,7 +100,10 @@ export async function getAllCards(): Promise<CardMeta[]> {
       title: p.data.title,
       description: [p.data.puzzle_type, p.data.difficulty].filter(Boolean).join(' · '),
       date: p.data.date,
-      tags: p.data.tags,
+      tags: injectWhereTags(
+        injectWhoTags(p.data.tags, lookupOrgForDate(p.data.date, ORG_HISTORY)),
+        lookupLocationForDate(p.data.date, TRAVEL_LOG),
+      ),
       renderer: resolveRenderer('puzzles', p.data),
     })),
     ...tags.map(t => ({
@@ -113,7 +123,10 @@ export async function getAllCards(): Promise<CardMeta[]> {
         id: s.id,
         title: s.data.title ?? s.data.series,
         date: s.data.date,
-        tags: [],
+        tags: injectWhoTags(
+          [],
+          s.data.date ? lookupOrgForDate(s.data.date, ORG_HISTORY) : null,
+        ),
         renderer: resolveRenderer('stories', s.data),
       })),
     ...work.map(w => ({
