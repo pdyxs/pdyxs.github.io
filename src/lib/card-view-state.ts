@@ -13,6 +13,7 @@ const LS_PREFIX = 'pdyxs:view-state:';
 type StoredEntry = {
   hash: string;
   state: 'displayed' | 'read';
+  displayedDate?: string; // YYYY-MM-DD in viewer's TZ, set when state is 'displayed'
 };
 
 function storageKey(uid: string): string {
@@ -37,13 +38,32 @@ export function getViewState(uid: string, contentHash: string): CardViewState {
 }
 
 /**
+ * Returns the date string (YYYY-MM-DD) on which a card was marked displayed,
+ * or null if no such entry exists, the hash doesn't match, or the state is not 'displayed'.
+ */
+export function getDisplayedDate(uid: string, contentHash: string): string | null {
+  try {
+    const raw = localStorage.getItem(storageKey(uid));
+    if (raw === null) return null;
+    const entry: StoredEntry = JSON.parse(raw);
+    if (entry.hash !== contentHash || entry.state !== 'displayed') return null;
+    return entry.displayedDate ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Records that a card has been displayed (appeared as an excerpt on the front page).
  * Does not downgrade an existing 'read' state.
+ *
+ * @param displayedDate - YYYY-MM-DD in the viewer's timezone. Defaults to today in local TZ.
  */
-export function markDisplayed(uid: string, contentHash: string): void {
+export function markDisplayed(uid: string, contentHash: string, displayedDate?: string): void {
   const current = getViewState(uid, contentHash);
   if (current === 'read') return; // don't downgrade
-  const entry: StoredEntry = { hash: contentHash, state: 'displayed' };
+  const dateStr = displayedDate ?? new Date().toLocaleDateString('en-CA');
+  const entry: StoredEntry = { hash: contentHash, state: 'displayed', displayedDate: dateStr };
   localStorage.setItem(storageKey(uid), JSON.stringify(entry));
 }
 
