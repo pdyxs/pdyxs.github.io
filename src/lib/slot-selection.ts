@@ -1,42 +1,40 @@
 // Day-seeded slot selection.
 //
-// Given a filtered card set and the current date in Sydney timezone, selects
-// one card stably for the entire calendar day. Preference order:
-//   unseen → displayed → read
-// Within the top-priority tier the selection is seeded by the Sydney-timezone
-// date string (YYYY-MM-DD) so the same card is always selected on a given day.
+// Given a filtered card set and a date, selects one card stably for the
+// entire calendar day (in the viewer's local timezone by default).
+// Preference order: unseen → displayed (same day only) → read.
+//
+// Displayed cards from a prior calendar day fall into the read tier so they
+// are no longer actively preferred, but can still be selected as fallback.
 
 import type { CardMeta } from './cards';
 import type { FilterState } from './filters';
 import { applyFilters } from './filters';
-import { getViewState } from './card-view-state';
+import { getViewState, getDisplayedDate } from './card-view-state';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Returns the date as 'YYYY-MM-DD' in Australia/Sydney timezone. */
-function toSydneyDateString(date: Date): string {
-  return date.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+/** Returns 'YYYY-MM-DD' for `date` in the given IANA timezone. */
+function toDateString(date: Date, timezone: string): string {
+  return date.toLocaleDateString('en-CA', { timeZone: timezone });
   // en-CA locale returns ISO-style YYYY-MM-DD
 }
 
 /**
- * Simple deterministic numeric hash for a string.
+ * Simple deterministic numeric hash for a string (djb2 variant).
  * Produces a non-negative 32-bit integer.
- * Uses djb2 variant.
  */
 function hashString(s: string): number {
   let h = 5381;
   for (let i = 0; i < s.length; i++) {
-    h = (((h << 5) + h) + s.charCodeAt(i)) >>> 0; // keep 32-bit unsigned
+    h = (((h << 5) + h) + s.charCodeAt(i)) >>> 0;
   }
   return h;
 }
 
-/**
- * Picks a stable index within an array using a seed string.
- */
+/** Picks a stable index within an array using a seed string. */
 function seededIndex(seed: string, length: number): number {
   if (length === 0) return 0;
   return hashString(seed) % length;
@@ -47,23 +45,34 @@ function seededIndex(seed: string, length: number): number {
 // ---------------------------------------------------------------------------
 
 /**
+ * Returns the pre-computed content hash for a card (stored on the card at build time).
+ * A different hash means the card's content changed, which resets view state to unseen.
+ */
+export function contentHashFor(card: CardMeta): string {
+  return card.contentHash;
+}
+
+/**
  * Selects one card from `cards` after applying `filterState`, using the
- * Sydney-timezone calendar day of `date` as a stable seed.
+ * calendar day of `date` (in the viewer's timezone) as a stable seed.
  *
- * Preference order: unseen > displayed > read.
- * Within the top-priority tier, the selection is deterministic for a given day.
+ * Preference order: unseen > displayed (same calendar day) > read.
+ * Displayed cards from a prior calendar day fall into the read tier.
  *
+ * @param timezone - IANA timezone string; defaults to the viewer's local timezone.
  * Returns null if no cards match the filter.
  */
 export function selectSlotCard(
   cards: CardMeta[],
   filterState: FilterState,
-  date: Date
+  date: Date,
+  timezone?: string,
 ): CardMeta | null {
+  const tz = timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const filtered = applyFilters(cards, filterState);
   if (filtered.length === 0) return null;
 
-  const daySeed = toSydneyDateString(date);
+  const daySeed = toDateString(date, tz);
 
   // Partition into preference tiers
   const unseen: CardMeta[] = [];
@@ -71,34 +80,27 @@ export function selectSlotCard(
   const read: CardMeta[] = [];
 
   for (const card of filtered) {
-    const state = getViewState(card.uid, contentHashFor(card));
-    if (state === 'unseen') unseen.push(card);
-    else if (state === 'displayed') displayed.push(card);
-    else read.push(card);
+    const hash = contentHashFor(card);
+    const state = getViewState(card.uid, hash);
+    if (state === 'unseen') {
+      unseen.push(card);
+    } else if (state === 'displayed') {
+      // Only keep in "displayed" tier if displayed on today's calendar day;
+      // prior-day displayed cards fall to the read tier.
+      const displayedDate = getDisplayedDate(card.uid, hash);
+      if (displayedDate === daySeed) displayed.push(card);
+      else read.push(card);
+    } else {
+      read.push(card);
+    }
   }
 
   // Pick from the highest-priority non-empty tier
-  const tier = unseen.length > 0 ? unseen : displayed.length > 0 ? displayed : read;
-
-  // Use a seed combining day and tier identity so the selection changes between
-  // tiers (when all unseen are exhausted on a new day, don't accidentally pick
-  // the same index from displayed tier)
   const tierName = unseen.length > 0 ? 'unseen' : displayed.length > 0 ? 'displayed' : 'read';
-  const seed = `${daySeed}:${tierName}`;
+  const tier = tierName === 'unseen' ? unseen : tierName === 'displayed' ? displayed : read;
 
+  // Combine day seed with tier name so selection changes when moving between tiers
+  const seed = `${daySeed}:${tierName}`;
   const idx = seededIndex(seed, tier.length);
   return tier[idx];
-}
-
-// ---------------------------------------------------------------------------
-// Content hash utility (exported for use by callers that want to pass the hash)
-// ---------------------------------------------------------------------------
-
-/**
- * Computes a content hash string for a card based on its title and description.
- * Different content → different hash, which resets the view state to unseen.
- */
-export function contentHashFor(card: CardMeta): string {
-  const str = `${card.title}||${card.description ?? ''}`;
-  return String(hashString(str));
 }

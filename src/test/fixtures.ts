@@ -46,13 +46,20 @@ export function fakeTagEntry(overrides?: {
 }
 
 export function fakeCardMeta(overrides?: Partial<CardMeta>): CardMeta {
-  return {
+  const base: CardMeta = {
     uid: 'cards/test',
     collection: 'cards',
     id: 'test',
     title: 'Test Card',
     tags: [],
     renderer: 'card',
+    contentHash: 'default-hash',
     ...overrides,
   };
+  // Re-derive contentHash from title if not explicitly overridden, so distinct
+  // fakeCardMeta({ title: 'X' }) calls produce distinct hashes automatically.
+  if (!overrides?.contentHash) {
+    base.contentHash = `hash:${base.title}:${base.uid}`;
+  }
+  return base;
 }
