@@ -1,4 +1,38 @@
 import { getCollection } from 'astro:content';
+import { readFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { derivePathTags, loadDefaultsTags, mergeEffectiveTags } from './tag-inheritance';
+
+const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
+
+function makeFileReader() {
+  const cache = new Map<string, string | null>();
+  return async (path: string): Promise<string | null> => {
+    if (cache.has(path)) return cache.get(path)!;
+    try {
+      const text = await readFile(resolve(CONTENT_DIR, path), 'utf-8');
+      cache.set(path, text);
+      return text;
+    } catch {
+      cache.set(path, null);
+      return null;
+    }
+  };
+}
+
+async function effectiveTags(
+  collection: string,
+  id: string,
+  frontmatterTags: string[],
+  reader: (path: string) => Promise<string | null>
+): Promise<string[]> {
+  return mergeEffectiveTags(
+    derivePathTags(collection, id),
+    await loadDefaultsTags(collection, id, reader),
+    frontmatterTags,
+  );
+}
 
 // Default renderer per collection — override per-card with `renderer` in frontmatter
 export const COLLECTION_DEFAULTS: Record<string, string> = {
@@ -57,72 +91,86 @@ export async function getAllCards(): Promise<CardMeta[]> {
     getCollection('work'),
   ]);
 
-  return [
-    ...cards.map(c => ({
+  const reader = makeFileReader();
+
+  const [
+    cardsMeta,
+    postsMeta,
+    projectsMeta,
+    puzzlesMeta,
+    storiesMeta,
+    workMeta,
+  ] = await Promise.all([
+    Promise.all(cards.map(async c => ({
       uid: `cards/${c.id}`,
       collection: 'cards',
       id: c.id,
       title: c.data.title,
       description: c.data.description,
-      tags: c.data.tags,
+      tags: await effectiveTags('cards', c.id, c.data.tags, reader),
       renderer: resolveRenderer('cards', c.data),
-    })),
-    ...posts.map(p => ({
+    }))),
+    Promise.all(posts.map(async p => ({
       uid: `posts/${p.id}`,
       collection: 'posts',
       id: p.id,
       title: p.data.title,
       description: p.data.description,
       date: p.data.date,
-      tags: p.data.tags,
+      tags: await effectiveTags('posts', p.id, p.data.tags, reader),
       renderer: resolveRenderer('posts', p.data),
-    })),
-    ...projects.map(p => ({
+    }))),
+    Promise.all(projects.map(async p => ({
       uid: `projects/${p.id}`,
       collection: 'projects',
       id: p.id,
       title: p.data.title,
       description: p.data.description,
-      tags: p.data.tags,
+      tags: await effectiveTags('projects', p.id, p.data.tags, reader),
       renderer: resolveRenderer('projects', p.data),
-    })),
-    ...puzzles.map(p => ({
+    }))),
+    Promise.all(puzzles.map(async p => ({
       uid: `puzzles/${p.id}`,
       collection: 'puzzles',
       id: p.id,
       title: p.data.title,
       description: [p.data.puzzle_type, p.data.difficulty].filter(Boolean).join(' · '),
       date: p.data.date,
-      tags: p.data.tags,
+      tags: await effectiveTags('puzzles', p.id, p.data.tags, reader),
       renderer: resolveRenderer('puzzles', p.data),
-    })),
-    ...tags.map(t => ({
-      uid: `tag/${t.id}`,
-      collection: 'tag',
-      id: t.id,
-      title: t.data.name,
-      description: t.data.description,
-      tags: [],
-      renderer: resolveRenderer('tag', t.data),
-    })),
-    ...stories
-      .filter(s => import.meta.env.DEV || s.data.published !== false)
-      .map(s => ({
-        uid: `stories/${s.id}`,
-        collection: 'stories',
-        id: s.id,
-        title: s.data.title ?? s.data.series,
-        date: s.data.date,
-        tags: [],
-        renderer: resolveRenderer('stories', s.data),
-      })),
-    ...work.map(w => ({
+    }))),
+    Promise.all(
+      stories
+        .filter(s => import.meta.env.DEV || s.data.published !== false)
+        .map(async s => ({
+          uid: `stories/${s.id}`,
+          collection: 'stories',
+          id: s.id,
+          title: s.data.title ?? s.data.series,
+          date: s.data.date,
+          tags: await effectiveTags('stories', s.id, [], reader),
+          renderer: resolveRenderer('stories', s.data),
+        }))
+    ),
+    Promise.all(work.map(async w => ({
       uid: `work/${w.id}`,
       collection: 'work',
       id: w.id,
       title: w.data.title,
-      tags: [],
+      tags: await effectiveTags('work', w.id, [], reader),
       renderer: resolveRenderer('work', w.data),
-    })),
-  ];
+    }))),
+  ]);
+
+  const tagsMeta = tags.map(t => ({
+    uid: `tag/${t.id}`,
+    collection: 'tag',
+    id: t.id,
+    title: t.data.name,
+    description: t.data.description,
+    tags: [] as string[],
+    renderer: resolveRenderer('tag', t.data),
+  }));
+
+  return [...cardsMeta, ...postsMeta, ...projectsMeta, ...puzzlesMeta, ...tagsMeta, ...storiesMeta, ...workMeta];
 }

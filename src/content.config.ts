@@ -156,7 +156,7 @@ const cards = defineCollection({
 // also provide a runtime fallback for any that slip through.
 
 const tag = defineCollection({
-  loader: glob({ pattern: '**/*.yaml', base: './src/content/tag' }),
+  loader: glob({ pattern: '**/[!_]*.yaml', base: './src/content/tag' }),
   schema: z.object({
     // canonical display name (slug is the file name, e.g. 'quantum-computing')
     name: z.string(),
