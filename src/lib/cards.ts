@@ -54,6 +54,7 @@ export type CardMeta = {
   date?: Date;
   tags: string[];
   renderer: string;
+  contentHash: string; // djb2 hash of title + description + body; resets view state on edit
 };
 
 export function getCardsForTag(
@@ -78,6 +79,18 @@ export function getCardsForTag(
 
 function resolveRenderer(collection: string, data: { renderer?: string }): string {
   return data.renderer ?? COLLECTION_DEFAULTS[collection] ?? 'card';
+}
+
+function djb2Hash(s: string): number {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) {
+    h = (((h << 5) + h) + s.charCodeAt(i)) >>> 0;
+  }
+  return h;
+}
+
+export function computeContentHash(title: string, description?: string, body?: string): string {
+  return String(djb2Hash(`${title}||${description ?? ''}||${body ?? ''}`));
 }
 
 export async function getAllCards(): Promise<CardMeta[]> {
@@ -109,6 +122,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
       description: c.data.description,
       tags: await effectiveTags('cards', c.id, c.data.tags, reader),
       renderer: resolveRenderer('cards', c.data),
+      contentHash: computeContentHash(c.data.title, c.data.description, c.body),
     }))),
     Promise.all(posts.map(async p => ({
       uid: `posts/${p.id}`,
@@ -119,6 +133,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
       date: p.data.date,
       tags: await effectiveTags('posts', p.id, p.data.tags, reader),
       renderer: resolveRenderer('posts', p.data),
+      contentHash: computeContentHash(p.data.title, p.data.description, p.body),
     }))),
     Promise.all(projects.map(async p => ({
       uid: `projects/${p.id}`,
@@ -128,6 +143,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
       description: p.data.description,
       tags: await effectiveTags('projects', p.id, p.data.tags, reader),
       renderer: resolveRenderer('projects', p.data),
+      contentHash: computeContentHash(p.data.title, p.data.description, p.body),
     }))),
     Promise.all(puzzles.map(async p => ({
       uid: `puzzles/${p.id}`,
@@ -138,6 +154,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
       date: p.data.date,
       tags: await effectiveTags('puzzles', p.id, p.data.tags, reader),
       renderer: resolveRenderer('puzzles', p.data),
+      contentHash: computeContentHash(p.data.title, p.data.description, p.body),
     }))),
     Promise.all(
       stories
@@ -150,6 +167,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
           date: s.data.date,
           tags: await effectiveTags('stories', s.id, [], reader),
           renderer: resolveRenderer('stories', s.data),
+          contentHash: computeContentHash(s.data.title ?? s.data.series ?? '', undefined, s.body),
         }))
     ),
     Promise.all(work.map(async w => ({
@@ -159,6 +177,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
       title: w.data.title,
       tags: await effectiveTags('work', w.id, [], reader),
       renderer: resolveRenderer('work', w.data),
+      contentHash: computeContentHash(w.data.title, undefined, w.body),
     }))),
   ]);
 
@@ -170,6 +189,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
     description: t.data.description,
     tags: [] as string[],
     renderer: resolveRenderer('tag', t.data),
+    contentHash: computeContentHash(t.data.name, t.data.description),
   }));
 
   return [...cardsMeta, ...postsMeta, ...projectsMeta, ...puzzlesMeta, ...tagsMeta, ...storiesMeta, ...workMeta];
