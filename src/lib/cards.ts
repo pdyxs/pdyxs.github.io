@@ -3,6 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { derivePathTags, loadDefaultsTags, mergeEffectiveTags } from './tag-inheritance';
+import { TRAVEL_LOG } from '../data/travel-log';
+import { lookupLocationForDate, injectWhereTags } from './where-tags';
 
 const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
 
@@ -131,7 +133,10 @@ export async function getAllCards(): Promise<CardMeta[]> {
       title: p.data.title,
       description: p.data.description,
       date: p.data.date,
-      tags: await effectiveTags('posts', p.id, p.data.tags, reader),
+      tags: injectWhereTags(
+        await effectiveTags('posts', p.id, p.data.tags, reader),
+        p.data.date ? lookupLocationForDate(p.data.date, TRAVEL_LOG) : null,
+      ),
       renderer: resolveRenderer('posts', p.data),
       contentHash: computeContentHash(p.data.title, p.data.description, p.body),
     }))),
@@ -152,7 +157,10 @@ export async function getAllCards(): Promise<CardMeta[]> {
       title: p.data.title,
       description: [p.data.puzzle_type, p.data.difficulty].filter(Boolean).join(' · '),
       date: p.data.date,
-      tags: await effectiveTags('puzzles', p.id, p.data.tags, reader),
+      tags: injectWhereTags(
+        await effectiveTags('puzzles', p.id, p.data.tags, reader),
+        p.data.date ? lookupLocationForDate(p.data.date, TRAVEL_LOG) : null,
+      ),
       renderer: resolveRenderer('puzzles', p.data),
       contentHash: computeContentHash(p.data.title, p.data.description, p.body),
     }))),
@@ -165,7 +173,10 @@ export async function getAllCards(): Promise<CardMeta[]> {
           id: s.id,
           title: s.data.title ?? s.data.series,
           date: s.data.date,
-          tags: await effectiveTags('stories', s.id, [], reader),
+          tags: injectWhereTags(
+            await effectiveTags('stories', s.id, [], reader),
+            s.data.date ? lookupLocationForDate(s.data.date, TRAVEL_LOG) : null,
+          ),
           renderer: resolveRenderer('stories', s.data),
           contentHash: computeContentHash(s.data.title ?? s.data.series ?? '', undefined, s.body),
         }))
