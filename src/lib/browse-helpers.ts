@@ -11,6 +11,18 @@ import type { Dimension } from './filters';
 // Types
 // ---------------------------------------------------------------------------
 
+/** Serialised representation of a card passed from SSR to the browse client. */
+export type SerialisedCard = {
+  uid: string;
+  title: string;
+  description?: string;
+  date: string | null;
+  tags: string[];
+  collection: string;
+  id: string;
+  renderer: string;
+};
+
 /**
  * A single node in the tag hierarchy for one dimension.
  *
