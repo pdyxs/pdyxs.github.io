@@ -8,14 +8,14 @@ import type { FilterState } from './filters';
 // ---------------------------------------------------------------------------
 
 describe('buildBrowseUrl', () => {
-  it('returns /browse with no params for an empty filter', () => {
-    expect(buildBrowseUrl({ selections: {} })).toBe('/browse');
+  it('returns / with no params for an empty filter', () => {
+    expect(buildBrowseUrl({ selections: {} })).toBe('/');
   });
 
   it('includes filter params for a single-dimension filter', () => {
     const url = buildBrowseUrl({ selections: { what: ['what:projects'] } });
     const parsed = new URL(url, 'http://x');
-    expect(parsed.pathname).toBe('/browse');
+    expect(parsed.pathname).toBe('/');
     expect(parsed.searchParams.getAll('filter.what')).toEqual(['what:projects']);
   });
 

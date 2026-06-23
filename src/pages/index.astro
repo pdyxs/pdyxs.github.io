@@ -4,8 +4,10 @@ import StackNav from '../components/StackNav.astro';
 import FrontPage from '../components/FrontPage.svelte';
 import { getAllCards } from '../lib/cards';
 import { FRONTPAGE_CONFIG } from '../content/frontpage';
+import { buildAllDimensionHierarchies } from '../lib/browse-helpers';
 
 const allCards = await getAllCards();
+const hierarchies = buildAllDimensionHierarchies(allCards);
 
 const serialisedCards = allCards.map(card => ({
   ...card,
@@ -25,6 +27,7 @@ const serialisedCards = allCards.map(card => ({
         client:load
         config={FRONTPAGE_CONFIG}
         cards={serialisedCards}
+        {hierarchies}
       />
     </main>
   </div>

@@ -19,11 +19,11 @@ export type FrontPageConfig = {
   slots: SlotConfig[];
 };
 
-/** Builds the /browse URL for a given filter state. */
+/** Builds the URL for a given filter state (always rooted at /). */
 export function buildBrowseUrl(filter: FilterState): string {
   const params = filterStateToParams(filter);
   const query = params.toString();
-  return query ? `/browse?${query}` : '/browse';
+  return query ? `/?${query}` : '/';
 }
 
 /**
