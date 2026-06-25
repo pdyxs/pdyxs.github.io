@@ -16,6 +16,7 @@
 <style>
   .fp-pinned {
     cursor: pointer;
+    width: 100%;
   }
 
   .card-header {

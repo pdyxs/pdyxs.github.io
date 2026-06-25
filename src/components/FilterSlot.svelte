@@ -38,6 +38,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
+    border: var(--border-width) solid var(--color-border);
   }
 
   .fp-slot-label {
