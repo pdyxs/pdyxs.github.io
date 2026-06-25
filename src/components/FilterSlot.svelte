@@ -48,7 +48,6 @@
     color: var(--color-text-muted);
     text-transform: uppercase;
     margin: 0;
-    padding: 0 var(--space-lg);
   }
 
   .card-header {
@@ -82,6 +81,7 @@
     display: block;
     text-decoration: none;
     width: 100%;
+    border: var(--border-width) solid var(--color-border);
   }
 
   .fp-slot-card:hover .card-header {
