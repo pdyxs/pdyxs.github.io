@@ -24,11 +24,6 @@
   .front-page-slots {
     display: flex;
     flex-direction: column;
-    gap: 0;
-    border: var(--border-width) solid var(--color-border);
-  }
-
-  .front-page-slots > :not(:first-child) {
-    border-top: var(--border-width) solid var(--color-border);
+    gap: var(--space-md);
   }
 </style>
