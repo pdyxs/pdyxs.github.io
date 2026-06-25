@@ -80,6 +80,7 @@
     cursor: pointer;
     display: block;
     text-decoration: none;
+    width: 100%;
   }
 
   .fp-slot-card:hover .card-header {
