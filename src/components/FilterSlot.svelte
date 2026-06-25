@@ -38,7 +38,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    border: var(--border-width) solid var(--color-border);
   }
 
   .fp-slot-label {
@@ -79,7 +78,6 @@
 
   .fp-slot-card {
     cursor: pointer;
-    border: var(--border-width) solid var(--color-border);
     display: block;
     text-decoration: none;
   }

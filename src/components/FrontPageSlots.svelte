@@ -13,7 +13,7 @@
 <div class="front-page-slots">
   {#each slots as slot (slot.type === 'pinned' ? slot.uid : slot.label)}
     {#if slot.type === 'pinned'}
-      <PinnedSlot uid={slot.uid} title={slot.title} />
+      <PinnedSlot uid={slot.uid} title={slot.title} description={slot.description} />
     {:else}
       <FilterSlot label={slot.label} card={slot.card} browseUrl={slot.browseUrl} />
     {/if}
