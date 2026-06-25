@@ -135,10 +135,10 @@
 <style>
   .fp-dimension-controls {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-lg);
+    padding: var(--space-sm) var(--space-md);
     border-bottom: var(--border-width) solid var(--color-border);
     background: var(--color-surface);
     position: sticky;
@@ -148,6 +148,13 @@
 
   .fp-dim-wrapper {
     position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .fp-dim-wrapper :global(.browse-dim-btn) {
+    width: 100%;
+    justify-content: center;
   }
 
   .fp-clear-all {
