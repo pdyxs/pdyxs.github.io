@@ -34,10 +34,10 @@
 
 <style>
   .fp-filter-slot {
-    padding: var(--space-md) var(--space-lg);
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
+    padding: var(--space-md) 0;
   }
 
   .fp-slot-label {
@@ -48,6 +48,7 @@
     color: var(--color-text-muted);
     text-transform: uppercase;
     margin: 0;
+    padding: 0 var(--space-lg);
   }
 
   .card-header {
@@ -101,6 +102,7 @@
     color: var(--color-text-muted);
     text-decoration: none;
     align-self: flex-end;
+    padding-right: var(--space-lg);
   }
 
   .fp-see-more:hover {
