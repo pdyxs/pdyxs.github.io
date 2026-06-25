@@ -138,7 +138,7 @@
     flex-wrap: nowrap;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-sm) 0;
     border-bottom: var(--border-width) solid var(--color-border);
     background: var(--color-surface);
     position: sticky;
