@@ -1,4 +1,5 @@
 import type { CardMeta } from './cards';
+import type { SerialisedCard } from './browse-helpers';
 import type { FilterState } from './filters';
 import { filterStateToParams } from './filters';
 
@@ -18,6 +19,24 @@ export type SlotConfig = PinnedSlotConfig | FilterSlotConfig;
 export type FrontPageConfig = {
   slots: SlotConfig[];
 };
+
+export type SerialisedCardFull = SerialisedCard & { contentHash: string };
+
+export type ResolvedPinned = {
+  type: 'pinned';
+  uid: string;
+  title: string;
+  description?: string;
+};
+
+export type ResolvedFilter = {
+  type: 'filter';
+  label: string;
+  card: SerialisedCardFull | null;
+  browseUrl: string;
+};
+
+export type ResolvedSlot = ResolvedPinned | ResolvedFilter;
 
 /** Builds the URL for a given filter state (always rooted at /). */
 export function buildBrowseUrl(filter: FilterState): string {
