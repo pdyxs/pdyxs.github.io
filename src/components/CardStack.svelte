@@ -215,11 +215,21 @@
       if (vtCard) vtCard.style.viewTransitionName = '';
 
       if (usePlaceholder) {
-        // Phase 2: swap real HTML in, then open body with CSS transition
+        // Phase 2: write real body content directly into the placeholder's DOM,
+        // then open with the body-wrapper CSS transition
         const html = await networkFetch;
         if (html) {
-          cardHtmlCache.set(uid, html); // triggers Svelte to re-render @html block
-          await tick(); // wait for DOM update
+          cardHtmlCache.set(uid, html); // update cache for future navigations
+          const card = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
+          if (card) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const realBodyInner = tmp.querySelector('.stack-card-body-inner');
+            const existingBodyInner = card.querySelector('.stack-card-body-inner');
+            if (realBodyInner && existingBodyInner) {
+              existingBodyInner.innerHTML = realBodyInner.innerHTML;
+            }
+          }
         }
         // One rAF so the browser paints the closed card before we start opening it
         await new Promise<void>(r => requestAnimationFrame(r));
