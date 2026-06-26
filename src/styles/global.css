@@ -16,6 +16,7 @@
 
   --font-size-base: 18px;
   --radius:       0px;          /* sharp corners suit e-ink */
+  --radius-sm:    4px;
   --border-width: 2px;
 
   --space-xs:     0.375rem;
@@ -249,6 +250,47 @@ strong { font-weight: 700; }
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 300ms;
+}
+
+/* ── Card header ───────────────────────────────────────────────── */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 18px,
+    var(--color-bg-stripes) 19px,
+    var(--color-bg-stripes) 20px
+  );
+  user-select: none;
+}
+
+.card-header-title,
+.card-header > * {
+  background: var(--color-surface);
+  padding: 0 2px;
+}
+
+.stack-card--collapsed .card-header {
+  font-size: 0.75em;
+  padding: var(--space-xs) var(--space-lg);
+  background: var(--color-surface);
+}
+
+.stack-card--collapsed .card-header-title,
+.stack-card--collapsed .card-header > * {
+  background: none;
+  padding: 0;
 }
 
 /* ── Card stack ────────────────────────────────────────────────── */

@@ -95,7 +95,6 @@
     background: transparent;
     color: var(--color-text);
     cursor: pointer;
-    border-radius: 2px;
   }
 
   .collection-filter-chip--active {
@@ -104,6 +103,6 @@
   }
 
   .collection-filter-chip:hover:not(.collection-filter-chip--active) {
-    background: var(--color-bg-stripes);
+    background: var(--color-bg-hover);
   }
 </style>

@@ -9,13 +9,11 @@
   interface Props {
     hierarchies: Record<Dimension, TagNode[]>;
     filterState: FilterState;
-    hasActiveFilters: boolean;
     onFilterToggle: (dim: Dimension, value: string) => void;
     onClearDimension: (dim: Dimension) => void;
-    onClearAll: () => void;
   }
 
-  let { hierarchies, filterState, hasActiveFilters, onFilterToggle, onClearDimension, onClearAll }: Props = $props();
+  let { hierarchies, filterState, onFilterToggle, onClearDimension }: Props = $props();
 
   let openDimension = $state<Dimension | null>(null);
   let drillPath = $state<string[]>([]);
@@ -125,11 +123,6 @@
     </div>
   {/each}
 
-  {#if hasActiveFilters}
-    <button class="fp-clear-all" onclick={onClearAll} aria-label="Clear all filters">
-      Clear all
-    </button>
-  {/if}
 </div>
 
 <style>
@@ -157,19 +150,4 @@
     justify-content: center;
   }
 
-  .fp-clear-all {
-    font-family: var(--font-ui);
-    font-size: 0.8rem;
-    padding: var(--space-xs) var(--space-sm);
-    border: 1px solid var(--color-border-light);
-    background: transparent;
-    color: var(--color-text-muted);
-    cursor: pointer;
-    margin-left: auto;
-  }
-
-  .fp-clear-all:hover {
-    color: var(--color-text);
-    border-color: var(--color-border);
-  }
 </style>

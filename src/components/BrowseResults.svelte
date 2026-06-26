@@ -27,7 +27,7 @@
 
 <style>
   .fp-browse-grid {
-    padding: var(--space-md) var(--space-lg);
+    padding: var(--space-md) 0;
   }
 
   .fp-result-count {

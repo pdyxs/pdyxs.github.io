@@ -5,9 +5,10 @@
   interface Props {
     filterState: FilterState;
     onRemove: (dim: Dimension, value: string) => void;
+    onClearAll: () => void;
   }
 
-  let { filterState, onRemove }: Props = $props();
+  let { filterState, onRemove, onClearAll }: Props = $props();
 </script>
 
 <div class="fp-active-filters" aria-label="Active filters">
@@ -22,6 +23,9 @@
       </button>
     {/each}
   {/each}
+  <button class="fp-clear-all" onclick={onClearAll} aria-label="Clear all filters">
+    Clear all
+  </button>
 </div>
 
 <style>
@@ -29,7 +33,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-lg);
+    padding: var(--space-xs) 0;
     border-bottom: 1px solid var(--color-border-light);
   }
 
@@ -45,5 +49,21 @@
 
   .fp-filter-chip:hover {
     opacity: 0.8;
+  }
+
+  .fp-clear-all {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--color-border-light);
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    margin-left: auto;
+  }
+
+  .fp-clear-all:hover {
+    color: var(--color-text);
+    border-color: var(--color-border);
   }
 </style>

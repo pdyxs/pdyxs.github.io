@@ -49,14 +49,12 @@
   <FilterBar
     {hierarchies}
     filterState={filter.filterState}
-    hasActiveFilters={filter.hasActiveFilters}
     onFilterToggle={filter.toggle}
     onClearDimension={filter.clearDimension}
-    onClearAll={filter.clearAll}
   />
 
   {#if filter.hasActiveFilters}
-    <ActiveFilterChips filterState={filter.filterState} onRemove={filter.toggle} />
+    <ActiveFilterChips filterState={filter.filterState} onRemove={filter.toggle} onClearAll={filter.clearAll} />
     <BrowseResults cards={filter.filteredCards} />
   {:else}
     <FrontPageSlots slots={resolvedSlots} />
