@@ -9,6 +9,8 @@
   }
 
   let { label, isActive, isOpen, hasNodes, selectionCount, onToggle }: Props = $props();
+
+  const dots = $derived(Array.from({ length: selectionCount }));
 </script>
 
 <button
@@ -17,13 +19,17 @@
   class:browse-dim-btn--open={isOpen}
   onclick={onToggle}
   aria-pressed={isOpen}
-  aria-label="{label} filter{isActive ? ' (active)' : ''}"
+  aria-label="{label} filter{isActive ? ` (${selectionCount} active)` : ''}"
   disabled={!hasNodes}
   title={hasNodes ? undefined : 'No tags available for this dimension'}
 >
-  {label}
+  <span class="browse-dim-label">{label}</span>
   {#if isActive}
-    <span class="browse-dim-badge" aria-hidden="true">{selectionCount}</span>
+    <span class="browse-dim-dots" aria-hidden="true">
+      {#each dots as _}
+        <span class="browse-dim-dot"></span>
+      {/each}
+    </span>
   {/if}
 </button>
 
@@ -31,14 +37,14 @@
   .browse-dim-btn {
     font-family: var(--font-heading);
     font-size: 1rem;
-    padding: var(--space-xs) var(--space-md);
     border: var(--border-width) solid var(--color-border);
     background: transparent;
     color: var(--color-text);
     cursor: pointer;
     display: flex;
-    align-items: center;
-    gap: var(--space-xs);
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
     transition: background 0.15s;
   }
 
@@ -47,29 +53,35 @@
     cursor: not-allowed;
   }
 
-  .browse-dim-btn--active {
-    background: var(--color-text);
-    color: var(--color-surface);
-  }
-
   .browse-dim-btn--open {
     border-bottom-color: transparent;
   }
 
-  .browse-dim-btn:not(:disabled):hover:not(.browse-dim-btn--active) {
+  .browse-dim-label {
+    padding: var(--space-xs) var(--space-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .browse-dim-btn:not(:disabled):hover:not(.browse-dim-btn--active) .browse-dim-label {
     background: var(--color-bg-hover);
   }
 
-  .browse-dim-badge {
-    display: inline-flex;
-    align-items: center;
+  .browse-dim-dots {
+    display: flex;
     justify-content: center;
-    width: 1.25em;
-    height: 1.25em;
+    align-items: center;
+    gap: 5px;
+    padding: var(--space-xs) var(--space-md);
+    background: var(--color-text);
+  }
+
+  .browse-dim-dot {
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: var(--color-surface);
-    color: var(--color-text);
-    font-size: 0.75em;
-    font-family: var(--font-ui);
+    flex-shrink: 0;
   }
 </style>

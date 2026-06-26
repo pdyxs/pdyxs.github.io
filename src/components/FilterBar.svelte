@@ -129,7 +129,7 @@
   .fp-dimension-controls {
     display: flex;
     flex-wrap: nowrap;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-xs);
     padding: var(--space-sm) 0;
     border-bottom: var(--border-width) solid var(--color-border);
