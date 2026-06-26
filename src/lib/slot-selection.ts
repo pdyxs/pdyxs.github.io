@@ -2,10 +2,12 @@
 //
 // Given a filtered card set and a date, selects one card stably for the
 // entire calendar day (in the viewer's local timezone by default).
-// Preference order: unseen → displayed (same day only) → read.
+// Preference order: displayed (same day) → unseen → read.
 //
-// Displayed cards from a prior calendar day fall into the read tier so they
-// are no longer actively preferred, but can still be selected as fallback.
+// A card marked displayed today is "today's pick" and is returned on every
+// subsequent call within the same calendar day.  Displayed cards from a prior
+// calendar day fall into the read tier so they are no longer actively
+// preferred, but can still be selected as fallback.
 
 import type { CardMeta } from './cards';
 import type { FilterState } from './filters';
@@ -56,7 +58,7 @@ export function contentHashFor(card: CardMeta): string {
  * Selects one card from `cards` after applying `filterState`, using the
  * calendar day of `date` (in the viewer's timezone) as a stable seed.
  *
- * Preference order: unseen > displayed (same calendar day) > read.
+ * Preference order: displayed (same calendar day) > unseen > read.
  * Displayed cards from a prior calendar day fall into the read tier.
  *
  * @param timezone - IANA timezone string; defaults to the viewer's local timezone.
@@ -95,8 +97,10 @@ export function selectSlotCard(
     }
   }
 
-  // Pick from the highest-priority non-empty tier
-  const tierName = unseen.length > 0 ? 'unseen' : displayed.length > 0 ? 'displayed' : 'read';
+  // Pick from the highest-priority non-empty tier.
+  // displayed_today wins: once a card is selected and marked displayed for this
+  // calendar day, subsequent calls return the same card.
+  const tierName = displayed.length > 0 ? 'displayed' : unseen.length > 0 ? 'unseen' : 'read';
   const tier = tierName === 'unseen' ? unseen : tierName === 'displayed' ? displayed : read;
 
   // Combine day seed with tier name so selection changes when moving between tiers

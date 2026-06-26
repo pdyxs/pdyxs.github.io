@@ -73,7 +73,7 @@ describe('selectSlotCard — day stability', () => {
 // ---------------------------------------------------------------------------
 
 describe('selectSlotCard — preference ordering', () => {
-  it('prefers unseen over displayed and read', () => {
+  it('prefers displayed (today) over unseen and read', () => {
     const unseenCard    = fakeCardMeta({ uid: 'posts/unseen',    title: 'Unseen' });
     const displayedCard = fakeCardMeta({ uid: 'posts/displayed', title: 'Displayed' });
     const readCard      = fakeCardMeta({ uid: 'posts/read',      title: 'Read' });
@@ -82,6 +82,16 @@ describe('selectSlotCard — preference ordering', () => {
     markRead(readCard.uid, contentHashFor(readCard));
 
     const result = selectSlotCard([displayedCard, readCard, unseenCard], EMPTY_FILTER, DAY1_A, UTC);
+    expect(result?.uid).toBe(displayedCard.uid);
+  });
+
+  it('picks from unseen when nothing has been displayed today', () => {
+    const unseenCard = fakeCardMeta({ uid: 'posts/unseen', title: 'Unseen' });
+    const readCard   = fakeCardMeta({ uid: 'posts/read',   title: 'Read' });
+
+    markRead(readCard.uid, contentHashFor(readCard));
+
+    const result = selectSlotCard([readCard, unseenCard], EMPTY_FILTER, DAY1_A, UTC);
     expect(result?.uid).toBe(unseenCard.uid);
   });
 
@@ -117,6 +127,21 @@ describe('selectSlotCard — preference ordering', () => {
     const r1 = selectSlotCard(cards, EMPTY_FILTER, DAY1_A, UTC);
     const r2 = selectSlotCard(cards, EMPTY_FILTER, DAY1_B, UTC);
     expect(r1?.uid).toBe(r2?.uid);
+  });
+
+  it('returns the same card on subsequent calls after markDisplayed (simulates page refresh)', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/u1', title: 'U1' }),
+      fakeCardMeta({ uid: 'posts/u2', title: 'U2' }),
+      fakeCardMeta({ uid: 'posts/u3', title: 'U3' }),
+    ];
+    const r1 = selectSlotCard(cards, EMPTY_FILTER, DAY1_A, UTC);
+    expect(r1).not.toBeNull();
+    // Simulate what FrontPage does after selecting: mark it displayed
+    markDisplayed(r1!.uid, contentHashFor(r1!), DAY1_STR);
+    // Refresh — should return the same card
+    const r2 = selectSlotCard(cards, EMPTY_FILTER, DAY1_B, UTC);
+    expect(r2?.uid).toBe(r1?.uid);
   });
 });
 

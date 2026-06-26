@@ -6,4 +6,9 @@ import svelte from '@astrojs/svelte';
 export default defineConfig({
   site: 'https://pdyxs.wtf',
   integrations: [svelte()],
+  vite: {
+    server: {
+      allowedHosts: ['preview.pdyxs.wtf'],
+    },
+  },
 });

@@ -90,15 +90,33 @@
     updateUrl();
   }
 
-  async function fetchAndCacheCard(uid: string): Promise<boolean> {
-    if (cardHtmlCache.has(uid)) return true;
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function buildPlaceholderHtml(uid: string, title: string): string {
+    return `<div class="stack-card" data-uid="${escapeHtml(uid)}">` +
+      `<div class="card-header">` +
+      `<span class="card-header-title"><b>${escapeHtml(title)}</b></span>` +
+      `<button class="stack-card-close" aria-label="Close">×</button>` +
+      `</div>` +
+      `<div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner"></div></div></div>` +
+      `</div>`;
+  }
+
+  async function fetchCardHtmlFromNetwork(uid: string): Promise<string | null> {
     const res = await fetch(uidToFetchUrl(uid));
-    if (!res.ok) return false;
+    if (!res.ok) return null;
     const tmp = document.createElement('div');
     tmp.innerHTML = await res.text();
-    const card = tmp.querySelector('.stack-card');
-    if (!card) return false;
-    cardHtmlCache.set(uid, card.outerHTML);
+    return tmp.querySelector('.stack-card')?.outerHTML ?? null;
+  }
+
+  async function fetchAndCacheCard(uid: string): Promise<boolean> {
+    if (cardHtmlCache.has(uid)) return true;
+    const html = await fetchCardHtmlFromNetwork(uid);
+    if (!html) return false;
+    cardHtmlCache.set(uid, html);
     return true;
   }
 
@@ -146,8 +164,25 @@
       return;
     }
 
-    const ok = await fetchAndCacheCard(uid);
-    if (!ok) return;
+    const alreadyCached = cardHtmlCache.has(uid);
+
+    // Start network fetch immediately, before any VT
+    const networkFetch: Promise<string | null> = alreadyCached
+      ? Promise.resolve(null)
+      : fetchCardHtmlFromNetwork(uid);
+
+    // If we have a link to click and VT support, seed cache with a placeholder
+    // so the VT can start immediately without waiting for the network
+    const usePlaceholder = !alreadyCached && clickedLink != null && startVT != null;
+    if (usePlaceholder) {
+      const title = (clickedLink as Element).querySelector('.card-header-title')?.textContent?.trim() ?? uid;
+      cardHtmlCache.set(uid, buildPlaceholderHtml(uid, title));
+    } else if (!alreadyCached) {
+      // No VT possible — wait for real content before showing anything
+      const html = await networkFetch;
+      if (!html) return;
+      cardHtmlCache.set(uid, html);
+    }
 
     const doUpdate = () => {
       stackStore.update(s => {
@@ -162,7 +197,7 @@
     const homepage = document.getElementById('homepage');
 
     if (clickedLink && startVT) {
-      // VT path: panel link morphs into stack card
+      // Phase 1: panel link morphs into card header position immediately
       skipBodyOpen.add(uid);
       (clickedLink as HTMLElement).style.viewTransitionName = 'panel-card-open';
 
@@ -176,13 +211,34 @@
       await vt.finished;
       skipBodyOpen.delete(uid);
       (clickedLink as HTMLElement).style.viewTransitionName = '';
-      const newCard = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
-      if (newCard) {
-        newCard.style.viewTransitionName = '';
-        newCard.querySelector<HTMLElement>('.body-wrapper')?.classList.add('open');
+      const vtCard = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
+      if (vtCard) vtCard.style.viewTransitionName = '';
+
+      if (usePlaceholder) {
+        // Phase 2: write real body content directly into the placeholder's DOM,
+        // then open with the body-wrapper CSS transition
+        const html = await networkFetch;
+        if (html) {
+          cardHtmlCache.set(uid, html); // update cache for future navigations
+          const card = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
+          if (card) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const realBodyInner = tmp.querySelector('.stack-card-body-inner');
+            const existingBodyInner = card.querySelector('.stack-card-body-inner');
+            if (realBodyInner && existingBodyInner) {
+              existingBodyInner.innerHTML = realBodyInner.innerHTML;
+            }
+          }
+        }
+        // One rAF so the browser paints the closed card before we start opening it
+        await new Promise<void>(r => requestAnimationFrame(r));
       }
+
+      document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`)
+        ?.querySelector<HTMLElement>('.body-wrapper')?.classList.add('open');
     } else {
-      // Instant fallback
+      // Instant fallback (no VT support or no clicked link)
       doUpdate();
       if (homepage) homepage.hidden = true;
       await tick();
