@@ -4,6 +4,7 @@
   import { stackStore, pushToStack, activateCard as activateCardFn, replaceActiveSlot } from '../stores/card-stack-store';
   import { computeStackLayout } from '../lib/stack-layout';
   import { parseUidEntry, serializeUidEntry } from '../lib/card-url-params';
+  import { parseCollectionLink } from '../lib/collection-link';
 
   interface Props {
     activeUid?: string;
@@ -415,14 +416,16 @@
       if (colLink) {
         e.preventDefault();
         const colHref = colLink.getAttribute('href')!.slice(11);
-        const qIdx = colHref.indexOf('?');
-        const colUid = qIdx === -1 ? colHref : colHref.slice(0, qIdx);
-        if (qIdx !== -1) {
-          const colLinkParams: Record<string, string> = {};
-          new URLSearchParams(colHref.slice(qIdx + 1)).forEach((v, k) => { colLinkParams[k] = v; });
-          cardParams.set(colUid, colLinkParams);
+        const action = parseCollectionLink(colHref);
+        if (action.type === 'filter') {
+          // Navigate to browse view with filter pre-applied.
+          // Full-page navigation ensures FrontPage reads filter state from URL on mount.
+          // The current card URL is already in browser history — clicking Back restores it.
+          window.location.href = action.url;
+        } else {
+          if (action.params) cardParams.set(action.uid, action.params);
+          pushCard(`/card/${action.uid}`);
         }
-        pushCard(`/card/${colUid}`);
         return;
       }
     }
