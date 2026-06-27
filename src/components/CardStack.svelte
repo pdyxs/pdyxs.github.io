@@ -5,7 +5,7 @@
   import { computeStackLayout } from '../lib/stack-layout';
   import { parseUidEntry, serializeUidEntry } from '../lib/card-url-params';
   import { parseCollectionLink } from '../lib/collection-link';
-  import { appendStackToUrl } from '../lib/browse-stack';
+  import { appendStackToUrl, stackFromParams } from '../lib/browse-stack';
 
   interface Props {
     activeUid?: string;
@@ -22,6 +22,8 @@
   let overflowElRight = $state<HTMLElement | null>(null);
   let overflowOpen = $state<'left' | 'right' | false>(false);
   let startVT: ((cb: () => void) => { finished: Promise<void> }) | undefined;
+  // UIDs from the browse-page `stack` URL param, consumed on the first card push
+  let pendingBrowseStack: string[] = [];
 
   // Seed store from SSR prop once at mount — untrack to silence reactive-capture warning.
   untrack(() => {
@@ -187,11 +189,25 @@
     }
 
     const doUpdate = () => {
+      // Consume the browse-page stack context on the first push from the filter page.
+      // Runs inside flushSync (VT path) or directly, so both paths get the seeding.
+      const toSeed = pendingBrowseStack;
+      pendingBrowseStack = [];
+      for (const pendingUid of toSeed) {
+        if (!cardHtmlCache.has(pendingUid)) {
+          cardHtmlCache.set(pendingUid, buildPlaceholderHtml(pendingUid, pendingUid));
+        }
+      }
+
       stackStore.update(s => {
-        const activeIdx = s.activeUid
-          ? s.cards.findIndex(c => c.uid === s.activeUid)
-          : s.cards.length - 1;
-        const base = activeIdx >= 0 ? { ...s, cards: s.cards.slice(0, activeIdx + 1) } : s;
+        let state = s;
+        for (const pendingUid of toSeed) {
+          state = pushToStack(state, pendingUid);
+        }
+        const activeIdx = state.activeUid
+          ? state.cards.findIndex(c => c.uid === state.activeUid)
+          : state.cards.length - 1;
+        const base = activeIdx >= 0 ? { ...state, cards: state.cards.slice(0, activeIdx + 1) } : state;
         return pushToStack(base, uid);
       });
     };
@@ -364,6 +380,14 @@
 
     // Restore from/to context cards in URL
     initFromUrl();
+
+    // If on the filter page with a browse stack, prefetch those cards so they're
+    // ready to seed the store the moment the user opens their first card.
+    const browseUids = stackFromParams(new URLSearchParams(window.location.search));
+    if (browseUids.length > 0 && get(stackStore).cards.length === 0) {
+      pendingBrowseStack = [...browseUids];
+      browseUids.forEach(uid => fetchAndCacheCard(uid));
+    }
 
     const cardStackEl = document.getElementById('card-stack')!;
 
