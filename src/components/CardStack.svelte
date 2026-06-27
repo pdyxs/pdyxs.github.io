@@ -5,6 +5,7 @@
   import { computeStackLayout } from '../lib/stack-layout';
   import { parseUidEntry, serializeUidEntry } from '../lib/card-url-params';
   import { parseCollectionLink } from '../lib/collection-link';
+  import { appendStackToUrl } from '../lib/browse-stack';
 
   interface Props {
     activeUid?: string;
@@ -418,10 +419,10 @@
         const colHref = colLink.getAttribute('href')!.slice(11);
         const action = parseCollectionLink(colHref);
         if (action.type === 'filter') {
-          // Navigate to browse view with filter pre-applied.
-          // Full-page navigation ensures FrontPage reads filter state from URL on mount.
-          // The current card URL is already in browser history — clicking Back restores it.
-          window.location.href = action.url;
+          // Navigate to browse view with filter pre-applied, encoding the current stack
+          // in the URL so the front page can render a breadcrumb trail back to here.
+          const stackUids = get(stackStore).cards.map(c => c.uid);
+          window.location.href = appendStackToUrl(stackUids, action.url);
         } else {
           if (action.params) cardParams.set(action.uid, action.params);
           pushCard(`/card/${action.uid}`);

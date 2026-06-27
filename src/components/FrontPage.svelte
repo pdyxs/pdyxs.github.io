@@ -11,6 +11,7 @@
   import ActiveFilterChips from './ActiveFilterChips.svelte';
   import BrowseResults from './BrowseResults.svelte';
   import FrontPageSlots from './FrontPageSlots.svelte';
+  import BrowseStackBreadcrumb from './BrowseStackBreadcrumb.svelte';
 
   interface Props {
     config: FrontPageConfig;
@@ -46,6 +47,7 @@
 </script>
 
 <div class="fp-page">
+  <BrowseStackBreadcrumb {cards} />
   <FilterBar
     {hierarchies}
     filterState={filter.filterState}
