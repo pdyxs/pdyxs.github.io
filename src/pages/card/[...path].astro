@@ -32,8 +32,15 @@ let entry: any = null;
 let Content: any = null;
 
 if (!isCollectionView) {
-  entries = await getCollection(collection as any);
-  entry = entries.find((e: any) => e.id === id);
+  if (collection === 'tag') {
+    const tags = await getCollection('tag');
+    entries = tags;
+    entry = tags.find((t: any) => t.id === id);
+  } else {
+    const allContent = await getCollection('content');
+    entries = allContent.filter((e: any) => e.id.startsWith(collection + '/'));
+    entry = allContent.find((e: any) => e.id === path);
+  }
   const rendered = entry ? await render(entry as any) : null;
   Content = rendered?.Content;
 }

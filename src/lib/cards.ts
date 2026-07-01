@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { load as parseYaml } from 'js-yaml';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,19 +37,17 @@ async function effectiveTags(
   );
 }
 
-// Default renderer per collection — override per-card with `renderer` in frontmatter
-export const COLLECTION_DEFAULTS: Record<string, string> = {
-  cards: 'card',
-  posts: 'post',
-  projects: 'project',
-  puzzles: 'puzzle',
-  stories: 'story',
-  work: 'work',
-  tag: 'tag',
-};
+async function loadCollectionConfig(
+  collection: string,
+  reader: (path: string) => Promise<string | null>
+): Promise<{ renderer?: string }> {
+  const text = await reader(`${collection}/_config.yaml`);
+  if (!text) return {};
+  return (parseYaml(text) as { renderer?: string } | null) ?? {};
+}
 
 export type CardMeta = {
-  uid: string;        // "collection/id", e.g. "posts/why-portal"
+  uid: string;        // "collection/id", e.g. "writing/why-portal"
   collection: string;
   id: string;
   title: string;
@@ -79,10 +78,6 @@ export function getCardsForTag(
     });
 }
 
-function resolveRenderer(collection: string, data: { renderer?: string }): string {
-  return data.renderer ?? COLLECTION_DEFAULTS[collection] ?? 'card';
-}
-
 function djb2Hash(s: string): number {
   let h = 5381;
   for (let i = 0; i < s.length; i++) {
@@ -96,101 +91,56 @@ export function computeContentHash(title: string, description?: string, body?: s
 }
 
 export async function getAllCards(): Promise<CardMeta[]> {
-  const [cards, posts, projects, puzzles, tags, stories, work] = await Promise.all([
-    getCollection('cards'),
-    getCollection('posts'),
-    getCollection('projects'),
-    getCollection('puzzles'),
+  const [allContent, tags] = await Promise.all([
+    getCollection('content'),
     getCollection('tag'),
-    getCollection('stories'),
-    getCollection('work'),
   ]);
 
   const reader = makeFileReader();
 
-  const [
-    cardsMeta,
-    postsMeta,
-    projectsMeta,
-    puzzlesMeta,
-    storiesMeta,
-    workMeta,
-  ] = await Promise.all([
-    Promise.all(cards.map(async c => ({
-      uid: `cards/${c.id}`,
-      collection: 'cards',
-      id: c.id,
-      title: c.data.title,
-      description: c.data.description,
-      tags: await effectiveTags('cards', c.id, c.data.tags, reader),
-      renderer: resolveRenderer('cards', c.data),
-      contentHash: computeContentHash(c.data.title, c.data.description, c.body),
-    }))),
-    Promise.all(posts.map(async p => ({
-      uid: `posts/${p.id}`,
-      collection: 'posts',
-      id: p.id,
-      title: p.data.title,
-      description: p.data.description,
-      date: p.data.date,
-      tags: injectWhereTags(
-        await effectiveTags('posts', p.id, p.data.tags, reader),
-        p.data.date ? lookupLocationForDate(p.data.date, TRAVEL_LOG) : null,
-      ),
-      renderer: resolveRenderer('posts', p.data),
-      contentHash: computeContentHash(p.data.title, p.data.description, p.body),
-    }))),
-    Promise.all(projects.map(async p => ({
-      uid: `projects/${p.id}`,
-      collection: 'projects',
-      id: p.id,
-      title: p.data.title,
-      description: p.data.description,
-      tags: await effectiveTags('projects', p.id, p.data.tags, reader),
-      renderer: resolveRenderer('projects', p.data),
-      contentHash: computeContentHash(p.data.title, p.data.description, p.body),
-    }))),
-    Promise.all(puzzles.map(async p => ({
-      uid: `puzzles/${p.id}`,
-      collection: 'puzzles',
-      id: p.id,
-      title: p.data.title,
-      description: [p.data.puzzle_type, p.data.difficulty].filter(Boolean).join(' · '),
-      date: p.data.date,
-      tags: injectWhereTags(
-        await effectiveTags('puzzles', p.id, p.data.tags, reader),
-        p.data.date ? lookupLocationForDate(p.data.date, TRAVEL_LOG) : null,
-      ),
-      renderer: resolveRenderer('puzzles', p.data),
-      contentHash: computeContentHash(p.data.title, p.data.description, p.body),
-    }))),
-    Promise.all(
-      stories
-        .filter(s => import.meta.env.DEV || s.data.published !== false)
-        .map(async s => ({
-          uid: `stories/${s.id}`,
-          collection: 'stories',
-          id: s.id,
-          title: s.data.title ?? s.data.series,
-          date: s.data.date,
-          tags: injectWhereTags(
-            await effectiveTags('stories', s.id, [], reader),
-            s.data.date ? lookupLocationForDate(s.data.date, TRAVEL_LOG) : null,
-          ),
-          renderer: resolveRenderer('stories', s.data),
-          contentHash: computeContentHash(s.data.title ?? s.data.series ?? '', undefined, s.body),
-        }))
-    ),
-    Promise.all(work.map(async w => ({
-      uid: `work/${w.id}`,
-      collection: 'work',
-      id: w.id,
-      title: w.data.title,
-      tags: await effectiveTags('work', w.id, [], reader),
-      renderer: resolveRenderer('work', w.data),
-      contentHash: computeContentHash(w.data.title, undefined, w.body),
-    }))),
-  ]);
+  // Pre-load _config.yaml per collection directory
+  const collectionNames = [...new Set(allContent.map(e => e.id.split('/')[0]))];
+  const configMap = new Map<string, { renderer?: string }>();
+  await Promise.all(collectionNames.map(async col => {
+    configMap.set(col, await loadCollectionConfig(col, reader));
+  }));
+
+  const contentMeta = await Promise.all(
+    allContent
+      .filter(e => {
+        const col = e.id.split('/')[0];
+        return col !== 'stories' || import.meta.env.DEV || e.data.published !== false;
+      })
+      .map(async e => {
+        const slashIdx = e.id.indexOf('/');
+        const collection = e.id.slice(0, slashIdx);
+        const id = e.id.slice(slashIdx + 1);
+        const config = configMap.get(collection) ?? {};
+
+        const title = e.data.title ?? (collection === 'stories' ? (e.data.series ?? '') : '');
+        let description = e.data.description;
+        if (collection === 'puzzles' && !description) {
+          description = [e.data.puzzle_type, e.data.difficulty].filter(Boolean).join(' · ') || undefined;
+        }
+
+        const baseTags = await effectiveTags(collection, id, e.data.tags, reader);
+        const finalTags = e.data.date
+          ? injectWhereTags(baseTags, lookupLocationForDate(e.data.date, TRAVEL_LOG))
+          : baseTags;
+
+        return {
+          uid: e.id,
+          collection,
+          id,
+          title,
+          description,
+          date: e.data.date,
+          tags: finalTags,
+          renderer: e.data.renderer ?? config.renderer ?? 'card',
+          contentHash: computeContentHash(title, description, e.body),
+        } satisfies CardMeta;
+      })
+  );
 
   const tagsMeta = tags.map(t => ({
     uid: `tag/${t.id}`,
@@ -199,9 +149,9 @@ export async function getAllCards(): Promise<CardMeta[]> {
     title: t.data.name,
     description: t.data.description,
     tags: [] as string[],
-    renderer: resolveRenderer('tag', t.data),
+    renderer: 'tag',
     contentHash: computeContentHash(t.data.name, t.data.description),
   }));
 
-  return [...cardsMeta, ...postsMeta, ...projectsMeta, ...puzzlesMeta, ...tagsMeta, ...storiesMeta, ...workMeta];
+  return [...contentMeta, ...tagsMeta];
 }
