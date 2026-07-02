@@ -1,0 +1,11 @@
+name: Puzzles
+dimension: what
+aliases:
+  - puzzles
+  - puzzle
+  - sudoku
+related:
+  - what/projects/game-design
+description: >
+  Puzzle design and construction — logic puzzles, sudoku variants, and the craft of making something satisfyingly solvable.
+featured: []

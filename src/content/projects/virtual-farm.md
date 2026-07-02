@@ -3,11 +3,11 @@ title: Virtual Farm
 description: An interactive exhibit for a science museum about farming
 image: farm-1.jpg
 tags:
-  - games
-  - education
-  - game
-  - released
-  - noshortcv
+  - what:projects/games
+  - what:topics/education
+  - what:projects/games
+  - when:released
+  - who:noshortcv
 priority: 20221001
 actions:
   - text: Read the case study

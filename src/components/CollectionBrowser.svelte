@@ -21,10 +21,18 @@
     }));
   }
 
+  // Normalise tag value ("what:projects/games") to tag id ("what/projects/games")
+  function tagValueToId(value: string): string {
+    const colonIdx = value.indexOf(':');
+    return colonIdx !== -1
+      ? value.slice(0, colonIdx) + '/' + value.slice(colonIdx + 1)
+      : value;
+  }
+
   onMount(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.has('tag')) {
-      activeFilter = params.get('tag');
+      activeFilter = tagValueToId(params.get('tag')!);
     } else {
       const allEntries = [
         ...(params.get('from')?.split(',') ?? []),
@@ -34,7 +42,8 @@
       if (myEntry) {
         const colonIdx = myEntry.indexOf(':');
         if (colonIdx !== -1) {
-          activeFilter = new URLSearchParams(myEntry.slice(colonIdx + 1)).get('tag') ?? null;
+          const tagValue = new URLSearchParams(myEntry.slice(colonIdx + 1)).get('tag');
+          activeFilter = tagValue ? tagValueToId(tagValue) : null;
         }
       }
     }

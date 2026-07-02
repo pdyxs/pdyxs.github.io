@@ -3,11 +3,11 @@ title: PlayEd
 description: A web platform to help primary school teachers bring games into the classroom
 image: cover.jpeg
 tags:
-  - games
-  - education
-  - game
-  - released
-  - noshortcv
+  - what:projects/games
+  - what:topics/education
+  - what:projects/games
+  - when:released
+  - who:noshortcv
 priority: 20220101
 actions:
   - text: Read the case study

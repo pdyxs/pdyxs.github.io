@@ -6,10 +6,10 @@ description: >-
 image: 5-1b.jpg
 feature: 5-1b
 tags:
-  - games
-  - science
-  - released
-  - game
+  - what:projects/games
+  - what:topics/science
+  - when:released
+  - what:projects/games
 priority: 20140900
 actions:
   - text: Buy on Steam

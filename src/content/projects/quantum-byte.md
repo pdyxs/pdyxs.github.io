@@ -4,10 +4,10 @@ description: >-
   A game that teaches players to program a Quantum Computer, by having them tell
   stories about the inner lives of others.
 tags:
-  - games
-  - science
-  - development
-  - interactive
+  - what:projects/games
+  - what:topics/science
+  - what:topics/development
+  - what:topics/interactive
 priority: 20190100
 image: gameplay.jpg
 actions:

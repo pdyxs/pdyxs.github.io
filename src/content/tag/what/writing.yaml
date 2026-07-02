@@ -1,0 +1,10 @@
+name: Writing
+dimension: what
+aliases:
+  - writing
+related:
+  - what/topics/design
+  - what/projects/game-design
+description: >
+  Essays, articles and posts on games, design, technology and interactive experiences.
+featured: []

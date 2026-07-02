@@ -21,23 +21,10 @@ if (isDev) {
   const allTags = await getCollection('tag');
   const tagBySlug = new Map(allTags.map(t => [t.id, t]));
 
-  // Build uid → raw body map from all collections that have markdown
-  const [cards, posts, projects, puzzles, stories, work] = await Promise.all([
-    getCollection('cards'),
-    getCollection('posts'),
-    getCollection('projects'),
-    getCollection('puzzles'),
-    getCollection('stories'),
-    getCollection('work'),
-  ]);
-
+  // Build uid → raw body map from all content entries
+  const allContentEntries = await getCollection('content');
   const bodyByUid = new Map<string, string>();
-  for (const e of cards)    bodyByUid.set(`cards/${e.id}`,    (e as any).body ?? '');
-  for (const e of posts)    bodyByUid.set(`posts/${e.id}`,    (e as any).body ?? '');
-  for (const e of projects) bodyByUid.set(`projects/${e.id}`, (e as any).body ?? '');
-  for (const e of puzzles)  bodyByUid.set(`puzzles/${e.id}`,  (e as any).body ?? '');
-  for (const e of stories)  bodyByUid.set(`stories/${e.id}`,  (e as any).body ?? '');
-  for (const e of work)     bodyByUid.set(`work/${e.id}`,     (e as any).body ?? '');
+  for (const e of allContentEntries) bodyByUid.set(e.id, (e as any).body ?? '');
 
   const tagLinkRe = /\[.*?\]\(tag:([^)]+)\)/g;
   const pushCardRe = /data-push-card="([^"]+)"/g;
@@ -55,10 +42,11 @@ if (isDev) {
   const reachableUids = new Set<string>();
   const visitedTagSlugs = new Set<string>();
 
-  const panels = (await getCollection('cards', c => c.data.panel === true))
-    .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
+  const panels = allContentEntries
+    .filter(c => c.data.panel === true)
+    .sort((a, b) => ((a.data as any).order ?? 99) - ((b.data as any).order ?? 99));
 
-  const queue: string[] = panels.map(p => `cards/${p.id}`);
+  const queue: string[] = panels.map(p => p.id);
 
   while (queue.length > 0) {
     const uid = queue.shift()!;
@@ -93,7 +81,7 @@ if (isDev) {
   }
 
   audit = {
-    panels: panels.map(p => ({ id: p.id, title: p.data.title })),
+    panels: panels.map(p => ({ id: p.id, title: (p.data as any).title ?? p.id })),
     reachableCards: allCards.filter(c => reachableUids.has(c.uid)),
     unreachableCards: allCards.filter(c => !reachableUids.has(c.uid)),
     totalCards: allCards.length,

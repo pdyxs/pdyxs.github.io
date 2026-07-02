@@ -464,6 +464,10 @@ strong { font-weight: 700; }
 /* ── Desktop card stack (≥681px) ─────────────────────────────────── */
 
 @media (min-width: 681px) {
+  .site-main {
+    padding-inline: 0;
+  }
+
   #card-stack {
     position: relative;
     flex-direction: row;

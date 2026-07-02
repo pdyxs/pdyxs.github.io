@@ -133,7 +133,7 @@
     gap: var(--space-xs);
     padding: var(--space-sm) 0;
     border-bottom: var(--border-width) solid var(--color-border);
-    background: var(--color-surface);
+    background: var(--color-bg);
     position: sticky;
     top: 0;
     z-index: 10;

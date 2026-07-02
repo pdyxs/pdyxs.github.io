@@ -6,10 +6,10 @@ images:
 image: crowd.jpg
 feature: crowd
 tags:
-  - data-art
-  - science
-  - released
-  - installation
+  - what:projects/data-art
+  - what:topics/science
+  - when:released
+  - what:topics/installation
 priority: 20150600
 status: past
 medium: Installation artwork

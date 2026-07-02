@@ -1,0 +1,10 @@
+name: Game Engine Podcast
+dimension: what
+aliases:
+  - game-engine-podcast
+related:
+  - what/projects/game-design
+  - what/topics/development
+description: >
+  Podcast episodes and writing about game engines and game development.
+featured: []

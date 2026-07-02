@@ -1,0 +1,10 @@
+name: Game Jam
+dimension: what
+aliases:
+  - game-jam
+related:
+  - what/projects/game-design
+  - what/projects/games
+description: >
+  Games created through game jams — rapid prototyping and timed development challenges.
+featured: []

@@ -17,8 +17,8 @@ images:
   - whatthingsare
 status: past
 tags:
-  - games
-  - analog-games
+  - what:projects/games
+  - what:projects/analog-games
 medium: Hybrid digital/physical board game
 cvDescription: >-
   This game was an experiment in form: using a website to run what is otherwise

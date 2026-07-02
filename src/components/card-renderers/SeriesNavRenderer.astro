@@ -31,12 +31,12 @@ const siblings = entry
       {siblings && (
         <nav class="series-footer-nav">
           {siblings.prev && (
-            <button data-replace-slot={`stories/${siblings.prev.id}`} class="series-nav-btn series-nav-btn--prev">
+            <button data-replace-slot={siblings.prev.id} class="series-nav-btn series-nav-btn--prev">
               ← {siblings.prev.data.title ?? 'Previous'}
             </button>
           )}
           {siblings.next && (
-            <button data-replace-slot={`stories/${siblings.next.id}`} class="series-nav-btn series-nav-btn--next">
+            <button data-replace-slot={siblings.next.id} class="series-nav-btn series-nav-btn--next">
               {siblings.next.data.title ?? 'Next'} →
             </button>
           )}

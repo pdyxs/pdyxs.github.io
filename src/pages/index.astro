@@ -1,36 +1,36 @@
 ---
-import Base from '../layouts/Base.astro';
-import StackNav from '../components/StackNav.astro';
-import FrontPage from '../components/FrontPage.svelte';
-import { getAllCards } from '../lib/cards';
-import { FRONTPAGE_CONFIG } from '../content/frontpage';
-import { buildAllDimensionHierarchies } from '../lib/browse-helpers';
+import Base from "../layouts/Base.astro";
+import StackNav from "../components/StackNav.astro";
+import FrontPage from "../components/FrontPage.svelte";
+import { getAllCards } from "../lib/cards";
+import { FRONTPAGE_CONFIG } from "../content/frontpage";
+import { buildAllDimensionHierarchies } from "../lib/browse-helpers";
 
 const allCards = await getAllCards();
 const hierarchies = buildAllDimensionHierarchies(allCards);
 
-const serialisedCards = allCards.map(card => ({
-  ...card,
-  date: card.date?.toISOString() ?? null,
+const serialisedCards = allCards.map((card) => ({
+    ...card,
+    date: card.date?.toISOString() ?? null,
 }));
 ---
 
 <Base>
-  <div id="homepage">
-    <header class="site-header">
-      <h1 class="site-title">pdyxs.wtf</h1>
-      <p class="site-tagline">Paul Sztajer — Software Engineer & Creative Technologist</p>
-    </header>
+    <div id="homepage">
+        <header class="site-header">
+            <h1 class="site-title">pdyxs.wtf</h1>
+            <p class="site-tagline">Games, Design and Software</p>
+        </header>
 
-    <main class="site-main">
-      <FrontPage
-        client:load
-        config={FRONTPAGE_CONFIG}
-        cards={serialisedCards}
-        {hierarchies}
-      />
-    </main>
-  </div>
+        <main class="site-main">
+            <FrontPage
+                client:load
+                config={FRONTPAGE_CONFIG}
+                cards={serialisedCards}
+                {hierarchies}
+            />
+        </main>
+    </div>
 
-  <StackNav />
+    <StackNav />
 </Base>

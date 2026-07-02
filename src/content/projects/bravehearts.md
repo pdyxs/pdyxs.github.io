@@ -3,11 +3,11 @@ title: Ditto's Keep Safe Adventure
 description: An interactive game designed to keep kids safe
 image: bravehearts-1.jpg
 tags:
-  - games
-  - education
-  - game
-  - released
-  - noshortcv
+  - what:projects/games
+  - what:topics/education
+  - what:projects/games
+  - when:released
+  - who:noshortcv
 priority: 20231001
 actions:
   - text: Read the case study

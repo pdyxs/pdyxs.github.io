@@ -1,0 +1,14 @@
+name: Software Engineering
+dimension: what
+aliases:
+  - software-engineering
+  - software
+  - engineering
+  - programming
+  - coding
+related:
+  - what/projects/game-design
+  - what/projects/data-art
+description: >
+  Projects and writing about software engineering — architecture, tools, craft, and the practice of building things.
+featured: []

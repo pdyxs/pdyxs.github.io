@@ -1,199 +1,94 @@
-import { defineCollection, z } from 'astro:content';
-import { glob } from 'astro/loaders';
+import { defineCollection, z } from "astro:content";
+import { glob } from "astro/loaders";
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
 const action = z.object({
-  text: z.string(),
-  url: z.string(),
+    text: z.string(),
+    url: z.string(),
 });
 
 const quote = z.object({
-  quote: z.string(),
-  by: z.string().optional(),
-  in: z.object({
-    text: z.string(),
-    url: z.string(),
-  }).optional(),
+    quote: z.string(),
+    by: z.string().optional(),
+    in: z
+        .object({
+            text: z.string(),
+            url: z.string(),
+        })
+        .optional(),
 });
 
-// ─── Posts ────────────────────────────────────────────────────────────────────
+// ─── Unified content collection ───────────────────────────────────────────────
 //
-// Source: collections/_posts/
-// URL pattern: /YYYY/MM/DD/slug/ (must match Jekyll permalinks exactly)
+// All markdown content lives under src/content/. The first path segment is the
+// logical collection name (e.g. posts/about-me → collection "posts", id "about-me").
+// Per-directory _config.yaml files set renderer defaults; individual files can
+// override any field in their frontmatter.
 
-const posts = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/posts' }),
-  schema: z.object({
-    title: z.string(),
-    // date is always explicit in frontmatter (not inferred from filename)
-    date: z.coerce.date(),
-    description: z.string().optional(),
-    tags: z.array(z.string()).default([]),
-    renderer: z.string().optional(),
-    // image: URL or relative path
-    image: z.string().optional(),
-    // canonical_url: original URL when post was cross-posted from Medium etc.
-    canonical_url: z.string().url().optional(),
-    // source: platform the post originated on (e.g. 'medium')
-    source: z.string().optional(),
-    // project: slug of a related project in the projects collection
-    project: z.string().optional(),
-  }),
-});
-
-// ─── Projects ─────────────────────────────────────────────────────────────────
-//
-// Source: collections/_pastprojects/, _currentprojects/, _futureprojects/
-// Merged into one collection; status field replaces the directory split.
-// Each project is a directory with a single .md file (the content).
-
-const projects = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/projects' }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    renderer: z.string().optional(),
-    // cvDescription: longer description for the CV page
-    cvDescription: z.string().optional(),
-    status: z.enum(['past', 'current', 'future']),
-    tags: z.array(z.string()).default([]),
-    // priority: YYYYMMDD-style number used for ordering (higher = more recent)
-    priority: z.number().optional(),
-    // image: primary image filename (relative to project directory)
-    image: z.string().optional(),
-    // feature: image to use in featured/hero contexts if different from image
-    feature: z.string().optional(),
-    // medium: type of project e.g. 'Video Game', 'Card Game', 'App'
-    medium: z.string().optional(),
-    actions: z.array(action).default([]),
-    quotes: z.array(quote).default([]),
-    // images: ordered gallery (filenames or URLs)
-    images: z.array(z.string()).default([]),
-    // portfolio: featured media URL (YouTube embed etc.) for portfolio view
-    portfolio: z.string().optional(),
-  }),
-});
-
-// ─── Stories ──────────────────────────────────────────────────────────────────
-//
-// Source: collections/_arctic/, _galapagos/, _fatecardgame/
-// Multi-part sequential content. Each chapter is a directory with an index.md.
-// series + order drive prev/next navigation.
-
-const stories = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/stories' }),
-  schema: z.object({
-    // title is optional: map cards and other non-text cards may not have one
-    title: z.string().optional(),
-    // series: matches the source collection name ('arctic', 'galapagos', 'fatecardgame')
-    series: z.string(),
-    // order: chapter position within the series (0-indexed, from filename prefix)
-    order: z.number(),
-    date: z.coerce.date().optional(),
-    icon: z.string().optional(),
-    published: z.boolean().optional(),
-    // map card fields
-    map: z.string().optional(),
-    latitude: z.number().optional(),
-    longitude: z.number().optional(),
-    scale: z.number().optional(),
-  }),
-});
-
-// ─── Work ─────────────────────────────────────────────────────────────────────
-//
-// Source: collections/_workhistory/
-// CV / work history entries. Ordered by priority (YYYYMM).
-
-const work = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/work' }),
-  schema: z.object({
-    title: z.string(),
-    // when: human-readable date range e.g. 'February 2015–May 2018'
-    when: z.string().optional(),
-    // roles: comma-separated roles e.g. 'Designer, Product Owner, Developer'
-    roles: z.string().optional(),
-    // priority: YYYYMM number for ordering (higher = more recent)
-    priority: z.number().optional(),
-    image: z.string().optional(),
-  }),
-});
-
-// ─── Cards ────────────────────────────────────────────────────────────────────
-//
-// Standalone cards that don't belong to another collection.
-// Includes the 5 accordion entry-point cards (who/what/where/when/why).
-
-const cards = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/cards' }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string().optional(),
-    tags: z.array(z.string()).default([]),
-    // order: position in the accordion (lower = first)
-    order: z.number().optional(),
-    // panel: marks this card as a homepage accordion entry point
-    panel: z.boolean().optional(),
-    // titleSuffix: non-bold text appended after the title in headings (e.g. " I do" → "**What** I do")
-    titleSuffix: z.string().optional(),
-    renderer: z.string().optional(),
-  }),
+const content = defineCollection({
+    loader: glob({ pattern: "**/[!_]*.{md,mdx}", base: "./src/content" }),
+    schema: z.object({
+        // ── common ──
+        title: z.string().optional(),
+        description: z.string().optional(),
+        tags: z.array(z.string()).default([]),
+        date: z.coerce.date().optional(),
+        renderer: z.string().optional(),
+        image: z.string().optional(),
+        // ── posts / writing ──
+        canonical_url: z.string().url().optional(),
+        source: z.string().optional(),
+        project: z.string().optional(),
+        // ── projects ──
+        cvDescription: z.string().optional(),
+        status: z.enum(["past", "current", "future"]).optional(),
+        priority: z.number().optional(),
+        feature: z.string().optional(),
+        medium: z.string().optional(),
+        actions: z.array(action).default([]),
+        quotes: z.array(quote).default([]),
+        images: z.array(z.string()).default([]),
+        portfolio: z.string().optional(),
+        // ── stories ──
+        series: z.string().optional(),
+        order: z.number().optional(),
+        icon: z.string().optional(),
+        published: z.boolean().optional(),
+        map: z.string().optional(),
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
+        scale: z.number().optional(),
+        // ── work ──
+        when: z.string().optional(),
+        roles: z.string().optional(),
+        // ── puzzles ──
+        url: z.string().url().optional(),
+        sudokupad_url: z.string().url().optional(),
+        difficulty: z.string().optional(),
+        puzzle_type: z.string().optional(),
+        // ── cards ──
+        panel: z.boolean().optional(),
+        titleSuffix: z.string().optional(),
+    }),
 });
 
 // ─── Tag ──────────────────────────────────────────────────────────────────────
 //
 // Tag metadata for the connective tissue of the card navigation model.
 // Each .yaml file's slug is the canonical tag identifier.
-//
-// Tag links in content point to a tag slug rather than a specific card.
-// At render time, the system resolves a tag link to the highest-priority card
-// for that tag, using the `featured` list first, then falling back to
-// content `priority` fields.
-//
-// Aliases let content authors use variant spellings freely — the migration
-// script normalises all tag references to canonical slugs, but aliases
-// also provide a runtime fallback for any that slip through.
 
 const tag = defineCollection({
-  loader: glob({ pattern: '**/[!_]*.yaml', base: './src/content/tag' }),
-  schema: z.object({
-    // canonical display name (slug is the file name, e.g. 'quantum-computing')
-    name: z.string(),
-    // aliases: other names/spellings that resolve to this tag
-    // e.g. ['quantum', 'quantum computing', 'QC']
-    aliases: z.array(z.string()).default([]),
-    // related: slugs of other tags for tag-to-tag traversal in navigation
-    related: z.array(z.string()).default([]),
-    description: z.string().optional(),
-    // featured: ordered content IDs to surface first when resolving a tag link.
-    // Format: 'collection/slug', e.g. 'projects/particulars', 'posts/why-portal'
-    // If empty, falls back to the content item with the highest priority value.
-    featured: z.array(z.string()).default([]),
-  }),
-});
-
-// ─── Puzzles ──────────────────────────────────────────────────────────────────
-//
-// Logic puzzles and sudoku variants published on logic-masters.de
-
-const puzzles = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/puzzles' }),
-  schema: z.object({
-    title: z.string(),
-    date: z.coerce.date(),
-    // url: canonical Logic Masters Deutschland page
-    url: z.string().url(),
-    // sudokupad_url: direct link to play the puzzle in SudokuPad
-    sudokupad_url: z.string().url().optional(),
-    // image: preview image served from Logic Masters
-    image: z.string().url().optional(),
-    difficulty: z.string(),
-    puzzle_type: z.string().optional(),
-    tags: z.array(z.string()).default(['puzzles']),
-  }),
+    loader: glob({ pattern: "**/[!_]*.yaml", base: "./src/content/tag" }),
+    schema: z.object({
+        name: z.string(),
+        aliases: z.array(z.string()).default([]),
+        related: z.array(z.string()).default([]),
+        description: z.string().optional(),
+        featured: z.array(z.string()).default([]),
+    }),
 });
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 
-export const collections = { posts, projects, stories, work, tag, cards, puzzles };
+export const collections = { content, tag };
