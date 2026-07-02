@@ -1,16 +1,97 @@
 ---
 import type { RenderResult } from 'astro:content';
 
+interface Action {
+  text: string;
+  url: string;
+}
+
+interface Quote {
+  quote: string;
+  by?: string;
+  in?: { text: string; url: string };
+}
+
 interface Props {
-  entry: { data: { description?: string } } | undefined;
+  entry: {
+    id: string;
+    data: {
+      description?: string;
+      image?: string;
+      status?: string;
+      medium?: string;
+      canonical_url?: string;
+      source?: string;
+      actions?: Action[];
+      quotes?: Quote[];
+    };
+  } | undefined;
   Content: RenderResult['Content'] | undefined;
 }
 
 const { entry, Content } = Astro.props;
+const data = entry?.data;
+
+const collection = entry?.id.split('/')[0];
+const imageSrc = data?.image
+  ? (data.image.startsWith('http') ? data.image : `/images/${collection}/${data.image}`)
+  : undefined;
+
+const sourceLabel = data?.source
+  ? data.source.charAt(0).toUpperCase() + data.source.slice(1)
+  : undefined;
+
+const actions = data?.actions?.filter(a => a.text && a.url) ?? [];
+const quotes = data?.quotes?.filter(q => q.quote) ?? [];
 ---
 
-{Content
-  ? <Content />
-  : entry?.data.description
-    ? <p>{entry.data.description}</p>
-    : null}
+{data && (
+  <>
+    {imageSrc && <img src={imageSrc} alt="" class="generic-image" />}
+
+    {(data.status || data.medium) && (
+      <dl class="generic-meta">
+        {data.status && <><dt>Status</dt><dd>{data.status}</dd></>}
+        {data.medium && <><dt>Medium</dt><dd>{data.medium}</dd></>}
+      </dl>
+    )}
+
+    {data.canonical_url && (
+      <p class="generic-source-note">
+        Originally published{sourceLabel ? ` on ${sourceLabel}` : ''}
+        {' '}<a href={data.canonical_url} target="_blank" rel="noopener noreferrer">↗</a>
+      </p>
+    )}
+
+    {Content
+      ? <Content />
+      : data.description
+        ? <p>{data.description}</p>
+        : null}
+
+    {quotes.length > 0 && (
+      <ul class="generic-quotes">
+        {quotes.map(q => (
+          <li>
+            <blockquote class="generic-quote">{q.quote}</blockquote>
+            {(q.by || q.in) && (
+              <p class="generic-quote-attribution">
+                {q.by}
+                {q.by && q.in && ', '}
+                {q.in && <a href={q.in.url} target="_blank" rel="noopener noreferrer">{q.in.text}</a>}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {actions.length > 0 && (
+      <div class="generic-actions">
+        {actions.map(a => (
+          <a href={a.url} target="_blank" rel="noopener noreferrer" class="generic-action-link">{a.text}</a>
+        ))}
+      </div>
+    )}
+  </>
+)}

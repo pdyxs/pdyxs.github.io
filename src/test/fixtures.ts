@@ -1,7 +1,41 @@
 import type { CardMeta } from '../lib/cards';
 
-export function fakeEntry(overrides?: { description?: string }): { data: { description?: string } } {
-  return { data: { description: undefined, ...overrides } };
+interface Action {
+  text: string;
+  url: string;
+}
+
+interface Quote {
+  quote: string;
+  by?: string;
+  in?: { text: string; url: string };
+}
+
+export function fakeEntry(overrides?: {
+  id?: string;
+  description?: string;
+  image?: string;
+  status?: string;
+  medium?: string;
+  canonical_url?: string;
+  source?: string;
+  actions?: Action[];
+  quotes?: Quote[];
+}): {
+  id: string;
+  data: {
+    description?: string;
+    image?: string;
+    status?: string;
+    medium?: string;
+    canonical_url?: string;
+    source?: string;
+    actions?: Action[];
+    quotes?: Quote[];
+  };
+} {
+  const { id, ...data } = overrides ?? {};
+  return { id: id ?? 'projects/test', data: { description: undefined, ...data } };
 }
 
 export function fakeContent(): undefined {
