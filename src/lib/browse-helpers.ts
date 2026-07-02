@@ -4,6 +4,7 @@
 // render navigable dimension hierarchies.
 
 import type { CardMeta } from './cards';
+import { tagIdToFilterValue } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension } from './filters';
 
@@ -45,8 +46,13 @@ export type TagNode = {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns all unique valid filter values for a given dimension, extracted
- * from the tags of the provided cards.
+ * Returns all unique valid filter values for a given dimension.
+ *
+ * This is the union of two sources:
+ *   - tags actually used on the provided cards' `tags` arrays
+ *   - `declaredTagIds`: ids from the `tag` content collection (e.g.
+ *     "what/projects/games"), which is the canonical taxonomy registry —
+ *     a tag defined there shows up even before any content uses it.
  *
  * Only tags that are valid filter values (i.e. `dimension:value`) are
  * included. Bare dimension roots (e.g. `what`) are excluded.
@@ -54,9 +60,16 @@ export type TagNode = {
 export function extractDimensionTags(
   cards: CardMeta[],
   dimension: Dimension,
+  declaredTagIds: string[] = [],
 ): string[] {
   const prefix = `${dimension}:`;
   const seen = new Set<string>();
+  for (const id of declaredTagIds) {
+    const value = tagIdToFilterValue(id);
+    if (value.startsWith(prefix) && isValidFilterValue(value)) {
+      seen.add(value);
+    }
+  }
   for (const card of cards) {
     for (const tag of card.tags) {
       if (tag.startsWith(prefix) && isValidFilterValue(tag)) {
@@ -99,8 +112,9 @@ export function countMatchingCards(cards: CardMeta[], value: string): number {
 export function buildTagHierarchy(
   cards: CardMeta[],
   dimension: Dimension,
+  declaredTagIds: string[] = [],
 ): TagNode[] {
-  const allTags = extractDimensionTags(cards, dimension);
+  const allTags = extractDimensionTags(cards, dimension, declaredTagIds);
   if (allTags.length === 0) return [];
 
   // Build a lookup of value → node (without children yet)
@@ -190,10 +204,11 @@ function sortNodes(nodes: TagNode[]): void {
  */
 export function buildAllDimensionHierarchies(
   cards: CardMeta[],
+  declaredTagIds: string[] = [],
 ): Record<Dimension, TagNode[]> {
   const result = {} as Record<Dimension, TagNode[]>;
   for (const dim of DIMENSIONS) {
-    result[dim] = buildTagHierarchy(cards, dim);
+    result[dim] = buildTagHierarchy(cards, dim, declaredTagIds);
   }
   return result;
 }
@@ -202,6 +217,10 @@ export function buildAllDimensionHierarchies(
  * Returns true if a given dimension has any selectable filter values in
  * the provided card set.
  */
-export function dimensionHasTags(cards: CardMeta[], dimension: Dimension): boolean {
-  return extractDimensionTags(cards, dimension).length > 0;
+export function dimensionHasTags(
+  cards: CardMeta[],
+  dimension: Dimension,
+  declaredTagIds: string[] = [],
+): boolean {
+  return extractDimensionTags(cards, dimension, declaredTagIds).length > 0;
 }

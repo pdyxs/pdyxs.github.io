@@ -7,7 +7,8 @@ import { FRONTPAGE_CONFIG } from "../content/frontpage";
 import { buildAllDimensionHierarchies } from "../lib/browse-helpers";
 
 const allCards = await getAllCards();
-const hierarchies = buildAllDimensionHierarchies(allCards);
+const declaredTagIds = allCards.filter((c) => c.collection === "tag").map((c) => c.id);
+const hierarchies = buildAllDimensionHierarchies(allCards, declaredTagIds);
 
 const serialisedCards = allCards.map((card) => ({
     ...card,

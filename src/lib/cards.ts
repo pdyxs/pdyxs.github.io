@@ -58,15 +58,17 @@ export type CardMeta = {
   contentHash: string; // djb2 hash of title + description + body; resets view state on edit
 };
 
+/** Converts a tag collection entry id (e.g. "what/projects/games") to filter-value format ("what:projects/games"). */
+export function tagIdToFilterValue(id: string): string {
+  const slashIdx = id.indexOf('/');
+  return slashIdx !== -1 ? id.slice(0, slashIdx) + ':' + id.slice(slashIdx + 1) : id;
+}
+
 export function getCardsForTag(
   entry: { id: string; data: { name: string; aliases: string[] } },
   allCards: CardMeta[]
 ): CardMeta[] {
-  // Normalise entry id to tag-value format: "what/projects/games" → "what:projects/games"
-  const colonIdx = entry.id.indexOf('/');
-  const idAsTag = colonIdx !== -1
-    ? entry.id.slice(0, colonIdx) + ':' + entry.id.slice(colonIdx + 1)
-    : entry.id;
+  const idAsTag = tagIdToFilterValue(entry.id);
 
   const canonicals = new Set([
     idAsTag,

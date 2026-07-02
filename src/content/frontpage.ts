@@ -16,7 +16,7 @@ export const FRONTPAGE_CONFIG: FrontPageConfig = {
         {
             type: "filter",
             label: "A Post",
-            filter: { selections: { what: ["what:posts"] } },
+            filter: { selections: { what: ["what:writing"] } },
         },
     ],
 };

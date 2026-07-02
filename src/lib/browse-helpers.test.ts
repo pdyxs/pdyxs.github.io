@@ -67,6 +67,31 @@ describe('extractDimensionTags', () => {
     const result = extractDimensionTags(cards, 'what');
     expect(result).toEqual(['what:art', 'what:projects', 'what:writing']);
   });
+
+  it('includes declared tag ids even when no card uses them yet', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] }),
+    ];
+    const result = extractDimensionTags(cards, 'what', ['what/projects/edtech']);
+    expect(result).toContain('what:projects');
+    expect(result).toContain('what:projects/edtech');
+  });
+
+  it('deduplicates when a declared tag id is also used on a card', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['what:projects/games'] }),
+    ];
+    const result = extractDimensionTags(cards, 'what', ['what/projects/games']);
+    expect(result).toEqual(['what:projects/games']);
+  });
+
+  it('excludes declared tag ids from other dimensions', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] }),
+    ];
+    const result = extractDimensionTags(cards, 'why', ['what/projects/edtech']);
+    expect(result).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -227,6 +252,30 @@ describe('buildTagHierarchy', () => {
     expect(tree).toHaveLength(1);
     expect(tree[0].value).toBe('what:projects');
   });
+
+  it('includes a declared-but-unused tag as a zero-count node', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] }),
+    ];
+    const tree = buildTagHierarchy(cards, 'what', ['what/projects/edtech']);
+    const root = tree.find(n => n.value === 'what:projects')!;
+    const edtech = root.children.find(c => c.value === 'what:projects/edtech');
+    expect(edtech).toBeDefined();
+    expect(edtech!.count).toBe(0);
+  });
+
+  it('uses a declared registry tag to seed an intermediate parent node with no direct card usage', () => {
+    // No card is tagged bare 'what:projects', only 'what:projects/games' is used.
+    // Declaring 'what/projects' in the registry should nest 'games' under it.
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['what:projects/games'] }),
+    ];
+    const tree = buildTagHierarchy(cards, 'what', ['what/projects']);
+    expect(tree).toHaveLength(1);
+    expect(tree[0].value).toBe('what:projects');
+    expect(tree[0].count).toBe(1);
+    expect(tree[0].children.map(c => c.value)).toEqual(['what:projects/games']);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -286,5 +335,12 @@ describe('dimensionHasTags', () => {
       fakeCardMeta({ uid: 'posts/a', tags: ['what'] }), // invalid
     ];
     expect(dimensionHasTags(cards, 'what')).toBe(false);
+  });
+
+  it('returns true when a tag is declared in the registry even if no card uses it', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['why:professional'] }),
+    ];
+    expect(dimensionHasTags(cards, 'what', ['what/projects/edtech'])).toBe(true);
   });
 });
