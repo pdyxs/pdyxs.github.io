@@ -5,7 +5,7 @@ canonical_url: >-
   https://www.gamasutra.com/blogs/PaulSztajer/20110614/89629/Metamethis_Are_the_best_games_about_games.php
 source: gamasutra
 tags:
-  - writing
+  - what:writing
 ---
 Is it just me, or do a disproportionately large number of games with deep messages entwine said messages with a bucketful of meta? By this, I mean games will more likely make comment on the medium of gaming, how we play or how culture perceives the medium than on (any one of the many) other aspects in our world.
 

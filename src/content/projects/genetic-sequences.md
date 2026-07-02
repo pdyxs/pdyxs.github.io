@@ -2,11 +2,11 @@
 title: Genetic Sequences
 description: An exploration of the structures of genetic sequences
 tags:
-  - data-art
-  - development
-  - science
-  - visualisation
-  - nocv
+  - what:projects/data-art
+  - what:topics/development
+  - what:topics/science
+  - what:topics/visualisation
+  - who:nocv
 images:
   - 'https://medium.com/series/visualising-genetic-sequences-bea25751f4b7'
 image: output4.jpg

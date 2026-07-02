@@ -2,8 +2,8 @@
 title: The 15 Steps of (Particulars) Pre-production
 date: '2013-03-24 17:00:00 +1000'
 tags:
-  - writing
-  - particulars
+  - what:writing
+  - what:projects/particulars
 canonical_url: >-
   https://www.gamasutra.com/blogs/PaulSztajer/20130324/189171/The_15_Steps_of_Particulars_Preproduction.php
 image: >-

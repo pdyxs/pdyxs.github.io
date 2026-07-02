@@ -1,13 +1,15 @@
 name: Data Art
+dimension: what
 aliases:
+  - data-art
   - data art
   - data artwork
   - data artworks
   - data visualisation
   - data visualization
 related:
-  - software-engineering
-  - science
+  - what/projects/software-engineering
+  - what/topics/science
 description: >
   Artworks and projects that use data as their medium — visualisations, generative work, and making numbers beautiful.
 featured: []

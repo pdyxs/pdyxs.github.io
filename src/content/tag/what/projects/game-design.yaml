@@ -1,12 +1,13 @@
 name: Game Design
+dimension: what
 aliases:
+  - game-design
   - games
   - game
   - gamedev
-  - interactive
 related:
-  - narrative
-  - science
+  - what/topics/design
+  - what/topics/science
 description: >
   Writing about and projects involving the design of games and interactive
   experiences — mechanics, narrative, player psychology, and craft.

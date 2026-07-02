@@ -4,11 +4,10 @@ description: >-
   An interactive theatre experience where teams of four develop and execute a
   plan to steal a painting from an art gallery
 tags:
-  - interactive-theatre
-  - data-art
-  - other
-  - released
-  - installation
+  - what:projects/interactive-theatre
+  - what:projects/data-art
+  - when:released
+  - what:topics/installation
 priority: 20170601
 images:
   - >-

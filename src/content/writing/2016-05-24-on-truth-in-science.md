@@ -7,7 +7,7 @@ description: >-
 canonical_url: 'https://medium.com/@pdyxs/on-truth-in-science-d1fbdb432d60'
 source: medium
 tags:
-  - writing
+  - what:writing
 ---
 I’ve been thinking a lot about truth in science, or more specifically, about the fuzziness of scientific truth.
 

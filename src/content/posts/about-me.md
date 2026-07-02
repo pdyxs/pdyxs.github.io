@@ -4,7 +4,7 @@ panel: true
 order: 1
 description: Paul Sztajer — Software Engineer and Creative Technologist
 tags:
-  - about
+  - who:about
 ---
 
 I'm Paul Sztajer, a Software Engineer and Creative Technologist. My favourite thing to do is to develop works that illuminate complex systems and ideas, particularly in the realm of science.

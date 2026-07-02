@@ -3,11 +3,11 @@ title: Cybersecurity Ethics
 description: A game designed to teach the moral dimensions of cybersecurity quandries
 image: cyber-2.jpg
 tags:
-  - games
-  - education
-  - game
-  - released
-  - noshortcv
+  - what:projects/games
+  - what:topics/education
+  - what:projects/games
+  - when:released
+  - who:noshortcv
 priority: 20210901
 actions:
   - text: Read the case study

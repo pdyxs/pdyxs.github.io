@@ -2,7 +2,7 @@
 title: The A-Z of Game Development
 date: '2012-01-06 17:00:00 +1000'
 tags:
-  - game-engine-podcast
+  - what:topics/game-engine-podcast
 canonical_url: 'https://www.kotaku.com.au/2012/01/the-a-z-of-game-development/'
 image: 'https://edge.alluremedia.com.au/m/k/2012/01/classroom.jpg'
 source: kotaku

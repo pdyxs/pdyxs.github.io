@@ -62,8 +62,14 @@ export function getCardsForTag(
   entry: { id: string; data: { name: string; aliases: string[] } },
   allCards: CardMeta[]
 ): CardMeta[] {
+  // Normalise entry id to tag-value format: "what/projects/games" → "what:projects/games"
+  const colonIdx = entry.id.indexOf('/');
+  const idAsTag = colonIdx !== -1
+    ? entry.id.slice(0, colonIdx) + ':' + entry.id.slice(colonIdx + 1)
+    : entry.id;
+
   const canonicals = new Set([
-    entry.id,
+    idAsTag,
     entry.data.name.toLowerCase(),
     ...entry.data.aliases.map((a: string) => a.toLowerCase()),
   ]);

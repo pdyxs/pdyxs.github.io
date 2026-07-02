@@ -5,7 +5,7 @@ titleSuffix: " to find me"
 order: 4
 description: How to find and contact Paul Sztajer
 tags:
-  - contact
+  - who:contact
 ---
 
 The best way to reach me is [talk@pdyxs.wtf](mailto:talk@pdyxs.wtf).

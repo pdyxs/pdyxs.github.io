@@ -5,13 +5,13 @@ description: >-
   and adorable numbeanies
 image: cover.jpg
 tags:
-  - games
-  - analog-games
-  - education
-  - game
-  - released
-  - ar
-  - noshortcv
+  - what:projects/games
+  - what:projects/analog-games
+  - what:topics/education
+  - what:projects/games
+  - when:released
+  - what:projects/games
+  - who:noshortcv
 priority: 20180400
 actions:
   - text: Get on the iOS App Store

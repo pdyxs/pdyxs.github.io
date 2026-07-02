@@ -5,7 +5,7 @@ description: A reaction to an interactive theatre piece I saw in Edinburgh
 canonical_url: 'https://medium.com/@pdyxs/edinburgh-reactions-whist-c52f0c5067bc'
 source: medium
 tags:
-  - writing
+  - what:writing
 ---
 
 # Edinburgh Reactions: Whist

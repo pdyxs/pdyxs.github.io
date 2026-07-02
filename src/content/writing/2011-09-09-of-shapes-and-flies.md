@@ -2,8 +2,8 @@
 title: 'Of Shapes and Flies: A Ludum Dare Double Bill Postmortem'
 date: '2011-09-09 17:00:00 +1000'
 tags:
-  - writing
-  - flatland-fallen-angle
+  - what:writing
+  - what:projects/flatland-fallen-angle
 canonical_url: >-
   https://www.gamasutra.com/blogs/PaulSztajer/20110909/90176/Of_Shapes_and_Flies_A_Ludum_Dare_Double_Bill_Postmortem.php
 source: gamasutra

@@ -6,7 +6,7 @@ canonical_url: >-
   https://medium.com/@pdyxs/data-that-listens-the-need-for-more-responsive-data-visualisation-2527b092d169
 source: medium
 tags:
-  - writing
+  - what:writing
 ---
 ## The need for more responsive data visualisation
 

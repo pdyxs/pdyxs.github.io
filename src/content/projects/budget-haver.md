@@ -4,11 +4,10 @@ description: >-
   A minimalistic budgeting app, focusing on helping you to control your everyday
   spending
 tags:
-  - software-engineering
-  - development
-  - budgeting
-  - visualisation
-  - app
+  - what:projects/software-engineering
+  - what:topics/development
+  - what:topics/budgeting
+  - what:topics/visualisation
 images:
   - icon
 image: icon.jpg

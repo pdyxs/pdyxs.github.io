@@ -5,8 +5,8 @@ titleSuffix: " is this like this"
 order: 5
 description: Why this site is designed the way it is
 tags:
-  - meta
-  - design
+  - what:topics/meta
+  - what:topics/design
 ---
 
 One thing I've been fascinated with for a long time is how we present information to those around us. Right now, our best approaches to presenting information tend to be didactic: we tell people facts and expect them to accept those facts.

@@ -1,11 +1,13 @@
 name: Analog Games
+dimension: what
 aliases:
+  - analog-games
   - analog
   - card games
   - board games
 related:
-  - games
-  - game-design
+  - what/projects/games
+  - what/projects/game-design
 description: >
   Physical and analog games — card games, board games, and hybrid digital/physical experiences.
 featured: []

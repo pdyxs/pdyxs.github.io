@@ -1,0 +1,11 @@
+name: Education
+dimension: what
+aliases:
+  - education
+  - learning
+related:
+  - what/projects/edtech
+  - what/projects/game-design
+description: >
+  Learning design, educational tools, and making complex topics accessible.
+featured: []

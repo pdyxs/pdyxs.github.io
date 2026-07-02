@@ -6,11 +6,11 @@ images:
 image: Flatland1.jpg
 feature: Flatland1
 tags:
-  - games
-  - game
-  - released
-  - nocv
-  - noshortcv
+  - what:projects/games
+  - what:projects/games
+  - when:released
+  - who:nocv
+  - who:noshortcv
 priority: 20120200
 quotes:
   - quote: >-

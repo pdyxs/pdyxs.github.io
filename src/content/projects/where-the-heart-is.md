@@ -2,11 +2,11 @@
 title: Where the Heart Is
 description: A reflection on globalised life
 tags:
-  - games
-  - released
-  - game
-  - game-jam
-  - nocv
+  - what:projects/games
+  - when:released
+  - what:projects/games
+  - what:topics/game-jam
+  - who:nocv
 priority: 20190126
 images:
   - wheretheheartis

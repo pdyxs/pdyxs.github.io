@@ -1,12 +1,11 @@
 name: Education Technology
+dimension: what
 aliases:
   - edtech
-  - education
-  - learning
   - education technology
 related:
-  - game-design
-  - science
+  - what/projects/game-design
+  - what/topics/science
 description: >
   Work at the intersection of education and technology — learning design, educational tools, and making hard things understandable.
 featured: []

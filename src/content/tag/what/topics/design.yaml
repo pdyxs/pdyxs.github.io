@@ -1,10 +1,12 @@
 name: Design
+dimension: what
 aliases:
+  - design
   - ux
   - product design
 related:
-  - game-design
-  - software-engineering
+  - what/projects/game-design
+  - what/projects/software-engineering
 description: >
   Writing and thinking about design — how things are shaped to work well and feel right.
 featured: []

@@ -8,11 +8,11 @@ images:
 feature: Unstoppabot1
 image: Unstoppabot1.jpg
 tags:
-  - games
-  - game
-  - released
-  - noshortcv
-  - nocv
+  - what:projects/games
+  - what:projects/games
+  - when:released
+  - who:noshortcv
+  - who:nocv
 priority: 20130300
 status: past
 medium: Video Game

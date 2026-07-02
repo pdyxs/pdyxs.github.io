@@ -1,0 +1,8 @@
+name: Released
+dimension: when
+aliases:
+  - released
+related: []
+description: >
+  Projects that have been released and are available to the public.
+featured: []
