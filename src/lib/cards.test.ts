@@ -1,14 +1,37 @@
 import { describe, it, expect } from 'vitest';
-import { COLLECTION_DEFAULTS, getCardsForTag } from './cards';
+import { readdirSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { load as parseYaml } from 'js-yaml';
+import { getCardsForTag } from './cards';
 import { COLLECTION_RENDERERS } from './renderers';
 import { fakeCardMeta, fakeTagEntry } from '../test/fixtures';
 import TagRenderer from '../components/card-renderers/TagRenderer.astro';
 import PuzzleRenderer from '../components/card-renderers/PuzzleRenderer.astro';
 
+const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
+
+/** Renderer per collection, sourced from each directory's _config.yaml (falls back to 'card'), plus the 'tag' collection's hardcoded renderer. */
+function collectionDefaults(): Record<string, string> {
+  const defaults: Record<string, string> = { tag: 'tag' };
+  for (const dir of readdirSync(CONTENT_DIR, { withFileTypes: true })) {
+    if (!dir.isDirectory() || dir.name === 'tag') continue;
+    let renderer = 'card';
+    try {
+      const text = readFileSync(resolve(CONTENT_DIR, dir.name, '_config.yaml'), 'utf-8');
+      renderer = (parseYaml(text) as { renderer?: string } | null)?.renderer ?? 'card';
+    } catch {
+      // no _config.yaml — default renderer applies
+    }
+    defaults[dir.name] = renderer;
+  }
+  return defaults;
+}
+
 describe('renderer registry', () => {
-  it('all non-generic COLLECTION_DEFAULTS keys are present in COLLECTION_RENDERERS', () => {
+  it('all non-generic collection default renderers are present in COLLECTION_RENDERERS', () => {
     const genericRenderers = new Set(['card', 'post', 'project', 'story', 'work']);
-    const nonGenericKeys = Object.entries(COLLECTION_DEFAULTS)
+    const nonGenericKeys = Object.entries(collectionDefaults())
       .filter(([, renderer]) => !genericRenderers.has(renderer))
       .map(([key]) => key);
 

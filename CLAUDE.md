@@ -106,7 +106,7 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 
 ### Renderer registration is mandatory
 
-Any new content collection must appear in `COLLECTION_DEFAULTS` (`src/lib/cards.ts`); any new renderer component in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
+Any new content collection must set its default renderer via `_config.yaml` in its content directory (read by `loadCollectionConfig` in `src/lib/cards.ts`); any new renderer component must be registered in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
 
 ### Nav renderer pattern (`NAV_RENDERERS`)
 
