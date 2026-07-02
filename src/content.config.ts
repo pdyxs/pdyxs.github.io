@@ -35,6 +35,11 @@ const content = defineCollection({
         tags: z.array(z.string()).default([]),
         date: z.coerce.date().optional(),
         renderer: z.string().optional(),
+        // bare filename → resolved against the entry's own directory via
+        // resolveLocalImage() (src/lib/images.ts); full URL → rendered as-is.
+        // Not image(): this field is shared with posts/puzzles, which store
+        // plenty of legacy remote URLs that image() would eagerly (and
+        // fatally) try to resolve as local assets.
         image: z.string().optional(),
         // ── posts / writing ──
         canonical_url: z.string().url().optional(),

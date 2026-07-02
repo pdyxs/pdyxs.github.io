@@ -37,7 +37,7 @@ describe('GenericRenderer', () => {
     expect(div.textContent?.trim()).toBe('');
   });
 
-  it('prefixes bare image filenames with the collection image path', async () => {
+  it('resolves a bare image filename to the colocated local asset', async () => {
     const container = await AstroContainer.create();
     const html = await container.renderToString(GenericRenderer, {
       props: { entry: fakeEntry({ id: 'projects/art-heist', image: 'outside.jpg' }), Content: undefined },
@@ -45,7 +45,20 @@ describe('GenericRenderer', () => {
 
     const div = document.createElement('div');
     div.innerHTML = html;
-    expect(div.querySelector('img.generic-image')?.getAttribute('src')).toBe('/images/projects/outside.jpg');
+    const src = div.querySelector('img.generic-image')?.getAttribute('src');
+    expect(src).toContain('outside.jpg');
+    expect(src).toContain('/_image?href=');
+  });
+
+  it('renders nothing when the bare filename has no colocated local asset', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(GenericRenderer, {
+      props: { entry: fakeEntry({ id: 'projects/does-not-exist', image: 'missing.jpg' }), Content: undefined },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    expect(div.querySelector('img.generic-image')).toBeNull();
   });
 
   it('uses full image URLs as-is', async () => {

@@ -1,5 +1,7 @@
 ---
 import type { RenderResult } from 'astro:content';
+import { Image } from 'astro:assets';
+import { resolveLocalImage } from '../../lib/images';
 
 interface Action {
   text: string;
@@ -32,10 +34,8 @@ interface Props {
 const { entry, Content } = Astro.props;
 const data = entry?.data;
 
-const collection = entry?.id.split('/')[0];
-const imageSrc = data?.image
-  ? (data.image.startsWith('http') ? data.image : `/images/${collection}/${data.image}`)
-  : undefined;
+const localImage = entry ? resolveLocalImage(entry.id, data?.image) : undefined;
+const remoteImageSrc = !localImage && data?.image?.startsWith('http') ? data.image : undefined;
 
 const sourceLabel = data?.source
   ? data.source.charAt(0).toUpperCase() + data.source.slice(1)
@@ -47,7 +47,8 @@ const quotes = data?.quotes?.filter(q => q.quote) ?? [];
 
 {data && (
   <>
-    {imageSrc && <img src={imageSrc} alt="" class="generic-image" />}
+    {remoteImageSrc && <img src={remoteImageSrc} alt="" class="generic-image" />}
+    {localImage && <Image src={localImage} alt="" class="generic-image" />}
 
     {(data.status || data.medium) && (
       <dl class="generic-meta">
