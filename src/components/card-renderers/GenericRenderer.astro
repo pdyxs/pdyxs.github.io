@@ -1,7 +1,8 @@
 ---
 import type { RenderResult } from 'astro:content';
-import { Image } from 'astro:assets';
-import { resolveLocalImage } from '../../lib/images';
+import { Image, getImage } from 'astro:assets';
+import { resolveLocalImage, resolveGalleryImages } from '../../lib/images';
+import ImageGallery from '../ImageGallery.svelte';
 
 interface Action {
   text: string;
@@ -26,6 +27,7 @@ interface Props {
       source?: string;
       actions?: Action[];
       quotes?: Quote[];
+      images?: string[];
     };
   } | undefined;
   Content: RenderResult['Content'] | undefined;
@@ -43,6 +45,18 @@ const sourceLabel = data?.source
 
 const actions = data?.actions?.filter(a => a.text && a.url) ?? [];
 const quotes = data?.quotes?.filter(q => q.quote) ?? [];
+
+const gallerySources = entry ? resolveGalleryImages(entry.id, data?.image, data?.images) : [];
+const galleryImages = await Promise.all(
+  gallerySources.map(async ({ src }) => {
+    if (typeof src === 'string') return { thumb: src, full: src };
+    const [thumb, full] = await Promise.all([
+      getImage({ src, width: 200 }),
+      getImage({ src, width: 1600 }),
+    ]);
+    return { thumb: thumb.src, full: full.src };
+  })
+);
 ---
 
 {data && (
@@ -69,6 +83,8 @@ const quotes = data?.quotes?.filter(q => q.quote) ?? [];
       : data.description
         ? <p>{data.description}</p>
         : null}
+
+    {galleryImages.length > 0 && <ImageGallery images={galleryImages} client:load />}
 
     {quotes.length > 0 && (
       <ul class="generic-quotes">

@@ -9,6 +9,7 @@
   --color-text:       #000000;
   --color-text-muted: #555555;
   --color-bg-hover:   #f0f0f0;
+  --color-overlay:    rgba(0, 0, 0, 0.85);
 
   --font-body:    'Montserrat', system-ui, sans-serif;
   --font-ui:      'Montserrat', system-ui, sans-serif;
