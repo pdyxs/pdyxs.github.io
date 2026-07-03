@@ -2,6 +2,7 @@
 import type { RenderResult } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
 import { resolveLocalImage, resolveGalleryImages } from '../../lib/images';
+import { filterValueToTagId } from '../../lib/cards';
 import ImageGallery from '../ImageGallery.svelte';
 
 interface Action {
@@ -28,6 +29,7 @@ interface Props {
       actions?: Action[];
       quotes?: Quote[];
       images?: string[];
+      tags?: string[];
     };
   } | undefined;
   Content: RenderResult['Content'] | undefined;
@@ -45,6 +47,7 @@ const sourceLabel = data?.source
 
 const actions = data?.actions?.filter(a => a.text && a.url) ?? [];
 const quotes = data?.quotes?.filter(q => q.quote) ?? [];
+const tags = data?.tags ?? [];
 
 const gallerySources = entry ? resolveGalleryImages(entry.id, data?.image, data?.images) : [];
 const galleryImages = await Promise.all(
@@ -109,6 +112,14 @@ const galleryImages = await Promise.all(
           <a href={a.url} target="_blank" rel="noopener noreferrer" class="generic-action-link">{a.text}</a>
         ))}
       </div>
+    )}
+
+    {tags.length > 0 && (
+      <ul class="generic-tags" aria-label="Tags">
+        {tags.map(tag => (
+          <li><a href={`tag:${filterValueToTagId(tag)}`} class="generic-tag">{tag}</a></li>
+        ))}
+      </ul>
     )}
   </>
 )}

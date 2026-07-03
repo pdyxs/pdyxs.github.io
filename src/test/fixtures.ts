@@ -22,6 +22,7 @@ export function fakeEntry(overrides?: {
   actions?: Action[];
   quotes?: Quote[];
   images?: string[];
+  tags?: string[];
 }): {
   id: string;
   data: {
@@ -34,6 +35,7 @@ export function fakeEntry(overrides?: {
     actions?: Action[];
     quotes?: Quote[];
     images?: string[];
+    tags?: string[];
   };
 } {
   const { id, ...data } = overrides ?? {};

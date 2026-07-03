@@ -3,10 +3,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { load as parseYaml } from 'js-yaml';
-import { getCardsForTag } from './cards';
+import { getCardsForTag, filterValueToTagId } from './cards';
 import { COLLECTION_RENDERERS } from './renderers';
 import { fakeCardMeta, fakeTagEntry } from '../test/fixtures';
-import TagRenderer from '../components/card-renderers/TagRenderer.astro';
+import FilterRenderer from '../components/card-renderers/FilterRenderer.astro';
 import PuzzleRenderer from '../components/card-renderers/PuzzleRenderer.astro';
 
 const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
@@ -41,7 +41,7 @@ describe('renderer registry', () => {
   });
 
   it('explicit renderers resolve correctly and generic collections are absent', () => {
-    expect(COLLECTION_RENDERERS['tag']).toBe(TagRenderer);
+    expect(COLLECTION_RENDERERS['tag']).toBe(FilterRenderer);
     expect(COLLECTION_RENDERERS['puzzles']).toBe(PuzzleRenderer);
     expect('posts' in COLLECTION_RENDERERS).toBe(false);
   });
@@ -96,5 +96,46 @@ describe('getCardsForTag', () => {
   it('returns empty array when no matches', () => {
     const tag = fakeTagEntry({ id: 't', name: 't', aliases: [] });
     expect(getCardsForTag(tag, [])).toEqual([]);
+  });
+
+  it('prefix-matches descendant tags for a dimension-prefixed tag id', () => {
+    const tag = fakeTagEntry({ id: 'what/projects', name: 'Projects', aliases: [] });
+    const exact = fakeCardMeta({ uid: 'cards/exact', tags: ['what:projects'] });
+    const descendant = fakeCardMeta({ uid: 'cards/descendant', tags: ['what:projects/games'] });
+    const unrelated = fakeCardMeta({ uid: 'cards/unrelated', tags: ['what:posts'] });
+    const result = getCardsForTag(tag, [exact, descendant, unrelated]);
+    expect(result).toEqual(expect.arrayContaining([exact, descendant]));
+    expect(result).not.toContain(unrelated);
+    expect(result).toHaveLength(2);
+  });
+
+  it('does not prefix-match flat tag ids with no dimension prefix', () => {
+    const tag = fakeTagEntry({ id: 'puzzle', name: 'Puzzle', aliases: [] });
+    const match = fakeCardMeta({ tags: ['puzzle'] });
+    const noMatch = fakeCardMeta({ uid: 'cards/other', tags: ['puzzle/subtype'] });
+    expect(getCardsForTag(tag, [match, noMatch])).toEqual([match]);
+  });
+
+  it('still applies alias matching alongside dimension prefix matching', () => {
+    const tag = fakeTagEntry({ id: 'what/puzzles', name: 'Puzzles', aliases: ['brainteasers'] });
+    const byPrefix = fakeCardMeta({ uid: 'cards/by-prefix', tags: ['what:puzzles/sudoku'] });
+    const byAlias = fakeCardMeta({ uid: 'cards/by-alias', tags: ['brainteasers'] });
+    const result = getCardsForTag(tag, [byPrefix, byAlias]);
+    expect(result).toEqual(expect.arrayContaining([byPrefix, byAlias]));
+    expect(result).toHaveLength(2);
+  });
+});
+
+describe('filterValueToTagId', () => {
+  it('converts a dimension-prefixed filter value back to its tag entry id', () => {
+    expect(filterValueToTagId('who:about')).toBe('who/about');
+  });
+
+  it('converts a nested filter value, replacing only the first colon', () => {
+    expect(filterValueToTagId('what:projects/games')).toBe('what/projects/games');
+  });
+
+  it('leaves a flat tag with no colon unchanged', () => {
+    expect(filterValueToTagId('gamedev')).toBe('gamedev');
   });
 });

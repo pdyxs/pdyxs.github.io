@@ -1,14 +1,15 @@
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
-import TagRenderer from '../components/card-renderers/TagRenderer.astro';
+import FilterRenderer from '../components/card-renderers/FilterRenderer.astro';
 import PuzzleRenderer from '../components/card-renderers/PuzzleRenderer.astro';
 import WorkRenderer from '../components/card-renderers/WorkRenderer.astro';
 import SeriesNavRenderer from '../components/card-renderers/SeriesNavRenderer.astro';
 import PostsRenderer from '../components/card-renderers/PostsRenderer.astro';
 import ProjectsRenderer from '../components/card-renderers/ProjectsRenderer.astro';
 import PuzzlesRenderer from '../components/card-renderers/PuzzlesRenderer.astro';
+import FilterBrowserRenderer from '../components/card-renderers/FilterBrowserRenderer.astro';
 
 export const COLLECTION_RENDERERS: Record<string, AstroComponentFactory> = {
-  tag: TagRenderer,
+  tag: FilterRenderer,
   puzzles: PuzzleRenderer,
   work: WorkRenderer,
 };
@@ -21,4 +22,5 @@ export const COLLECTION_VIEW_RENDERERS: Record<string, AstroComponentFactory> = 
   posts: PostsRenderer,
   projects: ProjectsRenderer,
   puzzles: PuzzlesRenderer,
+  filter: FilterBrowserRenderer,
 };

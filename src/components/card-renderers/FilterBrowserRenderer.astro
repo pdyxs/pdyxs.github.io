@@ -1,0 +1,22 @@
+---
+import { getAllCards } from '../../lib/cards';
+import CardHeader from '../CardHeader.astro';
+import FilterResults from '../FilterResults.svelte';
+
+const allCards = await getAllCards();
+const serialisedCards = allCards.map(card => ({
+  ...card,
+  date: card.date?.toISOString() ?? null,
+}));
+---
+
+<CardHeader title="Filter">
+  <button class="stack-card-close" aria-label="Close">×</button>
+</CardHeader>
+<div class="body-wrapper open">
+  <div class="stack-card-body">
+    <div class="stack-card-body-inner">
+      <FilterResults client:load cards={serialisedCards} />
+    </div>
+  </div>
+</div>

@@ -188,4 +188,34 @@ describe('GenericRenderer', () => {
     expect(link?.textContent).toBe('Play on iOS');
     expect(link?.getAttribute('href')).toBe('https://apple.com/app');
   });
+
+  it('renders tags as links using the tag: protocol, addressed by tag entry id', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(GenericRenderer, {
+      props: {
+        entry: fakeEntry({ tags: ['gamedev', 'who:about'] }),
+        Content: undefined,
+      },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    const links = div.querySelectorAll('a.generic-tag');
+    expect(links).toHaveLength(2);
+    expect(links[0].textContent).toBe('gamedev');
+    expect(links[0].getAttribute('href')).toBe('tag:gamedev');
+    expect(links[1].textContent).toBe('who:about');
+    expect(links[1].getAttribute('href')).toBe('tag:who/about');
+  });
+
+  it('renders no tags list when entry has no tags', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(GenericRenderer, {
+      props: { entry: fakeEntry({ description: 'x' }), Content: undefined },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    expect(div.querySelector('.generic-tags')).toBeNull();
+  });
 });

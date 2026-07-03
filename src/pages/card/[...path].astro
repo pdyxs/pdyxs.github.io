@@ -14,6 +14,7 @@ export async function getStaticPaths() {
     { params: { path: 'posts' } },
     { params: { path: 'projects' } },
     { params: { path: 'puzzles' } },
+    { params: { path: 'filter' } },
     ...cards.map(c => ({ params: { path: c.uid } })),
     ...tags.map(t => ({ params: { path: `tag/${t.id}` } })),
   ];
