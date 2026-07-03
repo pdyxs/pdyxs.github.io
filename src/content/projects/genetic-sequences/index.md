@@ -9,7 +9,7 @@ tags:
   - who:nocv
 images:
   - 'https://medium.com/series/visualising-genetic-sequences-bea25751f4b7'
-image: output4.jpg
+image: output4.png
 actions:
   - text: Follow the progress of the project
     url: 'https://medium.com/series/visualising-genetic-sequences-bea25751f4b7'
