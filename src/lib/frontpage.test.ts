@@ -1,6 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { buildBrowseUrl, resolvePinnedCards } from './frontpage';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { buildBrowseUrl, resolvePinnedCards, resolveFrontPageSlots } from './frontpage';
+import type { FrontPageConfig, SerialisedCardFull } from './frontpage';
 import { fakeCardMeta } from '../test/fixtures';
+import { clearViewState } from './card-view-state';
 import type { FilterState } from './filters';
 
 // ---------------------------------------------------------------------------
@@ -64,5 +66,80 @@ describe('resolvePinnedCards', () => {
   it('returns empty array when uid list is empty', () => {
     const a = fakeCardMeta({ uid: 'posts/a' });
     expect(resolvePinnedCards([], [a])).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveFrontPageSlots
+// ---------------------------------------------------------------------------
+
+function fakeSerialisedCard(overrides?: Partial<SerialisedCardFull>): SerialisedCardFull {
+  return {
+    uid: 'posts/a',
+    title: 'A Post',
+    date: null,
+    tags: [],
+    collection: 'posts',
+    id: 'a',
+    renderer: 'card',
+    contentHash: 'hash:a',
+    ...overrides,
+  };
+}
+
+describe('resolveFrontPageSlots', () => {
+  beforeEach(() => {
+    clearViewState();
+  });
+
+  it('resolves a pinned slot to its known card, in slot order', () => {
+    const config: FrontPageConfig = { slots: [{ type: 'pinned', uid: 'posts/about-me' }] };
+    const cards = [fakeSerialisedCard({ uid: 'posts/about-me', title: 'About Me', description: 'bio' })];
+
+    const { slots } = resolveFrontPageSlots(config, cards, new Date('2024-03-15T08:00:00Z'));
+
+    expect(slots).toEqual([{ type: 'pinned', uid: 'posts/about-me', title: 'About Me', description: 'bio' }]);
+  });
+
+  it('drops a pinned slot whose uid matches no card', () => {
+    const config: FrontPageConfig = { slots: [{ type: 'pinned', uid: 'posts/missing' }] };
+    const { slots } = resolveFrontPageSlots(config, [], new Date('2024-03-15T08:00:00Z'));
+    expect(slots).toEqual([]);
+  });
+
+  it('resolves a filter slot to a day-seeded pick among matching cards', () => {
+    const config: FrontPageConfig = {
+      slots: [{ type: 'filter', label: 'A Project', filter: { selections: { what: ['what:projects'] } } }],
+    };
+    const cards = [
+      fakeSerialisedCard({ uid: 'projects/a', tags: ['what:projects'] }),
+      fakeSerialisedCard({ uid: 'projects/b', tags: ['what:projects'] }),
+    ];
+
+    const { slots } = resolveFrontPageSlots(config, cards, new Date('2024-03-15T08:00:00Z'));
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0].type).toBe('filter');
+    expect(slots[0]).toMatchObject({ label: 'A Project', browseUrl: '/?filter.what=what%3Aprojects' });
+    expect(['projects/a', 'projects/b']).toContain((slots[0] as any).card?.uid);
+  });
+
+  it('resolves a filter slot to null when no card matches', () => {
+    const config: FrontPageConfig = {
+      slots: [{ type: 'filter', label: 'A Project', filter: { selections: { what: ['what:projects'] } } }],
+    };
+    const { slots } = resolveFrontPageSlots(config, [], new Date('2024-03-15T08:00:00Z'));
+    expect(slots).toEqual([{ type: 'filter', label: 'A Project', card: null, browseUrl: '/?filter.what=what%3Aprojects' }]);
+  });
+
+  it('reports the picked filter-slot card as displayed, without writing view-state itself', () => {
+    const config: FrontPageConfig = {
+      slots: [{ type: 'filter', label: 'A Project', filter: { selections: { what: ['what:projects'] } } }],
+    };
+    const cards = [fakeSerialisedCard({ uid: 'projects/a', tags: ['what:projects'], contentHash: 'hash:a' })];
+
+    const { displayed } = resolveFrontPageSlots(config, cards, new Date('2024-03-15T08:00:00Z'));
+
+    expect(displayed).toEqual([{ uid: 'projects/a', contentHash: 'hash:a' }]);
   });
 });

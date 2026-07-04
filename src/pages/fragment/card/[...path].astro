@@ -1,0 +1,31 @@
+---
+// Fragment partial: renders just the `.stack-card` markup for a card
+// location, with island props baked in — no <html> shell. In-app navigation
+// (CardStack.svelte) fetches this instead of the full page + stripping it
+// client-side.
+//
+// Falls back to a plain non-partial route (still just `.stack-card` markup,
+// same URL shape) if `export const partial = true` ever fights the static
+// build — see CONTEXT for issue #23.
+export const partial = true;
+
+import { getCollection } from 'astro:content';
+import { getAllCards } from '../../../lib/cards';
+import CardStackCard from '../../../components/CardStackCard.astro';
+
+export async function getStaticPaths() {
+  const cards = await getAllCards();
+  const tags = await getCollection('tag');
+  return [
+    { params: { path: 'posts' } },
+    { params: { path: 'projects' } },
+    { params: { path: 'puzzles' } },
+    { params: { path: 'filter' } },
+    ...cards.map(c => ({ params: { path: c.uid } })),
+    ...tags.map(t => ({ params: { path: `tag/${t.id}` } })),
+  ];
+}
+
+const { path } = Astro.params;
+---
+<CardStackCard path={path!} />

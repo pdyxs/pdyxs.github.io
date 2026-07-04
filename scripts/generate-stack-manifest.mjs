@@ -17,6 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assignCodes } from '../src/lib/stack-manifest.ts';
 import { uidFromContentPath, uidFromTagPath } from '../src/lib/content-uid.ts';
+import { allLensUids } from '../src/lib/lens-registry.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(__dirname, '../src/content');
@@ -67,7 +68,11 @@ async function collectUids() {
   // A handful of entries have both a "collection/id.md" file and a
   // "collection/id/index.md" file resolving to the same uid (pre-existing
   // content-migration leftovers, not introduced here) — one uid gets one code.
-  return [...new Set(uids)].sort();
+  //
+  // Lens uids come from the lens registry (src/lib/lens-registry.ts), not the
+  // filesystem — enumeration is driven from the registry so a new lens gets a
+  // manifest code the moment it's declared, with no route file required.
+  return [...new Set([...uids, ...allLensUids()])].sort();
 }
 
 async function loadExistingManifest() {

@@ -1,0 +1,45 @@
+---
+// The "newest" lens: a browse-sort lens under the `when` dimension
+// (src/lib/lens-registry.ts). Accepts filters — `filter.<dim>` query params
+// narrow the set in place, reusing the same applyFilters() as the front page
+// and collection browsers.
+//
+// This is a fully static (getStaticPaths-prerendered) route, same as every
+// other page in this project — there's no server adapter, so Astro.url here
+// is *not* the live browser request and its searchParams are always empty
+// (verified: this holds even under `astro dev`, not just the production
+// build). The applyFilters() call below is intentionally harmless/inert at
+// request time; it exists so this component behaves correctly if the route
+// is ever adapted to on-demand rendering, and so it's exercised directly by
+// unit tests (AstroContainer lets a test pass a real Request with a query
+// string, unlike a real static request). The narrowing an actual visitor
+// sees comes from NewestLensBrowser.svelte's client-side createFilterState,
+// which reads the real window.location.search once the island hydrates.
+import { getAllCards } from '../../lib/cards';
+import { filterStateFromParams, applyFilters } from '../../lib/filters';
+import CardHeader from '../CardHeader.astro';
+import NewestLensBrowser from './NewestLensBrowser.svelte';
+
+const allCards = await getAllCards();
+const sorted = [...allCards].sort(
+  (a, b) => (b.date?.getTime() ?? -Infinity) - (a.date?.getTime() ?? -Infinity)
+);
+
+const filterState = filterStateFromParams(Astro.url.searchParams);
+const narrowed = applyFilters(sorted, filterState);
+
+const serialisedCards = narrowed.map(card => ({
+  ...card,
+  date: card.date?.toISOString() ?? null,
+}));
+---
+<CardHeader title="Newest">
+  <button class="stack-card-close" aria-label="Close">×</button>
+</CardHeader>
+<div class="body-wrapper open">
+  <div class="stack-card-body">
+    <div class="stack-card-body-inner">
+      <NewestLensBrowser client:load cards={serialisedCards} />
+    </div>
+  </div>
+</div>

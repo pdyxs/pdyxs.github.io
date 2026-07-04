@@ -1,0 +1,87 @@
+---
+// Renders the `.stack-card` fragment for a card-collection location
+// ("posts", "posts/about-me", "tag/who", ...). Shared by the full-page route
+// (src/pages/card/[...path].astro) and the fragment-partial route
+// (src/pages/fragment/card/[...path].astro) — both wrap this in whatever
+// shell they need (or none, for the fragment).
+//
+// Dispatch (collection-view vs nav-owned-shell vs plain card) goes through
+// resolveLocation() (src/lib/location-resolver.ts), the single resolver
+// shared with the lens routes.
+import { getCollection, render } from 'astro:content';
+import { computeContentHash, resolveCardTitle, resolveCardDescription } from '../lib/cards';
+import { resolveLocation, resolveCardRenderer } from '../lib/location-resolver';
+import CardHeader from './CardHeader.astro';
+import GenericRenderer from './card-renderers/GenericRenderer.astro';
+
+interface Props {
+  path: string;
+}
+
+const { path } = Astro.props;
+const resolution = resolveLocation(path);
+
+let entries: any[] = [];
+let entry: any = null;
+let Content: any = null;
+
+if (resolution.kind === 'card') {
+  if (resolution.collection === 'tag') {
+    const tags = await getCollection('tag');
+    entries = tags;
+    entry = tags.find((t: any) => t.id === resolution.id);
+  } else {
+    const allContent = await getCollection('content');
+    entries = allContent.filter((e: any) => e.id.startsWith(resolution.collection + '/'));
+    entry = allContent.find((e: any) => e.id === path);
+  }
+  const rendered = entry ? await render(entry as any) : null;
+  Content = rendered?.Content;
+}
+
+const rendererName: string | undefined = (entry?.data as any)?.renderer;
+const Renderer = resolution.kind === 'card' ? resolveCardRenderer(resolution.collection, rendererName) : GenericRenderer;
+
+const CollectionViewComponent = resolution.kind === 'collection-view' ? resolution.component : null;
+const NavComponent = resolution.kind === 'card' ? resolution.navComponent : null;
+
+const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name ?? '';
+const titleSuffix: string | undefined = (entry?.data as any)?.titleSuffix;
+
+// Content hash for client-side view-state tracking (markRead/markDisplayed).
+// Uses the exact same formula as getAllCards() (resolveCardTitle/resolveCardDescription
+// + computeContentHash) so a card opened here hashes identically to its FrontPage slot
+// entry — a mismatch would make getViewState() think the content changed on every visit.
+const contentHash: string | undefined =
+  resolution.kind === 'card' && entry
+    ? resolution.collection === 'tag'
+      ? computeContentHash(entry.data.name, entry.data.description)
+      : computeContentHash(
+          resolveCardTitle(resolution.collection, entry.data),
+          resolveCardDescription(resolution.collection, entry.data),
+          entry.body
+        )
+    : undefined;
+---
+<div class="stack-card stack-card--active" data-uid={path} data-content-hash={contentHash}>
+  {CollectionViewComponent ? (
+    <CollectionViewComponent />
+  ) : NavComponent ? (
+    <NavComponent {title} {titleSuffix} {entry} allEntries={entries}>
+      <Renderer {entry} {Content} />
+    </NavComponent>
+  ) : (
+    <>
+      <CardHeader {title} {titleSuffix}>
+        <button class="stack-card-close" aria-label="Close">×</button>
+      </CardHeader>
+      <div class="body-wrapper open">
+        <div class="stack-card-body">
+          <div class="stack-card-body-inner">
+            <Renderer {entry} {Content} />
+          </div>
+        </div>
+      </div>
+    </>
+  )}
+</div>
