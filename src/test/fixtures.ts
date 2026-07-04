@@ -66,23 +66,6 @@ export function fakePuzzleEntry(overrides?: {
   };
 }
 
-export function fakeTagEntry(overrides?: {
-  id?: string;
-  name?: string;
-  aliases?: string[];
-  description?: string;
-}): { id: string; data: { name: string; aliases: string[]; description?: string } } {
-  const { id, name, aliases, description } = overrides ?? {};
-  return {
-    id: id ?? 'test-tag',
-    data: {
-      name: name ?? 'Test Tag',
-      aliases: aliases ?? [],
-      description,
-    },
-  };
-}
-
 export function fakeCardMeta(overrides?: Partial<CardMeta>): CardMeta {
   const base: CardMeta = {
     uid: 'what/cards/test',

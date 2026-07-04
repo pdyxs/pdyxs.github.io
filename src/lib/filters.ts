@@ -38,12 +38,6 @@ export function isValidFilterValue(value: string): boolean {
     return rest.length > 0;
 }
 
-/** Converts a tag collection entry id (e.g. "what/projects/games") to filter-value format ("what:projects/games"). */
-export function tagIdToFilterValue(id: string): string {
-    const slashIdx = id.indexOf("/");
-    return slashIdx !== -1 ? id.slice(0, slashIdx) + ":" + id.slice(slashIdx + 1) : id;
-}
-
 // ---------------------------------------------------------------------------
 // Prefix matching
 // ---------------------------------------------------------------------------

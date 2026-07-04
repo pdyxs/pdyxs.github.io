@@ -87,22 +87,13 @@ const content = defineCollection({
     }),
 });
 
-// ─── Tag ──────────────────────────────────────────────────────────────────────
-//
-// Tag metadata for the connective tissue of the card navigation model.
-// Each .yaml file's slug is the canonical tag identifier.
-
-const tag = defineCollection({
-    loader: glob({ pattern: "**/[!_]*.yaml", base: "./src/content/tag" }),
-    schema: z.object({
-        name: z.string(),
-        aliases: z.array(z.string()).default([]),
-        related: z.array(z.string()).default([]),
-        description: z.string().optional(),
-        featured: z.array(z.string()).default([]),
-    }),
-});
-
 // ─── Export ───────────────────────────────────────────────────────────────────
+//
+// The `tag` collection retired (see decisions/DEC-006-tag-registry) in favour
+// of a build-time tag registry (src/lib/tag-registry.ts) that aggregates
+// container `_config.yaml` identities, `<name>.tag.yaml` declarations, card
+// titles, and tags actually used on content — read from the filesystem
+// rather than a content collection, since the content glob above is
+// markdown-only.
 
-export const collections = { content, tag };
+export const collections = { content };

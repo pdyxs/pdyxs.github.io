@@ -34,7 +34,7 @@ describe('parseCollectionLink — bare collection name', () => {
 // ?tag= query links — legacy collection-view "browse by tag" hrefs, migrated
 // to filter-expression form. The tag id arrives in slash-form
 // ("what/projects/software-engineering") and must be translated to filter
-// colon-form ("what:projects/software-engineering") via tagIdToFilterValue.
+// colon-form ("what:projects/software-engineering") via slashIdToFilterValue.
 // ---------------------------------------------------------------------------
 
 describe('parseCollectionLink — ?tag= query (slash-form id)', () => {
