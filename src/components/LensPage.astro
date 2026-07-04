@@ -1,0 +1,30 @@
+---
+// Full-page cold load for a lens location, in page-mode chrome. Shared by the
+// `/` shortcut (index.astro → name="home") and the `/lens/[name]` route so the
+// two addresses render byte-identical output — `/` is just a prettier alias
+// for `/lens/home`.
+//
+// A cold-loaded lens is the sole/root stack entry, so it presents in page mode
+// (presentationMode in stack-layout.ts). CardStack.svelte takes over on the
+// client, toggling chrome as the stack grows/shrinks.
+import Base from '../layouts/Base.astro';
+import StackNav from './StackNav.astro';
+import LensStackCard from './LensStackCard.astro';
+import { getLensDefinition } from '../lib/lens-registry';
+import { deriveLensChrome } from '../lib/lens-chrome';
+
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+const lens = getLensDefinition(name);
+// The <title> tracks the lens's card title (home → "pdyxs.wtf").
+const title = lens ? deriveLensChrome(lens, { selections: {} }).cardTitle : '';
+---
+<Base {title}>
+  <div id="homepage" hidden></div>
+  <StackNav activeUid={`lens/${name}`}>
+    <LensStackCard {name} presentation="page" />
+  </StackNav>
+</Base>

@@ -1,13 +1,15 @@
 ---
-// The "home" lens: the sole acceptsFilters:false lens in the registry
-// (src/lib/lens-registry.ts). Presents the same day-seeded pinned/filter
-// slots as index.astro's FrontPage, without the filter bar — resolution
-// happens client-side (HomeLensSlots.svelte) because slot selection reads
+// The "home" lens body: the sole acceptsFilters:false lens in the registry
+// (src/lib/lens-registry.ts). Renders the same day-seeded pinned/filter slots
+// as the old front page, without the filter bar. Chrome (header + body-wrapper
+// shell) is owned by LensStackCard.astro — this component renders body content
+// only.
+//
+// Slot resolution happens client-side (HomeLensSlots.svelte) because it reads
 // per-viewer view-state from localStorage, which isn't available at
 // server-render time.
 import { getAllCards } from '../../lib/cards';
 import { FRONTPAGE_CONFIG } from '../../content/frontpage';
-import CardHeader from '../CardHeader.astro';
 import HomeLensSlots from './HomeLensSlots.svelte';
 
 const allCards = await getAllCards();
@@ -16,13 +18,4 @@ const serialisedCards = allCards.map(card => ({
   date: card.date?.toISOString() ?? null,
 }));
 ---
-<CardHeader title="Home">
-  <button class="stack-card-close" aria-label="Close">×</button>
-</CardHeader>
-<div class="body-wrapper open">
-  <div class="stack-card-body">
-    <div class="stack-card-body-inner">
-      <HomeLensSlots client:load config={FRONTPAGE_CONFIG} cards={serialisedCards} />
-    </div>
-  </div>
-</div>
+<HomeLensSlots client:load config={FRONTPAGE_CONFIG} cards={serialisedCards} />

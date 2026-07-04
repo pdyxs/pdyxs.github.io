@@ -253,6 +253,15 @@ strong { font-weight: 700; }
   animation-duration: 300ms;
 }
 
+/* Home → card morph: the page-mode title and divider slide into the pushed
+   card's header (issue #24). Names are injected/cleared by CardStack.svelte. */
+::view-transition-group(home-title),
+::view-transition-group(home-divider) {
+  z-index: 1;
+  animation-duration: 300ms;
+  animation-timing-function: ease-in-out;
+}
+
 /* ── Card header ───────────────────────────────────────────────── */
 
 .card-header {
@@ -292,6 +301,54 @@ strong { font-weight: 700; }
 .stack-card--collapsed .card-header > * {
   background: none;
   padding: 0;
+}
+
+/* ── Page-mode lens chrome ─────────────────────────────────────── */
+/* A lens that is the sole/root stack entry (presentationMode → 'page')
+   presents as the front page: no card border, a site-header title/subtitle
+   with a divider, and no card-header. Both headers live in the DOM so the
+   home→card View Transition can morph between them; CSS just shows one. */
+
+.page-header {
+  display: none;
+}
+
+/* Page mode has no card border. Specificity must clear both the base
+   `.stack-card` border and the desktop `#card-stack .stack-card` border-top
+   restore below, hence the id + double-class selector. */
+#card-stack .stack-card.stack-card--page {
+  border: none;
+}
+
+.stack-card--page > .page-header {
+  display: block;
+  padding: var(--space-xl) var(--space-md) var(--space-lg);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.stack-card--page > .card-header {
+  display: none;
+}
+
+.page-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 400;
+  color: var(--color-text);
+  margin: 0 0 var(--space-xs);
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  font-family: var(--font-ui);
+}
+
+/* In page mode the body has no card border, so drop the header divider's
+   double-up and let the body breathe like the old .site-main. */
+.stack-card--page > .body-wrapper .stack-card-body-inner {
+  padding-inline: var(--space-md);
 }
 
 /* ── Card stack ────────────────────────────────────────────────── */

@@ -16,20 +16,22 @@ function dom(html: string) {
 }
 
 describe('HomeLens', () => {
-  it('renders a CardHeader titled "Home" with an open body-wrapper', async () => {
+  // The chrome (header, body-wrapper, close button) is owned by
+  // LensStackCard.astro — this component renders body content only.
+  it('renders the day-seeded front-page slots island', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(HomeLens, { props: {} });
     const div = dom(html);
 
-    expect(div.querySelector('.card-header-title')?.textContent).toContain('Home');
-    expect(div.querySelector('.body-wrapper.open')).not.toBeNull();
+    expect(div.querySelector('.front-page-slots')).not.toBeNull();
   });
 
-  it('renders a close button, matching the shell shape of other card renderers', async () => {
+  it('renders no chrome of its own (no header/body-wrapper)', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(HomeLens, { props: {} });
     const div = dom(html);
 
-    expect(div.querySelector('.stack-card-close')).not.toBeNull();
+    expect(div.querySelector('.card-header')).toBeNull();
+    expect(div.querySelector('.body-wrapper')).toBeNull();
   });
 });
