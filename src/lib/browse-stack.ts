@@ -1,5 +1,10 @@
 // Pure logic for encoding/decoding the card navigation stack in filter page URLs.
 
+import { serialiseStack } from './stack-codec';
+import { cardEntry } from './stack-layout';
+import type { StackState } from './stack-layout';
+import { manifestLookup } from './stack-manifest-client';
+
 const STACK_PARAM = 'stack';
 
 /**
@@ -24,17 +29,15 @@ export function stackFromParams(params: URLSearchParams): string[] {
 
 /**
  * Builds the card page URL for navigating to `stack[activeIndex]`.
- * Cards before activeIndex become `from`, cards after become `to`.
+ * Cards before activeIndex become `from`, cards after become `to`, encoded
+ * via the same stack codec + manifest CardStack.svelte uses — so links built
+ * here decode correctly once the user lands on the card page.
  */
 export function buildCardUrl(stack: string[], activeIndex: number): string {
-  const activeUid = stack[activeIndex];
-  const fromUids = stack.slice(0, activeIndex);
-  const toUids = stack.slice(activeIndex + 1);
-
-  const params = new URLSearchParams();
-  if (fromUids.length) params.set('from', fromUids.join(','));
-  if (toUids.length) params.set('to', toUids.join(','));
-
-  const query = params.toString();
-  return query ? `/card/${activeUid}?${query}` : `/card/${activeUid}`;
+  const state: StackState = {
+    entries: stack.map(cardEntry),
+    activeKey: stack[activeIndex],
+  };
+  const { path, search } = serialiseStack(state, new Map(), manifestLookup);
+  return `${path}${search}`;
 }
