@@ -6,10 +6,13 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "predev": "node scripts/generate-stack-manifest.mjs",
     "dev": "astro dev",
+    "prebuild": "node scripts/generate-stack-manifest.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "generate:manifest": "node scripts/generate-stack-manifest.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

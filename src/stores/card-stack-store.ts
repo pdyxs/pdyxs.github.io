@@ -1,34 +1,34 @@
 import { writable } from 'svelte/store';
-import type { StackState, CardEntry } from '../lib/stack-layout';
+import type { StackState, LocationEntry } from '../lib/stack-layout';
 
-export const stackStore = writable<StackState>({ cards: [], activeUid: null });
+export const stackStore = writable<StackState>({ entries: [], activeKey: null });
 
-export function pushToStack(state: StackState, uid: string): StackState {
+export function pushToStack(state: StackState, entry: LocationEntry): StackState {
   return {
-    cards: [...state.cards, { uid }],
-    activeUid: uid,
+    entries: [...state.entries, entry],
+    activeKey: entry.key,
   };
 }
 
-export function removeFromStack(state: StackState, uid: string): StackState {
-  const index = state.cards.findIndex(c => c.uid === uid);
-  const newCards = state.cards.filter(c => c.uid !== uid);
-  let newActiveUid = state.activeUid;
-  if (state.activeUid === uid) {
-    newActiveUid = index > 0 ? state.cards[index - 1].uid : (newCards[0]?.uid ?? null);
+export function removeFromStack(state: StackState, key: string): StackState {
+  const index = state.entries.findIndex(e => e.key === key);
+  const newEntries = state.entries.filter(e => e.key !== key);
+  let newActiveKey = state.activeKey;
+  if (state.activeKey === key) {
+    newActiveKey = index > 0 ? state.entries[index - 1].key : (newEntries[0]?.key ?? null);
   }
-  return { cards: newCards, activeUid: newActiveUid };
+  return { entries: newEntries, activeKey: newActiveKey };
 }
 
-export function activateCard(state: StackState, uid: string): StackState {
-  return { ...state, activeUid: uid };
+export function activateCard(state: StackState, key: string): StackState {
+  return { ...state, activeKey: key };
 }
 
-export function replaceActiveSlot(state: StackState, newUid: string): StackState {
-  if (!state.activeUid) return state;
-  const idx = state.cards.findIndex(c => c.uid === state.activeUid);
+export function replaceActiveSlot(state: StackState, newEntry: LocationEntry): StackState {
+  if (!state.activeKey) return state;
+  const idx = state.entries.findIndex(e => e.key === state.activeKey);
   if (idx === -1) return state;
-  const newCards = [...state.cards];
-  newCards[idx] = { uid: newUid };
-  return { cards: newCards, activeUid: newUid };
+  const newEntries = [...state.entries];
+  newEntries[idx] = newEntry;
+  return { entries: newEntries, activeKey: newEntry.key };
 }

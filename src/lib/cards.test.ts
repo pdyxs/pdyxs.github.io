@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { load as parseYaml } from 'js-yaml';
-import { getCardsForTag } from './cards';
+import { getCardsForTag, resolveCardTitle, resolveCardDescription } from './cards';
 import { COLLECTION_RENDERERS } from './renderers';
 import { fakeCardMeta, fakeTagEntry } from '../test/fixtures';
 import FilterRenderer from '../components/card-renderers/FilterRenderer.astro';
@@ -123,5 +123,37 @@ describe('getCardsForTag', () => {
     const result = getCardsForTag(tag, [byPrefix, byAlias]);
     expect(result).toEqual(expect.arrayContaining([byPrefix, byAlias]));
     expect(result).toHaveLength(2);
+  });
+});
+
+describe('resolveCardTitle', () => {
+  it('uses data.title when present', () => {
+    expect(resolveCardTitle('posts', { title: 'Hello' })).toBe('Hello');
+  });
+
+  it('falls back to series for stories with no title', () => {
+    expect(resolveCardTitle('stories', { series: 'Arctic' })).toBe('Arctic');
+  });
+
+  it('falls back to empty string when nothing else applies', () => {
+    expect(resolveCardTitle('posts', {})).toBe('');
+  });
+});
+
+describe('resolveCardDescription', () => {
+  it('uses data.description when present', () => {
+    expect(resolveCardDescription('posts', { description: 'A post' })).toBe('A post');
+  });
+
+  it('builds a puzzle description from type and difficulty when description is absent', () => {
+    expect(resolveCardDescription('puzzles', { puzzle_type: 'Logic', difficulty: 'Hard' })).toBe('Logic · Hard');
+  });
+
+  it('does not override an explicit puzzle description', () => {
+    expect(resolveCardDescription('puzzles', { description: 'Custom', puzzle_type: 'Logic' })).toBe('Custom');
+  });
+
+  it('returns undefined for a non-puzzle entry with no description', () => {
+    expect(resolveCardDescription('posts', {})).toBeUndefined();
   });
 });

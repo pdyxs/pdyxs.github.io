@@ -2,11 +2,14 @@
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
   import { stackStore, pushToStack, activateCard as activateCardFn, replaceActiveSlot } from '../stores/card-stack-store';
-  import { computeStackLayout } from '../lib/stack-layout';
-  import { parseUidEntry, serializeUidEntry } from '../lib/card-url-params';
+  import { computeStackLayout, cardEntry } from '../lib/stack-layout';
+  import { serialiseStack, deserialiseStack } from '../lib/stack-codec';
+  import type { ParamPairs } from '../lib/stack-codec';
+  import { manifestLookup } from '../lib/stack-manifest-client';
   import { parseCollectionLink } from '../lib/collection-link';
   import { appendStackToUrl, stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../lib/filters';
+  import { markRead } from '../lib/card-view-state';
 
   interface Props {
     activeUid?: string;
@@ -15,9 +18,10 @@
 
   let { activeUid, activeHtml }: Props = $props();
 
+  // Keyed by LocationEntry.key (== uid for card locations, see stack-layout.ts).
   let cardHtmlCache = $state(new Map<string, string>());
   let cardParams = new Map<string, Record<string, string>>();
-  // UIDs to skip body-open in $effect during VT push (body opens after vt.finished)
+  // Keys to skip body-open in $effect during VT push (body opens after vt.finished)
   let skipBodyOpen = new Set<string>();
   let overflowElLeft = $state<HTMLElement | null>(null);
   let overflowElRight = $state<HTMLElement | null>(null);
@@ -30,12 +34,12 @@
   untrack(() => {
     if (activeUid && activeHtml) {
       cardHtmlCache.set(activeUid, activeHtml);
-      stackStore.set({ cards: [{ uid: activeUid }], activeUid });
+      stackStore.set({ entries: [cardEntry(activeUid)], activeKey: activeUid });
     }
   });
 
   const layout = $derived(computeStackLayout($stackStore));
-  const hasCards = $derived($stackStore.cards.length > 0);
+  const hasCards = $derived($stackStore.entries.length > 0);
 
   $effect(() => {
     const stackEl = document.getElementById('card-stack');
@@ -43,7 +47,7 @@
     stackEl?.style.setProperty('--num-right-collapsed', String(layout.numRightCollapsed));
 
     for (const card of layout.visible) {
-      const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(card.uid)}"]`);
+      const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(card.key)}"]`);
       if (!el) continue;
       el.classList.toggle('stack-card--active', card.isActive);
       el.classList.toggle('stack-card--collapsed', card.isCollapsed);
@@ -51,7 +55,7 @@
       el.dataset.side = card.side;
       const bw = el.querySelector<HTMLElement>('.body-wrapper');
       // During VT push, suppress body-open until vt.finished
-      if (bw) bw.classList.toggle('open', card.isActive && !skipBodyOpen.has(card.uid));
+      if (bw) bw.classList.toggle('open', card.isActive && !skipBodyOpen.has(card.key));
     }
   });
 
@@ -77,20 +81,34 @@
     return url.startsWith('/card/') ? url.slice('/card/'.length) : url;
   }
 
-  function getCardTitle(uid: string): string {
-    const html = cardHtmlCache.get(uid);
-    if (!html) return uid;
+  function getCardTitle(key: string): string {
+    const html = cardHtmlCache.get(key);
+    if (!html) return key;
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    return tmp.querySelector('.card-header-title')?.textContent?.trim() ?? uid;
+    return tmp.querySelector('.card-header-title')?.textContent?.trim() ?? key;
+  }
+
+  // Reads the data-content-hash the card's own page rendered (see
+  // card/[...path].astro) and records the view-state transition to 'read'.
+  // No-op if the card's HTML isn't cached yet or carries no hash (e.g. a
+  // collection view has no single card identity to hash).
+  function markReadIfKnown(key: string) {
+    const html = cardHtmlCache.get(key);
+    if (!html) return;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const hash = tmp.querySelector('.stack-card')?.getAttribute('data-content-hash');
+    if (hash) markRead(key, hash);
   }
 
   function toggleOverflow(side: 'left' | 'right') {
     overflowOpen = overflowOpen === side ? false : side;
   }
 
-  function activateHidden(uid: string) {
-    stackStore.update(s => activateCardFn(s, uid));
+  function activateHidden(key: string) {
+    stackStore.update(s => activateCardFn(s, key));
+    markReadIfKnown(key);
     overflowOpen = false;
     updateUrl();
   }
@@ -128,30 +146,22 @@
   function updateUrl(method: 'push' | 'replace' = 'push') {
     const state = get(stackStore);
     const historyFn = method === 'replace' ? history.replaceState.bind(history) : history.pushState.bind(history);
-    if (state.cards.length === 0) {
-      historyFn(null, '', '/');
-      return;
+
+    const paramsByKey = new Map<string, ParamPairs>();
+    for (const [key, params] of cardParams) {
+      const entries = Object.entries(params).filter(([, v]) => v != null) as ParamPairs;
+      if (entries.length) paramsByKey.set(key, entries);
     }
-    const active = state.activeUid ?? state.cards[state.cards.length - 1].uid;
-    const activeIndex = state.cards.findIndex(c => c.uid === active);
-    const fromUids = state.cards.slice(0, activeIndex).map(c => c.uid);
-    const toUids = state.cards.slice(activeIndex + 1).map(c => c.uid);
-    const basePath = `/card/${active}`;
-    const params = new URLSearchParams();
-    if (fromUids.length) params.set('from', fromUids.map(u => serializeUidEntry(u, cardParams.get(u) ?? {})).join(','));
-    if (toUids.length) params.set('to', toUids.map(u => serializeUidEntry(u, cardParams.get(u) ?? {})).join(','));
-    for (const [k, v] of Object.entries(cardParams.get(active) ?? {})) {
-      if (v != null) params.set(k, v);
-    }
-    const query = params.toString();
-    historyFn(null, '', query ? `${basePath}?${query}` : basePath);
+
+    const { path, search } = serialiseStack(state, paramsByKey, manifestLookup);
+    historyFn(null, '', `${path}${search}`);
   }
 
   async function replaceSlot(url: string) {
     const uid = urlToUid(url);
     const ok = await fetchAndCacheCard(uid);
     if (!ok) return;
-    stackStore.update(s => replaceActiveSlot(s, uid));
+    stackStore.update(s => replaceActiveSlot(s, cardEntry(uid)));
     updateUrl('replace');
   }
 
@@ -160,8 +170,9 @@
     const state = get(stackStore);
 
     // Already in stack → just activate
-    if (state.cards.some(c => c.uid === uid)) {
+    if (state.entries.some(e => e.key === uid)) {
       stackStore.update(s => activateCardFn(s, uid));
+      markReadIfKnown(uid);
       updateUrl();
       await tick();
       document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`)
@@ -203,13 +214,13 @@
       stackStore.update(s => {
         let state = s;
         for (const pendingUid of toSeed) {
-          state = pushToStack(state, pendingUid);
+          state = pushToStack(state, cardEntry(pendingUid));
         }
-        const activeIdx = state.activeUid
-          ? state.cards.findIndex(c => c.uid === state.activeUid)
-          : state.cards.length - 1;
-        const base = activeIdx >= 0 ? { ...state, cards: state.cards.slice(0, activeIdx + 1) } : state;
-        return pushToStack(base, uid);
+        const activeIdx = state.activeKey
+          ? state.entries.findIndex(e => e.key === state.activeKey)
+          : state.entries.length - 1;
+        const base = activeIdx >= 0 ? { ...state, entries: state.entries.slice(0, activeIdx + 1) } : state;
+        return pushToStack(base, cardEntry(uid));
       });
     };
 
@@ -263,6 +274,7 @@
       await tick();
     }
 
+    markReadIfKnown(uid);
     updateUrl();
     document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`)
       ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -270,14 +282,14 @@
 
   async function closeCard(uid: string) {
     const state = get(stackStore);
-    const idx = state.cards.findIndex(c => c.uid === uid);
+    const idx = state.entries.findIndex(e => e.key === uid);
     if (idx === -1) return;
 
     cardParams.delete(uid);
-    const newCards = state.cards.slice(0, idx);
+    const newEntries = state.entries.slice(0, idx);
     const homepage = document.getElementById('homepage');
 
-    if (newCards.length === 0) {
+    if (newEntries.length === 0) {
       // Stack becomes empty — return to homepage
       const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
       const bw = el?.querySelector<HTMLElement>('.body-wrapper');
@@ -313,7 +325,7 @@
         matchingLink.style.viewTransitionName = 'panel-card-close';
 
         const vt = startVT(() => {
-          flushSync(() => stackStore.set({ cards: [], activeUid: null }));
+          flushSync(() => stackStore.set({ entries: [], activeKey: null }));
           if (homepage) homepage.hidden = false;
           history.pushState(null, '', '/');
         });
@@ -321,7 +333,7 @@
         await vt.finished;
         matchingLink.style.viewTransitionName = '';
       } else {
-        stackStore.set({ cards: [], activeUid: null });
+        stackStore.set({ entries: [], activeKey: null });
         if (homepage) {
           homepage.hidden = false;
         } else {
@@ -330,42 +342,44 @@
         history.pushState(null, '', '/');
       }
     } else {
-      // Trim stack to cards before the closed card, activate the new last card
-      const newActiveUid = newCards[newCards.length - 1].uid;
-      stackStore.update(s => ({ ...s, cards: newCards, activeUid: newActiveUid }));
+      // Trim stack to entries before the closed card, activate the new last one
+      const newActiveKey = newEntries[newEntries.length - 1].key;
+      stackStore.update(s => ({ ...s, entries: newEntries, activeKey: newActiveKey }));
       updateUrl();
       await tick();
-      document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(newActiveUid)}"]`)
+      document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(newActiveKey)}"]`)
         ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
 
   async function initFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const fromEntries = params.get('from')?.split(',').filter(Boolean) ?? [];
-    const toEntries = params.get('to')?.split(',').filter(Boolean) ?? [];
-    if (!fromEntries.length && !toEntries.length) return;
+    const { state: parsed, paramsByKey } = deserialiseStack(window.location.pathname, window.location.search, manifestLookup);
+    if (parsed.entries.length <= 1) return;
 
-    for (const entry of fromEntries) {
-      const { uid, params: entryParams } = parseUidEntry(entry);
-      const ok = await fetchAndCacheCard(uid);
+    const activeIdxInParsed = parsed.entries.findIndex(e => e.key === parsed.activeKey);
+    const fromLocations = parsed.entries.slice(0, activeIdxInParsed);
+    const toLocations = parsed.entries.slice(activeIdxInParsed + 1);
+
+    for (const location of fromLocations) {
+      const ok = await fetchAndCacheCard(location.uid);
       if (ok) {
-        if (Object.keys(entryParams).length > 0) cardParams.set(uid, entryParams);
+        const entryParams = paramsByKey.get(location.key);
+        if (entryParams?.length) cardParams.set(location.key, Object.fromEntries(entryParams));
         stackStore.update(s => {
-          const activeIdx = s.cards.findIndex(c => c.uid === s.activeUid);
-          const newCards = activeIdx >= 0
-            ? [...s.cards.slice(0, activeIdx), { uid }, ...s.cards.slice(activeIdx)]
-            : [{ uid }, ...s.cards];
-          return { ...s, cards: newCards };
+          const activeIdx = s.entries.findIndex(e => e.key === s.activeKey);
+          const newEntries = activeIdx >= 0
+            ? [...s.entries.slice(0, activeIdx), location, ...s.entries.slice(activeIdx)]
+            : [location, ...s.entries];
+          return { ...s, entries: newEntries };
         });
       }
     }
-    for (const entry of toEntries) {
-      const { uid, params: entryParams } = parseUidEntry(entry);
-      const ok = await fetchAndCacheCard(uid);
+    for (const location of toLocations) {
+      const ok = await fetchAndCacheCard(location.uid);
       if (ok) {
-        if (Object.keys(entryParams).length > 0) cardParams.set(uid, entryParams);
-        stackStore.update(s => ({ ...s, cards: [...s.cards, { uid }] }));
+        const entryParams = paramsByKey.get(location.key);
+        if (entryParams?.length) cardParams.set(location.key, Object.fromEntries(entryParams));
+        stackStore.update(s => ({ ...s, entries: [...s.entries, location] }));
       }
     }
   }
@@ -375,7 +389,7 @@
     const homepage = document.getElementById('homepage');
 
     // If SSR-seeded card present, hide homepage
-    if (get(stackStore).cards.length > 0 && homepage) {
+    if (get(stackStore).entries.length > 0 && homepage) {
       homepage.hidden = true;
     }
 
@@ -385,7 +399,7 @@
     // If on the filter page with a browse stack, prefetch those cards so they're
     // ready to seed the store the moment the user opens their first card.
     const browseUids = stackFromParams(new URLSearchParams(window.location.search));
-    if (browseUids.length > 0 && get(stackStore).cards.length === 0) {
+    if (browseUids.length > 0 && get(stackStore).entries.length === 0) {
       pendingBrowseStack = [...browseUids];
       browseUids.forEach(uid => fetchAndCacheCard(uid));
     }
@@ -416,7 +430,9 @@
 
       const collapsedCard = target.closest<HTMLElement>('.stack-card--collapsed');
       if (collapsedCard?.dataset.uid) {
-        stackStore.update(s => activateCardFn(s, collapsedCard.dataset.uid!));
+        const key = collapsedCard.dataset.uid;
+        stackStore.update(s => activateCardFn(s, key));
+        markReadIfKnown(key);
         collapsedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         updateUrl();
       }
@@ -446,7 +462,7 @@
         if (action.type === 'filter') {
           // Navigate to browse view with filter pre-applied, encoding the current stack
           // in the URL so the front page can render a breadcrumb trail back to here.
-          const stackUids = get(stackStore).cards.map(c => c.uid);
+          const stackUids = get(stackStore).entries.map(e => e.uid);
           window.location.href = appendStackToUrl(stackUids, action.url);
         } else {
           if (action.params) cardParams.set(action.uid, action.params);
@@ -472,7 +488,7 @@
     document.addEventListener('cardparam', onCardParam);
 
     async function onPopstate() {
-      stackStore.set({ cards: [], activeUid: null });
+      stackStore.set({ entries: [], activeKey: null });
       const path = window.location.pathname;
       if (path === '/' || path === '') {
         if (homepage) homepage.hidden = false;
@@ -482,7 +498,8 @@
         const uid = path.slice('/card/'.length);
         const ok = await fetchAndCacheCard(uid);
         if (ok) {
-          stackStore.update(s => pushToStack(s, uid));
+          stackStore.update(s => pushToStack(s, cardEntry(uid)));
+          markReadIfKnown(uid);
           if (homepage) homepage.hidden = true;
           await initFromUrl();
         }
@@ -502,13 +519,13 @@
 
 <div id="card-stack" hidden={!hasCards}>
   <div class="card-stack-inner">
-  {#each layout.renderItems as item (item.kind === 'card' ? 'card-' + item.uid : item.kind === 'fan-corner' ? 'fc-' + item.forUid : 'overflow-' + item.side)}
+  {#each layout.renderItems as item (item.kind === 'card' ? 'card-' + item.key : item.kind === 'fan-corner' ? 'fc-' + item.forKey : 'overflow-' + item.side)}
     {#if item.kind === 'card' && item.side === 'active'}
       <div class="active-card-col">
-        {@html cardHtmlCache.get(item.uid) ?? ''}
+        {@html cardHtmlCache.get(item.key) ?? ''}
       </div>
     {:else if item.kind === 'card'}
-      {@html cardHtmlCache.get(item.uid) ?? ''}
+      {@html cardHtmlCache.get(item.key) ?? ''}
     {:else if item.kind === 'fan-corner'}
       <div class="fan-corner" style="--i:{item.i}; --n:{item.n}"></div>
     {:else if item.kind === 'overflow' && item.side === 'left'}
@@ -525,9 +542,9 @@
         <span class="stack-overflow-label">⋯</span>
         {#if overflowOpen === 'left'}
           <div class="stack-overflow-panel">
-            {#each item.hiddenUids as uid}
-              <button class="stack-overflow-item" onclick={(e) => { e.stopPropagation(); activateHidden(uid); }}>
-                {getCardTitle(uid)}
+            {#each item.hiddenKeys as key}
+              <button class="stack-overflow-item" onclick={(e) => { e.stopPropagation(); activateHidden(key); }}>
+                {getCardTitle(key)}
               </button>
             {/each}
           </div>
@@ -547,9 +564,9 @@
         <span class="stack-overflow-label">⋯</span>
         {#if overflowOpen === 'right'}
           <div class="stack-overflow-panel">
-            {#each item.hiddenUids as uid}
-              <button class="stack-overflow-item" onclick={(e) => { e.stopPropagation(); activateHidden(uid); }}>
-                {getCardTitle(uid)}
+            {#each item.hiddenKeys as key}
+              <button class="stack-overflow-item" onclick={(e) => { e.stopPropagation(); activateHidden(key); }}>
+                {getCardTitle(key)}
               </button>
             {/each}
           </div>

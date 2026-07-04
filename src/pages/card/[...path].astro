@@ -1,6 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
-import { getAllCards } from '../../lib/cards';
+import { getAllCards, computeContentHash, resolveCardTitle, resolveCardDescription } from '../../lib/cards';
 import Base from '../../layouts/Base.astro';
 import CardHeader from '../../components/CardHeader.astro';
 import StackNav from '../../components/StackNav.astro';
@@ -55,12 +55,26 @@ const Renderer =
 const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name ?? '';
 const titleSuffix: string | undefined = (entry?.data as any)?.titleSuffix;
 const NavRenderer = !isCollectionView ? (NAV_RENDERERS[collection] ?? null) : null;
+
+// Content hash for client-side view-state tracking (markRead/markDisplayed).
+// Uses the exact same formula as getAllCards() (resolveCardTitle/resolveCardDescription
+// + computeContentHash) so a card opened here hashes identically to its FrontPage slot
+// entry — a mismatch would make getViewState() think the content changed on every visit.
+const contentHash: string | undefined = !isCollectionView && entry
+  ? collection === 'tag'
+    ? computeContentHash(entry.data.name, entry.data.description)
+    : computeContentHash(
+        resolveCardTitle(collection, entry.data),
+        resolveCardDescription(collection, entry.data),
+        entry.body
+      )
+  : undefined;
 ---
 
 <Base title={title}>
   <div id="homepage" hidden></div>
   <StackNav activeUid={path}>
-    <div class="stack-card stack-card--active" data-uid={path}>
+    <div class="stack-card stack-card--active" data-uid={path} data-content-hash={contentHash}>
       {CollectionViewRenderer ? (
         <CollectionViewRenderer />
       ) : NavRenderer ? (

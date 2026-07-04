@@ -111,6 +111,25 @@ export function getCardsForTag(
   return [...prefixMatched, ...literalMatched].sort(compareByDateDesc);
 }
 
+/** Resolves a card's display title, applying the stories-fallback-to-series rule. */
+export function resolveCardTitle(
+  collection: string,
+  data: { title?: string; series?: string }
+): string {
+  return data.title ?? (collection === 'stories' ? (data.series ?? '') : '') ?? '';
+}
+
+/** Resolves a card's description, synthesising one from puzzle metadata when absent. */
+export function resolveCardDescription(
+  collection: string,
+  data: { description?: string; puzzle_type?: string; difficulty?: string }
+): string | undefined {
+  if (collection === 'puzzles' && !data.description) {
+    return [data.puzzle_type, data.difficulty].filter(Boolean).join(' · ') || undefined;
+  }
+  return data.description;
+}
+
 function djb2Hash(s: string): number {
   let h = 5381;
   for (let i = 0; i < s.length; i++) {
@@ -150,11 +169,8 @@ export async function getAllCards(): Promise<CardMeta[]> {
         const id = e.id.slice(slashIdx + 1);
         const config = configMap.get(collection) ?? {};
 
-        const title = e.data.title ?? (collection === 'stories' ? (e.data.series ?? '') : '');
-        let description = e.data.description;
-        if (collection === 'puzzles' && !description) {
-          description = [e.data.puzzle_type, e.data.difficulty].filter(Boolean).join(' · ') || undefined;
-        }
+        const title = resolveCardTitle(collection, e.data);
+        const description = resolveCardDescription(collection, e.data);
 
         const baseTags = await effectiveTags(collection, id, e.data.tags, reader);
         const finalTags = e.data.date
