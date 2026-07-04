@@ -2,7 +2,7 @@ import { filterStateFromParams, filterStateToParams, applyFilters } from './filt
 import type { FilterState, Dimension } from './filters';
 import type { SerialisedCardFull } from './frontpage';
 
-export function createFilterState(getCards: () => SerialisedCardFull[]) {
+export function createFilterState(getCards: () => SerialisedCardFull[], basePath: string = '/') {
   let filterState = $state<FilterState>({ selections: {} });
 
   const cardMetas = $derived(
@@ -18,7 +18,7 @@ export function createFilterState(getCards: () => SerialisedCardFull[]) {
   function pushToUrl(state: FilterState) {
     const params = filterStateToParams(state);
     const query = params.toString();
-    history.pushState(null, '', query ? `/?${query}` : '/');
+    history.pushState(null, '', query ? `${basePath}?${query}` : basePath);
   }
 
   function toggle(dim: Dimension, value: string) {

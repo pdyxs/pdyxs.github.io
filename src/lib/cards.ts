@@ -66,12 +66,6 @@ export function tagIdToFilterValue(id: string): string {
   return slashIdx !== -1 ? id.slice(0, slashIdx) + ':' + id.slice(slashIdx + 1) : id;
 }
 
-/** Inverse of tagIdToFilterValue: converts a filter-value tag ("what:projects/games") back to its tag collection entry id ("what/projects/games"). */
-export function filterValueToTagId(tagValue: string): string {
-  const colonIdx = tagValue.indexOf(':');
-  return colonIdx !== -1 ? tagValue.slice(0, colonIdx) + '/' + tagValue.slice(colonIdx + 1) : tagValue;
-}
-
 function compareByDateDesc(a: CardMeta, b: CardMeta): number {
   if (!a.date && !b.date) return 0;
   if (!a.date) return 1;

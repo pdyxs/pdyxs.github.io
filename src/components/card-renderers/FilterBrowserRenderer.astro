@@ -1,9 +1,12 @@
 ---
 import { getAllCards } from '../../lib/cards';
+import { buildAllDimensionHierarchies } from '../../lib/browse-helpers';
 import CardHeader from '../CardHeader.astro';
 import FilterResults from '../FilterResults.svelte';
 
 const allCards = await getAllCards();
+const declaredTagIds = allCards.filter(c => c.collection === 'tag').map(c => c.id);
+const hierarchies = buildAllDimensionHierarchies(allCards, declaredTagIds);
 const serialisedCards = allCards.map(card => ({
   ...card,
   date: card.date?.toISOString() ?? null,
@@ -16,7 +19,7 @@ const serialisedCards = allCards.map(card => ({
 <div class="body-wrapper open">
   <div class="stack-card-body">
     <div class="stack-card-body-inner">
-      <FilterResults client:load cards={serialisedCards} />
+      <FilterResults client:load cards={serialisedCards} {hierarchies} />
     </div>
   </div>
 </div>

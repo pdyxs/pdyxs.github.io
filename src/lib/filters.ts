@@ -114,6 +114,22 @@ export function applyFilters(
     });
 }
 
+/**
+ * Builds the /card/filter push URL that selects a single tag value's dimension
+ * subtree, e.g. "who:about" -> "/card/filter?filter.who=who%3Aabout".
+ *
+ * Returns the bare filter card URL for values with no recognised dimension
+ * prefix (nothing to pre-select).
+ */
+export function filterUrlForTagValue(tagValue: string): string {
+    const colonIdx = tagValue.indexOf(":");
+    if (colonIdx === -1) return "/card/filter";
+    const dim = tagValue.slice(0, colonIdx) as Dimension;
+    if (!(DIMENSIONS as readonly string[]).includes(dim)) return "/card/filter";
+    const params = filterStateToParams({ selections: { [dim]: [tagValue] } });
+    return `/card/filter?${params.toString()}`;
+}
+
 // ---------------------------------------------------------------------------
 // URL encoding / decoding
 // ---------------------------------------------------------------------------

@@ -2,7 +2,6 @@
 import type { RenderResult } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
 import { resolveLocalImage, resolveGalleryImages } from '../../lib/images';
-import { filterValueToTagId } from '../../lib/cards';
 import ImageGallery from '../ImageGallery.svelte';
 
 interface Action {
@@ -117,7 +116,7 @@ const galleryImages = await Promise.all(
     {tags.length > 0 && (
       <ul class="generic-tags" aria-label="Tags">
         {tags.map(tag => (
-          <li><a href={`tag:${filterValueToTagId(tag)}`} class="generic-tag">{tag}</a></li>
+          <li><a href={`tag:${tag}`} class="generic-tag">{tag}</a></li>
         ))}
       </ul>
     )}

@@ -189,7 +189,7 @@ describe('GenericRenderer', () => {
     expect(link?.getAttribute('href')).toBe('https://apple.com/app');
   });
 
-  it('renders tags as links using the tag: protocol, addressed by tag entry id', async () => {
+  it('renders tags as links using the tag: protocol, carrying the raw filter value', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
       props: {
@@ -205,7 +205,7 @@ describe('GenericRenderer', () => {
     expect(links[0].textContent).toBe('gamedev');
     expect(links[0].getAttribute('href')).toBe('tag:gamedev');
     expect(links[1].textContent).toBe('who:about');
-    expect(links[1].getAttribute('href')).toBe('tag:who/about');
+    expect(links[1].getAttribute('href')).toBe('tag:who:about');
   });
 
   it('renders no tags list when entry has no tags', async () => {

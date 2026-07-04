@@ -4,6 +4,7 @@ import {
   applyFilters,
   filterStateToParams,
   filterStateFromParams,
+  filterUrlForTagValue,
 } from './filters';
 import type { FilterState } from './filters';
 import { fakeCardMeta } from '../test/fixtures';
@@ -311,5 +312,32 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
     const decoded = filterStateFromParams(params);
     expect(decoded.selections.what).toEqual(['what:projects']);
     expect(decoded.selections.why).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// filterUrlForTagValue
+// ---------------------------------------------------------------------------
+
+describe('filterUrlForTagValue', () => {
+  it('builds a /card/filter URL pre-selecting the tag value on its dimension', () => {
+    const url = filterUrlForTagValue('who:about');
+    const parsed = new URL(url, 'http://x');
+    expect(parsed.pathname).toBe('/card/filter');
+    expect(parsed.searchParams.getAll('filter.who')).toEqual(['who:about']);
+  });
+
+  it('preserves nested tag values', () => {
+    const url = filterUrlForTagValue('what:projects/games');
+    const parsed = new URL(url, 'http://x');
+    expect(parsed.searchParams.getAll('filter.what')).toEqual(['what:projects/games']);
+  });
+
+  it('returns the bare filter URL for a value with no dimension prefix', () => {
+    expect(filterUrlForTagValue('gamedev')).toBe('/card/filter');
+  });
+
+  it('returns the bare filter URL for an unrecognised dimension prefix', () => {
+    expect(filterUrlForTagValue('bogus:value')).toBe('/card/filter');
   });
 });

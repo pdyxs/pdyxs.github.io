@@ -6,6 +6,7 @@
   import { parseUidEntry, serializeUidEntry } from '../lib/card-url-params';
   import { parseCollectionLink } from '../lib/collection-link';
   import { appendStackToUrl, stackFromParams } from '../lib/browse-stack';
+  import { filterUrlForTagValue } from '../lib/filters';
 
   interface Props {
     activeUid?: string;
@@ -434,7 +435,7 @@
       const tagLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="tag:"]');
       if (tagLink) {
         e.preventDefault();
-        pushCard(`/card/tag/${tagLink.getAttribute('href')!.slice(4)}`);
+        pushCard(filterUrlForTagValue(tagLink.getAttribute('href')!.slice(4)));
         return;
       }
       const colLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="collection:"]');

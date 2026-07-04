@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { load as parseYaml } from 'js-yaml';
-import { getCardsForTag, filterValueToTagId } from './cards';
+import { getCardsForTag } from './cards';
 import { COLLECTION_RENDERERS } from './renderers';
 import { fakeCardMeta, fakeTagEntry } from '../test/fixtures';
 import FilterRenderer from '../components/card-renderers/FilterRenderer.astro';
@@ -123,19 +123,5 @@ describe('getCardsForTag', () => {
     const result = getCardsForTag(tag, [byPrefix, byAlias]);
     expect(result).toEqual(expect.arrayContaining([byPrefix, byAlias]));
     expect(result).toHaveLength(2);
-  });
-});
-
-describe('filterValueToTagId', () => {
-  it('converts a dimension-prefixed filter value back to its tag entry id', () => {
-    expect(filterValueToTagId('who:about')).toBe('who/about');
-  });
-
-  it('converts a nested filter value, replacing only the first colon', () => {
-    expect(filterValueToTagId('what:projects/games')).toBe('what/projects/games');
-  });
-
-  it('leaves a flat tag with no colon unchanged', () => {
-    expect(filterValueToTagId('gamedev')).toBe('gamedev');
   });
 });
