@@ -1,13 +1,15 @@
 <script lang="ts">
   import { createFilterState } from '../../lib/use-filter-state.svelte';
   import type { SerialisedCardFull } from '../../lib/frontpage';
+  import type { TagDisplay } from '../../lib/tag-display';
   import BrowseResults from '../BrowseResults.svelte';
 
   interface Props {
     cards: SerialisedCardFull[];
+    tagDisplay?: Record<string, TagDisplay>;
   }
 
-  let { cards }: Props = $props();
+  let { cards, tagDisplay = {} }: Props = $props();
 
   // Re-derives the filter from the current URL on mount/popstate and narrows
   // `cards` with the same applyFilters() used everywhere else. `cards` here
@@ -17,4 +19,4 @@
   const filter = createFilterState(() => cards);
 </script>
 
-<BrowseResults cards={filter.filteredCards} />
+<BrowseResults cards={filter.filteredCards} {tagDisplay} />

@@ -1,11 +1,15 @@
 <script lang="ts">
   import type { SerialisedCard } from '../lib/browse-helpers';
+  import { displayFor } from '../lib/tag-display';
+  import type { TagDisplay } from '../lib/tag-display';
 
   interface Props {
     card: SerialisedCard;
+    /** Flat value -> display-name map from the tag registry (see tag-registry.ts's flattenTagDisplay), serialised in from the server. */
+    tagDisplay?: Record<string, TagDisplay>;
   }
 
-  let { card }: Props = $props();
+  let { card, tagDisplay = {} }: Props = $props();
 </script>
 
 <li class="browse-card-item" data-push-card={card.uid}>
@@ -30,7 +34,7 @@
   {#if card.tags.length > 0}
     <ul class="browse-card-tags" aria-label="Tags">
       {#each card.tags as tag}
-        <li class="browse-card-tag">{tag}</li>
+        <li class="browse-card-tag">{displayFor(tag, tagDisplay).name}</li>
       {/each}
     </ul>
   {/if}

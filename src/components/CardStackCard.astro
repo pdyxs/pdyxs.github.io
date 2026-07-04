@@ -12,14 +12,17 @@ import { getCollection, render } from 'astro:content';
 import { computeContentHash, resolveCardTitle, resolveCardDescription } from '../lib/cards';
 import { resolveLocation, resolveCardRenderer } from '../lib/location-resolver';
 import { resolveFolderCascade, makeFileReader } from '../lib/folder-config';
+import type { TagDisplay } from '../lib/tag-display';
 import CardHeader from './CardHeader.astro';
 import GenericRenderer from './card-renderers/GenericRenderer.astro';
 
 interface Props {
   path: string;
+  /** Flat value -> display-name map from the tag registry, threaded down to whichever renderer shows per-card tag chips. */
+  tagDisplay?: Record<string, TagDisplay>;
 }
 
-const { path } = Astro.props;
+const { path, tagDisplay = {} } = Astro.props;
 const resolution = resolveLocation(path);
 
 let entries: any[] = [];
@@ -76,7 +79,7 @@ const contentHash: string | undefined =
     <CollectionViewComponent />
   ) : NavComponent ? (
     <NavComponent {title} {titleSuffix} {entry} allEntries={entries}>
-      <Renderer {entry} {Content} />
+      <Renderer {entry} {Content} {tagDisplay} />
     </NavComponent>
   ) : (
     <>
@@ -86,7 +89,7 @@ const contentHash: string | undefined =
       <div class="body-wrapper open">
         <div class="stack-card-body">
           <div class="stack-card-body-inner">
-            <Renderer {entry} {Content} />
+            <Renderer {entry} {Content} {tagDisplay} />
           </div>
         </div>
       </div>

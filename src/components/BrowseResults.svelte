@@ -1,12 +1,14 @@
 <script lang="ts">
   import type { CardMeta } from '../lib/cards';
+  import type { TagDisplay } from '../lib/tag-display';
   import BrowseCard from './BrowseCard.svelte';
 
   interface Props {
     cards: CardMeta[];
+    tagDisplay?: Record<string, TagDisplay>;
   }
 
-  let { cards }: Props = $props();
+  let { cards, tagDisplay = {} }: Props = $props();
 </script>
 
 <main class="fp-browse-grid" aria-label="Browse results">
@@ -19,7 +21,7 @@
   {:else}
     <ul class="fp-browse-list">
       {#each cards as card (card.uid)}
-        <BrowseCard {card} />
+        <BrowseCard {card} {tagDisplay} />
       {/each}
     </ul>
   {/if}
