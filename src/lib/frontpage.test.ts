@@ -4,20 +4,24 @@ import type { FrontPageConfig, SerialisedCardFull } from './frontpage';
 import { fakeCardMeta } from '../test/fixtures';
 import { clearViewState } from './card-view-state';
 import type { FilterState } from './filters';
+import { DEFAULT_BROWSE_LENS_ID } from './lens-registry';
 
 // ---------------------------------------------------------------------------
 // buildBrowseUrl
 // ---------------------------------------------------------------------------
 
 describe('buildBrowseUrl', () => {
-  it('returns / with no params for an empty filter', () => {
-    expect(buildBrowseUrl({ selections: {} })).toBe('/');
+  // Home (the sole acceptsFilters:false lens) can't render a filter, so
+  // buildBrowseUrl always targets the fallback browse lens (issue #26) —
+  // never bare `/`, which would silently drop the filter.
+  it('routes to the default browse lens with no params for an empty filter', () => {
+    expect(buildBrowseUrl({ selections: {} })).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
   });
 
   it('includes filter params for a single-dimension filter', () => {
     const url = buildBrowseUrl({ selections: { what: ['what:projects'] } });
     const parsed = new URL(url, 'http://x');
-    expect(parsed.pathname).toBe('/');
+    expect(parsed.pathname).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
     expect(parsed.searchParams.getAll('filter.what')).toEqual(['what:projects']);
   });
 
@@ -120,7 +124,7 @@ describe('resolveFrontPageSlots', () => {
 
     expect(slots).toHaveLength(1);
     expect(slots[0].type).toBe('filter');
-    expect(slots[0]).toMatchObject({ label: 'A Project', browseUrl: '/?filter.what=what%3Aprojects' });
+    expect(slots[0]).toMatchObject({ label: 'A Project', browseUrl: `/lens/${DEFAULT_BROWSE_LENS_ID}?filter.what=what%3Aprojects` });
     expect(['projects/a', 'projects/b']).toContain((slots[0] as any).card?.uid);
   });
 
@@ -129,7 +133,7 @@ describe('resolveFrontPageSlots', () => {
       slots: [{ type: 'filter', label: 'A Project', filter: { selections: { what: ['what:projects'] } } }],
     };
     const { slots } = resolveFrontPageSlots(config, [], new Date('2024-03-15T08:00:00Z'));
-    expect(slots).toEqual([{ type: 'filter', label: 'A Project', card: null, browseUrl: '/?filter.what=what%3Aprojects' }]);
+    expect(slots).toEqual([{ type: 'filter', label: 'A Project', card: null, browseUrl: `/lens/${DEFAULT_BROWSE_LENS_ID}?filter.what=what%3Aprojects` }]);
   });
 
   it('reports the picked filter-slot card as displayed, without writing view-state itself', () => {

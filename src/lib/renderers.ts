@@ -3,10 +3,6 @@ import FilterRenderer from '../components/card-renderers/FilterRenderer.astro';
 import PuzzleRenderer from '../components/card-renderers/PuzzleRenderer.astro';
 import WorkRenderer from '../components/card-renderers/WorkRenderer.astro';
 import SeriesNavRenderer from '../components/card-renderers/SeriesNavRenderer.astro';
-import PostsRenderer from '../components/card-renderers/PostsRenderer.astro';
-import ProjectsRenderer from '../components/card-renderers/ProjectsRenderer.astro';
-import PuzzlesRenderer from '../components/card-renderers/PuzzlesRenderer.astro';
-import FilterBrowserRenderer from '../components/card-renderers/FilterBrowserRenderer.astro';
 
 // Keyed by renderer *name* (the cascaded _config.yaml / frontmatter `renderer`
 // value), not collection name. Only renderers with a dedicated component are
@@ -22,9 +18,8 @@ export const NAV_RENDERERS: Record<string, AstroComponentFactory> = {
   stories: SeriesNavRenderer,
 };
 
-export const COLLECTION_VIEW_RENDERERS: Record<string, AstroComponentFactory> = {
-  posts: PostsRenderer,
-  projects: ProjectsRenderer,
-  puzzles: PuzzlesRenderer,
-  filter: FilterBrowserRenderer,
-};
+// Collection-view browsing pages (bare collection-name uids, e.g. "posts")
+// are retired (issue #26) — "browse a collection" is now the browse lens
+// pre-filtered (see collection-link.ts). This map is kept as the registration
+// point for a future collection-view, but is empty for now.
+export const COLLECTION_VIEW_RENDERERS: Record<string, AstroComponentFactory> = {};

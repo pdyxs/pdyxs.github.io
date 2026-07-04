@@ -16,13 +16,17 @@ function dom(html: string) {
 }
 
 describe('CardStackCard', () => {
-  it('renders a collection-view location using its registered view renderer', async () => {
+  // Collection-view pages (bare uids like "posts") are retired (issue #26) —
+  // COLLECTION_VIEW_RENDERERS is empty, so a bare collection name resolves to
+  // `unknown` and falls back to a plain (empty) card shell rather than
+  // crashing.
+  it('renders a bare collection name with no registered view renderer as an empty card shell', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(CardStackCard, { props: { path: 'posts' } });
     const div = dom(html);
 
     expect(div.querySelector('.stack-card')?.getAttribute('data-uid')).toBe('posts');
-    expect(div.querySelector('.card-header-title')?.textContent).toContain('Writing');
+    expect(div.querySelector('.card-header')).not.toBeNull();
   });
 
   it('renders a plain card location with a CardHeader + the resolved renderer', async () => {

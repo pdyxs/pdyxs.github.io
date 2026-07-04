@@ -8,6 +8,7 @@ import {
 } from './filters';
 import type { FilterState } from './filters';
 import { fakeCardMeta } from '../test/fixtures';
+import { DEFAULT_BROWSE_LENS_ID } from './lens-registry';
 
 // ---------------------------------------------------------------------------
 // isValidFilterValue
@@ -320,10 +321,12 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
 // ---------------------------------------------------------------------------
 
 describe('filterUrlForTagValue', () => {
-  it('builds a /card/filter URL pre-selecting the tag value on its dimension', () => {
+  // /card/filter is retired (issue #26) — tag chips now push the fallback
+  // browse lens (DEFAULT_BROWSE_LENS_ID), same as buildBrowseUrl.
+  it('builds a browse-lens URL pre-selecting the tag value on its dimension', () => {
     const url = filterUrlForTagValue('who:about');
     const parsed = new URL(url, 'http://x');
-    expect(parsed.pathname).toBe('/card/filter');
+    expect(parsed.pathname).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
     expect(parsed.searchParams.getAll('filter.who')).toEqual(['who:about']);
   });
 
@@ -333,11 +336,11 @@ describe('filterUrlForTagValue', () => {
     expect(parsed.searchParams.getAll('filter.what')).toEqual(['what:projects/games']);
   });
 
-  it('returns the bare filter URL for a value with no dimension prefix', () => {
-    expect(filterUrlForTagValue('gamedev')).toBe('/card/filter');
+  it('returns the bare browse-lens URL for a value with no dimension prefix', () => {
+    expect(filterUrlForTagValue('gamedev')).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
   });
 
-  it('returns the bare filter URL for an unrecognised dimension prefix', () => {
-    expect(filterUrlForTagValue('bogus:value')).toBe('/card/filter');
+  it('returns the bare browse-lens URL for an unrecognised dimension prefix', () => {
+    expect(filterUrlForTagValue('bogus:value')).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
   });
 });

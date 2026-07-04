@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { LENS_REGISTRY, lensUid, getLensDefinition, allLensUids, lensesForDimension, lensIdFromUid, activeLensIcon } from './lens-registry';
+import { LENS_REGISTRY, lensUid, getLensDefinition, allLensUids, lensesForDimension, lensIdFromUid, activeLensIcon, DEFAULT_BROWSE_LENS_ID } from './lens-registry';
 
 describe('LENS_REGISTRY', () => {
   it('declares home and newest as live lenses', () => {
@@ -109,6 +109,22 @@ describe('activeLensIcon', () => {
   it('falls back to a generic marker when the active lens declares no icon', () => {
     const iconless = [{ ...LENS_REGISTRY[0], icon: undefined, id: 'iconless' }];
     expect(activeLensIcon(iconless, 'iconless')).toBe('●');
+  });
+});
+
+describe('DEFAULT_BROWSE_LENS_ID', () => {
+  // The fallback target for filters added somewhere that can't accept them
+  // (e.g. the home lens) — must resolve to a real, filter-accepting lens.
+  it('resolves to a registered lens', () => {
+    expect(getLensDefinition(DEFAULT_BROWSE_LENS_ID)).toBeDefined();
+  });
+
+  it('resolves to a lens that accepts filters', () => {
+    expect(getLensDefinition(DEFAULT_BROWSE_LENS_ID)?.acceptsFilters).toBe(true);
+  });
+
+  it('is the newest lens', () => {
+    expect(DEFAULT_BROWSE_LENS_ID).toBe('newest');
   });
 });
 

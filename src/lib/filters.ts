@@ -38,6 +38,12 @@ export function isValidFilterValue(value: string): boolean {
     return rest.length > 0;
 }
 
+/** Converts a tag collection entry id (e.g. "what/projects/games") to filter-value format ("what:projects/games"). */
+export function tagIdToFilterValue(id: string): string {
+    const slashIdx = id.indexOf("/");
+    return slashIdx !== -1 ? id.slice(0, slashIdx) + ":" + id.slice(slashIdx + 1) : id;
+}
+
 // ---------------------------------------------------------------------------
 // Prefix matching
 // ---------------------------------------------------------------------------
@@ -54,6 +60,7 @@ function tagMatchesPrefix(tag: string, prefix: string): boolean {
 // ---------------------------------------------------------------------------
 
 import type { CardMeta } from "./cards";
+import { DEFAULT_BROWSE_LENS_ID } from "./lens-registry";
 
 /**
  * Returns cards that match all active dimension selections.
@@ -115,19 +122,20 @@ export function applyFilters(
 }
 
 /**
- * Builds the /card/filter push URL that selects a single tag value's dimension
- * subtree, e.g. "who:about" -> "/card/filter?filter.who=who%3Aabout".
+ * Builds the browse-lens push URL that selects a single tag value's dimension
+ * subtree, e.g. "who:about" -> "/lens/newest?filter.who=who%3Aabout".
  *
- * Returns the bare filter card URL for values with no recognised dimension
+ * Returns the bare browse-lens URL for values with no recognised dimension
  * prefix (nothing to pre-select).
  */
 export function filterUrlForTagValue(tagValue: string): string {
+    const base = `/lens/${DEFAULT_BROWSE_LENS_ID}`;
     const colonIdx = tagValue.indexOf(":");
-    if (colonIdx === -1) return "/card/filter";
+    if (colonIdx === -1) return base;
     const dim = tagValue.slice(0, colonIdx) as Dimension;
-    if (!(DIMENSIONS as readonly string[]).includes(dim)) return "/card/filter";
+    if (!(DIMENSIONS as readonly string[]).includes(dim)) return base;
     const params = filterStateToParams({ selections: { [dim]: [tagValue] } });
-    return `/card/filter?${params.toString()}`;
+    return `${base}?${params.toString()}`;
 }
 
 // ---------------------------------------------------------------------------

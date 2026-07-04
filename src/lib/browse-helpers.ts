@@ -4,8 +4,7 @@
 // render navigable dimension hierarchies.
 
 import type { CardMeta } from './cards';
-import { tagIdToFilterValue } from './cards';
-import { DIMENSIONS, isValidFilterValue } from './filters';
+import { DIMENSIONS, isValidFilterValue, tagIdToFilterValue } from './filters';
 import type { Dimension } from './filters';
 
 // ---------------------------------------------------------------------------

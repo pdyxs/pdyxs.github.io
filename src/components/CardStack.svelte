@@ -7,7 +7,7 @@
   import type { ParamPairs } from '../lib/stack-codec';
   import { manifestLookup } from '../lib/stack-manifest-client';
   import { parseCollectionLink } from '../lib/collection-link';
-  import { appendStackToUrl, stackFromParams } from '../lib/browse-stack';
+  import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../lib/filters';
   import { markRead } from '../lib/card-view-state';
 
@@ -360,6 +360,24 @@
       ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  // Pushes a browse-lens URL carrying a `filter.<dim>=...` query (built by
+  // parseCollectionLink/filterUrlForTagValue) through the normal
+  // fetch-and-splice stack model — "browse with filter X" is just another
+  // lens location, never a full-page reload (issue #26). The query rides as
+  // cardParams on the clean lens uid rather than embedded in the uid itself,
+  // reusing the same per-key params serialiseStack already supports.
+  function pushFilteredLens(url: string) {
+    const qIdx = url.indexOf('?');
+    const path = qIdx === -1 ? url : url.slice(0, qIdx);
+    const uid = urlToUid(path);
+    if (qIdx !== -1) {
+      const params: Record<string, string> = {};
+      new URLSearchParams(url.slice(qIdx + 1)).forEach((v, k) => { params[k] = v; });
+      cardParams.set(uid, params);
+    }
+    pushCard(path);
+  }
+
   async function closeCard(uid: string) {
     const state = get(stackStore);
     const idx = state.entries.findIndex(e => e.key === uid);
@@ -510,7 +528,7 @@
       const tagLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="tag:"]');
       if (tagLink) {
         e.preventDefault();
-        pushCard(filterUrlForTagValue(tagLink.getAttribute('href')!.slice(4)));
+        pushFilteredLens(filterUrlForTagValue(tagLink.getAttribute('href')!.slice(4)));
         return;
       }
       const colLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="collection:"]');
@@ -518,15 +536,7 @@
         e.preventDefault();
         const colHref = colLink.getAttribute('href')!.slice(11);
         const action = parseCollectionLink(colHref);
-        if (action.type === 'filter') {
-          // Navigate to browse view with filter pre-applied, encoding the current stack
-          // in the URL so the front page can render a breadcrumb trail back to here.
-          const stackUids = get(stackStore).entries.map(e => e.uid);
-          window.location.href = appendStackToUrl(stackUids, action.url);
-        } else {
-          if (action.params) cardParams.set(action.uid, action.params);
-          pushCard(`/card/${action.uid}`);
-        }
+        pushFilteredLens(action.url);
         return;
       }
     }
