@@ -60,6 +60,11 @@ const DECLARATIONS: LensDeclaration[] = [
     icon: '🕒',
     component: 'newest',
     config: { sortKey: 'date', sortDirection: 'desc' },
+    // Wider than the default column — this lens browses a dense list of
+    // cards and benefits from the extra breathing room on desktop. Still
+    // responsive: on narrow viewports the existing active-card-col / #card-stack
+    // min()-with-viewport logic shrinks it down regardless of this value.
+    width: '960px',
   },
 ];
 

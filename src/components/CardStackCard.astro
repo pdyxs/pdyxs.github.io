@@ -60,6 +60,11 @@ const NavComponent = resolution.kind === 'card' ? resolution.navComponent : null
 
 const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name ?? '';
 const titleSuffix: string | undefined = (entry?.data as any)?.titleSuffix;
+// Per-location responsive width (issue #27) — travels as a data attribute
+// since CardStack.svelte (client-side) has no access to astro:content.
+// Tag entries have no `width` in their schema, so this is naturally
+// undefined for tag locations too.
+const width: string | undefined = resolution.kind === 'card' ? (entry?.data as any)?.width : undefined;
 
 // Content hash for client-side view-state tracking (markRead/markDisplayed).
 // Uses the exact same formula as getAllCards() (resolveCardTitle/resolveCardDescription
@@ -76,7 +81,7 @@ const contentHash: string | undefined =
         )
     : undefined;
 ---
-<div class="stack-card stack-card--active" data-uid={path} data-content-hash={contentHash}>
+<div class="stack-card stack-card--active" data-uid={path} data-content-hash={contentHash} data-width={width}>
   {CollectionViewComponent ? (
     <CollectionViewComponent />
   ) : NavComponent ? (

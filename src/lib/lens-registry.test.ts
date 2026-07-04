@@ -20,6 +20,13 @@ describe('LENS_REGISTRY', () => {
     }
   });
 
+  it('width is a plain CSS-length string when a lens declares one', () => {
+    const newest = getLensDefinition('newest');
+    expect(typeof newest?.width).toBe('string');
+    const home = getLensDefinition('home');
+    expect(home?.width).toBeUndefined();
+  });
+
   it('acceptsFilters defaults to true unless declared otherwise', () => {
     const newest = getLensDefinition('newest');
     expect(newest?.acceptsFilters).toBe(true);

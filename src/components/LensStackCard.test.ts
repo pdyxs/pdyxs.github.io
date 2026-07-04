@@ -86,6 +86,22 @@ describe('LensStackCard', () => {
     expect(div.querySelector('.body-wrapper.open .stack-card-body-inner')).not.toBeNull();
   });
 
+  it('carries the registry-declared width as a data-width attribute', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, { props: { name: 'newest' } });
+    const div = dom(html);
+
+    expect(div.querySelector('.stack-card')?.getAttribute('data-width')).toBe('960px');
+  });
+
+  it('omits data-width when the lens declares no width (falls back to the global default)', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });
+    const div = dom(html);
+
+    expect(div.querySelector('.stack-card')?.hasAttribute('data-width')).toBe(false);
+  });
+
   it('falls back to a not-found message for an unregistered lens name', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(LensStackCard, { props: { name: 'does-not-exist' } });
