@@ -13,8 +13,6 @@ import { getAllCards } from '../../../lib/cards';
 import CardStackCard from '../../../components/CardStackCard.astro';
 
 export async function getStaticPaths() {
-  // getAllCards() already includes tag entries (uid: "tag/<id>") — no need to
-  // separately enumerate getCollection('tag').
   const cards = await getAllCards();
   return cards.map(c => ({ params: { path: c.uid } }));
 }

@@ -6,9 +6,7 @@ import CardStackCard from '../../components/CardStackCard.astro';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
-  // getAllCards() already includes tag entries (uid: "tag/<id>") — no need to
-  // separately enumerate getCollection('tag'). Title comes along as a prop so
-  // this page never has to re-derive it (or branch on "is this a tag?") itself.
+  // Title comes along as a prop so this page never has to re-derive it itself.
   return cards.map(c => ({ params: { path: c.uid }, props: { title: c.title } }));
 }
 

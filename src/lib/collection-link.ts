@@ -10,9 +10,15 @@
 // resolves to a browse-lens filter, so a visitor can never be left at a
 // dead link.
 
-import { DIMENSIONS, isValidFilterValue, tagIdToFilterValue } from './filters';
+import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension, FilterState } from './filters';
 import { buildBrowseUrl } from './frontpage';
+
+/** Converts a legacy slash-form tag id (e.g. "what/projects/games", as used by the retired `tag` collection's `?tag=` query links) to filter-value colon form ("what:projects/games"). */
+function slashIdToFilterValue(id: string): string {
+  const slashIdx = id.indexOf('/');
+  return slashIdx !== -1 ? id.slice(0, slashIdx) + ':' + id.slice(slashIdx + 1) : id;
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,9 +51,10 @@ function filterActionFor(dim: Dimension, value: string): FilterAction {
  *   - `what:puzzles`          → filter on `what:puzzles`
  *   - `what:projects/games`   → filter on `what:projects/games`
  *
- * **`?tag=` query links** carry a legacy tag id in slash-form (as declared in
- * the `tag` content collection, e.g. "what/projects/software-engineering")
- * and are translated to filter colon-form via tagIdToFilterValue():
+ * **`?tag=` query links** carry a legacy tag id in slash-form (as declared by
+ * the now-retired `tag` content collection, e.g.
+ * "what/projects/software-engineering") and are translated to filter
+ * colon-form via slashIdToFilterValue():
  *   - `projects?tag=what/projects/software-engineering` → filter on
  *     `what:projects/software-engineering`
  *
@@ -66,7 +73,7 @@ export function parseCollectionLink(href: string): FilterAction {
   if (queryStr) {
     const tagId = new URLSearchParams(queryStr).get('tag');
     if (tagId) {
-      const filterValue = tagIdToFilterValue(tagId);
+      const filterValue = slashIdToFilterValue(tagId);
       if (isValidFilterValue(filterValue)) {
         const dim = filterValue.slice(0, filterValue.indexOf(':')) as Dimension;
         return filterActionFor(dim, filterValue);
