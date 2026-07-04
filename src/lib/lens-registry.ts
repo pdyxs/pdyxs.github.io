@@ -76,7 +76,39 @@ export function getLensDefinition(id: string): LensDefinition | undefined {
   return LENS_REGISTRY.find(l => l.id === id);
 }
 
+/** Inverse of lensUid(): extracts the id from a "lens/<id>" uid, or null for
+ * a card uid (or a missing uid) — used to find the currently active lens. */
+export function lensIdFromUid(uid: string | null | undefined): string | null {
+  if (!uid || !uid.startsWith('lens/')) return null;
+  return uid.slice('lens/'.length);
+}
+
 /** Every lens uid ("lens/<id>") in the registry — used to drive manifest enumeration. */
 export function allLensUids(): string[] {
   return LENS_REGISTRY.map(l => lensUid(l.id));
+}
+
+/**
+ * Lenses filed under a given dimension (e.g. one of the 5W dimensions) — the
+ * set a DimensionPanel lists above its filter listbox. Plain data lookup only;
+ * never touches lens-components.ts, so the lazy-load boundary holds.
+ */
+export function lensesForDimension(dimension: string): LensDefinition[] {
+  return LENS_REGISTRY.filter(l => l.dimension === dimension);
+}
+
+/** Fallback marker for a lens that declares no icon — always visible when active. */
+const DEFAULT_LENS_ICON = '●';
+
+/**
+ * If `activeLensId` names one of the given lenses, returns the icon to show
+ * above its dimension button (falling back to a generic marker when the lens
+ * declares none); otherwise undefined. Lens selection is single-select
+ * globally (one active stack location), so calling this once per dimension
+ * with that dimension's own lens list naturally yields at most one dimension
+ * showing an icon at a time.
+ */
+export function activeLensIcon(lenses: LensDefinition[], activeLensId: string | null): string | undefined {
+  const active = lenses.find(l => l.id === activeLensId);
+  return active ? (active.icon ?? DEFAULT_LENS_ICON) : undefined;
 }

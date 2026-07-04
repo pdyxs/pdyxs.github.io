@@ -1,8 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { DIMENSIONS } from '../lib/filters';
+  import { DIMENSIONS, filterStateToParams } from '../lib/filters';
   import type { Dimension, FilterState } from '../lib/filters';
   import type { TagNode } from '../lib/browse-helpers';
+  import { lensesForDimension, lensIdFromUid, activeLensIcon } from '../lib/lens-registry';
+  import { stackStore } from '../stores/card-stack-store';
   import DimensionButton from './DimensionButton.svelte';
   import DimensionPanel from './DimensionPanel.svelte';
 
@@ -78,6 +80,21 @@
     drillPath = [];
   }
 
+  // The globally active lens (if any) — sourced from the single source of
+  // truth for stack state, so at most one dimension button ever shows an
+  // icon, and it reflects the active lens wherever it sits in the stack.
+  const activeLensId = $derived(lensIdFromUid($stackStore.activeKey));
+
+  // Current filter selections, serialised so a lens replacement (below)
+  // carries them into the new location — it reads window.location.search
+  // on mount, same as this component does.
+  const carryFilterParams = $derived(filterStateToParams(filterState).toString());
+
+  function selectLensFromPanel(_lensId: string) {
+    openDimension = null;
+    drillPath = [];
+  }
+
   onMount(() => {
     function onDocumentClick(e: MouseEvent) {
       const target = e.target as Element;
@@ -96,6 +113,7 @@
     {@const isActive = dimensionIsActive(dim)}
     {@const isOpen = openDimension === dim}
     {@const hasNodes = (hierarchies[dim] ?? []).length > 0}
+    {@const lenses = lensesForDimension(dim)}
 
     <div class="fp-dim-wrapper">
       <DimensionButton
@@ -105,6 +123,7 @@
         {hasNodes}
         selectionCount={(filterState.selections[dim] ?? []).length}
         onToggle={() => togglePanel(dim)}
+        lensIcon={activeLensIcon(lenses, activeLensId)}
       />
 
       {#if isOpen}
@@ -118,6 +137,9 @@
           onDrillInto={drillInto}
           onDrillBack={drillBack}
           onClear={() => onClearDimension(dim)}
+          {lenses}
+          {carryFilterParams}
+          onSelectLens={selectLensFromPanel}
         />
       {/if}
     </div>
