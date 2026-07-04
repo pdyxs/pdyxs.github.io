@@ -5,45 +5,51 @@ import { fileURLToPath } from 'node:url';
 import { load as parseYaml } from 'js-yaml';
 import { getCardsForTag, resolveCardTitle, resolveCardDescription } from './cards';
 import { COLLECTION_RENDERERS } from './renderers';
+import { resolveCardRenderer } from './location-resolver';
 import { fakeCardMeta, fakeTagEntry } from '../test/fixtures';
 import FilterRenderer from '../components/card-renderers/FilterRenderer.astro';
 import PuzzleRenderer from '../components/card-renderers/PuzzleRenderer.astro';
+import WorkRenderer from '../components/card-renderers/WorkRenderer.astro';
+import GenericRenderer from '../components/card-renderers/GenericRenderer.astro';
 
 const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
 
-/** Renderer per collection, sourced from each directory's _config.yaml (falls back to 'card'), plus the 'tag' collection's hardcoded renderer. */
-function collectionDefaults(): Record<string, string> {
-  const defaults: Record<string, string> = { tag: 'tag' };
+/** Every renderer name declared by a top-level directory's _config.yaml (the 'tag' collection's renderer is hardcoded in getAllCards, not config-driven, so it's excluded here). */
+function rendererNamesInConfigs(): string[] {
+  const names = new Set<string>();
   for (const dir of readdirSync(CONTENT_DIR, { withFileTypes: true })) {
     if (!dir.isDirectory() || dir.name === 'tag') continue;
-    let renderer = 'card';
     try {
       const text = readFileSync(resolve(CONTENT_DIR, dir.name, '_config.yaml'), 'utf-8');
-      renderer = (parseYaml(text) as { renderer?: string } | null)?.renderer ?? 'card';
+      const renderer = (parseYaml(text) as { renderer?: string } | null)?.renderer;
+      if (renderer) names.add(renderer);
     } catch {
-      // no _config.yaml — default renderer applies
+      // no _config.yaml at this level — no renderer declared
     }
-    defaults[dir.name] = renderer;
   }
-  return defaults;
+  return [...names];
 }
 
 describe('renderer registry', () => {
-  it('all non-generic collection default renderers are present in COLLECTION_RENDERERS', () => {
-    const genericRenderers = new Set(['card', 'post', 'project', 'story', 'work']);
-    const nonGenericKeys = Object.entries(collectionDefaults())
-      .filter(([, renderer]) => !genericRenderers.has(renderer))
-      .map(([key]) => key);
-
-    for (const key of nonGenericKeys) {
-      expect(COLLECTION_RENDERERS).toHaveProperty(key);
+  it('every renderer name used in a _config.yaml resolves to a component, guarding against a silently-inert name', () => {
+    for (const name of rendererNamesInConfigs()) {
+      expect(resolveCardRenderer(name)).toBeTypeOf('function');
     }
   });
 
-  it('explicit renderers resolve correctly and generic collections are absent', () => {
+  it('renderer names with a dedicated component resolve to it', () => {
     expect(COLLECTION_RENDERERS['tag']).toBe(FilterRenderer);
-    expect(COLLECTION_RENDERERS['puzzles']).toBe(PuzzleRenderer);
-    expect('posts' in COLLECTION_RENDERERS).toBe(false);
+    expect(COLLECTION_RENDERERS['puzzle']).toBe(PuzzleRenderer);
+    expect(COLLECTION_RENDERERS['work']).toBe(WorkRenderer);
+  });
+
+  it('generic renderer names (post, story, card) are absent from the registry and fall back to GenericRenderer', () => {
+    expect('post' in COLLECTION_RENDERERS).toBe(false);
+    expect('story' in COLLECTION_RENDERERS).toBe(false);
+    expect('card' in COLLECTION_RENDERERS).toBe(false);
+    expect(resolveCardRenderer('post')).toBe(GenericRenderer);
+    expect(resolveCardRenderer('story')).toBe(GenericRenderer);
+    expect(resolveCardRenderer('card')).toBe(GenericRenderer);
   });
 });
 

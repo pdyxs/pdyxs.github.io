@@ -52,15 +52,14 @@ describe('resolveLocation', () => {
 });
 
 describe('resolveCardRenderer', () => {
-  it('uses the per-entry renderer override when present', () => {
-    expect(resolveCardRenderer('work', 'puzzles')).toBe(COLLECTION_RENDERERS.puzzles);
+  it('maps a registered renderer name to its component', () => {
+    expect(resolveCardRenderer('puzzle')).toBe(COLLECTION_RENDERERS.puzzle);
+    expect(resolveCardRenderer('work')).toBe(COLLECTION_RENDERERS.work);
   });
 
-  it('falls back to the collection default renderer', () => {
-    expect(resolveCardRenderer('puzzles')).toBe(COLLECTION_RENDERERS.puzzles);
-  });
-
-  it('falls back to GenericRenderer when neither an override nor a collection default exists', () => {
-    expect(resolveCardRenderer('writing')).toBe(GenericRenderer);
+  it('falls back to GenericRenderer for a renderer name with no dedicated component', () => {
+    expect(resolveCardRenderer('post')).toBe(GenericRenderer);
+    expect(resolveCardRenderer('story')).toBe(GenericRenderer);
+    expect(resolveCardRenderer('card')).toBe(GenericRenderer);
   });
 });

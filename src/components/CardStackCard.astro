@@ -11,6 +11,7 @@
 import { getCollection, render } from 'astro:content';
 import { computeContentHash, resolveCardTitle, resolveCardDescription } from '../lib/cards';
 import { resolveLocation, resolveCardRenderer } from '../lib/location-resolver';
+import { resolveFolderCascade, makeFileReader } from '../lib/folder-config';
 import CardHeader from './CardHeader.astro';
 import GenericRenderer from './card-renderers/GenericRenderer.astro';
 
@@ -39,8 +40,20 @@ if (resolution.kind === 'card') {
   Content = rendered?.Content;
 }
 
-const rendererName: string | undefined = (entry?.data as any)?.renderer;
-const Renderer = resolution.kind === 'card' ? resolveCardRenderer(resolution.collection, rendererName) : GenericRenderer;
+// Same cascaded-renderer resolution as getAllCards() (src/lib/cards.ts): a
+// per-entry frontmatter override wins, else the nearest-ancestor
+// _config.yaml renderer, else 'card'. The 'tag' collection has no
+// _config.yaml cascade of its own — its renderer is always 'tag'.
+let rendererName = 'card';
+if (resolution.kind === 'card') {
+  if (resolution.collection === 'tag') {
+    rendererName = 'tag';
+  } else {
+    const cascade = await resolveFolderCascade(resolution.collection, resolution.id, makeFileReader());
+    rendererName = (entry?.data as any)?.renderer ?? cascade.renderer ?? 'card';
+  }
+}
+const Renderer = resolution.kind === 'card' ? resolveCardRenderer(rendererName) : GenericRenderer;
 
 const CollectionViewComponent = resolution.kind === 'collection-view' ? resolution.component : null;
 const NavComponent = resolution.kind === 'card' ? resolution.navComponent : null;

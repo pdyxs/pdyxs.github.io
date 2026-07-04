@@ -1,51 +1,23 @@
 import { getCollection } from 'astro:content';
-import { load as parseYaml } from 'js-yaml';
-import { readFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { derivePathTags, loadDefaultsTags, mergeEffectiveTags } from './tag-inheritance';
+import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
+import { resolveFolderCascade, makeFileReader } from './folder-config';
 import { TRAVEL_LOG } from '../data/travel-log';
 import { lookupLocationForDate, injectWhereTags } from './where-tags';
 import { applyFilters, DIMENSIONS } from './filters';
 import type { Dimension, FilterState } from './filters';
 
-const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
-
-function makeFileReader() {
-  const cache = new Map<string, string | null>();
-  return async (path: string): Promise<string | null> => {
-    if (cache.has(path)) return cache.get(path)!;
-    try {
-      const text = await readFile(resolve(CONTENT_DIR, path), 'utf-8');
-      cache.set(path, text);
-      return text;
-    } catch {
-      cache.set(path, null);
-      return null;
-    }
-  };
-}
-
-async function effectiveTags(
+/** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
+function effectiveTags(
   collection: string,
   id: string,
   frontmatterTags: string[],
-  reader: (path: string) => Promise<string | null>
-): Promise<string[]> {
+  cascadeTags: string[],
+): string[] {
   return mergeEffectiveTags(
     derivePathTags(collection, id),
-    await loadDefaultsTags(collection, id, reader),
+    cascadeTags,
     frontmatterTags,
   );
-}
-
-async function loadCollectionConfig(
-  collection: string,
-  reader: (path: string) => Promise<string | null>
-): Promise<{ renderer?: string }> {
-  const text = await reader(`${collection}/_config.yaml`);
-  if (!text) return {};
-  return (parseYaml(text) as { renderer?: string } | null) ?? {};
 }
 
 export type CardMeta = {
@@ -150,13 +122,6 @@ export async function getAllCards(): Promise<CardMeta[]> {
 
   const reader = makeFileReader();
 
-  // Pre-load _config.yaml per collection directory
-  const collectionNames = [...new Set(allContent.map(e => e.id.split('/')[0]))];
-  const configMap = new Map<string, { renderer?: string }>();
-  await Promise.all(collectionNames.map(async col => {
-    configMap.set(col, await loadCollectionConfig(col, reader));
-  }));
-
   const contentMeta = await Promise.all(
     allContent
       .filter(e => {
@@ -167,12 +132,12 @@ export async function getAllCards(): Promise<CardMeta[]> {
         const slashIdx = e.id.indexOf('/');
         const collection = e.id.slice(0, slashIdx);
         const id = e.id.slice(slashIdx + 1);
-        const config = configMap.get(collection) ?? {};
+        const cascade = await resolveFolderCascade(collection, id, reader);
 
         const title = resolveCardTitle(collection, e.data);
         const description = resolveCardDescription(collection, e.data);
 
-        const baseTags = await effectiveTags(collection, id, e.data.tags, reader);
+        const baseTags = effectiveTags(collection, id, e.data.tags, cascade.cascadeTags);
         const finalTags = e.data.date
           ? injectWhereTags(baseTags, lookupLocationForDate(e.data.date, TRAVEL_LOG))
           : baseTags;
@@ -185,7 +150,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
           description,
           date: e.data.date,
           tags: finalTags,
-          renderer: e.data.renderer ?? config.renderer ?? 'card',
+          renderer: e.data.renderer ?? cascade.renderer ?? 'card',
           contentHash: computeContentHash(title, description, e.body),
         } satisfies CardMeta;
       })
