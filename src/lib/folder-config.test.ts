@@ -7,7 +7,7 @@ describe('resolveFolderCascade', () => {
       'puzzles/_config.yaml': 'renderer: puzzle\n',
     };
     const readFile = async (path: string) => files[path] ?? null;
-    const result = await resolveFolderCascade('puzzles', 'some-puzzle', readFile);
+    const result = await resolveFolderCascade('puzzles/some-puzzle', readFile);
     expect(result.renderer).toBe('puzzle');
   });
 
@@ -17,7 +17,7 @@ describe('resolveFolderCascade', () => {
       'stories/arctic/_config.yaml': 'renderer: arctic-special\n',
     };
     const readFile = async (path: string) => files[path] ?? null;
-    const result = await resolveFolderCascade('stories', 'arctic/ch-01', readFile);
+    const result = await resolveFolderCascade('stories/arctic/ch-01', readFile);
     expect(result.renderer).toBe('arctic-special');
   });
 
@@ -27,7 +27,7 @@ describe('resolveFolderCascade', () => {
       'stories/arctic/_config.yaml': 'tags:\n  - where:norway\n',
     };
     const readFile = async (path: string) => files[path] ?? null;
-    const result = await resolveFolderCascade('stories', 'arctic/ch-01', readFile);
+    const result = await resolveFolderCascade('stories/arctic/ch-01', readFile);
     expect(result.renderer).toBe('story');
   });
 
@@ -37,13 +37,13 @@ describe('resolveFolderCascade', () => {
       'stories/arctic/_config.yaml': 'tags:\n  - where:norway\n  - why:creative\n',
     };
     const readFile = async (path: string) => files[path] ?? null;
-    const result = await resolveFolderCascade('stories', 'arctic/ch-01', readFile);
+    const result = await resolveFolderCascade('stories/arctic/ch-01', readFile);
     expect(result.cascadeTags).toEqual(['why:creative', 'where:norway']);
   });
 
   it('returns an empty cascadeTags array when no ancestor _config.yaml declares tags', async () => {
     const readFile = async (_path: string) => null;
-    const result = await resolveFolderCascade('posts', '2008-07-27-why-portal', readFile);
+    const result = await resolveFolderCascade('posts/2008-07-27-why-portal', readFile);
     expect(result.cascadeTags).toEqual([]);
   });
 
@@ -52,7 +52,7 @@ describe('resolveFolderCascade', () => {
       'stories/arctic/_config.yaml': 'name: Arctic\ndescription: A cold expedition\n',
     };
     const readFile = async (path: string) => files[path] ?? null;
-    const result = await resolveFolderCascade('stories', 'arctic/ch-01', readFile);
+    const result = await resolveFolderCascade('stories/arctic/ch-01', readFile);
     expect(result.tagIdentity).toEqual({ name: 'Arctic', description: 'A cold expedition' });
   });
 
@@ -61,7 +61,7 @@ describe('resolveFolderCascade', () => {
       'stories/_config.yaml': 'name: Stories\ndescription: All stories\n',
     };
     const readFile = async (path: string) => files[path] ?? null;
-    const result = await resolveFolderCascade('stories', 'arctic/ch-01', readFile);
+    const result = await resolveFolderCascade('stories/arctic/ch-01', readFile);
     expect(result.tagIdentity).toEqual({});
   });
 
@@ -70,7 +70,17 @@ describe('resolveFolderCascade', () => {
       'puzzles/_config.yaml': 'renderer: puzzle\nname: Puzzles\n',
     };
     const readFile = async (path: string) => files[path] ?? null;
-    const result = await resolveFolderCascade('puzzles', 'some-puzzle', readFile);
+    const result = await resolveFolderCascade('puzzles/some-puzzle', readFile);
     expect(result.tagIdentity).toEqual({ name: 'Puzzles', description: undefined });
+  });
+
+  it('walks a dimension-rooted uid, checking every ancestor including the dimension root', async () => {
+    const files: Record<string, string> = {
+      'what/projects/_config.yaml': 'renderer: project\n',
+      'what/projects/games/_config.yaml': 'renderer: game\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade('what/projects/games/x', readFile);
+    expect(result.renderer).toBe('game');
   });
 });

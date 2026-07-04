@@ -5,9 +5,10 @@
 //
 // Used by scripts/generate-stack-manifest.mjs to enumerate uids without
 // needing the astro:content runtime (which is only available inside an
-// Astro dev/build process). Kept in sync with cards.ts's uid shape
-// ("collection/id") by construction, not by re-deriving titles/metadata —
-// this module only ever needs the identity string, never the content.
+// Astro dev/build process). Kept in sync with cards.ts's uid shape (the full
+// path relative to src/content, dimension-rooted — e.g. "what/projects/foo")
+// by construction, not by re-deriving titles/metadata — this module only
+// ever needs the identity string, never the content.
 
 function stripIndexSuffix(idNoExt: string): string {
   if (idNoExt === 'index') return '';
@@ -15,8 +16,9 @@ function stripIndexSuffix(idNoExt: string): string {
 }
 
 /**
- * Derives a content uid ("collection/id") from a path relative to
- * src/content, e.g. "projects/art-heist/index.md" -> "projects/art-heist".
+ * Derives a content uid (full path relative to src/content) from a path
+ * relative to src/content, e.g. "what/projects/art-heist/index.md" ->
+ * "what/projects/art-heist".
  */
 export function uidFromContentPath(relPath: string): string {
   const noExt = relPath.replace(/\.(md|mdx)$/i, '');

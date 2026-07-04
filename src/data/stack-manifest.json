@@ -698,5 +698,581 @@
   {
     "uid": "lens/newest",
     "code": "2O"
+  },
+  {
+    "uid": "what/cards/test-chain-1",
+    "code": "2P"
+  },
+  {
+    "uid": "what/cards/test-chain-2",
+    "code": "2Q"
+  },
+  {
+    "uid": "what/cards/test-chain-3",
+    "code": "2R"
+  },
+  {
+    "uid": "what/cards/test-chain-4",
+    "code": "2S"
+  },
+  {
+    "uid": "what/cards/test-chain-5",
+    "code": "2T"
+  },
+  {
+    "uid": "what/cards/test-chain-6",
+    "code": "2U"
+  },
+  {
+    "uid": "what/cards/test-chain-7",
+    "code": "2V"
+  },
+  {
+    "uid": "what/cards/test-chain-8",
+    "code": "2W"
+  },
+  {
+    "uid": "what/cards/what",
+    "code": "2X"
+  },
+  {
+    "uid": "what/cards/when",
+    "code": "2Y"
+  },
+  {
+    "uid": "what/cards/where",
+    "code": "2Z"
+  },
+  {
+    "uid": "what/cards/who",
+    "code": "30"
+  },
+  {
+    "uid": "what/posts/about-me",
+    "code": "31"
+  },
+  {
+    "uid": "what/posts/about-this-site",
+    "code": "32"
+  },
+  {
+    "uid": "what/projects/art-heist",
+    "code": "33"
+  },
+  {
+    "uid": "what/projects/bravehearts",
+    "code": "34"
+  },
+  {
+    "uid": "what/projects/budget-haver",
+    "code": "35"
+  },
+  {
+    "uid": "what/projects/cybersecurity",
+    "code": "36"
+  },
+  {
+    "uid": "what/projects/fatecardgame",
+    "code": "37"
+  },
+  {
+    "uid": "what/projects/flatland-fallen-angle",
+    "code": "38"
+  },
+  {
+    "uid": "what/projects/genetic-sequences",
+    "code": "39"
+  },
+  {
+    "uid": "what/projects/gottagetouttathisspace",
+    "code": "3a"
+  },
+  {
+    "uid": "what/projects/laser-harp",
+    "code": "3b"
+  },
+  {
+    "uid": "what/projects/numbeanies",
+    "code": "3c"
+  },
+  {
+    "uid": "what/projects/particulars",
+    "code": "3d"
+  },
+  {
+    "uid": "what/projects/played",
+    "code": "3e"
+  },
+  {
+    "uid": "what/projects/qistigram",
+    "code": "3f"
+  },
+  {
+    "uid": "what/projects/quantum-byte",
+    "code": "3g"
+  },
+  {
+    "uid": "what/projects/the-neighbourhood",
+    "code": "3h"
+  },
+  {
+    "uid": "what/projects/the-path",
+    "code": "3i"
+  },
+  {
+    "uid": "what/projects/unstoppabot",
+    "code": "3j"
+  },
+  {
+    "uid": "what/projects/virtual-farm",
+    "code": "3k"
+  },
+  {
+    "uid": "what/projects/where-the-heart-is",
+    "code": "3l"
+  },
+  {
+    "uid": "what/puzzles/a-murder-most-fogged",
+    "code": "3m"
+  },
+  {
+    "uid": "what/puzzles/cartography",
+    "code": "3n"
+  },
+  {
+    "uid": "what/puzzles/cityscrapers",
+    "code": "3o"
+  },
+  {
+    "uid": "what/puzzles/commonality",
+    "code": "3p"
+  },
+  {
+    "uid": "what/puzzles/friends-in-the-fog",
+    "code": "3q"
+  },
+  {
+    "uid": "what/puzzles/little-fillers",
+    "code": "3r"
+  },
+  {
+    "uid": "what/puzzles/little-fillers-2",
+    "code": "3s"
+  },
+  {
+    "uid": "what/puzzles/plans-of-a-medic",
+    "code": "3t"
+  },
+  {
+    "uid": "what/puzzles/recounting-the-counting",
+    "code": "3u"
+  },
+  {
+    "uid": "what/puzzles/recounting-the-rooms",
+    "code": "3v"
+  },
+  {
+    "uid": "what/puzzles/ships-in-the-time",
+    "code": "3w"
+  },
+  {
+    "uid": "what/puzzles/some-things-fogn",
+    "code": "3x"
+  },
+  {
+    "uid": "what/puzzles/something-this-puzzle-might-give-you",
+    "code": "3y"
+  },
+  {
+    "uid": "what/puzzles/sunny-with-a-chance-of-fog",
+    "code": "3z"
+  },
+  {
+    "uid": "what/puzzles/the-grid-of-forking-paths",
+    "code": "3A"
+  },
+  {
+    "uid": "what/puzzles/this-is-how-you-learn-the-time-war",
+    "code": "3B"
+  },
+  {
+    "uid": "what/puzzles/this-is-how-you-live-the-time-war",
+    "code": "3C"
+  },
+  {
+    "uid": "what/puzzles/times-apart",
+    "code": "3D"
+  },
+  {
+    "uid": "what/puzzles/whispers-in-the-mist",
+    "code": "3E"
+  },
+  {
+    "uid": "what/stories/arctic/00-introduction",
+    "code": "3F"
+  },
+  {
+    "uid": "what/stories/arctic/01-map",
+    "code": "3G"
+  },
+  {
+    "uid": "what/stories/arctic/02-glacier",
+    "code": "3H"
+  },
+  {
+    "uid": "what/stories/arctic/03-surge-glacier",
+    "code": "3I"
+  },
+  {
+    "uid": "what/stories/arctic/04-flowers",
+    "code": "3J"
+  },
+  {
+    "uid": "what/stories/arctic/05-reindeer",
+    "code": "3K"
+  },
+  {
+    "uid": "what/stories/arctic/06-morraine-and-tundra",
+    "code": "3L"
+  },
+  {
+    "uid": "what/stories/arctic/07-fractals-in-mud",
+    "code": "3M"
+  },
+  {
+    "uid": "what/stories/arctic/08-cultural-heritage",
+    "code": "3N"
+  },
+  {
+    "uid": "what/stories/arctic/09-polar-bear-tracks",
+    "code": "3O"
+  },
+  {
+    "uid": "what/stories/arctic/10-polar-bear-encounter",
+    "code": "3P"
+  },
+  {
+    "uid": "what/stories/arctic/11-midnight-sun",
+    "code": "3Q"
+  },
+  {
+    "uid": "what/stories/arctic/12-patterns-from-water",
+    "code": "3R"
+  },
+  {
+    "uid": "what/stories/arctic/13-melting-rocks",
+    "code": "3S"
+  },
+  {
+    "uid": "what/stories/arctic/14-glacier-sound",
+    "code": "3T"
+  },
+  {
+    "uid": "what/stories/arctic/15-the-northernmost-rock",
+    "code": "3U"
+  },
+  {
+    "uid": "what/stories/arctic/16-rock-jenga",
+    "code": "3V"
+  },
+  {
+    "uid": "what/stories/arctic/17-climbing-the-mast",
+    "code": "3W"
+  },
+  {
+    "uid": "what/stories/arctic/18-walruses",
+    "code": "3X"
+  },
+  {
+    "uid": "what/stories/arctic/19-plastic",
+    "code": "3Y"
+  },
+  {
+    "uid": "what/stories/arctic/20-the-worlds-northernmost-atm",
+    "code": "3Z"
+  },
+  {
+    "uid": "what/stories/arctic/21-conclusion",
+    "code": "40"
+  },
+  {
+    "uid": "what/stories/fatecardgame/00-introduction",
+    "code": "41"
+  },
+  {
+    "uid": "what/stories/fatecardgame/01-history",
+    "code": "42"
+  },
+  {
+    "uid": "what/stories/fatecardgame/02-themes",
+    "code": "43"
+  },
+  {
+    "uid": "what/stories/fatecardgame/03-art",
+    "code": "44"
+  },
+  {
+    "uid": "what/stories/fatecardgame/04-fates-hand",
+    "code": "45"
+  },
+  {
+    "uid": "what/stories/fatecardgame/05-fates-roles",
+    "code": "46"
+  },
+  {
+    "uid": "what/stories/galapagos/00-introduction",
+    "code": "47"
+  },
+  {
+    "uid": "what/stories/galapagos/01-tourism",
+    "code": "48"
+  },
+  {
+    "uid": "what/stories/galapagos/02-sea-wolves",
+    "code": "49"
+  },
+  {
+    "uid": "what/stories/galapagos/03-stay-away",
+    "code": "4a"
+  },
+  {
+    "uid": "what/stories/galapagos/04-semi-arid",
+    "code": "4b"
+  },
+  {
+    "uid": "what/stories/galapagos/05-sideways-leaves",
+    "code": "4c"
+  },
+  {
+    "uid": "what/work/3p",
+    "code": "4d"
+  },
+  {
+    "uid": "what/work/chaostheory",
+    "code": "4e"
+  },
+  {
+    "uid": "what/work/dot",
+    "code": "4f"
+  },
+  {
+    "uid": "what/work/equalreality",
+    "code": "4g"
+  },
+  {
+    "uid": "what/work/plan-a",
+    "code": "4h"
+  },
+  {
+    "uid": "what/work/seethrough",
+    "code": "4i"
+  },
+  {
+    "uid": "what/writing/2008-07-27-why-portal",
+    "code": "4j"
+  },
+  {
+    "uid": "what/writing/2010-06-20-mechanical-breakdown-the-rts",
+    "code": "4k"
+  },
+  {
+    "uid": "what/writing/2010-06-23-achron-real-time-just-got-complicated",
+    "code": "4l"
+  },
+  {
+    "uid": "what/writing/2010-06-27-finding-the-story",
+    "code": "4m"
+  },
+  {
+    "uid": "what/writing/2010-06-27-mechanical-breakdown-the-inventory",
+    "code": "4n"
+  },
+  {
+    "uid": "what/writing/2010-07-04-is-affect-the-new-mise-en-scene",
+    "code": "4o"
+  },
+  {
+    "uid": "what/writing/2010-07-10-a-matter-of-perspective",
+    "code": "4p"
+  },
+  {
+    "uid": "what/writing/2010-08-02-inception-the-game",
+    "code": "4q"
+  },
+  {
+    "uid": "what/writing/2010-08-13-mechanical-breakdown-the-inventory-part-two",
+    "code": "4r"
+  },
+  {
+    "uid": "what/writing/2010-08-26-postmortem-the-enemy-of-my-enemy-is-my-heat-seeking-missile",
+    "code": "4s"
+  },
+  {
+    "uid": "what/writing/2010-10-17-the-problem-with-portals",
+    "code": "4t"
+  },
+  {
+    "uid": "what/writing/2010-12-21-wrecking-the-curve",
+    "code": "4u"
+  },
+  {
+    "uid": "what/writing/2011-02-18-blood-and-stakes",
+    "code": "4v"
+  },
+  {
+    "uid": "what/writing/2011-06-09-controlling-the-rapids",
+    "code": "4w"
+  },
+  {
+    "uid": "what/writing/2011-06-09-how-to-find-your-gameplay-themes",
+    "code": "4x"
+  },
+  {
+    "uid": "what/writing/2011-06-14-meta-me-this",
+    "code": "4y"
+  },
+  {
+    "uid": "what/writing/2011-06-18-how-many-players-should-you-playtest-with",
+    "code": "4z"
+  },
+  {
+    "uid": "what/writing/2011-07-14-playtesting-101",
+    "code": "4A"
+  },
+  {
+    "uid": "what/writing/2011-07-19-playtesting-102",
+    "code": "4B"
+  },
+  {
+    "uid": "what/writing/2011-08-02-playtesting-103",
+    "code": "4C"
+  },
+  {
+    "uid": "what/writing/2011-08-04-playtesting-104",
+    "code": "4D"
+  },
+  {
+    "uid": "what/writing/2011-08-05-the-half-cinderella",
+    "code": "4E"
+  },
+  {
+    "uid": "what/writing/2011-08-06-playtesting-105",
+    "code": "4F"
+  },
+  {
+    "uid": "what/writing/2011-08-11-mechanical-breakdown-boss-battles",
+    "code": "4G"
+  },
+  {
+    "uid": "what/writing/2011-09-09-of-shapes-and-flies",
+    "code": "4H"
+  },
+  {
+    "uid": "what/writing/2011-09-12-playtesting-106",
+    "code": "4I"
+  },
+  {
+    "uid": "what/writing/2011-11-27-making-it-together",
+    "code": "4J"
+  },
+  {
+    "uid": "what/writing/2012-01-06-the-a-z-of-game-development",
+    "code": "4K"
+  },
+  {
+    "uid": "what/writing/2012-02-17-the-seethrough-diaries",
+    "code": "4L"
+  },
+  {
+    "uid": "what/writing/2012-07-09-holding-things-up-in-two-dimensions",
+    "code": "4M"
+  },
+  {
+    "uid": "what/writing/2013-03-14-launching-the-bot",
+    "code": "4N"
+  },
+  {
+    "uid": "what/writing/2013-03-24-the-15-steps-of-particulars-preproduction",
+    "code": "4O"
+  },
+  {
+    "uid": "what/writing/2013-04-29-7-things-that-have-to-work-together-in-a-game-story",
+    "code": "4P"
+  },
+  {
+    "uid": "what/writing/2013-05-08-ensuring-your-project-has-depth",
+    "code": "4Q"
+  },
+  {
+    "uid": "what/writing/2013-06-21-a-particular-vision",
+    "code": "4R"
+  },
+  {
+    "uid": "what/writing/2013-07-20-innovations-in-games",
+    "code": "4S"
+  },
+  {
+    "uid": "what/writing/2013-08-05-getting-social",
+    "code": "4T"
+  },
+  {
+    "uid": "what/writing/2014-05-08-inspiration-and-emulation",
+    "code": "4U"
+  },
+  {
+    "uid": "what/writing/2016-05-02-starting-over",
+    "code": "4V"
+  },
+  {
+    "uid": "what/writing/2016-05-24-on-truth-in-science",
+    "code": "4W"
+  },
+  {
+    "uid": "what/writing/2016-11-19-data-that-listens",
+    "code": "4X"
+  },
+  {
+    "uid": "what/writing/2016-12-07-finding-the-right-problems-for-citizen-science",
+    "code": "4Y"
+  },
+  {
+    "uid": "what/writing/2016-12-15-art-or-heist-designing-multipurpose-spaces",
+    "code": "4Z"
+  },
+  {
+    "uid": "what/writing/2017-07-11-government-2-0",
+    "code": "50"
+  },
+  {
+    "uid": "what/writing/2017-08-12-edinburgh-reactions-whist",
+    "code": "51"
+  },
+  {
+    "uid": "what/writing/2017-09-19-qbyte-devlog-taking-the-measure",
+    "code": "52"
+  },
+  {
+    "uid": "what/writing/2017-09-24-qbyte-devlog-v0-1-the-simulator-lives",
+    "code": "53"
+  },
+  {
+    "uid": "what/writing/2017-11-06-qbyte-devlog-cycles-and-cul-de-sacs",
+    "code": "54"
+  },
+  {
+    "uid": "what/writing/2017-11-19-its-probably-complicated",
+    "code": "55"
+  },
+  {
+    "uid": "what/writing/2019-02-18-deciding-where-the-heart-is",
+    "code": "56"
+  },
+  {
+    "uid": "what/writing/2019-03-11-having-a-budget",
+    "code": "57"
+  },
+  {
+    "uid": "what/writing/2019-03-21-designing-a-budget",
+    "code": "58"
   }
 ]

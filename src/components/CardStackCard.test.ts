@@ -31,10 +31,10 @@ describe('CardStackCard', () => {
 
   it('renders a plain card location with a CardHeader + the resolved renderer', async () => {
     const container = await makeContainer();
-    const html = await container.renderToString(CardStackCard, { props: { path: 'posts/about-me' } });
+    const html = await container.renderToString(CardStackCard, { props: { path: 'what/posts/about-me' } });
     const div = dom(html);
 
-    expect(div.querySelector('.stack-card')?.getAttribute('data-uid')).toBe('posts/about-me');
+    expect(div.querySelector('.stack-card')?.getAttribute('data-uid')).toBe('what/posts/about-me');
     expect(div.querySelector('.card-header')).not.toBeNull();
     expect(div.querySelector('.body-wrapper.open')).not.toBeNull();
     expect(div.querySelector('[data-content-hash]')?.getAttribute('data-content-hash')).toBeTruthy();
@@ -42,16 +42,16 @@ describe('CardStackCard', () => {
 
   it('renders a puzzle card via PuzzleRenderer, resolved from the cascaded _config.yaml renderer (not a frontmatter override)', async () => {
     const container = await makeContainer();
-    const html = await container.renderToString(CardStackCard, { props: { path: 'puzzles/cartography' } });
+    const html = await container.renderToString(CardStackCard, { props: { path: 'what/puzzles/cartography' } });
     const div = dom(html);
 
-    expect(div.querySelector('.stack-card')?.getAttribute('data-uid')).toBe('puzzles/cartography');
+    expect(div.querySelector('.stack-card')?.getAttribute('data-uid')).toBe('what/puzzles/cartography');
     expect(div.querySelector('.puzzle-meta')).not.toBeNull();
   });
 
   it('carries a frontmatter-declared width as a data-width attribute', async () => {
     const container = await makeContainer();
-    const html = await container.renderToString(CardStackCard, { props: { path: 'projects/the-path' } });
+    const html = await container.renderToString(CardStackCard, { props: { path: 'what/projects/the-path' } });
     const div = dom(html);
 
     expect(div.querySelector('.stack-card')?.getAttribute('data-width')).toBe('900px');
@@ -59,7 +59,7 @@ describe('CardStackCard', () => {
 
   it('omits data-width when frontmatter declares no width (falls back to the global default)', async () => {
     const container = await makeContainer();
-    const html = await container.renderToString(CardStackCard, { props: { path: 'posts/about-me' } });
+    const html = await container.renderToString(CardStackCard, { props: { path: 'what/posts/about-me' } });
     const div = dom(html);
 
     expect(div.querySelector('.stack-card')?.hasAttribute('data-width')).toBe(false);

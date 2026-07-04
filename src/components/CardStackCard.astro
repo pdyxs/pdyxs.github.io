@@ -1,6 +1,6 @@
 ---
 // Renders the `.stack-card` fragment for a card-collection location
-// ("posts", "posts/about-me", "tag/who", ...). Shared by the full-page route
+// ("posts", "what/posts/about-me", "tag/who", ...). Shared by the full-page route
 // (src/pages/card/[...path].astro) and the fragment-partial route
 // (src/pages/fragment/card/[...path].astro) — both wrap this in whatever
 // shell they need (or none, for the fragment).
@@ -21,20 +21,24 @@ interface Props {
 
 const { path } = Astro.props;
 const resolution = resolveLocation(path);
+const isTag = resolution.kind === 'card' && resolution.path.startsWith('tag/');
 
 let entries: any[] = [];
 let entry: any = null;
 let Content: any = null;
 
 if (resolution.kind === 'card') {
-  if (resolution.collection === 'tag') {
+  if (isTag) {
     const tags = await getCollection('tag');
     entries = tags;
-    entry = tags.find((t: any) => t.id === resolution.id);
+    entry = tags.find((t: any) => `tag/${t.id}` === resolution.path);
   } else {
     const allContent = await getCollection('content');
-    entries = allContent.filter((e: any) => e.id.startsWith(resolution.collection + '/'));
-    entry = allContent.find((e: any) => e.id === path);
+    // Passed to a NavComponent (if any) as sibling candidates; getSeriesSiblings
+    // (src/lib/series.ts) narrows by matching `data.series`, so no path-prefix
+    // filtering is needed here.
+    entries = allContent;
+    entry = allContent.find((e: any) => e.id === resolution.path);
   }
   const rendered = entry ? await render(entry as any) : null;
   Content = rendered?.Content;
@@ -46,10 +50,10 @@ if (resolution.kind === 'card') {
 // _config.yaml cascade of its own — its renderer is always 'tag'.
 let rendererName = 'card';
 if (resolution.kind === 'card') {
-  if (resolution.collection === 'tag') {
+  if (isTag) {
     rendererName = 'tag';
   } else {
-    const cascade = await resolveFolderCascade(resolution.collection, resolution.id, makeFileReader());
+    const cascade = await resolveFolderCascade(resolution.path, makeFileReader());
     rendererName = (entry?.data as any)?.renderer ?? cascade.renderer ?? 'card';
   }
 }
@@ -72,11 +76,11 @@ const width: string | undefined = resolution.kind === 'card' ? (entry?.data as a
 // entry — a mismatch would make getViewState() think the content changed on every visit.
 const contentHash: string | undefined =
   resolution.kind === 'card' && entry
-    ? resolution.collection === 'tag'
+    ? isTag
       ? computeContentHash(entry.data.name, entry.data.description)
       : computeContentHash(
-          resolveCardTitle(resolution.collection, entry.data),
-          resolveCardDescription(resolution.collection, entry.data),
+          resolveCardTitle(resolution.path, entry.data),
+          resolveCardDescription(resolution.path, entry.data),
           entry.body
         )
     : undefined;

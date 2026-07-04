@@ -2,7 +2,7 @@ import type { FrontPageConfig } from "../lib/frontpage";
 
 export const FRONTPAGE_CONFIG: FrontPageConfig = {
     slots: [
-        { type: "pinned", uid: "posts/about-me" },
+        { type: "pinned", uid: "what/posts/about-me" },
         {
             type: "filter",
             label: "A Project",

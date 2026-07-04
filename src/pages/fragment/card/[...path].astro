@@ -9,17 +9,14 @@
 // build — see CONTEXT for issue #23.
 export const partial = true;
 
-import { getCollection } from 'astro:content';
 import { getAllCards } from '../../../lib/cards';
 import CardStackCard from '../../../components/CardStackCard.astro';
 
 export async function getStaticPaths() {
+  // getAllCards() already includes tag entries (uid: "tag/<id>") — no need to
+  // separately enumerate getCollection('tag').
   const cards = await getAllCards();
-  const tags = await getCollection('tag');
-  return [
-    ...cards.map(c => ({ params: { path: c.uid } })),
-    ...tags.map(t => ({ params: { path: `tag/${t.id}` } })),
-  ];
+  return cards.map(c => ({ params: { path: c.uid } }));
 }
 
 const { path } = Astro.params;

@@ -1,5 +1,4 @@
 ---
-import { getCollection } from 'astro:content';
 import { getAllCards } from '../../lib/cards';
 import Base from '../../layouts/Base.astro';
 import StackNav from '../../components/StackNav.astro';
@@ -7,31 +6,14 @@ import CardStackCard from '../../components/CardStackCard.astro';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
-  const tags = await getCollection('tag');
-  return [
-    ...cards.map(c => ({ params: { path: c.uid } })),
-    ...tags.map(t => ({ params: { path: `tag/${t.id}` } })),
-  ];
+  // getAllCards() already includes tag entries (uid: "tag/<id>") — no need to
+  // separately enumerate getCollection('tag'). Title comes along as a prop so
+  // this page never has to re-derive it (or branch on "is this a tag?") itself.
+  return cards.map(c => ({ params: { path: c.uid }, props: { title: c.title } }));
 }
 
 const { path } = Astro.params;
-
-// Cheap title lookup for <title> — CardStackCard does the (potentially
-// expensive) Content render itself; this only needs frontmatter.
-const parts = path!.split('/');
-const collection = parts[0];
-const id = parts.slice(1).join('/');
-let title = '';
-if (id !== '') {
-  if (collection === 'tag') {
-    const tags = await getCollection('tag');
-    title = tags.find((t: any) => t.id === id)?.data.name ?? '';
-  } else {
-    const allContent = await getCollection('content');
-    const entry = allContent.find((e: any) => e.id === path);
-    title = (entry?.data as any)?.title ?? '';
-  }
-}
+const { title } = Astro.props as { title: string };
 ---
 
 <Base {title}>

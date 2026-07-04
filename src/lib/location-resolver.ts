@@ -2,8 +2,8 @@
 //
 // Collapses the three inline renderer registries (COLLECTION_RENDERERS,
 // NAV_RENDERERS, COLLECTION_VIEW_RENDERERS — see renderers.ts) plus the lens
-// registry into a single decision: given a stack path ("posts", "posts/about-me",
-// "tag/who", "lens/home"), what should render it?
+// registry into a single decision: given a stack path ("posts",
+// "what/posts/about-me", "tag/who", "lens/home"), what should render it?
 //
 // Both /pages/card/[...path].astro and /pages/lens/[name].astro (and their
 // fragment-partial counterparts) call resolveLocation() so the two routes
@@ -18,9 +18,9 @@ import type { LensComponentLoader } from './lens-components';
 
 export type CardLocation = {
   kind: 'card';
-  collection: string;
-  id: string;
-  /** Set when this collection has a nav renderer (e.g. stories prev/next chapter). */
+  /** Full uid, e.g. "what/stories/arctic/ch-01" or "tag/who". */
+  path: string;
+  /** Set when this card's collection has a nav renderer (e.g. stories prev/next chapter). */
   navComponent: AstroComponentFactory | null;
 };
 
@@ -44,6 +44,14 @@ export type LocationResolution = CardLocation | CollectionViewLocation | LensLoc
 
 const LENS_PREFIX = 'lens/';
 
+/** Finds the registered NAV_RENDERERS entry whose prefix owns this uid, or null. */
+function matchNavRenderer(path: string): AstroComponentFactory | null {
+  for (const prefix of Object.keys(NAV_RENDERERS)) {
+    if (path === prefix || path.startsWith(`${prefix}/`)) return NAV_RENDERERS[prefix];
+  }
+  return null;
+}
+
 /**
  * Resolves a stack path to the fragment/renderer that should handle it.
  *
@@ -52,11 +60,12 @@ const LENS_PREFIX = 'lens/';
  *   in LENS_COMPONENT_LOADERS yet.
  * - A bare collection name ("posts") resolves to its collection-view
  *   renderer (kind: 'collection-view'), or 'unknown' if none is registered.
- * - "<collection>/<id>" resolves to kind: 'card', carrying the collection's
- *   nav renderer (if any) — the per-entry content renderer itself still
- *   depends on frontmatter/collection data fetched by the caller, so use
+ * - Any other non-empty path (a full-path uid, e.g. "what/stories/arctic/ch-01"
+ *   or "tag/who") resolves to kind: 'card', carrying its nav renderer (if any,
+ *   matched by NAV_RENDERERS prefix) — the per-entry content renderer itself
+ *   still depends on frontmatter/collection data fetched by the caller, so use
  *   resolveCardRenderer() once that data is available.
- * - Anything else (empty path) is 'unknown'.
+ * - An empty path is 'unknown'.
  */
 export function resolveLocation(path: string): LocationResolution {
   if (!path) return { kind: 'unknown' };
@@ -70,15 +79,12 @@ export function resolveLocation(path: string): LocationResolution {
     return { kind: 'lens', name, definition, loadComponent };
   }
 
-  const slashIdx = path.indexOf('/');
-  if (slashIdx === -1) {
+  if (path.indexOf('/') === -1) {
     const component = COLLECTION_VIEW_RENDERERS[path];
     return component ? { kind: 'collection-view', collection: path, component } : { kind: 'unknown' };
   }
 
-  const collection = path.slice(0, slashIdx);
-  const id = path.slice(slashIdx + 1);
-  return { kind: 'card', collection, id, navComponent: NAV_RENDERERS[collection] ?? null };
+  return { kind: 'card', path, navComponent: matchNavRenderer(path) };
 }
 
 /**
