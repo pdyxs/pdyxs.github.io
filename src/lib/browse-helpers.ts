@@ -6,6 +6,8 @@
 import type { CardMeta } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension } from './filters';
+import { displayFor } from './tag-display';
+import type { TagDisplay } from './tag-display';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,11 +33,18 @@ export type SerialisedCard = {
  *
  * `value` is the full `dimension:path` string used as a filter value.
  * `label` is just the last path segment (human-readable display).
+ * `name` is the declared display name from the tag registry, falling back
+ * to a humanised `label` when nothing is declared — this is what the UI
+ * should render, not `label` or `value`.
+ * `description` is present only when the registry declares one (for a
+ * popover / tooltip).
  * `count` is the number of cards that prefix-match this node.
  */
 export type TagNode = {
   value: string;         // e.g. 'what:projects/games'
   label: string;         // e.g. 'games'
+  name: string;           // e.g. 'Games' or a declared display name
+  description?: string;
   count: number;
   children: TagNode[];
 };
@@ -112,6 +121,7 @@ export function buildTagHierarchy(
   cards: CardMeta[],
   dimension: Dimension,
   declaredValues: string[] = [],
+  display: Record<string, TagDisplay> = {},
 ): TagNode[] {
   const allTags = extractDimensionTags(cards, dimension, declaredValues);
   if (allTags.length === 0) return [];
@@ -122,6 +132,7 @@ export function buildTagHierarchy(
     nodeMap.set(tag, {
       value: tag,
       label: tagLabel(tag),
+      ...displayFor(tag, display),
       count: countMatchingCards(cards, tag),
       children: [],
     });
@@ -204,10 +215,11 @@ function sortNodes(nodes: TagNode[]): void {
 export function buildAllDimensionHierarchies(
   cards: CardMeta[],
   declaredValues: string[] = [],
+  display: Record<string, TagDisplay> = {},
 ): Record<Dimension, TagNode[]> {
   const result = {} as Record<Dimension, TagNode[]>;
   for (const dim of DIMENSIONS) {
-    result[dim] = buildTagHierarchy(cards, dim, declaredValues);
+    result[dim] = buildTagHierarchy(cards, dim, declaredValues, display);
   }
   return result;
 }

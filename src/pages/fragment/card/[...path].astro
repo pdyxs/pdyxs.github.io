@@ -10,13 +10,19 @@
 export const partial = true;
 
 import { getAllCards } from '../../../lib/cards';
+import { getTagRegistry, flattenTagDisplay } from '../../../lib/tag-registry';
+import type { TagDisplay } from '../../../lib/tag-display';
 import CardStackCard from '../../../components/CardStackCard.astro';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
-  return cards.map(c => ({ params: { path: c.uid } }));
+  // Computed once here (not per-card) since it walks the whole content tree —
+  // shared across every static path this route generates.
+  const tagDisplay = flattenTagDisplay(await getTagRegistry(cards));
+  return cards.map(c => ({ params: { path: c.uid }, props: { tagDisplay } }));
 }
 
 const { path } = Astro.params;
+const { tagDisplay } = Astro.props as { tagDisplay: Record<string, TagDisplay> };
 ---
-<CardStackCard path={path!} />
+<CardStackCard path={path!} {tagDisplay} />

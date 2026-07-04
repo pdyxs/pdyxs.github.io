@@ -19,15 +19,14 @@ import { fileURLToPath } from 'node:url';
 import type { CardMeta } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension } from './filters';
+import { humaniseSegment } from './tag-display';
+import type { TagDisplay } from './tag-display';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type TagDisplay = {
-  name: string;
-  description?: string;
-};
+export type { TagDisplay };
 
 export type DimensionRegistry = {
   /** Sorted, deduped filter values for this dimension, e.g. "what:projects/games". */
@@ -52,17 +51,6 @@ export type ValueIdentity = {
 // ---------------------------------------------------------------------------
 // Name/description resolution
 // ---------------------------------------------------------------------------
-
-/** Humanises the last path segment of a filter value: "data-art" -> "Data Art". */
-function humaniseSegment(value: string): string {
-  const afterColon = value.slice(value.indexOf(':') + 1);
-  const lastSegment = afterColon.split('/').pop() ?? afterColon;
-  return lastSegment
-    .split(/[-_]+/)
-    .filter(Boolean)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 /**
  * Returns the full-path filter value a card's own folder represents (distinct
@@ -269,4 +257,27 @@ export async function getTagRegistry(
 ): Promise<TagRegistry> {
   const { containerIdentities, tagDeclarations } = await discoverTagSources(reader);
   return computeTagRegistry(cards, containerIdentities, tagDeclarations);
+}
+
+// ---------------------------------------------------------------------------
+// Client serialisation
+// ---------------------------------------------------------------------------
+
+/**
+ * Flattens a TagRegistry's per-dimension `display` Maps into a single plain
+ * object keyed by full filter value (e.g. "what:puzzles"). Values are
+ * globally unique across dimensions (each is dimension-prefixed), so a flat
+ * object loses no information and is directly JSON-serialisable — unlike a
+ * Map, which Astro's client-directive prop serialisation can't carry. Pass
+ * the result as a prop to any client-rendered component that needs to
+ * resolve a raw tag string's display name (see tag-display.ts's `displayFor`).
+ */
+export function flattenTagDisplay(registry: TagRegistry): Record<string, TagDisplay> {
+  const flat: Record<string, TagDisplay> = {};
+  for (const dim of DIMENSIONS) {
+    for (const [value, display] of registry[dim].display) {
+      flat[value] = display;
+    }
+  }
+  return flat;
 }

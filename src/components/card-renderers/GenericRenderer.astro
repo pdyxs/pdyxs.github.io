@@ -2,6 +2,8 @@
 import type { RenderResult } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
 import { resolveLocalImage, resolveGalleryImages } from '../../lib/images';
+import { displayFor } from '../../lib/tag-display';
+import type { TagDisplay } from '../../lib/tag-display';
 import ImageGallery from '../ImageGallery.svelte';
 
 interface Action {
@@ -32,9 +34,11 @@ interface Props {
     };
   } | undefined;
   Content: RenderResult['Content'] | undefined;
+  /** Flat value -> display-name map from the tag registry (see tag-registry.ts's flattenTagDisplay). */
+  tagDisplay?: Record<string, TagDisplay>;
 }
 
-const { entry, Content } = Astro.props;
+const { entry, Content, tagDisplay = {} } = Astro.props;
 const data = entry?.data;
 
 const localImage = entry ? resolveLocalImage(entry.id, data?.image) : undefined;
@@ -116,7 +120,7 @@ const galleryImages = await Promise.all(
     {tags.length > 0 && (
       <ul class="generic-tags" aria-label="Tags">
         {tags.map(tag => (
-          <li><a href={`tag:${tag}`} class="generic-tag">{tag}</a></li>
+          <li><a href={`tag:${tag}`} class="generic-tag">{displayFor(tag, tagDisplay).name}</a></li>
         ))}
       </ul>
     )}

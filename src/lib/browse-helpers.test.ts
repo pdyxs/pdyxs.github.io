@@ -7,6 +7,7 @@ import {
   dimensionHasTags,
 } from './browse-helpers';
 import type { TagNode } from './browse-helpers';
+import { computeTagRegistry, flattenTagDisplay } from './tag-registry';
 import { fakeCardMeta } from '../test/fixtures';
 
 // ---------------------------------------------------------------------------
@@ -205,6 +206,45 @@ describe('buildTagHierarchy', () => {
     expect(tree[0].children[0].label).toBe('games');
   });
 
+  it('falls back to a humanised segment for name when no display map is given', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['what:projects/data-art'] }),
+    ];
+    const tree = buildTagHierarchy(cards, 'what');
+    expect(tree[0].name).toBe('Data Art');
+    expect(tree[0].description).toBeUndefined();
+  });
+
+  it('uses the declared name from the display map when present', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['what:puzzles'] }),
+    ];
+    const tree = buildTagHierarchy(cards, 'what', [], {
+      'what:puzzles': { name: 'Puzzles' },
+    });
+    expect(tree[0].name).toBe('Puzzles');
+  });
+
+  it('carries a description from the display map when present', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['what:puzzles'] }),
+    ];
+    const tree = buildTagHierarchy(cards, 'what', [], {
+      'what:puzzles': { name: 'Puzzles', description: 'Logic puzzles' },
+    });
+    expect(tree[0].description).toBe('Logic puzzles');
+  });
+
+  it('leaves description undefined when the display map has no description for the value', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'posts/a', tags: ['what:puzzles'] }),
+    ];
+    const tree = buildTagHierarchy(cards, 'what', [], {
+      'what:puzzles': { name: 'Puzzles' },
+    });
+    expect(tree[0].description).toBeUndefined();
+  });
+
   it('sets count to number of cards matching via prefix', () => {
     const cards = [
       fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] }),
@@ -275,6 +315,54 @@ describe('buildTagHierarchy', () => {
     expect(tree[0].value).toBe('what:projects');
     expect(tree[0].count).toBe(1);
     expect(tree[0].children.map(c => c.value)).toEqual(['what:projects/games']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// End-to-end: tag registry -> flattened display map -> TagNode
+// ---------------------------------------------------------------------------
+//
+// The unit tests above feed buildTagHierarchy a hand-built display map.
+// These confirm the real pipeline (computeTagRegistry -> flattenTagDisplay)
+// produces a node with the right name, for each of the registry's
+// name-source precedence cases that matter to the UI.
+
+describe('buildTagHierarchy fed by a real tag registry', () => {
+  it('shows a card-folder title as the name for a value with no other declaration', () => {
+    const referencing = fakeCardMeta({ uid: 'what/writing/a-post', tags: ['what:projects/particulars'] });
+    const project = fakeCardMeta({ uid: 'what/projects/particulars', title: 'Particulars', tags: ['what:projects'] });
+    const cards = [referencing, project];
+
+    const registry = computeTagRegistry(cards);
+    const display = flattenTagDisplay(registry);
+    const tree = buildTagHierarchy(cards, 'what', registry.what.values, display);
+
+    const root = tree.find(n => n.value === 'what:projects')!;
+    const node = root.children.find(c => c.value === 'what:projects/particulars')!;
+    expect(node.name).toBe('Particulars');
+  });
+
+  it('falls back to a humanised segment when neither a declaration nor a card title exists', () => {
+    const cards = [fakeCardMeta({ uid: 'posts/a', tags: ['what:projects/data-art'] })];
+
+    const registry = computeTagRegistry(cards);
+    const display = flattenTagDisplay(registry);
+    const tree = buildTagHierarchy(cards, 'what', registry.what.values, display);
+
+    expect(tree[0].name).toBe('Data Art');
+    expect(tree[0].description).toBeUndefined();
+  });
+
+  it('carries a container-declared description through to the node', () => {
+    const cards = [fakeCardMeta({ uid: 'what/puzzles/sudoku', title: 'Sudoku', tags: ['what:puzzles'] })];
+    const containerIdentities = [{ value: 'what:puzzles', name: 'Puzzles', description: 'Logic puzzles' }];
+
+    const registry = computeTagRegistry(cards, containerIdentities);
+    const display = flattenTagDisplay(registry);
+    const tree = buildTagHierarchy(cards, 'what', registry.what.values, display);
+
+    expect(tree[0].name).toBe('Puzzles');
+    expect(tree[0].description).toBe('Logic puzzles');
   });
 });
 

@@ -19,6 +19,7 @@
 // real window.location.search once the island hydrates.
 import { getAllCards } from '../../lib/cards';
 import { filterStateFromParams, applyFilters } from '../../lib/filters';
+import { getTagRegistry, flattenTagDisplay } from '../../lib/tag-registry';
 import NewestLensBrowser from './NewestLensBrowser.svelte';
 
 const allCards = await getAllCards();
@@ -33,5 +34,10 @@ const serialisedCards = narrowed.map(card => ({
   ...card,
   date: card.date?.toISOString() ?? null,
 }));
+
+// Serialised the same way `serialisedCards` is: a plain, JSON-friendly prop
+// into the client:load island, since BrowseCard renders (and re-renders on
+// client-side filter changes) in the browser.
+const tagDisplay = flattenTagDisplay(await getTagRegistry(allCards));
 ---
-<NewestLensBrowser client:load cards={serialisedCards} />
+<NewestLensBrowser client:load cards={serialisedCards} {tagDisplay} />

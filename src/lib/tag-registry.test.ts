@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeTagRegistry, discoverTagSources, getTagRegistry } from './tag-registry';
+import { computeTagRegistry, discoverTagSources, getTagRegistry, flattenTagDisplay } from './tag-registry';
 import type { TreeReader } from './tag-registry';
 import { extractDimensionTags } from './browse-helpers';
 import { fakeCardMeta } from '../test/fixtures';
@@ -107,6 +107,28 @@ describe('computeTagRegistry — name-source precedence', () => {
       [{ value: 'what:puzzles', name: 'From Tag Yaml' }],
     );
     expect(registry.what.display.get('what:puzzles')).toEqual({ name: 'From Tag Yaml', description: 'From Container' });
+  });
+});
+
+describe('flattenTagDisplay', () => {
+  it('flattens every dimension\'s display map into one plain object keyed by value', () => {
+    const cards = [
+      fakeCardMeta({ uid: 'what/posts/a', tags: ['what:puzzles', 'who:paul'] }),
+    ];
+    const registry = computeTagRegistry(cards, [
+      { value: 'what:puzzles', name: 'Puzzles', description: 'Logic puzzles' },
+      { value: 'who:paul', name: 'Paul' },
+    ]);
+    const flat = flattenTagDisplay(registry);
+    expect(flat).toEqual({
+      'what:puzzles': { name: 'Puzzles', description: 'Logic puzzles' },
+      'who:paul': { name: 'Paul' },
+    });
+  });
+
+  it('returns an empty object for an empty registry', () => {
+    const registry = computeTagRegistry([]);
+    expect(flattenTagDisplay(registry)).toEqual({});
   });
 });
 
