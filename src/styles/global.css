@@ -313,7 +313,10 @@ strong { font-weight: 700; }
   display: none;
 }
 
-.stack-card--page {
+/* Page mode has no card border. Specificity must clear both the base
+   `.stack-card` border and the desktop `#card-stack .stack-card` border-top
+   restore below, hence the id + double-class selector. */
+#card-stack .stack-card.stack-card--page {
   border: none;
 }
 
