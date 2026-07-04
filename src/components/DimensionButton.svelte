@@ -6,9 +6,13 @@
     hasNodes: boolean;
     selectionCount: number;
     onToggle: () => void;
+    /** Icon of the currently active lens filed under this dimension, if any.
+     * Undefined means no lens is active here — at most one dimension button
+     * across the bar shows an icon at a time (see activeLensIcon()). */
+    lensIcon?: string;
   }
 
-  let { label, isActive, isOpen, hasNodes, selectionCount, onToggle }: Props = $props();
+  let { label, isActive, isOpen, hasNodes, selectionCount, onToggle, lensIcon }: Props = $props();
 
   const dots = $derived(Array.from({ length: selectionCount }));
 </script>
@@ -23,6 +27,9 @@
   disabled={!hasNodes}
   title={hasNodes ? undefined : 'No tags available for this dimension'}
 >
+  {#if lensIcon}
+    <span class="browse-dim-lens-icon" aria-hidden="true">{lensIcon}</span>
+  {/if}
   <span class="browse-dim-label">{label}</span>
   {#if isActive}
     <span class="browse-dim-dots" aria-hidden="true">
@@ -55,6 +62,15 @@
 
   .browse-dim-btn--open {
     border-bottom-color: transparent;
+  }
+
+  .browse-dim-lens-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.85em;
+    line-height: 1;
+    padding-top: var(--space-xs);
   }
 
   .browse-dim-label {

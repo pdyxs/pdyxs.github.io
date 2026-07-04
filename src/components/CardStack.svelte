@@ -188,12 +188,26 @@
     historyFn(null, '', `${path}${search}`);
   }
 
-  async function replaceSlot(url: string) {
+  // `extraParams` (e.g. a serialised FilterState query string) rides along
+  // for a replace that must carry the current filter selections into the new
+  // slot — e.g. selecting a lens from a DimensionPanel while filters are
+  // active (issue #25). Appended to the URL after the stack's own
+  // serialisation so the new location's client-side filter state (which
+  // reads window.location.search on mount) picks it up.
+  async function replaceSlot(url: string, extraParams?: string) {
     const uid = urlToUid(url);
     const ok = await fetchAndCacheCard(uid);
     if (!ok) return;
     stackStore.update(s => replaceActiveSlot(s, cardEntry(uid)));
     updateUrl('replace');
+    if (extraParams) {
+      const carried = new URLSearchParams(extraParams);
+      if ([...carried].length) {
+        const target = new URL(window.location.href);
+        for (const [k, v] of carried) target.searchParams.append(k, v);
+        history.replaceState(null, '', `${target.pathname}?${target.searchParams.toString()}`);
+      }
+    }
   }
 
   async function pushCard(url: string, clickedLink?: Element | null) {
@@ -461,7 +475,7 @@
 
       const replaceItem = target.closest<HTMLElement>('[data-replace-slot]');
       if (replaceItem?.dataset.replaceSlot) {
-        replaceSlot(uidToFetchUrl(replaceItem.dataset.replaceSlot));
+        replaceSlot(uidToFetchUrl(replaceItem.dataset.replaceSlot), replaceItem.dataset.replaceParams);
         return;
       }
 

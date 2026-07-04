@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { TagNode } from '../lib/browse-helpers';
+  import type { LensDefinition } from '../lib/lens-registry';
+  import { lensUid } from '../lib/lens-registry';
 
   interface Props {
     dimensionLabel: string;
@@ -11,6 +13,14 @@
     onDrillInto: (node: TagNode) => void;
     onDrillBack: () => void;
     onClear: () => void;
+    /** Lenses filed under this dimension (src/lib/lens-registry.ts) — listed
+     * above the filter listbox. Plain data only; never imports a lens's
+     * actual component, so the lazy-load boundary holds. */
+    lenses: LensDefinition[];
+    /** Current filter selections, serialised, so a lens replacement carries
+     * them across the swap (e.g. "filter.what=what%3Aprojects"). */
+    carryFilterParams: string;
+    onSelectLens: (lensId: string) => void;
   }
 
   let {
@@ -23,6 +33,9 @@
     onDrillInto,
     onDrillBack,
     onClear,
+    lenses,
+    carryFilterParams,
+    onSelectLens,
   }: Props = $props();
 </script>
 
@@ -53,6 +66,25 @@
       </button>
     {/if}
   </div>
+
+  {#if lenses.length > 0}
+    <ul class="browse-dim-lenses" aria-label="{dimensionLabel} lenses">
+      {#each lenses as lens}
+        <li>
+          <button
+            class="browse-dim-lens-item"
+            data-replace-slot={lensUid(lens.id)}
+            data-replace-params={carryFilterParams}
+            onclick={() => onSelectLens(lens.id)}
+            aria-label="View through the {lens.label} lens"
+          >
+            {#if lens.icon}<span aria-hidden="true">{lens.icon}</span>{/if}
+            <span class="browse-dim-lens-label">{lens.label}</span>
+          </button>
+        </li>
+      {/each}
+    </ul>
+  {/if}
 
   <ul class="browse-dim-list" role="listbox" aria-multiselectable="true">
     {#each currentNodes as node}
@@ -132,6 +164,36 @@
   .browse-dim-clear:hover {
     color: var(--color-text);
     border-color: var(--color-border);
+  }
+
+  .browse-dim-lenses {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-xs) 0;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .browse-dim-lens-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    border: none;
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+  }
+
+  .browse-dim-lens-item:hover {
+    background: var(--color-bg-hover);
+  }
+
+  .browse-dim-lens-label {
+    font-weight: 600;
   }
 
   .browse-dim-list {

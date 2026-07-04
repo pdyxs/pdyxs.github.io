@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { LENS_REGISTRY, lensUid, getLensDefinition, allLensUids } from './lens-registry';
+import { LENS_REGISTRY, lensUid, getLensDefinition, allLensUids, lensesForDimension, lensIdFromUid, activeLensIcon } from './lens-registry';
 
 describe('LENS_REGISTRY', () => {
   it('declares home and newest as live lenses', () => {
@@ -55,6 +55,60 @@ describe('getLensDefinition', () => {
 
   it('returns undefined for an unknown lens id', () => {
     expect(getLensDefinition('does-not-exist')).toBeUndefined();
+  });
+});
+
+describe('lensesForDimension', () => {
+  it('returns the lenses filed under a given dimension', () => {
+    const when = lensesForDimension('when');
+    expect(when.map(l => l.id)).toEqual(['newest']);
+  });
+
+  it('returns an empty array for a dimension with no filed lenses', () => {
+    expect(lensesForDimension('who')).toEqual([]);
+  });
+
+  it('excludes the root-dimension home lens from every 5W dimension', () => {
+    for (const dim of ['who', 'what', 'when', 'where', 'why'] as const) {
+      expect(lensesForDimension(dim).map(l => l.id)).not.toContain('home');
+    }
+  });
+});
+
+describe('lensIdFromUid', () => {
+  it('extracts the id from a lens uid', () => {
+    expect(lensIdFromUid('lens/newest')).toBe('newest');
+  });
+
+  it('returns null for a card uid', () => {
+    expect(lensIdFromUid('posts/some-post')).toBeNull();
+  });
+
+  it('returns null for null or undefined input', () => {
+    expect(lensIdFromUid(null)).toBeNull();
+    expect(lensIdFromUid(undefined)).toBeNull();
+  });
+});
+
+describe('activeLensIcon', () => {
+  it('returns the icon of the active lens when it is in the given list', () => {
+    const when = lensesForDimension('when');
+    expect(activeLensIcon(when, 'newest')).toBe('🕒');
+  });
+
+  it('returns undefined when the active lens id is not in the given list', () => {
+    const who = lensesForDimension('who');
+    expect(activeLensIcon(who, 'newest')).toBeUndefined();
+  });
+
+  it('returns undefined when there is no active lens', () => {
+    const when = lensesForDimension('when');
+    expect(activeLensIcon(when, null)).toBeUndefined();
+  });
+
+  it('falls back to a generic marker when the active lens declares no icon', () => {
+    const iconless = [{ ...LENS_REGISTRY[0], icon: undefined, id: 'iconless' }];
+    expect(activeLensIcon(iconless, 'iconless')).toBe('●');
   });
 });
 
