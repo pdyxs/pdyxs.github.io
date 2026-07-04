@@ -66,6 +66,15 @@ const DECLARATIONS: LensDeclaration[] = [
 /** The full lens registry — the single source of truth for which lenses exist. */
 export const LENS_REGISTRY: LensDefinition[] = DECLARATIONS.map(normaliseLens);
 
+/**
+ * The fallback browse lens: where a filter lands when it's added somewhere
+ * that can't accept it (e.g. the home lens, acceptsFilters: false) — it
+ * "falls through" here carrying the accumulated FilterState rather than
+ * leaving the visitor stuck. Also the default member of the browse lens
+ * family (concrete sort lenses under a shared grid) until more are added.
+ */
+export const DEFAULT_BROWSE_LENS_ID = 'newest';
+
 /** Builds a lens location uid ("lens/<id>"), matching the "collection/id" uid shape. */
 export function lensUid(id: string): string {
   return `lens/${id}`;

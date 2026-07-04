@@ -7,8 +7,8 @@ description: Projects and writing — games, education, interactive art, science
 tags: []
 ---
 
-I've worked in the fields of [software engineering](collection:projects?tag=what/projects/software-engineering), [education technology](collection:projects?tag=what/projects/edtech) and [serious games](collection:projects?tag=what/projects/game-design).
+I've worked in the fields of [software engineering](collection:what:projects/software-engineering), [education technology](collection:what:projects/edtech) and [serious games](collection:what:projects/game-design).
 
-I've made [digital games](collection:projects?tag=what/projects/games), [analog games](collection:projects?tag=what/projects/analog-games), [interactive theatre](collection:projects?tag=what/projects/interactive-theatre), [data artworks](collection:projects?tag=what/projects/data-art) and [sudoku puzzles](collection:puzzles).
+I've made [digital games](collection:what:projects/games), [analog games](collection:what:projects/analog-games), [interactive theatre](collection:what:projects/interactive-theatre), [data artworks](collection:what:projects/data-art) and [sudoku puzzles](collection:what:puzzles).
 
-I've written about [design](collection:posts?tag=what/topics/design), development and about [my travels](collection:posts?tag=what/topics/travel). Read my [writing](collection:posts) or browse all [projects](collection:projects).
+I've written about [design](collection:what:topics/design), development and about [my travels](collection:what:topics/travel). Read my [writing](collection:what:posts) or browse all [projects](collection:what:projects).

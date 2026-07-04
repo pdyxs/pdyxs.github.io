@@ -1,15 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { resolveLocation, resolveCardRenderer } from './location-resolver';
-import { COLLECTION_RENDERERS, COLLECTION_VIEW_RENDERERS, NAV_RENDERERS } from './renderers';
+import { COLLECTION_RENDERERS, NAV_RENDERERS } from './renderers';
 import GenericRenderer from '../components/card-renderers/GenericRenderer.astro';
 
 describe('resolveLocation', () => {
-  it('resolves a bare collection name with a registered view renderer to kind: collection-view', () => {
-    const result = resolveLocation('posts');
-    expect(result).toEqual({ kind: 'collection-view', collection: 'posts', component: COLLECTION_VIEW_RENDERERS.posts });
-  });
-
+  // Collection-view pages (posts/projects/puzzles) are retired (issue #26) —
+  // COLLECTION_VIEW_RENDERERS is empty until a future collection view
+  // registers here, so every bare collection name resolves to unknown now.
   it('resolves a bare collection name with no view renderer to kind: unknown', () => {
+    expect(resolveLocation('posts')).toEqual({ kind: 'unknown' });
     expect(resolveLocation('nope')).toEqual({ kind: 'unknown' });
   });
 

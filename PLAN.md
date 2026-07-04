@@ -104,28 +104,28 @@ broken internal links.
 
 ---
 
-## Milestone 4: Navigation & Site Design
+## Milestone 4: Navigation & Site Design — resolved
 
-**This milestone is intentionally left open for design work.** The old
-Who/What/Where/When/Why structure should not be blindly recreated — treat this
-as a clean slate.
+This milestone was intentionally left open for design work; it's now decided
+and built, not a clean slate anymore. The answer that emerged: a **card-stack
+navigation model** with a **lens** as the first-class "browse" location —
 
-Questions to answer through design:
-- What do new visitors need to find immediately?
-- How do blog and portfolio surface together rather than separately?
-- Does the distinctive nav structure serve visitors or just feel clever?
-- What's the right homepage for someone who wants to explore vs. someone
-  who came from a specific post?
+- The 5W (Who/What/Where/When/Why) structure came back, but as a *filter*
+  dimension (`src/lib/filters.ts`), not a nav dropdown — content carries
+  `dimension:value` tags and any view can narrow by them.
+- The home lens (`src/lib/lens-registry.ts`, `home` entry) is the homepage;
+  "browse" is a lens family (concrete sort lenses under a shared grid, e.g.
+  `newest`) that a filter can pre-narrow. See issue #26 (browse lens +
+  retiring the old per-collection pages) and #23 (lens as a stack location).
+- Cards push/collapse in a stack (`CardStack.svelte`) rather than navigating
+  between separate pages — the "explore vs. arrived from a specific post"
+  question is answered by that shared stack: every entry point (home, a
+  post, a filtered browse) is a location on the same stack.
+- Bootstrap was never introduced; styling is CSS custom properties
+  end-to-end (see `global.css` design tokens).
 
-Technical notes for whatever design emerges:
-- Navigation data currently lives in `_data/nav.yml` — port to a config file
-  or hardcode if it's simple enough
-- The answer collections (`_who`, `_what`, etc.) were data-driving the nav
-  dropdowns — evaluate whether this level of indirection is still needed
-- Bootstrap can be brought in as npm dep (v5) or replaced with CSS custom
-  properties; the latter is better for front-end experimentation long-term
-
-**Done when:** Navigation design is decided, implemented, and works on mobile.
+**Done:** navigation design decided and implemented; mobile behaviour is
+covered by the CSS-first-responsive convention (see project CLAUDE.md).
 
 ---
 
@@ -133,16 +133,21 @@ Technical notes for whatever design emerges:
 
 Build the Astro layouts and components for each content type.
 
-- [ ] Base layout (head, nav, footer)
-- [ ] Blog post layout — with related project surfacing if `project:` field set
-- [ ] Project page layout — with related posts listed
-- [ ] Blog index / archive
-- [ ] Portfolio index — filterable by status and tags
-- [ ] Story/series layout — sequential chapter navigation (prev/next within series)
-- [ ] CV/work history page
-- [ ] Homepage — design TBD from Milestone 4
+- [x] Base layout (head, nav, footer) — `src/layouts/Base.astro`
+- [x] Blog post layout — with related project surfacing if `project:` field set
+- [x] Project page layout — with related posts listed
+- [x] Blog index / archive — superseded by the browse lens pre-filtered to
+  `what:posts` (issue #26), not a standalone archive page
+- [x] Portfolio index — filterable by status and tags — superseded by the
+  browse lens: any `dimension:value` filter (including `what:projects`) narrows
+  it in place (issue #26); there's no separate filterable portfolio page
+- [x] Story/series layout — sequential chapter navigation (prev/next within
+  series) — `SeriesNavRenderer` (`NAV_RENDERERS.stories`)
+- [x] CV/work history page — `WorkRenderer`
+- [x] Homepage — the home lens (issue #24: folded `index.astro` into the home
+  lens; resolved by Milestone 4 above)
 
-**Done when:** Every content type has a working layout with correct
+**Done:** every content type has a working layout with correct
 cross-references between posts and projects.
 
 ---

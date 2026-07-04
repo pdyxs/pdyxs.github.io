@@ -3,6 +3,7 @@ import type { SerialisedCard } from './browse-helpers';
 import type { FilterState } from './filters';
 import { filterStateToParams } from './filters';
 import { selectSlotCard } from './slot-selection';
+import { DEFAULT_BROWSE_LENS_ID } from './lens-registry';
 
 export type PinnedSlotConfig = {
   type: 'pinned';
@@ -39,11 +40,17 @@ export type ResolvedFilter = {
 
 export type ResolvedSlot = ResolvedPinned | ResolvedFilter;
 
-/** Builds the URL for a given filter state (always rooted at /). */
+/**
+ * Builds the URL for a given filter state. Always routes to the fallback
+ * browse lens (DEFAULT_BROWSE_LENS_ID) — home can't accept filters, so a
+ * filter added there falls through to the browse lens carrying the full
+ * FilterState rather than landing on a `/` that would silently drop it.
+ */
 export function buildBrowseUrl(filter: FilterState): string {
   const params = filterStateToParams(filter);
   const query = params.toString();
-  return query ? `/?${query}` : '/';
+  const base = `/lens/${DEFAULT_BROWSE_LENS_ID}`;
+  return query ? `${base}?${query}` : base;
 }
 
 /**

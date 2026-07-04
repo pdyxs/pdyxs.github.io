@@ -3,8 +3,14 @@ import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
 import { TRAVEL_LOG } from '../data/travel-log';
 import { lookupLocationForDate, injectWhereTags } from './where-tags';
-import { applyFilters, DIMENSIONS } from './filters';
+import { applyFilters, DIMENSIONS, tagIdToFilterValue } from './filters';
 import type { Dimension, FilterState } from './filters';
+
+// Re-exported for existing call sites; the canonical definition lives in
+// filters.ts (client-safe — no astro:content) so client-side code (e.g.
+// collection-link.ts, imported by CardStack.svelte) can use it without
+// pulling this server-only module into the client bundle.
+export { tagIdToFilterValue };
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
 function effectiveTags(
@@ -31,12 +37,6 @@ export type CardMeta = {
   renderer: string;
   contentHash: string; // djb2 hash of title + description + body; resets view state on edit
 };
-
-/** Converts a tag collection entry id (e.g. "what/projects/games") to filter-value format ("what:projects/games"). */
-export function tagIdToFilterValue(id: string): string {
-  const slashIdx = id.indexOf('/');
-  return slashIdx !== -1 ? id.slice(0, slashIdx) + ':' + id.slice(slashIdx + 1) : id;
-}
 
 function compareByDateDesc(a: CardMeta, b: CardMeta): number {
   if (!a.date && !b.date) return 0;
