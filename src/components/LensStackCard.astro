@@ -49,6 +49,7 @@ const isHome = lens?.dimension === 'root';
   <div
     class:list={['stack-card', 'stack-card--active', presentation === 'page' && 'stack-card--page']}
     data-uid={uid}
+    data-width={lens.width}
   >
     <header class="page-header">
       <h1 class="page-title">{chrome.pageTitle}</h1>

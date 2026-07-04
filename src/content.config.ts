@@ -75,6 +75,11 @@ const content = defineCollection({
         // ── cards ──
         panel: z.boolean().optional(),
         titleSuffix: z.string().optional(),
+        // Per-location responsive width (issue #27): a plain CSS length/expr
+        // (e.g. "900px") that overrides the global --max-width default for
+        // this card in both card mode and page mode. Undeclared → falls back
+        // to the site default.
+        width: z.string().optional(),
     }),
 });
 

@@ -14,6 +14,7 @@ tags:
 priority: 20160200
 status: past
 medium: 'Data visualisation, artwork'
+width: 900px
 actions: []
 quotes: []
 images: []

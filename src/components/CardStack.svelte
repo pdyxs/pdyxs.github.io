@@ -10,6 +10,7 @@
   import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../lib/filters';
   import { markRead } from '../lib/card-view-state';
+  import { extractLocationWidth } from '../lib/location-width';
 
   interface Props {
     activeUid?: string;
@@ -38,13 +39,42 @@
     }
   });
 
+  // Per-location responsive width (issue #27): a plain, non-reactive value
+  // captured once from the SSR-active location's rendered fragment. Rendered
+  // as a static inline style below so the correct --max-width is present in
+  // the very first paint, before hydration — the $effect further down keeps
+  // it in sync as the stack changes thereafter (mirrors --num-left-collapsed
+  // / --num-right-collapsed, which is also effect-owned post-mount).
+  const initialWidth = untrack(() => activeUid ? extractLocationWidth(activeHtml ?? undefined) : undefined);
+
   const layout = $derived(computeStackLayout($stackStore));
   const hasCards = $derived($stackStore.entries.length > 0);
+
+  // The active location's declared width overrides --max-width for the whole
+  // stack column (card mode's border-box and page mode's content + divider
+  // width both derive from the same var — see global.css). No declared width
+  // → remove the override and fall back to the :root default.
+  //
+  // Not folded into cardHtmlCache reactivity: cardHtmlCache is a plain
+  // `$state(new Map())`, which Svelte does not deep-proxy — a bare `.set()`
+  // doesn't retrigger effects that only read via `.get()`. That's fine for
+  // the common case (cache is populated before the store changes), but
+  // pushCard's placeholder→real-content swap populates the cache with real
+  // content *after* the store already changed, so that path calls this
+  // explicitly once the real fragment lands (mirrors why that swap already
+  // patches .stack-card-body-inner by hand rather than relying on reactivity).
+  function applyMaxWidth(activeKey: string | null) {
+    const stackEl = document.getElementById('card-stack');
+    const width = activeKey ? extractLocationWidth(cardHtmlCache.get(activeKey)) : undefined;
+    if (width) stackEl?.style.setProperty('--max-width', width);
+    else stackEl?.style.removeProperty('--max-width');
+  }
 
   $effect(() => {
     const stackEl = document.getElementById('card-stack');
     stackEl?.style.setProperty('--num-left-collapsed', String(layout.numLeftCollapsed));
     stackEl?.style.setProperty('--num-right-collapsed', String(layout.numRightCollapsed));
+    applyMaxWidth($stackStore.activeKey);
 
     const depth = $stackStore.entries.length;
     for (const card of layout.visible) {
@@ -340,6 +370,10 @@
               existingBodyInner.innerHTML = realBodyInner.innerHTML;
             }
           }
+          // The layout $effect already ran against the placeholder (no
+          // data-width) when the store changed; the real fragment's width
+          // only lands in cardHtmlCache now, so reapply explicitly.
+          applyMaxWidth(uid);
         }
         // One rAF so the browser paints the closed card before we start opening it
         await new Promise<void>(r => requestAnimationFrame(r));
@@ -590,7 +624,7 @@
   });
 </script>
 
-<div id="card-stack" hidden={!hasCards}>
+<div id="card-stack" hidden={!hasCards} style={initialWidth ? `--max-width: ${initialWidth};` : undefined}>
   <div class="card-stack-inner">
   {#each layout.renderItems as item (item.kind === 'card' ? 'card-' + item.key : item.kind === 'fan-corner' ? 'fc-' + item.forKey : 'overflow-' + item.side)}
     {#if item.kind === 'card' && item.side === 'active'}

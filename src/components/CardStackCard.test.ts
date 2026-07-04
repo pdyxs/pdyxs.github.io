@@ -49,6 +49,22 @@ describe('CardStackCard', () => {
     expect(div.querySelector('.puzzle-meta')).not.toBeNull();
   });
 
+  it('carries a frontmatter-declared width as a data-width attribute', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(CardStackCard, { props: { path: 'projects/the-path' } });
+    const div = dom(html);
+
+    expect(div.querySelector('.stack-card')?.getAttribute('data-width')).toBe('900px');
+  });
+
+  it('omits data-width when frontmatter declares no width (falls back to the global default)', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(CardStackCard, { props: { path: 'posts/about-me' } });
+    const div = dom(html);
+
+    expect(div.querySelector('.stack-card')?.hasAttribute('data-width')).toBe(false);
+  });
+
   it('renders a tag location via the tag renderer, hashing name+description', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(CardStackCard, { props: { path: 'tag/who' } });
