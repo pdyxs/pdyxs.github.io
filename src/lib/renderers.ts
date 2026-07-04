@@ -14,8 +14,11 @@ export const COLLECTION_RENDERERS: Record<string, AstroComponentFactory> = {
   work: WorkRenderer,
 };
 
+// Keyed by the full path prefix of the collection under content/ (e.g.
+// "what/stories"), not a bare collection name — resolveLocation() matches a
+// card's uid against these prefixes to find its nav renderer.
 export const NAV_RENDERERS: Record<string, AstroComponentFactory> = {
-  stories: SeriesNavRenderer,
+  'what/stories': SeriesNavRenderer,
 };
 
 // Collection-view browsing pages (bare collection-name uids, e.g. "posts")

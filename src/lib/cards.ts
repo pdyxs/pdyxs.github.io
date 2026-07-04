@@ -14,22 +14,19 @@ export { tagIdToFilterValue };
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
 function effectiveTags(
-  collection: string,
-  id: string,
+  uid: string,
   frontmatterTags: string[],
   cascadeTags: string[],
 ): string[] {
   return mergeEffectiveTags(
-    derivePathTags(collection, id),
+    derivePathTags(uid),
     cascadeTags,
     frontmatterTags,
   );
 }
 
 export type CardMeta = {
-  uid: string;        // "collection/id", e.g. "writing/why-portal"
-  collection: string;
-  id: string;
+  uid: string;        // full path relative to content/, e.g. "what/writing/why-portal"
   title: string;
   description?: string;
   date?: Date;
@@ -83,20 +80,23 @@ export function getCardsForTag(
   return [...prefixMatched, ...literalMatched].sort(compareByDateDesc);
 }
 
+const STORIES_PREFIX = 'what/stories/';
+const PUZZLES_PREFIX = 'what/puzzles/';
+
 /** Resolves a card's display title, applying the stories-fallback-to-series rule. */
 export function resolveCardTitle(
-  collection: string,
+  uid: string,
   data: { title?: string; series?: string }
 ): string {
-  return data.title ?? (collection === 'stories' ? (data.series ?? '') : '') ?? '';
+  return data.title ?? (uid.startsWith(STORIES_PREFIX) ? (data.series ?? '') : '') ?? '';
 }
 
 /** Resolves a card's description, synthesising one from puzzle metadata when absent. */
 export function resolveCardDescription(
-  collection: string,
+  uid: string,
   data: { description?: string; puzzle_type?: string; difficulty?: string }
 ): string | undefined {
-  if (collection === 'puzzles' && !data.description) {
+  if (uid.startsWith(PUZZLES_PREFIX) && !data.description) {
     return [data.puzzle_type, data.difficulty].filter(Boolean).join(' · ') || undefined;
   }
   return data.description;
@@ -124,28 +124,21 @@ export async function getAllCards(): Promise<CardMeta[]> {
 
   const contentMeta = await Promise.all(
     allContent
-      .filter(e => {
-        const col = e.id.split('/')[0];
-        return col !== 'stories' || import.meta.env.DEV || e.data.published !== false;
-      })
+      .filter(e => e.id.startsWith(STORIES_PREFIX) ? (import.meta.env.DEV || e.data.published !== false) : true)
       .map(async e => {
-        const slashIdx = e.id.indexOf('/');
-        const collection = e.id.slice(0, slashIdx);
-        const id = e.id.slice(slashIdx + 1);
-        const cascade = await resolveFolderCascade(collection, id, reader);
+        const uid = e.id;
+        const cascade = await resolveFolderCascade(uid, reader);
 
-        const title = resolveCardTitle(collection, e.data);
-        const description = resolveCardDescription(collection, e.data);
+        const title = resolveCardTitle(uid, e.data);
+        const description = resolveCardDescription(uid, e.data);
 
-        const baseTags = effectiveTags(collection, id, e.data.tags, cascade.cascadeTags);
+        const baseTags = effectiveTags(uid, e.data.tags, cascade.cascadeTags);
         const finalTags = e.data.date
           ? injectWhereTags(baseTags, lookupLocationForDate(e.data.date, TRAVEL_LOG))
           : baseTags;
 
         return {
-          uid: e.id,
-          collection,
-          id,
+          uid,
           title,
           description,
           date: e.data.date,
@@ -158,8 +151,6 @@ export async function getAllCards(): Promise<CardMeta[]> {
 
   const tagsMeta = tags.map(t => ({
     uid: `tag/${t.id}`,
-    collection: 'tag',
-    id: t.id,
     title: t.data.name,
     description: t.data.description,
     tags: [] as string[],

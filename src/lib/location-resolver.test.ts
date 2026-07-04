@@ -12,19 +12,29 @@ describe('resolveLocation', () => {
     expect(resolveLocation('nope')).toEqual({ kind: 'unknown' });
   });
 
-  it('resolves "<collection>/<id>" to kind: card, carrying the collection\'s nav renderer', () => {
-    const result = resolveLocation('stories/arctic-01');
+  it('resolves a dimension-rooted card uid to kind: card, carrying its collection\'s nav renderer', () => {
+    const result = resolveLocation('what/stories/arctic-01');
     expect(result).toEqual({
       kind: 'card',
-      collection: 'stories',
-      id: 'arctic-01',
-      navComponent: NAV_RENDERERS.stories,
+      path: 'what/stories/arctic-01',
+      navComponent: NAV_RENDERERS['what/stories'],
     });
   });
 
-  it('a card location has a null navComponent when the collection has no nav renderer', () => {
-    const result = resolveLocation('writing/why-portal');
-    expect(result).toEqual({ kind: 'card', collection: 'writing', id: 'why-portal', navComponent: null });
+  it('a card location has a null navComponent when its collection has no nav renderer', () => {
+    const result = resolveLocation('what/writing/why-portal');
+    expect(result).toEqual({ kind: 'card', path: 'what/writing/why-portal', navComponent: null });
+  });
+
+  it('matches the nav renderer prefix exactly, not just any path sharing the prefix string', () => {
+    // "what/storiesish" shares the "what/stories" string but isn't a descendant of it.
+    const result = resolveLocation('what/storiesish/foo');
+    expect(result).toEqual({ kind: 'card', path: 'what/storiesish/foo', navComponent: null });
+  });
+
+  it('resolves a tag location to kind: card with a null navComponent', () => {
+    const result = resolveLocation('tag/who');
+    expect(result).toEqual({ kind: 'card', path: 'tag/who', navComponent: null });
   });
 
   it('resolves a registered lens name to kind: lens, with its definition and a callable loader', () => {

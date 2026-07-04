@@ -47,7 +47,7 @@ describe('GenericRenderer', () => {
   it('resolves a bare image filename to the colocated local asset', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
-      props: { entry: fakeEntry({ id: 'projects/art-heist', image: 'outside.jpg' }), Content: undefined },
+      props: { entry: fakeEntry({ id: 'what/projects/art-heist', image: 'outside.jpg' }), Content: undefined },
     });
 
     const div = document.createElement('div');
@@ -60,7 +60,7 @@ describe('GenericRenderer', () => {
   it('renders nothing when the bare filename has no colocated local asset', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
-      props: { entry: fakeEntry({ id: 'projects/does-not-exist', image: 'missing.jpg' }), Content: undefined },
+      props: { entry: fakeEntry({ id: 'what/projects/does-not-exist', image: 'missing.jpg' }), Content: undefined },
     });
 
     const div = document.createElement('div');
@@ -129,7 +129,7 @@ describe('GenericRenderer', () => {
   it('renders a gallery of colocated images excluding the header image', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
-      props: { entry: fakeEntry({ id: 'projects/art-heist', image: 'outside.jpg' }), Content: undefined },
+      props: { entry: fakeEntry({ id: 'what/projects/art-heist', image: 'outside.jpg' }), Content: undefined },
     });
 
     const div = document.createElement('div');
@@ -140,7 +140,7 @@ describe('GenericRenderer', () => {
   it('renders a gallery from colocated images when no header image is set', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
-      props: { entry: fakeEntry({ id: 'projects/art-heist' }), Content: undefined },
+      props: { entry: fakeEntry({ id: 'what/projects/art-heist' }), Content: undefined },
     });
 
     const div = document.createElement('div');
@@ -152,7 +152,7 @@ describe('GenericRenderer', () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
       props: {
-        entry: fakeEntry({ id: 'projects/art-heist', image: 'outside.jpg', images: ['outside.jpg'] }),
+        entry: fakeEntry({ id: 'what/projects/art-heist', image: 'outside.jpg', images: ['outside.jpg'] }),
         Content: undefined,
       },
     });
@@ -165,7 +165,7 @@ describe('GenericRenderer', () => {
   it('renders no gallery when there are no gallery images', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
-      props: { entry: fakeEntry({ id: 'projects/does-not-exist' }), Content: undefined },
+      props: { entry: fakeEntry({ id: 'what/projects/does-not-exist' }), Content: undefined },
     });
 
     const div = document.createElement('div');

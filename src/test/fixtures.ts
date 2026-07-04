@@ -39,7 +39,7 @@ export function fakeEntry(overrides?: {
   };
 } {
   const { id, ...data } = overrides ?? {};
-  return { id: id ?? 'projects/test', data: { description: undefined, ...data } };
+  return { id: id ?? 'what/projects/test', data: { description: undefined, ...data } };
 }
 
 export function fakeContent(): undefined {
@@ -85,9 +85,7 @@ export function fakeTagEntry(overrides?: {
 
 export function fakeCardMeta(overrides?: Partial<CardMeta>): CardMeta {
   const base: CardMeta = {
-    uid: 'cards/test',
-    collection: 'cards',
-    id: 'test',
+    uid: 'what/cards/test',
     title: 'Test Card',
     tags: [],
     renderer: 'card',

@@ -12,9 +12,16 @@ export function mergeEffectiveTags(...arrays: string[][]): string[] {
   return result;
 }
 
-export function derivePathTags(collection: string, id: string): string[] {
-  const parts = id.split('/');
-  const dirSegments = parts.slice(0, -1);
-  const path = [collection, ...dirSegments].join('/');
-  return [`what:${path}`];
+/**
+ * Derives a card's folder-derived tag from its dimension-rooted uid
+ * ("<dimension>/<value...>/<slug>"). The first path segment is the filter
+ * dimension; every remaining directory segment (i.e. everything between the
+ * dimension and the file's own slug) is the tag value. A file always
+ * expresses exactly one folder-derived tag.
+ */
+export function derivePathTags(uid: string): string[] {
+  const parts = uid.split('/');
+  const dimension = parts[0];
+  const value = parts.slice(1, -1).join('/');
+  return [`${dimension}:${value}`];
 }

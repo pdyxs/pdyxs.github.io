@@ -21,10 +21,14 @@ const quote = z.object({
 
 // ─── Unified content collection ───────────────────────────────────────────────
 //
-// All markdown content lives under src/content/. The first path segment is the
-// logical collection name (e.g. posts/about-me → collection "posts", id "about-me").
-// Per-directory _config.yaml files set renderer defaults; individual files can
-// override any field in their frontmatter.
+// All markdown content lives under src/content/, rooted at the filter
+// dimension it belongs to (e.g. src/content/what/posts/about-me/index.md).
+// A card's uid is its full path relative to src/content/ (entry.id) — the
+// first segment is the dimension, the rest (minus the file's own slug) is
+// the dimension value (see derivePathTags in tag-inheritance.ts). Every card
+// is a folder with an index.md plus its colocated assets. Per-directory
+// _config.yaml files set renderer defaults; individual files can override
+// any field in their frontmatter.
 
 const content = defineCollection({
     loader: glob({ pattern: "**/[!_]*.{md,mdx}", base: "./src/content" }),

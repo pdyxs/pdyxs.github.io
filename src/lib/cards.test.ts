@@ -134,32 +134,40 @@ describe('getCardsForTag', () => {
 
 describe('resolveCardTitle', () => {
   it('uses data.title when present', () => {
-    expect(resolveCardTitle('posts', { title: 'Hello' })).toBe('Hello');
+    expect(resolveCardTitle('what/posts/about-me', { title: 'Hello' })).toBe('Hello');
   });
 
   it('falls back to series for stories with no title', () => {
-    expect(resolveCardTitle('stories', { series: 'Arctic' })).toBe('Arctic');
+    expect(resolveCardTitle('what/stories/arctic/ch-01', { series: 'Arctic' })).toBe('Arctic');
   });
 
   it('falls back to empty string when nothing else applies', () => {
-    expect(resolveCardTitle('posts', {})).toBe('');
+    expect(resolveCardTitle('what/posts/about-me', {})).toBe('');
+  });
+
+  it('does not apply the series fallback to a non-stories path even if a series field is present', () => {
+    expect(resolveCardTitle('what/posts/about-me', { series: 'Arctic' })).toBe('');
   });
 });
 
 describe('resolveCardDescription', () => {
   it('uses data.description when present', () => {
-    expect(resolveCardDescription('posts', { description: 'A post' })).toBe('A post');
+    expect(resolveCardDescription('what/posts/about-me', { description: 'A post' })).toBe('A post');
   });
 
   it('builds a puzzle description from type and difficulty when description is absent', () => {
-    expect(resolveCardDescription('puzzles', { puzzle_type: 'Logic', difficulty: 'Hard' })).toBe('Logic · Hard');
+    expect(resolveCardDescription('what/puzzles/cartography', { puzzle_type: 'Logic', difficulty: 'Hard' })).toBe('Logic · Hard');
   });
 
   it('does not override an explicit puzzle description', () => {
-    expect(resolveCardDescription('puzzles', { description: 'Custom', puzzle_type: 'Logic' })).toBe('Custom');
+    expect(resolveCardDescription('what/puzzles/cartography', { description: 'Custom', puzzle_type: 'Logic' })).toBe('Custom');
   });
 
   it('returns undefined for a non-puzzle entry with no description', () => {
-    expect(resolveCardDescription('posts', {})).toBeUndefined();
+    expect(resolveCardDescription('what/posts/about-me', {})).toBeUndefined();
+  });
+
+  it('does not apply the puzzle fallback to a non-puzzles path', () => {
+    expect(resolveCardDescription('what/posts/about-me', { puzzle_type: 'Logic', difficulty: 'Hard' })).toBeUndefined();
   });
 });

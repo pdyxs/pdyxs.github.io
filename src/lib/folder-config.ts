@@ -38,22 +38,27 @@ type ConfigFile = {
 };
 
 /**
- * Walks from the collection root down to a file's own directory, reading
+ * Walks from the dimension root down to a file's own directory, reading
  * `_config.yaml` at every level. Unifies what used to be two separate,
  * half-wired mechanisms (a single-level renderer read and a multi-level tag
  * read) into one ancestor walk.
+ *
+ * Takes the file's full uid relative to `src/content` (e.g.
+ * "what/projects/games/x") — every prefix of its directory portion is a
+ * candidate ancestor, from the first path segment down to (and including)
+ * the file's own containing directory. The file's own pseudo-directory
+ * (its last path segment, whether that's a flat file's stem or a
+ * card-as-folder's slug) is never itself a candidate — cascade only applies
+ * to descendants of a config, not the file that config's directory holds.
  */
 export async function resolveFolderCascade(
-  collection: string,
-  id: string,
+  uid: string,
   reader: (path: string) => Promise<string | null>
 ): Promise<FolderCascade> {
-  const parts = id.split('/');
+  const parts = uid.split('/');
   const dirs = parts.slice(0, -1);
 
-  // ancestor directories: collection root, then each nested subdirectory down
-  // to (and including) the file's own containing directory.
-  const candidates = [collection, ...dirs.map((_, i) => [collection, ...dirs.slice(0, i + 1)].join('/'))];
+  const candidates = dirs.map((_, i) => dirs.slice(0, i + 1).join('/'));
 
   let renderer: string | undefined;
   const cascadeTags: string[] = [];
