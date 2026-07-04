@@ -8,9 +8,13 @@ import ProjectsRenderer from '../components/card-renderers/ProjectsRenderer.astr
 import PuzzlesRenderer from '../components/card-renderers/PuzzlesRenderer.astro';
 import FilterBrowserRenderer from '../components/card-renderers/FilterBrowserRenderer.astro';
 
+// Keyed by renderer *name* (the cascaded _config.yaml / frontmatter `renderer`
+// value), not collection name. Only renderers with a dedicated component are
+// listed here — 'post', 'story', and 'card' legitimately have none and fall
+// back to GenericRenderer via resolveCardRenderer().
 export const COLLECTION_RENDERERS: Record<string, AstroComponentFactory> = {
   tag: FilterRenderer,
-  puzzles: PuzzleRenderer,
+  puzzle: PuzzleRenderer,
   work: WorkRenderer,
 };
 

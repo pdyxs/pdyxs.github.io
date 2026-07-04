@@ -36,6 +36,15 @@ describe('CardStackCard', () => {
     expect(div.querySelector('[data-content-hash]')?.getAttribute('data-content-hash')).toBeTruthy();
   });
 
+  it('renders a puzzle card via PuzzleRenderer, resolved from the cascaded _config.yaml renderer (not a frontmatter override)', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(CardStackCard, { props: { path: 'puzzles/cartography' } });
+    const div = dom(html);
+
+    expect(div.querySelector('.stack-card')?.getAttribute('data-uid')).toBe('puzzles/cartography');
+    expect(div.querySelector('.puzzle-meta')).not.toBeNull();
+  });
+
   it('renders a tag location via the tag renderer, hashing name+description', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(CardStackCard, { props: { path: 'tag/who' } });

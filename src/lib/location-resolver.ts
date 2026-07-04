@@ -82,10 +82,11 @@ export function resolveLocation(path: string): LocationResolution {
 }
 
 /**
- * Resolves which content renderer applies to a card entry: an explicit
- * per-entry `renderer` frontmatter override, else the collection's default,
- * else GenericRenderer.
+ * Maps a cascaded renderer name (frontmatter override, else nearest-ancestor
+ * `_config.yaml`, else 'card' — see resolveFolderCascade in folder-config.ts
+ * and getAllCards in cards.ts) to its component. Renderer names with no
+ * dedicated component ('post', 'story', 'card') fall back to GenericRenderer.
  */
-export function resolveCardRenderer(collection: string, rendererName?: string): AstroComponentFactory {
-  return (rendererName ? COLLECTION_RENDERERS[rendererName] : null) ?? COLLECTION_RENDERERS[collection] ?? GenericRenderer;
+export function resolveCardRenderer(rendererName: string): AstroComponentFactory {
+  return COLLECTION_RENDERERS[rendererName] ?? GenericRenderer;
 }
