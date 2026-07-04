@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { manifestLookup } from './stack-manifest-client';
+import { allLensUids } from './lens-registry';
 
 describe('manifestLookup (shipped manifest)', () => {
   it('cold_deep_link_decode: a code from the shipped manifest resolves back to its uid', () => {
@@ -12,5 +13,13 @@ describe('manifestLookup (shipped manifest)', () => {
 
   it('unknown_code_returns_undefined', () => {
     expect(manifestLookup.uidForCode('does-not-exist-code')).toBeUndefined();
+  });
+
+  it('every registry lens has a manifest code (manifest enumeration is registry-driven)', () => {
+    for (const uid of allLensUids()) {
+      const code = manifestLookup.codeForUid(uid);
+      expect(code, `expected a manifest code for ${uid}`).toBeTruthy();
+      expect(manifestLookup.uidForCode(code!)).toBe(uid);
+    }
   });
 });

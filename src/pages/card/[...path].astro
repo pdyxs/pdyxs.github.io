@@ -1,11 +1,9 @@
 ---
-import { getCollection, render } from 'astro:content';
-import { getAllCards, computeContentHash, resolveCardTitle, resolveCardDescription } from '../../lib/cards';
+import { getCollection } from 'astro:content';
+import { getAllCards } from '../../lib/cards';
 import Base from '../../layouts/Base.astro';
-import CardHeader from '../../components/CardHeader.astro';
 import StackNav from '../../components/StackNav.astro';
-import GenericRenderer from '../../components/card-renderers/GenericRenderer.astro';
-import { COLLECTION_RENDERERS, NAV_RENDERERS, COLLECTION_VIEW_RENDERERS } from '../../lib/renderers';
+import CardStackCard from '../../components/CardStackCard.astro';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
@@ -21,80 +19,28 @@ export async function getStaticPaths() {
 }
 
 const { path } = Astro.params;
+
+// Cheap title lookup for <title> — CardStackCard does the (potentially
+// expensive) Content render itself; this only needs frontmatter.
 const parts = path!.split('/');
 const collection = parts[0];
 const id = parts.slice(1).join('/');
-
-const isCollectionView = id === '';
-const CollectionViewRenderer = isCollectionView ? (COLLECTION_VIEW_RENDERERS[collection] ?? null) : null;
-
-let entries: any[] = [];
-let entry: any = null;
-let Content: any = null;
-
-if (!isCollectionView) {
+let title = '';
+if (id !== '') {
   if (collection === 'tag') {
     const tags = await getCollection('tag');
-    entries = tags;
-    entry = tags.find((t: any) => t.id === id);
+    title = tags.find((t: any) => t.id === id)?.data.name ?? '';
   } else {
     const allContent = await getCollection('content');
-    entries = allContent.filter((e: any) => e.id.startsWith(collection + '/'));
-    entry = allContent.find((e: any) => e.id === path);
+    const entry = allContent.find((e: any) => e.id === path);
+    title = (entry?.data as any)?.title ?? '';
   }
-  const rendered = entry ? await render(entry as any) : null;
-  Content = rendered?.Content;
 }
-
-const rendererName: string | undefined = (entry?.data as any)?.renderer;
-const Renderer =
-  (rendererName ? COLLECTION_RENDERERS[rendererName] : null) ??
-  COLLECTION_RENDERERS[collection] ??
-  GenericRenderer;
-
-const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name ?? '';
-const titleSuffix: string | undefined = (entry?.data as any)?.titleSuffix;
-const NavRenderer = !isCollectionView ? (NAV_RENDERERS[collection] ?? null) : null;
-
-// Content hash for client-side view-state tracking (markRead/markDisplayed).
-// Uses the exact same formula as getAllCards() (resolveCardTitle/resolveCardDescription
-// + computeContentHash) so a card opened here hashes identically to its FrontPage slot
-// entry — a mismatch would make getViewState() think the content changed on every visit.
-const contentHash: string | undefined = !isCollectionView && entry
-  ? collection === 'tag'
-    ? computeContentHash(entry.data.name, entry.data.description)
-    : computeContentHash(
-        resolveCardTitle(collection, entry.data),
-        resolveCardDescription(collection, entry.data),
-        entry.body
-      )
-  : undefined;
 ---
 
-<Base title={title}>
+<Base {title}>
   <div id="homepage" hidden></div>
   <StackNav activeUid={path}>
-    <div class="stack-card stack-card--active" data-uid={path} data-content-hash={contentHash}>
-      {CollectionViewRenderer ? (
-        <CollectionViewRenderer />
-      ) : NavRenderer ? (
-        <NavRenderer {title} {titleSuffix} {entry} allEntries={entries}>
-          <Renderer {entry} {Content} />
-        </NavRenderer>
-      ) : (
-        <>
-          <CardHeader {title} {titleSuffix}>
-            <button class="stack-card-close" aria-label="Close">×</button>
-          </CardHeader>
-          <div class="body-wrapper open">
-            <div class="stack-card-body">
-              <div class="stack-card-body-inner">
-                <Renderer {entry} {Content} />
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+    <CardStackCard path={path!} />
   </StackNav>
 </Base>

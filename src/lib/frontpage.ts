@@ -2,6 +2,7 @@ import type { CardMeta } from './cards';
 import type { SerialisedCard } from './browse-helpers';
 import type { FilterState } from './filters';
 import { filterStateToParams } from './filters';
+import { selectSlotCard } from './slot-selection';
 
 export type PinnedSlotConfig = {
   type: 'pinned';
@@ -55,4 +56,44 @@ export function resolvePinnedCards(uids: string[], allCards: CardMeta[]): CardMe
     const card = byUid.get(uid);
     return card ? [card] : [];
   });
+}
+
+export type ResolvedFrontPageSlots = {
+  slots: ResolvedSlot[];
+  /** Filter-slot picks to record as "displayed" — the caller applies this side effect (markDisplayed). */
+  displayed: { uid: string; contentHash: string }[];
+};
+
+/**
+ * Resolves a FrontPageConfig's slots against a card set: pinned slots resolve
+ * directly by uid; filter slots use the day-seeded selectSlotCard() pick.
+ *
+ * Pure decision, no side effects — selectSlotCard reads view-state (localStorage)
+ * to bias selection, but this function doesn't write it. Callers (FrontPage.svelte,
+ * the home lens) apply `displayed` themselves via markDisplayed().
+ */
+export function resolveFrontPageSlots(
+  config: FrontPageConfig,
+  cards: SerialisedCardFull[],
+  now: Date,
+): ResolvedFrontPageSlots {
+  const byUid = new Map(cards.map(c => [c.uid, c]));
+  const cardMetas: CardMeta[] = cards.map(c => ({ ...c, date: c.date ? new Date(c.date) : undefined }));
+
+  const slots: ResolvedSlot[] = [];
+  const displayed: { uid: string; contentHash: string }[] = [];
+
+  for (const slotConfig of config.slots) {
+    if (slotConfig.type === 'pinned') {
+      const card = byUid.get(slotConfig.uid);
+      if (card) slots.push({ type: 'pinned', uid: card.uid, title: card.title, description: card.description });
+    } else {
+      const meta = selectSlotCard(cardMetas, slotConfig.filter, now);
+      if (meta) displayed.push({ uid: meta.uid, contentHash: meta.contentHash });
+      const card = meta ? byUid.get(meta.uid) ?? null : null;
+      slots.push({ type: 'filter', label: slotConfig.label, card, browseUrl: buildBrowseUrl(slotConfig.filter) });
+    }
+  }
+
+  return { slots, displayed };
 }

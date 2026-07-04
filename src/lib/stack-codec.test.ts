@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { serialiseStack, deserialiseStack } from './stack-codec';
 import type { ParamPairs } from './stack-codec';
-import { cardEntry } from './stack-layout';
+import { cardEntry, lensEntry } from './stack-layout';
 import type { StackState, LocationEntry } from './stack-layout';
 import { buildLookup } from './stack-manifest';
 
@@ -9,6 +9,8 @@ const manifest = buildLookup([
   { uid: 'posts/about-me', code: '0' },
   { uid: 'posts/hello', code: '1' },
   { uid: 'tag/travel', code: '2' },
+  { uid: 'lens/home', code: '3' },
+  { uid: 'lens/newest', code: '4' },
 ]);
 
 describe('serialiseStack', () => {
@@ -89,6 +91,68 @@ describe('deserialiseStack', () => {
   });
 });
 
+describe('lens locations', () => {
+  it('serialiseStack_active_lens: an active lens location paths to /lens/<name>, not /card', () => {
+    const state: StackState = { entries: [lensEntry('newest')], activeKey: 'lens/newest' };
+    const result = serialiseStack(state, new Map(), manifest);
+    expect(result.path).toBe('/lens/newest');
+    expect(result.search).toBe('');
+  });
+
+  it('deserialiseStack_active_lens: a /lens/<name> path resolves to a lens/<name> uid', () => {
+    const result = deserialiseStack('/lens/newest', '', manifest);
+    expect(result.state).toEqual({
+      entries: [{ key: 'lens/newest', uid: 'lens/newest' }],
+      activeKey: 'lens/newest',
+    });
+  });
+
+  it('active lens + multi-value filter params are readable in the URL', () => {
+    const state: StackState = { entries: [lensEntry('newest')], activeKey: 'lens/newest' };
+    const paramsByKey = new Map([
+      ['lens/newest', [['filter.what', 'what:projects'], ['filter.what', 'what:puzzles']] as ParamPairs],
+    ]);
+    const result = serialiseStack(state, paramsByKey, manifest);
+    expect(result.path).toBe('/lens/newest');
+
+    const parsed = new URLSearchParams(result.search);
+    expect(parsed.getAll('filter.what')).toEqual(['what:projects', 'what:puzzles']);
+
+    const decoded = deserialiseStack(result.path, result.search, manifest);
+    expect(decoded.state.activeKey).toBe('lens/newest');
+    expect(decoded.paramsByKey.get('lens/newest')).toEqual([
+      ['filter.what', 'what:projects'],
+      ['filter.what', 'what:puzzles'],
+    ]);
+  });
+
+  it('mixed card<->lens interleaved stacks round-trip, with inactive locations short-coded via the manifest', () => {
+    const state: StackState = {
+      entries: [cardEntry('posts/hello'), lensEntry('home'), cardEntry('posts/about-me'), lensEntry('newest')],
+      activeKey: 'posts/about-me',
+    };
+    const result = serialiseStack(state, new Map(), manifest);
+    expect(result.path).toBe('/card/posts/about-me');
+    expect(result.search).toBe('?from=1%2C3&to=4');
+
+    const decoded = deserialiseStack(result.path, result.search, manifest);
+    expect(decoded.state).toEqual(state);
+  });
+
+  it('an inactive lens in the stack while a lens is active round-trips through /lens/<name>', () => {
+    const state: StackState = {
+      entries: [cardEntry('posts/hello'), lensEntry('newest')],
+      activeKey: 'lens/newest',
+    };
+    const result = serialiseStack(state, new Map(), manifest);
+    expect(result.path).toBe('/lens/newest');
+    expect(result.search).toBe('?from=1');
+
+    const decoded = deserialiseStack(result.path, result.search, manifest);
+    expect(decoded.state).toEqual(state);
+  });
+});
+
 describe('round-trip property', () => {
   // Small deterministic PRNG so the fuzz run is reproducible.
   function mulberry32(seed: number) {
@@ -101,7 +165,7 @@ describe('round-trip property', () => {
     };
   }
 
-  const uidPool = ['posts/about-me', 'posts/hello', 'tag/travel', 'posts/unmapped-thing'];
+  const uidPool = ['posts/about-me', 'posts/hello', 'tag/travel', 'posts/unmapped-thing', 'lens/home', 'lens/newest'];
   const paramKeyPool = ['tab', 'x'];
   const paramValuePool = ['bio', 'games', 'a b', 'c&d'];
 

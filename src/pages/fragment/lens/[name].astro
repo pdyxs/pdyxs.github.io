@@ -1,0 +1,16 @@
+---
+// Fragment partial: renders just the `.stack-card` markup for a lens
+// location, with island props baked in — no <html> shell. In-app navigation
+// fetches this instead of the full page + stripping it client-side.
+export const partial = true;
+
+import { LENS_REGISTRY } from '../../../lib/lens-registry';
+import LensStackCard from '../../../components/LensStackCard.astro';
+
+export async function getStaticPaths() {
+  return LENS_REGISTRY.map(l => ({ params: { name: l.id } }));
+}
+
+const { name } = Astro.params;
+---
+<LensStackCard name={name!} />

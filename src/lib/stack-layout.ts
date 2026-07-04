@@ -13,6 +13,11 @@ export function cardEntry(uid: string): LocationEntry {
   return { key: uid, uid };
 }
 
+/** Builds a lens location entry ("lens/<name>"). Like cards, key === uid. */
+export function lensEntry(name: string): LocationEntry {
+  return { key: `lens/${name}`, uid: `lens/${name}` };
+}
+
 export interface StackState {
   entries: LocationEntry[];
   activeKey: string | null;

@@ -1,0 +1,29 @@
+---
+// Renders the `.stack-card` fragment for a lens location ("home", "newest").
+// Shared by the full-page route (src/pages/lens/[name].astro) and the
+// fragment-partial route (src/pages/fragment/lens/[name].astro).
+//
+// Resolution goes through resolveLocation() (src/lib/location-resolver.ts),
+// the single resolver shared with the card routes — the lens's own Astro
+// component is only ever reached via resolution.loadComponent(), the lazy
+// dynamic import() defined in src/lib/lens-components.ts. Nothing here (or
+// upstream of here) imports a lens's component eagerly.
+import { resolveLocation } from '../lib/location-resolver';
+
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+const uid = `lens/${name}`;
+const resolution = resolveLocation(uid);
+
+const LensComponent = resolution.kind === 'lens' ? (await resolution.loadComponent()).default : null;
+---
+<div class="stack-card stack-card--active" data-uid={uid}>
+  {LensComponent ? (
+    <LensComponent />
+  ) : (
+    <p class="lens-not-found">Unknown lens: {name}</p>
+  )}
+</div>

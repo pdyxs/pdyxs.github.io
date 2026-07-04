@@ -22,6 +22,17 @@ export interface DeserialisedStack {
 }
 
 const ESCAPE_SEP = '~';
+const LENS_PREFIX = 'lens/';
+const LENS_BASE = '/lens';
+
+/** Builds the readable path for a stack's active location — "/lens/<name>" for a
+ * lens uid, "<basePath>/<uid>" for anything else (cards). */
+function pathForActive(activeUid: string, basePath: string): string {
+  if (activeUid.startsWith(LENS_PREFIX)) {
+    return `${LENS_BASE}/${activeUid.slice(LENS_PREFIX.length)}`;
+  }
+  return `${basePath}/${activeUid}`;
+}
 
 function encodeEntry(entry: LocationEntry, params: ParamPairs | undefined, manifest: ManifestLookup): string {
   const code = manifest.codeForUid(entry.uid) ?? entry.uid;
@@ -81,7 +92,7 @@ export function serialiseStack(
   const before = state.entries.slice(0, activeIdx);
   const after = state.entries.slice(activeIdx + 1);
 
-  const path = `${basePath}/${active.uid}`;
+  const path = pathForActive(active.uid, basePath);
   const usp = new URLSearchParams();
 
   const encodeSide = (entries: LocationEntry[]) =>
@@ -108,12 +119,18 @@ export function deserialiseStack(
   manifest: ManifestLookup,
   basePath = '/card'
 ): DeserialisedStack {
-  const prefix = `${basePath}/`;
-  if (!pathname.startsWith(prefix)) {
+  const cardPrefix = `${basePath}/`;
+  const lensPrefix = `${LENS_BASE}/`;
+
+  let activeUid: string;
+  if (pathname.startsWith(lensPrefix)) {
+    activeUid = `${LENS_PREFIX}${pathname.slice(lensPrefix.length)}`;
+  } else if (pathname.startsWith(cardPrefix)) {
+    activeUid = pathname.slice(cardPrefix.length);
+  } else {
     return { state: { entries: [], activeKey: null }, paramsByKey: new Map() };
   }
 
-  const activeUid = pathname.slice(prefix.length);
   const usp = new URLSearchParams(search);
   const paramsByKey = new Map<string, ParamPairs>();
 
