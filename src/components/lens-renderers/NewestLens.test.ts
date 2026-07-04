@@ -20,12 +20,17 @@ function countText(div: HTMLDivElement): string | undefined {
 }
 
 describe('NewestLens', () => {
-  it('renders a CardHeader titled "Newest"', async () => {
+  // The header is owned by LensStackCard.astro — this component renders body
+  // content only (the browsing island + result count).
+  it('renders the browse result count', async () => {
     const container = await makeContainer();
-    const html = await container.renderToString(NewestLens, { props: {} });
+    const html = await container.renderToString(NewestLens, {
+      props: {},
+      request: new Request('https://example.com/lens/newest'),
+    });
     const div = dom(html);
 
-    expect(div.querySelector('.card-header-title')?.textContent).toContain('Newest');
+    expect(div.querySelector('.fp-result-count')).not.toBeNull();
   });
 
   it('renders every card when no filter is present in the request', async () => {

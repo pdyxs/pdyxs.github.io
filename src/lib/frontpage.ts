@@ -69,8 +69,9 @@ export type ResolvedFrontPageSlots = {
  * directly by uid; filter slots use the day-seeded selectSlotCard() pick.
  *
  * Pure decision, no side effects — selectSlotCard reads view-state (localStorage)
- * to bias selection, but this function doesn't write it. Callers (FrontPage.svelte,
- * the home lens) apply `displayed` themselves via markDisplayed().
+ * to bias selection, but this function doesn't write it. The caller
+ * (HomeLensSlots.svelte, the home lens body) applies `displayed` itself via
+ * markDisplayed().
  */
 export function resolveFrontPageSlots(
   config: FrontPageConfig,

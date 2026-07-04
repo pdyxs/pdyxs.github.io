@@ -2,7 +2,7 @@
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
   import { stackStore, pushToStack, activateCard as activateCardFn, replaceActiveSlot } from '../stores/card-stack-store';
-  import { computeStackLayout, cardEntry } from '../lib/stack-layout';
+  import { computeStackLayout, cardEntry, lensEntry, locationKind, presentationMode } from '../lib/stack-layout';
   import { serialiseStack, deserialiseStack } from '../lib/stack-codec';
   import type { ParamPairs } from '../lib/stack-codec';
   import { manifestLookup } from '../lib/stack-manifest-client';
@@ -46,11 +46,15 @@
     stackEl?.style.setProperty('--num-left-collapsed', String(layout.numLeftCollapsed));
     stackEl?.style.setProperty('--num-right-collapsed', String(layout.numRightCollapsed));
 
+    const depth = $stackStore.entries.length;
     for (const card of layout.visible) {
       const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(card.key)}"]`);
       if (!el) continue;
       el.classList.toggle('stack-card--active', card.isActive);
       el.classList.toggle('stack-card--collapsed', card.isCollapsed);
+      // Chrome is a pure function of stack position: a lens that is the sole
+      // entry renders page-mode chrome, everything else card-mode.
+      el.classList.toggle('stack-card--page', presentationMode(locationKind(card.key), depth) === 'page');
       el.style.setProperty('--stack-index', String(card.stackIndex));
       el.dataset.side = card.side;
       const bw = el.querySelector<HTMLElement>('.body-wrapper');
@@ -73,12 +77,37 @@
 
   // --- Helpers ---
 
+  const HOME_UID = 'lens/home';
+
+  // Lens locations fetch their lean fragment; cards fetch their /card page.
+  // Both return a `.stack-card` element we splice into the stack.
   function uidToFetchUrl(uid: string): string {
+    if (uid.startsWith('lens/')) return `/fragment/lens/${uid.slice('lens/'.length)}`;
     return `/card/${uid}`;
   }
 
   function urlToUid(url: string): string {
+    if (url.startsWith('/fragment/lens/')) return `lens/${url.slice('/fragment/lens/'.length)}`;
+    if (url.startsWith('/lens/')) return `lens/${url.slice('/lens/'.length)}`;
     return url.startsWith('/card/') ? url.slice('/card/'.length) : url;
+  }
+
+  // Synchronously make the home lens the sole, active, page-mode entry — the
+  // state `/` cold-loads into. Home must already be cached (see seedHomeActive).
+  function applyHomeSeed() {
+    stackStore.set({ entries: [lensEntry('home')], activeKey: HOME_UID });
+  }
+
+  // Seeds the home lens as the sole active entry, fetching it first if needed.
+  // Used when a deep-linked card is closed down to empty, or on popstate to `/`.
+  async function seedHomeActive(pushUrl = true) {
+    const ok = await fetchAndCacheCard(HOME_UID);
+    if (!ok) {
+      window.location.href = '/';
+      return;
+    }
+    applyHomeSeed();
+    if (pushUrl) history.pushState(null, '', '/');
   }
 
   function getCardTitle(key: string): string {
@@ -153,7 +182,9 @@
       if (entries.length) paramsByKey.set(key, entries);
     }
 
-    const { path, search } = serialiseStack(state, paramsByKey, manifestLookup);
+    let { path, search } = serialiseStack(state, paramsByKey, manifestLookup);
+    // `/` is the prettier address for the home lens as the sole entry.
+    if (path === '/lens/home' && search === '') path = '/';
     historyFn(null, '', `${path}${search}`);
   }
 
@@ -179,6 +210,14 @@
         ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
+
+    // Pushing the first card while home is the sole page-mode entry: the home
+    // title + divider morph into the new card's header (issue #24). Detected
+    // before the store mutates.
+    const wasHomePageMode =
+      state.entries.length === 1 &&
+      state.entries[0].key === HOME_UID &&
+      state.activeKey === HOME_UID;
 
     const alreadyCached = cardHtmlCache.has(uid);
 
@@ -226,23 +265,50 @@
 
     const homepage = document.getElementById('homepage');
 
-    if (clickedLink && startVT) {
-      // Phase 1: panel link morphs into card header position immediately
+    if ((clickedLink || wasHomePageMode) && startVT) {
+      // Phase 1: seed the outgoing VT names. From home page mode we morph the
+      // page title/divider into the new card's header; otherwise the clicked
+      // panel link morphs into the card header position.
       skipBodyOpen.add(uid);
-      (clickedLink as HTMLElement).style.viewTransitionName = 'panel-card-open';
+      let homeTitle: HTMLElement | null = null;
+      let homeDivider: HTMLElement | null = null;
+      if (wasHomePageMode) {
+        const homeEl = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(HOME_UID)}"]`);
+        homeTitle = homeEl?.querySelector<HTMLElement>('.page-title') ?? null;
+        homeDivider = homeEl?.querySelector<HTMLElement>('.page-header') ?? null;
+        if (homeTitle) homeTitle.style.viewTransitionName = 'home-title';
+        if (homeDivider) homeDivider.style.viewTransitionName = 'home-divider';
+      } else if (clickedLink) {
+        (clickedLink as HTMLElement).style.viewTransitionName = 'panel-card-open';
+      }
 
       const vt = startVT(() => {
         flushSync(doUpdate);
         const newCard = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
-        if (newCard) newCard.style.viewTransitionName = 'panel-card-open';
+        if (wasHomePageMode) {
+          const t = newCard?.querySelector<HTMLElement>('.card-header-title');
+          const d = newCard?.querySelector<HTMLElement>('.card-header');
+          if (t) t.style.viewTransitionName = 'home-title';
+          if (d) d.style.viewTransitionName = 'home-divider';
+        } else if (newCard) {
+          newCard.style.viewTransitionName = 'panel-card-open';
+        }
         if (homepage) homepage.hidden = true;
       });
 
       await vt.finished;
       skipBodyOpen.delete(uid);
-      (clickedLink as HTMLElement).style.viewTransitionName = '';
+      if (homeTitle) homeTitle.style.viewTransitionName = '';
+      if (homeDivider) homeDivider.style.viewTransitionName = '';
+      if (clickedLink && !wasHomePageMode) (clickedLink as HTMLElement).style.viewTransitionName = '';
       const vtCard = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
-      if (vtCard) vtCard.style.viewTransitionName = '';
+      if (vtCard) {
+        vtCard.style.viewTransitionName = '';
+        const t = vtCard.querySelector<HTMLElement>('.card-header-title');
+        const d = vtCard.querySelector<HTMLElement>('.card-header');
+        if (t) t.style.viewTransitionName = '';
+        if (d) d.style.viewTransitionName = '';
+      }
 
       if (usePlaceholder) {
         // Phase 2: write real body content directly into the placeholder's DOM,
@@ -287,10 +353,11 @@
 
     cardParams.delete(uid);
     const newEntries = state.entries.slice(0, idx);
-    const homepage = document.getElementById('homepage');
 
     if (newEntries.length === 0) {
-      // Stack becomes empty — return to homepage
+      // Stack becomes empty (a deep-linked card closed) — return to the home
+      // lens, which becomes the sole page-mode entry. Animate the closing card
+      // shut first so the return reads as a collapse, not a jump.
       const el = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
       const bw = el?.querySelector<HTMLElement>('.body-wrapper');
       if (bw) {
@@ -307,40 +374,16 @@
         });
       }
 
-      // Fetch homepage content if empty (direct URL navigation)
-      if (homepage && homepage.children.length === 0) {
-        const res = await fetch('/');
-        if (res.ok) {
-          const tmp = document.createElement('div');
-          tmp.innerHTML = await res.text();
-          const fetched = tmp.querySelector('#homepage');
-          if (fetched) homepage.innerHTML = fetched.innerHTML;
-        }
-      }
+      const ok = await fetchAndCacheCard(HOME_UID);
+      if (!ok) { window.location.href = '/'; return; }
 
-      const matchingLink = homepage?.querySelector<HTMLElement>(`.card-link[data-push-card="${uid}"]`);
-
-      if (matchingLink && startVT && el) {
-        el.style.viewTransitionName = 'panel-card-close';
-        matchingLink.style.viewTransitionName = 'panel-card-close';
-
-        const vt = startVT(() => {
-          flushSync(() => stackStore.set({ entries: [], activeKey: null }));
-          if (homepage) homepage.hidden = false;
-          history.pushState(null, '', '/');
-        });
-
+      if (startVT) {
+        const vt = startVT(() => { flushSync(applyHomeSeed); });
         await vt.finished;
-        matchingLink.style.viewTransitionName = '';
       } else {
-        stackStore.set({ entries: [], activeKey: null });
-        if (homepage) {
-          homepage.hidden = false;
-        } else {
-          window.location.href = '/';
-        }
-        history.pushState(null, '', '/');
+        applyHomeSeed();
       }
+      history.pushState(null, '', '/');
     } else {
       // Trim stack to entries before the closed card, activate the new last one
       const newActiveKey = newEntries[newEntries.length - 1].key;
@@ -424,7 +467,9 @@
 
       const pushItem = target.closest<HTMLElement>('[data-push-card]');
       if (pushItem?.dataset.pushCard) {
-        pushCard(uidToFetchUrl(pushItem.dataset.pushCard));
+        // Home's front-page slot links now live inside the stack; pass the
+        // clicked `.card-link` so the push can morph it into the new card.
+        pushCard(uidToFetchUrl(pushItem.dataset.pushCard), pushItem.closest('.card-link'));
         return;
       }
 
@@ -491,16 +536,20 @@
       stackStore.set({ entries: [], activeKey: null });
       const path = window.location.pathname;
       if (path === '/' || path === '') {
-        if (homepage) homepage.hidden = false;
+        // `/` is the home lens as the sole page-mode entry.
+        await seedHomeActive(false);
+        await initFromUrl();
         return;
       }
-      if (path.startsWith('/card/')) {
-        const uid = path.slice('/card/'.length);
+      if (path.startsWith('/lens/') || path.startsWith('/card/')) {
+        const uid = path.startsWith('/lens/')
+          ? `lens/${path.slice('/lens/'.length)}`
+          : path.slice('/card/'.length);
         const ok = await fetchAndCacheCard(uid);
         if (ok) {
-          stackStore.update(s => pushToStack(s, cardEntry(uid)));
+          const entry = uid.startsWith('lens/') ? lensEntry(uid.slice('lens/'.length)) : cardEntry(uid);
+          stackStore.update(s => pushToStack(s, entry));
           markReadIfKnown(uid);
-          if (homepage) homepage.hidden = true;
           await initFromUrl();
         }
       }

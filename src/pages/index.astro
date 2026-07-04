@@ -1,37 +1,7 @@
 ---
-import Base from "../layouts/Base.astro";
-import StackNav from "../components/StackNav.astro";
-import FrontPage from "../components/FrontPage.svelte";
-import { getAllCards } from "../lib/cards";
-import { FRONTPAGE_CONFIG } from "../content/frontpage";
-import { buildAllDimensionHierarchies } from "../lib/browse-helpers";
-
-const allCards = await getAllCards();
-const declaredTagIds = allCards.filter((c) => c.collection === "tag").map((c) => c.id);
-const hierarchies = buildAllDimensionHierarchies(allCards, declaredTagIds);
-
-const serialisedCards = allCards.map((card) => ({
-    ...card,
-    date: card.date?.toISOString() ?? null,
-}));
+// `/` is a thin shortcut that renders the home lens, identical to /lens/home —
+// the bespoke front page is gone; the home lens (LensStackCard in page mode) is
+// the front page now.
+import LensPage from '../components/LensPage.astro';
 ---
-
-<Base>
-    <div id="homepage">
-        <header class="site-header">
-            <h1 class="site-title">pdyxs.wtf</h1>
-            <p class="site-tagline">Games, Design and Software</p>
-        </header>
-
-        <main class="site-main">
-            <FrontPage
-                client:load
-                config={FRONTPAGE_CONFIG}
-                cards={serialisedCards}
-                {hierarchies}
-            />
-        </main>
-    </div>
-
-    <StackNav />
-</Base>
+<LensPage name="home" />

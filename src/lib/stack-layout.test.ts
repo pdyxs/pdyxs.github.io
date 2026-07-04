@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeStackLayout, cardEntry } from './stack-layout';
+import { computeStackLayout, cardEntry, locationKind, presentationMode } from './stack-layout';
 import type { StackState, RenderItem } from './stack-layout';
 
 describe('computeStackLayout', () => {
@@ -184,5 +184,33 @@ describe('computeStackLayout', () => {
     expect(result.renderItems).toHaveLength(6);
     expect(result.renderItems.some(r => r.kind === 'overflow')).toBe(false);
     expect(result.numLeftCollapsed).toBe(2);
+  });
+});
+
+describe('locationKind', () => {
+  it('classifies a "lens/<name>" uid as a lens', () => {
+    expect(locationKind('lens/home')).toBe('lens');
+    expect(locationKind('lens/newest')).toBe('lens');
+  });
+
+  it('classifies a "collection/id" uid as a card', () => {
+    expect(locationKind('posts/about-me')).toBe('card');
+    expect(locationKind('tag/who')).toBe('card');
+  });
+});
+
+describe('presentationMode', () => {
+  it('page mode: a lens is the sole/root active entry (stack depth 1)', () => {
+    expect(presentationMode('lens', 1)).toBe('page');
+  });
+
+  it('card mode: the same lens deeper in the stack (depth > 1)', () => {
+    expect(presentationMode('lens', 2)).toBe('card');
+    expect(presentationMode('lens', 5)).toBe('card');
+  });
+
+  it('card mode: a card is always card mode, even at depth 1', () => {
+    expect(presentationMode('card', 1)).toBe('card');
+    expect(presentationMode('card', 3)).toBe('card');
   });
 });

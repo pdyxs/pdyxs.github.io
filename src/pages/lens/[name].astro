@@ -1,22 +1,15 @@
 ---
 // Full-page cold load for a lens location. Adding a lens is a registry data
-// entry (src/lib/lens-registry.ts) — this route file never changes.
-import { LENS_REGISTRY, getLensDefinition } from '../../lib/lens-registry';
-import Base from '../../layouts/Base.astro';
-import StackNav from '../../components/StackNav.astro';
-import LensStackCard from '../../components/LensStackCard.astro';
+// entry (src/lib/lens-registry.ts) — this route file never changes. Rendering
+// is delegated to LensPage.astro, shared with the `/` shortcut so `/` and
+// `/lens/home` render identical output.
+import { LENS_REGISTRY } from '../../lib/lens-registry';
+import LensPage from '../../components/LensPage.astro';
 
 export async function getStaticPaths() {
   return LENS_REGISTRY.map(l => ({ params: { name: l.id } }));
 }
 
 const { name } = Astro.params;
-const title = getLensDefinition(name!)?.label ?? '';
 ---
-
-<Base {title}>
-  <div id="homepage" hidden></div>
-  <StackNav activeUid={`lens/${name}`}>
-    <LensStackCard name={name!} />
-  </StackNav>
-</Base>
+<LensPage name={name!} />

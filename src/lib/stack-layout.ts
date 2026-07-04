@@ -23,6 +23,29 @@ export interface StackState {
   activeKey: string | null;
 }
 
+// ── Presentation mode ──────────────────────────────────────────────────
+// A pure decision of stack position + location type: a lens that is the
+// sole/root active entry (stack depth 1) presents in "page" mode (full-page
+// chrome — no border, site-header title/subtitle/divider); everything else —
+// cards always, and a lens once it sits deeper in the stack — presents as a
+// bordered "card". This is the single source of truth for chrome-by-position;
+// the reactive class toggle in CardStack.svelte just applies it.
+
+export type LocationKind = 'card' | 'lens';
+export type PresentationMode = 'page' | 'card';
+
+const LENS_UID_PREFIX = 'lens/';
+
+/** Classifies a location uid: "lens/<name>" is a lens, anything else a card. */
+export function locationKind(uid: string): LocationKind {
+  return uid.startsWith(LENS_UID_PREFIX) ? 'lens' : 'card';
+}
+
+/** Page mode iff a lens is the sole entry (depth 1); card mode otherwise. */
+export function presentationMode(kind: LocationKind, stackDepth: number): PresentationMode {
+  return kind === 'lens' && stackDepth === 1 ? 'page' : 'card';
+}
+
 export interface LayoutCard {
   key: string;
   stackIndex: number;
