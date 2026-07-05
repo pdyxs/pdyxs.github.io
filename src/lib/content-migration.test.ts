@@ -48,16 +48,16 @@ describe('content migration invariants', () => {
     expect(new Set(uids).size).toBe(uids.length);
   });
 
-  it('the top level of content/ contains only dimension folders (plus the separate tag collection and frontpage config)', () => {
+  it('the top level of content/ contains only dimension folders (plus the frontpage config)', () => {
     const topLevel = readdirSync(CONTENT_DIR, { withFileTypes: true });
-    const names = topLevel.map(e => e.name).filter(n => n !== 'tag' && n !== 'frontpage.ts');
+    const names = topLevel.map(e => e.name).filter(n => n !== 'frontpage.ts');
     for (const name of names) {
       expect(statSync(join(CONTENT_DIR, name)).isDirectory()).toBe(true);
     }
-    // "what" is the only dimension with folder-derived content today — the
-    // other four (who/when/where/why) only ever arrive via frontmatter/cascade
-    // tags, never folder structure (see derivePathTags).
-    expect(names).toEqual(['what']);
+    // "what" is the only dimension with real card content — who/when/where
+    // also have thin folder roots now, but only ever holding `.tag.yaml`
+    // declarations (no index.md cards); "why" has neither yet.
+    expect(names.sort()).toEqual(['what', 'when', 'where', 'who']);
   });
 });
 
@@ -70,7 +70,7 @@ describe('derivePathTags value parity (no re-tagging across the relocation)', ()
   // to the wrong level.
   const samples: Array<[uid: string, expected: string]> = [
     ['what/posts/about-me', 'what:posts'],
-    ['what/projects/art-heist', 'what:projects'],
+    ['what/projects/interactive-theatre/art-heist', 'what:projects/interactive-theatre'],
     ['what/puzzles/cartography', 'what:puzzles'],
     ['what/work/dot', 'what:work'],
     ['what/writing/2008-07-27-why-portal', 'what:writing'],

@@ -1,9 +1,0 @@
-name: Budgeting
-dimension: what
-aliases:
-  - budgeting
-related:
-  - what/projects/software-engineering
-description: >
-  Personal finance tools and thinking about budgeting.
-featured: []

@@ -1274,5 +1274,89 @@
   {
     "uid": "what/writing/2019-03-21-designing-a-budget",
     "code": "58"
+  },
+  {
+    "uid": "what/projects/data-art/genetic-sequences",
+    "code": "59"
+  },
+  {
+    "uid": "what/projects/data-art/laser-harp",
+    "code": "5a"
+  },
+  {
+    "uid": "what/projects/data-art/qistigram",
+    "code": "5b"
+  },
+  {
+    "uid": "what/projects/data-art/the-neighbourhood",
+    "code": "5c"
+  },
+  {
+    "uid": "what/projects/data-art/the-path",
+    "code": "5d"
+  },
+  {
+    "uid": "what/projects/games/analog/fatecardgame",
+    "code": "5e"
+  },
+  {
+    "uid": "what/projects/games/analog/gotta-get-outta-this-space",
+    "code": "5f"
+  },
+  {
+    "uid": "what/projects/games/digital/bravehearts",
+    "code": "5g"
+  },
+  {
+    "uid": "what/projects/games/digital/cybersecurity",
+    "code": "5h"
+  },
+  {
+    "uid": "what/projects/games/digital/flatland-fallen-angle",
+    "code": "5i"
+  },
+  {
+    "uid": "what/projects/games/digital/numbeanies",
+    "code": "5j"
+  },
+  {
+    "uid": "what/projects/games/digital/particulars",
+    "code": "5k"
+  },
+  {
+    "uid": "what/projects/games/digital/played",
+    "code": "5l"
+  },
+  {
+    "uid": "what/projects/games/digital/quantum-byte",
+    "code": "5m"
+  },
+  {
+    "uid": "what/projects/games/digital/unstoppabot",
+    "code": "5n"
+  },
+  {
+    "uid": "what/projects/games/digital/virtual-farm",
+    "code": "5o"
+  },
+  {
+    "uid": "what/projects/games/digital/where-the-heart-is",
+    "code": "5p"
+  },
+  {
+    "uid": "what/projects/interactive-theatre/art-heist",
+    "code": "5q"
+  },
+  {
+    "uid": "what/projects/posts/about-me",
+    "code": "5r"
+  },
+  {
+    "uid": "what/projects/posts/about-this-site",
+    "code": "5s"
+  },
+  {
+    "uid": "what/projects/software-engineering/budget-haver",
+    "code": "5t"
   }
 ]
