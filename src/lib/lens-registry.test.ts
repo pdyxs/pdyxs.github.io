@@ -75,8 +75,13 @@ describe('lensesForDimension', () => {
     expect(lensesForDimension('who')).toEqual([]);
   });
 
-  it('excludes the root-dimension home lens from every 5W dimension', () => {
-    for (const dim of ['who', 'what', 'when', 'where', 'why'] as const) {
+  it('returns the home lens filed under what', () => {
+    const what = lensesForDimension('what');
+    expect(what.map(l => l.id)).toEqual(['home']);
+  });
+
+  it('excludes home from every 5W dimension other than what', () => {
+    for (const dim of ['who', 'when', 'where', 'why'] as const) {
       expect(lensesForDimension(dim).map(l => l.id)).not.toContain('home');
     }
   });

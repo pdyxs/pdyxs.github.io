@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { lensFilterStore, toggleFilterValue, clearFilterDimension, clearAllFilters } from '../stores/lens-filter-store';
-  import { filterStateFromParams, filterStateToParams } from '../lib/filters';
+  import { filterStateFromParams, filterStateToParams, stripFilterParams } from '../lib/filters';
   import type { Dimension, FilterState } from '../lib/filters';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid, DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
@@ -24,7 +24,23 @@
 
   const basePath = $derived(`/lens/${lens.id}`);
 
+  // A lens that can't accept filters must never show any as active, no
+  // matter how a stray filter.* query string got onto its URL (carried
+  // forward by a lens replacement, left over from closing back to home,
+  // a hand-edited/shared link, etc.) — this is the single enforcement
+  // point, so every path into a non-accepting lens is covered without
+  // having to patch each call site that can navigate here.
   function syncFromUrl() {
+    if (!lens.acceptsFilters) {
+      lensFilterStore.set({ selections: {} });
+      const current = window.location.search;
+      const strippedQuery = stripFilterParams(new URLSearchParams(current)).toString();
+      const strippedSearch = strippedQuery ? `?${strippedQuery}` : '';
+      if (strippedSearch !== current) {
+        history.replaceState(null, '', `${window.location.pathname}${strippedSearch}`);
+      }
+      return;
+    }
     lensFilterStore.set(filterStateFromParams(new URLSearchParams(window.location.search)));
   }
 

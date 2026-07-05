@@ -51,7 +51,7 @@ describe('LensStackCard', () => {
     const card = div.querySelector('.stack-card')!;
     expect(card.classList.contains('stack-card--page')).toBe(true);
     expect(div.querySelector('.page-title')?.textContent).toContain('pdyxs.wtf');
-    expect(div.querySelector('.page-subtitle')?.textContent).toContain('Games, Design and Software');
+    expect(div.querySelector('.page-subtitle')?.textContent).toContain('A bit of everything');
   });
 
   it('card presentation (default) does not carry the page class', async () => {

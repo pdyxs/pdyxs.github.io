@@ -208,3 +208,19 @@ export function filterStateFromParams(params: URLSearchParams): FilterState {
 
     return { selections, datePredicate };
 }
+
+/**
+ * Removes every filter/date-predicate param from a copy of `params` — for
+ * landing on a lens that can't accept filters (acceptsFilters: false), where
+ * a stray filter.* query string would otherwise linger (e.g. carried forward
+ * by a lens replacement, or briefly stale mid-navigation).
+ */
+export function stripFilterParams(params: URLSearchParams): URLSearchParams {
+    const next = new URLSearchParams(params);
+    for (const dim of DIMENSIONS) {
+        next.delete(`${PARAM_PREFIX}${dim}`);
+    }
+    next.delete(DATE_FROM_PARAM);
+    next.delete(DATE_TO_PARAM);
+    return next;
+}

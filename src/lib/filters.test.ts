@@ -5,6 +5,7 @@ import {
   filterStateToParams,
   filterStateFromParams,
   filterUrlForTagValue,
+  stripFilterParams,
 } from './filters';
 import type { FilterState } from './filters';
 import { fakeCardMeta } from '../test/fixtures';
@@ -313,6 +314,33 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
     const decoded = filterStateFromParams(params);
     expect(decoded.selections.what).toEqual(['what:projects']);
     expect(decoded.selections.why).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// stripFilterParams
+// ---------------------------------------------------------------------------
+
+describe('stripFilterParams', () => {
+  it('removes dimension filter params', () => {
+    const params = new URLSearchParams('filter.what=what%3Apuzzles&filter.who=who%3Aaccenture');
+    expect(stripFilterParams(params).toString()).toBe('');
+  });
+
+  it('removes date predicate params', () => {
+    const params = new URLSearchParams('when.from=2020-01-01T00:00:00.000Z&when.to=2020-12-31T00:00:00.000Z');
+    expect(stripFilterParams(params).toString()).toBe('');
+  });
+
+  it('leaves unrelated params untouched', () => {
+    const params = new URLSearchParams('filter.what=what%3Apuzzles&stack=abc');
+    expect(stripFilterParams(params).toString()).toBe('stack=abc');
+  });
+
+  it('does not mutate the input', () => {
+    const params = new URLSearchParams('filter.what=what%3Apuzzles');
+    stripFilterParams(params);
+    expect(params.toString()).toBe('filter.what=what%3Apuzzles');
   });
 });
 

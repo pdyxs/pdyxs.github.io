@@ -18,7 +18,9 @@
      * actual component, so the lazy-load boundary holds. */
     lenses: LensDefinition[];
     /** Current filter selections, serialised, so a lens replacement carries
-     * them across the swap (e.g. "filter.what=what%3Aprojects"). */
+     * them across the swap (e.g. "filter.what=what%3Aprojects"). Only ever
+     * attached to a lens that declares acceptsFilters — a lens that can't
+     * handle filters (e.g. home) must never receive them in the first place. */
     carryFilterParams: string;
     onSelectLens: (lensId: string) => void;
   }
@@ -74,7 +76,7 @@
           <button
             class="browse-dim-lens-item"
             data-replace-slot={lensUid(lens.id)}
-            data-replace-params={carryFilterParams}
+            data-replace-params={lens.acceptsFilters ? carryFilterParams : ''}
             onclick={() => onSelectLens(lens.id)}
             aria-label="View through the {lens.label} lens"
           >
@@ -103,19 +105,6 @@
           <span class="browse-dim-item-label">{node.name}</span>
           <span class="browse-dim-item-count">({node.count})</span>
         </button>
-        {#if node.description}
-          <span class="browse-dim-item-info-wrapper">
-            <button
-              type="button"
-              class="browse-dim-item-info"
-              aria-label="About {node.name}"
-              onclick={(e) => e.stopPropagation()}
-            >
-              i
-            </button>
-            <span class="browse-dim-item-popover" role="tooltip">{node.description}</span>
-          </span>
-        {/if}
         {#if node.children.length > 0}
           <button
             class="browse-dim-drill"
@@ -260,57 +249,6 @@
   .browse-dim-item--selected .browse-dim-item-count {
     color: var(--color-surface);
     opacity: 0.7;
-  }
-
-  .browse-dim-item-info-wrapper {
-    position: relative;
-    display: flex;
-    align-self: stretch;
-  }
-
-  .browse-dim-item-info {
-    padding: 0 var(--space-xs);
-    border: none;
-    border-left: 1px solid var(--color-border-light);
-    background: transparent;
-    color: var(--color-text-muted);
-    cursor: help;
-    font-size: 0.75rem;
-    font-style: italic;
-    font-family: serif;
-  }
-
-  .browse-dim-item-info:hover,
-  .browse-dim-item-info:focus-visible {
-    background: var(--color-bg-hover);
-    color: var(--color-text);
-  }
-
-  .browse-dim-item-popover {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    z-index: 200;
-    min-width: 160px;
-    max-width: 240px;
-    margin-top: 4px;
-    padding: var(--space-xs) var(--space-sm);
-    border: var(--border-width) solid var(--color-border);
-    background: var(--color-surface);
-    color: var(--color-text);
-    font-size: 0.8rem;
-    line-height: 1.3;
-    box-shadow: 2px 2px 0 var(--color-border);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.1s;
-    pointer-events: none;
-  }
-
-  .browse-dim-item-info-wrapper:hover .browse-dim-item-popover,
-  .browse-dim-item-info:focus-visible ~ .browse-dim-item-popover {
-    opacity: 1;
-    visibility: visible;
   }
 
   .browse-dim-drill {

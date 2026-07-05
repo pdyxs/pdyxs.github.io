@@ -443,13 +443,18 @@
       const ok = await fetchAndCacheCard(HOME_UID);
       if (!ok) { window.location.href = '/'; return; }
 
+      // URL first: home's re-inserted fragment mounts LensFilterShell, which
+      // reads window.location.search on mount (see LensFilterShell.svelte's
+      // syncFromUrl). If the URL still carried the closed card's filter.*
+      // params at that point, home would briefly seed itself from them even
+      // though it can't accept filters.
+      history.pushState(null, '', '/');
       if (startVT) {
         const vt = startVT(() => { flushSync(applyHomeSeed); });
         await vt.finished;
       } else {
         applyHomeSeed();
       }
-      history.pushState(null, '', '/');
     } else {
       // Trim stack to entries before the closed card, activate the new last one
       const newActiveKey = newEntries[newEntries.length - 1].key;

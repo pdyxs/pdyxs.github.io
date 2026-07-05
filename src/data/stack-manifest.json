@@ -1358,5 +1358,33 @@
   {
     "uid": "what/projects/software-engineering/budget-haver",
     "code": "5t"
+  },
+  {
+    "uid": "where/work/3p",
+    "code": "5u"
+  },
+  {
+    "uid": "where/work/chaostheory",
+    "code": "5v"
+  },
+  {
+    "uid": "where/work/dot",
+    "code": "5w"
+  },
+  {
+    "uid": "where/work/equalreality",
+    "code": "5x"
+  },
+  {
+    "uid": "where/work/plan-a",
+    "code": "5y"
+  },
+  {
+    "uid": "where/work/seethrough",
+    "code": "5z"
+  },
+  {
+    "uid": "who/about-me",
+    "code": "5A"
   }
 ]
