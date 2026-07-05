@@ -109,4 +109,54 @@ describe('LensStackCard', () => {
 
     expect(div.querySelector('.lens-not-found')?.textContent).toContain('does-not-exist');
   });
+
+  it('renders the 5W dimension-filter bar for the home lens', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });
+    const div = dom(html);
+
+    expect(div.querySelector('.fp-dimension-controls[role="toolbar"]')).not.toBeNull();
+  });
+
+  it('renders the 5W dimension-filter bar for the newest lens', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, { props: { name: 'newest' } });
+    const div = dom(html);
+
+    expect(div.querySelector('.fp-dimension-controls[role="toolbar"]')).not.toBeNull();
+  });
+
+  it('renders the newest lens body with the full unfiltered card count', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, { props: { name: 'newest' } });
+    const div = dom(html);
+
+    const countText = div.querySelector('.fp-result-count')?.textContent?.trim();
+    expect(countText).toMatch(/^\d+ cards?$/);
+    expect(Number(countText!.match(/\d+/)![0])).toBeGreaterThan(0);
+  });
+
+  it('renders the home lens body (day-seeded front-page slots)', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });
+    const div = dom(html);
+
+    expect(div.querySelector('.front-page-slots')).not.toBeNull();
+  });
+
+  it("home's filter-toggle fallthrough trigger targets the default browse lens", async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });
+    const div = dom(html);
+
+    expect(div.querySelector('[data-replace-slot="lens/newest"]')).not.toBeNull();
+  });
+
+  it('does not render active-filter chips on a cold load with no active filters', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, { props: { name: 'newest' } });
+    const div = dom(html);
+
+    expect(div.querySelector('.fp-active-filters')).toBeNull();
+  });
 });

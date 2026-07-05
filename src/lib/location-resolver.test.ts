@@ -37,13 +37,12 @@ describe('resolveLocation', () => {
     expect(result).toEqual({ kind: 'card', path: 'tag/who', navComponent: null });
   });
 
-  it('resolves a registered lens name to kind: lens, with its definition and a callable loader', () => {
+  it('resolves a registered lens name to kind: lens, with its definition', () => {
     const result = resolveLocation('lens/home');
     expect(result.kind).toBe('lens');
     if (result.kind === 'lens') {
       expect(result.name).toBe('home');
       expect(result.definition.id).toBe('home');
-      expect(typeof result.loadComponent).toBe('function');
     }
   });
 

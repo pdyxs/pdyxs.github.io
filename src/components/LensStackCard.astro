@@ -5,23 +5,32 @@
 // (src/pages/fragment/lens/[name].astro).
 //
 // LensStackCard owns the *chrome* — it renders BOTH a page-mode header
-// (site-header: title + subtitle + divider) and a card-mode header, and the
-// lens component only renders the body. Which chrome shows is a pure decision
-// of stack position (presentationMode in stack-layout.ts): a lens that is the
-// sole/root entry is "page" mode, otherwise "card" mode. The `presentation`
-// prop seeds the initial class for cold loads; CardStack.svelte toggles
-// `stack-card--page` reactively thereafter and morphs between the two headers
-// via View Transitions. Both headers live in the DOM at once so that morph has
-// stable old/new targets.
+// (site-header: title + subtitle + divider) and a card-mode header. Which
+// chrome shows is a pure decision of stack position (presentationMode in
+// stack-layout.ts): a lens that is the sole/root entry is "page" mode,
+// otherwise "card" mode. The `presentation` prop seeds the initial class for
+// cold loads; CardStack.svelte toggles `stack-card--page` reactively
+// thereafter and morphs between the two headers via View Transitions. Both
+// headers live in the DOM at once so that morph has stable old/new targets.
 //
-// Resolution of the lens's own Astro component goes through resolveLocation()
-// (src/lib/location-resolver.ts) and only ever reaches the component via the
-// lazy dynamic import() in src/lib/lens-components.ts — nothing here imports a
-// lens's rendering code eagerly.
-import { resolveLocation } from '../lib/location-resolver';
+// LensStackCard is also the shared-fetch owner for every lens: it fetches
+// allCards/hierarchies/tagDisplay ONCE here (every lens body wants the same
+// universe of cards) and resolves the lens's body component via an awaited
+// dynamic import() — the lazy-load boundary in src/lib/lens-components.ts.
+// The dimension-filter bar (LensFilterShell) and the resolved body render as
+// SIBLING islands: Astro's client:* islands can't share live reactive props
+// across independent hydration boundaries, so they coordinate only through
+// the shared lensFilterStore (src/stores/lens-filter-store.ts) — see that
+// store's header comment.
 import { getLensDefinition } from '../lib/lens-registry';
 import { deriveLensChrome } from '../lib/lens-chrome';
+import { getAllCards } from '../lib/cards';
+import { getTagRegistry, flattenTagDisplay } from '../lib/tag-registry';
+import { buildAllDimensionHierarchies } from '../lib/browse-helpers';
+import { DIMENSIONS } from '../lib/filters';
 import type { FilterState } from '../lib/filters';
+import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '../lib/lens-components';
+import LensFilterShell from './LensFilterShell.svelte';
 
 interface Props {
   name: string;
@@ -31,21 +40,35 @@ interface Props {
 
 const { name, presentation = 'card' } = Astro.props;
 const uid = `lens/${name}`;
-const resolution = resolveLocation(uid);
 const lens = getLensDefinition(name);
 
-const LensComponent = resolution.kind === 'lens' ? (await resolution.loadComponent()).default : null;
-
 // Cold-load chrome uses the empty filter state — these are fully static routes
-// with no live query string (see NewestLens.astro). The client refines the
-// title once the browsing island reads window.location.search.
+// with no live query string. The client refines the title once
+// LensFilterShell reads window.location.search.
 const filterState: FilterState = { selections: {} };
 const chrome = lens ? deriveLensChrome(lens, filterState) : null;
 
 // Home is the root of the stack and is never closable; other lenses are.
 const isHome = lens?.dimension === 'root';
+
+let hierarchies: any = null;
+let tagDisplay: any = {};
+let serialisedCards: any[] = [];
+let BodyComponent: any = null;
+
+if (lens) {
+  const allCards = await getAllCards();
+  const registry = await getTagRegistry(allCards);
+  tagDisplay = flattenTagDisplay(registry);
+  const declaredValues = DIMENSIONS.flatMap(d => registry[d].values);
+  hierarchies = buildAllDimensionHierarchies(allCards, declaredValues, tagDisplay);
+  serialisedCards = allCards.map(card => ({ ...card, date: card.date?.toISOString() ?? null }));
+
+  const bodyLoader = LENS_BODY_LOADERS[lens.component] ?? DEFAULT_BODY_LOADER;
+  BodyComponent = (await bodyLoader()).default;
+}
 ---
-{LensComponent && lens && chrome ? (
+{lens && chrome ? (
   <div
     class:list={['stack-card', 'stack-card--active', presentation === 'page' && 'stack-card--page']}
     data-uid={uid}
@@ -62,7 +85,10 @@ const isHome = lens?.dimension === 'root';
     <div class="body-wrapper open">
       <div class="stack-card-body">
         <div class="stack-card-body-inner">
-          <LensComponent />
+          <LensFilterShell client:load lens={lens} hierarchies={hierarchies} tagDisplay={tagDisplay} />
+          {BodyComponent && (
+            <BodyComponent cards={serialisedCards} tagDisplay={tagDisplay} config={lens.config} />
+          )}
         </div>
       </div>
     </div>

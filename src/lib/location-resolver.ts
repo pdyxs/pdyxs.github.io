@@ -13,8 +13,6 @@ import { COLLECTION_RENDERERS, NAV_RENDERERS, COLLECTION_VIEW_RENDERERS } from '
 import GenericRenderer from '../components/card-renderers/GenericRenderer.astro';
 import { getLensDefinition } from './lens-registry';
 import type { LensDefinition } from './lens-registry';
-import { LENS_COMPONENT_LOADERS } from './lens-components';
-import type { LensComponentLoader } from './lens-components';
 
 export type CardLocation = {
   kind: 'card';
@@ -34,8 +32,6 @@ export type LensLocation = {
   kind: 'lens';
   name: string;
   definition: LensDefinition;
-  /** The lazy-import boundary — only called (and thus only imported) once a lens route actually renders. */
-  loadComponent: LensComponentLoader;
 };
 
 export type UnknownLocation = { kind: 'unknown' };
@@ -56,8 +52,7 @@ function matchNavRenderer(path: string): AstroComponentFactory | null {
  * Resolves a stack path to the fragment/renderer that should handle it.
  *
  * - "lens/<name>" resolves against the lens registry (kind: 'lens'), or
- *   'unknown' if the name isn't registered or its component isn't wired up
- *   in LENS_COMPONENT_LOADERS yet.
+ *   'unknown' if the name isn't registered.
  * - A bare collection name ("posts") resolves to its collection-view
  *   renderer (kind: 'collection-view'), or 'unknown' if none is registered.
  * - Any other non-empty path (a full-path uid, e.g. "what/stories/arctic/ch-01"
@@ -74,9 +69,7 @@ export function resolveLocation(path: string): LocationResolution {
     const name = path.slice(LENS_PREFIX.length);
     const definition = name ? getLensDefinition(name) : undefined;
     if (!definition) return { kind: 'unknown' };
-    const loadComponent = LENS_COMPONENT_LOADERS[definition.component];
-    if (!loadComponent) return { kind: 'unknown' };
-    return { kind: 'lens', name, definition, loadComponent };
+    return { kind: 'lens', name, definition };
   }
 
   if (path.indexOf('/') === -1) {

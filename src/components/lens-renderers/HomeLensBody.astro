@@ -1,0 +1,17 @@
+---
+// Thin Astro shim, only here so HomeLensSlots.svelte can be a static import
+// (client:load requires a statically analyzable component reference — a
+// dynamically-resolved variable breaks Astro's hydration bundling). The
+// lazy-load boundary is one level up: lens-components.ts dynamically imports
+// *this file*, not HomeLensSlots.svelte directly.
+import HomeLensSlots from './HomeLensSlots.svelte';
+import type { FrontPageConfig, SerialisedCardFull } from '../../lib/frontpage';
+
+interface Props {
+  cards: SerialisedCardFull[];
+  config: FrontPageConfig;
+}
+
+const { cards, config } = Astro.props;
+---
+<HomeLensSlots client:load {config} {cards} />

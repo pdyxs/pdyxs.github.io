@@ -5,6 +5,7 @@ import {
   buildTagHierarchy,
   buildAllDimensionHierarchies,
   dimensionHasTags,
+  sortCardsForBrowse,
 } from './browse-helpers';
 import type { TagNode } from './browse-helpers';
 import { computeTagRegistry, flattenTagDisplay } from './tag-registry';
@@ -430,5 +431,51 @@ describe('dimensionHasTags', () => {
       fakeCardMeta({ uid: 'posts/a', tags: ['why:professional'] }),
     ];
     expect(dimensionHasTags(cards, 'what', ['what:projects/edtech'])).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// sortCardsForBrowse
+// ---------------------------------------------------------------------------
+
+describe('sortCardsForBrowse', () => {
+  const older = fakeCardMeta({ uid: 'posts/older', title: 'Older', date: new Date('2020-01-01') });
+  const newer = fakeCardMeta({ uid: 'posts/newer', title: 'Newer', date: new Date('2024-01-01') });
+  const undated = fakeCardMeta({ uid: 'posts/undated', title: 'Undated' });
+
+  it('sorts by date descending when configured (matches the newest lens)', () => {
+    const result = sortCardsForBrowse([older, newer], { sortKey: 'date', sortDirection: 'desc' });
+    expect(result.map(c => c.uid)).toEqual(['posts/newer', 'posts/older']);
+  });
+
+  it('sorts by date ascending when sortDirection is "asc"', () => {
+    const result = sortCardsForBrowse([newer, older], { sortKey: 'date', sortDirection: 'asc' });
+    expect(result.map(c => c.uid)).toEqual(['posts/older', 'posts/newer']);
+  });
+
+  it('defaults to descending when sortDirection is absent', () => {
+    const result = sortCardsForBrowse([older, newer], { sortKey: 'date' });
+    expect(result.map(c => c.uid)).toEqual(['posts/newer', 'posts/older']);
+  });
+
+  it('sorts undated cards last under descending order', () => {
+    const result = sortCardsForBrowse([undated, newer], { sortKey: 'date', sortDirection: 'desc' });
+    expect(result.map(c => c.uid)).toEqual(['posts/newer', 'posts/undated']);
+  });
+
+  it('leaves order untouched when config is absent', () => {
+    const result = sortCardsForBrowse([newer, older]);
+    expect(result.map(c => c.uid)).toEqual(['posts/newer', 'posts/older']);
+  });
+
+  it('leaves order untouched for an unrecognised sortKey', () => {
+    const result = sortCardsForBrowse([newer, older], { sortKey: 'title' });
+    expect(result.map(c => c.uid)).toEqual(['posts/newer', 'posts/older']);
+  });
+
+  it('does not mutate the input array', () => {
+    const input = [older, newer];
+    sortCardsForBrowse(input, { sortKey: 'date', sortDirection: 'desc' });
+    expect(input.map(c => c.uid)).toEqual(['posts/older', 'posts/newer']);
   });
 });

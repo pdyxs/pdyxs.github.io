@@ -9,6 +9,8 @@
 // at that. This module can be imported anywhere (manifest generation, the
 // resolver, tests) without pulling in a single lens's rendering code.
 
+import { FRONTPAGE_CONFIG } from '../content/frontpage.ts';
+
 export type LensPresentation = 'card' | 'fullbleed';
 
 export interface LensDefinition {
@@ -51,6 +53,7 @@ const DECLARATIONS: LensDeclaration[] = [
     label: 'Home',
     icon: '🏠',
     component: 'home',
+    config: FRONTPAGE_CONFIG,
     acceptsFilters: false,
   },
   {

@@ -235,3 +235,22 @@ export function dimensionHasTags(
 ): boolean {
   return extractDimensionTags(cards, dimension, declaredValues).length > 0;
 }
+
+// ---------------------------------------------------------------------------
+// Browse-lens sorting
+// ---------------------------------------------------------------------------
+
+/**
+ * Sorts cards for a browse-family lens per its registry `config` (see
+ * lens-registry.ts, e.g. `{ sortKey: 'date', sortDirection: 'desc' }` on the
+ * `newest` entry). Unrecognised or absent config leaves the input order
+ * untouched — a lens declaring no sort config just shows cards as given.
+ */
+export function sortCardsForBrowse(cards: CardMeta[], config?: Record<string, unknown>): CardMeta[] {
+  if (config?.sortKey !== 'date') return cards;
+  const descending = config.sortDirection !== 'asc';
+  return [...cards].sort((a, b) => {
+    const diff = (a.date?.getTime() ?? -Infinity) - (b.date?.getTime() ?? -Infinity);
+    return descending ? -diff : diff;
+  });
+}
