@@ -351,6 +351,13 @@ strong { font-weight: 700; }
   padding-inline: var(--space-md);
 }
 
+/* Lenses open with their own sticky filter bar as the first thing in the
+   body — drop the shared top padding so the bar sits flush under the card
+   header instead of floating in a gap above it. */
+[data-uid^="lens/"] > .body-wrapper .stack-card-body-inner {
+  padding-top: 0;
+}
+
 /* ── Card stack ────────────────────────────────────────────────── */
 
 #card-stack {

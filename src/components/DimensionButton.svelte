@@ -42,6 +42,7 @@
 
 <style>
   .browse-dim-btn {
+    position: relative;
     font-family: var(--font-heading);
     font-size: 1rem;
     border: var(--border-width) solid var(--color-border);
@@ -49,9 +50,9 @@
     color: var(--color-text);
     cursor: pointer;
     display: flex;
-    flex-direction: column;
     align-items: stretch;
     padding: 0;
+    margin: 1em 0;
     transition: background 0.15s;
   }
 
@@ -64,33 +65,51 @@
     border-bottom-color: transparent;
   }
 
+  /* Positioned outside the button's own border box (not part of its flow)
+     so every dimension button stays the same height/vertical position
+     regardless of whether an indicator is present. Offsetting by
+     --border-width and insetting left/right by the same amount aligns
+     this flush with the button's outer border edge instead of its padding
+     edge (100% alone lands under the border, not below/above it). */
   .browse-dim-lens-icon {
+    position: absolute;
+    bottom: calc(100%);
+    left: calc(-1 * var(--border-width) + 1px);
+    right: calc(-1 * var(--border-width) + 1px);
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 0.85em;
     line-height: 1;
-    padding-top: var(--space-xs);
+    background: var(--color-text);
+    border-bottom: none;
+    pointer-events: none;
   }
 
   .browse-dim-label {
     padding: var(--space-xs) var(--space-md);
     display: flex;
+    flex-grow: 1;
     justify-content: center;
     align-items: center;
   }
 
-  .browse-dim-btn:not(:disabled):hover:not(.browse-dim-btn--active) .browse-dim-label {
+  .browse-dim-btn:not(:disabled):hover .browse-dim-label {
     background: var(--color-bg-hover);
   }
 
   .browse-dim-dots {
+    position: absolute;
+    top: calc(100% + var(--border-width));
+    left: calc(-1 * var(--border-width));
+    right: calc(-1 * var(--border-width));
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 5px;
     padding: var(--space-xs) var(--space-md);
     background: var(--color-text);
+    pointer-events: none;
   }
 
   .browse-dim-dot {

@@ -136,7 +136,7 @@
 <style>
   .browse-dim-panel {
     position: absolute;
-    top: 100%;
+    top: calc(100% - 1em - 1px);
     left: 0;
     min-width: 220px;
     border: var(--border-width) solid var(--color-border);

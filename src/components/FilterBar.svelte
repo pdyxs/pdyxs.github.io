@@ -115,7 +115,12 @@
     {@const hasNodes = (hierarchies[dim] ?? []).length > 0}
     {@const lenses = lensesForDimension(dim)}
 
-    <div class="fp-dim-wrapper">
+    {@const lensIcon = activeLensIcon(lenses, activeLensId)}
+    <div
+      class="fp-dim-wrapper"
+      class:fp-dim-wrapper--filter-active={isActive}
+      class:fp-dim-wrapper--lens-active={!!lensIcon}
+    >
       <DimensionButton
         label={dimensionLabels[dim]}
         {isActive}
@@ -123,7 +128,7 @@
         {hasNodes}
         selectionCount={(filterState.selections[dim] ?? []).length}
         onToggle={() => togglePanel(dim)}
-        lensIcon={activeLensIcon(lenses, activeLensId)}
+        {lensIcon}
       />
 
       {#if isOpen}
@@ -153,7 +158,7 @@
     flex-wrap: nowrap;
     align-items: flex-start;
     gap: var(--space-xs);
-    padding: var(--space-sm) 0;
+    padding: 0.2em 0;
     border-bottom: var(--border-width) solid var(--color-border);
     background: var(--color-bg);
     position: sticky;
@@ -165,6 +170,19 @@
     position: relative;
     flex: 1;
     min-width: 0;
+    z-index: 1;
+  }
+
+  /* The filter-count dot strip hangs below the button; keep it behind
+     neighboring dimension buttons rather than painting over them. */
+  .fp-dim-wrapper--filter-active {
+    z-index: 0;
+  }
+
+  /* The active-lens icon hangs above the button; it should rise above
+     neighboring dimension buttons (and above filter-active ones). */
+  .fp-dim-wrapper--lens-active {
+    z-index: 2;
   }
 
   .fp-dim-wrapper :global(.browse-dim-btn) {
