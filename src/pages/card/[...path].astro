@@ -1,7 +1,9 @@
 ---
 import { getAllCards } from '../../lib/cards';
+import type { CardMeta } from '../../lib/cards';
 import { getTagRegistry, flattenTagDisplay } from '../../lib/tag-registry';
 import type { TagDisplay } from '../../lib/tag-display';
+import { computeRelatedCardsIndex } from '../../lib/card-identity';
 import Base from '../../layouts/Base.astro';
 import StackNav from '../../components/StackNav.astro';
 import CardStackCard from '../../components/CardStackCard.astro';
@@ -11,17 +13,25 @@ export async function getStaticPaths() {
   // Computed once here (not per-card) since it walks the whole content tree —
   // shared across every static path this route generates.
   const tagDisplay = flattenTagDisplay(await getTagRegistry(cards));
+  const relatedCardsIndex = computeRelatedCardsIndex(cards);
   // Title comes along as a prop so this page never has to re-derive it itself.
-  return cards.map(c => ({ params: { path: c.uid }, props: { title: c.title, tagDisplay } }));
+  return cards.map(c => ({
+    params: { path: c.uid },
+    props: { title: c.title, tagDisplay, relatedCards: relatedCardsIndex.get(c.uid) ?? [] },
+  }));
 }
 
 const { path } = Astro.params;
-const { title, tagDisplay } = Astro.props as { title: string; tagDisplay: Record<string, TagDisplay> };
+const { title, tagDisplay, relatedCards } = Astro.props as {
+  title: string;
+  tagDisplay: Record<string, TagDisplay>;
+  relatedCards: CardMeta[];
+};
 ---
 
 <Base {title}>
   <div id="homepage" hidden></div>
   <StackNav activeUid={path}>
-    <CardStackCard path={path!} {tagDisplay} />
+    <CardStackCard path={path!} {tagDisplay} {relatedCards} />
   </StackNav>
 </Base>

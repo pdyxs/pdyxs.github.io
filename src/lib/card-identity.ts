@@ -37,3 +37,32 @@ export function cardOwnValues(cards: CardMeta[]): Set<string> {
   }
   return values;
 }
+
+/**
+ * Reverse index of card-backed tags: for every card, the other cards that
+ * link to it by tagging its own value (see `ownValueForCard`). Used to show
+ * a "what links here" section on a card — e.g. a project card surfaces every
+ * blog post tagged with that project's own path.
+ */
+export function computeRelatedCardsIndex(cards: CardMeta[]): Map<string, CardMeta[]> {
+  const uidByOwnValue = new Map<string, string>();
+  for (const card of cards) {
+    const value = ownValueForCard(card.uid);
+    if (value && !uidByOwnValue.has(value)) uidByOwnValue.set(value, card.uid);
+  }
+
+  const index = new Map<string, CardMeta[]>();
+  for (const card of cards) {
+    for (const tag of card.tags) {
+      const targetUid = uidByOwnValue.get(tag);
+      if (!targetUid || targetUid === card.uid) continue;
+      const related = index.get(targetUid);
+      if (related) {
+        related.push(card);
+      } else {
+        index.set(targetUid, [card]);
+      }
+    }
+  }
+  return index;
+}

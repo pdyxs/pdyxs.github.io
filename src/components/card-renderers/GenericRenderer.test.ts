@@ -3,7 +3,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { getContainerRenderer } from '@astrojs/svelte';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
 import GenericRenderer from './GenericRenderer.astro';
-import { fakeEntry } from '../../test/fixtures';
+import { fakeEntry, fakeCardMeta } from '../../test/fixtures';
 
 async function makeContainer() {
   const renderers = [{ ...getContainerRenderer(), ssr: svelteServerRenderer }];
@@ -258,5 +258,33 @@ describe('GenericRenderer', () => {
     const div = document.createElement('div');
     div.innerHTML = html;
     expect(div.querySelector('.generic-tags')).toBeNull();
+  });
+
+  it('renders a related-cards section when relatedCards are given', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(GenericRenderer, {
+      props: {
+        entry: fakeEntry({ description: 'x' }),
+        Content: undefined,
+        relatedCards: [fakeCardMeta({ uid: 'posts/bar', title: 'Bar' })],
+      },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    expect(div.querySelector('.generic-related')).not.toBeNull();
+    expect(div.textContent).toContain('Related');
+    expect(div.textContent).toContain('Bar');
+  });
+
+  it('renders no related-cards section when relatedCards is empty', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(GenericRenderer, {
+      props: { entry: fakeEntry({ description: 'x' }), Content: undefined },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    expect(div.querySelector('.generic-related')).toBeNull();
   });
 });

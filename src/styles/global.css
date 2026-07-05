@@ -910,6 +910,18 @@ strong { font-weight: 700; }
   border-color: var(--color-border);
 }
 
+.generic-related {
+  margin: var(--space-lg) 0 0;
+  padding-top: var(--space-lg);
+  border-top: var(--border-width) solid var(--color-border-light);
+}
+
+.generic-related-heading {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  margin: 0 0 var(--space-sm);
+}
+
 /* ── Site footer ───────────────────────────────────────────────── */
 
 .site-footer {

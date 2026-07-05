@@ -4,7 +4,9 @@ import { Image, getImage } from 'astro:assets';
 import { resolveLocalImage, resolveGalleryImages } from '../../lib/images';
 import { displayFor } from '../../lib/tag-display';
 import type { TagDisplay } from '../../lib/tag-display';
+import type { CardMeta } from '../../lib/cards';
 import ImageGallery from '../ImageGallery.svelte';
+import BrowseResults from '../BrowseResults.svelte';
 
 interface Action {
   text: string;
@@ -36,9 +38,11 @@ interface Props {
   Content: RenderResult['Content'] | undefined;
   /** Flat value -> display-name map from the tag registry (see tag-registry.ts's flattenTagDisplay). */
   tagDisplay?: Record<string, TagDisplay>;
+  /** Cards that link to this one via a card-backed tag (see card-identity.ts's computeRelatedCardsIndex) — rendered as a "Related" section. */
+  relatedCards?: CardMeta[];
 }
 
-const { entry, Content, tagDisplay = {} } = Astro.props;
+const { entry, Content, tagDisplay = {}, relatedCards = [] } = Astro.props;
 const data = entry?.data;
 
 const localImage = entry ? resolveLocalImage(entry.id, data?.image) : undefined;
@@ -128,6 +132,13 @@ const galleryImages = await Promise.all(
           );
         })}
       </ul>
+    )}
+
+    {relatedCards.length > 0 && (
+      <div class="generic-related">
+        <h3 class="generic-related-heading">Related</h3>
+        <BrowseResults cards={relatedCards} {tagDisplay} client:load />
+      </div>
     )}
   </>
 )}
