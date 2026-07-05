@@ -2,7 +2,7 @@
 title: Designing a Budget
 date: '2019-03-21 13:00:00 -0500'
 tags:
-  - what:projects/budget-haver
+  - what:projects/software-engineering/budget-haver
 description: A look at the design of Budget Haver
 canonical_url: >-
   https://medium.com/@pdyxs/designing-a-budget-3528cd426aa7?source=friends_link&sk=61823129cce33d378d9a82da308bf6c8

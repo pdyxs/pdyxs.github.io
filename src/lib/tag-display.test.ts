@@ -18,10 +18,10 @@ describe('displayFor', () => {
   });
 
   it('falls back to a humanised segment when the value is absent from the map', () => {
-    expect(displayFor('what:projects/data-art', {})).toEqual({ name: 'Data Art' });
+    expect(displayFor('what:projects/data-art', {})).toEqual({ name: 'Data Art', declared: false });
   });
 
   it('falls back to a humanised segment when no display map is provided', () => {
-    expect(displayFor('what:puzzles')).toEqual({ name: 'Puzzles' });
+    expect(displayFor('what:puzzles')).toEqual({ name: 'Puzzles', declared: false });
   });
 });

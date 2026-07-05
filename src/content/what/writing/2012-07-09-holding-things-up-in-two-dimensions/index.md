@@ -2,7 +2,7 @@
 title: 'Holding things up in two dimensions: The Pillars of Flatland'
 date: '2012-07-09 17:00:00 +1000'
 tags:
-  - what:projects/flatland-fallen-angle
+  - what:projects/games/digital/flatland-fallen-angle
 canonical_url: >-
   https://www.gamasutra.com/blogs/PaulSztajer/20120709/173778/Holding_things_up_in_two_dimensions_The_Pillars_of_Flatland.php
 image: >-

@@ -6,6 +6,7 @@
 import type { CardMeta } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension } from './filters';
+import { cardOwnValues } from './card-identity';
 import { displayFor } from './tag-display';
 import type { TagDisplay } from './tag-display';
 
@@ -47,6 +48,10 @@ export type TagNode = {
   description?: string;
   count: number;
   children: TagNode[];
+  /** True when this value has a container `_config.yaml` or `<name>.tag.yaml` identity — see tag-registry.ts. Drives filterVisibleNodes. */
+  declared?: boolean;
+  /** Set when this value is exactly some card's own path — the uid to navigate to instead of filtering. */
+  cardUid?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -97,10 +102,16 @@ export function extractDimensionTags(
  * prefix-matches the given value.
  *
  * A tag prefix-matches if it equals the value or starts with `value + '/'`.
+ * Exception: a tag that is some *other* card's own path (a "card-backed
+ * tag") is a direct link to that card, not category membership, so it only
+ * counts on an exact match — see cardOwnValues.
  */
 export function countMatchingCards(cards: CardMeta[], value: string): number {
+  const cardBackedValues = cardOwnValues(cards);
   return cards.filter(card =>
-    card.tags.some(tag => tag === value || tag.startsWith(value + '/'))
+    card.tags.some(tag =>
+      tag === value || (!cardBackedValues.has(tag) && tag.startsWith(value + '/'))
+    )
   ).length;
 }
 
@@ -220,6 +231,28 @@ export function buildAllDimensionHierarchies(
   const result = {} as Record<Dimension, TagNode[]>;
   for (const dim of DIMENSIONS) {
     result[dim] = buildTagHierarchy(cards, dim, declaredValues, display);
+  }
+  return result;
+}
+
+/**
+ * Recursively filters a tag-node tree down to nodes that should actually be
+ * offered in a dimension panel: a declared value (container `_config.yaml`
+ * or `<name>.tag.yaml` identity) or a value that is already an active
+ * selection. Undeclared values (e.g. card-backed tags, or any other
+ * freeform-but-used value) are hidden from the browsing panel unless
+ * already selected — otherwise-active filters never disappear out from
+ * under the user.
+ *
+ * Filtering is applied at every level, so a node's `children` in the result
+ * only ever contain visible descendants too (this also governs whether a
+ * "drill in" affordance should show for that node).
+ */
+export function filterVisibleNodes(nodes: TagNode[], activeValues: Set<string>): TagNode[] {
+  const result: TagNode[] = [];
+  for (const node of nodes) {
+    if (!node.declared && !activeValues.has(node.value)) continue;
+    result.push({ ...node, children: filterVisibleNodes(node.children, activeValues) });
   }
   return result;
 }

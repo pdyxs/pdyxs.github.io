@@ -3,7 +3,7 @@ title: Inspiration and emulation – the drive to create
 date: '2014-05-08 17:00:00 +1000'
 tags:
   - what:writing
-  - what:projects/particulars
+  - what:projects/games/digital/particulars
 image: >-
   https://i2.wp.com/www.seethroughstudios.com/wp-content/uploads/2014/05/inspiration-and-emulation-the-drive-to-create-jw.jpg?w=600
 source: seethroughstudios

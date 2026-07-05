@@ -5,7 +5,9 @@
 // client title updates (CardStack.svelte).
 //
 // Rules:
-//   home            → card title = site title, page subtitle = site tagline
+//   home            → card title = site title (site branding, shown even
+//                     when home is collapsed behind another card), page
+//                     subtitle = the lens's label
 //   any other lens  → title = "<label>[ · <Filter>]*", used for both the
 //                     card-mode header and the page-mode subtitle
 // The page-mode H1 is always the site title (page mode is "the front page of
@@ -15,7 +17,6 @@ import type { LensDefinition } from './lens-registry';
 import { DIMENSIONS, type FilterState } from './filters';
 
 export const SITE_TITLE = 'pdyxs.wtf';
-export const SITE_TAGLINE = 'Games, Design and Software';
 
 export interface LensChrome {
   /** Page-mode H1 — always the site title. */
@@ -26,9 +27,11 @@ export interface LensChrome {
   pageSubtitle: string;
 }
 
-/** True for the home lens — the sole `dimension: 'root'` entry. */
+/** True for the home lens. Identified by id, not dimension — home is filed
+ * under the 'what' dimension (so it also appears in that panel) but keeps
+ * this bespoke chrome regardless of which dimension it's filed under. */
 function isHome(lens: LensDefinition): boolean {
-  return lens.dimension === 'root';
+  return lens.id === 'home';
 }
 
 /** "what:projects/software-engineering" → "Software Engineering". */
@@ -57,7 +60,7 @@ function activeFilterLabels(filterState: FilterState): string[] {
 /** Derives the chrome strings for a lens under the given filter state. */
 export function deriveLensChrome(lens: LensDefinition, filterState: FilterState): LensChrome {
   if (isHome(lens)) {
-    return { pageTitle: SITE_TITLE, cardTitle: SITE_TITLE, pageSubtitle: SITE_TAGLINE };
+    return { pageTitle: SITE_TITLE, cardTitle: SITE_TITLE, pageSubtitle: lens.label };
   }
   const title = [lens.label, ...activeFilterLabels(filterState)].join(' · ');
   return { pageTitle: SITE_TITLE, cardTitle: title, pageSubtitle: title };

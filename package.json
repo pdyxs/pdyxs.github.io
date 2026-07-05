@@ -1,31 +1,32 @@
 {
-  "name": "pdyxs-temp",
-  "type": "module",
-  "version": "0.0.1",
-  "engines": {
-    "node": ">=22.12.0"
-  },
-  "scripts": {
-    "predev": "node scripts/generate-stack-manifest.mjs",
-    "dev": "astro dev",
-    "prebuild": "node scripts/generate-stack-manifest.mjs",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro",
-    "generate:manifest": "node scripts/generate-stack-manifest.mjs",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "dependencies": {
-    "@astrojs/rss": "^4.0.18",
-    "@astrojs/svelte": "^8.0.5",
-    "astro": "^6.1.4",
-    "svelte": "^5.55.4"
-  },
-  "devDependencies": {
-    "@vitest/ui": "^4.1.4",
-    "gray-matter": "^4.0.3",
-    "happy-dom": "^20.8.9",
-    "vitest": "^4.1.4"
-  }
+    "name": "pdyxs-temp",
+    "type": "module",
+    "version": "0.0.1",
+    "engines": {
+        "node": ">=22.12.0"
+    },
+    "scripts": {
+        "predev": "node scripts/generate-stack-manifest.mjs",
+        "dev": "astro dev",
+        "prebuild": "node scripts/generate-stack-manifest.mjs",
+        "build": "astro build",
+        "preview": "astro preview",
+        "astro": "astro",
+        "generate:manifest": "node scripts/generate-stack-manifest.mjs",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "restart-server": "systemctl --user restart astro-preview.service"
+    },
+    "dependencies": {
+        "@astrojs/rss": "^4.0.18",
+        "@astrojs/svelte": "^8.0.5",
+        "astro": "^6.1.4",
+        "svelte": "^5.55.4"
+    },
+    "devDependencies": {
+        "@vitest/ui": "^4.1.4",
+        "gray-matter": "^4.0.3",
+        "happy-dom": "^20.8.9",
+        "vitest": "^4.1.4"
+    }
 }

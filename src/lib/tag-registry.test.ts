@@ -65,14 +65,18 @@ describe('computeTagRegistry — name-source precedence', () => {
   it('falls back to a humanised last path segment when nothing is declared', () => {
     const cards = [fakeCardMeta({ uid: 'what/posts/a', tags: ['what:projects/data-art'] })];
     const registry = computeTagRegistry(cards);
-    expect(registry.what.display.get('what:projects/data-art')).toEqual({ name: 'Data Art' });
+    expect(registry.what.display.get('what:projects/data-art')).toEqual({ name: 'Data Art', declared: false });
   });
 
   it('prefers a card-folder title over the humanised fallback', () => {
     const referencing = fakeCardMeta({ uid: 'what/writing/a-post', tags: ['what:projects/particulars'] });
     const project = fakeCardMeta({ uid: 'what/projects/particulars', title: 'Particulars', tags: ['what:projects'] });
     const registry = computeTagRegistry([referencing, project]);
-    expect(registry.what.display.get('what:projects/particulars')).toEqual({ name: 'Particulars' });
+    expect(registry.what.display.get('what:projects/particulars')).toEqual({
+      name: 'Particulars',
+      declared: false,
+      cardUid: 'what/projects/particulars',
+    });
   });
 
   it('prefers a container _config.yaml identity over a card-folder title', () => {
@@ -80,7 +84,7 @@ describe('computeTagRegistry — name-source precedence', () => {
       fakeCardMeta({ uid: 'what/puzzles/sudoku', title: 'Sudoku', tags: ['what:puzzles'] }),
     ];
     const registry = computeTagRegistry(cards, [{ value: 'what:puzzles', name: 'Puzzles', description: 'Logic puzzles' }]);
-    expect(registry.what.display.get('what:puzzles')).toEqual({ name: 'Puzzles', description: 'Logic puzzles' });
+    expect(registry.what.display.get('what:puzzles')).toEqual({ name: 'Puzzles', description: 'Logic puzzles', declared: true });
   });
 
   it('prefers a .tag.yaml declaration over a container _config.yaml identity for the same value', () => {
@@ -96,7 +100,7 @@ describe('computeTagRegistry — name-source precedence', () => {
   it('description is optional and absent when no source declares one', () => {
     const cards = [fakeCardMeta({ uid: 'what/posts/a', tags: ['what:puzzles'] })];
     const registry = computeTagRegistry(cards, [{ value: 'what:puzzles', name: 'Puzzles' }]);
-    expect(registry.what.display.get('what:puzzles')).toEqual({ name: 'Puzzles' });
+    expect(registry.what.display.get('what:puzzles')).toEqual({ name: 'Puzzles', declared: true });
   });
 
   it('takes a description from a lower-precedence source when a higher one supplies only a name', () => {
@@ -106,7 +110,7 @@ describe('computeTagRegistry — name-source precedence', () => {
       [{ value: 'what:puzzles', description: 'From Container' }],
       [{ value: 'what:puzzles', name: 'From Tag Yaml' }],
     );
-    expect(registry.what.display.get('what:puzzles')).toEqual({ name: 'From Tag Yaml', description: 'From Container' });
+    expect(registry.what.display.get('what:puzzles')).toEqual({ name: 'From Tag Yaml', description: 'From Container', declared: true });
   });
 });
 
@@ -121,8 +125,8 @@ describe('flattenTagDisplay', () => {
     ]);
     const flat = flattenTagDisplay(registry);
     expect(flat).toEqual({
-      'what:puzzles': { name: 'Puzzles', description: 'Logic puzzles' },
-      'who:paul': { name: 'Paul' },
+      'what:puzzles': { name: 'Puzzles', description: 'Logic puzzles', declared: true },
+      'who:paul': { name: 'Paul', declared: true },
     });
   });
 
@@ -195,7 +199,7 @@ describe('getTagRegistry', () => {
     const cards = [fakeCardMeta({ uid: 'what/puzzles/sudoku', tags: ['what:puzzles'] })];
     const registry = await getTagRegistry(cards, reader);
     expect(registry.what.values).toContain('what:puzzles');
-    expect(registry.what.display.get('what:puzzles')).toEqual({ name: 'Puzzles', description: 'Logic puzzles' });
+    expect(registry.what.display.get('what:puzzles')).toEqual({ name: 'Puzzles', description: 'Logic puzzles', declared: true });
   });
 });
 

@@ -74,8 +74,8 @@
   .browse-dim-lens-icon {
     position: absolute;
     bottom: calc(100%);
-    left: calc(-1 * var(--border-width) + 1px);
-    right: calc(-1 * var(--border-width) + 1px);
+    left: calc(-1 * var(--border-width));
+    right: calc(-1 * var(--border-width));
     display: flex;
     justify-content: center;
     align-items: center;

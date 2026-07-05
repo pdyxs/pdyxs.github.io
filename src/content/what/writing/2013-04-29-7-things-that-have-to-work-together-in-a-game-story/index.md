@@ -3,7 +3,7 @@ title: 7 things that have to work together in a game story
 date: '2013-04-29 17:00:00 +1000'
 tags:
   - what:writing
-  - what:projects/particulars
+  - what:projects/games/digital/particulars
 canonical_url: >-
   https://www.gamasutra.com/blogs/PaulSztajer/20130429/191393/7_things_that_have_to_work_together_in_a_game_story.php
 image: >-

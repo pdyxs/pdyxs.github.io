@@ -49,7 +49,9 @@ const filterState: FilterState = { selections: {} };
 const chrome = lens ? deriveLensChrome(lens, filterState) : null;
 
 // Home is the root of the stack and is never closable; other lenses are.
-const isHome = lens?.dimension === 'root';
+// Identified by id, not dimension — home is filed under 'what' so it also
+// appears in that dimension's panel, but is still the sole stack anchor.
+const isHome = lens?.id === 'home';
 
 let hierarchies: any = null;
 let tagDisplay: any = {};
@@ -75,7 +77,7 @@ if (lens) {
     data-width={lens.width}
   >
     <header class="page-header">
-      <h1 class="page-title">{chrome.pageTitle}</h1>
+      <h1 class="page-title"><a href="/" class="page-title-link">{chrome.pageTitle}</a></h1>
       <p class="page-subtitle">{chrome.pageSubtitle}</p>
     </header>
     <div class="card-header">

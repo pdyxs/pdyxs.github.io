@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import type { CardMeta } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension } from './filters';
+import { ownValueForCard } from './card-identity';
 import { humaniseSegment } from './tag-display';
 import type { TagDisplay } from './tag-display';
 
@@ -53,20 +54,6 @@ export type ValueIdentity = {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the full-path filter value a card's own folder represents (distinct
- * from its inherited path tag, which is its *parent* folder's value). Used
- * for name-source precedence (3): a card's own title supplies the display
- * name for its own value when some other card references it as a tag.
- */
-function ownValueForCard(uid: string): string | undefined {
-  const slashIdx = uid.indexOf('/');
-  if (slashIdx === -1) return undefined;
-  const dimension = uid.slice(0, slashIdx);
-  const rest = uid.slice(slashIdx + 1);
-  return rest ? `${dimension}:${rest}` : undefined;
-}
-
-/**
  * Resolves display info for a value via name-source precedence: (1) a
  * `.tag.yaml` declaration; (2) a container `_config.yaml` identity; (3) the
  * title of the card-folder whose path *is* this value; (4) fallback —
@@ -79,15 +66,23 @@ function resolveDisplay(
   tagDeclarations: ValueIdentity[],
   containerIdentities: ValueIdentity[],
   cardTitleByValue: Map<string, string>,
+  cardUidByValue: Map<string, string>,
 ): TagDisplay {
   const tagDecl = tagDeclarations.find(v => v.value === value);
   const container = containerIdentities.find(v => v.value === value);
   const cardTitle = cardTitleByValue.get(value);
+  const cardUid = cardUidByValue.get(value);
+  const declared = !!tagDecl || !!container;
 
   const name = tagDecl?.name ?? container?.name ?? cardTitle ?? humaniseSegment(value);
   const description = tagDecl?.description ?? container?.description;
 
-  return description !== undefined ? { name, description } : { name };
+  return {
+    name,
+    ...(description !== undefined ? { description } : {}),
+    declared,
+    ...(cardUid ? { cardUid } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -105,9 +100,13 @@ export function computeTagRegistry(
   tagDeclarations: ValueIdentity[] = [],
 ): TagRegistry {
   const cardTitleByValue = new Map<string, string>();
+  const cardUidByValue = new Map<string, string>();
   for (const card of cards) {
     const value = ownValueForCard(card.uid);
-    if (value && !cardTitleByValue.has(value)) cardTitleByValue.set(value, card.title);
+    if (value && !cardTitleByValue.has(value)) {
+      cardTitleByValue.set(value, card.title);
+      cardUidByValue.set(value, card.uid);
+    }
   }
 
   const result = {} as TagRegistry;
@@ -131,7 +130,7 @@ export function computeTagRegistry(
     const sortedValues = [...values].sort();
     const display = new Map<string, TagDisplay>();
     for (const value of sortedValues) {
-      display.set(value, resolveDisplay(value, tagDeclarations, containerIdentities, cardTitleByValue));
+      display.set(value, resolveDisplay(value, tagDeclarations, containerIdentities, cardTitleByValue, cardUidByValue));
     }
 
     result[dim] = { values: sortedValues, display };

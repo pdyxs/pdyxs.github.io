@@ -6,6 +6,7 @@ import {
   buildAllDimensionHierarchies,
   dimensionHasTags,
   sortCardsForBrowse,
+  filterVisibleNodes,
 } from './browse-helpers';
 import type { TagNode } from './browse-helpers';
 import { computeTagRegistry, flattenTagDisplay } from './tag-registry';
@@ -135,6 +136,19 @@ describe('countMatchingCards', () => {
       fakeCardMeta({ uid: 'posts/a', tags: ['what:writing'] }),
     ];
     expect(countMatchingCards(cards, 'what:projects')).toBe(0);
+  });
+
+  it('does not count a card-backed tag (another card\'s own path) toward an ancestor', () => {
+    // A blog post linking to a project card via a manual tag should not
+    // inflate the project category's count.
+    const project = fakeCardMeta({ uid: 'what/projects/where-the-heart-is', tags: ['what:projects'] });
+    const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:writing', 'what:projects/where-the-heart-is'] });
+    expect(countMatchingCards([project, post], 'what:projects')).toBe(1);
+  });
+
+  it('still counts a card-backed tag on an exact match', () => {
+    const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:projects/where-the-heart-is'] });
+    expect(countMatchingCards([post], 'what:projects/where-the-heart-is')).toBe(1);
   });
 });
 
@@ -364,6 +378,66 @@ describe('buildTagHierarchy fed by a real tag registry', () => {
 
     expect(tree[0].name).toBe('Puzzles');
     expect(tree[0].description).toBe('Logic puzzles');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// filterVisibleNodes
+// ---------------------------------------------------------------------------
+
+describe('filterVisibleNodes', () => {
+  function node(overrides: Partial<TagNode> & { value: string }): TagNode {
+    return {
+      label: overrides.value,
+      name: overrides.value,
+      count: 0,
+      children: [],
+      declared: false,
+      ...overrides,
+    };
+  }
+
+  it('keeps a declared node', () => {
+    const nodes = [node({ value: 'what:projects', declared: true })];
+    expect(filterVisibleNodes(nodes, new Set())).toHaveLength(1);
+  });
+
+  it('drops an undeclared node with no active selection', () => {
+    const nodes = [node({ value: 'what:projects/budget-haver', declared: false })];
+    expect(filterVisibleNodes(nodes, new Set())).toEqual([]);
+  });
+
+  it('keeps an undeclared node that is currently selected', () => {
+    const nodes = [node({ value: 'what:projects/budget-haver', declared: false })];
+    const result = filterVisibleNodes(nodes, new Set(['what:projects/budget-haver']));
+    expect(result.map(n => n.value)).toEqual(['what:projects/budget-haver']);
+  });
+
+  it('recursively filters children, dropping undeclared/unselected leaves', () => {
+    const nodes = [
+      node({
+        value: 'what:projects',
+        declared: true,
+        children: [
+          node({ value: 'what:projects/games', declared: true }),
+          node({ value: 'what:projects/budget-haver', declared: false }),
+        ],
+      }),
+    ];
+    const result = filterVisibleNodes(nodes, new Set());
+    expect(result[0].children.map(c => c.value)).toEqual(['what:projects/games']);
+  });
+
+  it('keeps an undeclared child when it is the active selection', () => {
+    const nodes = [
+      node({
+        value: 'what:projects',
+        declared: true,
+        children: [node({ value: 'what:projects/budget-haver', declared: false })],
+      }),
+    ];
+    const result = filterVisibleNodes(nodes, new Set(['what:projects/budget-haver']));
+    expect(result[0].children.map(c => c.value)).toEqual(['what:projects/budget-haver']);
   });
 });
 

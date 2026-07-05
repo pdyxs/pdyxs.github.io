@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveLensChrome, SITE_TITLE, SITE_TAGLINE } from './lens-chrome';
+import { deriveLensChrome, SITE_TITLE } from './lens-chrome';
 import { getLensDefinition } from './lens-registry';
 import type { FilterState } from './filters';
 
@@ -8,11 +8,11 @@ const newest = getLensDefinition('newest')!;
 const empty: FilterState = { selections: {} };
 
 describe('deriveLensChrome', () => {
-  it('home: card title is the site title, page subtitle is the tagline', () => {
+  it('home: card title is the site title, page subtitle is the lens label', () => {
     const chrome = deriveLensChrome(home, empty);
     expect(chrome.cardTitle).toBe(SITE_TITLE);
     expect(chrome.pageTitle).toBe(SITE_TITLE);
-    expect(chrome.pageSubtitle).toBe(SITE_TAGLINE);
+    expect(chrome.pageSubtitle).toBe('A bit of everything');
   });
 
   it('a filter lens with no active filters: card title is the lens label', () => {

@@ -2,8 +2,8 @@
 title: 'Ensuring your project has depth: the Triple Threat test'
 date: '2013-05-08 17:00:00 +1000'
 tags:
-  - what:projects/particulars
-  - what:projects/flatland-fallen-angle
+  - what:projects/games/digital/particulars
+  - what:projects/games/digital/flatland-fallen-angle
 source: seethroughstudios
 ---
 Last weekend I saw Iron Man 3, and was oddly disappointed. The movie was fun despite a few flaws, and was really quite entertaining. It took me a couple of days, but I think I've figured out why I was underwhelmed by it: because I'm (some might say finally) getting sick of media that's satisfied with just being entertaining.

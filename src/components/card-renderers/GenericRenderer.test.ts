@@ -47,7 +47,7 @@ describe('GenericRenderer', () => {
   it('resolves a bare image filename to the colocated local asset', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
-      props: { entry: fakeEntry({ id: 'what/projects/art-heist', image: 'outside.jpg' }), Content: undefined },
+      props: { entry: fakeEntry({ id: 'what/projects/interactive-theatre/art-heist', image: 'outside.jpg' }), Content: undefined },
     });
 
     const div = document.createElement('div');
@@ -129,7 +129,7 @@ describe('GenericRenderer', () => {
   it('renders a gallery of colocated images excluding the header image', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
-      props: { entry: fakeEntry({ id: 'what/projects/art-heist', image: 'outside.jpg' }), Content: undefined },
+      props: { entry: fakeEntry({ id: 'what/projects/interactive-theatre/art-heist', image: 'outside.jpg' }), Content: undefined },
     });
 
     const div = document.createElement('div');
@@ -140,7 +140,7 @@ describe('GenericRenderer', () => {
   it('renders a gallery from colocated images when no header image is set', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
-      props: { entry: fakeEntry({ id: 'what/projects/art-heist' }), Content: undefined },
+      props: { entry: fakeEntry({ id: 'what/projects/interactive-theatre/art-heist' }), Content: undefined },
     });
 
     const div = document.createElement('div');
@@ -152,7 +152,7 @@ describe('GenericRenderer', () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
       props: {
-        entry: fakeEntry({ id: 'what/projects/art-heist', image: 'outside.jpg', images: ['outside.jpg'] }),
+        entry: fakeEntry({ id: 'what/projects/interactive-theatre/art-heist', image: 'outside.jpg', images: ['outside.jpg'] }),
         Content: undefined,
       },
     });
@@ -223,6 +223,30 @@ describe('GenericRenderer', () => {
     const link = div.querySelector('a.generic-tag');
     expect(link?.textContent).toBe('Puzzles');
     expect(link?.getAttribute('href')).toBe('tag:what:puzzles');
+  });
+
+  it('renders a card-backed tag as a card link instead of a tag: filter link', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(GenericRenderer, {
+      props: {
+        entry: fakeEntry({ tags: ['what:projects/software-engineering/budget-haver'] }),
+        Content: undefined,
+        tagDisplay: {
+          'what:projects/software-engineering/budget-haver': {
+            name: 'Budget Haver',
+            declared: false,
+            cardUid: 'what/projects/software-engineering/budget-haver',
+          },
+        },
+      },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    const link = div.querySelector('a.generic-tag');
+    expect(link?.textContent).toBe('Budget Haver');
+    expect(link?.getAttribute('href')).toBe('/card/what/projects/software-engineering/budget-haver');
+    expect(link?.getAttribute('data-push-card')).toBe('what/projects/software-engineering/budget-haver');
   });
 
   it('renders no tags list when entry has no tags', async () => {

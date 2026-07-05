@@ -16,9 +16,10 @@ export type LensPresentation = 'card' | 'fullbleed';
 export interface LensDefinition {
   /** Stable id, also the URL segment: /lens/<id>. */
   id: string;
-  /** Which 5W dimension this lens browses under (or 'root' for the home lens). */
+  /** Which 5W dimension this lens browses under. */
   dimension: string;
-  /** Human-readable label, e.g. for nav chips. */
+  /** Human-readable label — used both for nav chips and, combined with any
+   * active filters, the chrome title once the lens is active. */
   label: string;
   icon?: string;
   /** Lookup key into the lazy component-loader map (lens-components.ts) — not an import itself. */
@@ -49,8 +50,8 @@ function normaliseLens(decl: LensDeclaration): LensDefinition {
 const DECLARATIONS: LensDeclaration[] = [
   {
     id: 'home',
-    dimension: 'root',
-    label: 'Home',
+    dimension: 'what',
+    label: 'A bit of everything',
     icon: '🏠',
     component: 'home',
     config: FRONTPAGE_CONFIG,
