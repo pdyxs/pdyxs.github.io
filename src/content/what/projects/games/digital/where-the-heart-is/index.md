@@ -4,7 +4,6 @@ description: A reflection on globalised life
 tags:
   - when:released
   - what:topics/game-jam
-  - who:nocv
 priority: 20190126
 images:
   - wheretheheartis

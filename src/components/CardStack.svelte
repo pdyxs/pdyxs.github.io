@@ -538,6 +538,10 @@
 
       const pushItem = target.closest<HTMLElement>('[data-push-card]');
       if (pushItem?.dataset.pushCard) {
+        // A real <a href> carrying data-push-card (e.g. a card-backed tag
+        // chip) still needs a working href for no-JS/new-tab — stop the
+        // browser navigating away now that the SPA push is handling it.
+        e.preventDefault();
         // Home's front-page slot links now live inside the stack; pass the
         // clicked `.card-link` so the push can morph it into the new card.
         pushCard(uidToFetchUrl(pushItem.dataset.pushCard), pushItem.closest('.card-link'));
@@ -558,6 +562,7 @@
     function onHomepageClick(e: MouseEvent) {
       const link = (e.target as Element).closest<HTMLElement>('[data-push-card]');
       if (link?.dataset.pushCard) {
+        e.preventDefault();
         pushCard(uidToFetchUrl(link.dataset.pushCard), link.closest('.card-link'));
       }
     }

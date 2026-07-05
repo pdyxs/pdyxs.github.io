@@ -5,7 +5,6 @@ image: farm-1.jpg
 tags:
   - what:topics/education
   - when:released
-  - who:noshortcv
 priority: 20221001
 actions:
   - text: Read the case study

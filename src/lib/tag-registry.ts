@@ -79,15 +79,23 @@ function resolveDisplay(
   tagDeclarations: ValueIdentity[],
   containerIdentities: ValueIdentity[],
   cardTitleByValue: Map<string, string>,
+  cardUidByValue: Map<string, string>,
 ): TagDisplay {
   const tagDecl = tagDeclarations.find(v => v.value === value);
   const container = containerIdentities.find(v => v.value === value);
   const cardTitle = cardTitleByValue.get(value);
+  const cardUid = cardUidByValue.get(value);
+  const declared = !!tagDecl || !!container;
 
   const name = tagDecl?.name ?? container?.name ?? cardTitle ?? humaniseSegment(value);
   const description = tagDecl?.description ?? container?.description;
 
-  return description !== undefined ? { name, description } : { name };
+  return {
+    name,
+    ...(description !== undefined ? { description } : {}),
+    declared,
+    ...(cardUid ? { cardUid } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -105,9 +113,13 @@ export function computeTagRegistry(
   tagDeclarations: ValueIdentity[] = [],
 ): TagRegistry {
   const cardTitleByValue = new Map<string, string>();
+  const cardUidByValue = new Map<string, string>();
   for (const card of cards) {
     const value = ownValueForCard(card.uid);
-    if (value && !cardTitleByValue.has(value)) cardTitleByValue.set(value, card.title);
+    if (value && !cardTitleByValue.has(value)) {
+      cardTitleByValue.set(value, card.title);
+      cardUidByValue.set(value, card.uid);
+    }
   }
 
   const result = {} as TagRegistry;
@@ -131,7 +143,7 @@ export function computeTagRegistry(
     const sortedValues = [...values].sort();
     const display = new Map<string, TagDisplay>();
     for (const value of sortedValues) {
-      display.set(value, resolveDisplay(value, tagDeclarations, containerIdentities, cardTitleByValue));
+      display.set(value, resolveDisplay(value, tagDeclarations, containerIdentities, cardTitleByValue, cardUidByValue));
     }
 
     result[dim] = { values: sortedValues, display };

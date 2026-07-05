@@ -7,8 +7,6 @@ image: Flatland1.jpg
 feature: Flatland1
 tags:
   - when:released
-  - who:nocv
-  - who:noshortcv
 priority: 20120200
 quotes:
   - quote: >-

@@ -9,8 +9,6 @@ feature: Unstoppabot1
 image: Unstoppabot1.jpg
 tags:
   - when:released
-  - who:noshortcv
-  - who:nocv
 priority: 20130300
 status: past
 medium: Video Game

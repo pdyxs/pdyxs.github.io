@@ -6,6 +6,7 @@ import {
   buildAllDimensionHierarchies,
   dimensionHasTags,
   sortCardsForBrowse,
+  filterVisibleNodes,
 } from './browse-helpers';
 import type { TagNode } from './browse-helpers';
 import { computeTagRegistry, flattenTagDisplay } from './tag-registry';
@@ -364,6 +365,66 @@ describe('buildTagHierarchy fed by a real tag registry', () => {
 
     expect(tree[0].name).toBe('Puzzles');
     expect(tree[0].description).toBe('Logic puzzles');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// filterVisibleNodes
+// ---------------------------------------------------------------------------
+
+describe('filterVisibleNodes', () => {
+  function node(overrides: Partial<TagNode> & { value: string }): TagNode {
+    return {
+      label: overrides.value,
+      name: overrides.value,
+      count: 0,
+      children: [],
+      declared: false,
+      ...overrides,
+    };
+  }
+
+  it('keeps a declared node', () => {
+    const nodes = [node({ value: 'what:projects', declared: true })];
+    expect(filterVisibleNodes(nodes, new Set())).toHaveLength(1);
+  });
+
+  it('drops an undeclared node with no active selection', () => {
+    const nodes = [node({ value: 'what:projects/budget-haver', declared: false })];
+    expect(filterVisibleNodes(nodes, new Set())).toEqual([]);
+  });
+
+  it('keeps an undeclared node that is currently selected', () => {
+    const nodes = [node({ value: 'what:projects/budget-haver', declared: false })];
+    const result = filterVisibleNodes(nodes, new Set(['what:projects/budget-haver']));
+    expect(result.map(n => n.value)).toEqual(['what:projects/budget-haver']);
+  });
+
+  it('recursively filters children, dropping undeclared/unselected leaves', () => {
+    const nodes = [
+      node({
+        value: 'what:projects',
+        declared: true,
+        children: [
+          node({ value: 'what:projects/games', declared: true }),
+          node({ value: 'what:projects/budget-haver', declared: false }),
+        ],
+      }),
+    ];
+    const result = filterVisibleNodes(nodes, new Set());
+    expect(result[0].children.map(c => c.value)).toEqual(['what:projects/games']);
+  });
+
+  it('keeps an undeclared child when it is the active selection', () => {
+    const nodes = [
+      node({
+        value: 'what:projects',
+        declared: true,
+        children: [node({ value: 'what:projects/budget-haver', declared: false })],
+      }),
+    ];
+    const result = filterVisibleNodes(nodes, new Set(['what:projects/budget-haver']));
+    expect(result[0].children.map(c => c.value)).toEqual(['what:projects/budget-haver']);
   });
 });
 

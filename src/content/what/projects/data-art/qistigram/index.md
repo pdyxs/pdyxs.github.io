@@ -4,7 +4,6 @@ description: A concept for quantum-powered Instagram stories
 tags:
   - what:projects/software-engineering
   - when:released
-  - who:nocv
 priority: 20190914
 image: qiskigram_header_full.jpg
 images:

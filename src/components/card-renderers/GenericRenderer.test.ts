@@ -225,6 +225,30 @@ describe('GenericRenderer', () => {
     expect(link?.getAttribute('href')).toBe('tag:what:puzzles');
   });
 
+  it('renders a card-backed tag as a card link instead of a tag: filter link', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(GenericRenderer, {
+      props: {
+        entry: fakeEntry({ tags: ['what:projects/software-engineering/budget-haver'] }),
+        Content: undefined,
+        tagDisplay: {
+          'what:projects/software-engineering/budget-haver': {
+            name: 'Budget Haver',
+            declared: false,
+            cardUid: 'what/projects/software-engineering/budget-haver',
+          },
+        },
+      },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    const link = div.querySelector('a.generic-tag');
+    expect(link?.textContent).toBe('Budget Haver');
+    expect(link?.getAttribute('href')).toBe('/card/what/projects/software-engineering/budget-haver');
+    expect(link?.getAttribute('data-push-card')).toBe('what/projects/software-engineering/budget-haver');
+  });
+
   it('renders no tags list when entry has no tags', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {

@@ -119,9 +119,14 @@ const galleryImages = await Promise.all(
 
     {tags.length > 0 && (
       <ul class="generic-tags" aria-label="Tags">
-        {tags.map(tag => (
-          <li><a href={`tag:${tag}`} class="generic-tag">{displayFor(tag, tagDisplay).name}</a></li>
-        ))}
+        {tags.map(tag => {
+          const info = displayFor(tag, tagDisplay);
+          return info.cardUid ? (
+            <li><a href={`/card/${info.cardUid}`} data-push-card={info.cardUid} class="generic-tag">{info.name}</a></li>
+          ) : (
+            <li><a href={`tag:${tag}`} class="generic-tag">{info.name}</a></li>
+          );
+        })}
       </ul>
     )}
   </>

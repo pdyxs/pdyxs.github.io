@@ -9,6 +9,10 @@
 export type TagDisplay = {
   name: string;
   description?: string;
+  /** True when this value has a container `_config.yaml` or `<name>.tag.yaml` identity — see tag-registry.ts's resolveDisplay. Undeclared (e.g. purely card-backed) values omit or set this false. */
+  declared?: boolean;
+  /** Set when this value is exactly some card's own path (see tag-registry.ts's ownValueForCard) — the uid to navigate to instead of filtering. */
+  cardUid?: string;
 };
 
 /** Humanises the last path segment of a filter value: "data-art" -> "Data Art". */
@@ -28,5 +32,5 @@ export function humaniseSegment(value: string): string {
  * with no description.
  */
 export function displayFor(value: string, display: Record<string, TagDisplay> = {}): TagDisplay {
-  return display[value] ?? { name: humaniseSegment(value) };
+  return display[value] ?? { name: humaniseSegment(value), declared: false };
 }

@@ -5,7 +5,6 @@ image: cyber-2.jpg
 tags:
   - what:topics/education
   - when:released
-  - who:noshortcv
 priority: 20210901
 actions:
   - text: Read the case study

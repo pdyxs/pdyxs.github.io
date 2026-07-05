@@ -7,7 +7,6 @@ image: cover.jpg
 tags:
   - what:topics/education
   - when:released
-  - who:noshortcv
 priority: 20180400
 actions:
   - text: Get on the iOS App Store

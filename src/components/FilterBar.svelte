@@ -3,6 +3,7 @@
   import { DIMENSIONS, filterStateToParams } from '../lib/filters';
   import type { Dimension, FilterState } from '../lib/filters';
   import type { TagNode } from '../lib/browse-helpers';
+  import { filterVisibleNodes } from '../lib/browse-helpers';
   import { lensesForDimension, lensIdFromUid, activeLensIcon } from '../lib/lens-registry';
   import { stackStore } from '../stores/card-stack-store';
   import DimensionButton from './DimensionButton.svelte';
@@ -28,9 +29,13 @@
     why: 'Why',
   };
 
+  function visibleNodesFor(dim: Dimension): TagNode[] {
+    return filterVisibleNodes(hierarchies[dim] ?? [], activeSelectionsFor(dim));
+  }
+
   const currentNodes = $derived.by<TagNode[]>(() => {
     if (!openDimension) return [];
-    const roots = hierarchies[openDimension] ?? [];
+    const roots = visibleNodesFor(openDimension);
     if (drillPath.length === 0) return roots;
     let nodes = roots;
     for (const val of drillPath) {
@@ -112,7 +117,7 @@
   {#each DIMENSIONS as dim}
     {@const isActive = dimensionIsActive(dim)}
     {@const isOpen = openDimension === dim}
-    {@const hasNodes = (hierarchies[dim] ?? []).length > 0}
+    {@const hasNodes = visibleNodesFor(dim).length > 0}
     {@const lenses = lensesForDimension(dim)}
 
     {@const lensIcon = activeLensIcon(lenses, activeLensId)}

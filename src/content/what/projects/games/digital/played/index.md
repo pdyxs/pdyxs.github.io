@@ -5,7 +5,6 @@ image: cover.jpeg
 tags:
   - what:topics/education
   - when:released
-  - who:noshortcv
 priority: 20220101
 actions:
   - text: Read the case study
