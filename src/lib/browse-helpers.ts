@@ -6,6 +6,7 @@
 import type { CardMeta } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension } from './filters';
+import { cardOwnValues } from './card-identity';
 import { displayFor } from './tag-display';
 import type { TagDisplay } from './tag-display';
 
@@ -101,10 +102,16 @@ export function extractDimensionTags(
  * prefix-matches the given value.
  *
  * A tag prefix-matches if it equals the value or starts with `value + '/'`.
+ * Exception: a tag that is some *other* card's own path (a "card-backed
+ * tag") is a direct link to that card, not category membership, so it only
+ * counts on an exact match — see cardOwnValues.
  */
 export function countMatchingCards(cards: CardMeta[], value: string): number {
+  const cardBackedValues = cardOwnValues(cards);
   return cards.filter(card =>
-    card.tags.some(tag => tag === value || tag.startsWith(value + '/'))
+    card.tags.some(tag =>
+      tag === value || (!cardBackedValues.has(tag) && tag.startsWith(value + '/'))
+    )
   ).length;
 }
 

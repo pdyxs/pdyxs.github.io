@@ -44,9 +44,16 @@ export function isValidFilterValue(value: string): boolean {
 
 /**
  * Returns true if `tag` equals `prefix` or starts with `prefix + "/"`.
+ *
+ * Exception: a tag that is some *other* card's own path (a "card-backed
+ * tag" — see cardOwnValues) is a direct link to that card, not a category
+ * membership claim, so it only ever matches by exact equality — it must
+ * never prefix-match into an ancestor filter.
  */
-function tagMatchesPrefix(tag: string, prefix: string): boolean {
-    return tag === prefix || tag.startsWith(prefix + "/");
+function tagMatchesPrefix(tag: string, prefix: string, cardBackedValues: Set<string>): boolean {
+    if (tag === prefix) return true;
+    if (cardBackedValues.has(tag)) return false;
+    return tag.startsWith(prefix + "/");
 }
 
 // ---------------------------------------------------------------------------
@@ -54,6 +61,7 @@ function tagMatchesPrefix(tag: string, prefix: string): boolean {
 // ---------------------------------------------------------------------------
 
 import type { CardMeta } from "./cards";
+import { cardOwnValues } from "./card-identity";
 import { DEFAULT_BROWSE_LENS_ID } from "./lens-registry";
 
 /**
@@ -70,6 +78,7 @@ export function applyFilters(
     filterState: FilterState,
 ): CardMeta[] {
     const { selections, datePredicate } = filterState;
+    const cardBackedValues = cardOwnValues(cards);
 
     return cards.filter((card) => {
         // Check each dimension that has active selections
@@ -78,7 +87,7 @@ export function applyFilters(
             if (!selected || selected.length === 0) continue;
 
             const tagsMatch = card.tags.some((tag) =>
-                selected.some((sel) => tagMatchesPrefix(tag, sel)),
+                selected.some((sel) => tagMatchesPrefix(tag, sel, cardBackedValues)),
             );
 
             if (tagsMatch) continue;

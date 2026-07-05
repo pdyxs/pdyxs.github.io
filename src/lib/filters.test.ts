@@ -118,6 +118,22 @@ describe('applyFilters — prefix matching', () => {
     const state: FilterState = { selections: { what: ['what:projects'] } };
     expect(applyFilters([match], state)).toEqual([match]);
   });
+
+  it('a card-backed tag (another card\'s own path) does not prefix-match an ancestor filter', () => {
+    // A blog post linking to a project card via a manual tag is not the
+    // same as the post being filed under that project's category.
+    const project = fakeCardMeta({ uid: 'what/projects/where-the-heart-is', tags: ['what:projects'] });
+    const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:writing', 'what:projects/where-the-heart-is'] });
+    const state: FilterState = { selections: { what: ['what:projects'] } };
+    expect(applyFilters([project, post], state)).toEqual([project]);
+  });
+
+  it('a card-backed tag still matches when selected exactly', () => {
+    const project = fakeCardMeta({ uid: 'what/projects/where-the-heart-is', tags: ['what:projects'] });
+    const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:writing', 'what:projects/where-the-heart-is'] });
+    const state: FilterState = { selections: { what: ['what:projects/where-the-heart-is'] } };
+    expect(applyFilters([project, post], state)).toEqual([post]);
+  });
 });
 
 // ---------------------------------------------------------------------------

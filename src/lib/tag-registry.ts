@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import type { CardMeta } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension } from './filters';
+import { ownValueForCard } from './card-identity';
 import { humaniseSegment } from './tag-display';
 import type { TagDisplay } from './tag-display';
 
@@ -51,20 +52,6 @@ export type ValueIdentity = {
 // ---------------------------------------------------------------------------
 // Name/description resolution
 // ---------------------------------------------------------------------------
-
-/**
- * Returns the full-path filter value a card's own folder represents (distinct
- * from its inherited path tag, which is its *parent* folder's value). Used
- * for name-source precedence (3): a card's own title supplies the display
- * name for its own value when some other card references it as a tag.
- */
-function ownValueForCard(uid: string): string | undefined {
-  const slashIdx = uid.indexOf('/');
-  if (slashIdx === -1) return undefined;
-  const dimension = uid.slice(0, slashIdx);
-  const rest = uid.slice(slashIdx + 1);
-  return rest ? `${dimension}:${rest}` : undefined;
-}
 
 /**
  * Resolves display info for a value via name-source precedence: (1) a

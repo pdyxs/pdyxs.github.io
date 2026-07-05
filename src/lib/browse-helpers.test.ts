@@ -137,6 +137,19 @@ describe('countMatchingCards', () => {
     ];
     expect(countMatchingCards(cards, 'what:projects')).toBe(0);
   });
+
+  it('does not count a card-backed tag (another card\'s own path) toward an ancestor', () => {
+    // A blog post linking to a project card via a manual tag should not
+    // inflate the project category's count.
+    const project = fakeCardMeta({ uid: 'what/projects/where-the-heart-is', tags: ['what:projects'] });
+    const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:writing', 'what:projects/where-the-heart-is'] });
+    expect(countMatchingCards([project, post], 'what:projects')).toBe(1);
+  });
+
+  it('still counts a card-backed tag on an exact match', () => {
+    const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:projects/where-the-heart-is'] });
+    expect(countMatchingCards([post], 'what:projects/where-the-heart-is')).toBe(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
