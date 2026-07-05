@@ -51,7 +51,7 @@ describe('CardStackCard', () => {
 
   it('carries a frontmatter-declared width as a data-width attribute', async () => {
     const container = await makeContainer();
-    const html = await container.renderToString(CardStackCard, { props: { path: 'what/projects/the-path' } });
+    const html = await container.renderToString(CardStackCard, { props: { path: 'what/projects/data-art/the-path' } });
     const div = dom(html);
 
     expect(div.querySelector('.stack-card')?.getAttribute('data-width')).toBe('900px');
