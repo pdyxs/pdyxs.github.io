@@ -6,8 +6,6 @@ description: >-
 tags:
   - what:projects/software-engineering
   - what:topics/development
-  - what:topics/budgeting
-  - what:topics/visualisation
 images:
   - icon
 image: icon.jpg
