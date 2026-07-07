@@ -802,7 +802,8 @@ strong { font-weight: 700; }
 
 /* ── Generic card ──────────────────────────────────────────────── */
 
-.generic-image {
+.generic-image,
+.generic-video {
   width: 100%;
   height: auto;
   border: var(--border-width) solid var(--color-border);

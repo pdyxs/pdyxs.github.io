@@ -2,6 +2,7 @@
   interface GalleryImage {
     thumb: string;
     full: string;
+    kind: 'image' | 'video';
   }
 
   interface Props {
@@ -46,9 +47,13 @@
       type="button"
       class="image-gallery-thumb"
       onclick={() => open(i)}
-      aria-label="View image {i + 1} of {images.length}"
+      aria-label="View item {i + 1} of {images.length}"
     >
-      <img src={img.thumb} alt="" loading="lazy" />
+      {#if img.kind === 'video'}
+        <video src={img.thumb} muted preload="metadata" class="image-gallery-thumb-video"></video>
+      {:else}
+        <img src={img.thumb} alt="" loading="lazy" />
+      {/if}
     </button>
   {/each}
 </div>
@@ -71,7 +76,12 @@
         aria-label="Previous image"
       >‹</button>
     {/if}
-    <img class="image-gallery-full" src={images[openIndex].full} alt="" />
+    {#if images[openIndex].kind === 'video'}
+      <!-- svelte-ignore a11y_media_has_caption -->
+      <video class="image-gallery-full" src={images[openIndex].full} controls autoplay></video>
+    {:else}
+      <img class="image-gallery-full" src={images[openIndex].full} alt="" />
+    {/if}
     {#if images.length > 1}
       <button
         type="button"
@@ -100,7 +110,8 @@
     overflow: hidden;
   }
 
-  .image-gallery-thumb img {
+  .image-gallery-thumb img,
+  .image-gallery-thumb-video {
     width: 100%;
     height: 100%;
     object-fit: cover;

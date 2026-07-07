@@ -1,7 +1,7 @@
 ---
 import type { RenderResult } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
-import { resolveLocalImage, resolveGalleryImages } from '../../lib/images';
+import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages } from '../../lib/images';
 import { displayFor } from '../../lib/tag-display';
 import type { TagDisplay } from '../../lib/tag-display';
 import type { CardMeta } from '../../lib/cards';
@@ -46,7 +46,9 @@ const { entry, Content, tagDisplay = {}, relatedCards = [] } = Astro.props;
 const data = entry?.data;
 
 const localImage = entry ? resolveLocalImage(entry.id, data?.image) : undefined;
-const remoteImageSrc = !localImage && data?.image?.startsWith('http') ? data.image : undefined;
+// A header `image:` that points to a colocated video renders as <video>.
+const localVideo = entry && !localImage ? resolveLocalVideo(entry.id, data?.image) : undefined;
+const remoteImageSrc = !localImage && !localVideo && data?.image?.startsWith('http') ? data.image : undefined;
 
 const sourceLabel = data?.source
   ? data.source.charAt(0).toUpperCase() + data.source.slice(1)
@@ -58,13 +60,14 @@ const tags = data?.tags ?? [];
 
 const gallerySources = entry ? resolveGalleryImages(entry.id, data?.image, data?.images) : [];
 const galleryImages = await Promise.all(
-  gallerySources.map(async ({ src }) => {
-    if (typeof src === 'string') return { thumb: src, full: src };
+  gallerySources.map(async ({ src, kind }) => {
+    // Videos and remote images are plain URL strings — only local images (ImageMetadata) go through astro:assets.
+    if (kind === 'video' || typeof src === 'string') return { thumb: src as string, full: src as string, kind };
     const [thumb, full] = await Promise.all([
       getImage({ src, width: 200 }),
       getImage({ src, width: 1600 }),
     ]);
-    return { thumb: thumb.src, full: full.src };
+    return { thumb: thumb.src, full: full.src, kind };
   })
 );
 ---
@@ -73,6 +76,7 @@ const galleryImages = await Promise.all(
   <>
     {remoteImageSrc && <img src={remoteImageSrc} alt="" class="generic-image" />}
     {localImage && <Image src={localImage} alt="" class="generic-image" />}
+    {localVideo && <video src={localVideo} class="generic-video" controls preload="metadata"></video>}
 
     {(data.status || data.medium) && (
       <dl class="generic-meta">

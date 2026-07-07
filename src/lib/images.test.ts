@@ -21,14 +21,29 @@ describe('resolveGalleryImages', () => {
 
   it('passes remote image URLs from images[] through as-is', () => {
     const result = resolveGalleryImages('what/projects/interactive-theatre/art-heist', undefined, ['https://example.com/x.jpg']);
-    expect(result).toEqual([{ src: 'https://example.com/x.jpg' }]);
+    expect(result).toEqual([{ src: 'https://example.com/x.jpg', kind: 'image' }]);
   });
 
-  it('drops non-image remote URLs (e.g. video embeds) from images[]', () => {
+  it('passes remote video URLs from images[] through with kind video', () => {
+    const result = resolveGalleryImages('what/projects/interactive-theatre/art-heist', undefined, ['https://example.com/clip.mp4']);
+    expect(result).toEqual([{ src: 'https://example.com/clip.mp4', kind: 'video' }]);
+  });
+
+  it('drops non-media remote URLs (e.g. YouTube embeds) from images[]', () => {
     const result = resolveGalleryImages('what/projects/interactive-theatre/art-heist', 'outside.jpg', [
       'https://www.youtube.com/embed/abc123',
     ]);
     expect(result).toEqual([]);
+  });
+
+  it('drops local video filenames with no colocated file', () => {
+    const result = resolveGalleryImages('what/projects/interactive-theatre/art-heist', 'outside.jpg', ['missing.mp4']);
+    expect(result).toEqual([]);
+  });
+
+  it('tags default colocated images with kind image', () => {
+    const result = resolveGalleryImages('what/projects/interactive-theatre/art-heist', undefined, []);
+    expect(result.every(m => m.kind === 'image')).toBe(true);
   });
 
   it('drops images[] entries with no colocated file', () => {

@@ -5,6 +5,14 @@ const localImages = import.meta.glob<{ default: ImageMetadata }>(
   { eager: true }
 );
 
+// Videos can't go through astro:assets (getImage is image-only), so they're
+// resolved to a plain URL string and rendered as <video>. See resolveLocalVideo
+// and the `kind` discriminator on GalleryImageSource.
+const localVideos = import.meta.glob<string>(
+  '/src/content/**/*.{mp4,webm,mov}',
+  { query: '?url', import: 'default', eager: true }
+);
+
 /**
  * Resolves a bare filename from an `image:` frontmatter field against the
  * colocated directory for that content entry (src/content/<entryId>/<filename>).
@@ -16,25 +24,42 @@ export function resolveLocalImage(entryId: string, filename: string | undefined)
   return localImages[path]?.default;
 }
 
+/**
+ * Resolves a bare video filename the same way as resolveLocalImage, returning
+ * the video's URL string (videos aren't run through astro:assets). Returns
+ * undefined for remote URLs or filenames with no colocated file.
+ */
+export function resolveLocalVideo(entryId: string, filename: string | undefined): string | undefined {
+  if (!filename || filename.startsWith('http')) return undefined;
+  const path = `/src/content/${entryId}/${filename}`;
+  return localVideos[path];
+}
+
+export type MediaKind = 'image' | 'video';
+
 export interface GalleryImageSource {
+  /** ImageMetadata for local images; a URL string for remote images and all videos. */
   src: ImageMetadata | string;
+  kind: MediaKind;
 }
 
 const IMAGE_URL_PATTERN = /\.(jpe?g|png|gif|webp|avif)$/i;
+const VIDEO_URL_PATTERN = /\.(mp4|webm|mov)$/i;
 
 /**
- * Resolves the set of images to show in a card's gallery.
+ * Resolves the set of media to show in a card's gallery.
  *
  * If `images` (from frontmatter) is non-empty and at least one entry resolves,
  * each entry is resolved the same way as the `image:` field (bare filename →
- * colocated asset, full URL → used as-is), dropping any that don't resolve to
- * a real image. Remote URLs without an image file extension (e.g.
- * YouTube/Vimeo/Facebook embed links left over from the Jekyll migration) are
- * dropped rather than rendered as a broken `<img>`.
+ * colocated asset, full URL → used as-is), dropping any that don't resolve.
+ * Image filenames/URLs resolve to `kind: 'image'`; video filenames/URLs (mp4,
+ * webm, mov) resolve to `kind: 'video'`. Remote URLs without a known media
+ * extension (e.g. YouTube/Vimeo/Facebook embed links left over from the Jekyll
+ * migration) are dropped rather than rendered as a broken `<img>`.
  *
  * Otherwise (no `images` override, or every entry in it fails to resolve),
- * defaults to every colocated image in the entry's own directory, excluding
- * the entry's header image.
+ * defaults to every colocated image and video in the entry's own directory,
+ * excluding the entry's header image.
  */
 export function resolveGalleryImages(
   entryId: string,
@@ -45,12 +70,17 @@ export function resolveGalleryImages(
     const resolved = images
       .map((filename): GalleryImageSource | undefined => {
         if (filename.startsWith('http')) {
-          return IMAGE_URL_PATTERN.test(filename) ? { src: filename } : undefined;
+          if (IMAGE_URL_PATTERN.test(filename)) return { src: filename, kind: 'image' };
+          if (VIDEO_URL_PATTERN.test(filename)) return { src: filename, kind: 'video' };
+          return undefined;
         }
-        const local = resolveLocalImage(entryId, filename);
-        return local ? { src: local } : undefined;
+        const localImg = resolveLocalImage(entryId, filename);
+        if (localImg) return { src: localImg, kind: 'image' };
+        const localVid = resolveLocalVideo(entryId, filename);
+        if (localVid) return { src: localVid, kind: 'video' };
+        return undefined;
       })
-      .filter((img): img is GalleryImageSource => img !== undefined);
+      .filter((m): m is GalleryImageSource => m !== undefined);
 
     if (resolved.length > 0) return resolved;
   }
@@ -60,8 +90,14 @@ export function resolveGalleryImages(
     ? `${prefix}${headerImage}`
     : undefined;
 
-  return Object.keys(localImages)
+  const imageEntries = Object.keys(localImages)
     .filter(path => path.startsWith(prefix) && path !== headerPath)
-    .sort()
-    .map(path => ({ src: localImages[path].default }));
+    .map(path => ({ path, item: { src: localImages[path].default, kind: 'image' as const } }));
+  const videoEntries = Object.keys(localVideos)
+    .filter(path => path.startsWith(prefix) && path !== headerPath)
+    .map(path => ({ path, item: { src: localVideos[path], kind: 'video' as const } }));
+
+  return [...imageEntries, ...videoEntries]
+    .sort((a, b) => a.path.localeCompare(b.path))
+    .map(e => e.item);
 }
