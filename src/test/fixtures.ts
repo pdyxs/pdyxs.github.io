@@ -47,6 +47,7 @@ export function fakeContent(): undefined {
 }
 
 export function fakePuzzleEntry(overrides?: {
+  id?: string;
   title?: string;
   difficulty?: string;
   date?: Date;
@@ -54,14 +55,16 @@ export function fakePuzzleEntry(overrides?: {
   image?: string;
   puzzle_type?: string;
   sudokupad_url?: string;
-}): { data: { title: string; difficulty: string; date: Date; url: string; image?: string; puzzle_type?: string; sudokupad_url?: string } } {
+}): { id: string; data: { title: string; difficulty: string; date: Date; url: string; image?: string; puzzle_type?: string; sudokupad_url?: string } } {
+  const { id, ...data } = overrides ?? {};
   return {
+    id: id ?? 'what/puzzles/test',
     data: {
       title: 'Test Puzzle',
       difficulty: 'Medium',
       date: new Date('2024-01-01'),
       url: 'https://example.com/puzzle',
-      ...overrides,
+      ...data,
     },
   };
 }

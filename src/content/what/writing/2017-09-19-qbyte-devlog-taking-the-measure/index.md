@@ -6,7 +6,7 @@ tags:
 description: Making quantum measurements work in the QByte engine
 canonical_url: >-
   https://medium.com/seethrough-studios/qbyte-devlog-taking-the-measure-fb06de96d368
-image: 'https://cdn-images-1.medium.com/max/5464/1*-erHcYtTXrYO-Ohor5hFxg@2x.jpeg'
+image: 1--erHcYtTXrYO-Ohor5hFxg-2x.jpg
 source: medium
 ---
 
@@ -16,7 +16,7 @@ So this is the first devlog I’ve made, which means it’s missing a lot of con
 
 This week, I finalised measurement in the QByte quantum engine, and made a pretty nasty interface for doing it.
 
-![A circuit, made using the latest build. Now with 2 more colours!](https://cdn-images-1.medium.com/max/5464/1*-erHcYtTXrYO-Ohor5hFxg@2x.jpeg)*A circuit, made using the latest build. Now with 2 more colours!*
+![A circuit, made using the latest build. Now with 2 more colours!](./1--erHcYtTXrYO-Ohor5hFxg-2x.jpg)*A circuit, made using the latest build. Now with 2 more colours!*
 
 ### Looking in the box…
 
@@ -31,7 +31,7 @@ When you measure a quantum bit you look at it and see what state it has:
 
 Usually, measurement is treated as a gate, just like the Not gate and the Hadamard one.
 
-![A normal Quantum Circuit treating Measurement like other gates (the dial icon represents measurement)](https://cdn-images-1.medium.com/max/2000/1*QJJrGElI3pwZvb32JzlclA@2x.png)*A normal Quantum Circuit treating Measurement like other gates (the dial icon represents measurement)*
+![A normal Quantum Circuit treating Measurement like other gates (the dial icon represents measurement)](./1-QJJrGElI3pwZvb32JzlclA-2x.png)*A normal Quantum Circuit treating Measurement like other gates (the dial icon represents measurement)*
 
 However, there’s a problem with this: generally if two gates are simultaneous, we can combine their effects (into a single, bigger matrix, for the mathsier of you) and run them all at once. But measurement *must* happen either before or after a gate is run (it’s not a matrix operation at all!). So if we just let measurement be a gate, we have to choose one of these (so we’re consistent), and the choice is pretty arbitrary. In reality, measurement should *never* be placed vertically aligned with other quantum gates (as vertical alignment implies simultanaeity).
 
@@ -53,11 +53,11 @@ The interaction is really simple: click on a state (or the space where a state w
 
 The parts of the state with a green background shows what’s been measured – they’ll either all be 0's or all be 1's. Every time you turn on a measurement it’s re-calculated, so if you keep clicking it’ll change randomly.
 
-![A circuit with some measurement. The green pieces are what was measured in each case.](https://cdn-images-1.medium.com/max/5464/1*Ba8pA7ZiYYQb-2a0LM0STw@2x.jpeg)*A circuit with some measurement. The green pieces are what was measured in each case.*
+![A circuit with some measurement. The green pieces are what was measured in each case.](./1-Ba8pA7ZiYYQb-2a0LM0STw-2x.jpg)*A circuit with some measurement. The green pieces are what was measured in each case.*
 
 If the state is entangled with another bit, the part of the other bit’s state that was measured will be shown in blue.
 
-![Measured states that are in superposition! The blue pieces are the parts of the state that have been forced by the green measurements.](https://cdn-images-1.medium.com/max/5464/1*QGJsST0Wg6sYMk83ldjaJQ@2x.jpeg)*Measured states that are in superposition! The blue pieces are the parts of the state that have been forced by the green measurements.*
+![Measured states that are in superposition! The blue pieces are the parts of the state that have been forced by the green measurements.](./1-QGJsST0Wg6sYMk83ldjaJQ-2x.jpg)*Measured states that are in superposition! The blue pieces are the parts of the state that have been forced by the green measurements.*
 
 This approach means that you can see both the state that came out of the last set of gates, as well as the state that was measured (and thus will be used from here on in).
 

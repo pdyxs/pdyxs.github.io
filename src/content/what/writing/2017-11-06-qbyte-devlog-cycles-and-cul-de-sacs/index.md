@@ -6,7 +6,7 @@ tags:
 description: Getting lost in the quantum (but also the actual) desert
 canonical_url: >-
   https://medium.com/seethrough-studios/qbyte-devlog-cycles-and-cul-de-sacs-2a0c361845a2
-image: 'https://cdn-images-1.medium.com/max/8064/1*0oGIuQ6un8Cyur9c7wbULg@2x.jpeg'
+image: 1-0oGIuQ6un8Cyur9c7wbULg-2x.jpg
 source: medium
 ---
 
@@ -32,7 +32,7 @@ The problem isn’t just integrating Firebase (though that in itself is not triv
 
 A week later and I’d made marginal progress. At the end of it, I decided that I was done and ran off to the desert*.
 
-![The desert. Turns out that camels are really comfortable to ride when going uphill but terrible when going downhill](https://cdn-images-1.medium.com/max/8064/1*0oGIuQ6un8Cyur9c7wbULg@2x.jpeg)*The desert. Turns out that camels are really comfortable to ride when going uphill but terrible when going downhill*
+![The desert. Turns out that camels are really comfortable to ride when going uphill but terrible when going downhill](./1-0oGIuQ6un8Cyur9c7wbULg-2x.jpg)*The desert. Turns out that camels are really comfortable to ride when going uphill but terrible when going downhill*
 
 \* *OK, so I’d already planned to go to the desert. But after that first week, I think I’d have gone anyway…*
 
@@ -48,7 +48,7 @@ This worked pretty damned well, actually. I can specify prefabs as being ‘Skin
 
 I ended up with this:
 
-![Changing Skins — from the ‘Circuit’ view to the ‘Emoji’ view and back again](https://cdn-images-1.medium.com/max/2044/1*rF25VKIferBV1Ix28Zevng.gif)*Changing Skins — from the ‘Circuit’ view to the ‘Emoji’ view and back again*
+![Changing Skins — from the ‘Circuit’ view to the ‘Emoji’ view and back again](./1-rF25VKIferBV1Ix28Zevng.gif)*Changing Skins — from the ‘Circuit’ view to the ‘Emoji’ view and back again*
 
 Now that I had the ability to show stories in the engine, it was time to actually build those stories. I built a really simple ‘Explainer’ system, where you click on an object to find out more about it. This presented a really nice opportunity to actually explain the science in an exploratory style, and so I decided to focus on the circuit skin’s version: describing the circuit elements before tackling the harder task of storytelling.
 
@@ -61,7 +61,7 @@ A {{controls | repeat: 'Controlled '}}Not Gate. Turns 0’s into 1’s and vice 
 
 And this is the result:
 
-![Captions for controlled not gates](https://cdn-images-1.medium.com/max/2000/1*fWqF1FoC5LCuVmEEbXzG5w.gif)*Captions for controlled not gates*
+![Captions for controlled not gates](./1-fWqF1FoC5LCuVmEEbXzG5w.gif)*Captions for controlled not gates*
 
 While this is pretty great, building this system invoked the need for 2 more:
 
@@ -89,11 +89,11 @@ Unfortunately, this plan means that entangled states no longer line up nicely, t
 
 So far, I’ve got the first (ie. the easy) bit done, and I’ve also changed the colour scheme to use a Brewer Palette (thanks to [John Kane](https://twitter.com/gritfish) for suggesting these). I’ve broken some of the input systems and completely broken Measurement along the way, so I’ll have to fix those as well.
 
-![Somewhat broken, but definitely prettier…](https://cdn-images-1.medium.com/max/2432/1*paF_0mSObNaefF_YgZ5q3g.png)*Somewhat broken, but definitely prettier…*
+![Somewhat broken, but definitely prettier…](./1-paF_0mSObNaefF_YgZ5q3g.png)*Somewhat broken, but definitely prettier…*
 
 ### Coming up next…
 
-![My Current todo list](https://cdn-images-1.medium.com/max/2000/1*74F1-Qxoqh7IzVCQVCfK5A.png)*My Current todo list*
+![My Current todo list](./1-74F1-Qxoqh7IzVCQVCfK5A.png)*My Current todo list*
 
 So this is my current todo list. It’s a little scary… I’m hoping I get the first 2 items done by next week, but we’ll just have to see how I go.
 

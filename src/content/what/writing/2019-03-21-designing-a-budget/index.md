@@ -6,7 +6,7 @@ tags:
 description: A look at the design of Budget Haver
 canonical_url: >-
   https://medium.com/@pdyxs/designing-a-budget-3528cd426aa7?source=friends_link&sk=61823129cce33d378d9a82da308bf6c8
-image: 'https://cdn-images-1.medium.com/max/1200/1*hbTIjbjzAss7HJIQ2S7_LA.png'
+image: 1-hbTIjbjzAss7HJIQ2S7_LA.png
 source: medium
 ---
 ## **Designing a Budget**
@@ -23,7 +23,7 @@ In the end, I followed three basic principles in the design. In a surprise twist
 
 One of the underlying premises of this app is that most budgeting apps overcomplicate things: they start adding categories and sorting and all sorts of fluff, and in doing so basically imply that people can't really make good decisions in the moment.
 
-![](https://cdn-images-1.medium.com/max/1200/1*hbTIjbjzAss7HJIQ2S7_LA.png)
+![](./1-hbTIjbjzAss7HJIQ2S7_LA.png)
 
 *The Balance: big and in your face. Also, my tour of the salt flats of Bolivia was a bit more expensive than expected...*
 
@@ -43,7 +43,7 @@ If this was going to work at all, I needed to build a habit of logging my spendi
 -   If you go to log your spending before you make the spending decision, it creates a decision point ('Can I afford this?') that didn't exist before. This can change your behaviour in the moment, and has done so for me on multiple occasions
 -   Every time you log your spending, you look at your balance, helping you to internalise it (this is why it's important that logging is manual --- even if I could make it automated, I wouldn't)
 
-![](https://cdn-images-1.medium.com/max/1200/1*XyMGWkdX63Y1BLsGeM-D-Q.png)
+![](./1-XyMGWkdX63Y1BLsGeM-D-Q.png)
 
 *You can do everything you need to log spending without ever changing screens or scrolling (except on an iPhone SE. Those screens are tiny!).*
 
@@ -57,7 +57,7 @@ Secondly, it's essential that you can log a spend without ever changing screens.
 
 A feature that is absolutely necessary for logging every spend, however, is currency conversion. When I was building the app for myself, I was manually building the currencies I was using into the app each time, changing that list in code whenever I changed countries. Obviously this won't do for a wider release.
 
-![](https://cdn-images-1.medium.com/max/1200/1*vf2BRTPCM6GoRCfQlTqxlg.png)
+![](./1-vf2BRTPCM6GoRCfQlTqxlg.png)
 
 *The screen for editing which currencies are 'active'. Guess which part of the world I'm in?*
 
@@ -79,7 +79,7 @@ So when I went to change my habits around spending, I knew I couldn't frame succ
 
 I knew there was a good chance that I'd go into negative balance at some point --- sometimes your expenses are just higher than others, and that's got to be OK. And I didn't want these changes to adjust how I treat money with those around me --- I'm not someone who usually sweats a few dollars here and there, and I don't want that to change, even if I have 'negative money' (note that the jury's out on this: just having more awareness of money changes these sorts of relationships anyway, so the best you can really do is be aware and adjust as you go).
 
-![](https://cdn-images-1.medium.com/max/1200/1*k8EBnUC8a77Qj9CaZ8rdfA.png)
+![](./1-k8EBnUC8a77Qj9CaZ8rdfA.png)
 
 *The message that appears the first time your balance goes negative... and I just realised that I used the wrong "You're". This is what beta testing is for --- fix incoming in v0.6.1!*
 

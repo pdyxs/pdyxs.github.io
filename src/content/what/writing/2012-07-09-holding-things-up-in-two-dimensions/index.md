@@ -5,9 +5,7 @@ tags:
   - what:projects/games/digital/flatland-fallen-angle
 canonical_url: >-
   https://www.gamasutra.com/blogs/PaulSztajer/20120709/173778/Holding_things_up_in_two_dimensions_The_Pillars_of_Flatland.php
-image: >-
-  https://i1.wp.com/www.seethroughstudios.com/wp-content/uploads/2012/07/Screen-Shot-2012-07-09-at-10.34.56-PM.png?resize=300%2C215
-  "Screen Shot 2012-07-09 at 10.34.56 PM"
+image: Screen-Shot-2012-07-09-at-10.34.56-PM.png
 source: gamasutra
 ---
 The weekend before last, I went to Canberra iFest as a speaker (I'll get a summary of that talk and the slides up shortly!). As a part of that, I saw a talk by Daniel Fisher of [Halfbrick](http://halfbrick.com/){:target="_blank"} about their design process, where he said, amongst other gems, that one of their key processes is to decide what the 'three pillars' of their game is. That is, the three things that wholly describe and are wholly important to their game look, feel, sound, taste and smell, possible sans the taste and smell.
@@ -30,7 +28,7 @@ The first thing we looked at is what we specifically liked about the different v
 
 Note here that it was important not to look at what we didn't like. We're not trying to solve problems, but instead we're trying to figure out the core, important 'awesome' bit of the game. What's not working doesn't factor into it.
 
-![](https://i1.wp.com/www.seethroughstudios.com/wp-content/uploads/2012/07/2440-shot2.png?resize=300%2C225 "Escape from Flatland")
+![](./2440-shot2.png "Escape from Flatland")
 
 #### Version 1: Escape from Flatland
 
@@ -43,7 +41,7 @@ What we liked:
 
 #### Version 2: Fallen Angle (96 hour version)
 
-![](https://i1.wp.com/www.seethroughstudios.com/wp-content/uploads/2012/07/flatland.jpeg?resize=300%2C122 "flatland")
+![](./flatland.jpg "flatland")
 
 What we liked:
 
@@ -54,7 +52,7 @@ What we liked:
 
 #### Version 3: Fallen Angle (Alpha release version)
 
-![](https://i2.wp.com/www.seethroughstudios.com/wp-content/uploads/2012/05/Flatland-Fallen-Angle-v1-2012-04-30-17-35-36-18.png?resize=216%2C173 "Flatland - Fallen Angle v1 2012-04-30 17-35-36-18")
+![](./Flatland-Fallen-Angle-v1-2012-04-30-17-35-36-18.png "Flatland - Fallen Angle v1 2012-04-30 17-35-36-18")
 
 What we liked:
 
@@ -65,7 +63,7 @@ What we liked:
 
 #### Version 4: Shapes of Grey (0.3 -- Supanova Version)
 
-![](https://i1.wp.com/www.seethroughstudios.com/wp-content/uploads/2012/07/Screen-Shot-2012-07-09-at-10.34.56-PM.png?resize=300%2C215 "Screen Shot 2012-07-09 at 10.34.56 PM")What we liked:
+![](./Screen-Shot-2012-07-09-at-10.34.56-PM.png "Screen Shot 2012-07-09 at 10.34.56 PM")What we liked:
 
 -   The Stealth Concept
 -   The switching colour mechanic

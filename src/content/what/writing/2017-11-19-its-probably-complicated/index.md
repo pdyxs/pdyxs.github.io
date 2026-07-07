@@ -7,7 +7,7 @@ tags:
 description: A deep dive into how I've chosen how to visualise quantum states
 canonical_url: >-
   https://medium.com/seethrough-studios/its-probably-complicated-visualising-the-states-of-a-quantum-computer-9fe38a12df72
-image: 'https://cdn-images-1.medium.com/max/2612/1*WbLTltM__ycs1ob6nJtVAg.png'
+image: 1-WbLTltM__ycs1ob6nJtVAg.png
 source: medium
 ---
 
@@ -21,7 +21,7 @@ A single quantum bit, on the other hand, is represented by 2 somewhat arbitrary 
 
 To make matters simultaneously better and worse, the mathematical representation that we’re using for states in QByte are density matrices: which are basically 2^n by 2^n grids of numbers (so 2x2 for 1 bit, 4x4 for 2 bits, 8x8 for 3 bits etc.). Density matrices are really good in that they neatly package the data we most care about (the probabilities of different states).
 
-![Density Matrices for 1-bit states](https://cdn-images-1.medium.com/max/2580/1*SfCva9x7ruQJPfmca-vwAA@2x.jpeg)*Density Matrices for 1-bit states*
+![Density Matrices for 1-bit states](./1-SfCva9x7ruQJPfmca-vwAA-2x.jpg)*Density Matrices for 1-bit states*
 
 What all of this means is that visualising quantum states is, at best, a complicated affair, but it’s also the key to making QByte work.
 
@@ -31,13 +31,13 @@ If there’s a key conceit behind the QByte project, it’s that with sufficient
 
 The motivation part is the job of the metaphor and the player goals, but without good feedback, it’s not possible to convert player actions into learning. This is where QByte stands out from most quantum computing tools: in most tools, you have to build the whole circuit, set up the inputs and then run the program to see what happens. In QByte, the player gets immediate feedback about how each change affects the state of each bit, and how that affects all the states down the line.
 
-![In QByte, states are shown whenever they change](https://cdn-images-1.medium.com/max/4706/1*9AHcINlIfNZRp195XSCoxQ.jpeg)*In QByte, states are shown whenever they change*
+![In QByte, states are shown whenever they change](./1-9AHcINlIfNZRp195XSCoxQ.jpg)*In QByte, states are shown whenever they change*
 
 To do this, QByte represents the state of each bit at the start of the circuit and whenever it changes. Because circuits should be able to take variable input, input states can be changed by the user – this let’s players try different possible inputs and learn how the circuit will react. At the start, players will mostly be thinking about static inputs, but hopefully, with time, they can begin to play with dynamic inputs as well.
 
 ## Part 1: Information
 
-![A density matrix for a 3-bit state](https://cdn-images-1.medium.com/max/2000/1*qM9ms1v2NAkrvfDIqd2xRg.jpeg)*A density matrix for a 3-bit state*
+![A density matrix for a 3-bit state](./1-qM9ms1v2NAkrvfDIqd2xRg.jpg)*A density matrix for a 3-bit state*
 
 As mentioned before, density matrices can be pretty large structures — there’s quite a bit of information encoded here.
 
@@ -57,7 +57,7 @@ Thankfully, density matrices are great for this: we can simply read the diagonal
 
 Note that this is an example of 3 entangled qubits — that means that if one of them is measured, it affects the other two (for instance, if the second bit is measured as \|0>, the first and third are definitely \|1>). The QByte engine automatically separates states that aren’t entangled, so if we’ve got a density matrix for 3 bits, it means that these bits are entangled.
 
-![Two fairly similar entangled states for 2 bits](https://cdn-images-1.medium.com/max/2060/1*DvyaFnMFOTMddW8HeEQQHg.jpeg)*Two fairly similar entangled states for 2 bits*
+![Two fairly similar entangled states for 2 bits](./1-DvyaFnMFOTMddW8HeEQQHg.jpg)*Two fairly similar entangled states for 2 bits*
 
 ### Entanglements
 
@@ -67,7 +67,7 @@ How they are entangled is important information that the user needs to know. In 
 
 At this stage, it looks like we can probably throw out the non-diagonal entries for our visualisation, but we can’t quite do it yet.
 
-![The \|+> and \|-> states](https://cdn-images-1.medium.com/max/2000/1*g76oE_pfGqYEG7lUi_tc_g.jpeg)*The \|+> and \|-> states*
+![The \|+> and \|-> states](./1-g76oE_pfGqYEG7lUi_tc_g.jpg)*The \|+> and \|-> states*
 
 The states to the left have identical diagonal entries: that is, they’ve both got a 50% chance of being \|0> or \|1>. But their diagonal entries are different, and the (very strange) truth is that these two states are as different from each other than \|0> is from \|1>. In fact, if you apply a Hadamard gate (a fairly standard gate) to both, the left state turns int \|0>, and the right one turns into \|1>.
 
@@ -85,7 +85,7 @@ What we’re left with is what I call ‘State Pieces’, each of which is based
 
 The first implementation of state representations was quite simple: represent each State Piece as a bar on each bit, and use the probabilities to determine the length of the bar. Turn the text on negative pieces red.
 
-![The first approach for QByte’s state representations](https://cdn-images-1.medium.com/max/4746/1*fH-s5X9W4PB-Q3hcDvWImg.jpeg)*The first approach for QByte’s state representations*
+![The first approach for QByte’s state representations](./1-fH-s5X9W4PB-Q3hcDvWImg.jpg)*The first approach for QByte’s state representations*
 
 This approach has a few advantages:
 
@@ -103,7 +103,7 @@ However, there’s also a few problems:
 
 * The bars that connect bits to show entanglement can get confusing
 
-![It’s hard to tell from the state alone whether q1 is entangled with q3 or q4.](https://cdn-images-1.medium.com/max/2000/1*itpwFilzqdp4jn45ZmLLQQ.jpeg)*It’s hard to tell from the state alone whether q1 is entangled with q3 or q4.*
+![It’s hard to tell from the state alone whether q1 is entangled with q3 or q4.](./1-itpwFilzqdp4jn45ZmLLQQ.jpg)*It’s hard to tell from the state alone whether q1 is entangled with q3 or q4.*
 
 * The representation breaks our information hierarchy — once the states get a little bit complicated, it gets quite hard to read the probability of a bit being \|0> or \|1> from the diagram (which is, as you recall, the most important piece of information).
 
@@ -111,11 +111,11 @@ However, there’s also a few problems:
 
 At this stage, I took a bit of time to try out some concepts on paper. These were all based on a single circuit, which I’d designed to have a decent mix of different types of states.
 
-![](https://cdn-images-1.medium.com/max/2944/1*Lc5btouXS9MkJ0zyNNKVIg.png)
+![](./1-Lc5btouXS9MkJ0zyNNKVIg.png)
 
-![](https://cdn-images-1.medium.com/max/2944/1*SFh9qgjiTNQ1nginJ7Pafg.png)
+![](./1-SFh9qgjiTNQ1nginJ7Pafg.png)
 
-![Some different concepts for state representations](https://cdn-images-1.medium.com/max/2944/1*op31EX6tGtbgtsN2ZAGNsA.png)*Some different concepts for state representations*
+![Some different concepts for state representations](./1-op31EX6tGtbgtsN2ZAGNsA.png)*Some different concepts for state representations*
 
 The issue with most of these was that they became too difficult to read once entanglements became more complicated (I didn’t even bother drawing some of the states for the representation on the right, because I had no idea how I’d do it). Trying to fit all of the information on the representation was really messing with my ability to make the most vital information the clearest.
 
@@ -127,43 +127,43 @@ The next step was to work out what states would exist, and which pieces of infor
 
 The basic state needed to show, at the very least, the probabilities of a bit being 0 or 1, and which bits are entangled with each other. To this end, I chose a simple representation that would show the relative probabilities of the state being \|0> and \|1>, without specifying all the pieces. I also chose to give negative pieces a slightly darker shade to differentiate them, which I use throughout the state representations.
 
-![Single bit states](https://cdn-images-1.medium.com/max/2574/1*Ki7Hapu6vslm7d7vpxvZmQ.png)*Single bit states*
+![Single bit states](./1-Ki7Hapu6vslm7d7vpxvZmQ.png)*Single bit states*
 
 The entangled connectors gain a slight curve here, so that complex entanglements are easily identified.
 
-![Simple entangled states](https://cdn-images-1.medium.com/max/2624/1*tz4vZOhtqbOOHW-3pnpPgw.png)*Simple entangled states*
+![Simple entangled states](./1-tz4vZOhtqbOOHW-3pnpPgw.png)*Simple entangled states*
 
-![Complex entangled states](https://cdn-images-1.medium.com/max/2590/1*AczA-GOn6mmF5iWCeX02PA.png)*Complex entangled states*
+![Complex entangled states](./1-AczA-GOn6mmF5iWCeX02PA.png)*Complex entangled states*
 
 Initial states are a nice green shade to differentiate them.
 
-![](https://cdn-images-1.medium.com/max/2574/1*DX7rDgGSNXxEkWZshNk9ew.png)
+![](./1-DX7rDgGSNXxEkWZshNk9ew.png)
 
 From there, a player can choose to focus on a state by clicking on it, which will highlight it and provide a textual explanation of the state.
 
-![](https://cdn-images-1.medium.com/max/2574/1*g6qpfTTJpNY1C3BS5x3n0w.png)
+![](./1-g6qpfTTJpNY1C3BS5x3n0w.png)
 
-![](https://cdn-images-1.medium.com/max/2622/1*VDusII7yJ_OInAgW_Wi4xA.png)
+![](./1-VDusII7yJ_OInAgW_Wi4xA.png)
 
 If the state is entangled, clicking again will focus on a piece of that state, showing how that piece relates to the states of entangled bits. Players can click on different pieces to examine them.
 
-![](https://cdn-images-1.medium.com/max/2656/1*GqKAG-Yay8UqBUp-Cu8KDA.png)
+![](./1-GqKAG-Yay8UqBUp-Cu8KDA.png)
 
 Measured states, as before, highlight the pieces which have been measured.
 
-![](https://cdn-images-1.medium.com/max/2574/1*uvugqWMYJ4_encAXvZ6OKQ.png)
+![](./1-uvugqWMYJ4_encAXvZ6OKQ.png)
 
 As before, measured entangled states highlight the pieces chosen on different bits in a slightly different colour. I’ve also connected the highlighted pieces so that entangled measured states stand out a bit more.
 
-![](https://cdn-images-1.medium.com/max/2624/1*nGOqZpvoroLEX89-EUvkAw.png)
+![](./1-nGOqZpvoroLEX89-EUvkAw.png)
 
 Finally, measured states can be focused on.
 
-![](https://cdn-images-1.medium.com/max/2612/1*WbLTltM__ycs1ob6nJtVAg.png)
+![](./1-WbLTltM__ycs1ob6nJtVAg.png)
 
 This leaves us with the following state diagram for our states (one of these things might need a new word).
 
-![A state representation state diagram. Mouse overs in this approach become ‘previews’ of a new state (in the case of measurements, it actually changes the measurement on mouseover but will then revert if you don’t click on it).](https://cdn-images-1.medium.com/max/2944/1*n5sEmPkxTTwz0cQRXd2uYQ.png)*A state representation state diagram. Mouse overs in this approach become ‘previews’ of a new state (in the case of measurements, it actually changes the measurement on mouseover but will then revert if you don’t click on it).*
+![A state representation state diagram. Mouse overs in this approach become ‘previews’ of a new state (in the case of measurements, it actually changes the measurement on mouseover but will then revert if you don’t click on it).](./1-n5sEmPkxTTwz0cQRXd2uYQ.png)*A state representation state diagram. Mouse overs in this approach become ‘previews’ of a new state (in the case of measurements, it actually changes the measurement on mouseover but will then revert if you don’t click on it).*
 
 The pros of this representation are:
 
@@ -195,7 +195,7 @@ And the cons:
 
 Over the last couple of weeks, I’ve done a lot of refactoring of the quantum simulation model in order to allow this new view to work, and I’ve gotten started on the implementation. It’s been quite intense, but really worth it to have a cleaner, easier to use codebase. Right now, I’m working on code to allow players to choose which piece of a state gets measured, which has proven to be harder than expected.
 
-![The newest QByte build](https://cdn-images-1.medium.com/max/5464/1*neatDrYGiUygeex0M2z4_w@2x.png)*The newest QByte build*
+![The newest QByte build](./1-neatDrYGiUygeex0M2z4_w-2x.png)*The newest QByte build*
 
 I’ll probably be working on finishing up these state representations for the next week or two. After that, I’ll be working on some UI fixes, before coming back to the explanation engine.
 

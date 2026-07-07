@@ -4,7 +4,7 @@ date: '2012-01-06 17:00:00 +1000'
 tags:
   - what:topics/game-engine-podcast
 canonical_url: 'https://www.kotaku.com.au/2012/01/the-a-z-of-game-development/'
-image: 'https://edge.alluremedia.com.au/m/k/2012/01/classroom.jpg'
+image: classroom.jpg
 source: kotaku
 ---
 *At the end of 2011, seven game developers from six different studios sat together to record a podcast. The theme they were given was the top tips for game development, and over the course of the recording they pooled together their experience to come up with 26 pieces of advice that every developer should at least consider. I realised that there was a wealth of knowledge being shared, and that someone should write it down in an article. This is that article.*
@@ -33,7 +33,7 @@ You can have a team with the most amazing set of skills ever, but if you don't h
 
 There are so many aspects to making a game (art, music, programming and design are the big four), not to mention making a game studio (leadership, legals, marketing, accounting) that it's a little overwhelming. You can't know everything, but you really don't want to go in blind. Make sure you go in equipped -- being aware of the logistics of game development will put you ahead by miles.
 
-[![](https://edge.alluremedia.com.au/m/k/2012/01/game-jam-1.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/game-jam-1.jpg){:target="_blank"}
+[![](./game-jam-1.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/game-jam-1.jpg){:target="_blank"}
 
 ### F. 48 Hours
 
@@ -73,7 +73,7 @@ When you're developing, it's important to be constantly updating your processes,
 
 A counter to this is to anchor parts of your process: don't allow your requirements to change for a few weeks at a time and lock down versions of your tools for your designers to use.
 
-[![](https://edge.alluremedia.com.au/m/k/2012/01/scope-creep.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/scope-creep.jpg){:target="_blank"}
+[![](./scope-creep.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/scope-creep.jpg){:target="_blank"}
 
 ### L. Set your Scope (a.k.a Stop Scope Creep)
 
@@ -89,7 +89,7 @@ There's currently a lack of good producers in the game development community, an
 
 Every game needs to be playtested. You cannot know how a fresh player will react to a game. Unless you playtest. So playtest.
 
-[![](https://edge.alluremedia.com.au/m/k/2012/01/instructor.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/instructor.jpg){:target="_blank"}
+[![](./instructor.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/instructor.jpg){:target="_blank"}
 
 ### O. Don't tell your Playtesters what to do
 
@@ -111,7 +111,7 @@ In general, it's a good policy to have as shallow a management structure as poss
 
 Anyone who thinks that they've learnt everything they need to before they start making games (whether it be through self-study, university, a college or other) is deluding themselves. One of the most important things about being a game developer, or any other profession, is your curiosity and ability to continually learn new things. You'll never be done learning, and that's a great thing.
 
-[![](https://edge.alluremedia.com.au/m/k/2012/01/Escher1.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/Escher1.jpg){:target="_blank"}
+[![](./Escher1.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/Escher1.jpg){:target="_blank"}
 
 ### T. Reflect on Everything
 

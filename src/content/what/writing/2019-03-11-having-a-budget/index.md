@@ -6,7 +6,7 @@ tags:
 description: An exploration of what this 'budgeting' thing is
 canonical_url: >-
   https://medium.com/@pdyxs/having-a-budget-7659059e52fa?source=friends_link&sk=e16b77d3f9f91f013633bb3c0c84fd53
-image: 'https://cdn-images-1.medium.com/max/1600/1*RfdPubqINSVZlNwcGlkS8w.png'
+image: 1-RfdPubqINSVZlNwcGlkS8w.png
 source: medium
 ---
 ### **Having a Budget**
@@ -17,7 +17,7 @@ Which isn't necessarily a bad thing: plans are great, and so are budgets. But I 
 
 But that's not always the case. When you plan to plan, the problem might not be that you've not got a plan: it might be that you don't understand the problem well enough. And wanting a budget might mean that you first need to take some time to understand the problem you're really trying to solve.
 
-![](https://cdn-images-1.medium.com/max/1600/1*RfdPubqINSVZlNwcGlkS8w.png)
+![](./1-RfdPubqINSVZlNwcGlkS8w.png)
 
 Spoiler Alert: there's an app at the end of this article. You can [check it out here](http://budgethaver.app/).
 

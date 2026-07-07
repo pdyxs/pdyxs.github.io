@@ -1,7 +1,7 @@
 ---
 title: 'Postmortem: “The Enemy Of My Enemy Is My Heat-Seeking Missile”'
 date: '2010-08-26 17:00:00 +1000'
-image: 'http://www.ludumdare.com/compo/wp-content/uploads/2010/08/IMG_0088.JPG'
+image: IMG_0088.jpg
 tags:
   - what:writing
 ---
@@ -16,7 +16,7 @@ Part 1: Brainstorming
 
 My brainstorming session involved me, a whiteboard (pictured below), and Google. The first thing I did was to break down the theme into its two important points: Enemies, and Weapons. Ultimately, the idea of enemies proved to be the more interesting of the two.
 
-![Brainstorming!](http://www.ludumdare.com/compo/wp-content/uploads/2010/08/IMG_0088.JPG)
+![Brainstorming!](./IMG_0088.jpg)
 
 Brainstorming!
 

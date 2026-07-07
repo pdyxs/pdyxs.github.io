@@ -7,7 +7,7 @@ tags:
 description: How I got to v0.1 of QByte
 canonical_url: >-
   https://medium.com/seethrough-studios/qbyte-devlog-v0-1-the-simulator-lives-5daf39c52b44
-image: 'https://cdn-images-1.medium.com/max/5464/1*nHg1vN01bgrmHaa3YghUbQ@2x.png'
+image: 1-nHg1vN01bgrmHaa3YghUbQ-2x.png
 source: medium
 ---
 
@@ -17,7 +17,7 @@ This week I hit a milestone: QByte has hit v0.1, which means that it’s a fully
 
 To get to this point, I’ve mostly been working on fixes to the visuals and interactions — you’ll notice that things are, in general, a lot nicer to play with than they were this time last week.
 
-![QByte v0.1, in all its glory!](https://cdn-images-1.medium.com/max/5464/1*nHg1vN01bgrmHaa3YghUbQ@2x.png)*QByte v0.1, in all its glory!*
+![QByte v0.1, in all its glory!](./1-nHg1vN01bgrmHaa3YghUbQ-2x.png)*QByte v0.1, in all its glory!*
 
 ### Dragging on and on
 
@@ -31,13 +31,13 @@ This also allowed me to clean up a lot of the interactions for controls. There�
 
 Finally, I added a drag and drop interaction for Measurement (replacing the ‘tap to measure’ approach from last time). Because of all the groundwork I’d already done, this was actually quite nice and easy.
 
-![M is for Measurement!](https://cdn-images-1.medium.com/max/3618/1*4YCz1EgeUYzdy8ob84doWA@2x.jpeg)*M is for Measurement!*
+![M is for Measurement!](./1-4YCz1EgeUYzdy8ob84doWA-2x.jpg)*M is for Measurement!*
 
 ### States! States with Entanglements!
 
 The next thing that I (finally) did was to put in a rudimentary indicator for entanglement, which you can see above. Basically, I connect the states that are entangled with a semi-transparent black box. This works great a lot of the time, but it can definitely lead to ambiguity when more than 2 bits are involved.
 
-![On the left, it’s pretty clear that q1 is entangled with q4 and q2 with q3. On the right, however, the states are super ambiguous: is q1 entangled with q3 or q4?](https://cdn-images-1.medium.com/max/3732/1*9lgiClRITaecJKaXNQOPIg@2x.jpeg)*On the left, it’s pretty clear that q1 is entangled with q4 and q2 with q3. On the right, however, the states are super ambiguous: is q1 entangled with q3 or q4?*
+![On the left, it’s pretty clear that q1 is entangled with q4 and q2 with q3. On the right, however, the states are super ambiguous: is q1 entangled with q3 or q4?](./1-9lgiClRITaecJKaXNQOPIg-2x.jpg)*On the left, it’s pretty clear that q1 is entangled with q4 and q2 with q3. On the right, however, the states are super ambiguous: is q1 entangled with q3 or q4?*
 
 This is just a first pass, and I fully expect to revisit it in time. The state representation has proved to be a really difficult problem to solve, so I expect I’ll be tweaking it forever.
 
@@ -45,9 +45,9 @@ This is just a first pass, and I fully expect to revisit it in time. The state r
 
 We’ve got 2 new gates in town: R1 and R2. They’re rotation gates, which essentially means that they rotate the state of a bit around a figurative (but not imaginary – no complex numbers here!) axis. R1 is a bit like the Not gate, and R2 is a bit like the Hadamard gate, but both are different in subtle ways.
 
-![](https://cdn-images-1.medium.com/max/4630/1*CU6XNVx38WEUTzPs537qoA@2x.jpeg)
+![](./1-CU6XNVx38WEUTzPs537qoA-2x.jpg)
 
-![Some circuits to compare Hadamard with R2 (left) and Not with R1 (right)](https://cdn-images-1.medium.com/max/4640/1*rqXBdCihzg4i3gWoMv9wDQ@2x.jpeg)*Some circuits to compare Hadamard with R2 (left) and Not with R1 (right)*
+![Some circuits to compare Hadamard with R2 (left) and Not with R1 (right)](./1-rqXBdCihzg4i3gWoMv9wDQ-2x.jpg)*Some circuits to compare Hadamard with R2 (left) and Not with R1 (right)*
 
 I’ve added these at the request of our resident academic, and I’m looking forward to playing with them more to see how they stack up. Thankfully, adding these was incredibly easy (because they’re just slightly different matrices) – most of the work was probably in making labels for the new gates.
 
@@ -59,7 +59,7 @@ It’s all still pretty minimal and there’s still some issues (I’d be shocke
 
 Having said that, it seems like 8 bits is just about our limit. If you entangle all 8 bits, you’ll notice a fair bit of slowdown – that’s us finally hitting our computational limits for calculation. At some point I’ll probably make the calculation part happen on a separate thread so the UI can stay smooth.
 
-![Too… many… entangled… bits…](https://cdn-images-1.medium.com/max/5464/1*S1mcLRV6gCKbBvWbwt93qA@2x.jpeg)*Too… many… entangled… bits…*
+![Too… many… entangled… bits…](./1-S1mcLRV6gCKbBvWbwt93qA-2x.jpg)*Too… many… entangled… bits…*
 
 Finally, I’ve added some versioning information and a feedback button! Though right now you’ll probably get a popup blocked notification instead of an actual email window…
 

@@ -6,7 +6,7 @@ tags:
   - what:projects/games/digital/where-the-heart-is
 description: A postmortem of my Global Game Jam project
 canonical_url: 'https://medium.com/@pdyxs/deciding-where-the-heart-is-4484b5476fa1'
-image: 'https://cdn-images-1.medium.com/max/1600/1*3bSWZFycxSNjlN---YfbAg.png'
+image: 1-3bSWZFycxSNjlN---YfbAg.png
 source: medium
 ---
 ### **Deciding Where the Heart Is**
@@ -46,7 +46,7 @@ definitely an interactive thing.
 If you haven’t tried “Where the Heart is”, maybe do that now. You can find it
 over at [https://wheretheheartis.surge.sh](https://wheretheheartis.surge.sh)
 
-![](https://cdn-images-1.medium.com/max/1600/1*3bSWZFycxSNjlN---YfbAg.png)
+![](./1-3bSWZFycxSNjlN---YfbAg.png)
 <span class="figcaption_hack">The final product of “Where the Heart Is”</span>
 
 #### **The Vision**
@@ -127,7 +127,7 @@ better ways that I’ve thought of since (and it would’ve been awesome to give
 lines a width that changed with distance from the viewer), but the clock was
 ticking!
 
-![](https://cdn-images-1.medium.com/max/1600/1*AVzWuMt3gicS4B7vT-Ec5g.png)
+![](./1-AVzWuMt3gicS4B7vT-Ec5g.png)
 <span class="figcaption_hack">Making the ‘travel’ lines pop off the globe makes them easy to distinguish from
 the ‘heart’ lines</span>
 
@@ -139,7 +139,7 @@ fun things that happen to the look of these when they’re near the top/bottom o
 the globe (as I’m just using circles and they don’t warp the way that things on
 the surface of a globe should), but otherwise there’s nothing too crazy here.
 
-![](https://cdn-images-1.medium.com/max/1600/1*TJg4VerJJjggxa3QO_57ew.png)
+![](./1-TJg4VerJJjggxa3QO_57ew.png)
 <span class="figcaption_hack">Left: A nice circle of circles. Right: hmmm….</span>
 
 **Forcing matters of the heart**
@@ -171,7 +171,7 @@ this for showing the lines of travel earlier, so maybe it was trivial.
 The features here are basically what I started with, and that version of the
 game was pretty damned ugly but was starting to take shape.
 
-![](https://cdn-images-1.medium.com/max/1600/1*JHMfjLTO63pymJVxyh8rIQ.png)
+![](./1-JHMfjLTO63pymJVxyh8rIQ.png)
 <span class="figcaption_hack">The admittedly quite ugly first pass of “Where the Heart Is”</span>
 
 #### **Time Warps**
@@ -255,7 +255,7 @@ whole game, so being a last-minute addition I had to roll it back.
 So right now, according to “Where the Heart is”, all your friends will move to
 Europe. Whoops.
 
-![](https://cdn-images-1.medium.com/max/1600/1*p_ohmThojNxdvnHpcTGDwA.png)
+![](./1-p_ohmThojNxdvnHpcTGDwA.png)
 <span class="figcaption_hack">They all go to Europe in the end…</span>
 
 #### **Done and Dusted**

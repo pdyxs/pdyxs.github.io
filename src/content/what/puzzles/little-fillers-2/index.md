@@ -3,7 +3,7 @@ title: Little Fillers 2
 date: 2025-01-27
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LS4
 sudokupad_url: https://sudokupad.app/pdyxs/little-fillers-2
-image: https://logic-masters.de/Dateien/bild.php?data=9eebb91c-37367-3030304c53342d31
+image: bild.png
 difficulty: Level 3 (Medium)
 tags: []
 ---

@@ -3,7 +3,7 @@ title: Recounting the Rooms
 date: 2025-02-14
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000M09
 sudokupad_url: https://sudokupad.app/pdyxs/recounting-the-rooms
-image: https://logic-masters.de/Dateien/bild.php?data=84549576-37731-3030304d30392d31
+image: bild.png
 difficulty: Level 2 (Easy)
 tags: []
 ---

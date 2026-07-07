@@ -1,14 +1,13 @@
 ---
 title: 'Mechanical Breakdown: The Inventory (Part 2)'
 date: '2010-08-13 17:00:00 +1000'
-image: >-
-  https://i.kinja-img.com/gawker-media/image/upload/s--RM7HIhsy--/c_fit,fl_progressive,q_80,w_320/18j38dsj7ymsbjpg.jpg
+image: 18j38dsj7ymsbjpg.jpg
 canonical_url: 'https://kotaku.com/5612149/mechanical-breakdown-the-inventory'
 source: kotaku
 tags:
   - what:writing
 ---
-![](https://i.kinja-img.com/gawker-media/image/upload/s--RM7HIhsy--/c_fit,fl_progressive,q_80,w_320/18j38dsj7ymsbjpg.jpg)
+![](./18j38dsj7ymsbjpg.jpg)
 
 It's now been a few weeks since I wrote my [initial thoughts about the inventory](/why/2010/06/27/mechanical-breakdown-the-inventory.html), and I've made a few new conclusions from the comments and other articles I've researched (thanks to the [Critical Distance Game Writing search engine](http://www.critical-distance.com/search/)).
 

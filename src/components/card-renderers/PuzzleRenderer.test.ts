@@ -55,13 +55,14 @@ describe('PuzzleRenderer', () => {
     expect(div.querySelector('.puzzle-lmd-link')).toBeNull();
   });
 
-  it('image renders when data.image is set', async () => {
+  it('remote image renders as a plain img fallback', async () => {
     const div = dom(await render({
-      entry: fakePuzzleEntry({ image: '/puzzle.png', title: 'My Puzzle' }),
+      entry: fakePuzzleEntry({ image: 'https://example.com/puzzle.png', title: 'My Puzzle' }),
       Content: undefined,
     }));
     const img = div.querySelector('img') as HTMLImageElement | null;
     expect(img).not.toBeNull();
+    expect(img?.getAttribute('src')).toBe('https://example.com/puzzle.png');
     expect(img?.alt).toBe('Preview of My Puzzle');
   });
 
