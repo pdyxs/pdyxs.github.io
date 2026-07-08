@@ -27,7 +27,7 @@ function slashIdToFilterValue(id: string): string {
 /** Navigate to the browse lens with pre-applied dimension filter. */
 export type FilterAction = {
   type: 'filter';
-  /** Absolute URL (e.g. `/lens/newest?filter.what=what%3Apuzzles`) ready for navigation. */
+  /** Absolute URL (e.g. `/lens/newest?filter.what=puzzles`) ready for navigation. */
   url: string;
 };
 

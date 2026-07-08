@@ -152,8 +152,16 @@ const DATE_TO_PARAM = "when.to";
 /**
  * Encodes a FilterState into URLSearchParams.
  *
- * Each dimension's selections are stored as repeated params:
- *   filter.what=what:projects&filter.what=what:games
+ * The dimension already lives in the param key, so the redundant `<dim>:`
+ * prefix is stripped from each value — `what:projects/games` under key
+ * `filter.what` rides as just `projects/games`. This keeps the URL readable
+ * (no percent-escaped `%3A` colon):
+ *   filter.what=projects&filter.what=games
+ *
+ * Decoding re-adds the prefix; because a tag sub-value never itself contains a
+ * colon (the dimension separator is the only one), the round-trip is
+ * unambiguous and still accepts old fully-qualified `filter.what=what:games`
+ * links.
  *
  * Date predicates are stored as ISO strings:
  *   when.from=2020-01-01T00:00:00.000Z&when.to=2020-12-31T23:59:59.999Z
@@ -164,8 +172,10 @@ export function filterStateToParams(state: FilterState): URLSearchParams {
     for (const dim of DIMENSIONS) {
         const selected = state.selections[dim];
         if (!selected || selected.length === 0) continue;
+        const prefix = `${dim}:`;
         for (const val of selected) {
-            params.append(`${PARAM_PREFIX}${dim}`, val);
+            const short = val.startsWith(prefix) ? val.slice(prefix.length) : val;
+            params.append(`${PARAM_PREFIX}${dim}`, short);
         }
     }
 
@@ -191,8 +201,12 @@ export function filterStateFromParams(params: URLSearchParams): FilterState {
     const selections: Partial<Record<Dimension, string[]>> = {};
 
     for (const dim of DIMENSIONS) {
+        const prefix = `${dim}:`;
         const values = params
             .getAll(`${PARAM_PREFIX}${dim}`)
+            // Re-add the dimension prefix stripped on encode. Fully-qualified
+            // legacy values (already `<dim>:...`) pass through untouched.
+            .map((v) => (v.startsWith(prefix) ? v : `${prefix}${v}`))
             .filter(isValidFilterValue);
         if (values.length > 0) {
             selections[dim] = values;

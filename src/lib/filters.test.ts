@@ -251,6 +251,21 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
     expect(decoded.selections.what).toEqual(['what:projects']);
   });
 
+  it('encodes values without the redundant dimension prefix (no %3A)', () => {
+    const state: FilterState = { selections: { what: ['what:projects/games'], who: ['who:about'] } };
+    const params = filterStateToParams(state);
+    expect(params.getAll('filter.what')).toEqual(['projects/games']);
+    expect(params.getAll('filter.who')).toEqual(['about']);
+    expect(params.toString()).not.toContain('%3A');
+    // Internal state is still fully-qualified after the round-trip.
+    expect(filterStateFromParams(params).selections.what).toEqual(['what:projects/games']);
+  });
+
+  it('decodes legacy fully-qualified values for backward compatibility', () => {
+    const params = new URLSearchParams('filter.what=what%3Aprojects/games');
+    expect(filterStateFromParams(params).selections.what).toEqual(['what:projects/games']);
+  });
+
   it('multiple values in same dimension round-trip', () => {
     const state: FilterState = { selections: { what: ['what:projects', 'what:writing'] } };
     const params = filterStateToParams(state);
@@ -317,8 +332,8 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
 
   it('invalid filter values in params are silently dropped on decode', () => {
     const params = new URLSearchParams();
-    params.set('filter.what', 'what'); // bare dimension root — invalid
-    params.append('filter.what', 'what:projects'); // valid
+    params.set('filter.what', ''); // empty sub-value — invalid
+    params.append('filter.what', 'projects'); // valid → what:projects
     const decoded = filterStateFromParams(params);
     expect(decoded.selections.what).toEqual(['what:projects']);
   });
@@ -371,13 +386,13 @@ describe('filterUrlForTagValue', () => {
     const url = filterUrlForTagValue('who:about');
     const parsed = new URL(url, 'http://x');
     expect(parsed.pathname).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
-    expect(parsed.searchParams.getAll('filter.who')).toEqual(['who:about']);
+    expect(parsed.searchParams.getAll('filter.who')).toEqual(['about']);
   });
 
   it('preserves nested tag values', () => {
     const url = filterUrlForTagValue('what:projects/games');
     const parsed = new URL(url, 'http://x');
-    expect(parsed.searchParams.getAll('filter.what')).toEqual(['what:projects/games']);
+    expect(parsed.searchParams.getAll('filter.what')).toEqual(['projects/games']);
   });
 
   it('returns the bare browse-lens URL for a value with no dimension prefix', () => {

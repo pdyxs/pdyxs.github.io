@@ -22,8 +22,6 @@
     Object.values($lensFilterStore.selections).some(v => v && v.length > 0)
   );
 
-  const basePath = $derived(`/lens/${lens.id}`);
-
   // A lens that can't accept filters must never show any as active, no
   // matter how a stray filter.* query string got onto its URL (carried
   // forward by a lens replacement, left over from closing back to home,
@@ -44,9 +42,17 @@
     lensFilterStore.set(filterStateFromParams(new URLSearchParams(window.location.search)));
   }
 
-  function pushToUrl(state: FilterState) {
-    const query = filterStateToParams(state).toString();
-    history.pushState(null, '', query ? `${basePath}?${query}` : basePath);
+  // Report the full filter selection to CardStack (the sole owner of the stack
+  // URL) as ordered param pairs, so the selection is serialised into the stack
+  // and survives pushing/closing cards. We deliberately do NOT write the URL
+  // here — that would race CardStack's own serialisation and drop the filters
+  // the moment a card is pushed (the lens becomes an inactive `from` entry
+  // whose params come only from CardStack's own map).
+  function reportFiltersToStack(state: FilterState) {
+    const params: [string, string][] = [...filterStateToParams(state)];
+    document.dispatchEvent(new CustomEvent('cardparam', {
+      detail: { uid: lensUid(lens.id), params },
+    }));
   }
 
   onMount(() => {
@@ -77,20 +83,20 @@
     }
     const next = toggleFilterValue($lensFilterStore, dim, value);
     lensFilterStore.set(next);
-    pushToUrl(next);
+    reportFiltersToStack(next);
   }
 
   function handleClearDimension(dim: Dimension) {
     if (!lens.acceptsFilters) return; // Home never accumulates a selection to clear.
     const next = clearFilterDimension($lensFilterStore, dim);
     lensFilterStore.set(next);
-    pushToUrl(next);
+    reportFiltersToStack(next);
   }
 
   function handleClearAll() {
     const next = clearAllFilters();
     lensFilterStore.set(next);
-    pushToUrl(next);
+    reportFiltersToStack(next);
   }
 </script>
 

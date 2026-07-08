@@ -14,13 +14,13 @@ describe('parseCollectionLink — bare collection name', () => {
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
     expect(url.pathname).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
-    expect(url.searchParams.getAll('filter.what')).toEqual(['what:puzzles']);
+    expect(url.searchParams.getAll('filter.what')).toEqual(['puzzles']);
   });
 
   it('maps "posts" and "projects" the same way', () => {
     for (const [name, expected] of [
-      ['posts', 'what:posts'],
-      ['projects', 'what:projects'],
+      ['posts', 'posts'],
+      ['projects', 'projects'],
     ] as const) {
       const result = parseCollectionLink(name);
       expect(result.type).toBe('filter');
@@ -43,14 +43,14 @@ describe('parseCollectionLink — ?tag= query (slash-form id)', () => {
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
     expect(url.pathname).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
-    expect(url.searchParams.getAll('filter.what')).toEqual(['what:projects/software-engineering']);
+    expect(url.searchParams.getAll('filter.what')).toEqual(['projects/software-engineering']);
   });
 
   it('translates a top-level slash-form tag id', () => {
     const result = parseCollectionLink('posts?tag=what/topics/design');
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
-    expect(url.searchParams.getAll('filter.what')).toEqual(['what:topics/design']);
+    expect(url.searchParams.getAll('filter.what')).toEqual(['topics/design']);
   });
 });
 
@@ -63,49 +63,49 @@ describe('parseCollectionLink — filter expressions', () => {
     const result = parseCollectionLink('what:puzzles');
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
-    expect(url.searchParams.getAll('filter.what')).toEqual(['what:puzzles']);
+    expect(url.searchParams.getAll('filter.what')).toEqual(['puzzles']);
   });
 
   it('returns filter action for a multi-segment expression: what:projects/games', () => {
     const result = parseCollectionLink('what:projects/games');
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
-    expect(url.searchParams.getAll('filter.what')).toEqual(['what:projects/games']);
+    expect(url.searchParams.getAll('filter.what')).toEqual(['projects/games']);
   });
 
   it('returns filter action for a deeply nested expression: what:projects/games/puzzle', () => {
     const result = parseCollectionLink('what:projects/games/puzzle');
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
-    expect(url.searchParams.getAll('filter.what')).toEqual(['what:projects/games/puzzle']);
+    expect(url.searchParams.getAll('filter.what')).toEqual(['projects/games/puzzle']);
   });
 
   it('works for the who dimension', () => {
     const result = parseCollectionLink('who:paul');
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
-    expect(url.searchParams.getAll('filter.who')).toEqual(['who:paul']);
+    expect(url.searchParams.getAll('filter.who')).toEqual(['paul']);
   });
 
   it('works for the when dimension', () => {
     const result = parseCollectionLink('when:2024');
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
-    expect(url.searchParams.getAll('filter.when')).toEqual(['when:2024']);
+    expect(url.searchParams.getAll('filter.when')).toEqual(['2024']);
   });
 
   it('works for the where dimension', () => {
     const result = parseCollectionLink('where:australia');
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
-    expect(url.searchParams.getAll('filter.where')).toEqual(['where:australia']);
+    expect(url.searchParams.getAll('filter.where')).toEqual(['australia']);
   });
 
   it('works for the why dimension', () => {
     const result = parseCollectionLink('why:creative');
     expect(result.type).toBe('filter');
     const url = new URL(result.url, 'http://x');
-    expect(url.searchParams.getAll('filter.why')).toEqual(['why:creative']);
+    expect(url.searchParams.getAll('filter.why')).toEqual(['creative']);
   });
 
   it('filter URL pathname is the default browse lens', () => {

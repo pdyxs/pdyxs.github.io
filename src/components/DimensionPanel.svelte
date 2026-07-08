@@ -18,7 +18,7 @@
      * actual component, so the lazy-load boundary holds. */
     lenses: LensDefinition[];
     /** Current filter selections, serialised, so a lens replacement carries
-     * them across the swap (e.g. "filter.what=what%3Aprojects"). Only ever
+     * them across the swap (e.g. "filter.what=projects"). Only ever
      * attached to a lens that declares acceptsFilters — a lens that can't
      * handle filters (e.g. home) must never receive them in the first place. */
     carryFilterParams: string;

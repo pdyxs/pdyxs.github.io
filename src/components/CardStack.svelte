@@ -21,7 +21,10 @@
 
   // Keyed by LocationEntry.key (== uid for card locations, see stack-layout.ts).
   let cardHtmlCache = $state(new Map<string, string>());
-  let cardParams = new Map<string, Record<string, string>>();
+  // Per-location URL params, stored as ordered pairs so repeated keys (e.g. a
+  // lens's multi-value `filter.what=a&filter.what=b` selections) survive the
+  // round-trip through serialiseStack — a plain Record would collapse repeats.
+  let cardParams = new Map<string, ParamPairs>();
   // Keys to skip body-open in $effect during VT push (body opens after vt.finished)
   let skipBodyOpen = new Set<string>();
   let overflowElLeft = $state<HTMLElement | null>(null);
@@ -207,9 +210,8 @@
     const historyFn = method === 'replace' ? history.replaceState.bind(history) : history.pushState.bind(history);
 
     const paramsByKey = new Map<string, ParamPairs>();
-    for (const [key, params] of cardParams) {
-      const entries = Object.entries(params).filter(([, v]) => v != null) as ParamPairs;
-      if (entries.length) paramsByKey.set(key, entries);
+    for (const [key, pairs] of cardParams) {
+      if (pairs.length) paramsByKey.set(key, pairs);
     }
 
     let { path, search } = serialiseStack(state, paramsByKey, manifestLookup);
@@ -405,9 +407,9 @@
     const path = qIdx === -1 ? url : url.slice(0, qIdx);
     const uid = urlToUid(path);
     if (qIdx !== -1) {
-      const params: Record<string, string> = {};
-      new URLSearchParams(url.slice(qIdx + 1)).forEach((v, k) => { params[k] = v; });
-      cardParams.set(uid, params);
+      const pairs: ParamPairs = [];
+      new URLSearchParams(url.slice(qIdx + 1)).forEach((v, k) => { pairs.push([k, v]); });
+      cardParams.set(uid, pairs);
     }
     pushCard(path);
   }
@@ -468,6 +470,15 @@
 
   async function initFromUrl() {
     const { state: parsed, paramsByKey } = deserialiseStack(window.location.pathname, window.location.search, manifestLookup);
+
+    // Capture the active location's own params (e.g. a lens's filter.* query on
+    // a cold load or a shared link) even when it's the sole entry — otherwise
+    // the first card push serialises the lens with no filters and drops them.
+    if (parsed.activeKey) {
+      const activeParams = paramsByKey.get(parsed.activeKey);
+      if (activeParams?.length) cardParams.set(parsed.activeKey, activeParams);
+    }
+
     if (parsed.entries.length <= 1) return;
 
     const activeIdxInParsed = parsed.entries.findIndex(e => e.key === parsed.activeKey);
@@ -478,7 +489,7 @@
       const ok = await fetchAndCacheCard(location.uid);
       if (ok) {
         const entryParams = paramsByKey.get(location.key);
-        if (entryParams?.length) cardParams.set(location.key, Object.fromEntries(entryParams));
+        if (entryParams?.length) cardParams.set(location.key, entryParams);
         stackStore.update(s => {
           const activeIdx = s.entries.findIndex(e => e.key === s.activeKey);
           const newEntries = activeIdx >= 0
@@ -492,7 +503,7 @@
       const ok = await fetchAndCacheCard(location.uid);
       if (ok) {
         const entryParams = paramsByKey.get(location.key);
-        if (entryParams?.length) cardParams.set(location.key, Object.fromEntries(entryParams));
+        if (entryParams?.length) cardParams.set(location.key, entryParams);
         stackStore.update(s => ({ ...s, entries: [...s.entries, location] }));
       }
     }
@@ -586,15 +597,16 @@
     }
     document.addEventListener('click', onDocumentClick);
 
+    // A location (currently the active lens's LensFilterShell) reports its full
+    // current param set as ordered pairs; we replace what we hold for that uid
+    // and re-serialise so the params live in the stack URL. Full replacement,
+    // not a partial patch — the emitter always sends its complete param state.
     function onCardParam(e: Event) {
-      const { uid, params } = (e as CustomEvent<{ uid: string; params: Record<string, string | null> }>).detail;
-      const filtered = Object.fromEntries(
-        Object.entries(params).filter(([, v]) => v != null)
-      ) as Record<string, string>;
-      if (Object.keys(filtered).length === 0) {
+      const { uid, params } = (e as CustomEvent<{ uid: string; params: ParamPairs }>).detail;
+      if (params.length === 0) {
         cardParams.delete(uid);
       } else {
-        cardParams.set(uid, filtered);
+        cardParams.set(uid, params);
       }
       updateUrl('replace');
     }
