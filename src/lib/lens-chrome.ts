@@ -54,6 +54,10 @@ function activeFilterLabels(filterState: FilterState): string[] {
       labels.push(filterLabel(value));
     }
   }
+  // Dimensionless filters trail the dimensioned ones.
+  for (const value of filterState.tags ?? []) {
+    labels.push(filterLabel(value));
+  }
   return labels;
 }
 

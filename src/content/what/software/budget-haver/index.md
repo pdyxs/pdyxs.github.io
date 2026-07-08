@@ -4,7 +4,7 @@ description: >-
   A minimalistic budgeting app, focusing on helping you to control your everyday
   spending
 tags:
-  - what:topics/development
+  - development
 images:
   - icon
 image: icon.jpg

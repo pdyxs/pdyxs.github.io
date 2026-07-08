@@ -25,6 +25,19 @@ export function toggleFilterValue(state: FilterState, dim: Dimension, value: str
   return { ...state, selections: newSelections };
 }
 
+/** Toggles a dimensionless filter value in the `tags` bucket (see filters.ts). */
+export function toggleDimensionlessValue(state: FilterState, value: string): FilterState {
+  const existing = state.tags ?? [];
+  const updated = existing.includes(value)
+    ? existing.filter(v => v !== value)
+    : [...existing, value];
+  if (updated.length === 0) {
+    const { tags: _drop, ...rest } = state;
+    return rest;
+  }
+  return { ...state, tags: updated };
+}
+
 export function clearFilterDimension(state: FilterState, dim: Dimension): FilterState {
   const newSelections = { ...state.selections };
   delete newSelections[dim];

@@ -395,11 +395,79 @@ describe('filterUrlForTagValue', () => {
     expect(parsed.searchParams.getAll('filter.what')).toEqual(['projects/games']);
   });
 
-  it('returns the bare browse-lens URL for a value with no dimension prefix', () => {
-    expect(filterUrlForTagValue('gamedev')).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
+  it('builds a dimensionless filter URL for a value with no dimension prefix', () => {
+    const url = filterUrlForTagValue('gamedev');
+    const parsed = new URL(url, 'http://x');
+    expect(parsed.pathname).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
+    expect(parsed.searchParams.getAll('filter')).toEqual(['gamedev']);
+    expect(parsed.searchParams.getAll('filter.what')).toEqual([]);
   });
 
   it('returns the bare browse-lens URL for an unrecognised dimension prefix', () => {
     expect(filterUrlForTagValue('bogus:value')).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Dimensionless filters
+// ---------------------------------------------------------------------------
+
+describe('applyFilters — dimensionless tags', () => {
+  it('matches cards carrying an exactly-equal dimensionless tag', () => {
+    const match = fakeCardMeta({ uid: 'posts/a', tags: ['what:art', 'science'] });
+    const noMatch = fakeCardMeta({ uid: 'posts/b', tags: ['what:art'] });
+    const state: FilterState = { selections: {}, tags: ['science'] };
+    expect(applyFilters([match, noMatch], state)).toEqual([match]);
+  });
+
+  it('does not prefix-match dimensionless tags', () => {
+    const noMatch = fakeCardMeta({ uid: 'posts/a', tags: ['science-fiction'] });
+    const state: FilterState = { selections: {}, tags: ['science'] };
+    expect(applyFilters([noMatch], state)).toEqual([]);
+  });
+
+  it('multiple dimensionless tags are OR-ed within the bucket', () => {
+    const a = fakeCardMeta({ uid: 'posts/a', tags: ['science'] });
+    const b = fakeCardMeta({ uid: 'posts/b', tags: ['education'] });
+    const c = fakeCardMeta({ uid: 'posts/c', tags: ['unrelated'] });
+    const state: FilterState = { selections: {}, tags: ['science', 'education'] };
+    expect(applyFilters([a, b, c], state)).toEqual([a, b]);
+  });
+
+  it('dimensionless bucket AND-s with dimension selections', () => {
+    const both = fakeCardMeta({ uid: 'posts/both', tags: ['what:art', 'science'] });
+    const onlyDim = fakeCardMeta({ uid: 'posts/a', tags: ['what:art'] });
+    const onlyTag = fakeCardMeta({ uid: 'posts/b', tags: ['science'] });
+    const state: FilterState = { selections: { what: ['what:art'] }, tags: ['science'] };
+    expect(applyFilters([both, onlyDim, onlyTag], state)).toEqual([both]);
+  });
+});
+
+describe('dimensionless filter URL round-trip', () => {
+  it('encodes a dimensionless filter as a bare `filter` param', () => {
+    const state: FilterState = { selections: {}, tags: ['science'] };
+    const params = filterStateToParams(state);
+    expect(params.getAll('filter')).toEqual(['science']);
+    expect(params.toString()).not.toContain('%3A');
+  });
+
+  it('round-trips dimensionless tags alongside dimension selections', () => {
+    const state: FilterState = { selections: { what: ['what:art'] }, tags: ['science', 'education'] };
+    const decoded = filterStateFromParams(filterStateToParams(state));
+    expect(decoded.selections.what).toEqual(['what:art']);
+    expect(decoded.tags).toEqual(['science', 'education']);
+  });
+
+  it('drops invalid dimensionless values (empty or containing a colon) on decode', () => {
+    const params = new URLSearchParams();
+    params.append('filter', '');
+    params.append('filter', 'what:art');
+    params.append('filter', 'science');
+    expect(filterStateFromParams(params).tags).toEqual(['science']);
+  });
+
+  it('stripFilterParams removes the bare filter param', () => {
+    const params = new URLSearchParams('filter=science&stack=abc');
+    expect(stripFilterParams(params).toString()).toBe('stack=abc');
   });
 });

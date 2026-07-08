@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { lensFilterStore, toggleFilterValue, clearFilterDimension, clearAllFilters } from '../stores/lens-filter-store';
+  import { lensFilterStore, toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters } from '../stores/lens-filter-store';
   import { filterStateFromParams, filterStateToParams, stripFilterParams } from '../lib/filters';
   import type { Dimension, FilterState } from '../lib/filters';
   import type { LensDefinition } from '../lib/lens-registry';
@@ -20,6 +20,7 @@
 
   const hasActiveFilters = $derived(
     Object.values($lensFilterStore.selections).some(v => v && v.length > 0)
+    || ($lensFilterStore.tags?.length ?? 0) > 0
   );
 
   // A lens that can't accept filters must never show any as active, no
@@ -86,6 +87,16 @@
     reportFiltersToStack(next);
   }
 
+  // Dimensionless filters are never added from the dimension bar — they only
+  // arrive via a tag click that opens a fresh browse card. So the shell only
+  // needs to remove them (chip ×). Home (acceptsFilters:false) never holds any.
+  function handleDimensionlessRemove(value: string) {
+    if (!lens.acceptsFilters) return;
+    const next = toggleDimensionlessValue($lensFilterStore, value);
+    lensFilterStore.set(next);
+    reportFiltersToStack(next);
+  }
+
   function handleClearDimension(dim: Dimension) {
     if (!lens.acceptsFilters) return; // Home never accumulates a selection to clear.
     const next = clearFilterDimension($lensFilterStore, dim);
@@ -111,6 +122,7 @@
   <ActiveFilterChips
     filterState={$lensFilterStore}
     onRemove={handleFilterToggle}
+    onRemoveTag={handleDimensionlessRemove}
     onClearAll={handleClearAll}
     {tagDisplay}
   />

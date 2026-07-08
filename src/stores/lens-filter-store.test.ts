@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toggleFilterValue, clearFilterDimension, clearAllFilters } from './lens-filter-store';
+import { toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters } from './lens-filter-store';
 import type { FilterState } from '../lib/filters';
 
 const emptyState: FilterState = { selections: {} };
@@ -32,6 +32,38 @@ describe('toggleFilterValue', () => {
     const state: FilterState = { selections: { who: ['who:pdyxs'] } };
     const result = toggleFilterValue(state, 'what', 'what:puzzles');
     expect(result.selections.who).toEqual(['who:pdyxs']);
+  });
+});
+
+describe('toggleDimensionlessValue', () => {
+  it('adds a value to an empty dimensionless bucket', () => {
+    const result = toggleDimensionlessValue(emptyState, 'science');
+    expect(result.tags).toEqual(['science']);
+  });
+
+  it('appends a second dimensionless value', () => {
+    const state: FilterState = { selections: {}, tags: ['science'] };
+    const result = toggleDimensionlessValue(state, 'education');
+    expect(result.tags).toEqual(['science', 'education']);
+  });
+
+  it('removes an already-selected dimensionless value (toggle off)', () => {
+    const state: FilterState = { selections: {}, tags: ['science', 'education'] };
+    const result = toggleDimensionlessValue(state, 'science');
+    expect(result.tags).toEqual(['education']);
+  });
+
+  it('leaves the tags key empty when the last value is toggled off', () => {
+    const state: FilterState = { selections: {}, tags: ['science'] };
+    const result = toggleDimensionlessValue(state, 'science');
+    expect(result.tags ?? []).toEqual([]);
+  });
+
+  it('does not mutate dimension selections', () => {
+    const state: FilterState = { selections: { what: ['what:art'] } };
+    const result = toggleDimensionlessValue(state, 'science');
+    expect(result.selections.what).toEqual(['what:art']);
+    expect(result.tags).toEqual(['science']);
   });
 });
 

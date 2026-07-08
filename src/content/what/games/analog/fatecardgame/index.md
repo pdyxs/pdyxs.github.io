@@ -2,8 +2,8 @@
 title: The Odysseys
 description: 'A game where one player is Fate, and they hold all the cards.'
 tags:
-  - what:topics/development
-  - what:topics/interactive
+  - development
+  - interactive
 priority: 20190701
 image: original.png
 status: current

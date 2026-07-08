@@ -5,7 +5,7 @@ description: >-
   and adorable numbeanies
 image: cover.jpg
 tags:
-  - what:topics/education
+  - education
   - when:released
 priority: 20180400
 actions:

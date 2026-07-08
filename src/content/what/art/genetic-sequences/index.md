@@ -2,9 +2,9 @@
 title: Genetic Sequences
 description: An exploration of the structures of genetic sequences
 tags:
-  - what:topics/development
-  - what:topics/science
-  - what:topics/visualisation
+  - development
+  - science
+  - visualisation
 images:
   - 'https://medium.com/series/visualising-genetic-sequences-bea25751f4b7'
 image: output4.png

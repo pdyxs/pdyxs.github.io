@@ -6,9 +6,9 @@ images:
 image: crowd.jpg
 feature: crowd
 tags:
-  - what:topics/science
+  - science
   - when:released
-  - what:topics/installation
+  - installation
 priority: 20150600
 status: past
 medium: Installation artwork

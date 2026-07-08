@@ -5,7 +5,7 @@ description: >-
   plan to steal a painting from an art gallery
 tags:
   - when:released
-  - what:topics/installation
+  - installation
 priority: 20170601
 images:
   - >-

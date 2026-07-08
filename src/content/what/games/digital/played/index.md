@@ -3,7 +3,7 @@ title: PlayEd
 description: A web platform to help primary school teachers bring games into the classroom
 image: cover.jpeg
 tags:
-  - what:topics/education
+  - education
   - when:released
 priority: 20220101
 actions:

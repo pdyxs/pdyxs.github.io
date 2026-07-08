@@ -98,17 +98,13 @@ function dimensionedPrefixes(tag) {
   return out;
 }
 
-// Enumerates the dimensioned filter tags the codec should keep short: each
-// card's folder-derived tag (and its ancestor prefixes, since a filter can
-// select any level), plus any dimensioned (`dim:value`) tags declared in
-// frontmatter. Uncovered values still work via the codec's raw fallback.
-//
-// Dimensionless tags (bare frontmatter slugs) are intentionally NOT coded yet:
-// the `filter=tag` feature that would use them doesn't exist, and today's
-// frontmatter tags are noisy import leftovers. The param codec already
-// supports dimensionless filters (see param-codecs.ts) — when that feature
-// lands, enumerate the real dimensionless tags here and their codes append
-// cleanly after these.
+// Enumerates the filter tags the codec should keep short: each card's
+// folder-derived tag (and its ancestor prefixes, since a filter can select any
+// level), plus any dimensioned (`dim:value`) tags declared in frontmatter, plus
+// any dimensionless (bare-slug) frontmatter tags — the `filter=<slug>` feature
+// (see param-codecs.ts's filterCodec) codes them exactly. Dimensionless slugs
+// are flat, so they need no ancestor-prefix expansion. Uncovered values still
+// work via the codec's raw fallback.
 async function collectTags() {
   const allFiles = await walk(CONTENT_DIR);
   const tags = new Set();
@@ -128,8 +124,12 @@ async function collectTags() {
       const { data } = matter(await readFile(file, 'utf-8'));
       if (Array.isArray(data?.tags)) {
         for (const raw of data.tags) {
-          if (typeof raw !== 'string' || !raw.includes(':')) continue; // dimensioned only
-          for (const prefix of dimensionedPrefixes(raw)) tags.add(prefix);
+          if (typeof raw !== 'string' || !raw) continue;
+          if (raw.includes(':')) {
+            for (const prefix of dimensionedPrefixes(raw)) tags.add(prefix);
+          } else {
+            tags.add(raw); // dimensionless — flat, no prefix expansion
+          }
         }
       }
     } catch {

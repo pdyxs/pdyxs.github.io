@@ -36,6 +36,18 @@ describe('deriveLensChrome', () => {
     expect(chrome.cardTitle).toBe('Newest · Software Engineering');
   });
 
+  it('includes a dimensionless filter label, humanised', () => {
+    const fs: FilterState = { selections: {}, tags: ['game-engine-podcast'] };
+    const chrome = deriveLensChrome(newest, fs);
+    expect(chrome.cardTitle).toBe('Newest · Game Engine Podcast');
+  });
+
+  it('appends dimensionless labels after dimension labels', () => {
+    const fs: FilterState = { selections: { what: ['what:puzzles'] }, tags: ['science'] };
+    const chrome = deriveLensChrome(newest, fs);
+    expect(chrome.cardTitle).toBe('Newest · Puzzles · Science');
+  });
+
   it('joins multiple active filters in dimension order', () => {
     const fs: FilterState = {
       selections: { what: ['what:puzzles'], who: ['who:accenture'] },

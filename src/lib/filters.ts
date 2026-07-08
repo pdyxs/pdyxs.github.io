@@ -15,6 +15,12 @@ export type DatePredicate = {
 export type FilterState = {
     /** Selected tag prefixes per dimension, e.g. { what: ['what:projects'] } */
     selections: Partial<Record<Dimension, string[]>>;
+    /**
+     * Dimensionless filter values (bare slugs with no `dimension:` prefix,
+     * e.g. `science`). Match cards by exact tag equality — no hierarchy — and
+     * never appear in the 5W dimension bar. See DEC-dimensionless-filters.
+     */
+    tags?: string[];
     /** Optional date-range predicates for the `when` dimension */
     datePredicate?: DatePredicate;
 };
@@ -36,6 +42,15 @@ export function isValidFilterValue(value: string): boolean {
     // The part after the colon must be non-empty
     const rest = value.slice(colonIdx + 1);
     return rest.length > 0;
+}
+
+/**
+ * Returns true for a valid dimensionless filter value — a non-empty slug with
+ * no colon. A colon would make it a (mis-scoped) dimensioned value, so those
+ * are rejected here.
+ */
+export function isValidDimensionlessValue(value: string): boolean {
+    return value.length > 0 && !value.includes(":");
 }
 
 // ---------------------------------------------------------------------------
@@ -105,6 +120,13 @@ export function applyFilters(
             return false;
         }
 
+        // Dimensionless bucket: exact-match, OR within the bucket, AND with the
+        // dimension buckets above.
+        const dimensionless = filterState.tags;
+        if (dimensionless && dimensionless.length > 0) {
+            if (!card.tags.some((tag) => dimensionless.includes(tag))) return false;
+        }
+
         // Also check date predicate when there are NO when-dimension tag selections
         // but a date predicate is active. In that case the predicate acts as an
         // independent when filter.
@@ -134,7 +156,11 @@ export function applyFilters(
 export function filterUrlForTagValue(tagValue: string): string {
     const base = `/lens/${DEFAULT_BROWSE_LENS_ID}`;
     const colonIdx = tagValue.indexOf(":");
-    if (colonIdx === -1) return base;
+    // A colon-less value is a dimensionless filter — select it as such.
+    if (colonIdx === -1) {
+        const params = filterStateToParams({ selections: {}, tags: [tagValue] });
+        return `${base}?${params.toString()}`;
+    }
     const dim = tagValue.slice(0, colonIdx) as Dimension;
     if (!(DIMENSIONS as readonly string[]).includes(dim)) return base;
     const params = filterStateToParams({ selections: { [dim]: [tagValue] } });
@@ -146,6 +172,7 @@ export function filterUrlForTagValue(tagValue: string): string {
 // ---------------------------------------------------------------------------
 
 const PARAM_PREFIX = "filter.";
+const DIMENSIONLESS_PARAM = "filter";
 const DATE_FROM_PARAM = "when.from";
 const DATE_TO_PARAM = "when.to";
 
@@ -177,6 +204,10 @@ export function filterStateToParams(state: FilterState): URLSearchParams {
             const short = val.startsWith(prefix) ? val.slice(prefix.length) : val;
             params.append(`${PARAM_PREFIX}${dim}`, short);
         }
+    }
+
+    for (const tag of state.tags ?? []) {
+        params.append(DIMENSIONLESS_PARAM, tag);
     }
 
     if (state.datePredicate) {
@@ -213,6 +244,10 @@ export function filterStateFromParams(params: URLSearchParams): FilterState {
         }
     }
 
+    const tags = params
+        .getAll(DIMENSIONLESS_PARAM)
+        .filter(isValidDimensionlessValue);
+
     let datePredicate: DatePredicate | undefined;
     const fromStr = params.get(DATE_FROM_PARAM);
     const toStr = params.get(DATE_TO_PARAM);
@@ -229,7 +264,7 @@ export function filterStateFromParams(params: URLSearchParams): FilterState {
         }
     }
 
-    return { selections, datePredicate };
+    return { selections, ...(tags.length > 0 ? { tags } : {}), datePredicate };
 }
 
 /**
@@ -243,6 +278,7 @@ export function stripFilterParams(params: URLSearchParams): URLSearchParams {
     for (const dim of DIMENSIONS) {
         next.delete(`${PARAM_PREFIX}${dim}`);
     }
+    next.delete(DIMENSIONLESS_PARAM);
     next.delete(DATE_FROM_PARAM);
     next.delete(DATE_TO_PARAM);
     return next;

@@ -186,5 +186,681 @@
   {
     "uid": "where:work/seethrough",
     "code": "K"
+  },
+  {
+    "uid": "3dprinting",
+    "code": "L"
+  },
+  {
+    "uid": "4",
+    "code": "M"
+  },
+  {
+    "uid": "alsoitviolatesgoodvrdesign",
+    "code": "N"
+  },
+  {
+    "uid": "alsothetempleherewasprettyrad",
+    "code": "O"
+  },
+  {
+    "uid": "app",
+    "code": "P"
+  },
+  {
+    "uid": "arduino",
+    "code": "Q"
+  },
+  {
+    "uid": "art",
+    "code": "R"
+  },
+  {
+    "uid": "astronomy",
+    "code": "S"
+  },
+  {
+    "uid": "bali",
+    "code": "T"
+  },
+  {
+    "uid": "barcelona",
+    "code": "U"
+  },
+  {
+    "uid": "beachtimes",
+    "code": "V"
+  },
+  {
+    "uid": "bluedot",
+    "code": "W"
+  },
+  {
+    "uid": "bluemountains",
+    "code": "X"
+  },
+  {
+    "uid": "boardgame",
+    "code": "Y"
+  },
+  {
+    "uid": "boardgamedesign",
+    "code": "Z"
+  },
+  {
+    "uid": "boardgames",
+    "code": "10"
+  },
+  {
+    "uid": "bolivia",
+    "code": "11"
+  },
+  {
+    "uid": "bubbles",
+    "code": "12"
+  },
+  {
+    "uid": "canicallitanobelix",
+    "code": "13"
+  },
+  {
+    "uid": "cardgame",
+    "code": "14"
+  },
+  {
+    "uid": "cardgames",
+    "code": "15"
+  },
+  {
+    "uid": "cards",
+    "code": "16"
+  },
+  {
+    "uid": "cityscape",
+    "code": "17"
+  },
+  {
+    "uid": "cloudsaregreat",
+    "code": "18"
+  },
+  {
+    "uid": "colombia",
+    "code": "19"
+  },
+  {
+    "uid": "comingsoon",
+    "code": "1a"
+  },
+  {
+    "uid": "confetti",
+    "code": "1b"
+  },
+  {
+    "uid": "coronaprojects",
+    "code": "1c"
+  },
+  {
+    "uid": "creativity",
+    "code": "1d"
+  },
+  {
+    "uid": "dataart",
+    "code": "1e"
+  },
+  {
+    "uid": "datavis",
+    "code": "1f"
+  },
+  {
+    "uid": "datavisualization",
+    "code": "1g"
+  },
+  {
+    "uid": "design",
+    "code": "1h"
+  },
+  {
+    "uid": "development",
+    "code": "1i"
+  },
+  {
+    "uid": "didimentiontheyhavebubbles",
+    "code": "1j"
+  },
+  {
+    "uid": "digitalart",
+    "code": "1k"
+  },
+  {
+    "uid": "digitalnomad",
+    "code": "1l"
+  },
+  {
+    "uid": "eatfresh",
+    "code": "1m"
+  },
+  {
+    "uid": "edinburgh",
+    "code": "1n"
+  },
+  {
+    "uid": "edinburghfringe",
+    "code": "1o"
+  },
+  {
+    "uid": "edtech",
+    "code": "1p"
+  },
+  {
+    "uid": "education",
+    "code": "1q"
+  },
+  {
+    "uid": "fatecardgame",
+    "code": "1r"
+  },
+  {
+    "uid": "feedthemasses",
+    "code": "1s"
+  },
+  {
+    "uid": "finance",
+    "code": "1t"
+  },
+  {
+    "uid": "firewatch",
+    "code": "1u"
+  },
+  {
+    "uid": "flipclock",
+    "code": "1v"
+  },
+  {
+    "uid": "fringe",
+    "code": "1w"
+  },
+  {
+    "uid": "game-engine-podcast",
+    "code": "1x"
+  },
+  {
+    "uid": "game-jam",
+    "code": "1y"
+  },
+  {
+    "uid": "gamedesign",
+    "code": "1z"
+  },
+  {
+    "uid": "gamedev",
+    "code": "1A"
+  },
+  {
+    "uid": "gamelaunch",
+    "code": "1B"
+  },
+  {
+    "uid": "games",
+    "code": "1C"
+  },
+  {
+    "uid": "genetics",
+    "code": "1D"
+  },
+  {
+    "uid": "ggj15",
+    "code": "1E"
+  },
+  {
+    "uid": "ggjsyd",
+    "code": "1F"
+  },
+  {
+    "uid": "glovebagpipe",
+    "code": "1G"
+  },
+  {
+    "uid": "gottagetouttathisspace",
+    "code": "1H"
+  },
+  {
+    "uid": "hackathon",
+    "code": "1I"
+  },
+  {
+    "uid": "hashtags",
+    "code": "1J"
+  },
+  {
+    "uid": "houstonproblems",
+    "code": "1K"
+  },
+  {
+    "uid": "ifitsthelastthingweeverdo",
+    "code": "1L"
+  },
+  {
+    "uid": "imightneedaswim",
+    "code": "1M"
+  },
+  {
+    "uid": "indiegames",
+    "code": "1N"
+  },
+  {
+    "uid": "instagram",
+    "code": "1O"
+  },
+  {
+    "uid": "installation",
+    "code": "1P"
+  },
+  {
+    "uid": "interactive",
+    "code": "1Q"
+  },
+  {
+    "uid": "interactiveart",
+    "code": "1R"
+  },
+  {
+    "uid": "itbelongsinamuseum",
+    "code": "1S"
+  },
+  {
+    "uid": "lakes",
+    "code": "1T"
+  },
+  {
+    "uid": "lakeswithsunsets",
+    "code": "1U"
+  },
+  {
+    "uid": "landscape",
+    "code": "1V"
+  },
+  {
+    "uid": "lazers",
+    "code": "1W"
+  },
+  {
+    "uid": "ld46",
+    "code": "1X"
+  },
+  {
+    "uid": "ld48",
+    "code": "1Y"
+  },
+  {
+    "uid": "lifehacks",
+    "code": "1Z"
+  },
+  {
+    "uid": "linocut",
+    "code": "20"
+  },
+  {
+    "uid": "linoprint",
+    "code": "21"
+  },
+  {
+    "uid": "maximumdevices",
+    "code": "22"
+  },
+  {
+    "uid": "maygoals",
+    "code": "23"
+  },
+  {
+    "uid": "meccano",
+    "code": "24"
+  },
+  {
+    "uid": "meta",
+    "code": "25"
+  },
+  {
+    "uid": "metasocial",
+    "code": "26"
+  },
+  {
+    "uid": "migw17",
+    "code": "27"
+  },
+  {
+    "uid": "mobile",
+    "code": "28"
+  },
+  {
+    "uid": "morocco",
+    "code": "29"
+  },
+  {
+    "uid": "naturalfilter",
+    "code": "2a"
+  },
+  {
+    "uid": "nausea",
+    "code": "2b"
+  },
+  {
+    "uid": "neverthoughtidsaythat",
+    "code": "2c"
+  },
+  {
+    "uid": "newzealand",
+    "code": "2d"
+  },
+  {
+    "uid": "nodigitalfiltersanyway",
+    "code": "2e"
+  },
+  {
+    "uid": "nodroppedphones",
+    "code": "2f"
+  },
+  {
+    "uid": "nofilter",
+    "code": "2g"
+  },
+  {
+    "uid": "nomad",
+    "code": "2h"
+  },
+  {
+    "uid": "nomadholidays",
+    "code": "2i"
+  },
+  {
+    "uid": "nomadlife",
+    "code": "2j"
+  },
+  {
+    "uid": "nopicnic",
+    "code": "2k"
+  },
+  {
+    "uid": "noreallywhy",
+    "code": "2l"
+  },
+  {
+    "uid": "nuffsaid",
+    "code": "2m"
+  },
+  {
+    "uid": "opticalillusions",
+    "code": "2n"
+  },
+  {
+    "uid": "palermo",
+    "code": "2o"
+  },
+  {
+    "uid": "particlephysics",
+    "code": "2p"
+  },
+  {
+    "uid": "perth",
+    "code": "2q"
+  },
+  {
+    "uid": "peru",
+    "code": "2r"
+  },
+  {
+    "uid": "picnic",
+    "code": "2s"
+  },
+  {
+    "uid": "pisac",
+    "code": "2t"
+  },
+  {
+    "uid": "postage",
+    "code": "2u"
+  },
+  {
+    "uid": "practicalmonuments",
+    "code": "2v"
+  },
+  {
+    "uid": "printandplay",
+    "code": "2w"
+  },
+  {
+    "uid": "prototype",
+    "code": "2x"
+  },
+  {
+    "uid": "prototyping",
+    "code": "2y"
+  },
+  {
+    "uid": "qiskit",
+    "code": "2z"
+  },
+  {
+    "uid": "qiskitcamp",
+    "code": "2A"
+  },
+  {
+    "uid": "quantumart",
+    "code": "2B"
+  },
+  {
+    "uid": "quantumcomputing",
+    "code": "2C"
+  },
+  {
+    "uid": "raysofsun",
+    "code": "2D"
+  },
+  {
+    "uid": "react",
+    "code": "2E"
+  },
+  {
+    "uid": "recycling",
+    "code": "2F"
+  },
+  {
+    "uid": "river",
+    "code": "2G"
+  },
+  {
+    "uid": "roadrules",
+    "code": "2H"
+  },
+  {
+    "uid": "robots",
+    "code": "2I"
+  },
+  {
+    "uid": "robotuprising",
+    "code": "2J"
+  },
+  {
+    "uid": "rockclimbing",
+    "code": "2K"
+  },
+  {
+    "uid": "rubberbagpipe",
+    "code": "2L"
+  },
+  {
+    "uid": "runningtosummer",
+    "code": "2M"
+  },
+  {
+    "uid": "salt",
+    "code": "2N"
+  },
+  {
+    "uid": "science",
+    "code": "2O"
+  },
+  {
+    "uid": "scienceart",
+    "code": "2P"
+  },
+  {
+    "uid": "screenshotsaturday",
+    "code": "2Q"
+  },
+  {
+    "uid": "signs",
+    "code": "2R"
+  },
+  {
+    "uid": "signsaboutsigns",
+    "code": "2S"
+  },
+  {
+    "uid": "socialmedia",
+    "code": "2T"
+  },
+  {
+    "uid": "somanycats",
+    "code": "2U"
+  },
+  {
+    "uid": "somanyshadows",
+    "code": "2V"
+  },
+  {
+    "uid": "somuchsalt",
+    "code": "2W"
+  },
+  {
+    "uid": "somuchtodo",
+    "code": "2X"
+  },
+  {
+    "uid": "space",
+    "code": "2Y"
+  },
+  {
+    "uid": "spacegame",
+    "code": "2Z"
+  },
+  {
+    "uid": "stars",
+    "code": "30"
+  },
+  {
+    "uid": "sunset",
+    "code": "31"
+  },
+  {
+    "uid": "swiss",
+    "code": "32"
+  },
+  {
+    "uid": "tabletopgames",
+    "code": "33"
+  },
+  {
+    "uid": "tech",
+    "code": "34"
+  },
+  {
+    "uid": "theatre",
+    "code": "35"
+  },
+  {
+    "uid": "thematrixship",
+    "code": "36"
+  },
+  {
+    "uid": "themiddlegroundisdeath",
+    "code": "37"
+  },
+  {
+    "uid": "theodyssey",
+    "code": "38"
+  },
+  {
+    "uid": "theodysseysgame",
+    "code": "39"
+  },
+  {
+    "uid": "theresanamazingbuddhastatuebehindmebutthelightingisterrible",
+    "code": "3a"
+  },
+  {
+    "uid": "timefight",
+    "code": "3b"
+  },
+  {
+    "uid": "traingrave",
+    "code": "3c"
+  },
+  {
+    "uid": "travel",
+    "code": "3d"
+  },
+  {
+    "uid": "traveling",
+    "code": "3e"
+  },
+  {
+    "uid": "treeoflife",
+    "code": "3f"
+  },
+  {
+    "uid": "ubud",
+    "code": "3g"
+  },
+  {
+    "uid": "unity3d",
+    "code": "3h"
+  },
+  {
+    "uid": "ux",
+    "code": "3i"
+  },
+  {
+    "uid": "visualisation",
+    "code": "3j"
+  },
+  {
+    "uid": "vivid",
+    "code": "3k"
+  },
+  {
+    "uid": "vividsydney",
+    "code": "3l"
+  },
+  {
+    "uid": "walking",
+    "code": "3m"
+  },
+  {
+    "uid": "waterhouse",
+    "code": "3n"
+  },
+  {
+    "uid": "waterwatch",
+    "code": "3o"
+  },
+  {
+    "uid": "web",
+    "code": "3p"
+  },
+  {
+    "uid": "wellington",
+    "code": "3q"
+  },
+  {
+    "uid": "why",
+    "code": "3r"
+  },
+  {
+    "uid": "wip",
+    "code": "3s"
+  },
+  {
+    "uid": "xmasinthailand",
+    "code": "3t"
   }
 ]

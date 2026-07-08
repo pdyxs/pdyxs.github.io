@@ -7,8 +7,8 @@ feature: the_neighbourhood_2500x1250
 image: the_neighbourhood_2500x1250.jpg
 portfolio: the_neighbourhood_2500x1250.jpg
 tags:
-  - what:topics/science
-  - what:topics/visualisation
+  - science
+  - visualisation
   - when:released
 priority: 20160201
 status: past
