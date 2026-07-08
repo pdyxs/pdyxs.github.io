@@ -6,7 +6,7 @@ export const FRONTPAGE_CONFIG: FrontPageConfig = {
         {
             type: "filter",
             label: "A Project",
-            filter: { selections: { what: ["what:projects"] } },
+            filter: { selections: { what: ["what:games", "what:art", "what:software"] } },
         },
         {
             type: "filter",

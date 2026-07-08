@@ -4,7 +4,7 @@ date: '2015-02-10 12:54:00 +1000'
 tags:
   - "houstonproblems"
   - "themiddlegroundisdeath"
-  - "what:projects/games/analog/houston-we-have-a"
+  - "what:games/analog/houston-we-have-a"
 image: "17841586705027766.jpg"
 source: instagram
 ---

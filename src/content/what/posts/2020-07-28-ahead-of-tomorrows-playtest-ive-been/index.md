@@ -8,7 +8,7 @@ tags:
   - "gamedev"
   - "indiegames"
   - "theodyssey"
-  - "what:projects/games/analog/fatecardgame"
+  - "what:games/analog/fatecardgame"
 image: "17906566810484607.jpg"
 images:
   - "17877095134763674.jpg"

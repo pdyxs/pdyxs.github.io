@@ -6,7 +6,7 @@ tags:
   - "printandplay"
   - "screenshotsaturday"
   - "tabletopgames"
-  - "what:projects/games/analog/gotta-get-outta-this-space"
+  - "what:games/analog/gotta-get-outta-this-space"
 image: "17886410233551052.jpg"
 images:
   - "17870082757730183.jpg"

@@ -70,7 +70,7 @@ describe("CardStackCard", () => {
     it("carries a frontmatter-declared width as a data-width attribute", async () => {
         const container = await makeContainer();
         const html = await container.renderToString(CardStackCard, {
-            props: { path: "what/projects/art/the-path" },
+            props: { path: "what/art/the-path" },
         });
         const div = dom(html);
 

@@ -7,7 +7,7 @@ tags:
   - "treeoflife"
   - "visualisation"
   - "wip"
-  - "what:projects/art/the-path"
+  - "what:art/the-path"
 image: "17855697118025518.mp4"
 source: instagram
 ---

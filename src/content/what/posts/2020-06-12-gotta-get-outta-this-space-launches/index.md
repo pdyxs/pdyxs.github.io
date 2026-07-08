@@ -7,7 +7,7 @@ tags:
   - "gamedev"
   - "gottagetouttathisspace"
   - "printandplay"
-  - "what:projects/games/analog/gotta-get-outta-this-space"
+  - "what:games/analog/gotta-get-outta-this-space"
 image: "18145361011044841.jpg"
 images:
   - "17858955916950881.jpg"

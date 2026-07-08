@@ -7,7 +7,7 @@ tags:
   - "cards"
   - "gamedesign"
   - "gamedev"
-  - "what:projects/games/analog/fatecardgame"
+  - "what:games/analog/fatecardgame"
 image: "17844827962490375.jpg"
 source: instagram
 ---

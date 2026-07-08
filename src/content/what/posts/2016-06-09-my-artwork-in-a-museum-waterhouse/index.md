@@ -5,7 +5,7 @@ tags:
   - "art"
   - "science"
   - "waterhouse"
-  - "what:projects/art/the-neighbourhood"
+  - "what:art/the-neighbourhood"
 image: "17857975039051901.jpg"
 source: instagram
 ---

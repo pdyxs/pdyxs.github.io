@@ -8,7 +8,7 @@ tags:
   - "qiskitcamp"
   - "swiss"
   - "travel"
-  - "what:projects/art/qistigram"
+  - "what:art/qistigram"
 image: "17844507145649302.jpg"
 source: instagram
 ---

@@ -6,7 +6,7 @@ tags:
   - "feedthemasses"
   - "ggj15"
   - "ggjsyd"
-  - "what:projects/games/analog/houston-we-have-a"
+  - "what:games/analog/houston-we-have-a"
 image: "17843021818027766.jpg"
 source: instagram
 ---

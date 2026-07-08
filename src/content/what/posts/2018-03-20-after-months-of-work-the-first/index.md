@@ -2,7 +2,7 @@
 title: "After months of work, the first version of Numbeanies: Number Forest…"
 date: '2018-03-20 20:37:00 +1000'
 tags:
-  - "what:projects/games/digital/numbeanies"
+  - "what:games/digital/numbeanies"
   - "where:work/3p"
 image: "17871885130211012.jpg"
 source: instagram

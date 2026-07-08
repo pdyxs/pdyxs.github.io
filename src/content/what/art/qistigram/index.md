@@ -2,7 +2,7 @@
 title: Qistigram
 description: A concept for quantum-powered Instagram stories
 tags:
-  - what:projects/software-engineering
+  - what:software
   - when:released
 priority: 20190914
 image: qiskigram_header_full.jpg

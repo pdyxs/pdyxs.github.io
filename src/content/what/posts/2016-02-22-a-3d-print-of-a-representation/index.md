@@ -8,7 +8,7 @@ tags:
   - "science"
   - "stars"
   - "visualisation"
-  - "what:projects/art/the-neighbourhood"
+  - "what:art/the-neighbourhood"
 image: "17844611452127393.jpg"
 source: instagram
 ---

@@ -6,7 +6,7 @@ tags:
   - "gamedesign"
   - "gamedev"
   - "gottagetouttathisspace"
-  - "what:projects/games/analog/gotta-get-outta-this-space"
+  - "what:games/analog/gotta-get-outta-this-space"
 image: "18035776453258495.jpg"
 images:
   - "17950701538338791.jpg"

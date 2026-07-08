@@ -6,7 +6,7 @@ tags:
   - "dataart"
   - "interactiveart"
   - "wip"
-  - "what:projects/art/the-neighbourhood"
+  - "what:art/the-neighbourhood"
 image: "17988358507240608.mp4"
 source: instagram
 ---

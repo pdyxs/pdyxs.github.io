@@ -6,7 +6,7 @@ tags:
   - "gamedev"
   - "theodyssey"
   - "theodysseysgame"
-  - "what:projects/games/analog/fatecardgame"
+  - "what:games/analog/fatecardgame"
 image: "18160346695034338.jpg"
 images:
   - "17936230786386059.jpg"

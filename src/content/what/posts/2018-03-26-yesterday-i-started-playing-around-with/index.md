@@ -5,7 +5,7 @@ tags:
   - "dataart"
   - "digitalart"
   - "genetics"
-  - "what:projects/art/genetic-sequences"
+  - "what:art/genetic-sequences"
 image: "17892497266198650.jpg"
 images:
   - "17903564347163875.jpg"

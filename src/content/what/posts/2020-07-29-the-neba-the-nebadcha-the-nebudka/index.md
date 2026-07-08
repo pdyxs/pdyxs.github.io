@@ -6,7 +6,7 @@ tags:
   - "gottagetouttathisspace"
   - "printandplay"
   - "thematrixship"
-  - "what:projects/games/analog/gotta-get-outta-this-space"
+  - "what:games/analog/gotta-get-outta-this-space"
 image: "17844109397308784.jpg"
 source: instagram
 ---

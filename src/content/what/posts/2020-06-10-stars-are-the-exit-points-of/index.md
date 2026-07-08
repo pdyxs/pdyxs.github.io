@@ -9,7 +9,7 @@ tags:
   - "printandplay"
   - "space"
   - "spacegame"
-  - "what:projects/games/analog/gotta-get-outta-this-space"
+  - "what:games/analog/gotta-get-outta-this-space"
 image: "18057884620240008.jpg"
 images:
   - "17849196650135719.jpg"

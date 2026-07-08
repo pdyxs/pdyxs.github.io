@@ -2,9 +2,9 @@
 title: 'Ensuring your project has depth: the Triple Threat test'
 date: '2013-05-08 17:00:00 +1000'
 tags:
-  - what:projects/games/digital/particulars
-  - what:projects/games/digital/flatland-fallen-angle
-  - what:projects/games/digital/unstoppabot
+  - what:games/digital/particulars
+  - what:games/digital/flatland-fallen-angle
+  - what:games/digital/unstoppabot
   - where:work/seethrough
 source: seethroughstudios
 ---

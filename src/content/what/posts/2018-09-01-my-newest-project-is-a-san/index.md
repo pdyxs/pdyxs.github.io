@@ -4,7 +4,7 @@ date: '2018-09-01 06:34:00 +1000'
 tags:
   - "gamedev"
   - "screenshotsaturday"
-  - "what:projects/games/digital/dot-hunt"
+  - "what:games/digital/dot-hunt"
   - "where:work/dot"
 image: "17876829469263729.jpg"
 source: instagram

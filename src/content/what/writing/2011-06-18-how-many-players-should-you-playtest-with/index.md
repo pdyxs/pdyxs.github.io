@@ -5,7 +5,7 @@ canonical_url: >-
   https://www.gamasutra.com/blogs/PaulSztajer/20110618/89660/How_many_players_should_you_playtest_with.php
 source: gamasutra
 tags:
-  - what:projects/games/digital/particulars
+  - what:games/digital/particulars
 ---
 So, you've started developing your game, and you've got your basic gameplay done. It's time to start playtesting*. The question occurs to you: how many people should be playtesting my game?
 

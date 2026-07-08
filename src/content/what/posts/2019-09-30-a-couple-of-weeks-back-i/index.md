@@ -14,7 +14,7 @@ tags:
   - "quantumcomputing"
   - "socialmedia"
   - "unity3d"
-  - "what:projects/art/qistigram"
+  - "what:art/qistigram"
 image: "17881627366438848.jpg"
 images:
   - "17886727771418337.jpg"
