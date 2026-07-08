@@ -63,7 +63,9 @@ describe('buildCardUrl', () => {
     const url = buildCardUrl(['card-a', 'card-b', 'card-c'], 2);
     const parsed = new URL(url, 'http://x');
     expect(parsed.pathname).toBe('/card/card-c');
-    expect(parsed.searchParams.get('from')).toBe('card-a,card-b');
+    // Entries are '.'-separated in the escape-free grammar (these uids aren't
+    // in the manifest, so they ride as raw-uid fallbacks).
+    expect(parsed.searchParams.get('from')).toBe('card-a.card-b');
     expect(parsed.searchParams.has('to')).toBe(false);
   });
 
@@ -72,7 +74,7 @@ describe('buildCardUrl', () => {
     const parsed = new URL(url, 'http://x');
     expect(parsed.pathname).toBe('/card/card-a');
     expect(parsed.searchParams.has('from')).toBe(false);
-    expect(parsed.searchParams.get('to')).toBe('card-b,card-c');
+    expect(parsed.searchParams.get('to')).toBe('card-b.card-c');
   });
 
   it('middle card has both from and to', () => {

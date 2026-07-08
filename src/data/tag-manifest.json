@@ -1,0 +1,190 @@
+[
+  {
+    "uid": "what:art",
+    "code": "0"
+  },
+  {
+    "uid": "what:art/art-heist",
+    "code": "1"
+  },
+  {
+    "uid": "what:art/genetic-sequences",
+    "code": "2"
+  },
+  {
+    "uid": "what:art/laser-harp",
+    "code": "3"
+  },
+  {
+    "uid": "what:art/lino-printing",
+    "code": "4"
+  },
+  {
+    "uid": "what:art/qistigram",
+    "code": "5"
+  },
+  {
+    "uid": "what:art/the-neighbourhood",
+    "code": "6"
+  },
+  {
+    "uid": "what:art/the-path",
+    "code": "7"
+  },
+  {
+    "uid": "what:games",
+    "code": "8"
+  },
+  {
+    "uid": "what:games/analog",
+    "code": "9"
+  },
+  {
+    "uid": "what:games/analog/fatecardgame",
+    "code": "a"
+  },
+  {
+    "uid": "what:games/analog/gotta-get-outta-this-space",
+    "code": "b"
+  },
+  {
+    "uid": "what:games/analog/houston-we-have-a",
+    "code": "c"
+  },
+  {
+    "uid": "what:games/analog/time-fight",
+    "code": "d"
+  },
+  {
+    "uid": "what:games/digital",
+    "code": "e"
+  },
+  {
+    "uid": "what:games/digital/dot-hunt",
+    "code": "f"
+  },
+  {
+    "uid": "what:games/digital/flatland-fallen-angle",
+    "code": "g"
+  },
+  {
+    "uid": "what:games/digital/numbeanies",
+    "code": "h"
+  },
+  {
+    "uid": "what:games/digital/particulars",
+    "code": "i"
+  },
+  {
+    "uid": "what:games/digital/quantum-byte",
+    "code": "j"
+  },
+  {
+    "uid": "what:games/digital/tiny-world-the-musical-the-game",
+    "code": "k"
+  },
+  {
+    "uid": "what:games/digital/unstoppabot",
+    "code": "l"
+  },
+  {
+    "uid": "what:games/digital/where-the-heart-is",
+    "code": "m"
+  },
+  {
+    "uid": "what:posts",
+    "code": "n"
+  },
+  {
+    "uid": "what:posts/stories",
+    "code": "o"
+  },
+  {
+    "uid": "what:posts/stories/arctic",
+    "code": "p"
+  },
+  {
+    "uid": "what:posts/stories/fatecardgame",
+    "code": "q"
+  },
+  {
+    "uid": "what:posts/stories/galapagos",
+    "code": "r"
+  },
+  {
+    "uid": "what:puzzles",
+    "code": "s"
+  },
+  {
+    "uid": "what:software",
+    "code": "t"
+  },
+  {
+    "uid": "what:software/budget-haver",
+    "code": "u"
+  },
+  {
+    "uid": "what:topics",
+    "code": "v"
+  },
+  {
+    "uid": "what:topics/development",
+    "code": "w"
+  },
+  {
+    "uid": "what:topics/education",
+    "code": "x"
+  },
+  {
+    "uid": "what:topics/game-engine-podcast",
+    "code": "y"
+  },
+  {
+    "uid": "what:topics/game-jam",
+    "code": "z"
+  },
+  {
+    "uid": "what:topics/installation",
+    "code": "A"
+  },
+  {
+    "uid": "what:topics/interactive",
+    "code": "B"
+  },
+  {
+    "uid": "what:topics/science",
+    "code": "C"
+  },
+  {
+    "uid": "what:topics/visualisation",
+    "code": "D"
+  },
+  {
+    "uid": "what:writing",
+    "code": "E"
+  },
+  {
+    "uid": "when:released",
+    "code": "F"
+  },
+  {
+    "uid": "where:work",
+    "code": "G"
+  },
+  {
+    "uid": "where:work/3p",
+    "code": "H"
+  },
+  {
+    "uid": "where:work/dot",
+    "code": "I"
+  },
+  {
+    "uid": "where:work/plan-a",
+    "code": "J"
+  },
+  {
+    "uid": "where:work/seethrough",
+    "code": "K"
+  }
+]

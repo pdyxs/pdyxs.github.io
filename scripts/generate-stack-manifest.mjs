@@ -15,14 +15,17 @@
 import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import matter from 'gray-matter';
 import { assignCodes } from '../src/lib/stack-manifest.ts';
 import { uidFromContentPath, uidFromTagPath } from '../src/lib/content-uid.ts';
+import { derivePathTags } from '../src/lib/tag-inheritance.ts';
 import { allLensUids } from '../src/lib/lens-registry.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(__dirname, '../src/content');
 const TAG_DIR = path.join(CONTENT_DIR, 'tag');
 const MANIFEST_PATH = path.resolve(__dirname, '../src/data/stack-manifest.json');
+const TAG_MANIFEST_PATH = path.resolve(__dirname, '../src/data/tag-manifest.json');
 
 async function walk(dir) {
   const out = [];
@@ -75,25 +78,88 @@ async function collectUids() {
   return [...new Set([...uids, ...allLensUids()])].sort();
 }
 
-async function loadExistingManifest() {
+// Every dimensioned prefix of a `dim:value` tag — filters can select any
+// ancestor level, so all of them need a code. `what:games/analog` yields
+// `what:games` and `what:games/analog`. A bare dimension root (empty value)
+// isn't a valid filter and is skipped.
+function dimensionedPrefixes(tag) {
+  const colon = tag.indexOf(':');
+  if (colon === -1) return [tag]; // dimensionless — used as-is
+  const dim = tag.slice(0, colon);
+  const rest = tag.slice(colon + 1);
+  if (!rest) return [];
+  const segs = rest.split('/');
+  const out = [];
+  let acc = '';
+  for (const seg of segs) {
+    acc = acc ? `${acc}/${seg}` : seg;
+    out.push(`${dim}:${acc}`);
+  }
+  return out;
+}
+
+// Enumerates the dimensioned filter tags the codec should keep short: each
+// card's folder-derived tag (and its ancestor prefixes, since a filter can
+// select any level), plus any dimensioned (`dim:value`) tags declared in
+// frontmatter. Uncovered values still work via the codec's raw fallback.
+//
+// Dimensionless tags (bare frontmatter slugs) are intentionally NOT coded yet:
+// the `filter=tag` feature that would use them doesn't exist, and today's
+// frontmatter tags are noisy import leftovers. The param codec already
+// supports dimensionless filters (see param-codecs.ts) — when that feature
+// lands, enumerate the real dimensionless tags here and their codes append
+// cleanly after these.
+async function collectTags() {
+  const allFiles = await walk(CONTENT_DIR);
+  const tags = new Set();
+
+  for (const file of allFiles) {
+    const relToContent = path.relative(CONTENT_DIR, file).split(path.sep).join('/');
+    if (isUnderscorePrefixed(relToContent)) continue;
+    if (relToContent.startsWith('tag/')) continue;
+    if (!/\.(md|mdx)$/i.test(relToContent)) continue;
+
+    const uid = uidFromContentPath(relToContent);
+    for (const tag of derivePathTags(uid)) {
+      for (const prefix of dimensionedPrefixes(tag)) tags.add(prefix);
+    }
+
+    try {
+      const { data } = matter(await readFile(file, 'utf-8'));
+      if (Array.isArray(data?.tags)) {
+        for (const raw of data.tags) {
+          if (typeof raw !== 'string' || !raw.includes(':')) continue; // dimensioned only
+          for (const prefix of dimensionedPrefixes(raw)) tags.add(prefix);
+        }
+      }
+    } catch {
+      // Unparseable frontmatter — skip; the raw fallback still covers it.
+    }
+  }
+
+  return [...tags].sort();
+}
+
+async function loadExistingManifest(manifestPath) {
   try {
-    const text = await readFile(MANIFEST_PATH, 'utf-8');
+    const text = await readFile(manifestPath, 'utf-8');
     return JSON.parse(text);
   } catch {
     return [];
   }
 }
 
-async function main() {
-  const uids = await collectUids();
-  const existing = await loadExistingManifest();
+async function writeManifest(label, manifestPath, uids) {
+  const existing = await loadExistingManifest(manifestPath);
   const manifest = assignCodes(existing, uids);
+  await mkdir(path.dirname(manifestPath), { recursive: true });
+  await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf-8');
+  console.log(`${label}: ${manifest.length} entries (${manifest.length - existing.length} new)`);
+}
 
-  await mkdir(path.dirname(MANIFEST_PATH), { recursive: true });
-  await writeFile(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n', 'utf-8');
-
-  const added = manifest.length - existing.length;
-  console.log(`stack-manifest: ${manifest.length} entries (${added} new)`);
+async function main() {
+  await writeManifest('stack-manifest', MANIFEST_PATH, await collectUids());
+  await writeManifest('tag-manifest', TAG_MANIFEST_PATH, await collectTags());
 }
 
 main().catch(err => {

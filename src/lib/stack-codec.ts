@@ -1,13 +1,22 @@
 // Stack codec: serialises/deserialises the whole card-navigation stack to
 // and from a URL. The active location is readable in the path/params;
-// inactive locations (from/to) are encoded as short base62 codes drawn from
-// the build-generated manifest (src/lib/stack-manifest.ts), so shared URLs
-// stay short and durable across rebuilds.
+// inactive locations (from/to) are encoded compactly.
 //
-// Arbitrary per-entry params (e.g. tab=bio, repeated keys allowed) ride as
-// a compact escape-hatch suffix on that entry's code: "a3~tab=bio".
+// An inactive entry is `<locationcode>` (a short base62 code from the location
+// manifest, src/lib/stack-manifest.ts) followed by zero or more `~`-separated
+// param tokens; entries within from/to are `.`-separated. Each param token is
+// produced by the codec registry (src/lib/param-codecs.ts) — filters resolve
+// to a tag-manifest code, everything else rides an escape-free base64url
+// fallback. The whole from/to value is drawn from `[A-Za-z0-9._~-]`, so it
+// survives to the URL with no percent-escaping:
+//   from=4~f0~f1   (lens/newest with filter.what=projects & filter.what=puzzles)
+//
+// The active entry's own params ride as plain, readable query pairs instead
+// (e.g. ?filter.what=projects), keeping the address bar legible.
 import type { LocationEntry, StackState } from './stack-layout';
 import type { ManifestLookup } from './stack-manifest';
+import { encodeParam, decodeParam } from './param-codecs';
+import type { CodecContext } from './param-codecs';
 
 export type ParamPairs = [string, string][];
 
@@ -21,7 +30,8 @@ export interface DeserialisedStack {
   paramsByKey: Map<string, ParamPairs>;
 }
 
-const ESCAPE_SEP = '~';
+const PARAM_SEP = '~';
+const ENTRY_SEP = '.';
 const LENS_PREFIX = 'lens/';
 const LENS_BASE = '/lens';
 
@@ -34,37 +44,37 @@ function pathForActive(activeUid: string, basePath: string): string {
   return `${basePath}/${activeUid}`;
 }
 
-function encodeEntry(entry: LocationEntry, params: ParamPairs | undefined, manifest: ManifestLookup): string {
+function encodeEntry(entry: LocationEntry, params: ParamPairs | undefined, manifest: ManifestLookup, ctx: CodecContext): string {
   const code = manifest.codeForUid(entry.uid) ?? entry.uid;
   if (!params || params.length === 0) return code;
-  const usp = new URLSearchParams();
-  for (const [k, v] of params) usp.append(k, v);
-  return `${code}${ESCAPE_SEP}${usp.toString()}`;
+  let out = code;
+  for (const [k, v] of params) out += PARAM_SEP + encodeParam(k, v, ctx);
+  return out;
 }
 
-function decodeEntryToken(token: string, manifest: ManifestLookup): { uid: string; params: ParamPairs } {
-  const sepIdx = token.indexOf(ESCAPE_SEP);
-  const codePart = sepIdx === -1 ? token : token.slice(0, sepIdx);
-  const uid = manifest.uidForCode(codePart) ?? codePart;
+function decodeEntryToken(token: string, manifest: ManifestLookup, ctx: CodecContext): { uid: string; params: ParamPairs } {
+  const parts = token.split(PARAM_SEP);
+  const uid = manifest.uidForCode(parts[0]) ?? parts[0];
   const params: ParamPairs = [];
-  if (sepIdx !== -1) {
-    new URLSearchParams(token.slice(sepIdx + 1)).forEach((v, k) => params.push([k, v]));
+  for (const paramTok of parts.slice(1)) {
+    const pair = decodeParam(paramTok, ctx);
+    if (pair) params.push(pair);
   }
   return { uid, params };
 }
 
-function decodeSide(value: string | null, manifest: ManifestLookup): LocationEntry[] {
+function decodeSide(value: string | null, manifest: ManifestLookup, ctx: CodecContext): LocationEntry[] {
   if (!value) return [];
-  return value.split(',').filter(Boolean).map(tok => {
-    const { uid } = decodeEntryToken(tok, manifest);
+  return value.split(ENTRY_SEP).filter(Boolean).map(tok => {
+    const { uid } = decodeEntryToken(tok, manifest, ctx);
     return { key: uid, uid };
   });
 }
 
-function decodeSideParams(value: string | null, manifest: ManifestLookup, paramsByKey: Map<string, ParamPairs>): void {
+function decodeSideParams(value: string | null, manifest: ManifestLookup, ctx: CodecContext, paramsByKey: Map<string, ParamPairs>): void {
   if (!value) return;
-  for (const tok of value.split(',').filter(Boolean)) {
-    const { uid, params } = decodeEntryToken(tok, manifest);
+  for (const tok of value.split(ENTRY_SEP).filter(Boolean)) {
+    const { uid, params } = decodeEntryToken(tok, manifest, ctx);
     if (params.length) paramsByKey.set(uid, params);
   }
 }
@@ -78,11 +88,14 @@ export function serialiseStack(
   state: StackState,
   paramsByKey: ReadonlyMap<string, ParamPairs>,
   manifest: ManifestLookup,
+  tagManifest: ManifestLookup,
   basePath = '/card'
 ): SerialisedStack {
   if (state.entries.length === 0) {
     return { path: '/', search: '' };
   }
+
+  const ctx: CodecContext = { tags: tagManifest };
 
   const activeKey = state.activeKey ?? state.entries[state.entries.length - 1].key;
   let activeIdx = state.entries.findIndex(e => e.key === activeKey);
@@ -93,19 +106,24 @@ export function serialiseStack(
   const after = state.entries.slice(activeIdx + 1);
 
   const path = pathForActive(active.uid, basePath);
-  const usp = new URLSearchParams();
 
   const encodeSide = (entries: LocationEntry[]) =>
-    entries.map(e => encodeEntry(e, paramsByKey.get(e.key), manifest)).join(',');
+    entries.map(e => encodeEntry(e, paramsByKey.get(e.key), manifest, ctx)).join(ENTRY_SEP);
 
-  if (before.length) usp.set('from', encodeSide(before));
-  if (after.length) usp.set('to', encodeSide(after));
+  // from/to values are drawn from a URL-safe palette, so we assemble them by
+  // hand and keep them literal (no URLSearchParams re-escaping of '~'). The
+  // active entry's params, which can hold arbitrary values, still go through
+  // URLSearchParams for correct encoding.
+  const parts: string[] = [];
+  if (before.length) parts.push(`from=${encodeSide(before)}`);
+  if (after.length) parts.push(`to=${encodeSide(after)}`);
 
-  for (const [k, v] of paramsByKey.get(active.key) ?? []) {
-    usp.append(k, v);
-  }
+  const activeParams = new URLSearchParams();
+  for (const [k, v] of paramsByKey.get(active.key) ?? []) activeParams.append(k, v);
+  const activeStr = activeParams.toString();
+  if (activeStr) parts.push(activeStr);
 
-  const search = usp.toString();
+  const search = parts.join('&');
   return { path, search: search ? `?${search}` : '' };
 }
 
@@ -117,6 +135,7 @@ export function deserialiseStack(
   pathname: string,
   search: string,
   manifest: ManifestLookup,
+  tagManifest: ManifestLookup,
   basePath = '/card'
 ): DeserialisedStack {
   const cardPrefix = `${basePath}/`;
@@ -131,13 +150,14 @@ export function deserialiseStack(
     return { state: { entries: [], activeKey: null }, paramsByKey: new Map() };
   }
 
+  const ctx: CodecContext = { tags: tagManifest };
   const usp = new URLSearchParams(search);
   const paramsByKey = new Map<string, ParamPairs>();
 
-  const fromEntries = decodeSide(usp.get('from'), manifest);
-  decodeSideParams(usp.get('from'), manifest, paramsByKey);
-  const toEntries = decodeSide(usp.get('to'), manifest);
-  decodeSideParams(usp.get('to'), manifest, paramsByKey);
+  const fromEntries = decodeSide(usp.get('from'), manifest, ctx);
+  decodeSideParams(usp.get('from'), manifest, ctx, paramsByKey);
+  const toEntries = decodeSide(usp.get('to'), manifest, ctx);
+  decodeSideParams(usp.get('to'), manifest, ctx, paramsByKey);
 
   const activeParams: ParamPairs = [];
   usp.forEach((v, k) => {

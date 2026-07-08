@@ -4,6 +4,7 @@ import { serialiseStack } from './stack-codec';
 import { cardEntry } from './stack-layout';
 import type { StackState } from './stack-layout';
 import { manifestLookup } from './stack-manifest-client';
+import { tagManifestLookup } from './tag-manifest-client';
 
 const STACK_PARAM = 'stack';
 
@@ -38,6 +39,6 @@ export function buildCardUrl(stack: string[], activeIndex: number): string {
     entries: stack.map(cardEntry),
     activeKey: stack[activeIndex],
   };
-  const { path, search } = serialiseStack(state, new Map(), manifestLookup);
+  const { path, search } = serialiseStack(state, new Map(), manifestLookup, tagManifestLookup);
   return `${path}${search}`;
 }

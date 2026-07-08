@@ -6,6 +6,7 @@
   import { serialiseStack, deserialiseStack } from '../lib/stack-codec';
   import type { ParamPairs } from '../lib/stack-codec';
   import { manifestLookup } from '../lib/stack-manifest-client';
+  import { tagManifestLookup } from '../lib/tag-manifest-client';
   import { parseCollectionLink } from '../lib/collection-link';
   import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../lib/filters';
@@ -214,7 +215,7 @@
       if (pairs.length) paramsByKey.set(key, pairs);
     }
 
-    let { path, search } = serialiseStack(state, paramsByKey, manifestLookup);
+    let { path, search } = serialiseStack(state, paramsByKey, manifestLookup, tagManifestLookup);
     // `/` is the prettier address for the home lens as the sole entry.
     if (path === '/lens/home' && search === '') path = '/';
     historyFn(null, '', `${path}${search}`);
@@ -469,7 +470,7 @@
   }
 
   async function initFromUrl() {
-    const { state: parsed, paramsByKey } = deserialiseStack(window.location.pathname, window.location.search, manifestLookup);
+    const { state: parsed, paramsByKey } = deserialiseStack(window.location.pathname, window.location.search, manifestLookup, tagManifestLookup);
 
     // Capture the active location's own params (e.g. a lens's filter.* query on
     // a cold load or a shared link) even when it's the sole entry — otherwise
