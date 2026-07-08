@@ -1,8 +1,7 @@
 ---
 title: A Matter Of Perspective
 date: '2010-07-10 17:00:00 +1000'
-tags:
-  - what:writing
+tags: []
 ---
 *Your eyes lock to the screen. Your fingers grip the mouse. Your eyes furrow into a concentrated stare: you are not to be messed with.*
 

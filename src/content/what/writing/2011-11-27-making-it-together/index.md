@@ -2,7 +2,6 @@
 title: 'Making it together: Parallel Implementation'
 date: '2011-11-27 17:00:00 +1000'
 tags:
-  - what:writing
   - what:projects/games/digital/particulars
 canonical_url: >-
   https://www.gamasutra.com/blogs/PaulSztajer/20111127/90690/Making_it_together_Parallel_Implementation.php

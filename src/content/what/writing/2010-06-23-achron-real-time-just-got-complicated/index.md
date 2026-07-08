@@ -1,8 +1,7 @@
 ---
 title: 'Achron: Real-Time Just Got Complicated'
 date: '2010-06-23 17:00:00 +1000'
-tags:
-  - what:writing
+tags: []
 ---
 I've been meaning to talk about Achron for a while, and kept putting it off because I didn't feel like I'd gotten to the bottom of exactly what it means.
 

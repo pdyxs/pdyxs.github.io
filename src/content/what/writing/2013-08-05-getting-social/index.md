@@ -5,7 +5,7 @@ image: >-
   https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/08/Afraid_of_Twitter.jpeg?w=360
 source: seethroughstudios
 tags:
-  - what:writing
+  - where:work/seethrough
 ---
 I'm just going to put it out there: I'm scared of the internet.
 

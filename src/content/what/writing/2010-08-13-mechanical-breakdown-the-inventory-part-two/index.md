@@ -4,8 +4,7 @@ date: '2010-08-13 17:00:00 +1000'
 image: 18j38dsj7ymsbjpg.jpg
 canonical_url: 'https://kotaku.com/5612149/mechanical-breakdown-the-inventory'
 source: kotaku
-tags:
-  - what:writing
+tags: []
 ---
 ![](./18j38dsj7ymsbjpg.jpg)
 

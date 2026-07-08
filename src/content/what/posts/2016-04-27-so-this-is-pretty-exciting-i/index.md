@@ -1,0 +1,14 @@
+---
+title: "So this is pretty exciting..."
+date: '2016-04-27 18:20:00 +1000'
+tags:
+  - "art"
+  - "itbelongsinamuseum"
+  - "science"
+  - "waterhouse"
+  - "what:projects/art/the-neighbourhood"
+image: "17856050521035082.jpg"
+source: instagram
+---
+
+So this is pretty exciting... I'm gonna have an artwork in a freaking museum! #itbelongsinamuseum #art #waterhouse #science

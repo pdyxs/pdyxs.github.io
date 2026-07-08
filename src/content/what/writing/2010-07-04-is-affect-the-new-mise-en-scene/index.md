@@ -1,8 +1,7 @@
 ---
 title: Is Affect The New Mise-En-Scene?
 date: '2010-07-04 17:00:00 +1000'
-tags:
-  - what:writing
+tags: []
 ---
 So I've been thinking about how [affect is a really useful tool for designing games](http://bitbattalion.com/2010/05/mechanic-design-by-deconstruction/){:target="_blank"}, and it struck me that to an extent, I've heard this concept before.
 
