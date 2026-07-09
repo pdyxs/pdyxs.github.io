@@ -20,6 +20,7 @@ import { assignCodes } from '../src/lib/stack-manifest.ts';
 import { uidFromContentPath, uidFromTagPath } from '../src/lib/content-uid.ts';
 import { derivePathTags } from '../src/lib/tag-inheritance.ts';
 import { allLensUids } from '../src/lib/lens-registry.ts';
+import { allGeneratedFilterValues } from '../src/lib/filter-generators.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(__dirname, '../src/content');
@@ -135,6 +136,14 @@ async function collectTags() {
     } catch {
       // Unparseable frontmatter — skip; the raw fallback still covers it.
     }
+  }
+
+  // Filter values injected at runtime by generators (src/lib/filter-generators.ts)
+  // — e.g. the travel-log `where:*` tags. These never appear in the filesystem
+  // walked above, so enumerate them here (with ancestor prefixes) or they'd
+  // fall back to raw URL encoding.
+  for (const value of allGeneratedFilterValues()) {
+    for (const prefix of dimensionedPrefixes(value)) tags.add(prefix);
   }
 
   return [...tags].sort();

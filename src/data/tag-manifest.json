@@ -862,5 +862,373 @@
   {
     "uid": "xmasinthailand",
     "code": "3t"
+  },
+  {
+    "uid": "where:africa",
+    "code": "3u"
+  },
+  {
+    "uid": "where:africa/morocco",
+    "code": "3v"
+  },
+  {
+    "uid": "where:africa/morocco/taghazout",
+    "code": "3w"
+  },
+  {
+    "uid": "where:asia",
+    "code": "3x"
+  },
+  {
+    "uid": "where:asia/cambodia",
+    "code": "3y"
+  },
+  {
+    "uid": "where:asia/cambodia/phnom-penh",
+    "code": "3z"
+  },
+  {
+    "uid": "where:asia/cambodia/siem-reap",
+    "code": "3A"
+  },
+  {
+    "uid": "where:asia/indonesia",
+    "code": "3B"
+  },
+  {
+    "uid": "where:asia/indonesia/bali",
+    "code": "3C"
+  },
+  {
+    "uid": "where:asia/thailand",
+    "code": "3D"
+  },
+  {
+    "uid": "where:asia/thailand/bangkok",
+    "code": "3E"
+  },
+  {
+    "uid": "where:asia/thailand/ko-pha-ngan",
+    "code": "3F"
+  },
+  {
+    "uid": "where:asia/thailand/ko-samui",
+    "code": "3G"
+  },
+  {
+    "uid": "where:asia/thailand/krabi",
+    "code": "3H"
+  },
+  {
+    "uid": "where:asia/uae",
+    "code": "3I"
+  },
+  {
+    "uid": "where:asia/uae/dubai",
+    "code": "3J"
+  },
+  {
+    "uid": "where:asia/vietnam",
+    "code": "3K"
+  },
+  {
+    "uid": "where:asia/vietnam/ho-chi-minh-city",
+    "code": "3L"
+  },
+  {
+    "uid": "where:australia",
+    "code": "3M"
+  },
+  {
+    "uid": "where:australia/adelaide",
+    "code": "3N"
+  },
+  {
+    "uid": "where:australia/brisbane",
+    "code": "3O"
+  },
+  {
+    "uid": "where:australia/canberra",
+    "code": "3P"
+  },
+  {
+    "uid": "where:australia/gold-coast",
+    "code": "3Q"
+  },
+  {
+    "uid": "where:australia/hervey-bay",
+    "code": "3R"
+  },
+  {
+    "uid": "where:australia/melbourne",
+    "code": "3S"
+  },
+  {
+    "uid": "where:australia/perth",
+    "code": "3T"
+  },
+  {
+    "uid": "where:australia/sydney",
+    "code": "3U"
+  },
+  {
+    "uid": "where:europe",
+    "code": "3V"
+  },
+  {
+    "uid": "where:europe/denmark",
+    "code": "3W"
+  },
+  {
+    "uid": "where:europe/denmark/copenhagen",
+    "code": "3X"
+  },
+  {
+    "uid": "where:europe/france",
+    "code": "3Y"
+  },
+  {
+    "uid": "where:europe/france/alsace",
+    "code": "3Z"
+  },
+  {
+    "uid": "where:europe/france/paris",
+    "code": "40"
+  },
+  {
+    "uid": "where:europe/france/provence",
+    "code": "41"
+  },
+  {
+    "uid": "where:europe/germany",
+    "code": "42"
+  },
+  {
+    "uid": "where:europe/germany/berlin",
+    "code": "43"
+  },
+  {
+    "uid": "where:europe/germany/gottingen",
+    "code": "44"
+  },
+  {
+    "uid": "where:europe/iceland",
+    "code": "45"
+  },
+  {
+    "uid": "where:europe/ireland",
+    "code": "46"
+  },
+  {
+    "uid": "where:europe/ireland/dublin",
+    "code": "47"
+  },
+  {
+    "uid": "where:europe/italy",
+    "code": "48"
+  },
+  {
+    "uid": "where:europe/italy/naples",
+    "code": "49"
+  },
+  {
+    "uid": "where:europe/italy/palermo",
+    "code": "4a"
+  },
+  {
+    "uid": "where:europe/italy/rome",
+    "code": "4b"
+  },
+  {
+    "uid": "where:europe/italy/venice",
+    "code": "4c"
+  },
+  {
+    "uid": "where:europe/netherlands",
+    "code": "4d"
+  },
+  {
+    "uid": "where:europe/netherlands/amsterdam",
+    "code": "4e"
+  },
+  {
+    "uid": "where:europe/norway",
+    "code": "4f"
+  },
+  {
+    "uid": "where:europe/norway/oslo",
+    "code": "4g"
+  },
+  {
+    "uid": "where:europe/norway/svalbard",
+    "code": "4h"
+  },
+  {
+    "uid": "where:europe/spain",
+    "code": "4i"
+  },
+  {
+    "uid": "where:europe/spain/barcelona",
+    "code": "4j"
+  },
+  {
+    "uid": "where:europe/spain/camino-de-santiago",
+    "code": "4k"
+  },
+  {
+    "uid": "where:europe/sweden",
+    "code": "4l"
+  },
+  {
+    "uid": "where:europe/switzerland",
+    "code": "4m"
+  },
+  {
+    "uid": "where:europe/switzerland/geneva",
+    "code": "4n"
+  },
+  {
+    "uid": "where:europe/switzerland/lauterbrunnen",
+    "code": "4o"
+  },
+  {
+    "uid": "where:europe/switzerland/st-gallen",
+    "code": "4p"
+  },
+  {
+    "uid": "where:europe/turkey",
+    "code": "4q"
+  },
+  {
+    "uid": "where:europe/turkey/istanbul",
+    "code": "4r"
+  },
+  {
+    "uid": "where:europe/uk",
+    "code": "4s"
+  },
+  {
+    "uid": "where:europe/uk/bath",
+    "code": "4t"
+  },
+  {
+    "uid": "where:europe/uk/edinburgh",
+    "code": "4u"
+  },
+  {
+    "uid": "where:europe/uk/london",
+    "code": "4v"
+  },
+  {
+    "uid": "where:europe/uk/scotland",
+    "code": "4w"
+  },
+  {
+    "uid": "where:north-america",
+    "code": "4x"
+  },
+  {
+    "uid": "where:north-america/panama",
+    "code": "4y"
+  },
+  {
+    "uid": "where:north-america/usa",
+    "code": "4z"
+  },
+  {
+    "uid": "where:north-america/usa/austin",
+    "code": "4A"
+  },
+  {
+    "uid": "where:north-america/usa/boston",
+    "code": "4B"
+  },
+  {
+    "uid": "where:north-america/usa/chicago",
+    "code": "4C"
+  },
+  {
+    "uid": "where:north-america/usa/new-york",
+    "code": "4D"
+  },
+  {
+    "uid": "where:north-america/usa/san-francisco",
+    "code": "4E"
+  },
+  {
+    "uid": "where:north-america/usa/washington-dc",
+    "code": "4F"
+  },
+  {
+    "uid": "where:oceania",
+    "code": "4G"
+  },
+  {
+    "uid": "where:oceania/new-zealand",
+    "code": "4H"
+  },
+  {
+    "uid": "where:oceania/new-zealand/wellington",
+    "code": "4I"
+  },
+  {
+    "uid": "where:south-america",
+    "code": "4J"
+  },
+  {
+    "uid": "where:south-america/bolivia",
+    "code": "4K"
+  },
+  {
+    "uid": "where:south-america/chile",
+    "code": "4L"
+  },
+  {
+    "uid": "where:south-america/chile/santiago",
+    "code": "4M"
+  },
+  {
+    "uid": "where:south-america/colombia",
+    "code": "4N"
+  },
+  {
+    "uid": "where:south-america/colombia/cartagena",
+    "code": "4O"
+  },
+  {
+    "uid": "where:south-america/colombia/guatape",
+    "code": "4P"
+  },
+  {
+    "uid": "where:south-america/colombia/manizales",
+    "code": "4Q"
+  },
+  {
+    "uid": "where:south-america/colombia/medellin",
+    "code": "4R"
+  },
+  {
+    "uid": "where:south-america/colombia/santa-marta",
+    "code": "4S"
+  },
+  {
+    "uid": "where:south-america/ecuador",
+    "code": "4T"
+  },
+  {
+    "uid": "where:south-america/ecuador/cuenca",
+    "code": "4U"
+  },
+  {
+    "uid": "where:south-america/ecuador/galapagos",
+    "code": "4V"
+  },
+  {
+    "uid": "where:south-america/ecuador/quito",
+    "code": "4W"
+  },
+  {
+    "uid": "where:south-america/peru",
+    "code": "4X"
   }
 ]

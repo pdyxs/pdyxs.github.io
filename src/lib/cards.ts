@@ -1,8 +1,7 @@
 import { getCollection } from 'astro:content';
 import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
-import { TRAVEL_LOG } from '../data/travel-log';
-import { lookupLocationForDate, injectWhereTags } from './where-tags';
+import { generatedTagsForCard } from './filter-generators';
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
 function effectiveTags(
@@ -77,9 +76,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
         const description = resolveCardDescription(uid, e.data);
 
         const baseTags = effectiveTags(uid, e.data.tags, cascade.cascadeTags);
-        const finalTags = e.data.date
-          ? injectWhereTags(baseTags, lookupLocationForDate(e.data.date, TRAVEL_LOG))
-          : baseTags;
+        const finalTags = generatedTagsForCard(baseTags, { date: e.data.date });
 
         return {
           uid,

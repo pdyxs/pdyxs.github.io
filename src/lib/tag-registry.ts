@@ -20,6 +20,7 @@ import type { CardMeta } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension } from './filters';
 import { ownValueForCard } from './card-identity';
+import { declaredGeneratedFilterValues, generatedDisplayName } from './filter-generators';
 import { humaniseSegment } from './tag-display';
 import type { TagDisplay } from './tag-display';
 
@@ -255,7 +256,16 @@ export async function getTagRegistry(
   reader: TreeReader = makeContentTreeReader(),
 ): Promise<TagRegistry> {
   const { containerIdentities, tagDeclarations } = await discoverTagSources(reader);
-  return computeTagRegistry(cards, containerIdentities, tagDeclarations);
+  // Filter-generator values (e.g. travel-log `where:*` tags) that actually
+  // land on a card are declared identities: they surface in the panel like a
+  // `.tag.yaml` would, unlike a plain tag that only appears on a card. Names
+  // fall back to humanisation. Post-less locations are excluded.
+  const presentTags = cards.flatMap(card => card.tags);
+  const generatedDeclarations: ValueIdentity[] = declaredGeneratedFilterValues(presentTags).map(value => {
+    const name = generatedDisplayName(value);
+    return name ? { value, name } : { value };
+  });
+  return computeTagRegistry(cards, containerIdentities, [...tagDeclarations, ...generatedDeclarations]);
 }
 
 // ---------------------------------------------------------------------------

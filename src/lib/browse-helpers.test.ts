@@ -262,8 +262,11 @@ describe("buildTagHierarchy", () => {
             fakeCardMeta({ uid: "posts/a", tags: ["what:projects/board-games"] }),
         ];
         const tree = buildTagHierarchy(cards, "what");
-        expect(tree[0].name).toBe("Board Games");
-        expect(tree[0].description).toBeUndefined();
+        // 'what:projects' is synthesised as the parent; the leaf keeps a humanised name.
+        const leaf = tree[0].children[0];
+        expect(leaf.value).toBe("what:projects/board-games");
+        expect(leaf.name).toBe("Board Games");
+        expect(leaf.description).toBeUndefined();
     });
 
     it("uses the declared name from the display map when present", () => {
@@ -324,15 +327,19 @@ describe("buildTagHierarchy", () => {
         expect(labels).toEqual(["art", "games", "writing"]);
     });
 
-    it("handles orphaned child tags (no explicit parent tag) as roots", () => {
-        // Only 'what:projects/games' exists, no 'what:projects' tag
+    it("synthesises an intermediate parent for an orphaned child tag", () => {
+        // Only 'what:projects/games' exists, no 'what:projects' tag — the parent
+        // is synthesised so the value nests instead of rendering flat.
         const cards = [
             fakeCardMeta({ uid: "posts/a", tags: ["what:projects/games"] }),
         ];
         const tree = buildTagHierarchy(cards, "what");
-        // Should appear as a root (no parent to nest under)
         expect(tree).toHaveLength(1);
-        expect(tree[0].value).toBe("what:projects/games");
+        expect(tree[0].value).toBe("what:projects");
+        expect(tree[0].count).toBe(1); // rolls up from the child via prefix match
+        expect(tree[0].children.map((c) => c.value)).toEqual([
+            "what:projects/games",
+        ]);
     });
 
     it('bare dimension root tag "what" is not included as a node', () => {
@@ -357,6 +364,55 @@ describe("buildTagHierarchy", () => {
         );
         expect(edtech).toBeDefined();
         expect(edtech!.count).toBe(0);
+    });
+
+    it("nests a leaf-only value set (e.g. generated where:* tags) into a deep tree", () => {
+        // No continent/country level is ever tagged directly — only city leaves,
+        // as produced by the travel-log filter generator.
+        const cards = [
+            fakeCardMeta({ uid: "posts/a", tags: ["where:europe/uk/london"] }),
+            fakeCardMeta({ uid: "posts/b", tags: ["where:europe/uk/edinburgh"] }),
+            fakeCardMeta({ uid: "posts/c", tags: ["where:europe/italy/venice"] }),
+        ];
+        const tree = buildTagHierarchy(cards, "where");
+        expect(tree).toHaveLength(1);
+        const europe = tree[0];
+        expect(europe.value).toBe("where:europe");
+        expect(europe.count).toBe(3); // rolls up all three cities
+        const uk = europe.children.find((c) => c.value === "where:europe/uk")!;
+        expect(uk.count).toBe(2);
+        expect(uk.children.map((c) => c.value).sort()).toEqual([
+            "where:europe/uk/edinburgh",
+            "where:europe/uk/london",
+        ]);
+        const italy = europe.children.find((c) => c.value === "where:europe/italy")!;
+        expect(italy.children.map((c) => c.value)).toEqual([
+            "where:europe/italy/venice",
+        ]);
+    });
+
+    it("handles a mixed-depth set: a country-level leaf beside city-level leaves", () => {
+        // 'panama' has no city; 'usa' has cities — both sit under the continent.
+        const cards = [
+            fakeCardMeta({ uid: "posts/a", tags: ["where:north-america/panama"] }),
+            fakeCardMeta({ uid: "posts/b", tags: ["where:north-america/usa/austin"] }),
+        ];
+        const tree = buildTagHierarchy(cards, "where");
+        expect(tree).toHaveLength(1);
+        const na = tree[0];
+        expect(na.value).toBe("where:north-america");
+        const childValues = na.children.map((c) => c.value).sort();
+        expect(childValues).toEqual([
+            "where:north-america/panama",
+            "where:north-america/usa",
+        ]);
+        // panama is a selectable leaf (no children); usa is a synthesised parent
+        const panama = na.children.find((c) => c.value === "where:north-america/panama")!;
+        expect(panama.children).toHaveLength(0);
+        const usa = na.children.find((c) => c.value === "where:north-america/usa")!;
+        expect(usa.children.map((c) => c.value)).toEqual([
+            "where:north-america/usa/austin",
+        ]);
     });
 
     it("uses a declared registry value to seed an intermediate parent node with no direct card usage", () => {
@@ -427,8 +483,11 @@ describe("buildTagHierarchy fed by a real tag registry", () => {
             display,
         );
 
-        expect(tree[0].name).toBe("Board Games");
-        expect(tree[0].description).toBeUndefined();
+        // 'what:projects' is synthesised as the parent; the humanised name lands on the leaf.
+        const leaf = tree[0].children[0];
+        expect(leaf.value).toBe("what:projects/board-games");
+        expect(leaf.name).toBe("Board Games");
+        expect(leaf.description).toBeUndefined();
     });
 
     it("carries a container-declared description through to the node", () => {

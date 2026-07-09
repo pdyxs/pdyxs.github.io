@@ -137,9 +137,21 @@ export function buildTagHierarchy(
   const allTags = extractDimensionTags(cards, dimension, declaredValues);
   if (allTags.length === 0) return [];
 
+  // Expand to include every intermediate ancestor prefix. A value set that
+  // only contains leaves (e.g. `where:*` tags injected by a filter generator
+  // without their `where:europe` / `where:europe/uk` parents ever being tagged
+  // directly) would otherwise render flat — findParentValue only nests under an
+  // ancestor that exists in the map. Synthesising the missing ancestors gives
+  // them drill-down structure; their count rolls up via prefix matching.
+  const allValues = new Set<string>();
+  for (const tag of allTags) {
+    allValues.add(tag);
+    for (const ancestor of ancestorPrefixes(tag)) allValues.add(ancestor);
+  }
+
   // Build a lookup of value → node (without children yet)
   const nodeMap = new Map<string, TagNode>();
-  for (const tag of allTags) {
+  for (const tag of allValues) {
     nodeMap.set(tag, {
       value: tag,
       label: tagLabel(tag),
@@ -150,7 +162,7 @@ export function buildTagHierarchy(
   }
 
   // Sort all values so shorter paths come first (parent before child)
-  const sorted = [...allTags].sort();
+  const sorted = [...allValues].sort();
 
   const roots: TagNode[] = [];
 
@@ -179,6 +191,26 @@ function tagLabel(tagValue: string): string {
   if (slashIdx !== -1) return tagValue.slice(slashIdx + 1);
   const colonIdx = tagValue.indexOf(':');
   return colonIdx !== -1 ? tagValue.slice(colonIdx + 1) : tagValue;
+}
+
+/**
+ * Every dimensioned ancestor prefix of a value, excluding the value itself and
+ * the bare `dimension:` root. `where:europe/uk/london` yields
+ * `['where:europe', 'where:europe/uk']`. Used to synthesise intermediate
+ * hierarchy nodes for leaf-only value sets.
+ */
+function ancestorPrefixes(value: string): string[] {
+  const colonIdx = value.indexOf(':');
+  if (colonIdx === -1) return [];
+  const dimension = value.slice(0, colonIdx);
+  const segments = value.slice(colonIdx + 1).split('/');
+  const out: string[] = [];
+  let acc = '';
+  for (let i = 0; i < segments.length - 1; i++) {
+    acc = acc ? `${acc}/${segments[i]}` : segments[i];
+    out.push(`${dimension}:${acc}`);
+  }
+  return out;
 }
 
 /**
