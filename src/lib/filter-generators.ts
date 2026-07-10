@@ -50,21 +50,32 @@ export type FilterGenerator = {
 const LOCATION_OVERRIDE_KEY = 'location';
 
 /**
+ * Sentinel `location:` value that suppresses date-derivation entirely: the card
+ * gets no geographic `where:*` tag even if its date falls in a travel-log range.
+ * Reserved — no real travel-log location path is `none`. Only the *derived* tag
+ * is suppressed; authored `where:*` tags (e.g. `where:work/*`) are left in place.
+ */
+const LOCATION_NONE = 'none';
+
+/**
  * `where:*` location tags derived from the travel log (src/data/travel-log.ts).
  * A card's date is matched against the log's date ranges. A card (or a folder,
  * via `_config.yaml`) can override this by setting `location:` to a bare
- * location path — the override replaces the date lookup entirely, while any
- * authored `where:*` tags (e.g. `where:work/*`) are left untouched.
+ * location path — the override replaces the date lookup entirely — or to `none`
+ * to suppress the derived tag altogether. Either way, authored `where:*` tags
+ * (e.g. `where:work/*`) are left untouched.
  */
 const travelWhereGenerator: FilterGenerator = {
   overrideKeys: [LOCATION_OVERRIDE_KEY],
   apply(tags, { date, overrides }) {
     const override = overrides?.[LOCATION_OVERRIDE_KEY];
-    const derived = override
-      ? `where:${override}`
-      : date
-        ? lookupLocationForDate(date, TRAVEL_LOG)
-        : null;
+    const derived = override === LOCATION_NONE
+      ? null
+      : override
+        ? `where:${override}`
+        : date
+          ? lookupLocationForDate(date, TRAVEL_LOG)
+          : null;
     return injectWhereTags(tags, derived);
   },
   allValues() {

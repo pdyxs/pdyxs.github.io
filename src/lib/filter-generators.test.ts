@@ -40,6 +40,24 @@ describe('generatedTagsForCard', () => {
     expect(tags).toContain('where:europe/norway/svalbard');
   });
 
+  it('location: none suppresses the date-derived tag', () => {
+    // 2017-09-15 is the Taghazout range, but `none` opts out of derivation.
+    const tags = generatedTagsForCard(['what:writing'], {
+      date: new Date('2017-09-15T00:00:00.000Z'),
+      overrides: { location: 'none' },
+    });
+    expect(tags.filter(t => t.startsWith('where:'))).toEqual([]);
+    expect(tags).toContain('what:writing');
+  });
+
+  it('location: none leaves an authored where:work tag in place', () => {
+    const tags = generatedTagsForCard(['where:work/dot'], {
+      date: new Date('2017-09-15T00:00:00.000Z'),
+      overrides: { location: 'none' },
+    });
+    expect(tags).toEqual(['where:work/dot']);
+  });
+
   it('date-derivation still runs alongside an authored where:work tag (no skip)', () => {
     // 2017-09-15 is the Taghazout range; the authored work tag must not suppress it.
     const tags = generatedTagsForCard(['where:work/dot'], {

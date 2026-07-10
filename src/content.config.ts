@@ -43,7 +43,9 @@ const content = defineCollection({
         // overrides the date-derived where:* tag for this card (see the travel
         // generator in src/lib/filter-generators.ts). Also settable per-folder
         // via _config.yaml, where it cascades nearest-wins. Use for content
-        // posted long after the trip it's about.
+        // posted long after the trip it's about. The reserved value "none"
+        // suppresses the derived where:* tag entirely (for cards whose date
+        // carries no meaningful location); a nearer real path overrides it back.
         location: z.string().optional(),
         renderer: z.string().optional(),
         // Nav renderer name (owns the card shell + custom navigation, e.g.
