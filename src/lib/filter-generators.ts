@@ -25,25 +25,47 @@ import { lookupLocationForDate, injectWhereTags } from './where-tags.ts';
 /** The card fields a generator may read. Kept minimal and view-free. */
 export type FilterGeneratorCard = {
   date?: Date;
+  /**
+   * Explicit override attributes, keyed by the frontmatter/`_config.yaml`
+   * attribute name a generator declares in `overrideKeys`. Populated by
+   * getAllCards() (src/lib/cards.ts) as `frontmatter[key] ?? cascade[key]`.
+   */
+  overrides?: Record<string, string | undefined>;
 };
 
 export type FilterGenerator = {
+  /**
+   * Frontmatter/`_config.yaml` attribute names this generator consumes as
+   * explicit overrides. Each generator owns its own keys so two generators
+   * that both touch the same dimension never collide. See generatorOverrideKeys().
+   */
+  overrideKeys?: string[];
   /** Returns `tags` with this generator's derived tags merged in. */
   apply(tags: string[], card: FilterGeneratorCard): string[];
   /** Every filter value this generator can emit, for the short-code manifest. */
   allValues(): string[];
 };
 
+/** The attribute the travel generator reads to override its date-derived value. */
+const LOCATION_OVERRIDE_KEY = 'location';
+
 /**
  * `where:*` location tags derived from the travel log (src/data/travel-log.ts).
- * A card's date is matched against the log's date ranges; a card that already
- * declares a `where:*` tag in frontmatter overrides the derived value (see
- * injectWhereTags).
+ * A card's date is matched against the log's date ranges. A card (or a folder,
+ * via `_config.yaml`) can override this by setting `location:` to a bare
+ * location path — the override replaces the date lookup entirely, while any
+ * authored `where:*` tags (e.g. `where:work/*`) are left untouched.
  */
 const travelWhereGenerator: FilterGenerator = {
-  apply(tags, { date }) {
-    if (!date) return tags;
-    return injectWhereTags(tags, lookupLocationForDate(date, TRAVEL_LOG));
+  overrideKeys: [LOCATION_OVERRIDE_KEY],
+  apply(tags, { date, overrides }) {
+    const override = overrides?.[LOCATION_OVERRIDE_KEY];
+    const derived = override
+      ? `where:${override}`
+      : date
+        ? lookupLocationForDate(date, TRAVEL_LOG)
+        : null;
+    return injectWhereTags(tags, derived);
   },
   allValues() {
     return [...new Set(TRAVEL_LOG.map(entry => `where:${entry.location}`))];
@@ -74,6 +96,11 @@ export function generatedDisplayName(value: string): string | undefined {
 /** Runs every generator over a card's tags, returning the augmented list. */
 export function generatedTagsForCard(tags: string[], card: FilterGeneratorCard): string[] {
   return FILTER_GENERATORS.reduce((acc, gen) => gen.apply(acc, card), tags);
+}
+
+/** The union of every override attribute key any generator declares (for the cascade + card plumbing). */
+export function generatorOverrideKeys(): string[] {
+  return [...new Set(FILTER_GENERATORS.flatMap(gen => gen.overrideKeys ?? []))];
 }
 
 /** Sorted, deduped union of every value any generator can emit (for the manifest). */

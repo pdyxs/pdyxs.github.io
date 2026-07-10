@@ -30,24 +30,29 @@ export function lookupLocationForDate(date: Date, log: TravelEntry[]): string | 
 }
 
 /**
- * Merge a derived `where:*` tag into a card's existing tag list.
+ * Append a derived `where:*` tag to a card's existing tag list.
+ *
+ * The `where` dimension is dual-purpose: authored `where:work/*` tags coexist
+ * with generator-derived geographic tags, so this no longer skips when a
+ * `where:*` tag is already present. Overriding the *derived* value is the
+ * generator's job (via the `location` override key, see filter-generators.ts) —
+ * by the time we get here, `derivedWhereTag` is already the value to append.
  *
  * Rules:
- * - If `cardTags` already contains any `where:*` tag, return `cardTags` unchanged
- *   (frontmatter location overrides the derived value).
- * - Otherwise, if `derivedWhereTag` is non-null, append it and return the new list.
  * - If `derivedWhereTag` is null, return `cardTags` unchanged.
+ * - If `derivedWhereTag` is already present (exact match), return `cardTags`
+ *   unchanged (dedup).
+ * - Otherwise append it and return the new list.
  *
  * @param cardTags        - The tags already present on the card (from frontmatter / defaults)
- * @param derivedWhereTag - The tag produced by `lookupLocationForDate`, or null
+ * @param derivedWhereTag - The tag to inject (from an override or `lookupLocationForDate`), or null
  */
 export function injectWhereTags(cardTags: string[], derivedWhereTag: string | null): string[] {
-  // Frontmatter override: if any where:* tag is already present, leave tags unchanged.
-  if (cardTags.some(t => t.startsWith('where:'))) {
+  if (derivedWhereTag === null) {
     return cardTags;
   }
 
-  if (derivedWhereTag === null) {
+  if (cardTags.includes(derivedWhereTag)) {
     return cardTags;
   }
 

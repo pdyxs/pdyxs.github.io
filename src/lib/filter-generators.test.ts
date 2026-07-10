@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   generatedTagsForCard,
+  generatorOverrideKeys,
   allGeneratedFilterValues,
   declaredGeneratedFilterValues,
   generatedDisplayName,
@@ -20,18 +21,49 @@ describe('generatedTagsForCard', () => {
     expect(generatedTagsForCard(base, {})).toEqual(base);
   });
 
-  it('respects a frontmatter where:* override (does not inject a second one)', () => {
-    const tags = generatedTagsForCard(['where:antarctica/somewhere'], {
+  it('a location override replaces the date-derived value', () => {
+    // 2018-07-15 falls in the Berlin range, but the override wins.
+    const tags = generatedTagsForCard(['what:writing'], {
+      date: new Date('2018-07-15T00:00:00.000Z'),
+      overrides: { location: 'europe/norway/svalbard' },
+    });
+    expect(tags).toContain('where:europe/norway/svalbard');
+    expect(tags.filter(t => t.startsWith('where:'))).toEqual(['where:europe/norway/svalbard']);
+  });
+
+  it('an override coexists with an authored where:work tag', () => {
+    const tags = generatedTagsForCard(['where:work/dot'], {
+      date: new Date('2018-07-15T00:00:00.000Z'),
+      overrides: { location: 'europe/norway/svalbard' },
+    });
+    expect(tags).toContain('where:work/dot');
+    expect(tags).toContain('where:europe/norway/svalbard');
+  });
+
+  it('date-derivation still runs alongside an authored where:work tag (no skip)', () => {
+    // 2017-09-15 is the Taghazout range; the authored work tag must not suppress it.
+    const tags = generatedTagsForCard(['where:work/dot'], {
       date: new Date('2017-09-15T00:00:00.000Z'),
     });
-    expect(tags).toEqual(['where:antarctica/somewhere']);
-    expect(tags.filter(t => t.startsWith('where:'))).toHaveLength(1);
+    expect(tags).toContain('where:work/dot');
+    expect(tags).toContain('where:africa/morocco/taghazout');
   });
 
   it('injects the ongoing (to: null) location for a present-day date', () => {
     // Final entry is australia/sydney with to: null.
     const tags = generatedTagsForCard([], { date: new Date('2030-01-01T00:00:00.000Z') });
     expect(tags).toContain('where:australia/sydney');
+  });
+});
+
+describe('generatorOverrideKeys', () => {
+  it('includes the travel generator\'s location key', () => {
+    expect(generatorOverrideKeys()).toContain('location');
+  });
+
+  it('is deduplicated', () => {
+    const keys = generatorOverrideKeys();
+    expect(keys).toEqual([...new Set(keys)]);
   });
 });
 

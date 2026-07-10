@@ -91,16 +91,16 @@ describe('injectWhereTags', () => {
     expect(result).not.toBe(tags);           // different reference
   });
 
-  it('returns tags unchanged when the card already has a where:* tag (frontmatter override)', () => {
-    const tags = ['what:projects', 'where:usa/new-york'];
+  it('appends alongside an existing where:* tag (authored where:work tags coexist)', () => {
+    const tags = ['what:projects', 'where:work/dot'];
     const result = injectWhereTags(tags, 'where:australia/sydney');
-    expect(result).toEqual(tags);
+    expect(result).toEqual(['what:projects', 'where:work/dot', 'where:australia/sydney']);
   });
 
-  it('frontmatter where:* tag takes precedence even when derived tag differs', () => {
-    const tags = ['where:europe/london'];
+  it('dedups an exact-duplicate derived tag', () => {
+    const tags = ['what:projects', 'where:usa/san-francisco'];
     const result = injectWhereTags(tags, 'where:usa/san-francisco');
-    expect(result).toEqual(['where:europe/london']);
+    expect(result).toEqual(tags);
   });
 
   it('returns tags unchanged when derivedWhereTag is null and no existing where:* tag', () => {

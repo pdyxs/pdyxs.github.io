@@ -26,6 +26,13 @@ export type FolderCascade = {
   renderer?: string;
   /** Cascade tags accumulated across every ancestor `_config.yaml` (union, order-preserving, dedup). */
   cascadeTags: string[];
+  /**
+   * Nearest-ancestor value for each requested override key (see the
+   * `overrideKeys` param) — e.g. a generator's `location` override. Only keys
+   * that appear in some ancestor `_config.yaml` are present. Nearest-wins, like
+   * `renderer`.
+   */
+  overrides: Record<string, string>;
   /** This folder's own tag identity (name/description) — not inherited by descendants. */
   tagIdentity: { name?: string; description?: string };
 };
@@ -35,6 +42,7 @@ type ConfigFile = {
   tags?: string[];
   name?: string;
   description?: string;
+  [key: string]: unknown;
 };
 
 /**
@@ -53,7 +61,8 @@ type ConfigFile = {
  */
 export async function resolveFolderCascade(
   uid: string,
-  reader: (path: string) => Promise<string | null>
+  reader: (path: string) => Promise<string | null>,
+  overrideKeys: string[] = []
 ): Promise<FolderCascade> {
   const parts = uid.split('/');
   const dirs = parts.slice(0, -1);
@@ -63,6 +72,7 @@ export async function resolveFolderCascade(
   let renderer: string | undefined;
   const cascadeTags: string[] = [];
   const seenTags = new Set<string>();
+  const overrides: Record<string, string> = {};
   let tagIdentity: { name?: string; description?: string } = {};
 
   for (let i = 0; i < candidates.length; i++) {
@@ -81,6 +91,14 @@ export async function resolveFolderCascade(
       }
     }
 
+    // Override keys cascade nearest-wins, like `renderer`: a deeper candidate
+    // overwrites a shallower one. Kept generic — this module owns no knowledge
+    // of any specific generator's key.
+    for (const key of overrideKeys) {
+      const value = parsed[key];
+      if (typeof value === 'string') overrides[key] = value;
+    }
+
     // Tag identity belongs only to the file's own (nearest) directory — it
     // does not cascade to descendants — so only the last candidate counts.
     if (i === candidates.length - 1 && (parsed.name || parsed.description)) {
@@ -88,5 +106,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, cascadeTags, tagIdentity };
+  return { renderer, cascadeTags, overrides, tagIdentity };
 }

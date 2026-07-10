@@ -1,3 +1,6 @@
 name: The Arctic Circle
 description: >
   Dispatches from a trip to Svalbard, in the Arctic Circle.
+# These were mostly posted after returning; force the where:* tag to the trip
+# location rather than deriving it from each post's (later) date.
+location: europe/norway/svalbard

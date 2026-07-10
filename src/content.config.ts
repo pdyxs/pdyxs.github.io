@@ -38,6 +38,13 @@ const content = defineCollection({
         description: z.string().optional(),
         tags: z.array(z.string()).default([]),
         date: z.coerce.date().optional(),
+        // ── generated-tag overrides ──
+        // Bare travel-log location path (e.g. "europe/norway/svalbard") that
+        // overrides the date-derived where:* tag for this card (see the travel
+        // generator in src/lib/filter-generators.ts). Also settable per-folder
+        // via _config.yaml, where it cascades nearest-wins. Use for content
+        // posted long after the trip it's about.
+        location: z.string().optional(),
         renderer: z.string().optional(),
         // bare filename → resolved against the entry's own directory via
         // resolveLocalImage() (src/lib/images.ts); full URL → rendered as-is.

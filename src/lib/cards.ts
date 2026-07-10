@@ -1,7 +1,7 @@
 import { getCollection } from 'astro:content';
 import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
-import { generatedTagsForCard } from './filter-generators';
+import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
 function effectiveTags(
@@ -64,19 +64,25 @@ export async function getAllCards(): Promise<CardMeta[]> {
   const allContent = await getCollection('content');
 
   const reader = makeFileReader();
+  const overrideKeys = generatorOverrideKeys();
 
   const contentMeta = await Promise.all(
     allContent
       .filter(e => e.id.startsWith(STORIES_PREFIX) ? (import.meta.env.DEV || e.data.published !== false) : true)
       .map(async e => {
         const uid = e.id;
-        const cascade = await resolveFolderCascade(uid, reader);
+        const cascade = await resolveFolderCascade(uid, reader, overrideKeys);
 
         const title = resolveCardTitle(uid, e.data);
         const description = resolveCardDescription(uid, e.data);
 
         const baseTags = effectiveTags(uid, e.data.tags, cascade.cascadeTags);
-        const finalTags = generatedTagsForCard(baseTags, { date: e.data.date });
+        const overrides: Record<string, string | undefined> = {};
+        for (const key of overrideKeys) {
+          overrides[key] = (e.data as Record<string, unknown>)[key] as string | undefined
+            ?? cascade.overrides[key];
+        }
+        const finalTags = generatedTagsForCard(baseTags, { date: e.data.date, overrides });
 
         return {
           uid,

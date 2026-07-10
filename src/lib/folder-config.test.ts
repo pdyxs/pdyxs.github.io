@@ -74,6 +74,38 @@ describe('resolveFolderCascade', () => {
     expect(result.tagIdentity).toEqual({ name: 'Puzzles', description: undefined });
   });
 
+  it('collects a requested override key from an ancestor _config.yaml', async () => {
+    const files: Record<string, string> = {
+      'what/posts/stories/arctic/_config.yaml': 'location: europe/norway/svalbard\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade(
+      'what/posts/stories/arctic/05-reindeer',
+      readFile,
+      ['location'],
+    );
+    expect(result.overrides.location).toBe('europe/norway/svalbard');
+  });
+
+  it('an override key cascades nearest-wins', async () => {
+    const files: Record<string, string> = {
+      'trips/_config.yaml': 'location: europe/germany/berlin\n',
+      'trips/arctic/_config.yaml': 'location: europe/norway/svalbard\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade('trips/arctic/ch-01', readFile, ['location']);
+    expect(result.overrides.location).toBe('europe/norway/svalbard');
+  });
+
+  it('ignores config keys that were not requested as override keys', async () => {
+    const files: Record<string, string> = {
+      'trips/arctic/_config.yaml': 'location: europe/norway/svalbard\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade('trips/arctic/ch-01', readFile);
+    expect(result.overrides).toEqual({});
+  });
+
   it('walks a dimension-rooted uid, checking every ancestor including the dimension root', async () => {
     const files: Record<string, string> = {
       'what/projects/_config.yaml': 'renderer: project\n',
