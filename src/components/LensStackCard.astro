@@ -25,7 +25,9 @@
 import { getLensDefinition } from '../lib/lens-registry';
 import { deriveLensChrome } from '../lib/lens-chrome';
 import { getAllCards } from '../lib/cards';
-import { getTagRegistry, flattenTagDisplay } from '../lib/tag-registry';
+import { getTagRegistry, flattenTagDisplay, makeContentTreeReader } from '../lib/tag-registry';
+import { discoverCollapseConfig } from '../lib/collapse-config';
+import { collapseCollections } from '../lib/collapse';
 import { buildAllDimensionHierarchies } from '../lib/browse-helpers';
 import { DIMENSIONS } from '../lib/filters';
 import type { FilterState } from '../lib/filters';
@@ -63,8 +65,18 @@ if (lens) {
   const registry = await getTagRegistry(allCards);
   tagDisplay = flattenTagDisplay(registry);
   const declaredValues = DIMENSIONS.flatMap(d => registry[d].values);
-  hierarchies = buildAllDimensionHierarchies(allCards, declaredValues, tagDisplay);
-  serialisedCards = allCards.map(card => ({ ...card, date: card.date?.toISOString() ?? null }));
+
+  // Collapse opted-in folders (e.g. story series) to a single representative
+  // card BEFORE building hierarchies/counts and serialising — so the results
+  // grid, frontpage slots, and dimension-panel counts all browse the collapsed
+  // view. The tag registry above stays on the full card list so each folder's
+  // declared identity and every value still register. getAllCards() itself is
+  // never collapsed: member cards remain real cards for direct nav + series nav.
+  const collapseConfig = await discoverCollapseConfig(makeContentTreeReader());
+  const browseCards = collapseCollections(allCards, collapseConfig, v => tagDisplay[v] ?? {});
+
+  hierarchies = buildAllDimensionHierarchies(browseCards, declaredValues, tagDisplay);
+  serialisedCards = browseCards.map(card => ({ ...card, date: card.date?.toISOString() ?? null }));
 
   const bodyLoader = LENS_BODY_LOADERS[lens.component] ?? DEFAULT_BODY_LOADER;
   BodyComponent = (await bodyLoader()).default;

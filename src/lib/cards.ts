@@ -24,6 +24,9 @@ export type CardMeta = {
   tags: string[];
   renderer: string;
   contentHash: string; // djb2 hash of title + description + body; resets view state on edit
+  /** Sequence within a series/folder (from frontmatter `order`); used to pick
+   * a collapsed folder's representative "first" card. Absent for unordered content. */
+  order?: number;
 };
 
 const STORIES_PREFIX = 'what/stories/';
@@ -92,6 +95,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
           tags: finalTags,
           renderer: e.data.renderer ?? cascade.renderer ?? 'card',
           contentHash: computeContentHash(title, description, e.body),
+          order: e.data.order,
         } satisfies CardMeta;
       })
   );
