@@ -46,6 +46,11 @@ const content = defineCollection({
         // posted long after the trip it's about.
         location: z.string().optional(),
         renderer: z.string().optional(),
+        // Nav renderer name (owns the card shell + custom navigation, e.g.
+        // series prev/next). Cascades via _config.yaml like `renderer`; keyed
+        // by name in NAV_RENDERERS (src/lib/renderers.ts). Undeclared → plain
+        // card shell (no nav renderer).
+        navRenderer: z.string().optional(),
         // bare filename → resolved against the entry's own directory via
         // resolveLocalImage() (src/lib/images.ts); full URL → rendered as-is.
         // Not image(): this field is shared with posts/puzzles, which store

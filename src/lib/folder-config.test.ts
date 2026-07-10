@@ -31,6 +31,24 @@ describe('resolveFolderCascade', () => {
     expect(result.renderer).toBe('story');
   });
 
+  it('resolves navRenderer from an ancestor _config.yaml, nearest-wins like renderer', async () => {
+    const files: Record<string, string> = {
+      'what/posts/stories/_config.yaml': 'renderer: story\nnavRenderer: series\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade('what/posts/stories/arctic/00-introduction', readFile);
+    expect(result.navRenderer).toBe('series');
+  });
+
+  it('leaves navRenderer undefined when no ancestor _config.yaml declares one', async () => {
+    const files: Record<string, string> = {
+      'what/posts/_config.yaml': 'renderer: post\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade('what/posts/some-post', readFile);
+    expect(result.navRenderer).toBeUndefined();
+  });
+
   it('accumulates cascade tags across every ancestor _config.yaml, deduped and order-preserving', async () => {
     const files: Record<string, string> = {
       'stories/_config.yaml': 'tags:\n  - why:creative\n',

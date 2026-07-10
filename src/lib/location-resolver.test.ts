@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveLocation, resolveCardRenderer } from './location-resolver';
+import { resolveLocation, resolveCardRenderer, resolveNavRenderer } from './location-resolver';
 import { COLLECTION_RENDERERS, NAV_RENDERERS } from './renderers';
 import GenericRenderer from '../components/card-renderers/GenericRenderer.astro';
 
@@ -12,29 +12,14 @@ describe('resolveLocation', () => {
     expect(resolveLocation('nope')).toEqual({ kind: 'unknown' });
   });
 
-  it('resolves a dimension-rooted card uid to kind: card, carrying its collection\'s nav renderer', () => {
-    const result = resolveLocation('what/stories/arctic-01');
-    expect(result).toEqual({
-      kind: 'card',
-      path: 'what/stories/arctic-01',
-      navComponent: NAV_RENDERERS['what/stories'],
-    });
+  it('resolves a dimension-rooted card uid to kind: card (nav renderer is resolved separately from cascade)', () => {
+    const result = resolveLocation('what/posts/stories/arctic/00-introduction');
+    expect(result).toEqual({ kind: 'card', path: 'what/posts/stories/arctic/00-introduction' });
   });
 
-  it('a card location has a null navComponent when its collection has no nav renderer', () => {
-    const result = resolveLocation('what/writing/why-portal');
-    expect(result).toEqual({ kind: 'card', path: 'what/writing/why-portal', navComponent: null });
-  });
-
-  it('matches the nav renderer prefix exactly, not just any path sharing the prefix string', () => {
-    // "what/storiesish" shares the "what/stories" string but isn't a descendant of it.
-    const result = resolveLocation('what/storiesish/foo');
-    expect(result).toEqual({ kind: 'card', path: 'what/storiesish/foo', navComponent: null });
-  });
-
-  it('resolves a tag location to kind: card with a null navComponent', () => {
+  it('resolves a tag location to kind: card', () => {
     const result = resolveLocation('tag/who');
-    expect(result).toEqual({ kind: 'card', path: 'tag/who', navComponent: null });
+    expect(result).toEqual({ kind: 'card', path: 'tag/who' });
   });
 
   it('resolves a registered lens name to kind: lens, with its definition', () => {
@@ -69,5 +54,19 @@ describe('resolveCardRenderer', () => {
     expect(resolveCardRenderer('post')).toBe(GenericRenderer);
     expect(resolveCardRenderer('story')).toBe(GenericRenderer);
     expect(resolveCardRenderer('card')).toBe(GenericRenderer);
+  });
+});
+
+describe('resolveNavRenderer', () => {
+  it('maps a registered nav-renderer name to its component', () => {
+    expect(resolveNavRenderer('series')).toBe(NAV_RENDERERS.series);
+  });
+
+  it('returns null for an undeclared (undefined) nav renderer', () => {
+    expect(resolveNavRenderer(undefined)).toBeNull();
+  });
+
+  it('returns null for a nav-renderer name with no registered component', () => {
+    expect(resolveNavRenderer('nope')).toBeNull();
   });
 });

@@ -13,11 +13,14 @@ export const COLLECTION_RENDERERS: Record<string, AstroComponentFactory> = {
   work: WorkRenderer,
 };
 
-// Keyed by the full path prefix of the collection under content/ (e.g.
-// "what/stories"), not a bare collection name — resolveLocation() matches a
-// card's uid against these prefixes to find its nav renderer.
+// Keyed by nav-renderer *name* — the cascaded `navRenderer` value from
+// frontmatter or a `_config.yaml` (see resolveFolderCascade in
+// folder-config.ts), resolved via resolveNavRenderer() once that data is
+// available. This mirrors COLLECTION_RENDERERS (keyed by `renderer` name)
+// rather than binding a renderer to a hardcoded content path, so moving or
+// renaming content folders can't silently unhook their nav shell.
 export const NAV_RENDERERS: Record<string, AstroComponentFactory> = {
-  'what/stories': SeriesNavRenderer,
+  series: SeriesNavRenderer,
 };
 
 // Collection-view browsing pages (bare collection-name uids, e.g. "posts")

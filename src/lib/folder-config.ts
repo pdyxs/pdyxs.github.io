@@ -24,6 +24,8 @@ export function makeFileReader() {
 export type FolderCascade = {
   /** Nearest-ancestor `_config.yaml` `renderer`, or undefined if no ancestor sets one. */
   renderer?: string;
+  /** Nearest-ancestor `_config.yaml` `navRenderer` (nav-shell renderer name), or undefined if none. */
+  navRenderer?: string;
   /** Cascade tags accumulated across every ancestor `_config.yaml` (union, order-preserving, dedup). */
   cascadeTags: string[];
   /**
@@ -39,6 +41,7 @@ export type FolderCascade = {
 
 type ConfigFile = {
   renderer?: string;
+  navRenderer?: string;
   tags?: string[];
   name?: string;
   description?: string;
@@ -70,6 +73,7 @@ export async function resolveFolderCascade(
   const candidates = dirs.map((_, i) => dirs.slice(0, i + 1).join('/'));
 
   let renderer: string | undefined;
+  let navRenderer: string | undefined;
   const cascadeTags: string[] = [];
   const seenTags = new Set<string>();
   const overrides: Record<string, string> = {};
@@ -81,6 +85,7 @@ export async function resolveFolderCascade(
     const parsed = (parseYaml(text) as ConfigFile | null) ?? {};
 
     if (parsed.renderer) renderer = parsed.renderer;
+    if (parsed.navRenderer) navRenderer = parsed.navRenderer;
 
     if (parsed.tags) {
       for (const tag of parsed.tags) {
@@ -106,5 +111,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, cascadeTags, overrides, tagIdentity };
+  return { renderer, navRenderer, cascadeTags, overrides, tagIdentity };
 }

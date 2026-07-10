@@ -1,4 +1,5 @@
 renderer: story
+navRenderer: series
 name: Stories
 description: >
   Narrative projects and story-driven work.

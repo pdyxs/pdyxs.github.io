@@ -16,10 +16,8 @@ import type { LensDefinition } from './lens-registry';
 
 export type CardLocation = {
   kind: 'card';
-  /** Full uid, e.g. "what/stories/arctic/ch-01" or "tag/who". */
+  /** Full uid, e.g. "what/posts/stories/arctic/ch-01" or "tag/who". */
   path: string;
-  /** Set when this card's collection has a nav renderer (e.g. stories prev/next chapter). */
-  navComponent: AstroComponentFactory | null;
 };
 
 export type CollectionViewLocation = {
@@ -40,14 +38,6 @@ export type LocationResolution = CardLocation | CollectionViewLocation | LensLoc
 
 const LENS_PREFIX = 'lens/';
 
-/** Finds the registered NAV_RENDERERS entry whose prefix owns this uid, or null. */
-function matchNavRenderer(path: string): AstroComponentFactory | null {
-  for (const prefix of Object.keys(NAV_RENDERERS)) {
-    if (path === prefix || path.startsWith(`${prefix}/`)) return NAV_RENDERERS[prefix];
-  }
-  return null;
-}
-
 /**
  * Resolves a stack path to the fragment/renderer that should handle it.
  *
@@ -55,11 +45,11 @@ function matchNavRenderer(path: string): AstroComponentFactory | null {
  *   'unknown' if the name isn't registered.
  * - A bare collection name ("posts") resolves to its collection-view
  *   renderer (kind: 'collection-view'), or 'unknown' if none is registered.
- * - Any other non-empty path (a full-path uid, e.g. "what/stories/arctic/ch-01"
- *   or "tag/who") resolves to kind: 'card', carrying its nav renderer (if any,
- *   matched by NAV_RENDERERS prefix) — the per-entry content renderer itself
- *   still depends on frontmatter/collection data fetched by the caller, so use
- *   resolveCardRenderer() once that data is available.
+ * - Any other non-empty path (a full-path uid, e.g.
+ *   "what/posts/stories/arctic/ch-01" or "tag/who") resolves to kind: 'card'.
+ *   Both the content renderer and the nav renderer depend on
+ *   frontmatter/`_config.yaml` data fetched by the caller, so resolve them with
+ *   resolveCardRenderer() / resolveNavRenderer() once that data is available.
  * - An empty path is 'unknown'.
  */
 export function resolveLocation(path: string): LocationResolution {
@@ -77,7 +67,7 @@ export function resolveLocation(path: string): LocationResolution {
     return component ? { kind: 'collection-view', collection: path, component } : { kind: 'unknown' };
   }
 
-  return { kind: 'card', path, navComponent: matchNavRenderer(path) };
+  return { kind: 'card', path };
 }
 
 /**
@@ -88,4 +78,14 @@ export function resolveLocation(path: string): LocationResolution {
  */
 export function resolveCardRenderer(rendererName: string): AstroComponentFactory {
   return COLLECTION_RENDERERS[rendererName] ?? GenericRenderer;
+}
+
+/**
+ * Maps a cascaded nav-renderer name (frontmatter `navRenderer` override, else
+ * nearest-ancestor `_config.yaml` `navRenderer` — see resolveFolderCascade) to
+ * its component. Returns null when no name is declared or the name has no
+ * registered component, meaning "plain card shell, no nav renderer".
+ */
+export function resolveNavRenderer(navRendererName: string | undefined): AstroComponentFactory | null {
+  return navRendererName ? NAV_RENDERERS[navRendererName] ?? null : null;
 }
