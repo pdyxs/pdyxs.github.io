@@ -110,6 +110,8 @@ export function collapseCollections(
       date: latestDate(members),
       tags: unionTags(members),
       renderer: dest.renderer,
+      image: dest.image,
+      collapsed: { count: members.length },
       // Stable across which member is destination — keyed to folder identity.
       contentHash: computeContentHash(title, description, folderUid),
     });

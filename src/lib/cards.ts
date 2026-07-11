@@ -2,6 +2,7 @@ import { getCollection } from 'astro:content';
 import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
 import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
+import { interpolate } from './interpolate';
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
 function effectiveTags(
@@ -23,14 +24,18 @@ export type CardMeta = {
   date?: Date;
   tags: string[];
   renderer: string;
+  /** Raw frontmatter `image` (bare colocated filename or remote URL); resolved to a thumbnail at serialisation time. */
+  image?: string;
   contentHash: string; // djb2 hash of title + description + body; resets view state on edit
   /** Sequence within a series/folder (from frontmatter `order`); used to pick
    * a collapsed folder's representative "first" card. Absent for unordered content. */
   order?: number;
+  /** Present only on a collapsed-folder representative (see collapse.ts): how
+   * many member cards the folder collapsed. Drives the browse-card count badge. */
+  collapsed?: { count: number };
 };
 
 const STORIES_PREFIX = 'what/stories/';
-const PUZZLES_PREFIX = 'what/puzzles/';
 
 /** Resolves a card's display title, applying the stories-fallback-to-series rule. */
 export function resolveCardTitle(
@@ -40,15 +45,26 @@ export function resolveCardTitle(
   return data.title ?? (uid.startsWith(STORIES_PREFIX) ? (data.series ?? '') : '') ?? '';
 }
 
-/** Resolves a card's description, synthesising one from puzzle metadata when absent. */
+/**
+ * Resolves a card's description: the frontmatter `description` if present,
+ * otherwise a fallback synthesised from the folder's `cardDescriptionParts`
+ * templates (see folder-config.ts). Each part is interpolated against the
+ * card's frontmatter and dropped when any of its `{{field}}` references is
+ * missing; the surviving parts are joined by ` · `.
+ */
 export function resolveCardDescription(
-  uid: string,
-  data: { description?: string; puzzle_type?: string; difficulty?: string }
+  data: { description?: string; [key: string]: unknown },
+  cardDescriptionParts?: string[]
 ): string | undefined {
-  if (uid.startsWith(PUZZLES_PREFIX) && !data.description) {
-    return [data.puzzle_type, data.difficulty].filter(Boolean).join(' · ') || undefined;
+  if (data.description) return data.description;
+  if (cardDescriptionParts && cardDescriptionParts.length > 0) {
+    const joined = cardDescriptionParts
+      .map(part => interpolate(part, data))
+      .filter((s): s is string => !!s)
+      .join(' · ');
+    return joined || undefined;
   }
-  return data.description;
+  return undefined;
 }
 
 function djb2Hash(s: string): number {
@@ -77,7 +93,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
         const cascade = await resolveFolderCascade(uid, reader, overrideKeys);
 
         const title = resolveCardTitle(uid, e.data);
-        const description = resolveCardDescription(uid, e.data);
+        const description = resolveCardDescription(e.data, cascade.cardDescriptionParts);
 
         const baseTags = effectiveTags(uid, e.data.tags, cascade.cascadeTags);
         const overrides: Record<string, string | undefined> = {};
@@ -94,6 +110,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
           date: e.data.date,
           tags: finalTags,
           renderer: e.data.renderer ?? cascade.renderer ?? 'card',
+          image: e.data.image,
           contentHash: computeContentHash(title, description, e.body),
           order: e.data.order,
         } satisfies CardMeta;

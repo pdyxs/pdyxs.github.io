@@ -35,6 +35,12 @@ export type FolderCascade = {
    * `renderer`.
    */
   overrides: Record<string, string>;
+  /**
+   * Nearest-ancestor `cardDescriptionParts` — a list of `{{field}}` templates
+   * used to synthesise a fallback description for cards in this folder that
+   * declare none (see resolveCardDescription). Nearest-wins, like `renderer`.
+   */
+  cardDescriptionParts?: string[];
   /** This folder's own tag identity (name/description) — not inherited by descendants. */
   tagIdentity: { name?: string; description?: string };
 };
@@ -45,6 +51,7 @@ type ConfigFile = {
   tags?: string[];
   name?: string;
   description?: string;
+  cardDescriptionParts?: string[];
   [key: string]: unknown;
 };
 
@@ -74,6 +81,7 @@ export async function resolveFolderCascade(
 
   let renderer: string | undefined;
   let navRenderer: string | undefined;
+  let cardDescriptionParts: string[] | undefined;
   const cascadeTags: string[] = [];
   const seenTags = new Set<string>();
   const overrides: Record<string, string> = {};
@@ -86,6 +94,11 @@ export async function resolveFolderCascade(
 
     if (parsed.renderer) renderer = parsed.renderer;
     if (parsed.navRenderer) navRenderer = parsed.navRenderer;
+    if (Array.isArray(parsed.cardDescriptionParts)) {
+      cardDescriptionParts = parsed.cardDescriptionParts.filter(
+        (p): p is string => typeof p === 'string'
+      );
+    }
 
     if (parsed.tags) {
       for (const tag of parsed.tags) {
@@ -111,5 +124,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, navRenderer, cascadeTags, overrides, tagIdentity };
+  return { renderer, navRenderer, cardDescriptionParts, cascadeTags, overrides, tagIdentity };
 }

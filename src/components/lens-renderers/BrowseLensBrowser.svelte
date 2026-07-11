@@ -27,4 +27,4 @@
   const sortedCards = $derived(sortCardsForBrowse(filteredCards, config));
 </script>
 
-<BrowseResults cards={sortedCards} {tagDisplay} />
+<BrowseResults cards={sortedCards} {tagDisplay} filterState={$lensFilterStore} />

@@ -49,11 +49,13 @@ if (resolution.kind === 'card') {
 // cascade the same way.
 let rendererName = 'card';
 let NavComponent: any = null;
+let cardDescriptionParts: string[] | undefined;
 if (resolution.kind === 'card') {
   const cascade = await resolveFolderCascade(resolution.path, makeFileReader());
   rendererName = (entry?.data as any)?.renderer ?? cascade.renderer ?? 'card';
   const navRendererName = (entry?.data as any)?.navRenderer ?? cascade.navRenderer;
   NavComponent = resolveNavRenderer(navRendererName);
+  cardDescriptionParts = cascade.cardDescriptionParts;
 }
 const Renderer = resolution.kind === 'card' ? resolveCardRenderer(rendererName) : GenericRenderer;
 
@@ -75,7 +77,7 @@ const contentHash: string | undefined =
   resolution.kind === 'card' && entry
     ? computeContentHash(
         resolveCardTitle(resolution.path, entry.data),
-        resolveCardDescription(resolution.path, entry.data),
+        resolveCardDescription(entry.data, cardDescriptionParts),
         entry.body
       )
     : undefined;

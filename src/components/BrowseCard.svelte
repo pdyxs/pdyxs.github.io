@@ -2,55 +2,116 @@
   import type { SerialisedCard } from '../lib/browse-helpers';
   import { displayFor } from '../lib/tag-display';
   import type { TagDisplay } from '../lib/tag-display';
+  import type { FilterState } from '../lib/filters';
+  import { computeCardTagDisplay } from '../lib/card-tag-display';
 
   interface Props {
     card: SerialisedCard;
     /** Flat value -> display-name map from the tag registry (see tag-registry.ts's flattenTagDisplay), serialised in from the server. */
     tagDisplay?: Record<string, TagDisplay>;
+    /** Active filter selections — drives which tags are hidden/highlighted. */
+    filterState?: FilterState;
   }
 
-  let { card, tagDisplay = {} }: Props = $props();
+  let { card, tagDisplay = {}, filterState = { selections: {} } }: Props = $props();
+
+  const tagChips = $derived(computeCardTagDisplay(card.tags, filterState));
 </script>
 
-<li class="browse-card-item" data-push-card={card.uid}>
-  <div class="browse-card-header">
-    <p class="browse-card-title">{card.title}</p>
-    {#if card.date}
-      <time
-        class="browse-card-date"
-        datetime={new Date(card.date).toISOString()}
-      >
-        {new Date(card.date).toLocaleDateString('en-AU', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        })}
-      </time>
+<li class="browse-card-item">
+  <!-- A real anchor: keyboard-focusable and cmd/middle-clickable. The delegated
+       data-push-card handler in CardStack.svelte intercepts left-clicks and
+       preventDefaults, doing the in-stack push instead of a full navigation. -->
+  <a class="browse-card-link" href={`/card/${card.uid}`} data-push-card={card.uid}>
+    {#if card.thumb}
+      <img
+        class="browse-card-thumb"
+        src={card.thumb}
+        srcset={card.thumbSrcset}
+        sizes="(max-width: 700px) 100vw, 300px"
+        alt=""
+        loading="lazy"
+        onerror={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
+      />
     {/if}
-  </div>
-  {#if card.description}
-    <p class="browse-card-desc">{card.description}</p>
-  {/if}
-  {#if card.tags.length > 0}
-    <ul class="browse-card-tags" aria-label="Tags">
-      {#each card.tags as tag}
-        <li class="browse-card-tag">{displayFor(tag, tagDisplay).name}</li>
-      {/each}
-    </ul>
-  {/if}
+    <div class="browse-card-content">
+    <div class="browse-card-header">
+      <p class="browse-card-title">
+        {card.title}
+        {#if card.collapsed}
+          <span class="browse-card-badge">{card.collapsed.count} parts</span>
+        {/if}
+      </p>
+      {#if card.date}
+        <time
+          class="browse-card-date"
+          datetime={new Date(card.date).toISOString()}
+        >
+          {new Date(card.date).toLocaleDateString('en-AU', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          })}
+        </time>
+      {/if}
+    </div>
+    {#if card.description}
+      <p class="browse-card-desc">{card.description}</p>
+    {/if}
+    {#if tagChips.tags.length > 0 || tagChips.overflow > 0}
+      <ul class="browse-card-tags" aria-label="Tags">
+        {#each tagChips.tags as chip}
+          <li class="browse-card-tag" class:browse-card-tag--active={chip.active}>
+            {displayFor(chip.value, tagDisplay).name}
+          </li>
+        {/each}
+        {#if tagChips.overflow > 0}
+          <li class="browse-card-tag browse-card-tag-overflow">+{tagChips.overflow}</li>
+        {/if}
+      </ul>
+    {/if}
+    </div>
+  </a>
 </li>
 
 <style>
   .browse-card-item {
     border: var(--border-width) solid var(--color-border);
-    padding: var(--space-md);
-    cursor: pointer;
     background: var(--color-surface);
     transition: background 0.1s;
+    /* Clip the bled-out thumbnail banner to the card's border box. */
+    overflow: hidden;
   }
 
   .browse-card-item:hover {
     background: var(--color-bg-hover);
+  }
+
+  .browse-card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .browse-card-link:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: -2px;
+  }
+
+  /* Full-bleed banner: a direct child of the (unpadded) link, so it spans the
+     whole card. max-width:none defeats the reset's `img { max-width: 100% }`. */
+  .browse-card-thumb {
+    display: block;
+    width: 100%;
+    max-width: none;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: var(--color-bg-stripes);
+  }
+
+  .browse-card-content {
+    padding: var(--space-md);
   }
 
   .browse-card-header {
@@ -65,6 +126,20 @@
     font-family: var(--font-heading);
     font-size: 1rem;
     margin: 0;
+  }
+
+  .browse-card-badge {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: var(--space-xs);
+    font-family: var(--font-ui);
+    font-size: 0.65rem;
+    font-weight: normal;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--color-bg-stripes);
+    color: var(--color-text-muted);
+    white-space: nowrap;
   }
 
   .browse-card-date {
@@ -100,5 +175,17 @@
     padding: 1px 6px;
     border: 1px solid var(--color-border-light);
     color: var(--color-text-muted);
+  }
+
+  /* An OR-matched tag (dimension with >1 active selection): stands out so the
+     reader can see which branch this card matched. */
+  .browse-card-tag--active {
+    background: var(--color-tag-active-bg);
+    border-color: var(--color-tag-active-border);
+    color: var(--color-text);
+  }
+
+  .browse-card-tag-overflow {
+    border-style: dashed;
   }
 </style>

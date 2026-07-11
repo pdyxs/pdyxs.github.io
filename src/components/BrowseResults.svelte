@@ -1,14 +1,18 @@
 <script lang="ts">
   import type { CardMeta } from '../lib/cards';
   import type { TagDisplay } from '../lib/tag-display';
+  import type { FilterState } from '../lib/filters';
   import BrowseCard from './BrowseCard.svelte';
 
   interface Props {
     cards: CardMeta[];
     tagDisplay?: Record<string, TagDisplay>;
+    /** Active filter selections — drives per-card tag hiding/highlighting.
+     * Defaults to no filter (e.g. the "Related" list in GenericRenderer). */
+    filterState?: FilterState;
   }
 
-  let { cards, tagDisplay = {} }: Props = $props();
+  let { cards, tagDisplay = {}, filterState = { selections: {} } }: Props = $props();
 </script>
 
 <main class="fp-browse-grid" aria-label="Browse results">
@@ -21,7 +25,7 @@
   {:else}
     <ul class="fp-browse-list">
       {#each cards as card (card.uid)}
-        <BrowseCard {card} {tagDisplay} />
+        <BrowseCard {card} {tagDisplay} {filterState} />
       {/each}
     </ul>
   {/if}

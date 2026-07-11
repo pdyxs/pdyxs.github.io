@@ -10,6 +10,9 @@
   --color-text-muted: #555555;
   --color-bg-hover:   #f0f0f0;
   --color-overlay:    rgba(0, 0, 0, 0.85);
+  /* Emphasis for an OR-matched browse-card tag (monochrome: fill + strong border). */
+  --color-tag-active-bg:     #eaeaea;
+  --color-tag-active-border: #000000;
 
   --font-body:    'Montserrat', system-ui, sans-serif;
   --font-ui:      'Montserrat', system-ui, sans-serif;
@@ -38,6 +41,8 @@ html[data-theme="dark"] {
   --color-text:         #e0e0e0;
   --color-text-muted:   #aaaaaa;
   --color-bg-hover:     #2d2d2d;
+  --color-tag-active-bg:     #3a3a3a;
+  --color-tag-active-border: #c0c0c0;
 }
 
 /* ── Reset ─────────────────────────────────────────────────────── */

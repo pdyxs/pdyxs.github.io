@@ -11,6 +11,24 @@ describe('resolveFolderCascade', () => {
     expect(result.renderer).toBe('puzzle');
   });
 
+  it('reads cardDescriptionParts and lets a nearer ancestor override', async () => {
+    const files: Record<string, string> = {
+      'puzzles/_config.yaml': 'cardDescriptionParts:\n  - "{{puzzle_type}}"\n  - "{{difficulty}}"\n',
+      'puzzles/special/_config.yaml': 'cardDescriptionParts:\n  - "{{difficulty}}"\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('puzzles/a-puzzle', readFile)).cardDescriptionParts)
+      .toEqual(['{{puzzle_type}}', '{{difficulty}}']);
+    expect((await resolveFolderCascade('puzzles/special/a-puzzle', readFile)).cardDescriptionParts)
+      .toEqual(['{{difficulty}}']);
+  });
+
+  it('leaves cardDescriptionParts undefined when no ancestor declares it', async () => {
+    const files: Record<string, string> = { 'puzzles/_config.yaml': 'renderer: puzzle\n' };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('puzzles/a-puzzle', readFile)).cardDescriptionParts).toBeUndefined();
+  });
+
   it('a nearer ancestor _config.yaml renderer overrides a further one', async () => {
     const files: Record<string, string> = {
       'stories/_config.yaml': 'renderer: story\n',

@@ -73,23 +73,29 @@ describe('resolveCardTitle', () => {
 });
 
 describe('resolveCardDescription', () => {
+  const puzzleParts = ['{{puzzle_type}}', '{{difficulty}}'];
+
   it('uses data.description when present', () => {
-    expect(resolveCardDescription('what/posts/about-me', { description: 'A post' })).toBe('A post');
+    expect(resolveCardDescription({ description: 'A post' })).toBe('A post');
   });
 
-  it('builds a puzzle description from type and difficulty when description is absent', () => {
-    expect(resolveCardDescription('what/puzzles/cartography', { puzzle_type: 'Logic', difficulty: 'Hard' })).toBe('Logic · Hard');
+  it('synthesises a description from cardDescriptionParts when absent', () => {
+    expect(resolveCardDescription({ puzzle_type: 'Logic', difficulty: 'Hard' }, puzzleParts)).toBe('Logic · Hard');
   });
 
-  it('does not override an explicit puzzle description', () => {
-    expect(resolveCardDescription('what/puzzles/cartography', { description: 'Custom', puzzle_type: 'Logic' })).toBe('Custom');
+  it('drops parts whose field is missing (puzzle_type absent)', () => {
+    expect(resolveCardDescription({ difficulty: 'Level 2 (Easy)' }, puzzleParts)).toBe('Level 2 (Easy)');
   });
 
-  it('returns undefined for a non-puzzle entry with no description', () => {
-    expect(resolveCardDescription('what/posts/about-me', {})).toBeUndefined();
+  it('does not override an explicit description with parts', () => {
+    expect(resolveCardDescription({ description: 'Custom', difficulty: 'Hard' }, puzzleParts)).toBe('Custom');
   });
 
-  it('does not apply the puzzle fallback to a non-puzzles path', () => {
-    expect(resolveCardDescription('what/posts/about-me', { puzzle_type: 'Logic', difficulty: 'Hard' })).toBeUndefined();
+  it('returns undefined with no description and no parts', () => {
+    expect(resolveCardDescription({})).toBeUndefined();
+  });
+
+  it('returns undefined when every part drops', () => {
+    expect(resolveCardDescription({}, puzzleParts)).toBeUndefined();
   });
 });

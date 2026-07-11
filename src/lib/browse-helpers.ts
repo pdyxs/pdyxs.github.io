@@ -24,6 +24,12 @@ export type SerialisedCard = {
   collection: string;
   id: string;
   renderer: string;
+  /** Resolved header-image thumbnail URL (fallback src), or absent when the card has no usable image. */
+  thumb?: string;
+  /** Responsive srcset for a local thumbnail (multiple widths); absent for remote images. */
+  thumbSrcset?: string;
+  /** Present only on a collapsed-folder representative: member count, for the count badge. */
+  collapsed?: { count: number };
 };
 
 /**

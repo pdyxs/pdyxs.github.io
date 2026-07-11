@@ -22,6 +22,8 @@
 // across independent hydration boundaries, so they coordinate only through
 // the shared lensFilterStore (src/stores/lens-filter-store.ts) — see that
 // store's header comment.
+import { getImage } from 'astro:assets';
+import { resolveLocalImage } from '../lib/images';
 import { getLensDefinition } from '../lib/lens-registry';
 import { deriveLensChrome } from '../lib/lens-chrome';
 import { getAllCards } from '../lib/cards';
@@ -33,6 +35,8 @@ import { DIMENSIONS } from '../lib/filters';
 import type { FilterState } from '../lib/filters';
 import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '../lib/lens-components';
 import LensFilterShell from './LensFilterShell.svelte';
+
+const REMOTE_IMAGE_URL = /^https?:\/\/.*\.(jpe?g|png|gif|webp|avif)(\?.*)?$/i;
 
 interface Props {
   name: string;
@@ -76,7 +80,28 @@ if (lens) {
   const browseCards = collapseCollections(allCards, collapseConfig, v => tagDisplay[v] ?? {});
 
   hierarchies = buildAllDimensionHierarchies(browseCards, declaredValues, tagDisplay);
-  serialisedCards = browseCards.map(card => ({ ...card, date: card.date?.toISOString() ?? null }));
+
+  // Resolve each card's header `image` to a small thumbnail URL for the
+  // condensed browse cards: local images go through astro:assets; remote images
+  // are used as-is only when the URL ends in a known image extension (dead
+  // Jekyll-era embed/video links are dropped so they never render a broken img).
+  serialisedCards = await Promise.all(
+    browseCards.map(async card => {
+      const localImage = resolveLocalImage(card.uid, card.image);
+      let thumb: string | undefined;
+      let thumbSrcset: string | undefined;
+      if (localImage) {
+        // Responsive widths cover a full-width mobile card at 2x (720) down to a
+        // 3-up desktop column; `sizes` on the <img> lets the browser pick.
+        const generated = await getImage({ src: localImage, widths: [360, 720], format: 'webp' });
+        thumb = generated.src;
+        thumbSrcset = generated.srcSet.attribute;
+      } else if (card.image && REMOTE_IMAGE_URL.test(card.image)) {
+        thumb = card.image;
+      }
+      return { ...card, date: card.date?.toISOString() ?? null, thumb, thumbSrcset };
+    })
+  );
 
   const bodyLoader = LENS_BODY_LOADERS[lens.component] ?? DEFAULT_BODY_LOADER;
   BodyComponent = (await bodyLoader()).default;
