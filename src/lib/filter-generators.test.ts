@@ -55,7 +55,8 @@ describe('generatedTagsForCard', () => {
       date: new Date('2017-09-15T00:00:00.000Z'),
       overrides: { location: 'none' },
     });
-    expect(tags).toEqual(['where:work/dot']);
+    // location suppressed → no derived where:* geo tag; authored work tag stays.
+    expect(tags.filter(t => t.startsWith('where:'))).toEqual(['where:work/dot']);
   });
 
   it('date-derivation still runs alongside an authored where:work tag (no skip)', () => {
@@ -72,11 +73,57 @@ describe('generatedTagsForCard', () => {
     const tags = generatedTagsForCard([], { date: new Date('2030-01-01T00:00:00.000Z') });
     expect(tags).toContain('where:australia/sydney');
   });
+
+  it('injects the date/era when:<era>/<year>/<month> tag from a card date', () => {
+    // 2013-06 falls in the seethrough era (2010–2014).
+    const tags = generatedTagsForCard(['what:writing'], { date: new Date('2013-06-09T00:00:00.000Z') });
+    expect(tags).toContain('when:seethrough/2013/06');
+    expect(tags).toContain('what:writing');
+  });
+
+  it('injects both a where:* and a when:* tag for the same dated card', () => {
+    // 2017-09-15 → Taghazout (where) and the nomad era (when).
+    const tags = generatedTagsForCard([], { date: new Date('2017-09-15T00:00:00.000Z') });
+    expect(tags).toContain('where:africa/morocco/taghazout');
+    expect(tags).toContain('when:nomad/2017/09');
+  });
+
+  it('an era override replaces the date-derived when tag', () => {
+    const tags = generatedTagsForCard(['what:writing'], {
+      date: new Date('2013-06-09T00:00:00.000Z'),
+      overrides: { era: 'current/2024/01' },
+    });
+    expect(tags).toContain('when:current/2024/01');
+    expect(tags.filter(t => t.startsWith('when:'))).toEqual(['when:current/2024/01']);
+  });
+
+  it('era: none suppresses the date-derived when tag', () => {
+    const tags = generatedTagsForCard(['what:writing'], {
+      date: new Date('2013-06-09T00:00:00.000Z'),
+      overrides: { era: 'none' },
+    });
+    expect(tags.filter(t => t.startsWith('when:'))).toEqual([]);
+    expect(tags).toContain('what:writing');
+  });
+
+  it('the era and location overrides are independent', () => {
+    const tags = generatedTagsForCard([], {
+      date: new Date('2017-09-15T00:00:00.000Z'),
+      overrides: { location: 'none' },
+    });
+    // location suppressed, but the date/era tag still derives.
+    expect(tags.filter(t => t.startsWith('where:'))).toEqual([]);
+    expect(tags).toContain('when:nomad/2017/09');
+  });
 });
 
 describe('generatorOverrideKeys', () => {
   it('includes the travel generator\'s location key', () => {
     expect(generatorOverrideKeys()).toContain('location');
+  });
+
+  it('includes the date/era generator\'s era key', () => {
+    expect(generatorOverrideKeys()).toContain('era');
   });
 
   it('is deduplicated', () => {
@@ -99,10 +146,17 @@ describe('allGeneratedFilterValues', () => {
     expect(values).toEqual([...new Set(values)].sort());
   });
 
-  it('emits only where:* values (all in dimension:value form)', () => {
+  it('emits where:* and when:* values (all in dimension:value form)', () => {
     for (const value of allGeneratedFilterValues()) {
-      expect(value).toMatch(/^where:.+/);
+      expect(value).toMatch(/^(where|when):.+/);
     }
+  });
+
+  it('covers date/era when:* leaves across the era timeline', () => {
+    const values = allGeneratedFilterValues();
+    expect(values).toContain('when:seethrough/2013/06');
+    expect(values).toContain('when:edtech/2015/09');
+    expect(values).toContain('when:nomad/2018/02');
   });
 });
 
@@ -150,5 +204,21 @@ describe('generatedDisplayName', () => {
   it('returns undefined for values with no override (humanisation applies)', () => {
     expect(generatedDisplayName('where:europe/italy')).toBeUndefined();
     expect(generatedDisplayName('where:australia/sydney')).toBeUndefined();
+  });
+
+  it('labels era nodes from the era registry', () => {
+    expect(generatedDisplayName('when:seethrough')).toBe('SeeThrough Studios');
+    expect(generatedDisplayName('when:edtech')).toBe('EdTech');
+    expect(generatedDisplayName('when:current')).toBe('Current');
+  });
+
+  it('labels month leaves with month names', () => {
+    expect(generatedDisplayName('when:seethrough/2013/06')).toBe('June');
+    expect(generatedDisplayName('when:current/2020/01')).toBe('January');
+    expect(generatedDisplayName('when:nomad/2018/12')).toBe('December');
+  });
+
+  it('leaves year nodes to humanisation', () => {
+    expect(generatedDisplayName('when:seethrough/2013')).toBeUndefined();
   });
 });

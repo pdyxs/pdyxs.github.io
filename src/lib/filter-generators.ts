@@ -21,6 +21,8 @@
 
 import { TRAVEL_LOG } from '../data/travel-log.ts';
 import { lookupLocationForDate, injectWhereTags } from './where-tags.ts';
+import { WHEN_ERAS } from '../data/when-eras.ts';
+import { deriveWhenTag, enumerateWhenTags } from './when-tags.ts';
 
 /** The card fields a generator may read. Kept minimal and view-free. */
 export type FilterGeneratorCard = {
@@ -83,8 +85,45 @@ const travelWhereGenerator: FilterGenerator = {
   },
 };
 
+/** The attribute the date/era generator reads to override its date-derived value. */
+const ERA_OVERRIDE_KEY = 'era';
+
+/**
+ * Sentinel `era:` value that suppresses date-derivation entirely: the card gets
+ * no `when:*` tag even if its date falls in an era range. Mirrors the travel
+ * generator's `location: none`.
+ */
+const ERA_NONE = 'none';
+
+/**
+ * `when:<era>/<year>/<month>` tags derived from a card's date via the era
+ * timeline (src/data/when-eras.ts). The date/era analogue of the travel
+ * generator: a card (or a folder, via `_config.yaml`) can override this by
+ * setting `era:` to a bare `when` path — the override replaces the date lookup
+ * entirely — or to `none` to suppress the derived tag altogether. A card with
+ * no `date` simply gets no derived `when:*` tag.
+ */
+const dateEraGenerator: FilterGenerator = {
+  overrideKeys: [ERA_OVERRIDE_KEY],
+  apply(tags, { date, overrides }) {
+    const override = overrides?.[ERA_OVERRIDE_KEY];
+    const derived = override === ERA_NONE
+      ? null
+      : override
+        ? `when:${override}`
+        : date
+          ? deriveWhenTag(date, WHEN_ERAS)
+          : null;
+    if (derived === null || tags.includes(derived)) return tags;
+    return [...tags, derived];
+  },
+  allValues() {
+    return enumerateWhenTags(WHEN_ERAS, new Date().getUTCFullYear());
+  },
+};
+
 /** The active generators, applied in order. Add new generators here. */
-export const FILTER_GENERATORS: FilterGenerator[] = [travelWhereGenerator];
+export const FILTER_GENERATORS: FilterGenerator[] = [travelWhereGenerator, dateEraGenerator];
 
 /**
  * Display-name overrides for generated values whose humanised last segment
@@ -99,9 +138,27 @@ const GENERATED_DISPLAY_NAMES: Record<string, string> = {
   'where:north-america/usa/washington-dc': 'Washington DC',
 };
 
-/** Proper display name for a generated value, or undefined to let it humanise. */
+/** Month names, indexed 0–11, for the `when:<era>/<year>/<month>` leaf level. */
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+/** Era display labels keyed by `when:<slug>`, derived from the era registry. */
+const WHEN_ERA_LABELS: Record<string, string> = Object.fromEntries(
+  WHEN_ERAS.map(era => [`when:${era.slug}`, era.label]),
+);
+
+/**
+ * Proper display name for a generated value, or undefined to let it humanise.
+ * Year nodes (`when:<era>/2013`) return undefined — "2013" humanises to itself.
+ */
 export function generatedDisplayName(value: string): string | undefined {
-  return GENERATED_DISPLAY_NAMES[value];
+  if (GENERATED_DISPLAY_NAMES[value]) return GENERATED_DISPLAY_NAMES[value];
+  if (WHEN_ERA_LABELS[value]) return WHEN_ERA_LABELS[value];
+  const monthMatch = value.match(/^when:[^/]+\/\d{4}\/(0[1-9]|1[0-2])$/);
+  if (monthMatch) return MONTH_NAMES[Number(monthMatch[1]) - 1];
+  return undefined;
 }
 
 /** Runs every generator over a card's tags, returning the augmented list. */

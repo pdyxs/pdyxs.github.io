@@ -47,6 +47,14 @@ const content = defineCollection({
         // suppresses the derived where:* tag entirely (for cards whose date
         // carries no meaningful location); a nearer real path overrides it back.
         location: z.string().optional(),
+        // Bare `when` path (e.g. "seethrough/2013/06") that overrides the
+        // date-derived when:<era>/<year>/<month> tag for this card (see the
+        // date/era generator in src/lib/filter-generators.ts). Also settable
+        // per-folder via _config.yaml, where it cascades nearest-wins. The
+        // reserved value "none" suppresses the derived when:* tag entirely.
+        // Named `era` (not `when`) so it never reads as a raw dimension tag —
+        // it is the override knob, mirroring how `location` feeds `where`.
+        era: z.string().optional(),
         renderer: z.string().optional(),
         // Nav renderer name (owns the card shell + custom navigation, e.g.
         // series prev/next). Cascades via _config.yaml like `renderer`; keyed
