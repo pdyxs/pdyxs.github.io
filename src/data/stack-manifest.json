@@ -1166,5 +1166,13 @@
   {
     "uid": "who/about-me",
     "code": "4H"
+  },
+  {
+    "uid": "what/writing/2025-03-23-summoning-fog",
+    "code": "4I"
+  },
+  {
+    "uid": "what/writing/2025-03-26-the-pillars-of-the-odysseys",
+    "code": "4J"
   }
 ]
