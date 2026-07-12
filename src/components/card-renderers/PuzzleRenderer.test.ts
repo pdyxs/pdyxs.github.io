@@ -3,10 +3,9 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import PuzzleRenderer from './PuzzleRenderer.astro';
 import { fakePuzzleEntry } from '../../test/fixtures';
 
-function render(props: object) {
-  return AstroContainer.create().then(c =>
-    c.renderToString(PuzzleRenderer, { props: props as never })
-  );
+async function render(props: object) {
+  const c = await AstroContainer.create();
+  return c.renderToString(PuzzleRenderer, { props: props as never });
 }
 
 function dom(html: string) {

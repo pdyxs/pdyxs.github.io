@@ -1,4 +1,5 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
+import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
@@ -68,7 +69,7 @@ const content = defineCollection({
         // fatally) try to resolve as local assets.
         image: z.string().optional(),
         // ── posts / writing ──
-        canonical_url: z.string().url().optional(),
+        canonical_url: z.url().optional(),
         source: z.string().optional(),
         project: z.string().optional(),
         // ── projects ──
@@ -94,8 +95,8 @@ const content = defineCollection({
         when: z.string().optional(),
         roles: z.string().optional(),
         // ── puzzles ──
-        url: z.string().url().optional(),
-        sudokupad_url: z.string().url().optional(),
+        url: z.url().optional(),
+        sudokupad_url: z.url().optional(),
         difficulty: z.string().optional(),
         puzzle_type: z.string().optional(),
         // ── cards ──

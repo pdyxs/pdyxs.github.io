@@ -13,7 +13,6 @@ const DAY1_B = new Date('2024-03-15T16:00:00Z'); // 2024-03-15
 const DAY2   = new Date('2024-03-16T08:00:00Z'); // 2024-03-16
 
 const DAY1_STR = '2024-03-15'; // YYYY-MM-DD for markDisplayed
-const DAY2_STR = '2024-03-16';
 
 beforeEach(() => {
   clearViewState();

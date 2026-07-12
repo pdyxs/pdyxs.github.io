@@ -14,7 +14,7 @@
 
 import { load as parseYaml } from 'js-yaml';
 import { readdir, readFile } from 'node:fs/promises';
-import { dirname, resolve, join } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { CardMeta } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';

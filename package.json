@@ -12,6 +12,7 @@
         "build": "astro build",
         "preview": "astro preview",
         "astro": "astro",
+        "check": "astro check",
         "generate:manifest": "node scripts/generate-stack-manifest.mjs",
         "test": "vitest run",
         "test:watch": "vitest",

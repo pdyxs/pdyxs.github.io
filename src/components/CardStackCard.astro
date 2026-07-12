@@ -25,7 +25,10 @@ interface Props {
   relatedCards?: CardMeta[];
 }
 
-const { path, tagDisplay = {}, relatedCards = [] } = Astro.props;
+// Cast is load-bearing: Astro's props-type extraction falls back to
+// Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
+// leaving Astro.props untyped — `as Props` restores the real prop types.
+const { path, tagDisplay = {}, relatedCards = [] } = Astro.props as Props;
 const resolution = resolveLocation(path);
 
 let entries: any[] = [];
