@@ -5,7 +5,7 @@ import { fakePuzzleEntry } from '../../test/fixtures';
 
 function render(props: object) {
   return AstroContainer.create().then(c =>
-    c.renderToString(PuzzleRenderer, { props })
+    c.renderToString(PuzzleRenderer, { props: props as never })
   );
 }
 

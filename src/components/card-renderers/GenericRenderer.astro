@@ -54,8 +54,8 @@ const sourceLabel = data?.source
   ? data.source.charAt(0).toUpperCase() + data.source.slice(1)
   : undefined;
 
-const actions = data?.actions?.filter(a => a.text && a.url) ?? [];
-const quotes = data?.quotes?.filter(q => q.quote) ?? [];
+const actions = data?.actions?.filter((a: Action) => a.text && a.url) ?? [];
+const quotes = data?.quotes?.filter((q: Quote) => q.quote) ?? [];
 const tags = data?.tags ?? [];
 
 const gallerySources = entry ? resolveGalleryImages(entry.id, data?.image, data?.images) : [];
@@ -102,7 +102,7 @@ const galleryImages = await Promise.all(
 
     {quotes.length > 0 && (
       <ul class="generic-quotes">
-        {quotes.map(q => (
+        {quotes.map((q: Quote) => (
           <li>
             <blockquote class="generic-quote">{q.quote}</blockquote>
             {(q.by || q.in) && (
@@ -119,7 +119,7 @@ const galleryImages = await Promise.all(
 
     {actions.length > 0 && (
       <div class="generic-actions">
-        {actions.map(a => (
+        {actions.map((a: Action) => (
           <a href={a.url} target="_blank" rel="noopener noreferrer" class="generic-action-link">{a.text}</a>
         ))}
       </div>
@@ -127,7 +127,7 @@ const galleryImages = await Promise.all(
 
     {tags.length > 0 && (
       <ul class="generic-tags" aria-label="Tags">
-        {tags.map(tag => {
+        {tags.map((tag: string) => {
           const info = displayFor(tag, tagDisplay);
           return info.cardUid ? (
             <li><a href={`/card/${info.cardUid}`} data-push-card={info.cardUid} class="generic-tag">{info.name}</a></li>

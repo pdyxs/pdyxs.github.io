@@ -63,7 +63,10 @@ export function resolveLocation(path: string): LocationResolution {
   }
 
   if (path.indexOf('/') === -1) {
-    const component = COLLECTION_VIEW_RENDERERS[path];
+    // Index access is typed as always-defined (no noUncheckedIndexedAccess), but
+    // an unregistered collection really returns undefined at runtime — cast so the
+    // truthiness check below is meaningful rather than "always true".
+    const component = COLLECTION_VIEW_RENDERERS[path] as AstroComponentFactory | undefined;
     return component ? { kind: 'collection-view', collection: path, component } : { kind: 'unknown' };
   }
 

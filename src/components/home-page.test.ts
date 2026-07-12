@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { getContainerRenderer } from '@astrojs/svelte';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
 import IndexPage from '../pages/index.astro';
@@ -35,7 +36,7 @@ describe('/ folds into the home lens', () => {
     resetStackStore();
     const indexHtml = await container.renderToString(IndexPage, {});
     resetStackStore();
-    const lensHtml = await container.renderToString(LensNamePage, { params: { name: 'home' } });
+    const lensHtml = await container.renderToString(LensNamePage as unknown as AstroComponentFactory, { params: { name: 'home' } });
 
     expect(indexHtml).toBe(lensHtml);
   });

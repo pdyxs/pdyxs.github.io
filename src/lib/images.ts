@@ -1,4 +1,4 @@
-import type { ImageMetadata } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 
 const localImages = import.meta.glob<{ default: ImageMetadata }>(
   '/src/content/**/*.{jpg,jpeg,png,gif,webp,avif}',

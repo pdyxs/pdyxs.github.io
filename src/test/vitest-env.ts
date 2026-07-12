@@ -21,7 +21,7 @@ const env: Environment = {
   viteEnvironment: 'ssr',
 
   async setup(global, { happyDOM = {} }: { happyDOM?: Record<string, unknown> } = {}) {
-    const win = new ((GlobalWindow as unknown) || Window)({
+    const win = new ((GlobalWindow || Window) as typeof Window)({
       ...happyDOM,
       console: global.console ?? undefined,
       url: (happyDOM.url as string) || 'http://localhost:3000',
