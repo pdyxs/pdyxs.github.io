@@ -45,6 +45,16 @@ html[data-theme="dark"] {
   --color-tag-active-border: #c0c0c0;
 }
 
+/* ── Anti-FOUC: filtered cold load ─────────────────────────────── */
+/* The flag is set pre-paint by the inline script in Base.astro when the URL
+   carries filters, and cleared by BrowseLensBrowser once the filtered view is
+   committed. Hiding the list + count (not the whole grid) keeps the filter bar
+   and chips visible while the reduced set resolves. */
+html[data-filters-pending] .fp-browse-list,
+html[data-filters-pending] .fp-result-count {
+  display: none;
+}
+
 /* ── Reset ─────────────────────────────────────────────────────── */
 
 *, *::before, *::after {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { lensFilterStore } from '../../stores/lens-filter-store';
+  import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
   import { applyFilters } from '../../lib/filters';
   import { sortCardsForBrowse } from '../../lib/browse-helpers';
   import type { SerialisedCardFull } from '../../lib/frontpage';
@@ -25,6 +25,18 @@
   );
   const filteredCards = $derived(applyFilters(cardMetas, $lensFilterStore));
   const sortedCards = $derived(sortCardsForBrowse(filteredCards, config));
+
+  // Clear the pre-paint anti-FOUC guard (set by Base.astro's inline script when
+  // the URL carries filters) once the shell has synced the selection AND this
+  // filtered view is committed. Reading sortedCards makes the effect re-run when
+  // the reduced set lands, so we never reveal before the DOM reflects it. The
+  // guard is on <html>, so a bare-cold no-filter load (guard never set) no-ops.
+  $effect(() => {
+    sortedCards;
+    if ($lensFiltersSynced) {
+      document.documentElement.removeAttribute('data-filters-pending');
+    }
+  });
 </script>
 
 <BrowseResults cards={sortedCards} {tagDisplay} filterState={$lensFilterStore} />

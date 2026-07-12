@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { lensFilterStore, toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters } from '../stores/lens-filter-store';
+  import { lensFilterStore, lensFiltersSynced, toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters } from '../stores/lens-filter-store';
   import { filterStateFromParams, filterStateToParams, stripFilterParams } from '../lib/filters';
   import type { Dimension, FilterState } from '../lib/filters';
   import type { LensDefinition } from '../lib/lens-registry';
@@ -58,6 +58,9 @@
 
   onMount(() => {
     syncFromUrl();
+    // Signal the lens body that the URL selection is now in the store, so it can
+    // clear the anti-FOUC guard once its filtered view is committed to the DOM.
+    lensFiltersSynced.set(true);
     window.addEventListener('popstate', syncFromUrl);
     return () => window.removeEventListener('popstate', syncFromUrl);
   });

@@ -39,6 +39,31 @@ const pageTitle = title === 'pdyxs.wtf' ? title : `${title} — pdyxs.wtf`;
         }
       })();
     </script>
+    <script is:inline>
+      // Anti-FOUC for filtered cold loads. Lens pages are statically prerendered
+      // with the FULL card set (the build has no query string), so a refresh on
+      // a filtered URL would paint every card before the client reads the filter
+      // and reduces the set. Set a pre-paint flag when the URL carries filters;
+      // CSS hides the browse results until BrowseLensBrowser clears it once the
+      // filtered view is in the DOM (see lensFiltersSynced).
+      (function () {
+        var s = window.location.search;
+        if (!s) return;
+        var active = false;
+        new URLSearchParams(s).forEach(function (_value, key) {
+          if (key === 'filter' || key === 'when.from' || key === 'when.to' || key.indexOf('filter.') === 0) {
+            active = true;
+          }
+        });
+        if (!active) return;
+        document.documentElement.setAttribute('data-filters-pending', '');
+        // Safety net: if the filter island never hydrates (script error, etc.),
+        // reveal the full set rather than hiding results forever.
+        setTimeout(function () {
+          document.documentElement.removeAttribute('data-filters-pending');
+        }, 3000);
+      })();
+    </script>
   </head>
   <body>
     <div class="site-wrapper">
