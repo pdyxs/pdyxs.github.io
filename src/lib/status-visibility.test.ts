@@ -28,4 +28,24 @@ describe('computeStatusVisibility', () => {
     expect(computeStatusVisibility('published', undefined, { isDev: true, now: NOW }))
       .toEqual({ listed: true, reachable: true });
   });
+
+  it('an unlisted card is reachable but not listed in a production build', () => {
+    expect(computeStatusVisibility('unlisted', undefined, { isDev: false, now: NOW }))
+      .toEqual({ listed: false, reachable: true });
+  });
+
+  it('isDev bypass also applies to unlisted (listed and reachable on dev/preview)', () => {
+    expect(computeStatusVisibility('unlisted', undefined, { isDev: true, now: NOW }))
+      .toEqual({ listed: true, reachable: true });
+  });
+
+  it('an archived card is neither listed nor reachable in a production build', () => {
+    expect(computeStatusVisibility('archived', undefined, { isDev: false, now: NOW }))
+      .toEqual({ listed: false, reachable: false });
+  });
+
+  it('isDev bypass also applies to archived (listed and reachable on dev/preview)', () => {
+    expect(computeStatusVisibility('archived', undefined, { isDev: true, now: NOW }))
+      .toEqual({ listed: true, reachable: true });
+  });
 });
