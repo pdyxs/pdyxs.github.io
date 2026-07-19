@@ -1,15 +1,17 @@
 // Lens registry: the single source of truth for which lenses exist.
 //
 // A lens is a first-class stack location (like a card) driven entirely by
-// data here — adding a lens is adding an entry to LENS_REGISTRY, never a new
-// route file. Entries are plain data: no component reference lives here.
-// The `component` field is a string key resolved against the lazy-import
-// map in lens-components.ts — that map (not this file) is the only place a
-// lens's actual Astro component gets imported, and only a dynamic import()
-// at that. This module can be imported anywhere (manifest generation, the
-// resolver, tests) without pulling in a single lens's rendering code.
+// data — adding a lens is authoring a `content/<dimension>/<id>.lens.yaml`
+// file, never a new route file. Those files are read at build time by
+// scripts/generate-lens-registry.mjs, which emits the LENS_DECLARATIONS array
+// this module imports below. Entries are plain data: no component reference
+// lives here. The `component` field is a string key resolved against the
+// lazy-import map in lens-components.ts — that map (not this file) is the only
+// place a lens's actual Astro component gets imported, and only a dynamic
+// import() at that. This module can be imported anywhere (manifest generation,
+// the resolver, tests) without pulling in a single lens's rendering code.
 
-import { FRONTPAGE_CONFIG } from '../content/frontpage.ts';
+import { LENS_DECLARATIONS } from '../data/lenses.generated.ts';
 
 export type LensPresentation = 'card' | 'fullbleed';
 
@@ -34,9 +36,10 @@ export interface LensDefinition {
   presentation: LensPresentation;
 }
 
-// Raw declarations — `acceptsFilters` defaults to true unless stated, applied
-// via normaliseLens() below so entries can omit it.
-type LensDeclaration = Omit<LensDefinition, 'acceptsFilters' | 'presentation'> & {
+// Raw declaration shape (what a `.lens.yaml` file compiles to) — `acceptsFilters`
+// and `presentation` default via normaliseLens() below so entries can omit them.
+// Exported so the generated declarations module can type its array against it.
+export type LensDeclaration = Omit<LensDefinition, 'acceptsFilters' | 'presentation'> & {
   acceptsFilters?: boolean;
   presentation?: LensPresentation;
 };
@@ -49,45 +52,12 @@ function normaliseLens(decl: LensDeclaration): LensDefinition {
   };
 }
 
-const DECLARATIONS: LensDeclaration[] = [
-  {
-    id: 'home',
-    dimension: 'what',
-    label: 'A bit of everything',
-    icon: 'scatter',
-    component: 'home',
-    config: FRONTPAGE_CONFIG,
-    acceptsFilters: false,
-  },
-  {
-    id: 'newest',
-    dimension: 'when',
-    label: 'Newest',
-    icon: 'timeline',
-    component: 'newest',
-    config: { sortKey: 'date', sortDirection: 'desc' },
-    // Wider than the default column — this lens browses a dense list of
-    // cards and benefits from the extra breathing room on desktop. Still
-    // responsive: on narrow viewports the existing active-card-col / #card-stack
-    // min()-with-viewport logic shrinks it down regardless of this value.
-    width: '960px',
-  },
-  {
-    id: 'oldest',
-    dimension: 'when',
-    label: 'Oldest',
-    icon: 'timeline-oldest',
-    // No bespoke body — like `newest`, `oldest` rides the default browse-family
-    // body (DEFAULT_BODY_LOADER); the key just names the lens.
-    component: 'oldest',
-    // Mirror of `newest`: same date sort, ascending so the earliest cards lead.
-    config: { sortKey: 'date', sortDirection: 'asc' },
-    width: '960px',
-  },
-];
-
-/** The full lens registry — the single source of truth for which lenses exist. */
-export const LENS_REGISTRY: LensDefinition[] = DECLARATIONS.map(normaliseLens);
+/**
+ * The full lens registry — the single source of truth for which lenses exist.
+ * Sourced from the `content/<dimension>/<id>.lens.yaml` files via the generated
+ * LENS_DECLARATIONS array (see scripts/generate-lens-registry.mjs).
+ */
+export const LENS_REGISTRY: LensDefinition[] = LENS_DECLARATIONS.map(normaliseLens);
 
 /**
  * The fallback browse lens: where a filter lands when it's added somewhere

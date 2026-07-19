@@ -1,0 +1,11 @@
+# Lens definition — id "oldest", dimension "when". Mirror of newest: same date
+# sort, ascending so the earliest cards lead. Rides the default browse-family
+# body (no bespoke loader in lens-components.ts).
+label: Oldest
+icon: timeline-oldest
+component: oldest
+order: 1
+width: 960px
+config:
+  sortKey: date
+  sortDirection: asc

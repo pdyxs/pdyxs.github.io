@@ -1,0 +1,14 @@
+# Lens definition — id "newest", dimension "when". The default browse lens
+# (see DEFAULT_BROWSE_LENS_ID in src/lib/lens-registry.ts).
+label: Newest
+icon: timeline
+component: newest
+order: 0
+# Wider than the default column — this lens browses a dense list of cards and
+# benefits from the extra breathing room on desktop. Still responsive: on
+# narrow viewports the active-card-col / #card-stack min()-with-viewport logic
+# shrinks it down regardless of this value.
+width: 960px
+config:
+  sortKey: date
+  sortDirection: desc

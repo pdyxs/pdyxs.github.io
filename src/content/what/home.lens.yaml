@@ -1,0 +1,30 @@
+# Lens definition — id is the file stem ("home"), dimension is the parent
+# folder ("what"). See src/lib/lens-registry.ts for how these are assembled.
+label: A bit of everything
+icon: scatter
+component: home
+order: 0
+# Home is the stack root and can't narrow by filter — a filter added here
+# falls through to the default browse lens (see DEFAULT_BROWSE_LENS_ID).
+acceptsFilters: false
+# Frontpage slot layout: one pinned card plus featured filter slots. Consumed
+# by the home lens body (HomeLensBody/HomeLensSlots) as a FrontPageConfig.
+config:
+  slots:
+    - type: pinned
+      uid: who/about-me
+    - type: filter
+      label: A Project
+      filter:
+        selections:
+          what: [what:games, what:art, what:software]
+    - type: filter
+      label: A Puzzle
+      filter:
+        selections:
+          what: [what:puzzles]
+    - type: filter
+      label: A Post
+      filter:
+        selections:
+          what: [what:writing]
