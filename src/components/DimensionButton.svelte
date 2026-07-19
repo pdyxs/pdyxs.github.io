@@ -17,6 +17,9 @@
   const dots = $derived(Array.from({ length: selectionCount }));
 </script>
 
+<!-- The button and its indicator strips are siblings (not nested) so the
+     strips can be positioned against the shared `.fp-dim-wrapper` box rather
+     than computed off the button's padding box — see the strip CSS below. -->
 <button
   class="browse-dim-btn"
   class:browse-dim-btn--active={isActive}
@@ -27,22 +30,21 @@
   disabled={!hasNodes}
   title={hasNodes ? undefined : 'No tags available for this dimension'}
 >
-  {#if lensIcon}
-    <span class="browse-dim-lens-icon" aria-hidden="true">{lensIcon}</span>
-  {/if}
   <span class="browse-dim-label">{label}</span>
-  {#if isActive}
-    <span class="browse-dim-dots" aria-hidden="true">
-      {#each dots as _}
-        <span class="browse-dim-dot"></span>
-      {/each}
-    </span>
-  {/if}
 </button>
+{#if lensIcon}
+  <span class="browse-dim-lens-icon" aria-hidden="true">{lensIcon}</span>
+{/if}
+{#if isActive}
+  <span class="browse-dim-dots" aria-hidden="true">
+    {#each dots as _}
+      <span class="browse-dim-dot"></span>
+    {/each}
+  </span>
+{/if}
 
 <style>
   .browse-dim-btn {
-    position: relative;
     font-family: var(--font-heading);
     font-size: 1rem;
     border: var(--border-width) solid var(--color-border);
@@ -52,7 +54,10 @@
     display: flex;
     align-items: stretch;
     padding: 0;
-    margin: 1em 0;
+    /* Vertical space for the indicator strips is reserved by the wrapper's
+       padding (see .fp-dim-wrapper in FilterBar), not a button margin, so the
+       strips can anchor to the wrapper's padding box. */
+    margin: 0;
     transition: background 0.15s;
   }
 
@@ -65,24 +70,38 @@
     border-bottom-color: transparent;
   }
 
-  /* Positioned outside the button's own border box (not part of its flow)
-     so every dimension button stays the same height/vertical position
-     regardless of whether an indicator is present. Offsetting by
-     --border-width and insetting left/right by the same amount aligns
-     this flush with the button's outer border edge instead of its padding
-     edge (100% alone lands under the border, not below/above it). */
+  /* The indicator strips hang above (lens) and below (dots) the button,
+     out of flow, so every dimension button keeps the same height/position
+     whether or not an indicator is present. They are siblings of the button
+     and positioned against the shared `.fp-dim-wrapper` — whose padding box
+     edges ARE the button's border-box edges (the button is width:100% with no
+     horizontal margin). So `left/right: 0` puts the strip flush with the
+     button using the *same* raw coordinate, no `± border-width` arithmetic.
+
+     Why this matters on Firefox: at fractional (flex-distributed) button
+     widths, Firefox snaps a background fill outward to cover but snaps a
+     border to a crisp line, and it snaps an intermediate offset origin (the
+     old `padding-box − border-width`) to a different device pixel than the
+     button's own border. Two fixes together make the edges land identically:
+       1. left/right: 0 against the wrapper — no arithmetic, same coordinate.
+       2. the left/right edges are BORDERS matching the button's border, so
+          both snap by the crisp-line rule (not fill-cover).
+     The vertical `... - var(--border-width)` overlaps the strip one border
+     width into the button so the fill's snapped inner edge never leaves a gap.
+     `--dim-indicator-reserve` is the wrapper's vertical padding. */
   .browse-dim-lens-icon {
     position: absolute;
-    bottom: calc(100%);
-    left: calc(-1 * var(--border-width));
-    right: calc(-1 * var(--border-width));
+    left: 0;
+    right: 0;
+    bottom: calc(100% - var(--dim-indicator-reserve) - var(--border-width));
+    border-left: var(--border-width) solid var(--color-border);
+    border-right: var(--border-width) solid var(--color-border);
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 0.85em;
     line-height: 1;
     background: var(--color-text);
-    border-bottom: none;
     pointer-events: none;
   }
 
@@ -98,11 +117,16 @@
     background: var(--color-bg-hover);
   }
 
+  /* Mirror of .browse-dim-lens-icon, hung below the button. See that rule's
+     comment for the full rationale (wrapper-relative left/right, matching
+     side borders, one-border-width overlap into the button). */
   .browse-dim-dots {
     position: absolute;
-    top: calc(100% + var(--border-width));
-    left: calc(-1 * var(--border-width));
-    right: calc(-1 * var(--border-width));
+    left: 0;
+    right: 0;
+    top: calc(100% - var(--dim-indicator-reserve) - var(--border-width));
+    border-left: var(--border-width) solid var(--color-border);
+    border-right: var(--border-width) solid var(--color-border);
     display: flex;
     justify-content: center;
     align-items: center;

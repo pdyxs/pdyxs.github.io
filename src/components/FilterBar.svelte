@@ -201,6 +201,13 @@
     flex: 1;
     min-width: 0;
     z-index: 1;
+    /* Vertical room for the indicator strips that hang above/below the button.
+       The strips (rendered by DimensionButton as siblings of the button) are
+       absolutely positioned against this box and read --dim-indicator-reserve
+       to find the button's edges. Was formerly a `margin: 1em 0` on the
+       button; moved here so the strips share the wrapper's box bounds. */
+    --dim-indicator-reserve: 1rem;
+    padding: var(--dim-indicator-reserve) 0;
   }
 
   /* The filter-count dot strip hangs below the button; keep it behind
