@@ -68,7 +68,7 @@ describe('getLensDefinition', () => {
 describe('lensesForDimension', () => {
   it('returns the lenses filed under a given dimension', () => {
     const when = lensesForDimension('when');
-    expect(when.map(l => l.id)).toEqual(['newest']);
+    expect(when.map(l => l.id)).toEqual(['newest', 'oldest']);
   });
 
   it('returns an empty array for a dimension with no filed lenses', () => {
@@ -142,7 +142,7 @@ describe('DEFAULT_BROWSE_LENS_ID', () => {
 
 describe('allLensUids', () => {
   it('enumerates every registry entry as a uid, resolvable without importing any component', () => {
-    expect(allLensUids().sort()).toEqual(['lens/home', 'lens/newest']);
+    expect(allLensUids().sort()).toEqual(['lens/home', 'lens/newest', 'lens/oldest']);
   });
 
   it('every uid is resolvable back to a definition via getLensDefinition', () => {

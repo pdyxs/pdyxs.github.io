@@ -72,6 +72,18 @@ const DECLARATIONS: LensDeclaration[] = [
     // min()-with-viewport logic shrinks it down regardless of this value.
     width: '960px',
   },
+  {
+    id: 'oldest',
+    dimension: 'when',
+    label: 'Oldest',
+    icon: 'timeline-oldest',
+    // No bespoke body — like `newest`, `oldest` rides the default browse-family
+    // body (DEFAULT_BODY_LOADER); the key just names the lens.
+    component: 'oldest',
+    // Mirror of `newest`: same date sort, ascending so the earliest cards lead.
+    config: { sortKey: 'date', sortDirection: 'asc' },
+    width: '960px',
+  },
 ];
 
 /** The full lens registry — the single source of truth for which lenses exist. */

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { lensIconMarkup } from '../lib/lens-icons';
+  import { lensIconDef } from '../lib/lens-icons';
 
   interface Props {
     /** Lens icon key from the registry (see lens-icons.ts). */
@@ -8,13 +8,37 @@
 
   let { name }: Props = $props();
 
-  // SVG markup only — no <script>, so {@html} is safe here. currentColor lets
-  // the icon inherit the surrounding text colour.
-  const markup = $derived(lensIconMarkup(name));
+  // Real declarative SVG (no {@html}) so server and client renders match and
+  // Svelte hydration stays quiet. currentColor lets the icon inherit the
+  // surrounding text colour.
+  const def = $derived(lensIconDef(name));
 </script>
 
-{#if markup}
-  <span class="lens-icon" aria-hidden="true">{@html markup}</span>
+{#if def}
+  <span class="lens-icon" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="1em"
+      height="1em"
+      fill={def.filled ? 'currentColor' : 'none'}
+      stroke={def.filled ? 'none' : 'currentColor'}
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {#each def.shapes as s}
+        {#if s.kind === 'circle'}
+          <circle cx={s.cx} cy={s.cy} r={s.r} />
+        {:else if s.kind === 'line'}
+          <line x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} />
+        {:else if s.kind === 'polyline'}
+          <polyline points={s.points} />
+        {/if}
+      {/each}
+    </svg>
+  </span>
 {/if}
 
 <style>
