@@ -4,6 +4,7 @@
   import type { TagDisplay } from '../lib/tag-display';
   import type { FilterState } from '../lib/filters';
   import { computeCardTagDisplay } from '../lib/card-tag-display';
+  import { computeStatusBadge } from '../lib/status-badge';
 
   interface Props {
     card: SerialisedCard;
@@ -16,6 +17,10 @@
   let { card, tagDisplay = {}, filterState = { selections: {} } }: Props = $props();
 
   const tagChips = $derived(computeCardTagDisplay(card.tags, filterState));
+  // Dev-only status pill (issue #51) — same pure decision as the open-card
+  // header (CardHeader.astro). import.meta.env.DEV is the thin gate at the
+  // template `{#if}` below, not here, so this stays a plain derivation.
+  const statusBadge = $derived(computeStatusBadge(card.status, card.date ? new Date(card.date) : undefined));
 </script>
 
 <li class="browse-card-item">
@@ -42,18 +47,25 @@
           <span class="browse-card-badge">{card.collapsed.count} parts</span>
         {/if}
       </p>
-      {#if card.date}
-        <time
-          class="browse-card-date"
-          datetime={new Date(card.date).toISOString()}
-        >
-          {new Date(card.date).toLocaleDateString('en-AU', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          })}
-        </time>
-      {/if}
+      <span class="browse-card-header-meta">
+        {#if import.meta.env.DEV && statusBadge}
+          <span class="status-badge status-badge--{statusBadge.status}">
+            {statusBadge.label}{statusBadge.dateLabel ? ` · ${statusBadge.dateLabel}` : ''}
+          </span>
+        {/if}
+        {#if card.date}
+          <time
+            class="browse-card-date"
+            datetime={new Date(card.date).toISOString()}
+          >
+            {new Date(card.date).toLocaleDateString('en-AU', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            })}
+          </time>
+        {/if}
+      </span>
     </div>
     {#if card.description}
       <p class="browse-card-desc">{card.description}</p>
@@ -120,6 +132,11 @@
     justify-content: space-between;
     gap: var(--space-sm);
     margin-bottom: var(--space-xs);
+    /* The meta group (status badge + date) can be wider than the title's
+       leftover space at the ~280px tile width (e.g. "Scheduled · 1 Aug
+       2027") — wrapping drops it to its own line instead of overflowing
+       the card, since neither child shrinks (see .browse-card-header-meta). */
+    flex-wrap: wrap;
   }
 
   .browse-card-title {
@@ -140,6 +157,16 @@
     background: var(--color-bg-stripes);
     color: var(--color-text-muted);
     white-space: nowrap;
+  }
+
+  .browse-card-header-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex-shrink: 0;
+    /* Keeps the meta group right-aligned whether it shares the title's line
+       or wraps to its own (see .browse-card-header's flex-wrap). */
+    margin-left: auto;
   }
 
   .browse-card-date {

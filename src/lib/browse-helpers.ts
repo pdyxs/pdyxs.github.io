@@ -33,7 +33,8 @@ export type SerialisedCard = {
   collapsed?: { count: number };
   /** Resolved publish-lifecycle status (see CardMeta.status), carried through
    * so the dev-only status facet (issue #52) can narrow the browse-family
-   * lens's client-side card pool by real status. */
+   * lens's client-side card pool by real status, and so the dev-only status
+   * badge (issue #51) can render per-card in listings. */
   status?: StatusValue;
 };
 

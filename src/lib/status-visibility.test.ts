@@ -102,3 +102,21 @@ describe('resolveStatus', () => {
     expect(resolveStatus(undefined, 'not-a-real-status')).toBe('published');
   });
 });
+
+describe('resolveStatus', () => {
+  it('prefers a recognised frontmatter status over the cascade', () => {
+    expect(resolveStatus('draft', 'published')).toBe('draft');
+  });
+
+  it('falls back to the cascade status when frontmatter is absent', () => {
+    expect(resolveStatus(undefined, 'draft')).toBe('draft');
+  });
+
+  it('falls back to published when neither source is a recognised status', () => {
+    expect(resolveStatus(undefined, undefined)).toBe('published');
+  });
+
+  it('ignores an unrecognised frontmatter value and falls back to the cascade', () => {
+    expect(resolveStatus('not-a-status', 'draft')).toBe('draft');
+  });
+});

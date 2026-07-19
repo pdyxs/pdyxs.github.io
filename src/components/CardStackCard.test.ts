@@ -91,6 +91,16 @@ describe("CardStackCard", () => {
         ).toBe(false);
     });
 
+    it("renders no status badge for real content (implicit published default)", async () => {
+        const container = await makeContainer();
+        const html = await container.renderToString(CardStackCard, {
+            props: { path: "who/about-me" },
+        });
+        const div = dom(html);
+
+        expect(div.querySelector(".status-badge")).toBeNull();
+    });
+
     it("renders a tag location via the tag renderer, hashing name+description", async () => {
         const container = await makeContainer();
         const html = await container.renderToString(CardStackCard, {

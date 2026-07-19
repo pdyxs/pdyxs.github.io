@@ -14,6 +14,18 @@
   --color-tag-active-bg:     #eaeaea;
   --color-tag-active-border: #000000;
 
+  /* Dev-only status badge (issue #51) — one bg/border pair per non-published
+     StatusValue. Text stays var(--color-text) (see .status-badge), so only
+     the tint needs a per-status pair, same pattern as --color-tag-active-*. */
+  --status-draft-bg:         #fdecea;
+  --status-draft-border:     #c0392b;
+  --status-scheduled-bg:     #e8f0fe;
+  --status-scheduled-border: #1a56db;
+  --status-unlisted-bg:      #fef6e0;
+  --status-unlisted-border:  #b7791f;
+  --status-archived-bg:      #eeeeee;
+  --status-archived-border:  #666666;
+
   --font-body:    'Montserrat', system-ui, sans-serif;
   --font-ui:      'Montserrat', system-ui, sans-serif;
   --font-heading: 'Saira Stencil', system-ui, sans-serif;
@@ -43,6 +55,15 @@ html[data-theme="dark"] {
   --color-bg-hover:     #2d2d2d;
   --color-tag-active-bg:     #3a3a3a;
   --color-tag-active-border: #c0c0c0;
+
+  --status-draft-bg:         #3a2323;
+  --status-draft-border:     #e07a6c;
+  --status-scheduled-bg:     #1f2b40;
+  --status-scheduled-border: #6d97f5;
+  --status-unlisted-bg:      #3a3320;
+  --status-unlisted-border:  #e0b84f;
+  --status-archived-bg:      #333333;
+  --status-archived-border:  #999999;
 }
 
 /* ── Anti-FOUC: filtered cold load ─────────────────────────────── */
@@ -316,6 +337,54 @@ strong { font-weight: 700; }
 .stack-card--collapsed .card-header > * {
   background: none;
   padding: 0;
+}
+
+/* ── Status badge (dev-only, issue #51) ───────────────────────────
+   Shows a card's declared draft/scheduled/unlisted/archived status while
+   authoring — `published`/absent renders nothing (see computeStatusBadge in
+   lib/status-badge.ts). Rendered inside CardHeader (open card) and
+   BrowseCard (listings); both simply add these two classes, so the pill
+   looks identical in either location. Text stays the neutral --color-text
+   (not a variant-specific text color) — only the tint/border differ per
+   status, matching the .browse-card-tag--active pattern. */
+.status-badge {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* More specific than `.card-header > *` above, so the badge's own
+   background/padding win over that generic surface-patch rule. */
+.card-header > .status-badge {
+  padding: 2px 8px;
+}
+
+.status-badge--draft {
+  background: var(--status-draft-bg);
+  border-color: var(--status-draft-border);
+}
+
+.status-badge--scheduled {
+  background: var(--status-scheduled-bg);
+  border-color: var(--status-scheduled-border);
+}
+
+.status-badge--unlisted {
+  background: var(--status-unlisted-bg);
+  border-color: var(--status-unlisted-border);
+}
+
+.status-badge--archived {
+  background: var(--status-archived-bg);
+  border-color: var(--status-archived-border);
 }
 
 /* ── Page-mode lens chrome ─────────────────────────────────────── */
