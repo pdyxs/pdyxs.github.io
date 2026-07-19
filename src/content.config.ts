@@ -95,7 +95,6 @@ const content = defineCollection({
         series: z.string().optional(),
         order: z.number().optional(),
         icon: z.string().optional(),
-        published: z.boolean().optional(),
         map: z.string().optional(),
         latitude: z.number().optional(),
         longitude: z.number().optional(),

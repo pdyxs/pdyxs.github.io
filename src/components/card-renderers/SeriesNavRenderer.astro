@@ -13,7 +13,7 @@ interface Props {
 const { entry, allEntries, title, titleSuffix } = Astro.props;
 
 const siblings = entry
-  ? getSeriesSiblings(entry, allEntries, import.meta.env.DEV)
+  ? getSeriesSiblings(entry, allEntries, { isDev: import.meta.env.DEV, now: new Date() })
   : null;
 ---
 
