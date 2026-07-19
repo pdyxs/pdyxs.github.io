@@ -289,7 +289,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-sm);
+    padding: var(--space-sm) var(--space-sm);
     border: none;
     background: transparent;
     color: var(--color-text);
@@ -355,7 +355,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-sm);
+    padding: var(--space-sm) var(--space-sm);
     border: none;
     background: transparent;
     color: var(--color-text);
@@ -386,7 +386,7 @@
   }
 
   .browse-dim-drill {
-    padding: var(--space-xs) var(--space-sm);
+    padding: var(--space-sm) var(--space-sm);
     border: none;
     border-left: 1px solid var(--color-border-light);
     background: transparent;
