@@ -67,7 +67,13 @@ let BodyComponent: any = null;
 
 if (lens) {
   const allCards = await getAllCards();
-  const registry = await getTagRegistry(allCards);
+  // Listing filter (see computeStatusVisibility): the pool every lens/browse/
+  // timeline view draws from excludes cards whose status isn't listed (e.g.
+  // draft, outside isDev). getAllCards() itself stays unfiltered — the
+  // reachability filter (getStaticPaths in card/[...path].astro) applies
+  // independently over the same source list.
+  const listedCards = allCards.filter(c => c.visibility.listed);
+  const registry = await getTagRegistry(listedCards);
   groupOrder = await getDimensionGroupOrder();
   tagDisplay = flattenTagDisplay(registry);
   const declaredValues = DIMENSIONS.flatMap(d => registry[d].values);
@@ -75,11 +81,12 @@ if (lens) {
   // Collapse opted-in folders (e.g. story series) to a single representative
   // card BEFORE building hierarchies/counts and serialising — so the results
   // grid, frontpage slots, and dimension-panel counts all browse the collapsed
-  // view. The tag registry above stays on the full card list so each folder's
-  // declared identity and every value still register. getAllCards() itself is
-  // never collapsed: member cards remain real cards for direct nav + series nav.
+  // view. The tag registry above stays on the full listed-card list so each
+  // folder's declared identity and every value still register. getAllCards()
+  // itself is never collapsed: member cards remain real cards for direct nav
+  // + series nav.
   const collapseConfig = await discoverCollapseConfig(makeContentTreeReader());
-  const browseCards = collapseCollections(allCards, collapseConfig, v => tagDisplay[v] ?? {});
+  const browseCards = collapseCollections(listedCards, collapseConfig, v => tagDisplay[v] ?? {});
 
   hierarchies = buildAllDimensionHierarchies(browseCards, declaredValues, tagDisplay);
 

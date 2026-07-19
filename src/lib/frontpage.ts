@@ -86,7 +86,18 @@ export function resolveFrontPageSlots(
   now: Date,
 ): ResolvedFrontPageSlots {
   const byUid = new Map(cards.map(c => [c.uid, c]));
-  const cardMetas: CardMeta[] = cards.map(c => ({ ...c, date: c.date ? new Date(c.date) : undefined }));
+  // SerialisedCard (browse-helpers.ts) doesn't carry status/visibility across
+  // the server→client boundary — the pool reaching here is already the
+  // listing-filtered set (LensStackCard filters getAllCards() on `.listed`
+  // before serialising), so synthesising the published/visible defaults here
+  // is accurate for this already-filtered pool. selectSlotCard doesn't read
+  // either field.
+  const cardMetas: CardMeta[] = cards.map(c => ({
+    ...c,
+    date: c.date ? new Date(c.date) : undefined,
+    status: 'published',
+    visibility: { listed: true, reachable: true },
+  }));
 
   const slots: ResolvedSlot[] = [];
   const displayed: { uid: string; contentHash: string }[] = [];

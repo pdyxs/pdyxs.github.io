@@ -26,6 +26,13 @@ export type FolderCascade = {
   renderer?: string;
   /** Nearest-ancestor `_config.yaml` `navRenderer` (nav-shell renderer name), or undefined if none. */
   navRenderer?: string;
+  /**
+   * Nearest-ancestor `_config.yaml` `status` (publish-lifecycle value), or
+   * undefined if no ancestor sets one — a card with neither a frontmatter nor
+   * cascaded status resolves to `published` (see computeStatusVisibility /
+   * getAllCards). Nearest-wins, like `renderer`.
+   */
+  status?: string;
   /** Cascade tags accumulated across every ancestor `_config.yaml` (union, order-preserving, dedup). */
   cascadeTags: string[];
   /**
@@ -48,6 +55,7 @@ export type FolderCascade = {
 type ConfigFile = {
   renderer?: string;
   navRenderer?: string;
+  status?: string;
   tags?: string[];
   name?: string;
   description?: string;
@@ -81,6 +89,7 @@ export async function resolveFolderCascade(
 
   let renderer: string | undefined;
   let navRenderer: string | undefined;
+  let status: string | undefined;
   let cardDescriptionParts: string[] | undefined;
   const cascadeTags: string[] = [];
   const seenTags = new Set<string>();
@@ -94,6 +103,7 @@ export async function resolveFolderCascade(
 
     if (parsed.renderer) renderer = parsed.renderer;
     if (parsed.navRenderer) navRenderer = parsed.navRenderer;
+    if (parsed.status) status = parsed.status;
     if (Array.isArray(parsed.cardDescriptionParts)) {
       cardDescriptionParts = parsed.cardDescriptionParts.filter(
         (p): p is string => typeof p === 'string'
@@ -124,5 +134,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, navRenderer, cardDescriptionParts, cascadeTags, overrides, tagIdentity };
+  return { renderer, navRenderer, status, cardDescriptionParts, cascadeTags, overrides, tagIdentity };
 }
