@@ -4,7 +4,7 @@ description: A concept for quantum-powered Instagram stories
 tags:
   - what:software
   - when:released
-priority: 20190914
+date: 2019-09-14
 image: qiskigram_header_full.jpg
 images:
   - qiskigram_header_full

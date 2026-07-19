@@ -7,7 +7,7 @@ tags:
   - science
   - development
   - interactive
-priority: 20190100
+date: 2019-01-01
 image: gameplay.jpg
 actions:
   - text: Follow the progress of the project

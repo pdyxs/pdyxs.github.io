@@ -6,7 +6,7 @@ description: >-
 tags:
   - when:released
   - installation
-priority: 20170601
+date: 2017-06-01
 images:
   - >-
     https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FJetpackTheatre%2Fvideos%2F1038102896289787%2F&show_text=0

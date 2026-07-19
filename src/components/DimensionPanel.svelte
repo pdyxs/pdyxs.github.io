@@ -52,27 +52,30 @@
   role="dialog"
   aria-label="{dimensionLabel} tag browser"
 >
-  <div class="browse-dim-panel-header">
-    {#if drillPath.length > 0}
-      <button
-        class="browse-dim-back"
-        onclick={onDrillBack}
-        aria-label="Go back"
-      >
-        ← Back
-      </button>
-      <span class="browse-dim-panel-title">{drillTitle}</span>
-    {/if}
-    {#if isDimensionActive}
-      <button
-        class="browse-dim-clear"
-        onclick={onClear}
-        aria-label="Clear {dimensionLabel} filters"
-      >
-        Clear
-      </button>
-    {/if}
-  </div>
+
+  {#if drillPath.length > 0 || isDimensionActive}
+    <div class="browse-dim-panel-header">
+        {#if drillPath.length > 0}
+        <button
+            class="browse-dim-back"
+            onclick={onDrillBack}
+            aria-label="Go back"
+        >
+            ← Back
+        </button>
+        <span class="browse-dim-panel-title">{drillTitle}</span>
+        {/if}
+        {#if isDimensionActive}
+        <button
+            class="browse-dim-clear"
+            onclick={onClear}
+            aria-label="Clear {dimensionLabel} filters"
+        >
+            Clear
+        </button>
+        {/if}
+    </div>
+  {/if}
 
   {#if lenses.length > 0 && drillPath.length == 0}
     <ul class="browse-dim-lenses" aria-label="{dimensionLabel} lenses">

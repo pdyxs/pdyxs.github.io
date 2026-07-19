@@ -9,7 +9,7 @@ tags:
   - science
   - when:released
   - installation
-priority: 20150600
+date: 2015-06-01
 status: past
 medium: Installation artwork
 cvDescription: >-

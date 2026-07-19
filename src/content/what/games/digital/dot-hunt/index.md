@@ -3,7 +3,7 @@ title: dot-hunt
 description: >-
   A digital alternate-reality scavenger-hunt game, starting with a San
   Francisco-based prototype
-priority: 20180901
+date: 2018-09-01
 status: past
 medium: Digital ARG
 actions: []

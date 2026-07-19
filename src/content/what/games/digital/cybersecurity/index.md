@@ -5,7 +5,7 @@ image: cyber-2.jpg
 tags:
   - education
   - when:released
-priority: 20210901
+date: 2021-09-01
 actions:
   - text: Read the case study
     url: 'https://www.chaostheorygames.com/work/cybersecurity-ethics'

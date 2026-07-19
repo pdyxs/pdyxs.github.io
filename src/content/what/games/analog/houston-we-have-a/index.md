@@ -2,7 +2,7 @@
 title: "Houston, we have a #$!?"
 description: >-
   A hybrid digital/analog game made at Global Game Jam Sydney 2015
-priority: 20150123
+date: 2015-01-23
 status: past
 medium: Hybrid Digital/Analog Game
 actions: []

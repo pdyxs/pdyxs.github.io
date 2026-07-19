@@ -7,7 +7,7 @@ image: Flatland1.jpg
 feature: Flatland1
 tags:
   - when:released
-priority: 20120200
+date: 2012-02-01
 quotes:
   - quote: >-
       it’s atmospheric, smart and does a great job of the unusual melange of

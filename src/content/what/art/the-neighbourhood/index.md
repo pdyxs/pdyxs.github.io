@@ -10,7 +10,7 @@ tags:
   - science
   - visualisation
   - when:released
-priority: 20160201
+date: 2016-02-01
 status: past
 medium: 'Data visualisation, artwork'
 actions: []

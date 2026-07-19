@@ -7,7 +7,7 @@ image: cover.jpg
 tags:
   - education
   - when:released
-priority: 20180400
+date: 2018-04-01
 actions:
   - text: Get on the iOS App Store
     url: 'https://itunes.apple.com/au/app/numbeanies-number-forest/id1327676583?mt=8'

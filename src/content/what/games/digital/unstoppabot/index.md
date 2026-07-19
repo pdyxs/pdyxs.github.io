@@ -9,7 +9,7 @@ feature: Unstoppabot1
 image: Unstoppabot1.jpg
 tags:
   - when:released
-priority: 20130300
+date: 2013-03-01
 status: past
 medium: Video Game
 actions: []

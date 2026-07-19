@@ -10,7 +10,7 @@ tags:
   - science
   - visualisation
   - when:released
-priority: 20160200
+date: 2016-02-01
 status: past
 medium: 'Data visualisation, artwork'
 width: 900px

@@ -2,7 +2,7 @@
 title: Lino Printing
 description: >-
   Hand-carved lino block prints, exploring printmaking as a new craft
-priority: 20241008
+date: 2024-10-08
 status: current
 medium: Printmaking
 actions: []

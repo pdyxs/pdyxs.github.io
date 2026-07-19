@@ -4,7 +4,7 @@ description: 'A game where one player is Fate, and they hold all the cards.'
 tags:
   - development
   - interactive
-priority: 20190701
+date: 2019-07-01
 image: original.png
 status: current
 medium: Card Game

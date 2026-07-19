@@ -8,7 +8,7 @@ feature: 5-1b
 tags:
   - science
   - when:released
-priority: 20140900
+date: 2014-09-01
 actions:
   - text: Buy on Steam
     url: 'http://store.steampowered.com/app/259470/Particulars/'

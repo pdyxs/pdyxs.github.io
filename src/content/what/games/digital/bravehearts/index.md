@@ -5,7 +5,7 @@ image: bravehearts-1.jpg
 tags:
   - education
   - when:released
-priority: 20231001
+date: 2023-10-01
 actions:
   - text: Read the case study
     url: >-

@@ -5,7 +5,7 @@ image: cover.jpeg
 tags:
   - education
   - when:released
-priority: 20220101
+date: 2022-01-01
 actions:
   - text: Read the case study
     url: 'https://www.chaostheorygames.com/work/played'

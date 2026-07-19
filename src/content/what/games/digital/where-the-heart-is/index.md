@@ -4,7 +4,7 @@ description: A reflection on globalised life
 tags:
   - when:released
   - game-jam
-priority: 20190126
+date: 2019-01-26
 images:
   - wheretheheartis
 image: wheretheheartis.jpg
