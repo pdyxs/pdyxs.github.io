@@ -21,6 +21,8 @@ export interface LensDefinition {
   /** Human-readable label — used both for nav chips and, combined with any
    * active filters, the chrome title once the lens is active. */
   label: string;
+  /** Icon *key* resolved to monochrome SVG markup by lens-icons.ts — kept a
+   * plain string here so the registry stays pure data (no markup, no import). */
   icon?: string;
   /** Lookup key into the lazy component-loader map (lens-components.ts) — not an import itself. */
   component: string;
@@ -52,7 +54,7 @@ const DECLARATIONS: LensDeclaration[] = [
     id: 'home',
     dimension: 'what',
     label: 'A bit of everything',
-    icon: '🏠',
+    icon: 'scatter',
     component: 'home',
     config: FRONTPAGE_CONFIG,
     acceptsFilters: false,
@@ -61,7 +63,7 @@ const DECLARATIONS: LensDeclaration[] = [
     id: 'newest',
     dimension: 'when',
     label: 'Newest',
-    icon: '🕒',
+    icon: 'timeline',
     component: 'newest',
     config: { sortKey: 'date', sortDirection: 'desc' },
     // Wider than the default column — this lens browses a dense list of
@@ -115,8 +117,9 @@ export function lensesForDimension(dimension: string): LensDefinition[] {
   return LENS_REGISTRY.filter(l => l.dimension === dimension);
 }
 
-/** Fallback marker for a lens that declares no icon — always visible when active. */
-const DEFAULT_LENS_ICON = '●';
+/** Fallback icon key for a lens that declares no icon — always visible when
+ * active. Resolved to a generic dot glyph by lens-icons.ts. */
+const DEFAULT_LENS_ICON = 'dot';
 
 /**
  * If `activeLensId` names one of the given lenses, returns the icon to show

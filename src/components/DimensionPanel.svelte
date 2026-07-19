@@ -3,6 +3,7 @@
   import type { TagNode, TagSection } from '../lib/browse-helpers';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid } from '../lib/lens-registry';
+  import LensIcon from './LensIcon.svelte';
 
   interface Props {
     dimensionLabel: string;
@@ -164,7 +165,7 @@
             onclick={() => onSelectLens(lens.id)}
             aria-label="View through the {lens.label} lens"
           >
-            {#if lens.icon}<span aria-hidden="true">{lens.icon}</span>{/if}
+            {#if lens.icon}<LensIcon name={lens.icon} />{/if}
             <span class="browse-dim-lens-label">{lens.label}</span>
           </button>
         </li>

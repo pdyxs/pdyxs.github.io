@@ -1,4 +1,6 @@
 <script lang="ts">
+  import LensIcon from './LensIcon.svelte';
+
   interface Props {
     label: string;
     isActive: boolean;
@@ -33,7 +35,9 @@
   <span class="browse-dim-label">{label}</span>
 </button>
 {#if lensIcon}
-  <span class="browse-dim-lens-icon" aria-hidden="true">{lensIcon}</span>
+  <span class="browse-dim-lens-icon" aria-hidden="true">
+    <LensIcon name={lensIcon} />
+  </span>
 {/if}
 {#if isActive}
   <span class="browse-dim-dots" aria-hidden="true">
@@ -102,6 +106,9 @@
     font-size: 0.85em;
     line-height: 1;
     background: var(--color-text);
+    /* Strip sits on --color-text; the icon draws in currentColor, so paint it
+       in the surface colour to read as a light glyph on the dark strip. */
+    color: var(--color-surface);
     pointer-events: none;
   }
 

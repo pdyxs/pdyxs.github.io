@@ -105,7 +105,7 @@ describe('lensIdFromUid', () => {
 describe('activeLensIcon', () => {
   it('returns the icon of the active lens when it is in the given list', () => {
     const when = lensesForDimension('when');
-    expect(activeLensIcon(when, 'newest')).toBe('🕒');
+    expect(activeLensIcon(when, 'newest')).toBe('timeline');
   });
 
   it('returns undefined when the active lens id is not in the given list', () => {
@@ -120,7 +120,7 @@ describe('activeLensIcon', () => {
 
   it('falls back to a generic marker when the active lens declares no icon', () => {
     const iconless = [{ ...LENS_REGISTRY[0], icon: undefined, id: 'iconless' }];
-    expect(activeLensIcon(iconless, 'iconless')).toBe('●');
+    expect(activeLensIcon(iconless, 'iconless')).toBe('dot');
   });
 });
 
