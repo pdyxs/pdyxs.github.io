@@ -6,8 +6,10 @@
   import { filterVisibleNodes, groupNodesIntoSections } from '../lib/browse-helpers';
   import { lensesForDimension, lensIdFromUid, activeLensIcon } from '../lib/lens-registry';
   import { stackStore } from '../stores/card-stack-store';
+  import type { StatusValue } from '../lib/status-visibility';
   import DimensionButton from './DimensionButton.svelte';
   import DimensionPanel from './DimensionPanel.svelte';
+  import StatusFacet from './StatusFacet.svelte';
 
   interface Props {
     hierarchies: Record<Dimension, TagNode[]>;
@@ -18,9 +20,11 @@
     filterState: FilterState;
     onFilterToggle: (dim: Dimension, value: string) => void;
     onClearDimension: (dim: Dimension) => void;
+    /** Dev-only status facet (issue #52) — see StatusFacet.svelte. */
+    onStatusToggle: (value: StatusValue) => void;
   }
 
-  let { hierarchies, groupOrder = {}, filterState, onFilterToggle, onClearDimension }: Props = $props();
+  let { hierarchies, groupOrder = {}, filterState, onFilterToggle, onClearDimension, onStatusToggle }: Props = $props();
 
   let openDimension = $state<Dimension | null>(null);
   let drillPath = $state<string[]>([]);
@@ -181,6 +185,8 @@
   {/each}
 
 </div>
+
+<StatusFacet activeStatus={filterState.status} onSelect={onStatusToggle} />
 
 <style>
   .fp-dimension-controls {

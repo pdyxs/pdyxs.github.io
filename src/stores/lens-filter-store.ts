@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import type { FilterState, Dimension } from '../lib/filters';
+import type { StatusValue } from '../lib/status-visibility';
 
 /**
  * Single source of truth for the active lens's filter selections. Astro's
@@ -55,4 +56,23 @@ export function clearFilterDimension(state: FilterState, dim: Dimension): Filter
 
 export function clearAllFilters(): FilterState {
   return { selections: {} };
+}
+
+/**
+ * Toggles the dev-only status facet (issue #52). Exclusive, not multi-select
+ * like a dimension bucket — a card has exactly one status, so re-selecting
+ * the active value clears it and selecting a different value replaces it.
+ */
+export function toggleStatusValue(state: FilterState, value: StatusValue): FilterState {
+  if (state.status === value) {
+    const { status: _drop, ...rest } = state;
+    return rest;
+  }
+  return { ...state, status: value };
+}
+
+/** Removes the active status facet selection (e.g. an active-filter chip's ×). */
+export function clearStatusFilter(state: FilterState): FilterState {
+  const { status: _drop, ...rest } = state;
+  return rest;
 }
