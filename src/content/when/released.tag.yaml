@@ -1,3 +1,5 @@
 name: Released
+group: Release
+order: 0
 description: >
   Projects that have been released and are available to the public.

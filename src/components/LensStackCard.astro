@@ -27,7 +27,7 @@ import { resolveLocalImage } from '../lib/images';
 import { getLensDefinition } from '../lib/lens-registry';
 import { deriveLensChrome } from '../lib/lens-chrome';
 import { getAllCards } from '../lib/cards';
-import { getTagRegistry, flattenTagDisplay, makeContentTreeReader } from '../lib/tag-registry';
+import { getTagRegistry, getDimensionGroupOrder, flattenTagDisplay, makeContentTreeReader } from '../lib/tag-registry';
 import { discoverCollapseConfig } from '../lib/collapse-config';
 import { collapseCollections } from '../lib/collapse';
 import { buildAllDimensionHierarchies } from '../lib/browse-helpers';
@@ -60,6 +60,7 @@ const chrome = lens ? deriveLensChrome(lens, filterState) : null;
 const isHome = lens?.id === 'home';
 
 let hierarchies: any = null;
+let groupOrder: any = {};
 let tagDisplay: any = {};
 let serialisedCards: any[] = [];
 let BodyComponent: any = null;
@@ -67,6 +68,7 @@ let BodyComponent: any = null;
 if (lens) {
   const allCards = await getAllCards();
   const registry = await getTagRegistry(allCards);
+  groupOrder = await getDimensionGroupOrder();
   tagDisplay = flattenTagDisplay(registry);
   const declaredValues = DIMENSIONS.flatMap(d => registry[d].values);
 
@@ -124,7 +126,7 @@ if (lens) {
     <div class="body-wrapper open">
       <div class="stack-card-body">
         <div class="stack-card-body-inner">
-          <LensFilterShell client:load lens={lens} hierarchies={hierarchies} tagDisplay={tagDisplay} />
+          <LensFilterShell client:load lens={lens} hierarchies={hierarchies} groupOrder={groupOrder} tagDisplay={tagDisplay} />
           {BodyComponent && (
             <BodyComponent cards={serialisedCards} tagDisplay={tagDisplay} config={lens.config} />
           )}

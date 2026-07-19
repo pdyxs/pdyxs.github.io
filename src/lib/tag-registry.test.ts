@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeTagRegistry, discoverTagSources, getTagRegistry, flattenTagDisplay } from './tag-registry';
+import { computeTagRegistry, discoverTagSources, getTagRegistry, getDimensionGroupOrder, flattenTagDisplay } from './tag-registry';
 import type { TreeReader } from './tag-registry';
 import { extractDimensionTags } from './browse-helpers';
 import { fakeCardMeta } from '../test/fixtures';
@@ -187,7 +187,77 @@ describe('discoverTagSources', () => {
   it('returns empty results for an empty tree', async () => {
     const reader = makeTreeReaderFromFiles({});
     const result = await discoverTagSources(reader);
-    expect(result).toEqual({ containerIdentities: [], tagDeclarations: [] });
+    expect(result).toEqual({ containerIdentities: [], tagDeclarations: [], dimensionGroupOrder: {} });
+  });
+
+  it('captures a group from a container _config.yaml', async () => {
+    const reader = makeTreeReaderFromFiles({
+      'where/contact/_config.yaml': 'name: Contact\ngroup: Reach me\n',
+    });
+    const { containerIdentities } = await discoverTagSources(reader);
+    expect(containerIdentities).toEqual([
+      { value: 'where:contact', name: 'Contact', description: undefined, group: 'Reach me' },
+    ]);
+  });
+
+  it('captures a group from a .tag.yaml declaration', async () => {
+    const reader = makeTreeReaderFromFiles({
+      'what/topics/design.tag.yaml': 'name: Design\ngroup: Themes\n',
+    });
+    const { tagDeclarations } = await discoverTagSources(reader);
+    expect(tagDeclarations).toEqual([
+      { value: 'what:topics/design', name: 'Design', description: undefined, group: 'Themes', order: undefined },
+    ]);
+  });
+
+  it('captures a numeric order from a .tag.yaml declaration', async () => {
+    const reader = makeTreeReaderFromFiles({
+      'when/released.tag.yaml': 'name: Released\norder: 2\n',
+    });
+    const { tagDeclarations } = await discoverTagSources(reader);
+    expect(tagDeclarations[0].order).toBe(2);
+  });
+
+  it('captures a numeric order from a container _config.yaml', async () => {
+    const reader = makeTreeReaderFromFiles({
+      'what/puzzles/_config.yaml': 'name: Puzzles\norder: 1\n',
+    });
+    const { containerIdentities } = await discoverTagSources(reader);
+    expect(containerIdentities[0].order).toBe(1);
+  });
+
+  it('ignores a non-numeric order', async () => {
+    const reader = makeTreeReaderFromFiles({
+      'when/released.tag.yaml': 'name: Released\norder: soon\n',
+    });
+    const { tagDeclarations } = await discoverTagSources(reader);
+    expect(tagDeclarations[0].order).toBeUndefined();
+  });
+});
+
+describe('getDimensionGroupOrder', () => {
+  it('reads groupOrder from a dimension-root _config.yaml', async () => {
+    const reader = makeTreeReaderFromFiles({
+      'where/_config.yaml': 'groupOrder:\n  - Locations\n  - Reach me\n',
+    });
+    const order = await getDimensionGroupOrder(reader);
+    expect(order).toEqual({ where: ['Locations', 'Reach me'] });
+  });
+
+  it('ignores a non-dimension directory _config.yaml groupOrder', async () => {
+    const reader = makeTreeReaderFromFiles({
+      'where/contact/_config.yaml': 'name: Contact\ngroupOrder:\n  - Nope\n',
+    });
+    const order = await getDimensionGroupOrder(reader);
+    expect(order).toEqual({});
+  });
+
+  it('returns an empty map when no dimension declares groupOrder', async () => {
+    const reader = makeTreeReaderFromFiles({
+      'where/contact/_config.yaml': 'name: Contact\n',
+    });
+    const order = await getDimensionGroupOrder(reader);
+    expect(order).toEqual({});
   });
 });
 

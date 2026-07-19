@@ -2658,5 +2658,9 @@
   {
     "uid": "what:puzzles/sunny-with-a-chance-of-fog",
     "code": "aI"
+  },
+  {
+    "uid": "where:contact",
+    "code": "aJ"
   }
 ]

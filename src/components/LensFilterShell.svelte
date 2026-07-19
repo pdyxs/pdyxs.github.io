@@ -13,10 +13,13 @@
   interface Props {
     lens: LensDefinition;
     hierarchies: Record<Dimension, TagNode[]>;
+    /** Per-dimension panel-section order (see groupNodesIntoSections); passed
+     * straight through to FilterBar. */
+    groupOrder?: Partial<Record<Dimension, string[]>>;
     tagDisplay?: Record<string, TagDisplay>;
   }
 
-  let { lens, hierarchies, tagDisplay = {} }: Props = $props();
+  let { lens, hierarchies, groupOrder = {}, tagDisplay = {} }: Props = $props();
 
   const hasActiveFilters = $derived(
     Object.values($lensFilterStore.selections).some(v => v && v.length > 0)
@@ -116,6 +119,7 @@
 
 <FilterBar
   {hierarchies}
+  {groupOrder}
   filterState={$lensFilterStore}
   onFilterToggle={handleFilterToggle}
   onClearDimension={handleClearDimension}

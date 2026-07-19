@@ -1,3 +1,5 @@
-name: Current
+name: In Progress
+group: Release
+order: 1
 description: >
   Projects and work that are currently in progress or active.

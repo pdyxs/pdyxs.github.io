@@ -1,12 +1,17 @@
 <script lang="ts">
-  import type { TagNode } from '../lib/browse-helpers';
+  import type { TagNode, TagSection } from '../lib/browse-helpers';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid } from '../lib/lens-registry';
 
   interface Props {
     dimensionLabel: string;
     drillPath: string[];
-    currentNodes: TagNode[];
+    /** Display name of the drilled-into node, shown beside the Back button. */
+    drillTitle: string;
+    /** Root-level nodes partitioned into sections (see groupNodesIntoSections);
+     * a single unlabelled section renders as a flat list. Drilled-in levels
+     * pass one unlabelled section. */
+    sections: TagSection[];
     activeSelections: Set<string>;
     isDimensionActive: boolean;
     onSelectValue: (value: string) => void;
@@ -28,7 +33,8 @@
   let {
     dimensionLabel,
     drillPath,
-    currentNodes,
+    drillTitle,
+    sections,
     activeSelections,
     isDimensionActive,
     onSelectValue,
@@ -55,8 +61,7 @@
       >
         ← Back
       </button>
-    {:else}
-      <span class="browse-dim-panel-title">{dimensionLabel}</span>
+      <span class="browse-dim-panel-title">{drillTitle}</span>
     {/if}
     {#if isDimensionActive}
       <button
@@ -69,7 +74,7 @@
     {/if}
   </div>
 
-  {#if lenses.length > 0}
+  {#if lenses.length > 0 && drillPath.length == 0}
     <ul class="browse-dim-lenses" aria-label="{dimensionLabel} lenses">
       {#each lenses as lens}
         <li>
@@ -89,34 +94,39 @@
   {/if}
 
   <ul class="browse-dim-list" role="listbox" aria-multiselectable="true">
-    {#each currentNodes as node}
-      {@const selected = activeSelections.has(node.value)}
-      <li
-        class="browse-dim-item"
-        class:browse-dim-item--selected={selected}
-        role="option"
-        aria-selected={selected}
-      >
-        <button
-          class="browse-dim-item-btn"
-          onclick={() => onSelectValue(node.value)}
-          aria-label="{node.name} ({node.count} cards)"
+    {#each sections as section, si}
+      {#if si > 0}
+        <li class="browse-dim-section-divider" role="presentation" aria-hidden="true"></li>
+      {/if}
+      {#each section.nodes as node}
+        {@const selected = activeSelections.has(node.value)}
+        <li
+          class="browse-dim-item"
+          class:browse-dim-item--selected={selected}
+          role="option"
+          aria-selected={selected}
         >
-          <span class="browse-dim-item-label">{node.name}</span>
-          <span class="browse-dim-item-count">({node.count})</span>
-        </button>
-        {#if node.children.length > 0}
           <button
-            class="browse-dim-drill"
-            onclick={(e) => { e.stopPropagation(); onDrillInto(node); }}
-            aria-label="Explore subcategories of {node.label}"
+            class="browse-dim-item-btn"
+            onclick={() => onSelectValue(node.value)}
+            aria-label="{node.name} ({node.count} cards)"
           >
-            ›
+            <span class="browse-dim-item-label">{node.name}</span>
+            <span class="browse-dim-item-count">({node.count})</span>
           </button>
-        {/if}
-      </li>
+          {#if node.children.length > 0}
+            <button
+              class="browse-dim-drill"
+              onclick={(e) => { e.stopPropagation(); onDrillInto(node); }}
+              aria-label="Explore subcategories of {node.label}"
+            >
+              ›
+            </button>
+          {/if}
+        </li>
+      {/each}
     {/each}
-    {#if currentNodes.length === 0}
+    {#if sections.length === 0}
       <li class="browse-dim-empty">No tags available</li>
     {/if}
   </ul>
@@ -204,6 +214,14 @@
     padding: var(--space-xs) 0;
     max-height: 320px;
     overflow-y: auto;
+  }
+
+  /* Divider between two tag sections — the only visible separator; group names
+     are not shown. */
+  .browse-dim-section-divider {
+    height: 0;
+    margin: var(--space-xs) 0;
+    border-top: 1px solid var(--color-border-light);
   }
 
   .browse-dim-item {

@@ -13,6 +13,10 @@ export type TagDisplay = {
   declared?: boolean;
   /** Set when this value is exactly some card's own path (see tag-registry.ts's ownValueForCard) — the uid to navigate to instead of filtering. */
   cardUid?: string;
+  /** Section this value belongs to within its dimension panel — the tag's declared `group` (from its `_config.yaml`/`.tag.yaml`). Ungrouped values omit it and share the default section. See groupNodesIntoSections in browse-helpers.ts. */
+  group?: string;
+  /** Primary sort key for ordering sibling nodes ahead of the alphabetical fallback — lower sorts first. Set for values that need a non-alphabetical order (e.g. chronological `when` eras); omitted values sort alphabetically among themselves. See sortNodes in browse-helpers.ts. */
+  order?: number;
 };
 
 /** Humanises the last path segment of a filter value: "data-art" -> "Data Art". */

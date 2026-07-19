@@ -7,6 +7,7 @@ import {
     dimensionHasTags,
     sortCardsForBrowse,
     filterVisibleNodes,
+    groupNodesIntoSections,
 } from "./browse-helpers";
 import type { TagNode } from "./browse-helpers";
 import { computeTagRegistry, flattenTagDisplay } from "./tag-registry";
@@ -325,6 +326,42 @@ describe("buildTagHierarchy", () => {
         const tree = buildTagHierarchy(cards, "what");
         const labels = tree[0].children.map((c) => c.label);
         expect(labels).toEqual(["art", "games", "writing"]);
+    });
+
+    it("orders siblings by declared `order` ahead of the alphabetical fallback", () => {
+        const cards = [
+            fakeCardMeta({ uid: "posts/a", tags: ["when:current"] }),
+            fakeCardMeta({ uid: "posts/b", tags: ["when:uni"] }),
+            fakeCardMeta({ uid: "posts/c", tags: ["when:nomad"] }),
+        ];
+        const display = {
+            "when:uni": { name: "University", order: 0 },
+            "when:nomad": { name: "Nomad", order: 3 },
+            "when:current": { name: "Current", order: 4 },
+        };
+        const tree = buildTagHierarchy(cards, "when", [], display);
+        // Alphabetically by slug this would be current, nomad, uni — the order
+        // key overrides that with the declared (chronological) sequence.
+        expect(tree.map((n) => n.value)).toEqual([
+            "when:uni",
+            "when:nomad",
+            "when:current",
+        ]);
+    });
+
+    it("sorts nodes without an order alphabetically, after ordered ones", () => {
+        const cards = [
+            fakeCardMeta({ uid: "posts/a", tags: ["what:zebra"] }),
+            fakeCardMeta({ uid: "posts/b", tags: ["what:apple"] }),
+            fakeCardMeta({ uid: "posts/c", tags: ["what:pinned"] }),
+        ];
+        const display = { "what:pinned": { name: "Pinned", order: 0 } };
+        const tree = buildTagHierarchy(cards, "what", [], display);
+        expect(tree.map((n) => n.value)).toEqual([
+            "what:pinned",
+            "what:apple",
+            "what:zebra",
+        ]);
     });
 
     it("synthesises an intermediate parent for an orphaned child tag", () => {
@@ -757,5 +794,87 @@ describe("sortCardsForBrowse", () => {
         const input = [older, newer];
         sortCardsForBrowse(input, { sortKey: "date", sortDirection: "desc" });
         expect(input.map((c) => c.uid)).toEqual(["posts/older", "posts/newer"]);
+    });
+});
+
+describe("groupNodesIntoSections", () => {
+    function node(value: string, group?: string): TagNode {
+        return {
+            value,
+            label: value,
+            name: value,
+            count: 0,
+            children: [],
+            ...(group ? { group } : {}),
+        };
+    }
+
+    it("returns a single unlabelled section when nothing is grouped", () => {
+        const nodes = [node("where:australia"), node("where:europe")];
+        const sections = groupNodesIntoSections(nodes);
+        expect(sections).toHaveLength(1);
+        expect(sections[0].label).toBeUndefined();
+        expect(sections[0].nodes.map((n) => n.value)).toEqual([
+            "where:australia",
+            "where:europe",
+        ]);
+    });
+
+    it("puts grouped sections first, then the ungrouped section last", () => {
+        const nodes = [
+            node("where:australia"),
+            node("where:contact", "Contact"),
+        ];
+        const sections = groupNodesIntoSections(nodes);
+        expect(sections.map((s) => s.label)).toEqual(["Contact", undefined]);
+        expect(sections[0].nodes.map((n) => n.value)).toEqual([
+            "where:contact",
+        ]);
+        expect(sections[1].nodes.map((n) => n.value)).toEqual([
+            "where:australia",
+        ]);
+    });
+
+    it("orders labelled sections by groupOrder, then alphabetically", () => {
+        const nodes = [
+            node("where:a", "Beta"),
+            node("where:b", "Alpha"),
+            node("where:c", "Gamma"),
+        ];
+        const sections = groupNodesIntoSections(nodes, ["Gamma", "Alpha"]);
+        // Gamma and Alpha as listed, then Beta (unlisted) alphabetically after.
+        expect(sections.map((s) => s.label)).toEqual(["Gamma", "Alpha", "Beta"]);
+    });
+
+    it("orders labelled sections alphabetically when groupOrder is empty", () => {
+        const nodes = [
+            node("where:a", "Gamma"),
+            node("where:b", "Alpha"),
+            node("where:c", "Beta"),
+        ];
+        const sections = groupNodesIntoSections(nodes);
+        expect(sections.map((s) => s.label)).toEqual(["Alpha", "Beta", "Gamma"]);
+    });
+
+    it("ignores groupOrder entries with no matching nodes", () => {
+        const nodes = [node("where:contact", "Contact")];
+        const sections = groupNodesIntoSections(nodes, ["Nonexistent", "Contact"]);
+        expect(sections.map((s) => s.label)).toEqual(["Contact"]);
+    });
+
+    it("preserves input node order within a section", () => {
+        const nodes = [
+            node("where:z", "G"),
+            node("where:a", "G"),
+        ];
+        const sections = groupNodesIntoSections(nodes);
+        expect(sections[0].nodes.map((n) => n.value)).toEqual([
+            "where:z",
+            "where:a",
+        ]);
+    });
+
+    it("returns no sections for an empty node list", () => {
+        expect(groupNodesIntoSections([])).toEqual([]);
     });
 });

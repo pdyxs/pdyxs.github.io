@@ -1,0 +1,8 @@
+# Dimension-level config for the `where` panel.
+# `groupOrder` fixes the order of the grouped sections in the Where filter
+# panel (see groupNodesIntoSections in src/lib/browse-helpers.ts). Grouped
+# sections render first in this order (groups omitted here fall in
+# alphabetically after), then the ungrouped location tags render last.
+# Sections are separated by a divider only — group names are not shown.
+groupOrder:
+  - Top

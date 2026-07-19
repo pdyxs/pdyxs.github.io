@@ -149,6 +149,11 @@ const WHEN_ERA_LABELS: Record<string, string> = Object.fromEntries(
   WHEN_ERAS.map(era => [`when:${era.slug}`, era.label]),
 );
 
+/** Chronological index keyed by `when:<slug>` — the era's position in WHEN_ERAS (which is date-ordered). */
+const WHEN_ERA_ORDER: Record<string, number> = Object.fromEntries(
+  WHEN_ERAS.map((era, i) => [`when:${era.slug}`, i]),
+);
+
 /**
  * Proper display name for a generated value, or undefined to let it humanise.
  * Year nodes (`when:<era>/2013`) return undefined — "2013" humanises to itself.
@@ -159,6 +164,16 @@ export function generatedDisplayName(value: string): string | undefined {
   const monthMatch = value.match(/^when:[^/]+\/\d{4}\/(0[1-9]|1[0-2])$/);
   if (monthMatch) return MONTH_NAMES[Number(monthMatch[1]) - 1];
   return undefined;
+}
+
+/**
+ * Explicit sibling sort order for a generated value, or undefined to let it
+ * sort alphabetically. Only `when:<era>` root nodes need one — they'd
+ * otherwise sort by slug instead of chronologically; year (`when:<era>/2013`)
+ * and month (`.../03`) segments already sort chronologically as strings.
+ */
+export function generatedSortOrder(value: string): number | undefined {
+  return WHEN_ERA_ORDER[value];
 }
 
 /** Runs every generator over a card's tags, returning the augmented list. */

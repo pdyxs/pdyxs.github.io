@@ -5,6 +5,7 @@ import {
   allGeneratedFilterValues,
   declaredGeneratedFilterValues,
   generatedDisplayName,
+  generatedSortOrder,
 } from './filter-generators';
 import { TRAVEL_LOG } from '../data/travel-log';
 
@@ -220,5 +221,23 @@ describe('generatedDisplayName', () => {
 
   it('leaves year nodes to humanisation', () => {
     expect(generatedDisplayName('when:seethrough/2013')).toBeUndefined();
+  });
+});
+
+describe('generatedSortOrder', () => {
+  it('orders era roots chronologically (their WHEN_ERAS index)', () => {
+    // uni < seethrough < edtech < nomad < current in the era registry.
+    expect(generatedSortOrder('when:uni')).toBe(0);
+    expect(generatedSortOrder('when:seethrough')).toBe(1);
+    expect(generatedSortOrder('when:current')).toBe(4);
+    expect(generatedSortOrder('when:uni')!).toBeLessThan(
+      generatedSortOrder('when:current')!,
+    );
+  });
+
+  it('returns undefined for year/month levels and non-era values', () => {
+    expect(generatedSortOrder('when:seethrough/2013')).toBeUndefined();
+    expect(generatedSortOrder('when:current/2020/01')).toBeUndefined();
+    expect(generatedSortOrder('where:europe/uk')).toBeUndefined();
   });
 });

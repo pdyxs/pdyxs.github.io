@@ -58,6 +58,21 @@ export type TagNode = {
   declared?: boolean;
   /** Set when this value is exactly some card's own path — the uid to navigate to instead of filtering. */
   cardUid?: string;
+  /** Declared section label (the tag's `group`) used to partition root-level nodes into panel sections — see groupNodesIntoSections. Undefined for the default (ungrouped) section. */
+  group?: string;
+  /** Explicit sort order among siblings (lower first), taking precedence over the alphabetical fallback — see sortNodes. Undefined nodes sort alphabetically. */
+  order?: number;
+};
+
+/**
+ * A run of tag nodes that render together in a dimension panel, separated from
+ * adjacent sections by a divider (no heading is shown). `label` is the group
+ * name — retained for identity/ordering only — and is undefined for the
+ * ungrouped section. See groupNodesIntoSections.
+ */
+export type TagSection = {
+  label?: string;
+  nodes: TagNode[];
 };
 
 // ---------------------------------------------------------------------------
@@ -247,7 +262,12 @@ function findParentValue(
 }
 
 function sortNodes(nodes: TagNode[]): void {
-  nodes.sort((a, b) => a.label.localeCompare(b.label));
+  // A declared `order` sorts ahead of the alphabetical fallback: nodes with an
+  // order come first (lowest first), the rest sort by label. Siblings that all
+  // declare an order (e.g. chronological `when` eras) are fully ordered by it.
+  nodes.sort((a, b) =>
+    (a.order ?? Infinity) - (b.order ?? Infinity) || a.label.localeCompare(b.label)
+  );
   for (const node of nodes) {
     sortNodes(node.children);
   }
@@ -293,6 +313,54 @@ export function filterVisibleNodes(nodes: TagNode[], activeValues: Set<string>):
     result.push({ ...node, children: filterVisibleNodes(node.children, activeValues) });
   }
   return result;
+}
+
+/**
+ * Partitions root-level tag nodes into ordered panel sections by their
+ * declared `group`. Each distinct `group` becomes its own section; nodes with
+ * no `group` form the final section, after all grouped ones.
+ *
+ * `groupOrder` (from the dimension's `_config.yaml`) fixes the order of the
+ * grouped sections: groups appear in the order listed, then any group not
+ * listed follows alphabetically. An empty/absent `groupOrder` orders all
+ * grouped sections alphabetically. Empty sections are never emitted, so an
+ * all-ungrouped node list yields a single section (rendering exactly as a flat
+ * list — no divider).
+ *
+ * `label` carries the group name for identity/ordering, but panels render only
+ * a divider between sections — the name is not shown (see DimensionPanel).
+ *
+ * Grouping is only meaningful at the root drill level; drilled-in levels
+ * render flat. The caller decides when to apply it (see FilterBar.svelte).
+ */
+export function groupNodesIntoSections(
+  nodes: TagNode[],
+  groupOrder: string[] = [],
+): TagSection[] {
+  const ungrouped: TagNode[] = [];
+  const byGroup = new Map<string, TagNode[]>();
+  for (const node of nodes) {
+    if (node.group) {
+      const bucket = byGroup.get(node.group);
+      if (bucket) bucket.push(node);
+      else byGroup.set(node.group, [node]);
+    } else {
+      ungrouped.push(node);
+    }
+  }
+
+  const orderedGroups: string[] = [];
+  for (const group of groupOrder) {
+    if (byGroup.has(group) && !orderedGroups.includes(group)) orderedGroups.push(group);
+  }
+  for (const group of [...byGroup.keys()].sort((a, b) => a.localeCompare(b))) {
+    if (!orderedGroups.includes(group)) orderedGroups.push(group);
+  }
+
+  const sections: TagSection[] = [];
+  for (const group of orderedGroups) sections.push({ label: group, nodes: byGroup.get(group)! });
+  if (ungrouped.length > 0) sections.push({ nodes: ungrouped });
+  return sections;
 }
 
 /**

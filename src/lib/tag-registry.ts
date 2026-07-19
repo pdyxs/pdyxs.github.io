@@ -20,7 +20,7 @@ import type { CardMeta } from './cards';
 import { DIMENSIONS, isValidFilterValue } from './filters';
 import type { Dimension } from './filters';
 import { ownValueForCard } from './card-identity';
-import { declaredGeneratedFilterValues, generatedDisplayName } from './filter-generators';
+import { declaredGeneratedFilterValues, generatedDisplayName, generatedSortOrder } from './filter-generators';
 import { humaniseSegment } from './tag-display';
 import type { TagDisplay } from './tag-display';
 
@@ -48,6 +48,10 @@ export type ValueIdentity = {
   value: string;
   name?: string;
   description?: string;
+  /** Section this value belongs to within its dimension panel (declared `group`). */
+  group?: string;
+  /** Explicit sibling sort order (lower first); see sortNodes in browse-helpers.ts. */
+  order?: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -77,12 +81,16 @@ function resolveDisplay(
 
   const name = tagDecl?.name ?? container?.name ?? cardTitle ?? humaniseSegment(value);
   const description = tagDecl?.description ?? container?.description;
+  const group = tagDecl?.group ?? container?.group;
+  const order = tagDecl?.order ?? container?.order;
 
   return {
     name,
     ...(description !== undefined ? { description } : {}),
     declared,
     ...(cardUid ? { cardUid } : {}),
+    ...(group !== undefined ? { group } : {}),
+    ...(order !== undefined ? { order } : {}),
   };
 }
 
@@ -191,13 +199,22 @@ function fsPathToValue(path: string): string | undefined {
   return `${path.slice(0, slashIdx)}:${path.slice(slashIdx + 1)}`;
 }
 
-type YamlIdentity = { name?: string; description?: string };
+type YamlIdentity = { name?: string; description?: string; group?: string; order?: unknown };
+type YamlDimensionConfig = { groupOrder?: unknown };
+
+/** Coerces a parsed `groupOrder` value to a clean string[], or undefined if it isn't a string list. */
+function parseGroupOrder(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const groups = raw.filter((g): g is string => typeof g === 'string');
+  return groups.length > 0 ? groups : undefined;
+}
 
 async function walkDir(
   reader: TreeReader,
   dir: string,
   containerIdentities: ValueIdentity[],
   tagDeclarations: ValueIdentity[],
+  dimensionGroupOrder: Partial<Record<Dimension, string[]>>,
 ): Promise<void> {
   const entries = await reader.listDir(dir);
 
@@ -205,10 +222,18 @@ async function walkDir(
   if (configEntry && dir) {
     const text = await reader.readFile(dir ? `${dir}/_config.yaml` : '_config.yaml');
     if (text) {
-      const parsed = (parseYaml(text) as YamlIdentity | null) ?? {};
-      if (parsed.name || parsed.description) {
+      const parsed = (parseYaml(text) as (YamlIdentity & YamlDimensionConfig) | null) ?? {};
+      const order = typeof parsed.order === 'number' ? parsed.order : undefined;
+      if (parsed.name || parsed.description || parsed.group || order !== undefined) {
         const value = fsPathToValue(dir);
-        if (value) containerIdentities.push({ value, name: parsed.name, description: parsed.description });
+        if (value) containerIdentities.push({ value, name: parsed.name, description: parsed.description, group: parsed.group, order });
+      }
+      // A dimension-root `_config.yaml` (dir is exactly a dimension name) may
+      // declare `groupOrder` to fix the order of that dimension's panel
+      // sections — see groupNodesIntoSections in browse-helpers.ts.
+      if ((DIMENSIONS as readonly string[]).includes(dir)) {
+        const groupOrder = parseGroupOrder(parsed.groupOrder);
+        if (groupOrder) dimensionGroupOrder[dir as Dimension] = groupOrder;
       }
     }
   }
@@ -216,15 +241,16 @@ async function walkDir(
   for (const entry of entries) {
     const childPath = dir ? `${dir}/${entry.name}` : entry.name;
     if (entry.isDirectory) {
-      await walkDir(reader, childPath, containerIdentities, tagDeclarations);
+      await walkDir(reader, childPath, containerIdentities, tagDeclarations, dimensionGroupOrder);
     } else if (entry.name.endsWith(TAG_YAML_SUFFIX)) {
       const text = await reader.readFile(childPath);
       if (text) {
         const parsed = (parseYaml(text) as YamlIdentity | null) ?? {};
+        const order = typeof parsed.order === 'number' ? parsed.order : undefined;
         const stem = entry.name.slice(0, -TAG_YAML_SUFFIX.length);
         const declPath = dir ? `${dir}/${stem}` : stem;
         const value = fsPathToValue(declPath);
-        if (value) tagDeclarations.push({ value, name: parsed.name, description: parsed.description });
+        if (value) tagDeclarations.push({ value, name: parsed.name, description: parsed.description, group: parsed.group, order });
       }
     }
   }
@@ -238,11 +264,29 @@ async function walkDir(
  */
 export async function discoverTagSources(
   reader: TreeReader,
-): Promise<{ containerIdentities: ValueIdentity[]; tagDeclarations: ValueIdentity[] }> {
+): Promise<{
+  containerIdentities: ValueIdentity[];
+  tagDeclarations: ValueIdentity[];
+  dimensionGroupOrder: Partial<Record<Dimension, string[]>>;
+}> {
   const containerIdentities: ValueIdentity[] = [];
   const tagDeclarations: ValueIdentity[] = [];
-  await walkDir(reader, '', containerIdentities, tagDeclarations);
-  return { containerIdentities, tagDeclarations };
+  const dimensionGroupOrder: Partial<Record<Dimension, string[]>> = {};
+  await walkDir(reader, '', containerIdentities, tagDeclarations, dimensionGroupOrder);
+  return { containerIdentities, tagDeclarations, dimensionGroupOrder };
+}
+
+/**
+ * Returns the declared panel-section order per dimension, read from each
+ * dimension-root `_config.yaml`'s `groupOrder` key. Dimensions without a
+ * declaration are absent — callers fall back to the default (alphabetical)
+ * ordering in groupNodesIntoSections. Consumed by the browse filter bar.
+ */
+export async function getDimensionGroupOrder(
+  reader: TreeReader = makeContentTreeReader(),
+): Promise<Partial<Record<Dimension, string[]>>> {
+  const { dimensionGroupOrder } = await discoverTagSources(reader);
+  return dimensionGroupOrder;
 }
 
 /**
@@ -263,7 +307,12 @@ export async function getTagRegistry(
   const presentTags = cards.flatMap(card => card.tags);
   const generatedDeclarations: ValueIdentity[] = declaredGeneratedFilterValues(presentTags).map(value => {
     const name = generatedDisplayName(value);
-    return name ? { value, name } : { value };
+    const order = generatedSortOrder(value);
+    return {
+      value,
+      ...(name ? { name } : {}),
+      ...(order !== undefined ? { order } : {}),
+    };
   });
   return computeTagRegistry(cards, containerIdentities, [...tagDeclarations, ...generatedDeclarations]);
 }

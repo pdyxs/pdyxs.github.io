@@ -2,8 +2,8 @@
   import { onMount } from 'svelte';
   import { DIMENSIONS, filterStateToParams } from '../lib/filters';
   import type { Dimension, FilterState } from '../lib/filters';
-  import type { TagNode } from '../lib/browse-helpers';
-  import { filterVisibleNodes } from '../lib/browse-helpers';
+  import type { TagNode, TagSection } from '../lib/browse-helpers';
+  import { filterVisibleNodes, groupNodesIntoSections } from '../lib/browse-helpers';
   import { lensesForDimension, lensIdFromUid, activeLensIcon } from '../lib/lens-registry';
   import { stackStore } from '../stores/card-stack-store';
   import DimensionButton from './DimensionButton.svelte';
@@ -11,12 +11,16 @@
 
   interface Props {
     hierarchies: Record<Dimension, TagNode[]>;
+    /** Per-dimension section order for the root-level panel (see
+     * groupNodesIntoSections). Dimensions absent here fall back to the default
+     * (alphabetical) group ordering. */
+    groupOrder?: Partial<Record<Dimension, string[]>>;
     filterState: FilterState;
     onFilterToggle: (dim: Dimension, value: string) => void;
     onClearDimension: (dim: Dimension) => void;
   }
 
-  let { hierarchies, filterState, onFilterToggle, onClearDimension }: Props = $props();
+  let { hierarchies, groupOrder = {}, filterState, onFilterToggle, onClearDimension }: Props = $props();
 
   let openDimension = $state<Dimension | null>(null);
   let drillPath = $state<string[]>([]);
@@ -33,18 +37,37 @@
     return filterVisibleNodes(hierarchies[dim] ?? [], activeSelectionsFor(dim));
   }
 
-  const currentNodes = $derived.by<TagNode[]>(() => {
-    if (!openDimension) return [];
-    const roots = visibleNodesFor(openDimension);
-    if (drillPath.length === 0) return roots;
-    let nodes = roots;
-    for (const val of drillPath) {
+  // Walks the current drillPath, returning the node it points at (`node`, the
+  // header title source) and the level to render (`nodes`, that node's
+  // children). An unresolved path stops early and shows the last good level.
+  function resolveDrill(dim: Dimension, path: string[]): { node: TagNode | null; nodes: TagNode[] } {
+    let nodes = visibleNodesFor(dim);
+    let node: TagNode | null = null;
+    for (const val of path) {
       const found = nodes.find(n => n.value === val);
-      if (!found) return nodes;
+      if (!found) break;
+      node = found;
       nodes = found.children;
     }
-    return nodes;
+    return { node, nodes };
+  }
+
+  const currentSections = $derived.by<TagSection[]>(() => {
+    if (!openDimension) return [];
+    // At the root level, partition into declared sections; drilled-in levels
+    // render flat (a single unlabelled section).
+    if (drillPath.length === 0) {
+      return groupNodesIntoSections(visibleNodesFor(openDimension), groupOrder[openDimension] ?? []);
+    }
+    return [{ nodes: resolveDrill(openDimension, drillPath).nodes }];
   });
+
+  // Display name of the drilled-into node, for the panel header (empty at root).
+  const currentDrillTitle = $derived(
+    openDimension && drillPath.length > 0
+      ? resolveDrill(openDimension, drillPath).node?.name ?? ''
+      : ''
+  );
 
   function dimensionIsActive(dim: Dimension): boolean {
     const sel = filterState.selections[dim];
@@ -140,7 +163,8 @@
         <DimensionPanel
           dimensionLabel={dimensionLabels[dim]}
           {drillPath}
-          currentNodes={currentNodes}
+          drillTitle={currentDrillTitle}
+          sections={currentSections}
           activeSelections={activeSelectionsFor(dim)}
           isDimensionActive={isActive}
           onSelectValue={(value) => selectFromPanel(dim, value)}
