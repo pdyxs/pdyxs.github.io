@@ -270,8 +270,18 @@
     flex: 0 0 auto;
     list-style: none;
     margin: 0;
-    padding: var(--space-xs) 0;
+    padding: 0;
     border-bottom: 1px solid var(--color-border-light);
+  }
+
+  /* Full-bleed rows: every row's highlight (hover and selected alike) is the
+     whole row, so spacing must be static and gap-free in all states. The
+     global `li { margin-bottom }` (global.css) and the list paddings are the
+     only gap sources; zero them here so rows touch each other, the section
+     dividers, and the panel edges. Nothing about spacing is conditional on
+     selection, so selecting never shifts the layout. */
+  .browse-dim-lenses > li {
+    margin: 0;
   }
 
   .browse-dim-lens-item {
@@ -312,7 +322,7 @@
   .browse-dim-list {
     list-style: none;
     margin: 0;
-    padding: var(--space-xs) 0;
+    padding: 0;
     /* Flex child of the panel: takes the remaining capped height and scrolls,
        so the header/lens list stay pinned while the tag list scrolls. */
     flex: 1 1 auto;
@@ -325,11 +335,12 @@
      are not shown. */
   .browse-dim-section-divider {
     height: 0;
-    margin: var(--space-xs) 0;
+    margin: 0;
     border-top: 1px solid var(--color-border-light);
   }
 
   .browse-dim-item {
+    margin: 0;
     display: flex;
     align-items: center;
   }
@@ -374,56 +385,6 @@
     opacity: 0.7;
   }
 
-  /* Flush selected highlights against adjacent lines. A selected item at a list
-     edge or beside a section divider otherwise leaves a sliver of surface
-     between its highlight and the line. Collapse just the contributors to that
-     gap — only for selected items — so the highlight connects to the panel
-     edge or divider. The contributors are the list's own vertical padding, the
-     item's bottom margin (the global `li { margin-bottom }` in global.css), and
-     the divider's margins; adjacent block margins collapse, so both sides of a
-     boundary must be zeroed to close it. */
-
-  /* Tag list — selected item at the very top / bottom of the list. */
-  .browse-dim-list:has(> .browse-dim-item--selected:first-child) {
-    padding-top: 0;
-  }
-
-  .browse-dim-list:has(> .browse-dim-item--selected:last-child) {
-    padding-bottom: 0;
-  }
-
-  .browse-dim-item--selected:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Tag list — selected item flush against a section divider, above or below. */
-  .browse-dim-item--selected:has(+ .browse-dim-section-divider) {
-    margin-bottom: 0;
-  }
-
-  .browse-dim-item--selected + .browse-dim-section-divider {
-    margin-top: 0;
-  }
-
-  .browse-dim-section-divider:has(+ .browse-dim-item--selected) {
-    margin-bottom: 0;
-  }
-
-  /* Lens list — selected lens at the top of the panel / bottom of the lens list
-     (its border-bottom). Selected class sits on the button, so match via the
-     li, and also drop the li's own bottom margin at the list's end. */
-  .browse-dim-lenses:has(> li:first-child > .browse-dim-lens-item--selected) {
-    padding-top: 0;
-  }
-
-  .browse-dim-lenses:has(> li:last-child > .browse-dim-lens-item--selected) {
-    padding-bottom: 0;
-  }
-
-  .browse-dim-lenses > li:last-child:has(> .browse-dim-lens-item--selected) {
-    margin-bottom: 0;
-  }
-
   .browse-dim-drill {
     padding: var(--space-xs) var(--space-sm);
     border: none;
@@ -458,6 +419,7 @@
   }
 
   .browse-dim-empty {
+    margin: 0;
     padding: var(--space-sm) var(--space-md);
     color: var(--color-text-muted);
     font-size: 0.9rem;
