@@ -13,7 +13,6 @@ images:
 actions:
   - text: Github Repository
     url: 'https://github.com/pdyxs/QuantumInstaStories-Unity'
-status: past
 medium: Speculative Artwork
 quotes: []
 ---

@@ -14,7 +14,6 @@ actions:
     url: 'https://wheretheheartis.surge.sh/'
   - text: Read the Postmortem
     url: 'https://medium.com/@pdyxs/deciding-where-the-heart-is-4484b5476fa1'
-status: past
 medium: Interactive Art/Game
 quotes: []
 ---

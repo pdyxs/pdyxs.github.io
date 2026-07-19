@@ -58,7 +58,6 @@ images:
   - 5-5b
   - comic-e
 portfolio: 'https://www.youtube.com/embed/S7Oo97kO3rc'
-status: past
 medium: Video Game
 cvDescription: >-
   Particulars is a video game based on the mechanics of high-energy physics,

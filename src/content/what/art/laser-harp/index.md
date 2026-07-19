@@ -10,7 +10,6 @@ tags:
   - when:released
   - installation
 date: 2015-06-01
-status: past
 medium: Installation artwork
 cvDescription: >-
   An interactive artwork celebrating the International Year of Light, the Laser

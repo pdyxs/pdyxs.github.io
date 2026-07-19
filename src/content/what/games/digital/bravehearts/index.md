@@ -14,7 +14,6 @@ actions:
     url: 'https://apps.apple.com/us/app/dittos-keep-safe-adventure/id6451194489'
   - text: Play on Android
     url: 'https://play.google.com/store/apps/details?id=org.bravehearts.dksa'
-status: past
 medium: Mobile game
 quotes: []
 images: []

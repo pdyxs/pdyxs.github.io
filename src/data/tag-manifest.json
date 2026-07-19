@@ -2662,5 +2662,13 @@
   {
     "uid": "where:contact",
     "code": "aJ"
+  },
+  {
+    "uid": "when:in-progress",
+    "code": "aK"
+  },
+  {
+    "uid": "when:shelved",
+    "code": "aL"
   }
 ]

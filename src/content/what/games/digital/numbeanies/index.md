@@ -15,7 +15,6 @@ actions:
     url: 'http://au.mathletics.com/early-learners'
 images:
   - 'https://player.vimeo.com/video/257695244'
-status: past
 medium: Augmented Reality tablet App
 cvDescription: >-
   This game was a great collaboration between an artist, designer and developer

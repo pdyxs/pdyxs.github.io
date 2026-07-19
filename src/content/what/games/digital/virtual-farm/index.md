@@ -9,7 +9,6 @@ date: 2022-10-01
 actions:
   - text: Read the case study
     url: 'https://www.chaostheorygames.com/work/virtual-farm'
-status: past
 medium: Tabletop computer and iPad game
 quotes: []
 images: []

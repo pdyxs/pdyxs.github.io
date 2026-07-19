@@ -4,6 +4,7 @@ description: >-
   A minimalistic budgeting app, focusing on helping you to control your everyday
   spending
 tags:
+  - when:shelved
   - development
 images:
   - icon
@@ -14,7 +15,6 @@ actions:
   - text: Sign up to the beta
     url: 'https://budgethaver.app'
 date: 2019-03-11
-status: future
 medium: Productivity App
 quotes: []
 ---

@@ -15,7 +15,6 @@ export function fakeEntry(overrides?: {
   id?: string;
   description?: string;
   image?: string;
-  status?: string;
   medium?: string;
   canonical_url?: string;
   source?: string;
@@ -28,7 +27,6 @@ export function fakeEntry(overrides?: {
   data: {
     description?: string;
     image?: string;
-    status?: string;
     medium?: string;
     canonical_url?: string;
     source?: string;

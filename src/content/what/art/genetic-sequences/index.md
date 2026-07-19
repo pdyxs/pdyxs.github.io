@@ -2,6 +2,7 @@
 title: Genetic Sequences
 description: An exploration of the structures of genetic sequences
 tags:
+  - when:shelved
   - development
   - science
   - visualisation
@@ -11,7 +12,6 @@ image: output4.png
 actions:
   - text: Follow the progress of the project
     url: 'https://medium.com/series/visualising-genetic-sequences-bea25751f4b7'
-status: future
 medium: 'Data visualisation, artwork'
 quotes: []
 ---

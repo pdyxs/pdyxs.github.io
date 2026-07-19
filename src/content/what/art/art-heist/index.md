@@ -27,7 +27,6 @@ quotes:
     in:
       text: Escape Me
       url: 'https://escapeme.net/2017/07/09/jetpack-theatre-art-heist/#more-276'
-status: past
 medium: Escape Room/Interactive Theatre
 cvDescription: >-
   Art Heist is an interactive theatre experience where teams of four develop and

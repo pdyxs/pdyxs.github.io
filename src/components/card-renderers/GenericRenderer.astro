@@ -25,7 +25,6 @@ interface Props {
     data: {
       description?: string;
       image?: string;
-      status?: string;
       medium?: string;
       canonical_url?: string;
       source?: string;
@@ -81,10 +80,9 @@ const galleryImages = await Promise.all(
     {localImage && <Image src={localImage} alt="" class="generic-image" />}
     {localVideo && <video src={localVideo} class="generic-video" controls preload="metadata"></video>}
 
-    {(data.status || data.medium) && (
+    {data.medium && (
       <dl class="generic-meta">
-        {data.status && <><dt>Status</dt><dd>{data.status}</dd></>}
-        {data.medium && <><dt>Medium</dt><dd>{data.medium}</dd></>}
+        <dt>Medium</dt><dd>{data.medium}</dd>
       </dl>
     )}
 
