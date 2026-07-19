@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import type { TagNode, TagSection } from '../lib/browse-helpers';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid } from '../lib/lens-registry';
@@ -22,6 +23,9 @@
      * above the filter listbox. Plain data only; never imports a lens's
      * actual component, so the lazy-load boundary holds. */
     lenses: LensDefinition[];
+    /** The globally active lens id (or null). The matching lens item in this
+     * panel renders selected, mirroring how an active tag looks selected. */
+    activeLensId: string | null;
     /** Current filter selections, serialised, so a lens replacement carries
      * them across the swap (e.g. "filter.what=projects"). Only ever
      * attached to a lens that declares acceptsFilters — a lens that can't
@@ -42,12 +46,81 @@
     onDrillBack,
     onClear,
     lenses,
+    activeLensId,
     carryFilterParams,
     onSelectLens,
   }: Props = $props();
+
+  // True when any descendant of `node` (children filtered to visible ones by
+  // filterVisibleNodes) is an active selection — used to render the drill-in
+  // arrow selected, so a collapsed parent signals a selection lives inside it.
+  function hasSelectedDescendant(node: TagNode): boolean {
+    for (const child of node.children) {
+      if (activeSelections.has(child.value) || hasSelectedDescendant(child)) return true;
+    }
+    return false;
+  }
+
+  // The panel is a DOM descendant of `.stack-card-body`, which is
+  // `overflow: hidden` for the expand/collapse grid animation. An
+  // absolutely-positioned panel gets clipped at the card body's bottom edge,
+  // which on a short (little-content) page sits right around the footer — so
+  // the dropdown appeared cut off. `position: fixed` escapes that clip
+  // (no transformed ancestors create a containing block in any state where
+  // this panel can open), and we anchor it to the trigger button here. The
+  // panel stays a DOM child of `.fp-dimension-controls`, so FilterBar's
+  // click-outside detection and CardStack's delegated lens-replacement clicks
+  // are unaffected.
+  let panelEl: HTMLDivElement;
+
+  function anchorPanel() {
+    if (!panelEl) return;
+    const wrapper = panelEl.closest('.fp-dim-wrapper');
+    if (!wrapper) return;
+    const rect = wrapper.getBoundingClientRect();
+    // Overlap the button's bottom border, matching the old
+    // `top: calc(100% - 1em - 1px)` connected look.
+    const em = parseFloat(getComputedStyle(panelEl).fontSize) || 16;
+    const top = rect.bottom - em - 1;
+    const gutter = 8;
+    panelEl.style.top = `${top}px`;
+    // Cap height to the space between the panel top and the viewport bottom so
+    // the panel never runs past the viewport/footer; the list scrolls within.
+    panelEl.style.maxHeight = `${Math.max(120, window.innerHeight - top - gutter)}px`;
+    // Anchor to the button's left edge, then clamp so a right-hand dimension
+    // doesn't push the panel off-screen.
+    panelEl.style.left = '0px';
+    const width = panelEl.offsetWidth;
+    let left = rect.left;
+    if (left + width > window.innerWidth - gutter) {
+      left = Math.max(gutter, window.innerWidth - gutter - width);
+    }
+    panelEl.style.left = `${left}px`;
+  }
+
+  onMount(() => {
+    anchorPanel();
+    const onScroll = () => anchorPanel();
+    // capture:true so scrolls in any scrollable ancestor reposition the panel.
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll, { capture: true } as EventListenerOptions);
+      window.removeEventListener('resize', onScroll);
+    };
+  });
+
+  // Reposition when the content height changes (drilling in/out toggles the
+  // header), so the height cap stays correct.
+  $effect(() => {
+    void sections;
+    void drillPath;
+    anchorPanel();
+  });
 </script>
 
 <div
+  bind:this={panelEl}
   class="browse-dim-panel"
   role="dialog"
   aria-label="{dimensionLabel} tag browser"
@@ -80,9 +153,12 @@
   {#if lenses.length > 0 && drillPath.length == 0}
     <ul class="browse-dim-lenses" aria-label="{dimensionLabel} lenses">
       {#each lenses as lens}
+        {@const lensSelected = lens.id === activeLensId}
         <li>
           <button
             class="browse-dim-lens-item"
+            class:browse-dim-lens-item--selected={lensSelected}
+            aria-current={lensSelected ? 'true' : undefined}
             data-replace-slot={lensUid(lens.id)}
             data-replace-params={lens.acceptsFilters ? carryFilterParams : ''}
             onclick={() => onSelectLens(lens.id)}
@@ -118,10 +194,12 @@
             <span class="browse-dim-item-count">({node.count})</span>
           </button>
           {#if node.children.length > 0}
+            {@const childSelected = hasSelectedDescendant(node)}
             <button
               class="browse-dim-drill"
+              class:browse-dim-drill--selected={childSelected}
               onclick={(e) => { e.stopPropagation(); onDrillInto(node); }}
-              aria-label="Explore subcategories of {node.label}"
+              aria-label="Explore subcategories of {node.label}{childSelected ? ' (contains a selection)' : ''}"
             >
               ›
             </button>
@@ -137,10 +215,15 @@
 
 <style>
   .browse-dim-panel {
-    position: absolute;
-    top: calc(100% - 1em - 1px);
+    /* fixed (not absolute) so the panel escapes the `overflow: hidden` on the
+       ancestor `.stack-card-body`; top/left/max-height are set in JS
+       (anchorPanel) from the trigger button's rect. */
+    position: fixed;
+    top: 0;
     left: 0;
     min-width: 220px;
+    display: flex;
+    flex-direction: column;
     border: var(--border-width) solid var(--color-border);
     background: var(--color-surface);
     z-index: 100;
@@ -148,6 +231,7 @@
   }
 
   .browse-dim-panel-header {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -162,6 +246,7 @@
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    text-align: right;
   }
 
   .browse-dim-back,
@@ -182,6 +267,7 @@
   }
 
   .browse-dim-lenses {
+    flex: 0 0 auto;
     list-style: none;
     margin: 0;
     padding: var(--space-xs) 0;
@@ -207,6 +293,18 @@
     background: var(--color-bg-hover);
   }
 
+  /* Active lens reads selected, mirroring an active tag
+     (.browse-dim-item--selected). */
+  .browse-dim-lens-item--selected {
+    background: var(--color-text);
+    color: var(--color-surface);
+  }
+
+  .browse-dim-lens-item--selected:hover {
+    background: var(--color-text);
+    opacity: 0.85;
+  }
+
   .browse-dim-lens-label {
     font-weight: 600;
   }
@@ -215,6 +313,10 @@
     list-style: none;
     margin: 0;
     padding: var(--space-xs) 0;
+    /* Flex child of the panel: takes the remaining capped height and scrolls,
+       so the header/lens list stay pinned while the tag list scrolls. */
+    flex: 1 1 auto;
+    min-height: 0;
     max-height: 320px;
     overflow-y: auto;
   }
@@ -289,6 +391,20 @@
   .browse-dim-drill:hover {
     background: var(--color-bg-hover);
     color: var(--color-text);
+  }
+
+  /* A collapsed parent with a selected descendant reads selected, matching
+     the selected-tag treatment (.browse-dim-item--selected). */
+  .browse-dim-drill--selected {
+    background: var(--color-text);
+    color: var(--color-surface);
+    border-left-color: var(--color-text);
+  }
+
+  .browse-dim-drill--selected:hover {
+    background: var(--color-text);
+    color: var(--color-surface);
+    opacity: 0.85;
   }
 
   .browse-dim-empty {

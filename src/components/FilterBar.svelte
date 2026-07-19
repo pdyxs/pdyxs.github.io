@@ -172,6 +172,7 @@
           onDrillBack={drillBack}
           onClear={() => onClearDimension(dim)}
           {lenses}
+          {activeLensId}
           {carryFilterParams}
           onSelectLens={selectLensFromPanel}
         />
