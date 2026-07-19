@@ -55,6 +55,15 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     }
   },
   {
+    "id": "editorial",
+    "dimension": "what",
+    "label": "Editorial",
+    "icon": "flag",
+    "component": "editorial",
+    "width": "960px",
+    "devOnly": true
+  },
+  {
     "id": "newest",
     "dimension": "when",
     "label": "Newest",

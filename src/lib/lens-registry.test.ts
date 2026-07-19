@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { LENS_REGISTRY, lensUid, getLensDefinition, allLensUids, lensesForDimension, lensIdFromUid, activeLensIcon, DEFAULT_BROWSE_LENS_ID } from './lens-registry';
+import { LENS_REGISTRY, lensUid, getLensDefinition, allLensUids, lensesForDimension, lensIdFromUid, activeLensIcon, DEFAULT_BROWSE_LENS_ID, isLensVisible } from './lens-registry';
 
 describe('LENS_REGISTRY', () => {
   it('declares home and newest as live lenses', () => {
@@ -75,9 +75,9 @@ describe('lensesForDimension', () => {
     expect(lensesForDimension('who')).toEqual([]);
   });
 
-  it('returns the home lens filed under what', () => {
+  it('returns the home and editorial lenses filed under what', () => {
     const what = lensesForDimension('what');
-    expect(what.map(l => l.id)).toEqual(['home']);
+    expect(what.map(l => l.id)).toEqual(['home', 'editorial']);
   });
 
   it('excludes home from every 5W dimension other than what', () => {
@@ -124,6 +124,20 @@ describe('activeLensIcon', () => {
   });
 });
 
+describe('isLensVisible', () => {
+  it('a lens with no devOnly flag is visible whether or not isDev', () => {
+    const lens = { ...LENS_REGISTRY[0], devOnly: undefined };
+    expect(isLensVisible(lens, true)).toBe(true);
+    expect(isLensVisible(lens, false)).toBe(true);
+  });
+
+  it('a devOnly lens is only visible when isDev is true', () => {
+    const lens = { ...LENS_REGISTRY[0], devOnly: true };
+    expect(isLensVisible(lens, true)).toBe(true);
+    expect(isLensVisible(lens, false)).toBe(false);
+  });
+});
+
 describe('DEFAULT_BROWSE_LENS_ID', () => {
   // The fallback target for filters added somewhere that can't accept them
   // (e.g. the home lens) — must resolve to a real, filter-accepting lens.
@@ -143,6 +157,12 @@ describe('DEFAULT_BROWSE_LENS_ID', () => {
 describe('allLensUids', () => {
   it('enumerates every registry entry as a uid, resolvable without importing any component', () => {
     expect(allLensUids().sort()).toEqual(['lens/home', 'lens/newest', 'lens/oldest']);
+  });
+
+  it('excludes a devOnly lens even though it is in LENS_REGISTRY (never gets a manifest code)', () => {
+    const editorial = getLensDefinition('editorial');
+    expect(editorial?.devOnly).toBe(true);
+    expect(allLensUids()).not.toContain('lens/editorial');
   });
 
   it('every uid is resolvable back to a definition via getLensDefinition', () => {

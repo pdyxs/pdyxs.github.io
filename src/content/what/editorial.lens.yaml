@@ -1,0 +1,13 @@
+# Lens definition — id "editorial", dimension "what" (a pun the issue itself
+# makes: "what's in flight"). Dev-only status dashboard: groups every
+# non-published card by declared status (draft/scheduled/unlisted/archived)
+# with per-group counts (see src/lib/status-groups.ts). devOnly: true keeps it
+# out of the production manifest and static-path enumeration (its route
+# 404s outside the dev/preview server) — see isLensVisible() in
+# src/lib/lens-registry.ts.
+label: Editorial
+icon: flag
+component: editorial
+devOnly: true
+order: 99
+width: 960px
