@@ -9,12 +9,13 @@
 //     fragment counterpart filter getAllCards() on `.reachable`)
 //
 // This module must stay pure (no IO, no Astro, no mutable reads) so it's
-// testable in isolation and so future slices (#48 scheduled) can extend it
-// without touching its callers' plumbing.
+// testable in isolation and so future slices can extend it without touching
+// its callers' plumbing.
 
 /** All five publish-lifecycle values. The schema enum includes every one of
- * these even though this slice (#46) only enforces `draft`/`published` —
- * later issues add enforcement for the rest without needing a schema change. */
+ * these even though enforcement lands incrementally — #46 added `draft`/
+ * `published`, #48 added `scheduled`; later issues add the rest without
+ * needing a schema change. */
 export const STATUS_VALUES = ['draft', 'published', 'scheduled', 'unlisted', 'archived'] as const;
 
 export type StatusValue = typeof STATUS_VALUES[number];
@@ -58,10 +59,10 @@ export type StatusVisibilityOptions = {
  * (absent means `published`) and `date`. Enforces the finished-content
  * states: `draft` (neither listed nor reachable), `unlisted` (reachable but
  * not listed — still renders at its URL, absent from every listing),
- * `archived` (neither listed nor reachable — 404s, no static path at all)
- * and `published` (both). `scheduled` falls through to the published
- * default until #48 adds its own enforcement — `date`/`now` are already
- * threaded through for that future gating. Every rule is bypassed to
+ * `archived` (neither listed nor reachable — 404s, no static path at all),
+ * `scheduled` (hidden until its `date` is reached via a build-time
+ * comparison against `now`, then behaves exactly as `published`), and
+ * `published` (both). Every rule is bypassed to
  * `{listed: true, reachable: true}` when `isDev`, so the dev/preview server
  * always shows everything regardless of status.
  */
@@ -76,6 +77,11 @@ export function computeStatusVisibility(
   if (resolved === 'draft') return { listed: false, reachable: false };
   if (resolved === 'unlisted') return { listed: false, reachable: true };
   if (resolved === 'archived') return { listed: false, reachable: false };
+
+  if (resolved === 'scheduled') {
+    const reached = date !== undefined && date.getTime() <= now.getTime();
+    if (!reached) return { listed: false, reachable: false };
+  }
 
   return { listed: true, reachable: true };
 }

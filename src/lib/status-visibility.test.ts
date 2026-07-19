@@ -48,6 +48,41 @@ describe('computeStatusVisibility', () => {
     expect(computeStatusVisibility('archived', undefined, { isDev: true, now: NOW }))
       .toEqual({ listed: true, reachable: true });
   });
+
+  it('a scheduled card with a future date is neither listed nor reachable in a production build', () => {
+    const future = new Date('2026-07-20T00:00:00Z');
+    expect(computeStatusVisibility('scheduled', future, { isDev: false, now: NOW }))
+      .toEqual({ listed: false, reachable: false });
+  });
+
+  it('a scheduled card whose date is in the past is listed and reachable, like published', () => {
+    const past = new Date('2026-07-18T00:00:00Z');
+    expect(computeStatusVisibility('scheduled', past, { isDev: false, now: NOW }))
+      .toEqual({ listed: true, reachable: true });
+  });
+
+  it('boundary: a scheduled card whose date is exactly now has been reached (listed and reachable)', () => {
+    const exactlyNow = new Date(NOW.getTime());
+    expect(computeStatusVisibility('scheduled', exactlyNow, { isDev: false, now: NOW }))
+      .toEqual({ listed: true, reachable: true });
+  });
+
+  it('boundary: a scheduled card whose date is 1ms after now has not been reached (hidden)', () => {
+    const justAfter = new Date(NOW.getTime() + 1);
+    expect(computeStatusVisibility('scheduled', justAfter, { isDev: false, now: NOW }))
+      .toEqual({ listed: false, reachable: false });
+  });
+
+  it('a scheduled card with no date has nothing to gate on, so it stays hidden', () => {
+    expect(computeStatusVisibility('scheduled', undefined, { isDev: false, now: NOW }))
+      .toEqual({ listed: false, reachable: false });
+  });
+
+  it('isDev bypasses the scheduled gate: a future-dated scheduled card is visible on the dev/preview server', () => {
+    const future = new Date('2026-07-20T00:00:00Z');
+    expect(computeStatusVisibility('scheduled', future, { isDev: true, now: NOW }))
+      .toEqual({ listed: true, reachable: true });
+  });
 });
 
 describe('resolveStatus', () => {
