@@ -74,6 +74,8 @@ export function fakeCardMeta(overrides?: Partial<CardMeta>): CardMeta {
     tags: [],
     renderer: 'card',
     contentHash: 'default-hash',
+    status: 'published',
+    visibility: { listed: true, reachable: true },
     ...overrides,
   };
   // Re-derive contentHash from title if not explicitly overridden, so distinct

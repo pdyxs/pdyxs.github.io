@@ -3,6 +3,8 @@ import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
 import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
 import { interpolate } from './interpolate';
+import { computeStatusVisibility, isStatusValue } from './status-visibility';
+import type { StatusValue, StatusVisibility } from './status-visibility';
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
 function effectiveTags(
@@ -33,6 +35,10 @@ export type CardMeta = {
   /** Present only on a collapsed-folder representative (see collapse.ts): how
    * many member cards the folder collapsed. Drives the browse-card count badge. */
   collapsed?: { count: number };
+  /** Resolved publish-lifecycle status: frontmatter `status` ?? cascaded _config.yaml `status` ?? 'published'. */
+  status: StatusValue;
+  /** Build-time listing/reachability visibility, computed from `status`/`date`/isDev — see computeStatusVisibility. */
+  visibility: StatusVisibility;
 };
 
 const STORIES_PREFIX = 'what/stories/';
@@ -84,6 +90,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
 
   const reader = makeFileReader();
   const overrideKeys = generatorOverrideKeys();
+  const now = new Date();
 
   const contentMeta = await Promise.all(
     allContent
@@ -103,6 +110,10 @@ export async function getAllCards(): Promise<CardMeta[]> {
         }
         const finalTags = generatedTagsForCard(baseTags, { date: e.data.date, overrides });
 
+        const rawStatus = (e.data as { status?: unknown }).status ?? cascade.status;
+        const status: StatusValue = isStatusValue(rawStatus) ? rawStatus : 'published';
+        const visibility = computeStatusVisibility(status, e.data.date, { isDev: import.meta.env.DEV, now });
+
         return {
           uid,
           title,
@@ -113,6 +124,8 @@ export async function getAllCards(): Promise<CardMeta[]> {
           image: e.data.image,
           contentHash: computeContentHash(title, description, e.body),
           order: e.data.order,
+          status,
+          visibility,
         } satisfies CardMeta;
       })
   );

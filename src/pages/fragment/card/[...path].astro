@@ -18,11 +18,16 @@ import CardStackCard from '../../../components/CardStackCard.astro';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();
+  // Reachability filter (see computeStatusVisibility): a card whose status
+  // isn't reachable (e.g. draft, outside isDev) gets no static path at all —
+  // its URL 404s. tagDisplay/relatedCardsIndex are built from this same
+  // reachable set so neither ever surfaces a non-reachable card.
+  const reachableCards = cards.filter(c => c.visibility.reachable);
   // Computed once here (not per-card) since it walks the whole content tree —
   // shared across every static path this route generates.
-  const tagDisplay = flattenTagDisplay(await getTagRegistry(cards));
-  const relatedCardsIndex = computeRelatedCardsIndex(cards);
-  return cards.map(c => ({
+  const tagDisplay = flattenTagDisplay(await getTagRegistry(reachableCards));
+  const relatedCardsIndex = computeRelatedCardsIndex(reachableCards);
+  return reachableCards.map(c => ({
     params: { path: c.uid },
     props: { tagDisplay, relatedCards: relatedCardsIndex.get(c.uid) ?? [] },
   }));

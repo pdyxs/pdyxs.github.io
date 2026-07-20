@@ -114,6 +114,11 @@ export function collapseCollections(
       collapsed: { count: members.length },
       // Stable across which member is destination — keyed to folder identity.
       contentHash: computeContentHash(title, description, folderUid),
+      // Collapse runs on an already-listing-filtered pool (see LensStackCard),
+      // so every member (including dest) is already listed/reachable; carry
+      // the representative's own status/visibility through unchanged.
+      status: dest.status,
+      visibility: dest.visibility,
     });
     for (const m of members) dropUids.add(m.uid);
   }

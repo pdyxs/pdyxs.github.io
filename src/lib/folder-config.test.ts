@@ -142,6 +142,34 @@ describe('resolveFolderCascade', () => {
     expect(result.overrides).toEqual({});
   });
 
+  it('resolves status from an ancestor _config.yaml, nearest-wins like renderer', async () => {
+    const files: Record<string, string> = {
+      'what/projects/_config.yaml': 'status: draft\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade('what/projects/some-project', readFile);
+    expect(result.status).toBe('draft');
+  });
+
+  it('a nearer ancestor _config.yaml status overrides a further one', async () => {
+    const files: Record<string, string> = {
+      'what/projects/_config.yaml': 'status: draft\n',
+      'what/projects/games/_config.yaml': 'status: published\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade('what/projects/games/x', readFile);
+    expect(result.status).toBe('published');
+  });
+
+  it('leaves status undefined when no ancestor _config.yaml declares one', async () => {
+    const files: Record<string, string> = {
+      'what/projects/_config.yaml': 'renderer: project\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade('what/projects/some-project', readFile);
+    expect(result.status).toBeUndefined();
+  });
+
   it('walks a dimension-rooted uid, checking every ancestor including the dimension root', async () => {
     const files: Record<string, string> = {
       'what/projects/_config.yaml': 'renderer: project\n',

@@ -62,6 +62,16 @@ const content = defineCollection({
         // by name in NAV_RENDERERS (src/lib/renderers.ts). Undeclared → plain
         // card shell (no nav renderer).
         navRenderer: z.string().optional(),
+        // Publish-lifecycle status. Absent means "published" (existing content
+        // is untouched). Cascades via _config.yaml nearest-wins, like
+        // `renderer` (folder default is "published"). See
+        // computeStatusVisibility (src/lib/status-visibility.ts) for the pure
+        // rules and getAllCards() (src/lib/cards.ts) for how frontmatter and
+        // the folder cascade are resolved together. Only `draft`/`published`
+        // are enforced so far (issue #46); `scheduled`/`unlisted`/`archived`
+        // are declared here so #47/#48 can add their enforcement without a
+        // schema change.
+        status: z.enum(['draft', 'published', 'scheduled', 'unlisted', 'archived']).optional(),
         // bare filename → resolved against the entry's own directory via
         // resolveLocalImage() (src/lib/images.ts); full URL → rendered as-is.
         // Not image(): this field is shared with posts/puzzles, which store
