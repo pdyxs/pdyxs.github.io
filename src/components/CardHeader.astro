@@ -1,11 +1,29 @@
 ---
+// Dev-only status pill (issue #51): computeStatusBadge is the pure decision
+// (src/lib/status-badge.ts); import.meta.env.DEV is the thin gate here so no
+// status-badge markup/classes ever reach a production build (Astro bakes
+// import.meta.env.DEV=false at build time for a static route, so `badge`
+// renders nothing at all — not just hidden via CSS).
+import { computeStatusBadge } from '../lib/status-badge';
+import type { StatusValue } from '../lib/status-visibility';
+
 interface Props {
   title: string;
   titleSuffix?: string;
+  /** Card's resolved publish-lifecycle status (undefined/`published` show no badge). */
+  status?: StatusValue;
+  /** Threaded through for the `scheduled` badge, which always shows its date. */
+  date?: Date;
 }
-const { title, titleSuffix } = Astro.props;
+const { title, titleSuffix, status, date } = Astro.props;
+const badge = computeStatusBadge(status, date);
 ---
 <div class="card-header">
   <span class="card-header-title"><b>{title}</b>{titleSuffix}</span>
+  {import.meta.env.DEV && badge && (
+    <span class={`status-badge status-badge--${badge.status}`}>
+      {badge.label}{badge.dateLabel && ` · ${badge.dateLabel}`}
+    </span>
+  )}
   <slot />
 </div>

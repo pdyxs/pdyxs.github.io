@@ -3,7 +3,7 @@ import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
 import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
 import { interpolate } from './interpolate';
-import { computeStatusVisibility, isStatusValue } from './status-visibility';
+import { computeStatusVisibility, resolveStatus } from './status-visibility';
 import type { StatusValue, StatusVisibility } from './status-visibility';
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
@@ -109,8 +109,7 @@ export async function getAllCards(): Promise<CardMeta[]> {
         }
         const finalTags = generatedTagsForCard(baseTags, { date: e.data.date, overrides });
 
-        const rawStatus = (e.data as { status?: unknown }).status ?? cascade.status;
-        const status: StatusValue = isStatusValue(rawStatus) ? rawStatus : 'published';
+        const status: StatusValue = resolveStatus((e.data as { status?: unknown }).status, cascade.status);
         const visibility = computeStatusVisibility(status, e.data.date, { isDev: import.meta.env.DEV, now });
 
         return {

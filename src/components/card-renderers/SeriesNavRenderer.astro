@@ -2,22 +2,26 @@
 import CardHeader from '../CardHeader.astro';
 import { getSeriesSiblings } from '../../lib/series';
 import type { StoryEntry } from '../../lib/series';
+import type { StatusValue } from '../../lib/status-visibility';
 
 interface Props {
   entry: StoryEntry | undefined;
   allEntries: StoryEntry[];
   title: string;
   titleSuffix?: string;
+  /** Dev-only status badge (issue #51) — forwarded straight through to this renderer's own CardHeader. */
+  status?: StatusValue;
+  date?: Date;
 }
 
-const { entry, allEntries, title, titleSuffix } = Astro.props;
+const { entry, allEntries, title, titleSuffix, status, date } = Astro.props;
 
 const siblings = entry
   ? getSeriesSiblings(entry, allEntries, { isDev: import.meta.env.DEV, now: new Date() })
   : null;
 ---
 
-<CardHeader {title} {titleSuffix}>
+<CardHeader {title} {titleSuffix} {status} {date}>
   {siblings && (
     <span class="series-position">{siblings.current}/{siblings.total}</span>
   )}

@@ -13,6 +13,8 @@ import { computeContentHash, resolveCardTitle, resolveCardDescription } from '..
 import type { CardMeta } from '../lib/cards';
 import { resolveLocation, resolveCardRenderer, resolveNavRenderer } from '../lib/location-resolver';
 import { resolveFolderCascade, makeFileReader } from '../lib/folder-config';
+import { resolveStatus } from '../lib/status-visibility';
+import type { StatusValue } from '../lib/status-visibility';
 import type { TagDisplay } from '../lib/tag-display';
 import CardHeader from './CardHeader.astro';
 import GenericRenderer from './card-renderers/GenericRenderer.astro';
@@ -53,12 +55,22 @@ if (resolution.kind === 'card') {
 let rendererName = 'card';
 let NavComponent: any = null;
 let cardDescriptionParts: string[] | undefined;
+// Resolved the same way as getAllCards() (src/lib/cards.ts) via the shared
+// resolveStatus() precedence — this is a single-card view outside that
+// pool, so it can't reuse a CardMeta already carrying `status`. Dev-only
+// status badge (issue #51): threaded to CardHeader directly and to
+// NavComponent (which owns its own CardHeader call) so a nav-owned shell
+// (e.g. SeriesNavRenderer) still shows it.
+let status: StatusValue = 'published';
+let date: Date | undefined;
 if (resolution.kind === 'card') {
   const cascade = await resolveFolderCascade(resolution.path, makeFileReader());
   rendererName = (entry?.data as any)?.renderer ?? cascade.renderer ?? 'card';
   const navRendererName = (entry?.data as any)?.navRenderer ?? cascade.navRenderer;
   NavComponent = resolveNavRenderer(navRendererName);
   cardDescriptionParts = cascade.cardDescriptionParts;
+  status = resolveStatus((entry?.data as any)?.status, cascade.status);
+  date = (entry?.data as any)?.date;
 }
 const Renderer = resolution.kind === 'card' ? resolveCardRenderer(rendererName) : GenericRenderer;
 
@@ -89,12 +101,12 @@ const contentHash: string | undefined =
   {CollectionViewComponent ? (
     <CollectionViewComponent />
   ) : NavComponent ? (
-    <NavComponent {title} {titleSuffix} {entry} allEntries={entries}>
+    <NavComponent {title} {titleSuffix} {entry} allEntries={entries} {status} {date}>
       <Renderer {entry} {Content} {tagDisplay} {relatedCards} />
     </NavComponent>
   ) : (
     <>
-      <CardHeader {title} {titleSuffix}>
+      <CardHeader {title} {titleSuffix} {status} {date}>
         <button class="stack-card-close" aria-label="Close">×</button>
       </CardHeader>
       <div class="body-wrapper open">
