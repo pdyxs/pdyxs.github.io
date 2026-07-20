@@ -94,7 +94,6 @@ export async function getAllCards(): Promise<CardMeta[]> {
 
   const contentMeta = await Promise.all(
     allContent
-      .filter(e => e.id.startsWith(STORIES_PREFIX) ? (import.meta.env.DEV || e.data.published !== false) : true)
       .map(async e => {
         const uid = e.id;
         const cascade = await resolveFolderCascade(uid, reader, overrideKeys);

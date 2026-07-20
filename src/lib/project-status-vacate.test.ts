@@ -3,32 +3,12 @@
 // files directly (not through the Astro content collection) so the assertions
 // hold regardless of schema changes.
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
 const WHEN_LIFECYCLE_TAGS = ['when:released', 'when:in-progress', 'when:shelved'];
-
-function walk(dir: string): string[] {
-  const out: string[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name.startsWith('_')) continue;
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      out.push(...walk(full));
-    } else {
-      out.push(full);
-    }
-  }
-  return out;
-}
-
-function allContentMarkdownFiles(): string[] {
-  return walk(CONTENT_DIR)
-    .map(f => relative(CONTENT_DIR, f).split('\\').join('/'))
-    .filter(rel => !rel.startsWith('tag/') && /\.(md|mdx)$/i.test(rel));
-}
 
 // The cards that carried `status: past|current|future` before this migration
 // (captured from the pre-migration content tree). Every one of these must now
@@ -61,9 +41,16 @@ const PREVIOUSLY_STATUS_BEARING_CARDS = [
 ];
 
 describe('project status vacate (issue #45)', () => {
-  it('no content file frontmatter contains a status: key', () => {
-    const files = allContentMarkdownFiles();
-    const withStatus = files.filter(f => /^status:/m.test(readFileSync(join(CONTENT_DIR, f), 'utf-8')));
+  // Note: `status:` frontmatter itself is no longer banned site-wide — issue
+  // #46 repurposed it as the publish-lifecycle field (draft/published/...),
+  // which legitimately appears in content frontmatter (e.g. stories, #49).
+  // This guard narrows to its original intent: the specific project cards
+  // migrated off the old past/current/future status in #45 must not regress
+  // back to carrying a frontmatter `status:` key.
+  it('no previously status-bearing project card regresses to frontmatter status:', () => {
+    const withStatus = PREVIOUSLY_STATUS_BEARING_CARDS.filter(uid =>
+      /^status:/m.test(readFileSync(join(CONTENT_DIR, `${uid}/index.md`), 'utf-8'))
+    );
     expect(withStatus).toEqual([]);
   });
 

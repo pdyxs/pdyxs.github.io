@@ -1,9 +1,13 @@
+import { computeStatusVisibility } from './status-visibility';
+import type { StatusValue } from './status-visibility';
+
 export type StoryEntry = {
   id: string;
   data: {
     series: string;
     order: number;
-    published?: boolean;
+    status?: StatusValue;
+    date?: Date;
     title?: string;
   };
 };
@@ -16,13 +20,27 @@ export type SeriesSiblings<T extends StoryEntry> = {
   total: number;
 };
 
+export type GetSeriesSiblingsOptions = {
+  /** import.meta.env.DEV — bypasses hidden-chapter gating, mirroring computeStatusVisibility. */
+  isDev: boolean;
+  /** Caller-supplied clock, threaded through to computeStatusVisibility (kept explicit for purity). */
+  now: Date;
+};
+
+/**
+ * Resolves a story chapter's siblings within its series, skipping chapters
+ * that aren't reachable (see computeStatusVisibility) so prev/next never
+ * links to a 404 in production. This is the same shared visibility rule
+ * every other collection uses — no stories-only branch.
+ */
 export function getSeriesSiblings<T extends StoryEntry>(
   entry: T,
   allEntries: T[],
-  isDev: boolean
+  { isDev, now }: GetSeriesSiblingsOptions
 ): SeriesSiblings<T> {
   const siblings = allEntries
-    .filter(e => e.data.series === entry.data.series && (isDev || e.data.published !== false))
+    .filter(e => e.data.series === entry.data.series &&
+      computeStatusVisibility(e.data.status, e.data.date, { isDev, now }).reachable)
     .sort((a, b) => a.data.order - b.data.order);
 
   const idx = siblings.findIndex(e => e.id === entry.id);
