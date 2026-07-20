@@ -74,7 +74,6 @@ const content = defineCollection({
         project: z.string().optional(),
         // ── projects ──
         cvDescription: z.string().optional(),
-        status: z.enum(["past", "current", "future"]).optional(),
         priority: z.number().optional(),
         feature: z.string().optional(),
         medium: z.string().optional(),

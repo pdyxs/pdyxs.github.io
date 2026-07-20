@@ -10,7 +10,6 @@ image: Unstoppabot1.jpg
 tags:
   - when:released
 date: 2013-03-01
-status: past
 medium: Video Game
 actions: []
 quotes: []

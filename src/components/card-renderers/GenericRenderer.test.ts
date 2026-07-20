@@ -79,18 +79,33 @@ describe('GenericRenderer', () => {
     expect(div.querySelector('img.generic-image')?.getAttribute('src')).toBe('https://example.com/pic.jpg');
   });
 
-  it('renders status and medium as meta fields', async () => {
+  it('renders medium as a meta field', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
-      props: { entry: fakeEntry({ status: 'current', medium: 'Mobile game' }), Content: undefined },
+      props: { entry: fakeEntry({ medium: 'Mobile game' }), Content: undefined },
     });
 
     const div = document.createElement('div');
     div.innerHTML = html;
-    expect(div.textContent).toContain('Status');
-    expect(div.textContent).toContain('current');
     expect(div.textContent).toContain('Medium');
     expect(div.textContent).toContain('Mobile game');
+  });
+
+  it('never renders a Status row, even if legacy status data is present', async () => {
+    const container = await makeContainer();
+    const entry = fakeEntry({ medium: 'Mobile game' });
+    // Legacy content could still carry a stray `status` value at runtime (e.g.
+    // during a rolling deploy) even though it's no longer part of the schema
+    // or the fixture's type — inject it directly to prove the renderer never
+    // surfaces it regardless.
+    (entry.data as Record<string, unknown>).status = 'current';
+    const html = await container.renderToString(GenericRenderer, {
+      props: { entry, Content: undefined },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    expect(div.textContent).not.toContain('Status');
   });
 
   it('renders a source note linking to canonical_url', async () => {

@@ -11,7 +11,6 @@ tags:
   - visualisation
   - when:released
 date: 2016-02-01
-status: past
 medium: 'Data visualisation, artwork'
 width: 900px
 actions: []

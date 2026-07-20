@@ -11,7 +11,6 @@ actions:
     url: 'https://www.chaostheorygames.com/work/cybersecurity-ethics'
   - text: Play the game
     url: 'https://bit.ly/CyberSecurityEthics'
-status: past
 medium: WebGL game
 quotes: []
 images: []
