@@ -21,6 +21,8 @@ import { uidFromContentPath, uidFromTagPath } from '../src/lib/content-uid.ts';
 import { derivePathTags } from '../src/lib/tag-inheritance.ts';
 import { allLensUids } from '../src/lib/lens-registry.ts';
 import { allGeneratedFilterValues } from '../src/lib/filter-generators.ts';
+import { resolveFolderCascade, makeFileReader } from '../src/lib/folder-config.ts';
+import { computeStatusVisibility, resolveStatus } from '../src/lib/status-visibility.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(__dirname, '../src/content');
@@ -76,6 +78,13 @@ async function collectUids() {
   // Lens uids come from the lens registry (src/lib/lens-registry.ts), not the
   // filesystem — enumeration is driven from the registry so a new lens gets a
   // manifest code the moment it's declared, with no route file required.
+  //
+  // Deliberately not status-filtered (unlike collectTags below, see issue
+  // #50): a short code identifies a uid's *URL*, not its listing visibility.
+  // `unlisted` cards must stay reachable at their URL, and codes are
+  // append-only/never reassigned (src/lib/stack-manifest.ts) — excluding a
+  // draft card's uid here would only save one throwaway code, at the cost of
+  // reassigning it a different code later if that draft is ever published.
   return [...new Set([...uids, ...allLensUids()])].sort();
 }
 
@@ -106,9 +115,23 @@ function dimensionedPrefixes(tag) {
 // (see param-codecs.ts's filterCodec) codes them exactly. Dimensionless slugs
 // are flat, so they need no ancestor-prefix expansion. Uncovered values still
 // work via the codec's raw fallback.
+//
+// Status-aware (issue #50): a card whose resolved status isn't `.listed` (see
+// computeStatusVisibility) contributes no tag values here — the same rule the
+// tag registry (src/lib/tag-registry.ts, via getAllCards()'s `.visibility`)
+// already applies to the runtime browse/lens pool. This script walks the
+// filesystem directly instead of going through getAllCards(), so it resolves
+// status itself via resolveStatus (frontmatter, falling back to the
+// _config.yaml cascade). It always evaluates with `isDev: false`: this script
+// has no notion of dev vs. build (it's the same "pre*" step for both), and
+// the runtime dev bypass is handled independently by getAllCards() at request
+// time — a hidden card's tags simply falling back to raw (uncoded) URL
+// encoding here is a cosmetic cost, not a correctness one.
 async function collectTags() {
   const allFiles = await walk(CONTENT_DIR);
   const tags = new Set();
+  const reader = makeFileReader();
+  const now = new Date();
 
   for (const file of allFiles) {
     const relToContent = path.relative(CONTENT_DIR, file).split(path.sep).join('/');
@@ -117,24 +140,34 @@ async function collectTags() {
     if (!/\.(md|mdx)$/i.test(relToContent)) continue;
 
     const uid = uidFromContentPath(relToContent);
+
+    let data = {};
+    try {
+      ({ data } = matter(await readFile(file, 'utf-8')));
+    } catch {
+      // Unparseable frontmatter — no status/date/tags to read; the path-
+      // derived tag is skipped too below (status resolves to the cascade
+      // default), same as any other card with no readable frontmatter.
+    }
+
+    const cascade = await resolveFolderCascade(uid, reader);
+    const status = resolveStatus(data?.status, cascade.status);
+    const visibility = computeStatusVisibility(status, data?.date, { isDev: false, now });
+    if (!visibility.listed) continue;
+
     for (const tag of derivePathTags(uid)) {
       for (const prefix of dimensionedPrefixes(tag)) tags.add(prefix);
     }
 
-    try {
-      const { data } = matter(await readFile(file, 'utf-8'));
-      if (Array.isArray(data?.tags)) {
-        for (const raw of data.tags) {
-          if (typeof raw !== 'string' || !raw) continue;
-          if (raw.includes(':')) {
-            for (const prefix of dimensionedPrefixes(raw)) tags.add(prefix);
-          } else {
-            tags.add(raw); // dimensionless — flat, no prefix expansion
-          }
+    if (Array.isArray(data?.tags)) {
+      for (const raw of data.tags) {
+        if (typeof raw !== 'string' || !raw) continue;
+        if (raw.includes(':')) {
+          for (const prefix of dimensionedPrefixes(raw)) tags.add(prefix);
+        } else {
+          tags.add(raw); // dimensionless — flat, no prefix expansion
         }
       }
-    } catch {
-      // Unparseable frontmatter — skip; the raw fallback still covers it.
     }
   }
 

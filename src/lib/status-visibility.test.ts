@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeStatusVisibility } from './status-visibility';
+import { computeStatusVisibility, resolveStatus } from './status-visibility';
 
 const NOW = new Date('2026-07-19T00:00:00Z');
 
@@ -47,5 +47,23 @@ describe('computeStatusVisibility', () => {
   it('isDev bypass also applies to archived (listed and reachable on dev/preview)', () => {
     expect(computeStatusVisibility('archived', undefined, { isDev: true, now: NOW }))
       .toEqual({ listed: true, reachable: true });
+  });
+});
+
+describe('resolveStatus', () => {
+  it('a card\'s own frontmatter status wins over the folder cascade', () => {
+    expect(resolveStatus('draft', 'published')).toBe('draft');
+  });
+
+  it('falls back to the cascaded folder status when frontmatter declares none', () => {
+    expect(resolveStatus(undefined, 'draft')).toBe('draft');
+  });
+
+  it('defaults to published when neither frontmatter nor cascade declare a status', () => {
+    expect(resolveStatus(undefined, undefined)).toBe('published');
+  });
+
+  it('ignores a non-status cascade value and defaults to published', () => {
+    expect(resolveStatus(undefined, 'not-a-real-status')).toBe('published');
   });
 });

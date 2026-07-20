@@ -24,6 +24,21 @@ export function isStatusValue(value: unknown): value is StatusValue {
   return typeof value === 'string' && (STATUS_VALUES as readonly string[]).includes(value);
 }
 
+/**
+ * Resolves a card's effective status: its own frontmatter value wins, else
+ * the nearest-ancestor `_config.yaml` cascade value, else the `published`
+ * default. This is the same precedence getAllCards() (src/lib/cards.ts)
+ * applies inline — shared here so the tag-manifest generator (a plain Node
+ * script that walks the filesystem directly rather than going through
+ * getAllCards(), see scripts/generate-stack-manifest.mjs) resolves status
+ * identically instead of re-deriving its own copy of this rule.
+ */
+export function resolveStatus(rawStatus: unknown, cascadeStatus: string | undefined): StatusValue {
+  if (isStatusValue(rawStatus)) return rawStatus;
+  if (isStatusValue(cascadeStatus)) return cascadeStatus;
+  return 'published';
+}
+
 export type StatusVisibility = {
   /** Whether the card appears in the listing pool (lenses/browse/timeline). */
   listed: boolean;
