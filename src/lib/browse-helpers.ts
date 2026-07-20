@@ -9,6 +9,7 @@ import type { Dimension } from './filters';
 import { cardOwnValues } from './card-identity';
 import { displayFor } from './tag-display';
 import type { TagDisplay } from './tag-display';
+import type { StatusValue } from './status-visibility';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,6 +31,10 @@ export type SerialisedCard = {
   thumbSrcset?: string;
   /** Present only on a collapsed-folder representative: member count, for the count badge. */
   collapsed?: { count: number };
+  /** Resolved publish-lifecycle status (see CardMeta.status), carried through
+   * so the dev-only status facet (issue #52) can narrow the browse-family
+   * lens's client-side card pool by real status. */
+  status?: StatusValue;
 };
 
 /**

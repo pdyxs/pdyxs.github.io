@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { lensFilterStore, lensFiltersSynced, toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters } from '../stores/lens-filter-store';
+  import { lensFilterStore, lensFiltersSynced, toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters, toggleStatusValue, clearStatusFilter } from '../stores/lens-filter-store';
   import { filterStateFromParams, filterStateToParams, stripFilterParams } from '../lib/filters';
   import type { Dimension, FilterState } from '../lib/filters';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid, DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
   import type { TagNode } from '../lib/browse-helpers';
   import type { TagDisplay } from '../lib/tag-display';
+  import type { StatusValue } from '../lib/status-visibility';
   import FilterBar from './FilterBar.svelte';
   import ActiveFilterChips from './ActiveFilterChips.svelte';
 
@@ -24,6 +25,7 @@
   const hasActiveFilters = $derived(
     Object.values($lensFilterStore.selections).some(v => v && v.length > 0)
     || ($lensFilterStore.tags?.length ?? 0) > 0
+    || !!$lensFilterStore.status
   );
 
   // A lens that can't accept filters must never show any as active, no
@@ -83,6 +85,12 @@
     fallthroughTrigger?.click();
   }
 
+  async function fallthroughStatusToDefaultBrowseLens(value: StatusValue) {
+    fallthroughParams = filterStateToParams({ selections: {}, status: value }).toString();
+    await tick();
+    fallthroughTrigger?.click();
+  }
+
   function handleFilterToggle(dim: Dimension, value: string) {
     if (!lens.acceptsFilters) {
       fallthroughToDefaultBrowseLens(dim, value);
@@ -115,6 +123,25 @@
     lensFilterStore.set(next);
     reportFiltersToStack(next);
   }
+
+  // Dev-only status facet (issue #52). Same acceptsFilters fallthrough as
+  // handleFilterToggle — home can't accumulate a status selection, so a
+  // click there hands off to the default browse lens instead.
+  function handleStatusToggle(value: StatusValue) {
+    if (!lens.acceptsFilters) {
+      fallthroughStatusToDefaultBrowseLens(value);
+      return;
+    }
+    const next = toggleStatusValue($lensFilterStore, value);
+    lensFilterStore.set(next);
+    reportFiltersToStack(next);
+  }
+
+  function handleRemoveStatus() {
+    const next = clearStatusFilter($lensFilterStore);
+    lensFilterStore.set(next);
+    reportFiltersToStack(next);
+  }
 </script>
 
 <FilterBar
@@ -123,6 +150,7 @@
   filterState={$lensFilterStore}
   onFilterToggle={handleFilterToggle}
   onClearDimension={handleClearDimension}
+  onStatusToggle={handleStatusToggle}
 />
 
 {#if hasActiveFilters}
@@ -130,6 +158,7 @@
     filterState={$lensFilterStore}
     onRemove={handleFilterToggle}
     onRemoveTag={handleDimensionlessRemove}
+    onRemoveStatus={handleRemoveStatus}
     onClearAll={handleClearAll}
     {tagDisplay}
   />

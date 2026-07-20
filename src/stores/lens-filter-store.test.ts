@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters } from './lens-filter-store';
+import { toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters, toggleStatusValue, clearStatusFilter } from './lens-filter-store';
 import type { FilterState } from '../lib/filters';
 
 const emptyState: FilterState = { selections: {} };
@@ -84,5 +84,52 @@ describe('clearFilterDimension', () => {
 describe('clearAllFilters', () => {
   it('returns an empty selections object', () => {
     expect(clearAllFilters()).toEqual({ selections: {} });
+  });
+});
+
+describe('toggleStatusValue', () => {
+  it('sets the status on a state with no active status', () => {
+    const result = toggleStatusValue(emptyState, 'draft');
+    expect(result.status).toBe('draft');
+  });
+
+  it('clears the status when the same value is toggled again (exclusive toggle)', () => {
+    const state: FilterState = { selections: {}, status: 'draft' };
+    const result = toggleStatusValue(state, 'draft');
+    expect(result.status).toBeUndefined();
+  });
+
+  it('replaces the status when a different value is selected', () => {
+    const state: FilterState = { selections: {}, status: 'draft' };
+    const result = toggleStatusValue(state, 'archived');
+    expect(result.status).toBe('archived');
+  });
+
+  it('does not mutate dimension selections or tags', () => {
+    const state: FilterState = { selections: { what: ['what:puzzles'] }, tags: ['science'] };
+    const result = toggleStatusValue(state, 'draft');
+    expect(result.selections.what).toEqual(['what:puzzles']);
+    expect(result.tags).toEqual(['science']);
+  });
+});
+
+describe('clearStatusFilter', () => {
+  it('removes an active status', () => {
+    const state: FilterState = { selections: {}, status: 'draft' };
+    const result = clearStatusFilter(state);
+    expect(result.status).toBeUndefined();
+  });
+
+  it('is a no-op for a state with no active status', () => {
+    const result = clearStatusFilter(emptyState);
+    expect(result.status).toBeUndefined();
+    expect(result.selections).toEqual({});
+  });
+
+  it('does not mutate dimension selections or tags', () => {
+    const state: FilterState = { selections: { what: ['what:puzzles'] }, tags: ['science'], status: 'draft' };
+    const result = clearStatusFilter(state);
+    expect(result.selections.what).toEqual(['what:puzzles']);
+    expect(result.tags).toEqual(['science']);
   });
 });

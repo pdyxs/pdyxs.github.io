@@ -23,6 +23,13 @@ export type FilterState = {
     tags?: string[];
     /** Optional date-range predicates for the `when` dimension */
     datePredicate?: DatePredicate;
+    /**
+     * Dev-only publish-lifecycle facet (issue #52). Not a 5W dimension and not
+     * derived from the tag registry — a hardcoded chip set (see
+     * status-visibility.ts's STATUS_VALUES) exact-matches CardMeta.status.
+     * ANDs with dimension selections/dimensionless tags like any other facet.
+     */
+    status?: StatusValue;
 };
 
 // ---------------------------------------------------------------------------
@@ -78,6 +85,8 @@ function tagMatchesPrefix(tag: string, prefix: string, cardBackedValues: Set<str
 import type { CardMeta } from "./cards";
 import { cardOwnValues } from "./card-identity";
 import { DEFAULT_BROWSE_LENS_ID } from "./lens-registry";
+import { isStatusValue } from "./status-visibility";
+import type { StatusValue } from "./status-visibility";
 
 /**
  * Returns cards that match all active dimension selections.
@@ -92,10 +101,13 @@ export function applyFilters(
     cards: CardMeta[],
     filterState: FilterState,
 ): CardMeta[] {
-    const { selections, datePredicate } = filterState;
+    const { selections, datePredicate, status } = filterState;
     const cardBackedValues = cardOwnValues(cards);
 
     return cards.filter((card) => {
+        // Dev-only status facet: exact match, ANDed with everything else below.
+        if (status && card.status !== status) return false;
+
         // Check each dimension that has active selections
         for (const dim of DIMENSIONS) {
             const selected = selections[dim];
@@ -175,6 +187,7 @@ const PARAM_PREFIX = "filter.";
 const DIMENSIONLESS_PARAM = "filter";
 const DATE_FROM_PARAM = "when.from";
 const DATE_TO_PARAM = "when.to";
+const STATUS_PARAM = "status";
 
 /**
  * Encodes a FilterState into URLSearchParams.
@@ -218,6 +231,10 @@ export function filterStateToParams(state: FilterState): URLSearchParams {
         if (to !== undefined) {
             params.set(DATE_TO_PARAM, to.toISOString());
         }
+    }
+
+    if (state.status !== undefined) {
+        params.set(STATUS_PARAM, state.status);
     }
 
     return params;
@@ -264,7 +281,10 @@ export function filterStateFromParams(params: URLSearchParams): FilterState {
         }
     }
 
-    return { selections, ...(tags.length > 0 ? { tags } : {}), datePredicate };
+    const rawStatus = params.get(STATUS_PARAM);
+    const status = isStatusValue(rawStatus) ? rawStatus : undefined;
+
+    return { selections, ...(tags.length > 0 ? { tags } : {}), datePredicate, ...(status ? { status } : {}) };
 }
 
 /**
@@ -281,5 +301,6 @@ export function stripFilterParams(params: URLSearchParams): URLSearchParams {
     next.delete(DIMENSIONLESS_PARAM);
     next.delete(DATE_FROM_PARAM);
     next.delete(DATE_TO_PARAM);
+    next.delete(STATUS_PARAM);
     return next;
 }

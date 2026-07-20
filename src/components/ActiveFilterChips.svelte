@@ -9,12 +9,14 @@
     onRemove: (dim: Dimension, value: string) => void;
     /** Removes a dimensionless filter (see filters.ts's `tags` bucket). */
     onRemoveTag: (value: string) => void;
+    /** Removes the dev-only status facet selection (issue #52). */
+    onRemoveStatus: () => void;
     onClearAll: () => void;
     /** Flat value -> display-name map from the tag registry (see tag-registry.ts's flattenTagDisplay), serialised in from the server. */
     tagDisplay?: Record<string, TagDisplay>;
   }
 
-  let { filterState, onRemove, onRemoveTag, onClearAll, tagDisplay = {} }: Props = $props();
+  let { filterState, onRemove, onRemoveTag, onRemoveStatus, onClearAll, tagDisplay = {} }: Props = $props();
 </script>
 
 <div class="fp-active-filters" aria-label="Active filters">
@@ -40,6 +42,15 @@
       {name} ×
     </button>
   {/each}
+  {#if import.meta.env.DEV && filterState.status}
+    <button
+      class="fp-filter-chip"
+      onclick={onRemoveStatus}
+      aria-label="Remove filter: {filterState.status}"
+    >
+      {filterState.status} ×
+    </button>
+  {/if}
   <button class="fp-clear-all" onclick={onClearAll} aria-label="Clear all filters">
     Clear all
   </button>

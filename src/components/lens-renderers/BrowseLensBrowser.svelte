@@ -39,8 +39,21 @@
   let mounted = $state(false);
   onMount(() => { mounted = true; });
 
+  // status/visibility don't cross the serialisation boundary on the
+  // SerialisedCard type by default (see browse-helpers.ts); this pool is
+  // already listing-filtered (LensStackCard filters getAllCards() on
+  // `.listed` before serialising), so a card with no `status` here is
+  // published, and it's always listed/reachable — see CardMeta's defaults.
+  // The dev-only status facet (issue #52) narrows by the real `status` when
+  // it IS present (dev bypasses the listing filter, so drafts etc. do reach
+  // this pool with their true status).
   const cardMetas = $derived(
-    cards.map(c => ({ ...c, date: c.date ? new Date(c.date) : undefined }))
+    cards.map(c => ({
+      ...c,
+      date: c.date ? new Date(c.date) : undefined,
+      status: c.status ?? 'published',
+      visibility: { listed: true, reachable: true },
+    }))
   );
   const activeFilter: FilterState = $derived(mounted ? $lensFilterStore : { selections: {} });
   const filteredCards = $derived(applyFilters(cardMetas, activeFilter));

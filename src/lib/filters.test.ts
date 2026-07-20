@@ -330,6 +330,24 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
     expect(decoded.datePredicate?.to?.toISOString()).toBe(to.toISOString());
   });
 
+  it('status round-trips', () => {
+    const state: FilterState = { selections: {}, status: 'draft' };
+    const params = filterStateToParams(state);
+    expect(params.get('status')).toBe('draft');
+    const decoded = filterStateFromParams(params);
+    expect(decoded.status).toBe('draft');
+  });
+
+  it('invalid status values are silently dropped on decode', () => {
+    const params = new URLSearchParams('status=not-a-real-status');
+    expect(filterStateFromParams(params).status).toBeUndefined();
+  });
+
+  it('absent status decodes to undefined', () => {
+    const params = new URLSearchParams();
+    expect(filterStateFromParams(params).status).toBeUndefined();
+  });
+
   it('invalid filter values in params are silently dropped on decode', () => {
     const params = new URLSearchParams();
     params.set('filter.what', ''); // empty sub-value — invalid
@@ -361,6 +379,11 @@ describe('stripFilterParams', () => {
   it('removes date predicate params', () => {
     const params = new URLSearchParams('when.from=2020-01-01T00:00:00.000Z&when.to=2020-12-31T00:00:00.000Z');
     expect(stripFilterParams(params).toString()).toBe('');
+  });
+
+  it('removes the status param', () => {
+    const params = new URLSearchParams('status=draft&stack=abc');
+    expect(stripFilterParams(params).toString()).toBe('stack=abc');
   });
 
   it('leaves unrelated params untouched', () => {
@@ -411,6 +434,34 @@ describe('filterUrlForTagValue', () => {
 // ---------------------------------------------------------------------------
 // Dimensionless filters
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// applyFilters — status facet (dev-only filter panel, issue #52)
+// ---------------------------------------------------------------------------
+
+describe('applyFilters — status', () => {
+  it('narrows to cards matching the selected status', () => {
+    const draft = fakeCardMeta({ uid: 'posts/a', status: 'draft' });
+    const published = fakeCardMeta({ uid: 'posts/b', status: 'published' });
+    const state: FilterState = { selections: {}, status: 'draft' };
+    expect(applyFilters([draft, published], state)).toEqual([draft]);
+  });
+
+  it('returns all cards when no status is selected', () => {
+    const draft = fakeCardMeta({ uid: 'posts/a', status: 'draft' });
+    const published = fakeCardMeta({ uid: 'posts/b', status: 'published' });
+    const state: FilterState = { selections: {} };
+    expect(applyFilters([draft, published], state)).toEqual([draft, published]);
+  });
+
+  it('composes (ANDs) with an active 5W dimension selection', () => {
+    const match = fakeCardMeta({ uid: 'posts/a', status: 'draft', tags: ['what:games'] });
+    const wrongStatus = fakeCardMeta({ uid: 'posts/b', status: 'published', tags: ['what:games'] });
+    const wrongTag = fakeCardMeta({ uid: 'posts/c', status: 'draft', tags: ['what:writing'] });
+    const state: FilterState = { selections: { what: ['what:games'] }, status: 'draft' };
+    expect(applyFilters([match, wrongStatus, wrongTag], state)).toEqual([match]);
+  });
+});
 
 describe('applyFilters — dimensionless tags', () => {
   it('matches cards carrying an exactly-equal dimensionless tag', () => {
