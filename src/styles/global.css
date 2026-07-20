@@ -305,7 +305,10 @@ strong { font-weight: 700; }
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  padding: var(--space-md) var(--space-lg);
+  /* Mobile: no horizontal padding of our own — #card-stack's padding is
+     the only horizontal inset content should get. Desktop restores the
+     original inline padding below. */
+  padding: var(--space-md) 0;
   font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 400;
@@ -329,7 +332,7 @@ strong { font-weight: 700; }
 
 .stack-card--collapsed .card-header {
   font-size: 0.75em;
-  padding: var(--space-xs) var(--space-lg);
+  padding: var(--space-xs) 0;
   background: var(--color-surface);
 }
 
@@ -406,7 +409,10 @@ strong { font-weight: 700; }
 
 .stack-card--page > .page-header {
   display: block;
-  padding: var(--space-xl) var(--space-md) var(--space-lg);
+  /* Mobile: no horizontal padding of our own — #card-stack's padding is
+     the only horizontal inset content should get. Desktop restores the
+     original inline padding below. */
+  padding: var(--space-xl) 0 var(--space-lg);
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
@@ -439,9 +445,11 @@ strong { font-weight: 700; }
 }
 
 /* In page mode the body has no card border, so drop the header divider's
-   double-up and let the body breathe like the old .site-main. */
+   double-up and let the body breathe like the old .site-main. Mobile: no
+   horizontal padding of its own either (see .stack-card-body-inner above);
+   desktop restores it below. */
 .stack-card--page > .body-wrapper .stack-card-body-inner {
-  padding-inline: var(--space-md);
+  padding-inline: 0;
 }
 
 /* Lenses open with their own sticky filter bar as the first thing in the
@@ -532,7 +540,10 @@ strong { font-weight: 700; }
 }
 
 .stack-card-body-inner {
-  padding: var(--space-lg);
+  /* Mobile: no horizontal padding of our own — #card-stack's padding is
+     the only horizontal inset content should get. Desktop restores the
+     original inline padding below. */
+  padding: var(--space-lg) 0;
 }
 
 .stack-card--collapsed .stack-card-body { display: none; }
@@ -624,6 +635,23 @@ strong { font-weight: 700; }
 @media (min-width: 681px) {
   .site-main {
     padding-inline: 0;
+  }
+
+  .stack-card--page > .page-header {
+    padding-inline: var(--space-md);
+  }
+
+  .card-header,
+  .stack-card--collapsed .card-header {
+    padding-inline: var(--space-lg);
+  }
+
+  .stack-card-body-inner {
+    padding-inline: var(--space-lg);
+  }
+
+  .stack-card--page > .body-wrapper .stack-card-body-inner {
+    padding-inline: var(--space-md);
   }
 
   #card-stack {

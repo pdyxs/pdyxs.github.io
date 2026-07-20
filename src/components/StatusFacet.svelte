@@ -41,10 +41,12 @@
 
 <style>
   .fp-status-facet {
+    justify-content: center;
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
     padding: var(--space-xs) 0;
+    background: var(--color-text);
   }
 
   .fp-status-chip {
@@ -52,7 +54,7 @@
     font-size: 0.8rem;
     padding: 2px var(--space-sm);
     border: 1px solid var(--color-border);
-    background: transparent;
+    background: var(--color-bg);
     color: var(--color-text);
     cursor: pointer;
   }
@@ -64,6 +66,7 @@
   .fp-status-chip--selected {
     background: var(--color-text);
     color: var(--color-surface);
+    border: 1px solid var(--color-bg);
   }
 
   .fp-status-chip--selected:hover {
