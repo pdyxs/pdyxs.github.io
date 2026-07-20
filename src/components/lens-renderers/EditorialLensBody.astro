@@ -1,0 +1,21 @@
+---
+// Thin Astro shim, only here so EditorialLensBrowser.svelte can be a static
+// import (client:load requires a statically analyzable component reference —
+// a dynamically-resolved variable breaks Astro's hydration bundling). The
+// lazy-load boundary is one level up: lens-components.ts dynamically imports
+// *this file*, not EditorialLensBrowser.svelte directly. Mirrors
+// BrowseLensBody.astro's shape.
+import EditorialLensBrowser from './EditorialLensBrowser.svelte';
+import type { SerialisedCardFull } from '../../lib/frontpage';
+import type { TagDisplay } from '../../lib/tag-display';
+import type { StatusValue } from '../../lib/status-visibility';
+
+interface Props {
+  cards: (SerialisedCardFull & { status: StatusValue })[];
+  tagDisplay?: Record<string, TagDisplay>;
+  config?: Record<string, unknown>;
+}
+
+const { cards, tagDisplay, config } = Astro.props;
+---
+<EditorialLensBrowser client:load {cards} {tagDisplay} {config} />

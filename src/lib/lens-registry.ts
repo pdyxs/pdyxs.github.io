@@ -34,6 +34,11 @@ export interface LensDefinition {
   /** Whether `filter.<dimension>` query params narrow this lens. Defaults to true. */
   acceptsFilters: boolean;
   presentation: LensPresentation;
+  /** Present only on the dev/preview server: absent (or false) means the
+   * lens is invisible in a production build — excluded from static-path
+   * enumeration (its route 404s), the manifest, and nav chips. Defaults to
+   * false so an ordinary lens is unaffected. See isLensVisible(). */
+  devOnly?: boolean;
 }
 
 // Raw declaration shape (what a `.lens.yaml` file compiles to) — `acceptsFilters`
@@ -78,6 +83,18 @@ export function getLensDefinition(id: string): LensDefinition | undefined {
   return LENS_REGISTRY.find(l => l.id === id);
 }
 
+/**
+ * Pure visibility decision for a `devOnly` lens: visible when `isDev` is true,
+ * or when the lens isn't `devOnly` at all. Callers pass `import.meta.env.DEV`
+ * as `isDev` — kept as a plain boolean parameter (not read internally) so
+ * this stays testable without any Vite/Astro environment. Used to filter
+ * static-path enumeration (so a devOnly lens's route 404s in production) and
+ * nav-chip rendering (so it never appears as a chip outside dev).
+ */
+export function isLensVisible(lens: Pick<LensDefinition, 'devOnly'>, isDev: boolean): boolean {
+  return isDev || !lens.devOnly;
+}
+
 /** Inverse of lensUid(): extracts the id from a "lens/<id>" uid, or null for
  * a card uid (or a missing uid) — used to find the currently active lens. */
 export function lensIdFromUid(uid: string | null | undefined): string | null {
@@ -85,9 +102,14 @@ export function lensIdFromUid(uid: string | null | undefined): string | null {
   return uid.slice('lens/'.length);
 }
 
-/** Every lens uid ("lens/<id>") in the registry — used to drive manifest enumeration. */
+/** Every non-devOnly lens uid ("lens/<id>") in the registry — used to drive
+ * manifest enumeration. devOnly lenses are excluded unconditionally (not just
+ * in a production run): the manifest is append-only forever (see
+ * stack-manifest.ts), so a code assigned during a dev run would never be
+ * removable again once a build shipped it — a devOnly lens must simply never
+ * receive one. */
 export function allLensUids(): string[] {
-  return LENS_REGISTRY.map(l => lensUid(l.id));
+  return LENS_REGISTRY.filter(l => !l.devOnly).map(l => lensUid(l.id));
 }
 
 /**

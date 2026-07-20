@@ -4,7 +4,7 @@
   import type { Dimension, FilterState } from '../lib/filters';
   import type { TagNode, TagSection } from '../lib/browse-helpers';
   import { filterVisibleNodes, groupNodesIntoSections } from '../lib/browse-helpers';
-  import { lensesForDimension, lensIdFromUid, activeLensIcon } from '../lib/lens-registry';
+  import { lensesForDimension, lensIdFromUid, activeLensIcon, isLensVisible } from '../lib/lens-registry';
   import { stackStore } from '../stores/card-stack-store';
   import type { StatusValue } from '../lib/status-visibility';
   import DimensionButton from './DimensionButton.svelte';
@@ -145,7 +145,7 @@
     {@const isActive = dimensionIsActive(dim)}
     {@const isOpen = openDimension === dim}
     {@const hasNodes = visibleNodesFor(dim).length > 0}
-    {@const lenses = lensesForDimension(dim)}
+    {@const lenses = lensesForDimension(dim).filter(l => isLensVisible(l, import.meta.env.DEV))}
 
     {@const lensIcon = activeLensIcon(lenses, activeLensId)}
     <div

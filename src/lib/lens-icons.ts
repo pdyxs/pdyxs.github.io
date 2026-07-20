@@ -66,6 +66,16 @@ const LENS_ICONS: Record<string, LensIconDef> = {
   // Generic fallback marker for a lens that declares no icon (or an unknown
   // key) — mirrors the old '●' text marker.
   dot: { filled: true, shapes: [c(12, 12, 4)] },
+
+  // "Editorial" — a flag on a pole: a marker for in-flight/pending content,
+  // distinct from the timeline glyphs used by the date-sorted lenses.
+  flag: {
+    filled: false,
+    shapes: [
+      l(6, 3, 6, 21),
+      { kind: 'polyline', points: '6,4 18,4 14,9 18,14 6,14' },
+    ],
+  },
 };
 
 /**

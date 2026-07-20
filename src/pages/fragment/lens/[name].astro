@@ -4,11 +4,14 @@
 // fetches this instead of the full page + stripping it client-side.
 export const partial = true;
 
-import { LENS_REGISTRY } from '../../../lib/lens-registry';
+import { LENS_REGISTRY, isLensVisible } from '../../../lib/lens-registry';
 import LensStackCard from '../../../components/LensStackCard.astro';
 
 export async function getStaticPaths() {
-  return LENS_REGISTRY.map(l => ({ params: { name: l.id } }));
+  // See src/pages/lens/[name].astro: a devOnly lens is excluded from static
+  // path enumeration outside the dev/preview server, so its fragment 404s
+  // in a production build too.
+  return LENS_REGISTRY.filter(l => isLensVisible(l, import.meta.env.DEV)).map(l => ({ params: { name: l.id } }));
 }
 
 const { name } = Astro.params;

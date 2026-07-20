@@ -26,6 +26,7 @@ export type LensBodyLoader = () => Promise<{ default: AstroComponentFactory }>;
 
 export const LENS_BODY_LOADERS: Record<string, LensBodyLoader> = {
   home: () => import('../components/lens-renderers/HomeLensBody.astro'),
+  editorial: () => import('../components/lens-renderers/EditorialLensBody.astro'),
 };
 
 export const DEFAULT_BODY_LOADER: LensBodyLoader = () =>

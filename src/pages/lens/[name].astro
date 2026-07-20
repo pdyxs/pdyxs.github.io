@@ -3,11 +3,14 @@
 // entry (src/lib/lens-registry.ts) — this route file never changes. Rendering
 // is delegated to LensPage.astro, shared with the `/` shortcut so `/` and
 // `/lens/home` render identical output.
-import { LENS_REGISTRY } from '../../lib/lens-registry';
+import { LENS_REGISTRY, isLensVisible } from '../../lib/lens-registry';
 import LensPage from '../../components/LensPage.astro';
 
 export async function getStaticPaths() {
-  return LENS_REGISTRY.map(l => ({ params: { name: l.id } }));
+  // A devOnly lens (e.g. the editorial dashboard, issue #53) is excluded here
+  // in a production build — no static path means the route 404s. On the
+  // dev/preview server import.meta.env.DEV is true, so it's included.
+  return LENS_REGISTRY.filter(l => isLensVisible(l, import.meta.env.DEV)).map(l => ({ params: { name: l.id } }));
 }
 
 const { name } = Astro.params;
