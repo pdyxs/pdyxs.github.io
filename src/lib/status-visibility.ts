@@ -9,8 +9,8 @@
 //     fragment counterpart filter getAllCards() on `.reachable`)
 //
 // This module must stay pure (no IO, no Astro, no mutable reads) so it's
-// testable in isolation and so future slices (#47 unlisted/archived, #48
-// scheduled) can extend it without touching its callers' plumbing.
+// testable in isolation and so future slices (#48 scheduled) can extend it
+// without touching its callers' plumbing.
 
 /** All five publish-lifecycle values. The schema enum includes every one of
  * these even though this slice (#46) only enforces `draft`/`published` —
@@ -40,11 +40,15 @@ export type StatusVisibilityOptions = {
 
 /**
  * Resolves a card's listing/reachability visibility from its `status`
- * (absent means `published`) and `date`. This slice (#46) enforces `draft`
- * (neither listed nor reachable) and `published` (both). `scheduled`,
- * `unlisted`, and `archived` fall through to the published default until
- * #47/#48 add their own enforcement — `date`/`now` are already threaded
- * through for that future `scheduled` gating.
+ * (absent means `published`) and `date`. Enforces the finished-content
+ * states: `draft` (neither listed nor reachable), `unlisted` (reachable but
+ * not listed — still renders at its URL, absent from every listing),
+ * `archived` (neither listed nor reachable — 404s, no static path at all)
+ * and `published` (both). `scheduled` falls through to the published
+ * default until #48 adds its own enforcement — `date`/`now` are already
+ * threaded through for that future gating. Every rule is bypassed to
+ * `{listed: true, reachable: true}` when `isDev`, so the dev/preview server
+ * always shows everything regardless of status.
  */
 export function computeStatusVisibility(
   status: StatusValue | undefined,
@@ -55,6 +59,8 @@ export function computeStatusVisibility(
 
   const resolved = status ?? 'published';
   if (resolved === 'draft') return { listed: false, reachable: false };
+  if (resolved === 'unlisted') return { listed: false, reachable: true };
+  if (resolved === 'archived') return { listed: false, reachable: false };
 
   return { listed: true, reachable: true };
 }
