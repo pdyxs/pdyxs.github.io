@@ -12,3 +12,15 @@ dev/milestones/
 
 # Playwright MCP session artifacts (snapshots, traces)
 .playwright-mcp/
+
+# Content vault: src/content is its own Obsidian vault. Shared settings are
+# committed so vault behaviour is reproducible across devices; per-device state
+# and vendored plugin code are not.
+src/content/.obsidian/workspace*.json
+src/content/.obsidian/cache
+src/content/.obsidian/plugins/*/*
+!src/content/.obsidian/plugins/*/data.json
+# obsidian-git is not installed in this vault yet (mobile sync is a follow-up),
+# but if it ever is, its data.json can carry git credentials — never commit it.
+src/content/.obsidian/plugins/obsidian-git/data.json
+src/content/.trash/

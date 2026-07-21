@@ -17,7 +17,10 @@ const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content
 function walk(dir: string): string[] {
   const out: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name.startsWith('_')) continue;
+    // Mirrors what the content glob can reach: underscore-prefixed folders are
+    // excluded by CONTENT_GLOB_PATTERN, dot-prefixed ones (the vault's
+    // `.obsidian/`) by the glob engine's default of ignoring dotfiles.
+    if (entry.name.startsWith('_') || entry.name.startsWith('.')) continue;
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
       out.push(...walk(full));
@@ -50,7 +53,14 @@ describe('content migration invariants', () => {
 
   it('the top level of content/ contains only dimension folders (plus the frontpage config)', () => {
     const topLevel = readdirSync(CONTENT_DIR, { withFileTypes: true });
-    const names = topLevel.map(e => e.name).filter(n => n !== 'frontpage.ts');
+    // content/ is also an Obsidian vault root (issue #54), so it carries vault
+    // infrastructure — `.obsidian/`, `_templates/`. Both are unreachable by the
+    // content glob, which is the property that makes them safe to sit here; the
+    // filter below is that same rule, not an exemption list.
+    const names = topLevel
+      .map(e => e.name)
+      .filter(n => n !== 'frontpage.ts')
+      .filter(n => !n.startsWith('.') && !n.startsWith('_'));
     for (const name of names) {
       expect(statSync(join(CONTENT_DIR, name)).isDirectory()).toBe(true);
     }
