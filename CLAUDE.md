@@ -193,6 +193,21 @@ The "decisions are pure, effects are thin" global rule (`~/.claude/rules/archite
 
 ## Workflow
 
+### Content is authored in a dedicated Obsidian vault
+
+`src/content` is its own Obsidian vault (settings committed at
+`src/content/.obsidian/`), not a folder of the main notes vault. See
+`docs/content-vault.md`.
+
+Two consequences for code:
+
+- Non-card markdown that must live inside `src/content` (Templater scaffolds in
+  `_templates/`) is kept out of the collection by `CONTENT_GLOB_PATTERN`
+  (`src/lib/content-glob.ts`), which excludes underscore-prefixed *directories*
+  as well as underscore-prefixed files. Put anything similar under a `_`-folder.
+- Pasted images arrive colocated in the card folder as plain markdown
+  (`![](file.png)`), by vault setting — never assume a wikilink converter.
+
 ### Experiments live on dev-only routes
 
 `/experiment` should create throwaway pages under `src/pages/experiments/` with synthetic fixtures (e.g. 10 fake cards for an overflow experiment). Don't prototype by mutating production components and reverting.

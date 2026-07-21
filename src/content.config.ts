@@ -1,6 +1,7 @@
 import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
+import { CONTENT_GLOB_PATTERN } from "./lib/content-glob";
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
@@ -32,7 +33,7 @@ const quote = z.object({
 // any field in their frontmatter.
 
 const content = defineCollection({
-    loader: glob({ pattern: "**/[!_]*.{md,mdx}", base: "./src/content" }),
+    loader: glob({ pattern: CONTENT_GLOB_PATTERN, base: "./src/content" }),
     schema: z.object({
         // ── common ──
         title: z.string().optional(),
