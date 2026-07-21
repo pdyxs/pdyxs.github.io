@@ -4,14 +4,26 @@
 
 /* ── Custom properties ─────────────────────────────────────────── */
 
+/* Two colours, and only two: ink and paper. Every other greyscale token below
+   derives from them, so the dark block only has to restate those two (plus the
+   border, which is ink at a different semantic). Anything that used to be a
+   grey is now either pure, or a dither built from the same two colours. */
 :root {
   --color-bg:         #ffffff;
-  --color-surface:    #ffffff;
-  --color-bg-stripes: #555555;
-  --color-border:     #000000;
-  --color-border-light: #999999;
   --color-text:       #000000;
-  --color-text-muted: #555555;
+  --color-border:     #000000;
+  /* Paper, named for the role it plays where a background is inverted:
+     `color: var(--color-surface)` is knockout text sitting on --color-text.
+     It no longer lifts above --color-bg (that lift is a dither now), but the
+     two readings are worth keeping distinct at the call sites. */
+  --color-surface:      var(--color-bg);
+  /* Hairline (1px) internal dividers, as opposed to a --border-width frame.
+     Same colour as --color-border; the distinction is width and intent. */
+  --color-border-light: var(--color-border);
+  /* De-emphasis is expressed by size and weight at the call sites, not by
+     value — muted text is the same pure ink as body text. */
+  --color-text-muted:   var(--color-text);
+  --color-bg-stripes:   var(--color-text);
   /* Hover steps the dither up one notch rather than being a fixed level:
        flat/paper surface  → --color-bg-hover        (L2)
        already-L2 surface  → --color-bg-hover-strong (L4)
@@ -19,22 +31,44 @@
      values; --dither-N is theme-aware, so the dark block needs no override. */
   --color-bg-hover:        var(--dither-2);
   --color-bg-hover-strong: var(--dither-4);
+  /* A selected control is the page inverted — it sits at the ink end of the
+     same ramp (--dither-16 IS var(--color-text)), so it needs the mirror of
+     every flat-surface rule, not just swapped text and background:
+
+       flat surface      ink on paper   L0  → hover L2   (ink dots appear)
+       selected surface  paper on ink   L16 → hover L14  (paper dots appear)
+
+     --dither-14 is built from paper dots on ink, so the hover delta is
+     identical in both directions. -fg is for anything drawn ON the inverted
+     surface (text, counts, glyphs, internal dividers); -bg doubles as the
+     border colour and, critically, as the text-stroke colour — the stroke is
+     always the surface's OWN colour, which is what keeps it invisible until a
+     dither shows through. Painting it in paper here would fatten paper glyphs
+     instead of clearing dots behind them. */
+  --color-selected-bg:       var(--color-text);   /* = --dither-16 */
+  --color-selected-fg:       var(--color-bg);     /* = --dither-0  */
+  --color-selected-bg-hover: var(--dither-14);
   --color-overlay:    rgba(0, 0, 0, 0.85);
-  /* Emphasis for an OR-matched browse-card tag (monochrome: fill + strong border). */
-  --color-tag-active-bg:     #eaeaea;
-  --color-tag-active-border: #000000;
+  /* Emphasis for an OR-matched browse-card tag (monochrome: fill + strong
+     border). The fill is a dither, so it needs no dark override. */
+  --color-tag-active-bg:     var(--dither-3);
+  --color-tag-active-border: var(--color-border);
 
   /* Dev-only status badge (issue #51) — one bg/border pair per non-published
      StatusValue. Text stays var(--color-text) (see .status-badge), so only
-     the tint needs a per-status pair, same pattern as --color-tag-active-*. */
+     the tint needs a per-status pair, same pattern as --color-tag-active-*.
+     These are the only chromatic values in the palette and are exempt from the
+     monochrome rule: the markup is import.meta.env.DEV-gated in both renderers
+     (CardHeader.astro, BrowseCard.svelte) so it never reaches a production
+     build. "archived" was the one greyscale pair, so it joins the system. */
   --status-draft-bg:         #fdecea;
   --status-draft-border:     #c0392b;
   --status-scheduled-bg:     #e8f0fe;
   --status-scheduled-border: #1a56db;
   --status-unlisted-bg:      #fef6e0;
   --status-unlisted-border:  #b7791f;
-  --status-archived-bg:      #eeeeee;
-  --status-archived-border:  #666666;
+  --status-archived-bg:      var(--dither-2);
+  --status-archived-border:  var(--color-border);
 
   --font-body:    'Montserrat', system-ui, sans-serif;
   --font-ui:      'Montserrat', system-ui, sans-serif;
@@ -54,19 +88,14 @@
   --max-width:    680px;
 }
 
+/* Dark is a straight inversion: swap ink and paper and everything else follows.
+   Every greyscale token in :root is defined in terms of --color-text /
+   --color-bg / --dither-N, so restating those two colours re-derives the lot —
+   there is deliberately nothing else to override here. */
 html[data-theme="dark"] {
-  --color-bg:           #1a1a1a;
-  --color-surface:      #242424;
-  --color-bg-stripes:   #888888;
-  --color-border:       #c0c0c0;
-  --color-border-light: #555555;
-  --color-text:         #e0e0e0;
-  --color-text-muted:   #aaaaaa;
-  /* --color-bg-hover / -strong inherit from :root — the --dither-N values
-     resolve against this theme's --color-text/--color-bg, so no dark-specific
-     overrides are needed. */
-  --color-tag-active-bg:     #3a3a3a;
-  --color-tag-active-border: #c0c0c0;
+  --color-bg:     #000000;
+  --color-text:   #ffffff;
+  --color-border: #ffffff;
 
   --status-draft-bg:         #3a2323;
   --status-draft-border:     #e07a6c;
@@ -74,8 +103,6 @@ html[data-theme="dark"] {
   --status-scheduled-border: #6d97f5;
   --status-unlisted-bg:      #3a3320;
   --status-unlisted-border:  #e0b84f;
-  --status-archived-bg:      #333333;
-  --status-archived-border:  #999999;
 }
 
 /* ── Anti-FOUC: filtered cold load ─────────────────────────────── */
@@ -150,15 +177,6 @@ strong { font-weight: 700; }
   margin: 0 auto;
   padding: var(--space-lg) var(--space-md);
 }
-
-/* ── Card ──────────────────────────────────────────────────────── */
-
-.card {
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  padding: var(--space-md) var(--space-lg);
-}
-
 
 /* ── Project list ──────────────────────────────────────────────── */
 
@@ -950,9 +968,11 @@ strong { font-weight: 700; }
   padding: var(--space-xs) var(--space-md);
 }
 
+/* Inverts on hover — the same treatment a selected control wears at rest. */
 .puzzle-play-link:hover {
-  background: var(--color-text);
-  color: var(--color-bg);
+  background: var(--color-selected-bg);
+  color: var(--color-selected-fg);
+  -webkit-text-stroke-color: var(--color-selected-bg);
 }
 
 .puzzle-lmd-link {
@@ -1043,9 +1063,11 @@ strong { font-weight: 700; }
   padding: var(--space-xs) var(--space-md);
 }
 
+/* Inverts on hover — the same treatment a selected control wears at rest. */
 .generic-action-link:hover {
-  background: var(--color-text);
-  color: var(--color-bg);
+  background: var(--color-selected-bg);
+  color: var(--color-selected-fg);
+  -webkit-text-stroke-color: var(--color-selected-bg);
 }
 
 .generic-tags {

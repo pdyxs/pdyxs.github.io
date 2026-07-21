@@ -327,15 +327,15 @@
   }
 
   /* Active lens reads selected, mirroring an active tag
-     (.browse-dim-item--selected). */
+     (.browse-dim-item--selected). See --color-selected-* in global.css. */
   .browse-dim-lens-item--selected {
-    background: var(--color-text);
-    color: var(--color-surface);
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    -webkit-text-stroke-color: var(--color-selected-bg);
   }
 
   .browse-dim-lens-item--selected:hover {
-    background: var(--color-text);
-    opacity: 0.85;
+    background: var(--color-selected-bg-hover);
   }
 
   .browse-dim-lens-label {
@@ -369,8 +369,9 @@
   }
 
   .browse-dim-item--selected .browse-dim-item-btn {
-    background: var(--color-text);
-    color: var(--color-surface);
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    -webkit-text-stroke-color: var(--color-selected-bg);
   }
 
   .browse-dim-item-btn {
@@ -393,8 +394,7 @@
   }
 
   .browse-dim-item--selected .browse-dim-item-btn:hover {
-    background: var(--color-text);
-    opacity: 0.85;
+    background: var(--color-selected-bg-hover);
   }
 
   .browse-dim-item-count {
@@ -403,9 +403,10 @@
     margin-left: auto;
   }
 
+  /* Stays de-emphasised by size (0.8em), not by a faded value — an opacity
+     here would render as grey, which the palette no longer has. */
   .browse-dim-item--selected .browse-dim-item-count {
-    color: var(--color-surface);
-    opacity: 0.7;
+    color: var(--color-selected-fg);
   }
 
   /* Right-aligned drill glyph for a drillOnly row (the whole row is the drill
@@ -418,7 +419,7 @@
   }
 
   .browse-dim-item--selected .browse-dim-drill-affordance {
-    color: var(--color-surface);
+    color: var(--color-selected-fg);
   }
 
   .browse-dim-drill {
@@ -443,15 +444,17 @@
   /* A collapsed parent with a selected descendant reads selected, matching
      the selected-tag treatment (.browse-dim-item--selected). */
   .browse-dim-drill--selected {
-    background: var(--color-text);
-    color: var(--color-surface);
-    border-left-color: var(--color-text);
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    -webkit-text-stroke-color: var(--color-selected-bg);
+    /* Paper, not ink: when the row's button is selected too, an ink divider
+       would vanish and the two ink blocks would merge into one. */
+    border-left-color: var(--color-selected-fg);
   }
 
   .browse-dim-drill--selected:hover {
-    background: var(--color-text);
-    color: var(--color-surface);
-    opacity: 0.85;
+    background: var(--color-selected-bg-hover);
+    color: var(--color-selected-fg);
   }
 
   .browse-dim-empty {

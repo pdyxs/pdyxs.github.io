@@ -65,18 +65,21 @@
     border-bottom: 1px solid var(--color-border-light);
   }
 
+  /* An active filter is a selected control by definition — it uses the shared
+     inverted-surface treatment (--color-selected-* in global.css). */
   .fp-filter-chip {
     font-family: var(--font-ui);
     font-size: 0.8rem;
     padding: 2px var(--space-sm);
-    border: 1px solid var(--color-border);
-    background: var(--color-text);
-    color: var(--color-surface);
+    border: 1px solid var(--color-selected-bg);
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    -webkit-text-stroke-color: var(--color-selected-bg);
     cursor: pointer;
   }
 
   .fp-filter-chip:hover {
-    opacity: 0.8;
+    background: var(--color-selected-bg-hover);
   }
 
   .fp-clear-all {

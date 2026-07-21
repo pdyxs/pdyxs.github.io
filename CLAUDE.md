@@ -104,6 +104,23 @@ It's the round-trip key between DOM and `/card/...` fetches. Don't improvise the
 
 No hex literals or raw pixel values outside `:root` for anything that represents a design token (colors, spacing, radii, breakpoints). Dark-mode support and future theming depend on this.
 
+The palette is **two colours**: ink (`--color-text`) and paper (`--color-bg`), pure black and pure white, swapped by `data-theme`. Everything greyscale derives from those two — `--color-surface`, `--color-border-light` and `--color-text-muted` are aliases, and every other tone is a `--dither-N` level built from the same two colours. There is no grey. De-emphasis is expressed by size and weight, never by a faded value; **an `opacity` used to soften a colour is a bug**, because it renders as the grey the palette doesn't have.
+
+### Selected states use the `--color-selected-*` tokens
+
+A selected control is the page inverted — it sits at the ink end of the dither ramp, so it needs the *mirror* of every flat-surface rule, not just swapped text and background:
+
+| | rest | hover |
+|---|---|---|
+| flat surface | `L0` (paper) | `--color-bg-hover` (`L2`) |
+| selected surface | `--color-selected-bg` (`L16`, ink) | `--color-selected-bg-hover` (`L14`) |
+
+`--dither-14` is paper dots on ink, so the hover delta is identical in both directions. Three tokens cover it: `--color-selected-bg` (fill, border, **and text-stroke**), `--color-selected-fg` (text, counts, glyphs, internal dividers), `--color-selected-bg-hover`.
+
+The stroke is the trap. `-webkit-text-stroke` is inherited and paper-coloured by default (see the `.dither-text` block in `global.css`), which is correct on a flat surface and *wrong* on an inverted one: paper stroke behind paper glyphs fattens them instead of clearing dots behind them. Any selected rule whose element inherits the stroke must restate `-webkit-text-stroke-color: var(--color-selected-bg)`.
+
+These are applied as per-component rules rather than one shared class because Svelte's scoping inflates selector specificity — a global `.is-selected` loses to a component's own scoped base rule. The tokens are the contract; the rules live with the component.
+
 ### Renderer registration is mandatory
 
 Any new content collection must set its default renderer via `_config.yaml` in its content directory (read by `loadCollectionConfig` in `src/lib/cards.ts`); any new renderer component must be registered in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.

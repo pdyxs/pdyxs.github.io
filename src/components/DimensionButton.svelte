@@ -105,10 +105,11 @@
     align-items: center;
     font-size: 0.85em;
     line-height: 1;
-    background: var(--color-text);
-    /* Strip sits on --color-text; the icon draws in currentColor, so paint it
-       in the surface colour to read as a light glyph on the dark strip. */
-    color: var(--color-surface);
+    /* The strip is an inverted surface like any selected control, so it takes
+       the shared treatment: the icon draws in currentColor and reads as paper
+       on ink. See --color-selected-* in global.css. */
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
     pointer-events: none;
   }
 
@@ -139,7 +140,7 @@
     align-items: center;
     gap: 5px;
     padding: var(--space-xs) var(--space-md);
-    background: var(--color-text);
+    background: var(--color-selected-bg);
     pointer-events: none;
   }
 
@@ -147,7 +148,7 @@
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: var(--color-surface);
+    background: var(--color-selected-fg);
     flex-shrink: 0;
   }
 </style>

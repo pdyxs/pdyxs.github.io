@@ -199,8 +199,9 @@
   /* Solid backing so the card's hover dither doesn't overpower these small
      chips. Uses the card's own rest background, so it's invisible until the
      dither appears behind it. The inherited .browse-card-item text-stroke is
-     switched off: with an opaque chip it's redundant, and in dark mode its
-     --color-bg colour would read as a halo against --color-surface. */
+     switched off: the opaque chip already does that job, and at this size a
+     3px stroke would reach past the 1px vertical padding and eat into the
+     chip's own border. */
   .browse-card-tag {
     font-size: 0.7rem;
     font-family: var(--font-ui);
