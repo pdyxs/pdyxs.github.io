@@ -1,9 +1,0 @@
-renderer: puzzle
-name: Puzzles
-description: >
-  Puzzle design and construction — logic puzzles, sudoku variants, and the craft of making something satisfyingly solvable.
-# Fallback description for puzzle cards that declare none — each part drops when
-# its field is absent (most puzzles have `difficulty` but no `puzzle_type`).
-cardDescriptionParts:
-  - "{{puzzle_type}}"
-  - "{{difficulty}}"
