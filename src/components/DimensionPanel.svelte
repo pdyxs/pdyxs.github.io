@@ -179,6 +179,27 @@
         <li class="browse-dim-section-divider" role="presentation" aria-hidden="true"></li>
       {/if}
       {#each section.nodes as node}
+        {#if node.drillOnly}
+          <!-- Pure container (e.g. the dev Status facet): the row has no filter
+               meaning of its own, so the whole row drills in. Reads selected
+               when a selection lives inside it, matching a collapsed parent. -->
+          {@const childSelected = hasSelectedDescendant(node)}
+          <li
+            class="browse-dim-item"
+            class:browse-dim-item--selected={childSelected}
+            role="option"
+            aria-selected={childSelected}
+          >
+            <button
+              class="browse-dim-item-btn"
+              onclick={() => onDrillInto(node)}
+              aria-label="Explore {node.name}{childSelected ? ' (contains a selection)' : ''}"
+            >
+              <span class="browse-dim-item-label">{node.name}</span>
+              <span class="browse-dim-drill-affordance" aria-hidden="true">›</span>
+            </button>
+          </li>
+        {:else}
         {@const selected = activeSelections.has(node.value)}
         <li
           class="browse-dim-item"
@@ -206,6 +227,7 @@
             </button>
           {/if}
         </li>
+        {/if}
       {/each}
     {/each}
     {#if sections.length === 0}
@@ -384,6 +406,19 @@
   .browse-dim-item--selected .browse-dim-item-count {
     color: var(--color-surface);
     opacity: 0.7;
+  }
+
+  /* Right-aligned drill glyph for a drillOnly row (the whole row is the drill
+     button, so there's no separate .browse-dim-drill control). */
+  .browse-dim-drill-affordance {
+    margin-left: auto;
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .browse-dim-item--selected .browse-dim-drill-affordance {
+    color: var(--color-surface);
   }
 
   .browse-dim-drill {

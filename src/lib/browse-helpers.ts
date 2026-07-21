@@ -68,6 +68,10 @@ export type TagNode = {
   group?: string;
   /** Explicit sort order among siblings (lower first), taking precedence over the alphabetical fallback — see sortNodes. Undefined nodes sort alphabetically. */
   order?: number;
+  /** A pure container: the row itself has no filter meaning, so clicking it
+   * drills in rather than selecting `value` (see DimensionPanel). Used by the
+   * dev-only Status facet node — see status-facet-node.ts. */
+  drillOnly?: boolean;
 };
 
 /**

@@ -6,10 +6,9 @@
   import { filterVisibleNodes, groupNodesIntoSections } from '../lib/browse-helpers';
   import { lensesForDimension, lensIdFromUid, activeLensIcon, isLensVisible } from '../lib/lens-registry';
   import { stackStore } from '../stores/card-stack-store';
-  import type { StatusValue } from '../lib/status-visibility';
+  import { STATUS_FACET_VALUE, STATUS_LEAF_PREFIX } from '../lib/status-facet-node';
   import DimensionButton from './DimensionButton.svelte';
   import DimensionPanel from './DimensionPanel.svelte';
-  import StatusFacet from './StatusFacet.svelte';
 
   interface Props {
     hierarchies: Record<Dimension, TagNode[]>;
@@ -20,11 +19,9 @@
     filterState: FilterState;
     onFilterToggle: (dim: Dimension, value: string) => void;
     onClearDimension: (dim: Dimension) => void;
-    /** Dev-only status facet (issue #52) — see StatusFacet.svelte. */
-    onStatusToggle: (value: StatusValue) => void;
   }
 
-  let { hierarchies, groupOrder = {}, filterState, onFilterToggle, onClearDimension, onStatusToggle }: Props = $props();
+  let { hierarchies, groupOrder = {}, filterState, onFilterToggle, onClearDimension }: Props = $props();
 
   let openDimension = $state<Dimension | null>(null);
   let drillPath = $state<string[]>([]);
@@ -61,7 +58,15 @@
     // At the root level, partition into declared sections; drilled-in levels
     // render flat (a single unlabelled section).
     if (drillPath.length === 0) {
-      return groupNodesIntoSections(visibleNodesFor(openDimension), groupOrder[openDimension] ?? []);
+      const nodes = visibleNodesFor(openDimension);
+      // The dev-only Status facet node (injected at the head of the What
+      // hierarchy — see status-facet-node.ts) renders as its own section at the
+      // very top, below the lens list and above the real filter sections. In a
+      // production build it's never injected, so this find is simply null.
+      const statusNode = nodes.find(n => n.value === STATUS_FACET_VALUE);
+      const rest = statusNode ? nodes.filter(n => n !== statusNode) : nodes;
+      const sections = groupNodesIntoSections(rest, groupOrder[openDimension] ?? []);
+      return statusNode ? [{ nodes: [statusNode] }, ...sections] : sections;
     }
     return [{ nodes: resolveDrill(openDimension, drillPath).nodes }];
   });
@@ -79,7 +84,16 @@
   }
 
   function activeSelectionsFor(dim: Dimension): Set<string> {
-    return new Set(filterState.selections[dim] ?? []);
+    const active = new Set(filterState.selections[dim] ?? []);
+    // The dev-only Status facet lives under What but routes to
+    // FilterState.status (not a `what:` bucket), so surface the active status
+    // as a synthetic selection here — that's what highlights the chosen leaf
+    // and marks the "Status" parent as containing a selection. Inert outside
+    // dev, where the facet node isn't present and status is always undefined.
+    if (dim === 'what' && filterState.status) {
+      active.add(`${STATUS_LEAF_PREFIX}${filterState.status}`);
+    }
+    return active;
   }
 
   function togglePanel(dim: Dimension) {
@@ -185,8 +199,6 @@
   {/each}
 
 </div>
-
-<StatusFacet activeStatus={filterState.status} onSelect={onStatusToggle} />
 
 <style>
   .fp-dimension-controls {

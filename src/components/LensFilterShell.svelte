@@ -8,6 +8,8 @@
   import type { TagNode } from '../lib/browse-helpers';
   import type { TagDisplay } from '../lib/tag-display';
   import type { StatusValue } from '../lib/status-visibility';
+  import { isStatusValue } from '../lib/status-visibility';
+  import { STATUS_LEAF_PREFIX } from '../lib/status-facet-node';
   import FilterBar from './FilterBar.svelte';
   import ActiveFilterChips from './ActiveFilterChips.svelte';
 
@@ -92,6 +94,14 @@
   }
 
   function handleFilterToggle(dim: Dimension, value: string) {
+    // The dev-only Status facet is nested under the What panel but selects a
+    // separate field: its leaves carry `status:<value>` values that must route
+    // to FilterState.status, not a `what:` bucket. See status-facet-node.ts.
+    if (value.startsWith(STATUS_LEAF_PREFIX)) {
+      const status = value.slice(STATUS_LEAF_PREFIX.length);
+      if (isStatusValue(status)) handleStatusToggle(status);
+      return;
+    }
     if (!lens.acceptsFilters) {
       fallthroughToDefaultBrowseLens(dim, value);
       return;
@@ -150,7 +160,6 @@
   filterState={$lensFilterStore}
   onFilterToggle={handleFilterToggle}
   onClearDimension={handleClearDimension}
-  onStatusToggle={handleStatusToggle}
 />
 
 {#if hasActiveFilters}
