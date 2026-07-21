@@ -6,3 +6,5 @@ tags: []
 ---
 
 Paste an image below this line, then save.
+
+![](Screenshot%20From%202026-07-19%2017-00-58.png)
