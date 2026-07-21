@@ -20,7 +20,8 @@ const { uid, title, titleSuffix } = Astro.props;
     cursor: pointer;
   }
 
+  /* Card headers sit at L2 already, so hover steps up to the strong level. */
   .card-link:hover :global(.card-header) {
-    background: var(--color-bg-hover);
+    background: var(--color-bg-hover-strong);
   }
 </style>

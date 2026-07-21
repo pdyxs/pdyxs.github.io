@@ -58,8 +58,9 @@
     border: var(--border-width) solid var(--color-border);
   }
 
+  /* Card headers sit at L2 already, so hover steps up to the strong level. */
   .fp-slot-card:hover .card-header {
-    background: var(--color-bg-hover);
+    background: var(--color-bg-hover-strong);
   }
 
   .fp-slot-description {

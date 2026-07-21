@@ -1,3 +1,7 @@
+/* Generated dither surfaces: --dither-N / --dither-ink-N (scripts/gen-dither.mjs,
+   run by the prebuild npm script). @import must precede all other rules. */
+@import './dither.generated.css';
+
 /* ── Custom properties ─────────────────────────────────────────── */
 
 :root {
@@ -8,7 +12,13 @@
   --color-border-light: #999999;
   --color-text:       #000000;
   --color-text-muted: #555555;
-  --color-bg-hover:   #f0f0f0;
+  /* Hover steps the dither up one notch rather than being a fixed level:
+       flat/paper surface  → --color-bg-hover        (L2)
+       already-L2 surface  → --color-bg-hover-strong (L4)
+     Both are only ever used as a `background`, so they can hold full dither
+     values; --dither-N is theme-aware, so the dark block needs no override. */
+  --color-bg-hover:        var(--dither-2);
+  --color-bg-hover-strong: var(--dither-4);
   --color-overlay:    rgba(0, 0, 0, 0.85);
   /* Emphasis for an OR-matched browse-card tag (monochrome: fill + strong border). */
   --color-tag-active-bg:     #eaeaea;
@@ -52,7 +62,9 @@ html[data-theme="dark"] {
   --color-border-light: #555555;
   --color-text:         #e0e0e0;
   --color-text-muted:   #aaaaaa;
-  --color-bg-hover:     #2d2d2d;
+  /* --color-bg-hover / -strong inherit from :root — the --dither-N values
+     resolve against this theme's --color-text/--color-bg, so no dark-specific
+     overrides are needed. */
   --color-tag-active-bg:     #3a3a3a;
   --color-tag-active-border: #c0c0c0;
 
@@ -314,26 +326,64 @@ strong { font-weight: 700; }
   font-weight: 400;
   letter-spacing: 0.04em;
   color: var(--color-text);
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 18px,
-    var(--color-bg-stripes) 19px,
-    var(--color-bg-stripes) 20px
-  );
+  background: var(--dither-2);
   user-select: none;
 }
 
+/* Reusable: any text sitting over a dithered surface gets a paper-coloured
+   outline (stroke behind the fill) so it stays legible without a knockout
+   patch — invisible over a flat background, only clears dots where dither
+   shows through. Width is tunable per context via --dither-text-stroke.
+   Applied to every card-header title here (they come from 5 render paths,
+   including a JS string in CardStack.svelte), so it can't rely on a class. */
+.dither-text,
 .card-header-title,
+/* Surfaces whose background becomes a dither on hover (--color-bg-hover).
+   The stroke is inert until that dither appears, so applying it at rest is
+   free. Class names are matched from here rather than each component's
+   scoped styles. */
+.card-listing-item,
+.browse-card-item,
+.browse-stack-entry,
+.browse-dim-label,
+.browse-dim-lens-item,
+.browse-dim-item-btn,
+.browse-dim-drill,
+.stack-overflow,
+.stack-overflow-item,
+.theme-toggle button {
+  -webkit-text-stroke: var(--dither-text-stroke, 4px) var(--color-bg);
+  paint-order: stroke fill;
+}
+
+/* Smaller UI text needs a lighter stroke than the 1.1rem header titles. */
+.card-listing-item,
+.browse-card-item,
+.browse-stack-entry,
+.browse-dim-label,
+.browse-dim-lens-item,
+.browse-dim-item-btn,
+.browse-dim-drill,
+.stack-overflow,
+.stack-overflow-item,
+.theme-toggle button {
+  --dither-text-stroke: 3px;
+}
+
+/* No paper knockout — titles read over the dither via the stroke above.
+   Badges/buttons carry their own backgrounds. */
 .card-header > * {
-  background: var(--color-surface);
   padding: 0 2px;
+}
+.card-header-title {
+  background: none;
+  padding: 0;
 }
 
 .stack-card--collapsed .card-header {
   font-size: 0.75em;
   padding: var(--space-xs) 0;
-  background: var(--color-surface);
+  background: var(--dither-2);
 }
 
 .stack-card--collapsed .card-header-title,
@@ -562,7 +612,8 @@ strong { font-weight: 700; }
   line-height: 1;
 }
 
-.stack-card--collapsed:hover .card-header { background: var(--color-bg-hover); }
+/* Card headers are already L2 at rest, so they step up to the strong hover. */
+.stack-card--collapsed:hover .card-header { background: var(--color-bg-hover-strong); }
 
 /* Overflow strip — slim indicator for hidden cards */
 .stack-overflow {
@@ -714,18 +765,15 @@ strong { font-weight: 700; }
     flex-direction: column;
   }
 
-  /* Collapsed headers: vertical text with horizontal stripes */
+  /* Collapsed headers: vertical text over a dithered surface (title carries the
+     .dither-text outline for legibility). */
   #card-stack .stack-card--collapsed > .card-header {
     writing-mode: vertical-rl;
     flex: 1;
     justify-content: flex-start;
     align-items: center;
     padding: var(--space-md) var(--space-xs);
-    background: repeating-linear-gradient(
-      to right,
-      transparent 0px, transparent 18px,
-      var(--color-bg-stripes) 19px, var(--color-bg-stripes) 20px
-    );
+    background: var(--dither-2);
     overflow: hidden;
   }
 
@@ -734,9 +782,10 @@ strong { font-weight: 700; }
     display: none;
   }
 
-  /* Card title text sits on top of stripes in vertical header */
+  /* Vertical title reads over the dither via its .card-header-title stroke —
+     no knockout patch. */
   #card-stack .stack-card--collapsed .card-header-title {
-    background: var(--color-surface);
+    background: none;
     padding: 0 2px;
     white-space: nowrap;
     overflow: hidden;

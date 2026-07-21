@@ -6,14 +6,15 @@
         "node": ">=22.12.0"
     },
     "scripts": {
-        "predev": "npm run generate:lenses && node scripts/generate-stack-manifest.mjs",
+        "predev": "npm run generate:lenses && npm run generate:dither && node scripts/generate-stack-manifest.mjs",
         "dev": "astro dev",
-        "prebuild": "npm run generate:lenses && node scripts/generate-stack-manifest.mjs",
+        "prebuild": "npm run generate:lenses && npm run generate:dither && node scripts/generate-stack-manifest.mjs",
         "build": "astro build",
         "preview": "astro preview",
         "astro": "astro",
         "check": "astro check",
         "generate:lenses": "node scripts/generate-lens-registry.mjs",
+        "generate:dither": "node scripts/gen-dither.mjs",
         "generate:manifest": "node scripts/generate-stack-manifest.mjs",
         "test": "vitest run",
         "test:watch": "vitest",

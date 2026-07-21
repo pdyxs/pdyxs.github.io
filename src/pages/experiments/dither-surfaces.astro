@@ -1,0 +1,257 @@
+---
+import Base from '../../layouts/Base.astro';
+
+// Preview: every candidate greyscale surface on the site, shown Flat (current)
+// vs dithered at levels 1–4, with realistic text so contrast is judgeable.
+// Dither vars ship via global.css. Toggle the theme in the footer to check both.
+// Throwaway /experiments route.
+
+const STRIPES =
+  'repeating-linear-gradient(to bottom, transparent 0px, transparent 18px, var(--color-bg-stripes) 19px, var(--color-bg-stripes) 20px)';
+
+// For a given "flat" background value, the columns to render: current + L1..L4.
+const variants = (flat: string) => [
+  { label: 'Flat (now)', bg: flat },
+  ...[1, 2, 3, 4].map((n) => ({ label: `L${n}`, bg: `var(--dither-${n})` })),
+];
+
+const cardHeader = variants(STRIPES);
+
+// Legibility treatments for text sitting directly on a dithered surface.
+const OUTLINES = [
+  { cls: 'k', label: 'Knockout (current)' },
+  { cls: 'plain', label: 'No treatment' },
+  { cls: 'shadow', label: 'Outline · text-shadow' },
+  { cls: 'stroke', label: 'Stroke · text-stroke' },
+  { cls: 'halo', label: 'Soft halo' },
+];
+
+const hover = variants('var(--color-bg-hover)');
+const surface = variants('var(--color-surface)');
+const archived = variants('var(--status-archived-bg)');
+const stripes = variants(STRIPES);
+---
+
+<Base title="Dither surfaces preview">
+  <main class="wrap">
+    <h1>Dither surfaces — pick what ships</h1>
+    <p class="lede">
+      Each candidate grey surface, <strong>Flat (current)</strong> vs
+      <code>var(--dither-1…4)</code>, with real text where the surface carries text
+      (the contrast test). Toggle the theme in the footer — the dither inverts, the
+      flat greys switch tokens. Tell me which surfaces + which level to ship.
+    </p>
+
+    {/* ---- Card header (.card-header) — lines → dither ---- */}
+    <section class="group">
+      <h2>Card header <code>.card-header</code> — lines → dither</h2>
+      <p class="note">
+        The header's ruled lines replaced with dither. The title keeps its solid
+        <code>--color-surface</code> knockout, so the text stays crisp while the
+        surrounding header carries the texture. (The current lines are fairly heavy —
+        <code>#555</code>/<code>#888</code> — so a higher level matches their weight.)
+      </p>
+      <div class="row">
+        {cardHeader.map((v) => (
+          <figure class="cell">
+            <div class="ch" style={`background:${v.bg}`}>
+              <span class="ch-title">A card header title</span>
+            </div>
+            <figcaption>{v.label}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+
+    {/* ---- Text over dither: outline vs knockout ---- */}
+    <section class="group">
+      <h2>Text over dither — outline instead of knockout</h2>
+      <p class="note">
+        Rather than punching a solid <code>--color-surface</code> patch behind the
+        title, let the dither run continuously and keep the text legible with a
+        paper-coloured outline. Shown over L2, L3, then L4. Outlines use
+        <code>var(--color-bg)</code>, so they invert with the theme.
+      </p>
+      {[2, 3, 4].map((lvl) => (
+        <div class="row">
+          {OUTLINES.map((o) => (
+            <figure class="cell">
+              <div class="ch" style={`background:var(--dither-${lvl})`}>
+                <span class={`oh-title ${o.cls}`}>A card header title</span>
+              </div>
+              <figcaption>{o.label} · L{lvl}</figcaption>
+            </figure>
+          ))}
+        </div>
+      ))}
+    </section>
+
+    {/* ---- Panels / cards (--color-surface) — the heaviest text test ---- */}
+    <section class="group">
+      <h2>Panel / card surface <code>--color-surface</code></h2>
+      <p class="note">
+        Behind the most text. Note: flat is <em>pure white</em> in light mode, so any
+        dither here <em>adds</em> texture that isn't there today.
+      </p>
+      <div class="row">
+        {surface.map((v) => (
+          <figure class="cell">
+            <div class="s-panel" style={`background:${v.bg}`}>
+              <h4>Sample project</h4>
+              <p>A line of body copy to judge legibility over the surface texture.</p>
+              <span class="s-muted">muted metadata · 2024</span>
+            </div>
+            <figcaption>{v.label}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+
+    {/* ---- Hover fills (--color-bg-hover) ---- */}
+    <section class="group">
+      <h2>Hover fill <code>--color-bg-hover</code></h2>
+      <p class="note">~15 interactive surfaces: card headers, listing rows, buttons, chips, slots, theme toggle. Shown here in their hovered (grey) state.</p>
+      <div class="row">
+        {hover.map((v) => (
+          <figure class="cell">
+            <div class="s-row" style={`background:${v.bg}`}>
+              <span class="s-title">A card header title</span>
+              <span class="s-meta">2024</span>
+            </div>
+            <button class="s-btn" style={`background:${v.bg}`}>Filter label</button>
+            <figcaption>{v.label}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+
+    {/* ---- Archived status badge (--status-archived-bg) ---- */}
+    <section class="group">
+      <h2>Archived status badge <code>--status-archived-bg</code></h2>
+      <p class="note">Small, short label, bordered. Minimal text.</p>
+      <div class="row">
+        {archived.map((v) => (
+          <figure class="cell cell--tight">
+            <span class="s-badge" style={`background:${v.bg}`}>Archived</span>
+            <figcaption>{v.label}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+
+    {/* ---- Placeholder stripes (--color-bg-stripes) ---- */}
+    <section class="group">
+      <h2>Placeholder stripes <code>--color-bg-stripes</code></h2>
+      <p class="note">Already a texture (empty-state placeholder cards). No text — the lowest-risk swap, but it changes a deliberate motif.</p>
+      <div class="row">
+        {stripes.map((v) => (
+          <figure class="cell">
+            <div class="s-placeholder" style={`background:${v.bg}`}></div>
+            <figcaption>{v.label}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .wrap { max-width: 64rem; margin: 0 auto; padding: var(--space-lg) var(--space-md); }
+  .lede { color: var(--color-text-muted); max-width: 48rem; }
+  .group { margin: var(--space-xl) 0; }
+  .group h2 { display: flex; gap: var(--space-sm); align-items: baseline; flex-wrap: wrap; }
+  .note { color: var(--color-text-muted); font-size: 0.85rem; max-width: 48rem; margin-top: 0; }
+
+  .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: var(--space-md);
+    align-items: start;
+  }
+  .cell { margin: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
+  .cell figcaption {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .cell--tight { align-items: flex-start; }
+
+  /* Card header sample — mirrors .card-header + .card-header-title knockout */
+  .ch {
+    display: flex;
+    align-items: center;
+    padding: var(--space-md) var(--space-sm);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--color-text);
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+  }
+  .ch-title { background: var(--color-surface); padding: 0 2px; }
+
+  /* Legibility treatments for a title over dither. --o = paper (outline colour). */
+  .oh-title { --o: var(--color-bg); color: var(--color-text); padding: 0 2px; }
+  .oh-title.k { background: var(--color-surface); }
+  .oh-title.shadow {
+    text-shadow:
+      -1px -1px 0 var(--o), 0 -1px 0 var(--o), 1px -1px 0 var(--o),
+      -1px 0 0 var(--o), 1px 0 0 var(--o),
+      -1px 1px 0 var(--o), 0 1px 0 var(--o), 1px 1px 0 var(--o);
+  }
+  .oh-title.stroke {
+    -webkit-text-stroke: 3px var(--o);
+    paint-order: stroke fill;
+  }
+  .oh-title.halo {
+    text-shadow: 0 0 2px var(--o), 0 0 3px var(--o), 0 0 5px var(--o);
+  }
+
+  /* Panel sample */
+  .s-panel {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: var(--space-md);
+  }
+  .s-panel h4 { margin: 0 0 var(--space-xs); }
+  .s-panel p { margin: 0 0 var(--space-xs); font-size: 0.9rem; }
+  .s-muted { color: var(--color-text-muted); font-size: 0.78rem; }
+
+  /* Hover row + button */
+  .s-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 6px;
+  }
+  .s-title { font-weight: 700; }
+  .s-meta { color: var(--color-text-muted); font-size: 0.8rem; }
+  .s-btn {
+    align-self: flex-start;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: var(--space-xs) var(--space-md);
+    color: var(--color-text);
+    font: inherit;
+    cursor: default;
+  }
+
+  /* Archived badge */
+  .s-badge {
+    display: inline-block;
+    border: 1px solid var(--status-archived-border);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.8rem;
+  }
+
+  /* Placeholder */
+  .s-placeholder {
+    height: 6rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+  }
+</style>

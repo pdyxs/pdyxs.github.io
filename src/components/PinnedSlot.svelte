@@ -26,8 +26,9 @@
     text-decoration: none;
   }
 
+  /* Card headers sit at L2 already, so hover steps up to the strong level. */
   .fp-pinned:hover .card-header {
-    background: var(--color-bg-hover);
+    background: var(--color-bg-hover-strong);
   }
 
   .fp-pinned-description {
