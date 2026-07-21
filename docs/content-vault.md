@@ -17,8 +17,9 @@ lives under exactly one settings context.
 
 ## Opening it
 
-Obsidian → vault switcher → **Open folder as vault** →
-`~/dev/pdyxs-astro/src/content`.
+Obsidian → vault switcher → **Open folder as vault** → the content directory.
+On the server that's `~/dev/pdyxs-astro/src/content`; from the laptop it's the
+SSHFS mount of that same directory (see *Editing from the laptop* below).
 
 The committed `.obsidian/` is picked up on first open, so there is nothing to
 configure by hand. Obsidian will prompt to trust the vault (Templater is a
@@ -78,17 +79,51 @@ The `[!_]` alone only guards a file's *own* name; without the second pattern,
 Anything else that needs to live in the vault without being published goes in an
 underscore-prefixed folder for the same reason.
 
-## obsidian-git: desktop yes, mobile no
+## Editing from the laptop: SSHFS, not sync
 
-On desktop the plugin shells out to real `git`, which resolves the enclosing
-repo from any subdirectory, so a vault at `src/content` syncs the whole
-`pdyxs.github.io` working tree fine. Note what that means: **commit-and-sync
-from the vault commits the entire repo, not just content** — if the working
-tree has code changes in flight, they go in the "vault backup" commit too.
+The vault is **not** copied to the laptop. The laptop mounts the server's
+`src/content` over SSHFS and opens the mount as the vault:
 
-On mobile it does **not** work. That path runs isomorphic-git over an fs adapter
-bound to the vault root (`getRepo()` → `dir: settings.basePath`), and `basePath`
-can only point *down* into the vault, so a vault at `src/content` cannot reach a
-repo root two levels above it. Resolving it means either a second vault rooted at
-the repo root or bringing the deferred content-repo split forward — tracked
-separately, not decided here.
+```bash
+sshfs server:/home/pdyxs/dev/pdyxs-astro/src/content ~/vaults/pdyxs-content \
+  -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,follow_symlinks
+```
+
+So a save *is* a write on the server. The dev server's watcher sees a real
+filesystem event and hot-reloads — `preview.pdyxs.wtf` is current the moment the
+file is saved, with no commit, push, pull, or polling in the path.
+
+There is exactly one copy of the content and one `.obsidian`, which is the same
+property the dedicated vault was chosen for, extended across machines.
+
+Consequences worth knowing:
+
+- **Editing requires connectivity.** No offline drafting; the mount is the vault.
+- **Obsidian won't notice server-side changes.** inotify doesn't cross SSHFS, so
+  if something else rewrites content underneath (a `git pull`, a script), reload
+  the vault to see it.
+- **`obsidian-git` cannot run in this vault** and is deliberately not enabled.
+  The mount exposes `src/content` only; `.git` lives two levels above it and is
+  a *worktree pointer file* besides. Git happens on the server — see below.
+
+## Committing: server-side, content-scoped
+
+`pdyxs-content-git-sync` (a 5-minute user timer, defined in `server-project`)
+commits and pushes content edits from the server side.
+
+It commits **only `src/content`**, via `git commit -- src/content`, which takes
+the working-tree state of those paths and bypasses the index entirely. This
+matters because the same checkout is where code work happens: anything staged
+elsewhere stays staged and unshipped. It also refuses to act unless HEAD is
+`astro-rebuild`, and skips while a merge/rebase/cherry-pick/revert is in flight.
+
+This is the job `obsidian-git` would otherwise have done with a whole-repo
+`git add -A` — which is precisely how in-flight code changes ended up inside a
+"vault backup" commit before this existed.
+
+## Mobile
+
+Still unsolved, and SSHFS doesn't help — the same connectivity and `.git`-reach
+problems apply, and `obsidian-git` on mobile runs isomorphic-git over an fs
+adapter bound to the vault root (`getRepo()` → `dir: settings.basePath`), which
+can only point *down*. Tracked separately.
