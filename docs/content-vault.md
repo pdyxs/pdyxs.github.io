@@ -46,6 +46,18 @@ The settings that carry the design:
 - `useMarkdownLinks: true` + `newLinkFormat: "relative"` — images and links are
   inserted as plain markdown (`![](file.png)`), not `![[file.png]]` embeds, so
   no wikilink converter is needed and alt text is a first-class markdown `alt`.
+
+### The `./`-prefix question, settled
+
+Obsidian writes same-folder attachments as a **bare** path with URL-encoded
+spaces — `![](Screenshot%20From%202026-07-19.png)`, no `./`. Existing content
+uses `./`, so the open question was whether Astro's optimiser would reject the
+bare form and need a normaliser.
+
+It doesn't. Verified end to end on a real paste: dev serves
+`/_image?href=…&f=webp` at the image's true dimensions, and `astro build`
+emits the optimised variants (8kB png → 2kB webp). **No `./`-prefix normaliser
+is needed**, and both forms work, so existing `./` content needs no migration.
 - `sync: false` — this vault syncs by git, never by Obsidian Sync. Two sync
   layers over the same files is the failure mode the mount already demonstrated.
 
@@ -66,14 +78,17 @@ The `[!_]` alone only guards a file's *own* name; without the second pattern,
 Anything else that needs to live in the vault without being published goes in an
 underscore-prefixed folder for the same reason.
 
-## Not yet: mobile
+## obsidian-git: desktop yes, mobile no
 
-Drafting from mobile over `obsidian-git` does **not** work with this layout.
-The plugin's mobile path runs isomorphic-git over an fs adapter bound to the
-vault root (`getRepo()` → `dir: settings.basePath`), and `basePath` can only
-point *down* into the vault — so a vault at `src/content` cannot reach a repo
-root two levels above it. Desktop is fine (real `git` resolves the enclosing
-repo from any subdirectory).
+On desktop the plugin shells out to real `git`, which resolves the enclosing
+repo from any subdirectory, so a vault at `src/content` syncs the whole
+`pdyxs.github.io` working tree fine. Note what that means: **commit-and-sync
+from the vault commits the entire repo, not just content** — if the working
+tree has code changes in flight, they go in the "vault backup" commit too.
 
-Resolving this means either a second vault rooted at the repo root, or bringing
-the deferred content-repo split forward. Tracked separately.
+On mobile it does **not** work. That path runs isomorphic-git over an fs adapter
+bound to the vault root (`getRepo()` → `dir: settings.basePath`), and `basePath`
+can only point *down* into the vault, so a vault at `src/content` cannot reach a
+repo root two levels above it. Resolving it means either a second vault rooted at
+the repo root or bringing the deferred content-repo split forward — tracked
+separately, not decided here.
