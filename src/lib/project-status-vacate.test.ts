@@ -44,12 +44,14 @@ describe('project status vacate (issue #45)', () => {
   // Note: `status:` frontmatter itself is no longer banned site-wide — issue
   // #46 repurposed it as the publish-lifecycle field (draft/published/...),
   // which legitimately appears in content frontmatter (e.g. stories, #49).
-  // This guard narrows to its original intent: the specific project cards
-  // migrated off the old past/current/future status in #45 must not regress
-  // back to carrying a frontmatter `status:` key.
+  // This guard narrows to its original intent, so it matches the old
+  // past/current/future VALUES rather than the `status:` key: one of these
+  // cards being marked `status: draft` is #46's meaning, not a #45 regression.
+  const OLD_STATUS_VALUES = /^status:\s*(past|current|future)\b/m;
+
   it('no previously status-bearing project card regresses to frontmatter status:', () => {
     const withStatus = PREVIOUSLY_STATUS_BEARING_CARDS.filter(uid =>
-      /^status:/m.test(readFileSync(join(CONTENT_DIR, `${uid}/index.md`), 'utf-8'))
+      OLD_STATUS_VALUES.test(readFileSync(join(CONTENT_DIR, `${uid}/index.md`), 'utf-8'))
     );
     expect(withStatus).toEqual([]);
   });
