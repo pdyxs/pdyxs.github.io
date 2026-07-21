@@ -5,6 +5,7 @@
   import { computeStackLayout, cardEntry, lensEntry, locationKind, presentationMode } from '../lib/stack-layout';
   import { serialiseStack, deserialiseStack } from '../lib/stack-codec';
   import type { ParamPairs } from '../lib/stack-codec';
+  import { paramsAfterSlotReplace } from '../lib/slot-params';
   import { manifestLookup } from '../lib/stack-manifest-client';
   import { tagManifestLookup } from '../lib/tag-manifest-client';
   import { parseCollectionLink } from '../lib/collection-link';
@@ -228,23 +229,23 @@
   // `extraParams` (e.g. a serialised FilterState query string) rides along
   // for a replace that must carry the current filter selections into the new
   // slot — e.g. selecting a lens from a DimensionPanel while filters are
-  // active (issue #25). Appended to the URL after the stack's own
-  // serialisation so the new location's client-side filter state (which
-  // reads window.location.search on mount) picks it up.
+  // active (issue #25). It becomes the incoming location's cardParams entry
+  // *before* serialisation (the same route pushFilteredLens takes), rather
+  // than being appended to the URL afterwards: cardParams stays the single
+  // source of truth for a location's params, and a carried selection can't
+  // land in the URL twice when the incoming uid already held one. See
+  // paramsAfterSlotReplace for what happens to the outgoing location's params.
   async function replaceSlot(url: string, extraParams?: string) {
     const uid = urlToUid(url);
     const ok = await fetchAndCacheCard(uid);
     if (!ok) return;
+
+    const carried: ParamPairs = [];
+    if (extraParams) new URLSearchParams(extraParams).forEach((v, k) => { carried.push([k, v]); });
+    cardParams = paramsAfterSlotReplace(cardParams, get(stackStore).activeKey, uid, carried);
+
     stackStore.update(s => replaceActiveSlot(s, cardEntry(uid)));
     updateUrl('replace');
-    if (extraParams) {
-      const carried = new URLSearchParams(extraParams);
-      if ([...carried].length) {
-        const target = new URL(window.location.href);
-        for (const [k, v] of carried) target.searchParams.append(k, v);
-        history.replaceState(null, '', `${target.pathname}?${target.searchParams.toString()}`);
-      }
-    }
   }
 
   async function pushCard(url: string, clickedLink?: Element | null) {
