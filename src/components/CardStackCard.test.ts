@@ -91,10 +91,14 @@ describe("CardStackCard", () => {
         ).toBe(false);
     });
 
+    // The fixture must be a card that declares no `status` in frontmatter and
+    // inherits none from the _config.yaml cascade — that's what "implicit
+    // published default" means here. If this card is ever marked draft, move
+    // the test to another published one rather than relaxing the assertion.
     it("renders no status badge for real content (implicit published default)", async () => {
         const container = await makeContainer();
         const html = await container.renderToString(CardStackCard, {
-            props: { path: "who/about-me" },
+            props: { path: "what/puzzles/cartography" },
         });
         const div = dom(html);
 

@@ -592,6 +592,12 @@
         pushFilteredLens(filterUrlForTagValue(tagLink.getAttribute('href')!.slice(4)));
         return;
       }
+      const cardLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="card:"]');
+      if (cardLink) {
+        e.preventDefault();
+        pushCard(uidToFetchUrl(cardLink.getAttribute('href')!.slice(5)));
+        return;
+      }
       const colLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="collection:"]');
       if (colLink) {
         e.preventDefault();

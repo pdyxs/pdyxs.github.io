@@ -10,4 +10,4 @@ roles: 'Designer, Product Owner, Developer'
 
 While working there, I led a team to review and improve the UX processes across the entire organisation, and was part of the Creative Content Team - a design strike force that focused on creating and prototyping highly effective educational content.
 
-As a part of the Creative Content Team, I designed and developed <a href="https://pdyxs.wtf/what/projects/numbeanies">Numbeanies</a>.
+As a part of the Creative Content Team, I designed and developed <a href="card:what/games/digital/numbeanies">Numbeanies</a>.

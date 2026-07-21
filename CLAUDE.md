@@ -133,6 +133,18 @@ Collections that need custom navigation (e.g. prev/next chapter buttons, positio
 
 Collection views are browsing cards for an entire collection — e.g. `/card/posts` lists all posts with tag filter chips. They use bare collection-name UIDs (`posts`, `projects`) with no id component, which is a deliberate exception to the `collection/id` invariant. Register them in `COLLECTION_VIEW_RENDERERS` (`src/lib/renderers.ts`). The renderer is a plain Astro component that fetches all cards server-side and passes them to `<CollectionBrowser client:load />`. To link to a collection view from card content, use `[text](collection:posts)` — `CardStack.onDocumentClick` handles the `collection:` protocol and pushes `/card/posts`.
 
+### Internal links in card content use a protocol, never an absolute URL
+
+Body content links to the rest of the site through one of three protocols, all handled by `onDocumentClick` in `CardStack.svelte`. Each stays inside the card stack — an ordinary `https://pdyxs.wtf/...` or `/card/...` href is a full page load that discards the stack, and is treated as a data bug (guarded by `src/lib/content-links.test.ts`).
+
+| protocol | pushes | example |
+|---|---|---|
+| `card:<uid>` | that single card | `[Numbeanies](card:what/games/digital/numbeanies)` |
+| `collection:<dim>:<value>` | browse lens pre-filtered to that tag | `[Projects](collection:what:projects)` |
+| `tag:<value>` | browse lens filtered to a tag value | `[Svalbard](tag:where:europe/norway/svalbard)` |
+
+`<uid>` is the full dimension-rooted content path (`what/games/digital/numbeanies`), the same string as `data-uid`. Use `card:` for a single entry and `collection:` for a folder/series — a series folder has no card of its own, so `collection:what:posts/stories/arctic` is the only way to reach it.
+
 ### Canonical tag slugs in content; aliases only in tag YAML
 
 Aliases in `src/content.config.ts` tag schema are a runtime safety net, not a feature to rely on. Content should always link to canonical slugs; aliased links in content are a data bug.
