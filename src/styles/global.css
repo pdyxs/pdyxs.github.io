@@ -1039,11 +1039,30 @@ strong { font-weight: 700; }
 
 .site-footer {
   text-align: center;
-  padding: var(--space-lg) var(--space-md);
+  /* Box (and border-top) must match .page-header's box so the top and
+     bottom divider lines line up. Mobile: inset via margin, same as
+     #card-stack's padding, so the border matches the card column instead
+     of running full-bleed. Desktop restores original padding but caps
+     width to --max-width, centered — same box .page-header ends up with. */
+  padding-block: var(--space-lg);
+  margin-inline: var(--space-md);
   font-family: var(--font-ui);
   font-size: 0.8rem;
   color: var(--color-text-muted);
   border-top: var(--border-width) solid var(--color-border);
+}
+
+@media (min-width: 681px) {
+  .site-footer {
+    /* width:100% (not auto) is required here: .site-wrapper is a flex
+       column, and a flex item with auto cross-axis margins but a
+       cross-size of 'auto' shrink-wraps to content instead of filling
+       to max-width — see flexbox stretch/auto-margin interaction. */
+    width: 100%;
+    max-width: var(--max-width);
+    margin-inline: auto;
+    padding-inline: var(--space-md);
+  }
 }
 
 .footer-toggle {

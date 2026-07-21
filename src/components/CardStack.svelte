@@ -59,6 +59,11 @@
   // width both derive from the same var — see global.css). No declared width
   // → remove the override and fall back to the :root default.
   //
+  // Set on <html> rather than #card-stack: .site-footer (outside #card-stack,
+  // a sibling in Base.astro) also reads --max-width so its divider line
+  // stays the same width as the active card's — a descendant-only override
+  // on #card-stack wouldn't reach that sibling.
+  //
   // Not folded into cardHtmlCache reactivity: cardHtmlCache is a plain
   // `$state(new Map())`, which Svelte does not deep-proxy — a bare `.set()`
   // doesn't retrigger effects that only read via `.get()`. That's fine for
@@ -68,10 +73,9 @@
   // explicitly once the real fragment lands (mirrors why that swap already
   // patches .stack-card-body-inner by hand rather than relying on reactivity).
   function applyMaxWidth(activeKey: string | null) {
-    const stackEl = document.getElementById('card-stack');
     const width = activeKey ? extractLocationWidth(cardHtmlCache.get(activeKey)) : undefined;
-    if (width) stackEl?.style.setProperty('--max-width', width);
-    else stackEl?.style.removeProperty('--max-width');
+    if (width) document.documentElement.style.setProperty('--max-width', width);
+    else document.documentElement.style.removeProperty('--max-width');
   }
 
   $effect(() => {
