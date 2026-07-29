@@ -9,3 +9,5 @@ width: 960px
 config:
   sortKey: date
   sortDirection: asc
+  # Mirror of newest: only the leading 6 cards after filtering.
+  limit: 6
