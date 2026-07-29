@@ -35,6 +35,8 @@
           <line x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} />
         {:else if s.kind === 'polyline'}
           <polyline points={s.points} />
+        {:else if s.kind === 'path'}
+          <path d={s.d} />
         {/if}
       {/each}
     </svg>

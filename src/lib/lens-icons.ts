@@ -6,17 +6,27 @@
 //
 // Why structured shapes rather than raw SVG strings: an `{@html}` SVG string
 // doesn't round-trip byte-identically through the browser's parser, so Svelte
-// flags a (benign) hydration mismatch. Emitting real <line>/<circle>/<polyline>
-// elements from data sidesteps that entirely and stays type-safe.
+// flags a (benign) hydration mismatch. Emitting real <path>/<line>/<circle>/
+// <polyline> elements from data sidesteps that entirely and stays type-safe.
 //
 // All icons draw on a uniform 0 0 24 24 viewBox in `currentColor`, so a single
 // def works on a light lens-list row and the dark indicator strip alike, and
 // the caller sizes it purely via font-size (the <svg> is 1em square).
+//
+// The definitions themselves live in lens-icons.generated.ts, built by
+// scripts/generate-lens-icons.mjs from the editable SVG sources in
+// src/icons/lenses/*.svg (edit those — e.g. in Affinity Designer — and run
+// `npm run generate:lens-icons`, never hand-edit the generated file). `circle`/
+// `line`/`polyline` stay in the type for cheap hand-authored defs, but the
+// generator only ever emits `path`.
+
+import { LENS_ICON_DEFS } from '../data/lens-icons.generated';
 
 export type IconShape =
   | { kind: 'circle'; cx: number; cy: number; r: number }
   | { kind: 'line'; x1: number; y1: number; x2: number; y2: number }
-  | { kind: 'polyline'; points: string };
+  | { kind: 'polyline'; points: string }
+  | { kind: 'path'; d: string };
 
 export interface LensIconDef {
   /** Filled shapes (scatter/dot) vs stroked outlines (the timelines). */
@@ -24,59 +34,7 @@ export interface LensIconDef {
   shapes: IconShape[];
 }
 
-const c = (cx: number, cy: number, r: number): IconShape => ({ kind: 'circle', cx, cy, r });
-const l = (x1: number, y1: number, x2: number, y2: number): IconShape => ({ kind: 'line', x1, y1, x2, y2 });
-
-const LENS_ICONS: Record<string, LensIconDef> = {
-  // "A bit of everything" — a scatter plot stripped of its axes: dots strewn
-  // across the field with no ordering, standing in for a varied mix.
-  scatter: {
-    filled: true,
-    shapes: [
-      c(5, 7, 1.7), c(11, 4, 1.7), c(17, 8, 1.7), c(7, 14, 1.7),
-      c(13, 12, 1.7), c(20, 15, 1.7), c(9, 20, 1.7), c(17, 20, 1.7),
-    ],
-  },
-
-  // "Newest" — a time axis with a tall origin tick at the left and an arrowhead
-  // at the leading (right) end: advancing toward the most recent point. Its
-  // mirror `timeline-oldest` (tall tick right, arrow left) powers the Oldest lens.
-  timeline: {
-    filled: false,
-    shapes: [
-      l(3.5, 5.5, 3.5, 18.5),
-      l(3.5, 12, 20.5, 12),
-      l(9.5, 9.5, 9.5, 14.5),
-      l(15, 9.5, 15, 14.5),
-      { kind: 'polyline', points: '17,8 21,12 17,16' },
-    ],
-  },
-
-  'timeline-oldest': {
-    filled: false,
-    shapes: [
-      l(20.5, 5.5, 20.5, 18.5),
-      l(3.5, 12, 20.5, 12),
-      l(14.5, 9.5, 14.5, 14.5),
-      l(9, 9.5, 9, 14.5),
-      { kind: 'polyline', points: '7,8 3,12 7,16' },
-    ],
-  },
-
-  // Generic fallback marker for a lens that declares no icon (or an unknown
-  // key) — mirrors the old '●' text marker.
-  dot: { filled: true, shapes: [c(12, 12, 4)] },
-
-  // "Editorial" — a flag on a pole: a marker for in-flight/pending content,
-  // distinct from the timeline glyphs used by the date-sorted lenses.
-  flag: {
-    filled: false,
-    shapes: [
-      l(6, 3, 6, 21),
-      { kind: 'polyline', points: '6,4 18,4 14,9 18,14 6,14' },
-    ],
-  },
-};
+const LENS_ICONS: Record<string, LensIconDef> = LENS_ICON_DEFS;
 
 /**
  * Resolves a lens icon key to its shape definition. Returns undefined for a
