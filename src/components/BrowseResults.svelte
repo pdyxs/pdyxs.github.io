@@ -10,14 +10,21 @@
     /** Active filter selections — drives per-card tag hiding/highlighting.
      * Defaults to no filter (e.g. the "Related" list in GenericRenderer). */
     filterState?: FilterState;
+    /** How many cards match before any display limit is applied (see
+     * limitCardsForBrowse). The count line reports this, not the number
+     * rendered, so a capped lens still shows the true size of the match.
+     * Defaults to the rendered count for uncapped callers. */
+    totalCount?: number;
   }
 
-  let { cards, tagDisplay = {}, filterState = { selections: {} } }: Props = $props();
+  let { cards, tagDisplay = {}, filterState = { selections: {} }, totalCount }: Props = $props();
+
+  const count = $derived(totalCount ?? cards.length);
 </script>
 
 <main class="fp-browse-grid" aria-label="Browse results">
   <p class="fp-result-count">
-    {cards.length} card{cards.length === 1 ? '' : 's'}
+    {count} card{count === 1 ? '' : 's'}
   </p>
 
   {#if cards.length === 0}

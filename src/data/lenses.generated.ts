@@ -72,7 +72,8 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     "width": "960px",
     "config": {
       "sortKey": "date",
-      "sortDirection": "desc"
+      "sortDirection": "desc",
+      "limit": 6
     }
   },
   {
@@ -84,7 +85,8 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     "width": "960px",
     "config": {
       "sortKey": "date",
-      "sortDirection": "asc"
+      "sortDirection": "asc",
+      "limit": 6
     }
   }
 ];

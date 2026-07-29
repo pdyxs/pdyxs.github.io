@@ -3,7 +3,7 @@
   import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
   import { applyFilters } from '../../lib/filters';
   import type { FilterState } from '../../lib/filters';
-  import { sortCardsForBrowse } from '../../lib/browse-helpers';
+  import { sortCardsForBrowse, limitCardsForBrowse } from '../../lib/browse-helpers';
   import type { SerialisedCardFull } from '../../lib/frontpage';
   import type { TagDisplay } from '../../lib/tag-display';
   import BrowseResults from '../BrowseResults.svelte';
@@ -57,7 +57,7 @@
   );
   const activeFilter: FilterState = $derived(mounted ? $lensFilterStore : { selections: {} });
   const filteredCards = $derived(applyFilters(cardMetas, activeFilter));
-  const sortedCards = $derived(sortCardsForBrowse(filteredCards, config));
+  const sortedCards = $derived(limitCardsForBrowse(sortCardsForBrowse(filteredCards, config), config));
 
   // Clear the pre-paint anti-FOUC guard (set by Base.astro's inline script when
   // the URL carries filters) once this island has mounted (so sortedCards now
@@ -73,4 +73,9 @@
   });
 </script>
 
-<BrowseResults cards={sortedCards} {tagDisplay} filterState={$lensFilterStore} />
+<BrowseResults
+  cards={sortedCards}
+  totalCount={filteredCards.length}
+  {tagDisplay}
+  filterState={$lensFilterStore}
+/>

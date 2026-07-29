@@ -6,6 +6,7 @@ import {
     buildAllDimensionHierarchies,
     dimensionHasTags,
     sortCardsForBrowse,
+    limitCardsForBrowse,
     filterVisibleNodes,
     groupNodesIntoSections,
 } from "./browse-helpers";
@@ -794,6 +795,52 @@ describe("sortCardsForBrowse", () => {
         const input = [older, newer];
         sortCardsForBrowse(input, { sortKey: "date", sortDirection: "desc" });
         expect(input.map((c) => c.uid)).toEqual(["posts/older", "posts/newer"]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// limitCardsForBrowse
+// ---------------------------------------------------------------------------
+
+describe("limitCardsForBrowse", () => {
+    const cards = Array.from({ length: 10 }, (_, i) =>
+        fakeCardMeta({ uid: `posts/c${i}`, title: `Card ${i}` }),
+    );
+
+    it("keeps only the leading cards (matches the newest/oldest lenses)", () => {
+        const result = limitCardsForBrowse(cards, {
+            sortKey: "date",
+            limit: 6,
+        });
+        expect(result.map((c) => c.uid)).toEqual([
+            "posts/c0",
+            "posts/c1",
+            "posts/c2",
+            "posts/c3",
+            "posts/c4",
+            "posts/c5",
+        ]);
+    });
+
+    it("leaves a shorter set untouched", () => {
+        const short = cards.slice(0, 3);
+        expect(limitCardsForBrowse(short, { limit: 6 })).toEqual(short);
+    });
+
+    it("leaves the set untouched when no limit is configured", () => {
+        expect(limitCardsForBrowse(cards)).toEqual(cards);
+        expect(limitCardsForBrowse(cards, { sortKey: "date" })).toEqual(cards);
+    });
+
+    it("ignores a non-numeric or negative limit", () => {
+        expect(limitCardsForBrowse(cards, { limit: "6" })).toEqual(cards);
+        expect(limitCardsForBrowse(cards, { limit: -1 })).toEqual(cards);
+    });
+
+    it("does not mutate the input array", () => {
+        const input = [...cards];
+        limitCardsForBrowse(input, { limit: 2 });
+        expect(input).toHaveLength(10);
     });
 });
 

@@ -403,3 +403,16 @@ export function sortCardsForBrowse(cards: CardMeta[], config?: Record<string, un
     return descending ? -diff : diff;
   });
 }
+
+/**
+ * Truncates a sorted browse-lens result set per its registry `config.limit`
+ * (e.g. `{ limit: 6 }` on the `newest`/`oldest` entries, so they show only the
+ * leading cards rather than the whole archive). Applied *after* filtering and
+ * sorting, so it's the top N of what the visitor actually asked for. An absent,
+ * non-numeric or non-positive limit leaves the set untouched.
+ */
+export function limitCardsForBrowse(cards: CardMeta[], config?: Record<string, unknown>): CardMeta[] {
+  const limit = config?.limit;
+  if (typeof limit !== 'number' || !Number.isFinite(limit) || limit < 0) return cards;
+  return cards.length <= limit ? cards : cards.slice(0, limit);
+}
