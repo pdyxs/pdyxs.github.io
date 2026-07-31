@@ -123,7 +123,7 @@ These are applied as per-component rules rather than one shared class because Sv
 
 ### Renderer registration is mandatory
 
-Any new content collection must set its default renderer via `_config.yaml` in its content directory (read by `loadCollectionConfig` in `src/lib/cards.ts`); any new renderer component must be registered in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
+Any new content collection must set its default renderer via `_config.yaml` in its content directory (resolved by `resolveFolderCascade` in `src/lib/folder-config.ts`, which walks every ancestor `_config.yaml` from the dimension root down — nearest wins); any new renderer component must be registered in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
 
 ### Nav renderer pattern (`NAV_RENDERERS`)
 
@@ -217,3 +217,18 @@ Note: Astro excludes directories starting with `_` from routing, so `_experiment
 ### Plans must name the selectors and CSS variables they touch
 
 Given the selector contract and CSS custom property convention above, a plan file should explicitly list any new class names it adds to the JS contract and any new CSS variables it introduces. Reviewers and future sessions should see this without re-reading the diff.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `pdyxs/pdyxs.github.io`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, used verbatim as label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context, but the glossary and decision records live in the Obsidian vault at
+`~/notes/Creativity/Projects/pdyxs.wtf/`, not in this repo. See `docs/agents/domain.md`.
