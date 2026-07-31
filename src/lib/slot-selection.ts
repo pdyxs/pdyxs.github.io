@@ -10,8 +10,8 @@
 // preferred, but can still be selected as fallback.
 
 import type { CardMeta } from './cards';
-import type { FilterState } from './filters';
-import { applyFilters } from './filters';
+import type { FilterState } from '../dimensions';
+import { applyFilters } from '../dimensions';
 import { getViewState, getDisplayedDate } from './card-view-state';
 
 // ---------------------------------------------------------------------------

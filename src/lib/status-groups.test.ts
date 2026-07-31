@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { groupCardsByStatus } from './status-groups';
-import { applyFilters } from './filters';
-import type { FilterState } from './filters';
+import { applyFilters } from '../dimensions';
+import type { FilterState } from '../dimensions';
 import { fakeCardMeta } from '../test/fixtures';
 
 describe('groupCardsByStatus', () => {
@@ -72,7 +72,7 @@ describe('groupCardsByStatus', () => {
       fakeCardMeta({ uid: 'b', title: 'b', status: 'draft', tags: ['what:puzzles'] }),
       fakeCardMeta({ uid: 'c', title: 'c', status: 'archived', tags: ['what:puzzles'] }),
     ];
-    const filter: FilterState = { selections: { what: ['what:puzzles'] } };
+    const filter: FilterState = { what: ['what:puzzles'] };
 
     const unfiltered = groupCardsByStatus(pool);
     expect(unfiltered.find(g => g.status === 'draft')?.count).toBe(2);

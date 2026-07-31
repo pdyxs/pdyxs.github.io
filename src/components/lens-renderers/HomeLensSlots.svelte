@@ -5,7 +5,7 @@
   import { markDisplayed } from '../../lib/card-view-state';
   import type { FrontPageConfig, ResolvedSlot, SerialisedCardFull } from '../../lib/frontpage';
   import { lensFilterStore } from '../../stores/lens-filter-store';
-  import { applyFilters } from '../../lib/filters';
+  import { applyFilters } from '../../dimensions';
   import FrontPageSlots from '../FrontPageSlots.svelte';
 
   interface Props {

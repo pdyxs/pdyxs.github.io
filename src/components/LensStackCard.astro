@@ -30,10 +30,9 @@ import { getAllCards } from '../lib/cards';
 import { getTagRegistry, getDimensionGroupOrder, flattenTagDisplay, makeContentTreeReader } from '../lib/tag-registry';
 import { discoverCollapseConfig } from '../lib/collapse-config';
 import { collapseCollections } from '../lib/collapse';
-import { buildAllDimensionHierarchies } from '../lib/browse-helpers';
-import { buildStatusFacetNode } from '../lib/status-facet-node';
-import { FIVE_W_DIMENSIONS } from '../lib/filters';
-import type { FilterState } from '../lib/filters';
+import { FIVE_W_DIMENSIONS } from '../lib/five-w';
+import { DIMENSIONS, emptyFilterState } from '../dimensions';
+import type { FilterState } from '../dimensions';
 import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '../lib/lens-components';
 import LensFilterShell from './LensFilterShell.svelte';
 
@@ -50,7 +49,7 @@ const lens = getLensDefinition(name);
 // Cold-load chrome uses the empty filter state — these are fully static routes
 // with no live query string. The client refines the title once
 // LensFilterShell reads window.location.search.
-const filterState: FilterState = { selections: {} };
+const filterState: FilterState = emptyFilterState();
 const chrome = lens ? deriveLensChrome(lens, filterState) : null;
 
 // Home is the root of the stack and is never closable; other lenses are.
@@ -87,14 +86,14 @@ if (lens) {
   const collapseConfig = await discoverCollapseConfig(makeContentTreeReader());
   const browseCards = collapseCollections(listedCards, collapseConfig, v => tagDisplay[v] ?? {});
 
-  hierarchies = buildAllDimensionHierarchies(browseCards, declaredValues, tagDisplay);
-
-  // Dev-only publish-lifecycle facet: a drill-in "Status" node at the top of
-  // the What panel. `import.meta.env.DEV` is resolved at build time, so a
-  // production build dead-code-eliminates this block and the facet never ships.
-  if (import.meta.env.DEV) {
-    hierarchies.what = [buildStatusFacetNode(browseCards), ...hierarchies.what];
-  }
+  // Each dimension enumerates its own offerable values, so there is no
+  // hand-injection site here any more — a dimension that renders nowhere (the
+  // null dimension) simply returns none, and the dev-only status dimension
+  // isn't in the registry at all in a production build.
+  const nodeContext = { cards: browseCards, declaredValues, display: tagDisplay };
+  hierarchies = Object.fromEntries(
+    DIMENSIONS.map(dimension => [dimension.id, dimension.nodes(nodeContext)]),
+  );
 
   // Resolve each card's header `image` to a small thumbnail URL for the
   // condensed browse cards: local images go through astro:assets; remote images

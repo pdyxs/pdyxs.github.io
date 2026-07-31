@@ -16,7 +16,9 @@
     sections: TagSection[];
     activeSelections: Set<string>;
     isDimensionActive: boolean;
-    onSelectValue: (value: string) => void;
+    /** Receives the whole node, so the caller routes by node.dimensionId
+     * rather than inferring the axis from the value's shape. */
+    onSelectValue: (node: TagNode) => void;
     onDrillInto: (node: TagNode) => void;
     onDrillBack: () => void;
     onClear: () => void;
@@ -209,7 +211,7 @@
         >
           <button
             class="browse-dim-item-btn"
-            onclick={() => onSelectValue(node.value)}
+            onclick={() => onSelectValue(node)}
             aria-label="{node.name} ({node.count} cards)"
           >
             <span class="browse-dim-item-label">{node.name}</span>

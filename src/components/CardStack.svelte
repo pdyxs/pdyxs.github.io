@@ -10,7 +10,7 @@
   import { tagManifestLookup } from '../lib/tag-manifest-client';
   import { parseCollectionLink } from '../lib/collection-link';
   import { stackFromParams } from '../lib/browse-stack';
-  import { filterUrlForTagValue } from '../lib/filters';
+  import { filterUrlForTagValue } from '../dimensions';
   import { markRead } from '../lib/card-view-state';
   import { extractLocationWidth } from '../lib/location-width';
 

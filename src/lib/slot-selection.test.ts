@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { selectSlotCard, contentHashFor } from './slot-selection';
 import { clearViewState, markDisplayed, markRead } from './card-view-state';
 import { fakeCardMeta } from '../test/fixtures';
-import type { FilterState } from './filters';
+import type { FilterState } from '../dimensions';
 
-const EMPTY_FILTER: FilterState = { selections: {} };
+const EMPTY_FILTER: FilterState = { };
 const UTC = 'UTC';
 
 // Dates with unambiguous UTC calendar-day membership
@@ -29,7 +29,7 @@ describe('selectSlotCard — empty / no match', () => {
 
   it('returns null when no cards pass the filter', () => {
     const cards = [fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] })];
-    const filter: FilterState = { selections: { what: ['what:games'] } };
+    const filter: FilterState = { what: ['what:games'] };
     expect(selectSlotCard(cards, filter, DAY1_A, UTC)).toBeNull();
   });
 });
@@ -193,7 +193,7 @@ describe('selectSlotCard — filter integration', () => {
   it('only selects from cards that pass the filter', () => {
     const projectCard = fakeCardMeta({ uid: 'projects/p', tags: ['what:projects'] });
     const gameCard    = fakeCardMeta({ uid: 'projects/g', tags: ['what:games'] });
-    const filter: FilterState = { selections: { what: ['what:projects'] } };
+    const filter: FilterState = { what: ['what:projects'] };
 
     const result = selectSlotCard([projectCard, gameCard], filter, DAY1_A, UTC);
     expect(result?.uid).toBe(projectCard.uid);

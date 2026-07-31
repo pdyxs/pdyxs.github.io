@@ -565,6 +565,7 @@ describe("buildTagHierarchy fed by a real tag registry", () => {
 describe("filterVisibleNodes", () => {
     function node(overrides: Partial<TagNode> & { value: string }): TagNode {
         return {
+            dimensionId: 'what',
             label: overrides.value,
             name: overrides.value,
             count: 0,
@@ -847,6 +848,7 @@ describe("limitCardsForBrowse", () => {
 describe("groupNodesIntoSections", () => {
     function node(value: string, group?: string): TagNode {
         return {
+            dimensionId: 'what',
             value,
             label: value,
             name: value,

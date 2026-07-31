@@ -1,7 +1,7 @@
 import type { CardMeta } from './cards';
 import type { SerialisedCard } from './browse-helpers';
-import type { FilterState } from './filters';
-import { filterStateToParams } from './filters';
+import type { FilterState } from '../dimensions';
+import { filterStateToParams } from '../dimensions';
 import { selectSlotCard } from './slot-selection';
 import { DEFAULT_BROWSE_LENS_ID } from './lens-registry';
 

@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
-import type { FilterState, FiveWDimension } from '../lib/filters';
-import type { StatusValue } from '../lib/status-visibility';
+import type { FilterState } from '../dimensions';
+import { emptyFilterState } from '../dimensions';
 
 /**
  * Single source of truth for the active lens's filter selections. Astro's
@@ -9,8 +9,12 @@ import type { StatusValue } from '../lib/status-visibility';
  * from the URL) and each lens body (a reader, deriving its own filtered view
  * via applyFilters) coordinate only through this store — same cross-island
  * pattern card-stack-store.ts already uses for stackStore.
+ *
+ * The five toggle/clear helpers that used to live here are gone: selection
+ * algebra now belongs to each dimension (toggleValue / clearDimension in
+ * src/dimensions/registry.ts), so there is nothing per-kind left to duplicate.
  */
-export const lensFilterStore = writable<FilterState>({ selections: {} });
+export const lensFilterStore = writable<FilterState>(emptyFilterState());
 
 /**
  * Flips to true once LensFilterShell has synced the filter selection from the
@@ -20,59 +24,3 @@ export const lensFilterStore = writable<FilterState>({ selections: {} });
  * full unfiltered set before reducing to the selection.
  */
 export const lensFiltersSynced = writable(false);
-
-export function toggleFilterValue(state: FilterState, dim: FiveWDimension, value: string): FilterState {
-  const existing = state.selections[dim] ?? [];
-  const updated = existing.includes(value)
-    ? existing.filter(v => v !== value)
-    : [...existing, value];
-  const newSelections = { ...state.selections };
-  if (updated.length === 0) {
-    delete newSelections[dim];
-  } else {
-    newSelections[dim] = updated;
-  }
-  return { ...state, selections: newSelections };
-}
-
-/** Toggles a dimensionless filter value in the `tags` bucket (see filters.ts). */
-export function toggleDimensionlessValue(state: FilterState, value: string): FilterState {
-  const existing = state.tags ?? [];
-  const updated = existing.includes(value)
-    ? existing.filter(v => v !== value)
-    : [...existing, value];
-  if (updated.length === 0) {
-    const { tags: _drop, ...rest } = state;
-    return rest;
-  }
-  return { ...state, tags: updated };
-}
-
-export function clearFilterDimension(state: FilterState, dim: FiveWDimension): FilterState {
-  const newSelections = { ...state.selections };
-  delete newSelections[dim];
-  return { ...state, selections: newSelections };
-}
-
-export function clearAllFilters(): FilterState {
-  return { selections: {} };
-}
-
-/**
- * Toggles the dev-only status facet (issue #52). Exclusive, not multi-select
- * like a dimension bucket — a card has exactly one status, so re-selecting
- * the active value clears it and selecting a different value replaces it.
- */
-export function toggleStatusValue(state: FilterState, value: StatusValue): FilterState {
-  if (state.status === value) {
-    const { status: _drop, ...rest } = state;
-    return rest;
-  }
-  return { ...state, status: value };
-}
-
-/** Removes the active status facet selection (e.g. an active-filter chip's ×). */
-export function clearStatusFilter(state: FilterState): FilterState {
-  const { status: _drop, ...rest } = state;
-  return rest;
-}

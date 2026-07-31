@@ -3,7 +3,7 @@ import { buildBrowseUrl, resolvePinnedCards, resolveFrontPageSlots } from './fro
 import type { FrontPageConfig, SerialisedCardFull } from './frontpage';
 import { fakeCardMeta } from '../test/fixtures';
 import { clearViewState } from './card-view-state';
-import type { FilterState } from './filters';
+import type { FilterState } from '../dimensions';
 import { DEFAULT_BROWSE_LENS_ID } from './lens-registry';
 
 // ---------------------------------------------------------------------------
@@ -15,18 +15,18 @@ describe('buildBrowseUrl', () => {
   // buildBrowseUrl always targets the fallback browse lens (issue #26) —
   // never bare `/`, which would silently drop the filter.
   it('routes to the default browse lens with no params for an empty filter', () => {
-    expect(buildBrowseUrl({ selections: {} })).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
+    expect(buildBrowseUrl({ })).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
   });
 
   it('includes filter params for a single-dimension filter', () => {
-    const url = buildBrowseUrl({ selections: { what: ['what:projects'] } });
+    const url = buildBrowseUrl({ what: ['what:projects'] });
     const parsed = new URL(url, 'http://x');
     expect(parsed.pathname).toBe(`/lens/${DEFAULT_BROWSE_LENS_ID}`);
     expect(parsed.searchParams.getAll('filter.what')).toEqual(['projects']);
   });
 
   it('includes multiple values for the same dimension', () => {
-    const filter: FilterState = { selections: { what: ['what:projects', 'what:games'] } };
+    const filter: FilterState = { what: ['what:projects', 'what:games'] };
     const url = buildBrowseUrl(filter);
     const parsed = new URL(url, 'http://x');
     expect(parsed.searchParams.getAll('filter.what')).toEqual(['projects', 'games']);
@@ -34,7 +34,7 @@ describe('buildBrowseUrl', () => {
 
   it('includes values from multiple dimensions', () => {
     const filter: FilterState = {
-      selections: { what: ['what:projects'], who: ['who:pdyxs'] },
+      what: ['what:projects'], who: ['who:pdyxs'],
     };
     const url = buildBrowseUrl(filter);
     const parsed = new URL(url, 'http://x');
@@ -113,7 +113,7 @@ describe('resolveFrontPageSlots', () => {
 
   it('resolves a filter slot to a day-seeded pick among matching cards', () => {
     const config: FrontPageConfig = {
-      slots: [{ type: 'filter', label: 'A Project', filter: { selections: { what: ['what:projects'] } } }],
+      slots: [{ type: 'filter', label: 'A Project', filter: { what: ['what:projects'] } }],
     };
     const cards = [
       fakeSerialisedCard({ uid: 'projects/a', tags: ['what:projects'] }),
@@ -130,7 +130,7 @@ describe('resolveFrontPageSlots', () => {
 
   it('resolves a filter slot to null when no card matches', () => {
     const config: FrontPageConfig = {
-      slots: [{ type: 'filter', label: 'A Project', filter: { selections: { what: ['what:projects'] } } }],
+      slots: [{ type: 'filter', label: 'A Project', filter: { what: ['what:projects'] } }],
     };
     const { slots } = resolveFrontPageSlots(config, [], new Date('2024-03-15T08:00:00Z'));
     expect(slots).toEqual([{ type: 'filter', label: 'A Project', card: null, browseUrl: `/lens/${DEFAULT_BROWSE_LENS_ID}?filter.what=projects` }]);
@@ -138,7 +138,7 @@ describe('resolveFrontPageSlots', () => {
 
   it('reports the picked filter-slot card as displayed, without writing view-state itself', () => {
     const config: FrontPageConfig = {
-      slots: [{ type: 'filter', label: 'A Project', filter: { selections: { what: ['what:projects'] } } }],
+      slots: [{ type: 'filter', label: 'A Project', filter: { what: ['what:projects'] } }],
     };
     const cards = [fakeSerialisedCard({ uid: 'projects/a', tags: ['what:projects'], contentHash: 'hash:a' })];
 

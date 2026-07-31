@@ -10,8 +10,9 @@
 // resolves to a browse-lens filter, so a visitor can never be left at a
 // dead link.
 
-import { FIVE_W_DIMENSIONS, isValidFilterValue } from './filters';
-import type { FiveWDimension, FilterState } from './filters';
+import { FIVE_W_DIMENSIONS, isValidFilterValue } from './five-w';
+import type { FiveWDimension } from './five-w';
+import type { FilterState } from '../dimensions';
 import { buildBrowseUrl } from './frontpage';
 
 /** Converts a legacy slash-form tag id (e.g. "what/projects/games", as used by the retired `tag` collection's `?tag=` query links) to filter-value colon form ("what:projects/games"). */
@@ -38,7 +39,7 @@ export type CollectionLinkAction = FilterAction;
 // ---------------------------------------------------------------------------
 
 function filterActionFor(dim: FiveWDimension, value: string): FilterAction {
-  const filterState: FilterState = { selections: { [dim]: [value] } };
+  const filterState: FilterState = { [dim]: [value] };
   return { type: 'filter', url: buildBrowseUrl(filterState) };
 }
 

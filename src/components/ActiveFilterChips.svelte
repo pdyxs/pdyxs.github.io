@@ -1,56 +1,45 @@
 <script lang="ts">
-  import { FIVE_W_DIMENSIONS } from '../lib/filters';
-  import type { FiveWDimension, FilterState } from '../lib/filters';
-  import { displayFor } from '../lib/tag-display';
+  import { DIMENSIONS } from '../dimensions';
+  import type { FilterState } from '../dimensions';
   import type { TagDisplay } from '../lib/tag-display';
 
   interface Props {
     filterState: FilterState;
-    onRemove: (dim: FiveWDimension, value: string) => void;
-    /** Removes a dimensionless filter (see filters.ts's `tags` bucket). */
-    onRemoveTag: (value: string) => void;
-    /** Removes the dev-only status facet selection (issue #52). */
-    onRemoveStatus: () => void;
+    /** Removes one value from one dimension. Same handler the panel uses —
+     * toggling an active value off is exactly what a chip's × means. */
+    onRemove: (dimensionId: string, value: string) => void;
     onClearAll: () => void;
     /** Flat value -> display-name map from the tag registry (see tag-registry.ts's flattenTagDisplay), serialised in from the server. */
     tagDisplay?: Record<string, TagDisplay>;
   }
 
-  let { filterState, onRemove, onRemoveTag, onRemoveStatus, onClearAll, tagDisplay = {} }: Props = $props();
+  let { filterState, onRemove, onClearAll, tagDisplay = {} }: Props = $props();
+
+  // One fold over the registry replaces the three parallel render blocks (5 W
+  // selections, bare tags, status) and their three removal callbacks. Each
+  // dimension supplies its own chip text, so a dev-only dimension needs no
+  // import.meta.env.DEV gate here — it simply isn't registered in production.
+  const chips = $derived(
+    DIMENSIONS.flatMap(dimension =>
+      dimension.values(filterState[dimension.id]).map(value => ({
+        dimensionId: dimension.id,
+        value,
+        name: dimension.chipLabel(value, tagDisplay),
+      })),
+    ),
+  );
 </script>
 
 <div class="fp-active-filters" aria-label="Active filters">
-  {#each FIVE_W_DIMENSIONS as dim}
-    {#each (filterState.selections[dim] ?? []) as val}
-      {@const name = displayFor(val, tagDisplay).name}
-      <button
-        class="fp-filter-chip"
-        onclick={() => onRemove(dim, val)}
-        aria-label="Remove filter: {name}"
-      >
-        {name} ×
-      </button>
-    {/each}
-  {/each}
-  {#each (filterState.tags ?? []) as val}
-    {@const name = displayFor(val, tagDisplay).name}
+  {#each chips as chip (chip.dimensionId + '\u0000' + chip.value)}
     <button
       class="fp-filter-chip"
-      onclick={() => onRemoveTag(val)}
-      aria-label="Remove filter: {name}"
+      onclick={() => onRemove(chip.dimensionId, chip.value)}
+      aria-label="Remove filter: {chip.name}"
     >
-      {name} ×
+      {chip.name} ×
     </button>
   {/each}
-  {#if import.meta.env.DEV && filterState.status}
-    <button
-      class="fp-filter-chip"
-      onclick={onRemoveStatus}
-      aria-label="Remove filter: {filterState.status}"
-    >
-      {filterState.status} ×
-    </button>
-  {/if}
   <button class="fp-clear-all" onclick={onClearAll} aria-label="Clear all filters">
     Clear all
   </button>

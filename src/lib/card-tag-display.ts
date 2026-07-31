@@ -11,8 +11,10 @@
 //     they're kept and flagged `active` for distinct styling.
 // Tags in dimensions with no active selection are kept as normal chips.
 
-import { FIVE_W_DIMENSIONS } from './filters';
-import type { FiveWDimension, FilterState } from './filters';
+import { FIVE_W_DIMENSIONS } from './five-w';
+import type { FiveWDimension } from './five-w';
+import { selectedValues } from '../dimensions';
+import type { FilterState } from '../dimensions';
 
 export type TagChip = { value: string; active: boolean };
 export type CardTagDisplay = { tags: TagChip[]; overflow: number };
@@ -25,11 +27,10 @@ function dimensionOf(tag: string): FiveWDimension | null {
   return FIVE_W_DIMENSIONS.includes(dim) ? dim : null;
 }
 
-/** Selected filter values that apply to a tag: its dimension's selections, or the dimensionless `tags` bucket. */
+/** Selected filter values that apply to a tag: those of its own dimension,
+ * falling back to the null dimension for a bare tag. */
 function selectedFor(tag: string, filter: FilterState): string[] {
-  const dim = dimensionOf(tag);
-  if (dim) return filter.selections[dim] ?? [];
-  return filter.tags ?? [];
+  return selectedValues(filter, dimensionOf(tag) ?? '');
 }
 
 /** True when `tag` equals `value` or is a hierarchical descendant of it. */

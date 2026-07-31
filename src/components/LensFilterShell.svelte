@@ -1,21 +1,27 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { lensFilterStore, lensFiltersSynced, toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters, toggleStatusValue, clearStatusFilter } from '../stores/lens-filter-store';
-  import { filterStateFromParams, filterStateToParams, stripFilterParams } from '../lib/filters';
-  import type { FiveWDimension, FilterState } from '../lib/filters';
+  import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
+  import {
+    clearDimension,
+    emptyFilterState,
+    filterStateFromParams,
+    filterStateToParams,
+    hasAnySelection,
+    stripFilterParams,
+    toggleValue,
+  } from '../dimensions';
+  import type { FilterState } from '../dimensions';
+  import type { FiveWDimension } from '../lib/five-w';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid, DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
   import type { TagNode } from '../lib/browse-helpers';
   import type { TagDisplay } from '../lib/tag-display';
-  import type { StatusValue } from '../lib/status-visibility';
-  import { isStatusValue } from '../lib/status-visibility';
-  import { STATUS_LEAF_PREFIX } from '../lib/status-facet-node';
   import FilterBar from './FilterBar.svelte';
   import ActiveFilterChips from './ActiveFilterChips.svelte';
 
   interface Props {
     lens: LensDefinition;
-    hierarchies: Record<FiveWDimension, TagNode[]>;
+    hierarchies: Record<string, TagNode[]>;
     /** Per-dimension panel-section order (see groupNodesIntoSections); passed
      * straight through to FilterBar. */
     groupOrder?: Partial<Record<FiveWDimension, string[]>>;
@@ -24,11 +30,7 @@
 
   let { lens, hierarchies, groupOrder = {}, tagDisplay = {} }: Props = $props();
 
-  const hasActiveFilters = $derived(
-    Object.values($lensFilterStore.selections).some(v => v && v.length > 0)
-    || ($lensFilterStore.tags?.length ?? 0) > 0
-    || !!$lensFilterStore.status
-  );
+  const hasActiveFilters = $derived(hasAnySelection($lensFilterStore));
 
   // A lens that can't accept filters must never show any as active, no
   // matter how a stray filter.* query string got onto its URL (carried
@@ -38,7 +40,7 @@
   // having to patch each call site that can navigate here.
   function syncFromUrl() {
     if (!lens.acceptsFilters) {
-      lensFilterStore.set({ selections: {} });
+      lensFilterStore.set(emptyFilterState());
       const current = window.location.search;
       const strippedQuery = stripFilterParams(new URLSearchParams(current)).toString();
       const strippedSearch = strippedQuery ? `?${strippedQuery}` : '';
@@ -72,6 +74,11 @@
     return () => window.removeEventListener('popstate', syncFromUrl);
   });
 
+  function commit(next: FilterState) {
+    lensFilterStore.set(next);
+    reportFiltersToStack(next);
+  }
+
   // --- Home-fallthrough (acceptsFilters:false) -----------------------------
   // Reuses the existing data-replace-slot/data-replace-params + CardStack's
   // delegated click handler (the same mechanism DimensionPanel's lens list
@@ -81,76 +88,32 @@
   let fallthroughTrigger: HTMLButtonElement;
   let fallthroughParams = $state('');
 
-  async function fallthroughToDefaultBrowseLens(dim: FiveWDimension, value: string) {
-    fallthroughParams = filterStateToParams({ selections: { [dim]: [value] } }).toString();
+  async function fallthroughToDefaultBrowseLens(dimensionId: string, value: string) {
+    fallthroughParams = filterStateToParams(
+      toggleValue(emptyFilterState(), dimensionId, value),
+    ).toString();
     await tick();
     fallthroughTrigger?.click();
   }
 
-  async function fallthroughStatusToDefaultBrowseLens(value: StatusValue) {
-    fallthroughParams = filterStateToParams({ selections: {}, status: value }).toString();
-    await tick();
-    fallthroughTrigger?.click();
-  }
-
-  function handleFilterToggle(dim: FiveWDimension, value: string) {
-    // The dev-only Status facet is nested under the What panel but selects a
-    // separate field: its leaves carry `status:<value>` values that must route
-    // to FilterState.status, not a `what:` bucket. See status-facet-node.ts.
-    if (value.startsWith(STATUS_LEAF_PREFIX)) {
-      const status = value.slice(STATUS_LEAF_PREFIX.length);
-      if (isStatusValue(status)) handleStatusToggle(status);
-      return;
-    }
+  // One handler for every dimension. The panel reports which axis a value came
+  // from (TagNode.dimensionId), so nothing here has to recognise a value by its
+  // shape — which is what the old `status:` prefix sniffing existed to do.
+  function handleFilterToggle(dimensionId: string, value: string) {
     if (!lens.acceptsFilters) {
-      fallthroughToDefaultBrowseLens(dim, value);
+      fallthroughToDefaultBrowseLens(dimensionId, value);
       return;
     }
-    const next = toggleFilterValue($lensFilterStore, dim, value);
-    lensFilterStore.set(next);
-    reportFiltersToStack(next);
+    commit(toggleValue($lensFilterStore, dimensionId, value));
   }
 
-  // Dimensionless filters are never added from the dimension bar — they only
-  // arrive via a tag click that opens a fresh browse card. So the shell only
-  // needs to remove them (chip ×). Home (acceptsFilters:false) never holds any.
-  function handleDimensionlessRemove(value: string) {
-    if (!lens.acceptsFilters) return;
-    const next = toggleDimensionlessValue($lensFilterStore, value);
-    lensFilterStore.set(next);
-    reportFiltersToStack(next);
-  }
-
-  function handleClearDimension(dim: FiveWDimension) {
+  function handleClearDimension(dimensionId: string) {
     if (!lens.acceptsFilters) return; // Home never accumulates a selection to clear.
-    const next = clearFilterDimension($lensFilterStore, dim);
-    lensFilterStore.set(next);
-    reportFiltersToStack(next);
+    commit(clearDimension($lensFilterStore, dimensionId));
   }
 
   function handleClearAll() {
-    const next = clearAllFilters();
-    lensFilterStore.set(next);
-    reportFiltersToStack(next);
-  }
-
-  // Dev-only status facet (issue #52). Same acceptsFilters fallthrough as
-  // handleFilterToggle — home can't accumulate a status selection, so a
-  // click there hands off to the default browse lens instead.
-  function handleStatusToggle(value: StatusValue) {
-    if (!lens.acceptsFilters) {
-      fallthroughStatusToDefaultBrowseLens(value);
-      return;
-    }
-    const next = toggleStatusValue($lensFilterStore, value);
-    lensFilterStore.set(next);
-    reportFiltersToStack(next);
-  }
-
-  function handleRemoveStatus() {
-    const next = clearStatusFilter($lensFilterStore);
-    lensFilterStore.set(next);
-    reportFiltersToStack(next);
+    commit(emptyFilterState());
   }
 </script>
 
@@ -166,8 +129,6 @@
   <ActiveFilterChips
     filterState={$lensFilterStore}
     onRemove={handleFilterToggle}
-    onRemoveTag={handleDimensionlessRemove}
-    onRemoveStatus={handleRemoveStatus}
     onClearAll={handleClearAll}
     {tagDisplay}
   />

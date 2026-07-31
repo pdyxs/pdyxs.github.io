@@ -5,9 +5,9 @@ import type { ParamPairs } from './stack-codec';
 import { lensEntry } from './stack-layout';
 import type { StackState } from './stack-layout';
 import { buildLookup } from './stack-manifest';
-import { filterStateFromParams, filterStateToParams } from './filters';
-import type { FiveWDimension, FilterState } from './filters';
-import { toggleFilterValue } from '../stores/lens-filter-store';
+import { filterStateFromParams, filterStateToParams, toggleValue } from '../dimensions';
+import type { FiveWDimension } from './five-w';
+import type { FilterState } from '../dimensions';
 
 const FILTER: ParamPairs = [['filter.what', 'what:art']];
 
@@ -98,7 +98,7 @@ describe('lens swaps with an active filter', () => {
 
     /** LensFilterShell.handleFilterToggle → reportFiltersToStack → onCardParam */
     toggleFilter(dim: FiveWDimension, value: string) {
-      const next = toggleFilterValue(this.filterState, dim, value);
+      const next = toggleValue(this.filterState, dim, value);
       const pairs: ParamPairs = [];
       filterStateToParams(next).forEach((v, k) => { pairs.push([k, v]); });
       const key = this.state.activeKey!;
@@ -130,12 +130,12 @@ describe('lens swaps with an active filter', () => {
 
     // "A bit of everything" (acceptsFilters: false) — the selection is dropped.
     s.swapTo('home', false);
-    expect(s.filterState.selections.what).toBeUndefined();
+    expect(s.filterState.what).toBeUndefined();
 
     // Back to newest: the filter must stay gone, not return from a stale entry.
     s.swapTo('newest', true);
     expect(s.search).toBe('');
-    expect(s.filterState.selections.what).toBeUndefined();
+    expect(s.filterState.what).toBeUndefined();
   });
 
   it('carries a filter across repeated swaps without ever duplicating it', () => {
@@ -146,7 +146,7 @@ describe('lens swaps with an active filter', () => {
       s.swapTo(lens, true);
       // One param, one chip — never `?filter.what=art&filter.what=art`.
       expect(new URLSearchParams(s.search).getAll('filter.what')).toEqual(['art']);
-      expect(s.filterState.selections.what).toEqual(['what:art']);
+      expect(s.filterState.what).toEqual(['what:art']);
     }
   });
 
@@ -156,6 +156,6 @@ describe('lens swaps with an active filter', () => {
     s.swapTo('oldest', true);
     s.toggleFilter('what', 'what:art');
     expect(s.search).toBe('');
-    expect(s.filterState.selections.what).toBeUndefined();
+    expect(s.filterState.what).toBeUndefined();
   });
 });

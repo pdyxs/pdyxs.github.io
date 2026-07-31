@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
-  import { applyFilters } from '../../lib/filters';
-  import type { FilterState } from '../../lib/filters';
+  import { applyFilters } from '../../dimensions';
+  import type { FilterState } from '../../dimensions';
   import { groupCardsByStatus } from '../../lib/status-groups';
   import type { SerialisedCardFull } from '../../lib/frontpage';
   import type { TagDisplay } from '../../lib/tag-display';
@@ -38,7 +38,7 @@
       visibility: { listed: true, reachable: true },
     }))
   );
-  const activeFilter: FilterState = $derived(mounted ? $lensFilterStore : { selections: {} });
+  const activeFilter: FilterState = $derived(mounted ? $lensFilterStore : { });
   const filteredCards = $derived(applyFilters(cardMetas, activeFilter));
   const groups = $derived(groupCardsByStatus(filteredCards));
 

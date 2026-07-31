@@ -14,7 +14,7 @@
 // pdyxs.wtf, viewed through this lens").
 
 import type { LensDefinition } from './lens-registry';
-import { FIVE_W_DIMENSIONS, type FilterState } from './filters';
+import { DIMENSIONS, selectedValues, type FilterState } from '../dimensions';
 
 export const SITE_TITLE = 'pdyxs.wtf';
 
@@ -48,17 +48,11 @@ function filterLabel(value: string): string {
 
 /** Human-readable labels for every active filter, in dimension order. */
 function activeFilterLabels(filterState: FilterState): string[] {
-  const labels: string[] = [];
-  for (const dim of FIVE_W_DIMENSIONS) {
-    for (const value of filterState.selections[dim] ?? []) {
-      labels.push(filterLabel(value));
-    }
-  }
-  // Dimensionless filters trail the dimensioned ones.
-  for (const value of filterState.tags ?? []) {
-    labels.push(filterLabel(value));
-  }
-  return labels;
+  // Registry order: the five 5 W dimensions first, then the null dimension,
+  // then anything dev-only — so dimensioned filters still lead the title.
+  return DIMENSIONS.flatMap(dimension =>
+    selectedValues(filterState, dimension.id).map(filterLabel),
+  );
 }
 
 /** Derives the chrome strings for a lens under the given filter state. */

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { CardMeta } from '../lib/cards';
   import type { TagDisplay } from '../lib/tag-display';
-  import type { FilterState } from '../lib/filters';
+  import type { FilterState } from '../dimensions';
   import BrowseCard from './BrowseCard.svelte';
 
   interface Props {
@@ -17,7 +17,7 @@
     totalCount?: number;
   }
 
-  let { cards, tagDisplay = {}, filterState = { selections: {} }, totalCount }: Props = $props();
+  let { cards, tagDisplay = {}, filterState = { }, totalCount }: Props = $props();
 
   const count = $derived(totalCount ?? cards.length);
 </script>

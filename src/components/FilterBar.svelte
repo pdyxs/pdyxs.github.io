@@ -1,24 +1,25 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { FIVE_W_DIMENSIONS, filterStateToParams } from '../lib/filters';
-  import type { FiveWDimension, FilterState } from '../lib/filters';
+  import { FIVE_W_DIMENSIONS } from '../lib/five-w';
+  import type { FiveWDimension } from '../lib/five-w';
+  import { DIMENSIONS, filterStateToParams, selectedValues } from '../dimensions';
+  import type { FilterState } from '../dimensions';
   import type { TagNode, TagSection } from '../lib/browse-helpers';
   import { filterVisibleNodes, groupNodesIntoSections } from '../lib/browse-helpers';
   import { lensesForDimension, lensIdFromUid, activeLensIcon, isLensVisible } from '../lib/lens-registry';
   import { stackStore } from '../stores/card-stack-store';
-  import { STATUS_FACET_VALUE, STATUS_LEAF_PREFIX } from '../lib/status-facet-node';
   import DimensionButton from './DimensionButton.svelte';
   import DimensionPanel from './DimensionPanel.svelte';
 
   interface Props {
-    hierarchies: Record<FiveWDimension, TagNode[]>;
+    hierarchies: Record<string, TagNode[]>;
     /** Per-dimension section order for the root-level panel (see
      * groupNodesIntoSections). Dimensions absent here fall back to the default
      * (alphabetical) group ordering. */
     groupOrder?: Partial<Record<FiveWDimension, string[]>>;
     filterState: FilterState;
-    onFilterToggle: (dim: FiveWDimension, value: string) => void;
-    onClearDimension: (dim: FiveWDimension) => void;
+    onFilterToggle: (dimensionId: string, value: string) => void;
+    onClearDimension: (dimensionId: string) => void;
   }
 
   let { hierarchies, groupOrder = {}, filterState, onFilterToggle, onClearDimension }: Props = $props();
@@ -42,7 +43,7 @@
   // header title source) and the level to render (`nodes`, that node's
   // children). An unresolved path stops early and shows the last good level.
   function resolveDrill(dim: FiveWDimension, path: string[]): { node: TagNode | null; nodes: TagNode[] } {
-    let nodes = visibleNodesFor(dim);
+    let nodes = [...guestNodesFor(dim), ...visibleNodesFor(dim)];
     let node: TagNode | null = null;
     for (const val of path) {
       const found = nodes.find(n => n.value === val);
@@ -58,15 +59,16 @@
     // At the root level, partition into declared sections; drilled-in levels
     // render flat (a single unlabelled section).
     if (drillPath.length === 0) {
-      const nodes = visibleNodesFor(openDimension);
-      // The dev-only Status facet node (injected at the head of the What
-      // hierarchy — see status-facet-node.ts) renders as its own section at the
-      // very top, below the lens list and above the real filter sections. In a
-      // production build it's never injected, so this find is simply null.
-      const statusNode = nodes.find(n => n.value === STATUS_FACET_VALUE);
-      const rest = statusNode ? nodes.filter(n => n !== statusNode) : nodes;
-      const sections = groupNodesIntoSections(rest, groupOrder[openDimension] ?? []);
-      return statusNode ? [{ nodes: [statusNode] }, ...sections] : sections;
+      const sections = groupNodesIntoSections(
+        visibleNodesFor(openDimension),
+        groupOrder[openDimension] ?? [],
+      );
+      // A dimension that declares this panel as its placement (the dev-only
+      // status dimension does) contributes its own section at the very top,
+      // below the lens list and above this panel's own values. In production
+      // it isn't registered, so this is simply empty.
+      const guests = guestNodesFor(openDimension);
+      return guests.length > 0 ? [{ nodes: guests }, ...sections] : sections;
     }
     return [{ nodes: resolveDrill(openDimension, drillPath).nodes }];
   });
@@ -79,19 +81,23 @@
   );
 
   function dimensionIsActive(dim: FiveWDimension): boolean {
-    const sel = filterState.selections[dim];
-    return !!(sel && sel.length > 0);
+    return selectedValues(filterState, dim).length > 0;
   }
 
+  /** Nodes contributed to this panel by other dimensions (see DimensionPlacement). */
+  function guestNodesFor(dim: FiveWDimension): TagNode[] {
+    return DIMENSIONS
+      .filter(d => d.placement?.panel === dim)
+      .flatMap(d => filterVisibleNodes(hierarchies[d.id] ?? [], activeSelectionsFor(dim)));
+  }
+
+  /** Highlighted values for this panel — this dimension's own selection plus
+   * any guest dimension's, since guest nodes render inside this panel too. */
   function activeSelectionsFor(dim: FiveWDimension): Set<string> {
-    const active = new Set(filterState.selections[dim] ?? []);
-    // The dev-only Status facet lives under What but routes to
-    // FilterState.status (not a `what:` bucket), so surface the active status
-    // as a synthetic selection here — that's what highlights the chosen leaf
-    // and marks the "Status" parent as containing a selection. Inert outside
-    // dev, where the facet node isn't present and status is always undefined.
-    if (dim === 'what' && filterState.status) {
-      active.add(`${STATUS_LEAF_PREFIX}${filterState.status}`);
+    const active = new Set(selectedValues(filterState, dim));
+    for (const d of DIMENSIONS) {
+      if (d.placement?.panel !== dim) continue;
+      for (const value of selectedValues(filterState, d.id)) active.add(value);
     }
     return active;
   }
@@ -110,9 +116,7 @@
     if (node.children.length > 0) {
       drillPath = [...drillPath, node.value];
     } else {
-      onFilterToggle(openDimension!, node.value);
-      openDimension = null;
-      drillPath = [];
+      selectNode(node);
     }
   }
 
@@ -120,8 +124,10 @@
     drillPath = drillPath.slice(0, -1);
   }
 
-  function selectFromPanel(dim: FiveWDimension, value: string) {
-    onFilterToggle(dim, value);
+  // Routes by the node's own dimension, so a guest node selects on its own
+  // axis rather than the panel it happens to be rendered in.
+  function selectNode(node: TagNode) {
+    onFilterToggle(node.dimensionId, node.value);
     openDimension = null;
     drillPath = [];
   }
@@ -158,7 +164,7 @@
   {#each FIVE_W_DIMENSIONS as dim}
     {@const isActive = dimensionIsActive(dim)}
     {@const isOpen = openDimension === dim}
-    {@const hasNodes = visibleNodesFor(dim).length > 0}
+    {@const hasNodes = visibleNodesFor(dim).length + guestNodesFor(dim).length > 0}
     {@const lenses = lensesForDimension(dim).filter(l => isLensVisible(l, import.meta.env.DEV))}
 
     {@const lensIcon = activeLensIcon(lenses, activeLensId)}
@@ -172,7 +178,7 @@
         {isActive}
         {isOpen}
         {hasNodes}
-        selectionCount={(filterState.selections[dim] ?? []).length}
+        selectionCount={selectedValues(filterState, dim).length}
         onToggle={() => togglePanel(dim)}
         {lensIcon}
       />
@@ -185,7 +191,7 @@
           sections={currentSections}
           activeSelections={activeSelectionsFor(dim)}
           isDimensionActive={isActive}
-          onSelectValue={(value) => selectFromPanel(dim, value)}
+          onSelectValue={selectNode}
           onDrillInto={drillInto}
           onDrillBack={drillBack}
           onClear={() => onClearDimension(dim)}

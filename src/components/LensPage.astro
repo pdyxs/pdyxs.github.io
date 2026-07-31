@@ -19,7 +19,7 @@ interface Props {
 
 const { name } = Astro.props;
 const lens = getLensDefinition(name);
-const chrome = lens ? deriveLensChrome(lens, { selections: {} }) : null;
+const chrome = lens ? deriveLensChrome(lens, { }) : null;
 // The <title> tracks the lens's card title (home → "pdyxs.wtf").
 const title = chrome?.cardTitle ?? '';
 // A lens is a browsing surface, not a dated article — the page subtitle is the

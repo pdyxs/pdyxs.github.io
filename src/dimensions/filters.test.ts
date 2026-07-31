@@ -1,15 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import {
-  isValidFilterValue,
-  applyFilters,
-  filterStateToParams,
-  filterStateFromParams,
-  filterUrlForTagValue,
-  stripFilterParams,
-} from './filters';
-import type { FilterState } from './filters';
+import { isValidFilterValue } from '../lib/five-w';
+import { applyFilters, filterStateToParams, filterStateFromParams, filterUrlForTagValue, stripFilterParams } from './index';
+import type { FilterState } from './index';
 import { fakeCardMeta } from '../test/fixtures';
-import { DEFAULT_BROWSE_LENS_ID } from './lens-registry';
+import { DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
 
 // ---------------------------------------------------------------------------
 // isValidFilterValue
@@ -60,33 +54,33 @@ describe('applyFilters — prefix matching', () => {
       fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] }),
       fakeCardMeta({ uid: 'posts/b', tags: ['why:personal'] }),
     ];
-    const state: FilterState = { selections: {} };
+    const state: FilterState = { };
     expect(applyFilters(cards, state)).toEqual(cards);
   });
 
   it('exact match: selecting what:projects returns card with that exact tag', () => {
     const match = fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] });
     const noMatch = fakeCardMeta({ uid: 'posts/b', tags: ['what:writing'] });
-    const state: FilterState = { selections: { what: ['what:projects'] } };
+    const state: FilterState = { what: ['what:projects'] };
     expect(applyFilters([match, noMatch], state)).toEqual([match]);
   });
 
   it('prefix match: selecting what:projects returns card with what:projects/games', () => {
     const match = fakeCardMeta({ uid: 'posts/a', tags: ['what:projects/games'] });
     const noMatch = fakeCardMeta({ uid: 'posts/b', tags: ['what:writing'] });
-    const state: FilterState = { selections: { what: ['what:projects'] } };
+    const state: FilterState = { what: ['what:projects'] };
     expect(applyFilters([match, noMatch], state)).toEqual([match]);
   });
 
   it('multi-level prefix: what:projects matches what:projects/games/puzzle', () => {
     const match = fakeCardMeta({ uid: 'posts/a', tags: ['what:projects/games/puzzle'] });
-    const state: FilterState = { selections: { what: ['what:projects'] } };
+    const state: FilterState = { what: ['what:projects'] };
     expect(applyFilters([match], state)).toEqual([match]);
   });
 
   it('prefix does not partially match sibling: what:project does not match what:projects', () => {
     const noMatch = fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] });
-    const state: FilterState = { selections: { what: ['what:project'] } };
+    const state: FilterState = { what: ['what:project'] };
     // 'what:project' is a hypothetical different tag — it is NOT a prefix of 'what:projects'
     // because 'what:projects' does not equal 'what:project' and does not start with 'what:project/'
     expect(applyFilters([noMatch], state)).toEqual([]);
@@ -96,7 +90,7 @@ describe('applyFilters — prefix matching', () => {
     const a = fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] });
     const b = fakeCardMeta({ uid: 'posts/b', tags: ['what:writing'] });
     const c = fakeCardMeta({ uid: 'posts/c', tags: ['what:other'] });
-    const state: FilterState = { selections: { what: ['what:projects', 'what:writing'] } };
+    const state: FilterState = { what: ['what:projects', 'what:writing'] };
     expect(applyFilters([a, b, c], state)).toEqual([a, b]);
   });
 
@@ -105,17 +99,15 @@ describe('applyFilters — prefix matching', () => {
     const onlyWhat = fakeCardMeta({ uid: 'posts/a', tags: ['what:projects'] });
     const onlyWhy = fakeCardMeta({ uid: 'posts/b', tags: ['why:professional'] });
     const state: FilterState = {
-      selections: {
-        what: ['what:projects'],
+      what: ['what:projects'],
         why: ['why:professional'],
-      },
     };
     expect(applyFilters([both, onlyWhat, onlyWhy], state)).toEqual([both]);
   });
 
   it('card with multiple tags matches if any tag satisfies the selection', () => {
     const match = fakeCardMeta({ uid: 'posts/a', tags: ['why:personal', 'what:projects'] });
-    const state: FilterState = { selections: { what: ['what:projects'] } };
+    const state: FilterState = { what: ['what:projects'] };
     expect(applyFilters([match], state)).toEqual([match]);
   });
 
@@ -124,14 +116,14 @@ describe('applyFilters — prefix matching', () => {
     // same as the post being filed under that project's category.
     const project = fakeCardMeta({ uid: 'what/projects/where-the-heart-is', tags: ['what:projects'] });
     const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:writing', 'what:projects/where-the-heart-is'] });
-    const state: FilterState = { selections: { what: ['what:projects'] } };
+    const state: FilterState = { what: ['what:projects'] };
     expect(applyFilters([project, post], state)).toEqual([project]);
   });
 
   it('a card-backed tag still matches when selected exactly', () => {
     const project = fakeCardMeta({ uid: 'what/projects/where-the-heart-is', tags: ['what:projects'] });
     const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:writing', 'what:projects/where-the-heart-is'] });
-    const state: FilterState = { selections: { what: ['what:projects/where-the-heart-is'] } };
+    const state: FilterState = { what: ['what:projects/where-the-heart-is'] };
     expect(applyFilters([project, post], state)).toEqual([post]);
   });
 });
@@ -144,7 +136,7 @@ describe('applyFilters — when dimension', () => {
   it('when:tag prefix match works like other dimensions', () => {
     const match = fakeCardMeta({ uid: 'posts/a', tags: ['when:2023'] });
     const noMatch = fakeCardMeta({ uid: 'posts/b', tags: ['when:2022'] });
-    const state: FilterState = { selections: { when: ['when:2023'] } };
+    const state: FilterState = { when: ['when:2023'] };
     expect(applyFilters([match, noMatch], state)).toEqual([match]);
   });
 });
@@ -155,61 +147,59 @@ describe('applyFilters — when dimension', () => {
 
 describe('filterStateToParams / filterStateFromParams round-trip', () => {
   it('empty state encodes to empty params and round-trips', () => {
-    const state: FilterState = { selections: {} };
+    const state: FilterState = { };
     const params = filterStateToParams(state);
     expect([...params.entries()]).toHaveLength(0);
     const decoded = filterStateFromParams(params);
-    expect(decoded.selections).toEqual({});
+    expect(decoded).toEqual({});
   });
 
   it('single dimension selection round-trips', () => {
-    const state: FilterState = { selections: { what: ['what:projects'] } };
+    const state: FilterState = { what: ['what:projects'] };
     const params = filterStateToParams(state);
     const decoded = filterStateFromParams(params);
-    expect(decoded.selections.what).toEqual(['what:projects']);
+    expect(decoded.what).toEqual(['what:projects']);
   });
 
   it('encodes values without the redundant dimension prefix (no %3A)', () => {
-    const state: FilterState = { selections: { what: ['what:projects/games'], who: ['who:about'] } };
+    const state: FilterState = { what: ['what:projects/games'], who: ['who:about'] };
     const params = filterStateToParams(state);
     expect(params.getAll('filter.what')).toEqual(['projects/games']);
     expect(params.getAll('filter.who')).toEqual(['about']);
     expect(params.toString()).not.toContain('%3A');
     // Internal state is still fully-qualified after the round-trip.
-    expect(filterStateFromParams(params).selections.what).toEqual(['what:projects/games']);
+    expect(filterStateFromParams(params).what).toEqual(['what:projects/games']);
   });
 
   it('decodes legacy fully-qualified values for backward compatibility', () => {
     const params = new URLSearchParams('filter.what=what%3Aprojects/games');
-    expect(filterStateFromParams(params).selections.what).toEqual(['what:projects/games']);
+    expect(filterStateFromParams(params).what).toEqual(['what:projects/games']);
   });
 
   it('multiple values in same dimension round-trip', () => {
-    const state: FilterState = { selections: { what: ['what:projects', 'what:writing'] } };
+    const state: FilterState = { what: ['what:projects', 'what:writing'] };
     const params = filterStateToParams(state);
     const decoded = filterStateFromParams(params);
-    expect(decoded.selections.what).toEqual(['what:projects', 'what:writing']);
+    expect(decoded.what).toEqual(['what:projects', 'what:writing']);
   });
 
   it('multiple dimensions round-trip', () => {
     const state: FilterState = {
-      selections: {
-        what: ['what:projects'],
+      what: ['what:projects'],
         why: ['why:professional'],
         who: ['who:clients'],
-      },
     };
     const params = filterStateToParams(state);
     const decoded = filterStateFromParams(params);
-    expect(decoded.selections.what).toEqual(['what:projects']);
-    expect(decoded.selections.why).toEqual(['why:professional']);
-    expect(decoded.selections.who).toEqual(['who:clients']);
+    expect(decoded.what).toEqual(['what:projects']);
+    expect(decoded.why).toEqual(['why:professional']);
+    expect(decoded.who).toEqual(['who:clients']);
   });
 
   it('status round-trips', () => {
-    const state: FilterState = { selections: {}, status: 'draft' };
+    const state: FilterState = { status: 'draft' };
     const params = filterStateToParams(state);
-    expect(params.get('status')).toBe('draft');
+    expect(params.get('filter.status')).toBe('draft');
     const decoded = filterStateFromParams(params);
     expect(decoded.status).toBe('draft');
   });
@@ -229,7 +219,7 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
     params.set('filter.what', ''); // empty sub-value — invalid
     params.append('filter.what', 'projects'); // valid → what:projects
     const decoded = filterStateFromParams(params);
-    expect(decoded.selections.what).toEqual(['what:projects']);
+    expect(decoded.what).toEqual(['what:projects']);
   });
 
   it('unknown params are ignored on decode', () => {
@@ -237,8 +227,8 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
     params.set('random', 'value');
     params.set('filter.what', 'what:projects');
     const decoded = filterStateFromParams(params);
-    expect(decoded.selections.what).toEqual(['what:projects']);
-    expect(decoded.selections.why).toBeUndefined();
+    expect(decoded.what).toEqual(['what:projects']);
+    expect(decoded.why).toBeUndefined();
   });
 });
 
@@ -253,7 +243,7 @@ describe('stripFilterParams', () => {
   });
 
   it('removes the status param', () => {
-    const params = new URLSearchParams('status=draft&stack=abc');
+    const params = new URLSearchParams('filter.status=draft&stack=abc');
     expect(stripFilterParams(params).toString()).toBe('stack=abc');
   });
 
@@ -314,14 +304,14 @@ describe('applyFilters — status', () => {
   it('narrows to cards matching the selected status', () => {
     const draft = fakeCardMeta({ uid: 'posts/a', status: 'draft' });
     const published = fakeCardMeta({ uid: 'posts/b', status: 'published' });
-    const state: FilterState = { selections: {}, status: 'draft' };
+    const state: FilterState = { status: 'draft' };
     expect(applyFilters([draft, published], state)).toEqual([draft]);
   });
 
   it('returns all cards when no status is selected', () => {
     const draft = fakeCardMeta({ uid: 'posts/a', status: 'draft' });
     const published = fakeCardMeta({ uid: 'posts/b', status: 'published' });
-    const state: FilterState = { selections: {} };
+    const state: FilterState = { };
     expect(applyFilters([draft, published], state)).toEqual([draft, published]);
   });
 
@@ -329,7 +319,7 @@ describe('applyFilters — status', () => {
     const match = fakeCardMeta({ uid: 'posts/a', status: 'draft', tags: ['what:games'] });
     const wrongStatus = fakeCardMeta({ uid: 'posts/b', status: 'published', tags: ['what:games'] });
     const wrongTag = fakeCardMeta({ uid: 'posts/c', status: 'draft', tags: ['what:writing'] });
-    const state: FilterState = { selections: { what: ['what:games'] }, status: 'draft' };
+    const state: FilterState = { what: ['what:games'], status: 'draft' };
     expect(applyFilters([match, wrongStatus, wrongTag], state)).toEqual([match]);
   });
 });
@@ -338,13 +328,13 @@ describe('applyFilters — dimensionless tags', () => {
   it('matches cards carrying an exactly-equal dimensionless tag', () => {
     const match = fakeCardMeta({ uid: 'posts/a', tags: ['what:art', 'science'] });
     const noMatch = fakeCardMeta({ uid: 'posts/b', tags: ['what:art'] });
-    const state: FilterState = { selections: {}, tags: ['science'] };
+    const state: FilterState = { '': ['science'] };
     expect(applyFilters([match, noMatch], state)).toEqual([match]);
   });
 
   it('does not prefix-match dimensionless tags', () => {
     const noMatch = fakeCardMeta({ uid: 'posts/a', tags: ['science-fiction'] });
-    const state: FilterState = { selections: {}, tags: ['science'] };
+    const state: FilterState = { '': ['science'] };
     expect(applyFilters([noMatch], state)).toEqual([]);
   });
 
@@ -352,7 +342,7 @@ describe('applyFilters — dimensionless tags', () => {
     const a = fakeCardMeta({ uid: 'posts/a', tags: ['science'] });
     const b = fakeCardMeta({ uid: 'posts/b', tags: ['education'] });
     const c = fakeCardMeta({ uid: 'posts/c', tags: ['unrelated'] });
-    const state: FilterState = { selections: {}, tags: ['science', 'education'] };
+    const state: FilterState = { '': ['science', 'education'] };
     expect(applyFilters([a, b, c], state)).toEqual([a, b]);
   });
 
@@ -360,24 +350,24 @@ describe('applyFilters — dimensionless tags', () => {
     const both = fakeCardMeta({ uid: 'posts/both', tags: ['what:art', 'science'] });
     const onlyDim = fakeCardMeta({ uid: 'posts/a', tags: ['what:art'] });
     const onlyTag = fakeCardMeta({ uid: 'posts/b', tags: ['science'] });
-    const state: FilterState = { selections: { what: ['what:art'] }, tags: ['science'] };
+    const state: FilterState = { what: ['what:art'], '': ['science'] };
     expect(applyFilters([both, onlyDim, onlyTag], state)).toEqual([both]);
   });
 });
 
 describe('dimensionless filter URL round-trip', () => {
   it('encodes a dimensionless filter as a bare `filter` param', () => {
-    const state: FilterState = { selections: {}, tags: ['science'] };
+    const state: FilterState = { '': ['science'] };
     const params = filterStateToParams(state);
     expect(params.getAll('filter')).toEqual(['science']);
     expect(params.toString()).not.toContain('%3A');
   });
 
   it('round-trips dimensionless tags alongside dimension selections', () => {
-    const state: FilterState = { selections: { what: ['what:art'] }, tags: ['science', 'education'] };
+    const state: FilterState = { what: ['what:art'], '': ['science', 'education'] };
     const decoded = filterStateFromParams(filterStateToParams(state));
-    expect(decoded.selections.what).toEqual(['what:art']);
-    expect(decoded.tags).toEqual(['science', 'education']);
+    expect(decoded.what).toEqual(['what:art']);
+    expect(decoded['']).toEqual(['science', 'education']);
   });
 
   it('drops invalid dimensionless values (empty or containing a colon) on decode', () => {
@@ -385,7 +375,7 @@ describe('dimensionless filter URL round-trip', () => {
     params.append('filter', '');
     params.append('filter', 'what:art');
     params.append('filter', 'science');
-    expect(filterStateFromParams(params).tags).toEqual(['science']);
+    expect(filterStateFromParams(params)['']).toEqual(['science']);
   });
 
   it('stripFilterParams removes the bare filter param', () => {

@@ -2,7 +2,7 @@
   import type { SerialisedCard } from '../lib/browse-helpers';
   import { displayFor } from '../lib/tag-display';
   import type { TagDisplay } from '../lib/tag-display';
-  import type { FilterState } from '../lib/filters';
+  import type { FilterState } from '../dimensions';
   import { computeCardTagDisplay } from '../lib/card-tag-display';
   import { computeStatusBadge } from '../lib/status-badge';
 
@@ -14,7 +14,7 @@
     filterState?: FilterState;
   }
 
-  let { card, tagDisplay = {}, filterState = { selections: {} } }: Props = $props();
+  let { card, tagDisplay = {}, filterState = { } }: Props = $props();
 
   const tagChips = $derived(computeCardTagDisplay(card.tags, filterState));
   // Dev-only status pill (issue #51) — same pure decision as the open-card
