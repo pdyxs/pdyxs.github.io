@@ -63,12 +63,28 @@ jobs:
         run: npm run prebuild
 
       # The component tests render .astro components against the content
-      # collection, which reads node_modules/.astro/data-store.json. A dev
-      # server populates that locally, so the dependency is invisible until a
-      # cold checkout — `sync` is what creates it from nothing. (It does not
-      # *refresh* an existing store; that's a separate, local-only trap.)
-      - name: Sync content collections
-        run: npx astro sync
+      # collection, which reads `.astro/data-store.json` AT THE PROJECT ROOT.
+      # Only `astro dev` writes that file — `astro sync` and `astro build` both
+      # populate node_modules/.astro/ instead, which the tests do not read. A
+      # dev machine always has one lying around, so the dependency is invisible
+      # until a cold checkout. Boot the dev server just long enough to write it.
+      #
+      # This is a workaround for a test-design problem: the component tests
+      # depend on a dev-server artifact rather than building their own fixture.
+      # Fixing that properly retires this step.
+      - name: Warm the content store
+        run: |
+          npx astro dev --port 4321 > /tmp/astro-dev.log 2>&1 &
+          for _ in $(seq 1 60); do
+            [ -f .astro/data-store.json ] && break
+            sleep 1
+          done
+          pkill -f "astro dev" || true
+          if [ ! -f .astro/data-store.json ]; then
+            echo "::error::content store was never written"
+            cat /tmp/astro-dev.log
+            exit 1
+          fi
 
       - name: Test
         run: npm test
