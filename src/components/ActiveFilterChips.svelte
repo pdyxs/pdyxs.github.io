@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { DIMENSIONS } from '../lib/filters';
-  import type { Dimension, FilterState } from '../lib/filters';
+  import { FIVE_W_DIMENSIONS } from '../lib/filters';
+  import type { FiveWDimension, FilterState } from '../lib/filters';
   import { displayFor } from '../lib/tag-display';
   import type { TagDisplay } from '../lib/tag-display';
 
   interface Props {
     filterState: FilterState;
-    onRemove: (dim: Dimension, value: string) => void;
+    onRemove: (dim: FiveWDimension, value: string) => void;
     /** Removes a dimensionless filter (see filters.ts's `tags` bucket). */
     onRemoveTag: (value: string) => void;
     /** Removes the dev-only status facet selection (issue #52). */
@@ -20,7 +20,7 @@
 </script>
 
 <div class="fp-active-filters" aria-label="Active filters">
-  {#each DIMENSIONS as dim}
+  {#each FIVE_W_DIMENSIONS as dim}
     {#each (filterState.selections[dim] ?? []) as val}
       {@const name = displayFor(val, tagDisplay).name}
       <button

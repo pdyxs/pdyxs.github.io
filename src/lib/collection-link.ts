@@ -10,8 +10,8 @@
 // resolves to a browse-lens filter, so a visitor can never be left at a
 // dead link.
 
-import { DIMENSIONS, isValidFilterValue } from './filters';
-import type { Dimension, FilterState } from './filters';
+import { FIVE_W_DIMENSIONS, isValidFilterValue } from './filters';
+import type { FiveWDimension, FilterState } from './filters';
 import { buildBrowseUrl } from './frontpage';
 
 /** Converts a legacy slash-form tag id (e.g. "what/projects/games", as used by the retired `tag` collection's `?tag=` query links) to filter-value colon form ("what:projects/games"). */
@@ -37,7 +37,7 @@ export type CollectionLinkAction = FilterAction;
 // parseCollectionLink
 // ---------------------------------------------------------------------------
 
-function filterActionFor(dim: Dimension, value: string): FilterAction {
+function filterActionFor(dim: FiveWDimension, value: string): FilterAction {
   const filterState: FilterState = { selections: { [dim]: [value] } };
   return { type: 'filter', url: buildBrowseUrl(filterState) };
 }
@@ -75,7 +75,7 @@ export function parseCollectionLink(href: string): FilterAction {
     if (tagId) {
       const filterValue = slashIdToFilterValue(tagId);
       if (isValidFilterValue(filterValue)) {
-        const dim = filterValue.slice(0, filterValue.indexOf(':')) as Dimension;
+        const dim = filterValue.slice(0, filterValue.indexOf(':')) as FiveWDimension;
         return filterActionFor(dim, filterValue);
       }
     }
@@ -83,8 +83,8 @@ export function parseCollectionLink(href: string): FilterAction {
 
   const colonIdx = path.indexOf(':');
   if (colonIdx !== -1) {
-    const maybeDim = path.slice(0, colonIdx) as Dimension;
-    if ((DIMENSIONS as readonly string[]).includes(maybeDim)) {
+    const maybeDim = path.slice(0, colonIdx) as FiveWDimension;
+    if ((FIVE_W_DIMENSIONS as readonly string[]).includes(maybeDim)) {
       return filterActionFor(maybeDim, path);
     }
   }

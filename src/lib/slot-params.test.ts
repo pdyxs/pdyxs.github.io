@@ -6,7 +6,7 @@ import { lensEntry } from './stack-layout';
 import type { StackState } from './stack-layout';
 import { buildLookup } from './stack-manifest';
 import { filterStateFromParams, filterStateToParams } from './filters';
-import type { Dimension, FilterState } from './filters';
+import type { FiveWDimension, FilterState } from './filters';
 import { toggleFilterValue } from '../stores/lens-filter-store';
 
 const FILTER: ParamPairs = [['filter.what', 'what:art']];
@@ -97,7 +97,7 @@ describe('lens swaps with an active filter', () => {
     }
 
     /** LensFilterShell.handleFilterToggle → reportFiltersToStack → onCardParam */
-    toggleFilter(dim: Dimension, value: string) {
+    toggleFilter(dim: FiveWDimension, value: string) {
       const next = toggleFilterValue(this.filterState, dim, value);
       const pairs: ParamPairs = [];
       filterStateToParams(next).forEach((v, k) => { pairs.push([k, v]); });

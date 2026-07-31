@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { FilterState, Dimension } from '../lib/filters';
+import type { FilterState, FiveWDimension } from '../lib/filters';
 import type { StatusValue } from '../lib/status-visibility';
 
 /**
@@ -21,7 +21,7 @@ export const lensFilterStore = writable<FilterState>({ selections: {} });
  */
 export const lensFiltersSynced = writable(false);
 
-export function toggleFilterValue(state: FilterState, dim: Dimension, value: string): FilterState {
+export function toggleFilterValue(state: FilterState, dim: FiveWDimension, value: string): FilterState {
   const existing = state.selections[dim] ?? [];
   const updated = existing.includes(value)
     ? existing.filter(v => v !== value)
@@ -48,7 +48,7 @@ export function toggleDimensionlessValue(state: FilterState, value: string): Fil
   return { ...state, tags: updated };
 }
 
-export function clearFilterDimension(state: FilterState, dim: Dimension): FilterState {
+export function clearFilterDimension(state: FilterState, dim: FiveWDimension): FilterState {
   const newSelections = { ...state.selections };
   delete newSelections[dim];
   return { ...state, selections: newSelections };

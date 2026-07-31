@@ -17,8 +17,8 @@ import { readdir, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { CardMeta } from './cards';
-import { DIMENSIONS, isValidFilterValue } from './filters';
-import type { Dimension } from './filters';
+import { FIVE_W_DIMENSIONS, isValidFilterValue } from './filters';
+import type { FiveWDimension } from './filters';
 import { ownValueForCard } from './card-identity';
 import { declaredGeneratedFilterValues, generatedDisplayName, generatedSortOrder } from './filter-generators';
 import { humaniseSegment } from './tag-display';
@@ -37,7 +37,7 @@ export type DimensionRegistry = {
   display: Map<string, TagDisplay>;
 };
 
-export type TagRegistry = Record<Dimension, DimensionRegistry>;
+export type TagRegistry = Record<FiveWDimension, DimensionRegistry>;
 
 /**
  * A declared identity for a dimension-rooted filter value — from a container
@@ -120,7 +120,7 @@ export function computeTagRegistry(
 
   const result = {} as TagRegistry;
 
-  for (const dim of DIMENSIONS) {
+  for (const dim of FIVE_W_DIMENSIONS) {
     const prefix = `${dim}:`;
     const values = new Set<string>();
 
@@ -214,7 +214,7 @@ async function walkDir(
   dir: string,
   containerIdentities: ValueIdentity[],
   tagDeclarations: ValueIdentity[],
-  dimensionGroupOrder: Partial<Record<Dimension, string[]>>,
+  dimensionGroupOrder: Partial<Record<FiveWDimension, string[]>>,
 ): Promise<void> {
   const entries = await reader.listDir(dir);
 
@@ -231,9 +231,9 @@ async function walkDir(
       // A dimension-root `_config.yaml` (dir is exactly a dimension name) may
       // declare `groupOrder` to fix the order of that dimension's panel
       // sections — see groupNodesIntoSections in browse-helpers.ts.
-      if ((DIMENSIONS as readonly string[]).includes(dir)) {
+      if ((FIVE_W_DIMENSIONS as readonly string[]).includes(dir)) {
         const groupOrder = parseGroupOrder(parsed.groupOrder);
-        if (groupOrder) dimensionGroupOrder[dir as Dimension] = groupOrder;
+        if (groupOrder) dimensionGroupOrder[dir as FiveWDimension] = groupOrder;
       }
     }
   }
@@ -267,11 +267,11 @@ export async function discoverTagSources(
 ): Promise<{
   containerIdentities: ValueIdentity[];
   tagDeclarations: ValueIdentity[];
-  dimensionGroupOrder: Partial<Record<Dimension, string[]>>;
+  dimensionGroupOrder: Partial<Record<FiveWDimension, string[]>>;
 }> {
   const containerIdentities: ValueIdentity[] = [];
   const tagDeclarations: ValueIdentity[] = [];
-  const dimensionGroupOrder: Partial<Record<Dimension, string[]>> = {};
+  const dimensionGroupOrder: Partial<Record<FiveWDimension, string[]>> = {};
   await walkDir(reader, '', containerIdentities, tagDeclarations, dimensionGroupOrder);
   return { containerIdentities, tagDeclarations, dimensionGroupOrder };
 }
@@ -284,7 +284,7 @@ export async function discoverTagSources(
  */
 export async function getDimensionGroupOrder(
   reader: TreeReader = makeContentTreeReader(),
-): Promise<Partial<Record<Dimension, string[]>>> {
+): Promise<Partial<Record<FiveWDimension, string[]>>> {
   const { dimensionGroupOrder } = await discoverTagSources(reader);
   return dimensionGroupOrder;
 }
@@ -332,7 +332,7 @@ export async function getTagRegistry(
  */
 export function flattenTagDisplay(registry: TagRegistry): Record<string, TagDisplay> {
   const flat: Record<string, TagDisplay> = {};
-  for (const dim of DIMENSIONS) {
+  for (const dim of FIVE_W_DIMENSIONS) {
     for (const [value, display] of registry[dim].display) {
       flat[value] = display;
     }

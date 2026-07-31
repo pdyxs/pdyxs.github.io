@@ -32,7 +32,7 @@ import { discoverCollapseConfig } from '../lib/collapse-config';
 import { collapseCollections } from '../lib/collapse';
 import { buildAllDimensionHierarchies } from '../lib/browse-helpers';
 import { buildStatusFacetNode } from '../lib/status-facet-node';
-import { DIMENSIONS } from '../lib/filters';
+import { FIVE_W_DIMENSIONS } from '../lib/filters';
 import type { FilterState } from '../lib/filters';
 import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '../lib/lens-components';
 import LensFilterShell from './LensFilterShell.svelte';
@@ -75,7 +75,7 @@ if (lens) {
   const registry = await getTagRegistry(listedCards);
   groupOrder = await getDimensionGroupOrder();
   tagDisplay = flattenTagDisplay(registry);
-  const declaredValues = DIMENSIONS.flatMap(d => registry[d].values);
+  const declaredValues = FIVE_W_DIMENSIONS.flatMap(d => registry[d].values);
 
   // Collapse opted-in folders (e.g. story series) to a single representative
   // card BEFORE building hierarchies/counts and serialising — so the results

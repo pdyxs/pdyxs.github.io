@@ -11,18 +11,18 @@
 //     they're kept and flagged `active` for distinct styling.
 // Tags in dimensions with no active selection are kept as normal chips.
 
-import { DIMENSIONS } from './filters';
-import type { Dimension, FilterState } from './filters';
+import { FIVE_W_DIMENSIONS } from './filters';
+import type { FiveWDimension, FilterState } from './filters';
 
 export type TagChip = { value: string; active: boolean };
 export type CardTagDisplay = { tags: TagChip[]; overflow: number };
 
 /** The dimension a tag belongs to, or null for a dimensionless (colon-less) tag. */
-function dimensionOf(tag: string): Dimension | null {
+function dimensionOf(tag: string): FiveWDimension | null {
   const colonIdx = tag.indexOf(':');
   if (colonIdx === -1) return null;
-  const dim = tag.slice(0, colonIdx) as Dimension;
-  return DIMENSIONS.includes(dim) ? dim : null;
+  const dim = tag.slice(0, colonIdx) as FiveWDimension;
+  return FIVE_W_DIMENSIONS.includes(dim) ? dim : null;
 }
 
 /** Selected filter values that apply to a tag: its dimension's selections, or the dimensionless `tags` bucket. */

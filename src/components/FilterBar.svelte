@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { DIMENSIONS, filterStateToParams } from '../lib/filters';
-  import type { Dimension, FilterState } from '../lib/filters';
+  import { FIVE_W_DIMENSIONS, filterStateToParams } from '../lib/filters';
+  import type { FiveWDimension, FilterState } from '../lib/filters';
   import type { TagNode, TagSection } from '../lib/browse-helpers';
   import { filterVisibleNodes, groupNodesIntoSections } from '../lib/browse-helpers';
   import { lensesForDimension, lensIdFromUid, activeLensIcon, isLensVisible } from '../lib/lens-registry';
@@ -11,22 +11,22 @@
   import DimensionPanel from './DimensionPanel.svelte';
 
   interface Props {
-    hierarchies: Record<Dimension, TagNode[]>;
+    hierarchies: Record<FiveWDimension, TagNode[]>;
     /** Per-dimension section order for the root-level panel (see
      * groupNodesIntoSections). Dimensions absent here fall back to the default
      * (alphabetical) group ordering. */
-    groupOrder?: Partial<Record<Dimension, string[]>>;
+    groupOrder?: Partial<Record<FiveWDimension, string[]>>;
     filterState: FilterState;
-    onFilterToggle: (dim: Dimension, value: string) => void;
-    onClearDimension: (dim: Dimension) => void;
+    onFilterToggle: (dim: FiveWDimension, value: string) => void;
+    onClearDimension: (dim: FiveWDimension) => void;
   }
 
   let { hierarchies, groupOrder = {}, filterState, onFilterToggle, onClearDimension }: Props = $props();
 
-  let openDimension = $state<Dimension | null>(null);
+  let openDimension = $state<FiveWDimension | null>(null);
   let drillPath = $state<string[]>([]);
 
-  const dimensionLabels: Record<Dimension, string> = {
+  const dimensionLabels: Record<FiveWDimension, string> = {
     what: 'What',
     when: 'When',
     where: 'Where',
@@ -34,14 +34,14 @@
     why: 'Why',
   };
 
-  function visibleNodesFor(dim: Dimension): TagNode[] {
+  function visibleNodesFor(dim: FiveWDimension): TagNode[] {
     return filterVisibleNodes(hierarchies[dim] ?? [], activeSelectionsFor(dim));
   }
 
   // Walks the current drillPath, returning the node it points at (`node`, the
   // header title source) and the level to render (`nodes`, that node's
   // children). An unresolved path stops early and shows the last good level.
-  function resolveDrill(dim: Dimension, path: string[]): { node: TagNode | null; nodes: TagNode[] } {
+  function resolveDrill(dim: FiveWDimension, path: string[]): { node: TagNode | null; nodes: TagNode[] } {
     let nodes = visibleNodesFor(dim);
     let node: TagNode | null = null;
     for (const val of path) {
@@ -78,12 +78,12 @@
       : ''
   );
 
-  function dimensionIsActive(dim: Dimension): boolean {
+  function dimensionIsActive(dim: FiveWDimension): boolean {
     const sel = filterState.selections[dim];
     return !!(sel && sel.length > 0);
   }
 
-  function activeSelectionsFor(dim: Dimension): Set<string> {
+  function activeSelectionsFor(dim: FiveWDimension): Set<string> {
     const active = new Set(filterState.selections[dim] ?? []);
     // The dev-only Status facet lives under What but routes to
     // FilterState.status (not a `what:` bucket), so surface the active status
@@ -96,7 +96,7 @@
     return active;
   }
 
-  function togglePanel(dim: Dimension) {
+  function togglePanel(dim: FiveWDimension) {
     if (openDimension === dim) {
       openDimension = null;
       drillPath = [];
@@ -120,7 +120,7 @@
     drillPath = drillPath.slice(0, -1);
   }
 
-  function selectFromPanel(dim: Dimension, value: string) {
+  function selectFromPanel(dim: FiveWDimension, value: string) {
     onFilterToggle(dim, value);
     openDimension = null;
     drillPath = [];
@@ -155,7 +155,7 @@
 </script>
 
 <div class="fp-dimension-controls" role="toolbar" aria-label="5W dimension filters">
-  {#each DIMENSIONS as dim}
+  {#each FIVE_W_DIMENSIONS as dim}
     {@const isActive = dimensionIsActive(dim)}
     {@const isOpen = openDimension === dim}
     {@const hasNodes = visibleNodesFor(dim).length > 0}

@@ -137,96 +137,15 @@ describe('applyFilters — prefix matching', () => {
 });
 
 // ---------------------------------------------------------------------------
-// applyFilters — when dimension with date predicates
+// applyFilters — when dimension
 // ---------------------------------------------------------------------------
 
-describe('applyFilters — when dimension date predicates', () => {
+describe('applyFilters — when dimension', () => {
   it('when:tag prefix match works like other dimensions', () => {
     const match = fakeCardMeta({ uid: 'posts/a', tags: ['when:2023'] });
     const noMatch = fakeCardMeta({ uid: 'posts/b', tags: ['when:2022'] });
     const state: FilterState = { selections: { when: ['when:2023'] } };
     expect(applyFilters([match, noMatch], state)).toEqual([match]);
-  });
-
-  it('date predicate alone filters by date range (no when tag selection)', () => {
-    const inRange = fakeCardMeta({
-      uid: 'posts/a',
-      date: new Date('2023-06-01'),
-      tags: [],
-    });
-    const outRange = fakeCardMeta({
-      uid: 'posts/b',
-      date: new Date('2022-01-01'),
-      tags: [],
-    });
-    const noDate = fakeCardMeta({ uid: 'posts/c', tags: [] });
-    const state: FilterState = {
-      selections: {},
-      datePredicate: { from: new Date('2023-01-01'), to: new Date('2023-12-31') },
-    };
-    // inRange matches; outRange and noDate do not
-    expect(applyFilters([inRange, outRange, noDate], state)).toEqual([inRange]);
-  });
-
-  it('when tag selection OR date predicate: either can match', () => {
-    const tagMatch = fakeCardMeta({ uid: 'posts/a', tags: ['when:2020s'] });
-    const dateMatch = fakeCardMeta({
-      uid: 'posts/b',
-      date: new Date('2023-06-01'),
-      tags: [],
-    });
-    const noMatch = fakeCardMeta({ uid: 'posts/c', tags: ['when:2010s'] });
-    const state: FilterState = {
-      selections: { when: ['when:2020s'] },
-      datePredicate: { from: new Date('2023-01-01'), to: new Date('2023-12-31') },
-    };
-    const result = applyFilters([tagMatch, dateMatch, noMatch], state);
-    expect(result).toContain(tagMatch);
-    expect(result).toContain(dateMatch);
-    expect(result).not.toContain(noMatch);
-  });
-
-  it('date predicate from only: matches cards on or after the from date', () => {
-    const match = fakeCardMeta({ uid: 'posts/a', date: new Date('2023-01-01'), tags: [] });
-    const noMatch = fakeCardMeta({ uid: 'posts/b', date: new Date('2022-12-31'), tags: [] });
-    const state: FilterState = {
-      selections: {},
-      datePredicate: { from: new Date('2023-01-01') },
-    };
-    expect(applyFilters([match, noMatch], state)).toEqual([match]);
-  });
-
-  it('date predicate to only: matches cards on or before the to date', () => {
-    const match = fakeCardMeta({ uid: 'posts/a', date: new Date('2022-12-31'), tags: [] });
-    const noMatch = fakeCardMeta({ uid: 'posts/b', date: new Date('2023-01-01'), tags: [] });
-    const state: FilterState = {
-      selections: {},
-      datePredicate: { to: new Date('2022-12-31') },
-    };
-    expect(applyFilters([match, noMatch], state)).toEqual([match]);
-  });
-
-  it('combined: what selection AND date predicate both must be satisfied', () => {
-    const both = fakeCardMeta({
-      uid: 'posts/both',
-      date: new Date('2023-06-01'),
-      tags: ['what:projects'],
-    });
-    const wrongTag = fakeCardMeta({
-      uid: 'posts/a',
-      date: new Date('2023-06-01'),
-      tags: ['what:writing'],
-    });
-    const wrongDate = fakeCardMeta({
-      uid: 'posts/b',
-      date: new Date('2021-01-01'),
-      tags: ['what:projects'],
-    });
-    const state: FilterState = {
-      selections: { what: ['what:projects'] },
-      datePredicate: { from: new Date('2023-01-01'), to: new Date('2023-12-31') },
-    };
-    expect(applyFilters([both, wrongTag, wrongDate], state)).toEqual([both]);
   });
 });
 
@@ -241,7 +160,6 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
     expect([...params.entries()]).toHaveLength(0);
     const decoded = filterStateFromParams(params);
     expect(decoded.selections).toEqual({});
-    expect(decoded.datePredicate).toBeUndefined();
   });
 
   it('single dimension selection round-trips', () => {
@@ -288,48 +206,6 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
     expect(decoded.selections.who).toEqual(['who:clients']);
   });
 
-  it('date predicate round-trips', () => {
-    const from = new Date('2023-01-01T00:00:00.000Z');
-    const to = new Date('2023-12-31T23:59:59.999Z');
-    const state: FilterState = {
-      selections: {},
-      datePredicate: { from, to },
-    };
-    const params = filterStateToParams(state);
-    const decoded = filterStateFromParams(params);
-    expect(decoded.datePredicate?.from?.toISOString()).toBe(from.toISOString());
-    expect(decoded.datePredicate?.to?.toISOString()).toBe(to.toISOString());
-  });
-
-  it('date predicate from only round-trips', () => {
-    const from = new Date('2020-06-15T00:00:00.000Z');
-    const state: FilterState = { selections: {}, datePredicate: { from } };
-    const params = filterStateToParams(state);
-    const decoded = filterStateFromParams(params);
-    expect(decoded.datePredicate?.from?.toISOString()).toBe(from.toISOString());
-    expect(decoded.datePredicate?.to).toBeUndefined();
-  });
-
-  it('full state round-trips: selections + date predicate', () => {
-    const from = new Date('2022-01-01T00:00:00.000Z');
-    const to = new Date('2022-12-31T23:59:59.999Z');
-    const state: FilterState = {
-      selections: {
-        what: ['what:projects/games'],
-        why: ['why:professional'],
-        when: ['when:2020s'],
-      },
-      datePredicate: { from, to },
-    };
-    const params = filterStateToParams(state);
-    const decoded = filterStateFromParams(params);
-    expect(decoded.selections.what).toEqual(['what:projects/games']);
-    expect(decoded.selections.why).toEqual(['why:professional']);
-    expect(decoded.selections.when).toEqual(['when:2020s']);
-    expect(decoded.datePredicate?.from?.toISOString()).toBe(from.toISOString());
-    expect(decoded.datePredicate?.to?.toISOString()).toBe(to.toISOString());
-  });
-
   it('status round-trips', () => {
     const state: FilterState = { selections: {}, status: 'draft' };
     const params = filterStateToParams(state);
@@ -373,11 +249,6 @@ describe('filterStateToParams / filterStateFromParams round-trip', () => {
 describe('stripFilterParams', () => {
   it('removes dimension filter params', () => {
     const params = new URLSearchParams('filter.what=what%3Apuzzles&filter.who=who%3Aaccenture');
-    expect(stripFilterParams(params).toString()).toBe('');
-  });
-
-  it('removes date predicate params', () => {
-    const params = new URLSearchParams('when.from=2020-01-01T00:00:00.000Z&when.to=2020-12-31T00:00:00.000Z');
     expect(stripFilterParams(params).toString()).toBe('');
   });
 

@@ -53,7 +53,7 @@ describe('deriveLensChrome', () => {
       selections: { what: ['what:puzzles'], who: ['who:accenture'] },
     };
     const chrome = deriveLensChrome(newest, fs);
-    // DIMENSIONS order is who, what, when, where, why → Accenture before Puzzles.
+    // FIVE_W_DIMENSIONS order is who, what, when, where, why → Accenture before Puzzles.
     expect(chrome.cardTitle).toBe('Newest · Accenture · Puzzles');
   });
 });

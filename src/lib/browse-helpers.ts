@@ -4,8 +4,8 @@
 // render navigable dimension hierarchies.
 
 import type { CardMeta } from './cards';
-import { DIMENSIONS, isValidFilterValue } from './filters';
-import type { Dimension } from './filters';
+import { FIVE_W_DIMENSIONS, isValidFilterValue } from './filters';
+import type { FiveWDimension } from './filters';
 import { cardOwnValues } from './card-identity';
 import { displayFor } from './tag-display';
 import type { TagDisplay } from './tag-display';
@@ -104,7 +104,7 @@ export type TagSection = {
  */
 export function extractDimensionTags(
   cards: CardMeta[],
-  dimension: Dimension,
+  dimension: FiveWDimension,
   declaredValues: string[] = [],
 ): string[] {
   const prefix = `${dimension}:`;
@@ -161,7 +161,7 @@ export function countMatchingCards(cards: CardMeta[], value: string): number {
  */
 export function buildTagHierarchy(
   cards: CardMeta[],
-  dimension: Dimension,
+  dimension: FiveWDimension,
   declaredValues: string[] = [],
   display: Record<string, TagDisplay> = {},
 ): TagNode[] {
@@ -295,9 +295,9 @@ export function buildAllDimensionHierarchies(
   cards: CardMeta[],
   declaredValues: string[] = [],
   display: Record<string, TagDisplay> = {},
-): Record<Dimension, TagNode[]> {
-  const result = {} as Record<Dimension, TagNode[]>;
-  for (const dim of DIMENSIONS) {
+): Record<FiveWDimension, TagNode[]> {
+  const result = {} as Record<FiveWDimension, TagNode[]>;
+  for (const dim of FIVE_W_DIMENSIONS) {
     result[dim] = buildTagHierarchy(cards, dim, declaredValues, display);
   }
   return result;
@@ -379,7 +379,7 @@ export function groupNodesIntoSections(
  */
 export function dimensionHasTags(
   cards: CardMeta[],
-  dimension: Dimension,
+  dimension: FiveWDimension,
   declaredValues: string[] = [],
 ): boolean {
   return extractDimensionTags(cards, dimension, declaredValues).length > 0;

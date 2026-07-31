@@ -2,7 +2,7 @@
   import { onMount, tick } from 'svelte';
   import { lensFilterStore, lensFiltersSynced, toggleFilterValue, toggleDimensionlessValue, clearFilterDimension, clearAllFilters, toggleStatusValue, clearStatusFilter } from '../stores/lens-filter-store';
   import { filterStateFromParams, filterStateToParams, stripFilterParams } from '../lib/filters';
-  import type { Dimension, FilterState } from '../lib/filters';
+  import type { FiveWDimension, FilterState } from '../lib/filters';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid, DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
   import type { TagNode } from '../lib/browse-helpers';
@@ -15,10 +15,10 @@
 
   interface Props {
     lens: LensDefinition;
-    hierarchies: Record<Dimension, TagNode[]>;
+    hierarchies: Record<FiveWDimension, TagNode[]>;
     /** Per-dimension panel-section order (see groupNodesIntoSections); passed
      * straight through to FilterBar. */
-    groupOrder?: Partial<Record<Dimension, string[]>>;
+    groupOrder?: Partial<Record<FiveWDimension, string[]>>;
     tagDisplay?: Record<string, TagDisplay>;
   }
 
@@ -81,7 +81,7 @@
   let fallthroughTrigger: HTMLButtonElement;
   let fallthroughParams = $state('');
 
-  async function fallthroughToDefaultBrowseLens(dim: Dimension, value: string) {
+  async function fallthroughToDefaultBrowseLens(dim: FiveWDimension, value: string) {
     fallthroughParams = filterStateToParams({ selections: { [dim]: [value] } }).toString();
     await tick();
     fallthroughTrigger?.click();
@@ -93,7 +93,7 @@
     fallthroughTrigger?.click();
   }
 
-  function handleFilterToggle(dim: Dimension, value: string) {
+  function handleFilterToggle(dim: FiveWDimension, value: string) {
     // The dev-only Status facet is nested under the What panel but selects a
     // separate field: its leaves carry `status:<value>` values that must route
     // to FilterState.status, not a `what:` bucket. See status-facet-node.ts.
@@ -121,7 +121,7 @@
     reportFiltersToStack(next);
   }
 
-  function handleClearDimension(dim: Dimension) {
+  function handleClearDimension(dim: FiveWDimension) {
     if (!lens.acceptsFilters) return; // Home never accumulates a selection to clear.
     const next = clearFilterDimension($lensFilterStore, dim);
     lensFilterStore.set(next);

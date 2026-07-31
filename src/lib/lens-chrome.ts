@@ -14,7 +14,7 @@
 // pdyxs.wtf, viewed through this lens").
 
 import type { LensDefinition } from './lens-registry';
-import { DIMENSIONS, type FilterState } from './filters';
+import { FIVE_W_DIMENSIONS, type FilterState } from './filters';
 
 export const SITE_TITLE = 'pdyxs.wtf';
 
@@ -49,7 +49,7 @@ function filterLabel(value: string): string {
 /** Human-readable labels for every active filter, in dimension order. */
 function activeFilterLabels(filterState: FilterState): string[] {
   const labels: string[] = [];
-  for (const dim of DIMENSIONS) {
+  for (const dim of FIVE_W_DIMENSIONS) {
     for (const value of filterState.selections[dim] ?? []) {
       labels.push(filterLabel(value));
     }

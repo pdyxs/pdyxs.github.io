@@ -44,7 +44,7 @@ describe('filter codec', () => {
 
   it('declines non-filter keys', () => {
     expect(filterCodec.encode('tab', 'bio', ctx)).toBeNull();
-    expect(filterCodec.encode('when.from', '2020-01-01', ctx)).toBeNull();
+    expect(filterCodec.encode('note.updated', '2020-01-01', ctx)).toBeNull();
   });
 
   it('decode returns null for an unknown code (corrupt/hand-edited link)', () => {
@@ -62,7 +62,7 @@ describe('raw fallback codec', () => {
 
   it('round-trips values containing reserved characters (=, &, space, /, :)', () => {
     for (const [k, v] of [
-      ['when.from', '2022-01-01T00:00:00.000Z'],
+      ['note.updated', '2022-01-01T00:00:00.000Z'],
       ['x', 'a b'],
       ['x', 'c&d'],
       ['x', 'k=v'],
@@ -91,7 +91,7 @@ describe('registry dispatch', () => {
       ['filter.what', 'art'],
       ['filter', 'boardgames'],
       ['tab', 'bio'],
-      ['when.from', '2022-01-01T00:00:00.000Z'],
+      ['note.updated', '2022-01-01T00:00:00.000Z'],
     ] as const) {
       const token = encodeParam(k, v, ctx);
       expect(token).toMatch(/^[A-Za-z0-9-_]+$/);

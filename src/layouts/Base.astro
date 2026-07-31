@@ -99,7 +99,7 @@ const jsonLd = [
         if (!s) return;
         var active = false;
         new URLSearchParams(s).forEach(function (_value, key) {
-          if (key === 'filter' || key === 'when.from' || key === 'when.to' || key.indexOf('filter.') === 0) {
+          if (key === 'filter' || key.indexOf('filter.') === 0) {
             active = true;
           }
         });
