@@ -231,6 +231,12 @@ Two consequences for code:
   as well as underscore-prefixed files. Put anything similar under a `_`-folder.
 - Pasted images arrive colocated in the card folder as plain markdown
   (`![](file.png)`), by vault setting — never assume a wikilink converter.
+- The Templater scaffolds in `src/content/_templates/` are **generated** — one per
+  container folder, by `scripts/generate-card-templates.mjs` (decisions in
+  `src/lib/templater-scaffold.ts`), wired into `predev`/`prebuild`. Never hand-edit
+  one; change the generator and re-run `npm run generate:card-templates`. Adding a
+  container folder or a schema field means a regen. See
+  `src/content/_templates/README.md`.
 
 ### Experiments live on dev-only routes
 

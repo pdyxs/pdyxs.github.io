@@ -32,7 +32,7 @@ community plugin) — accept, then enable Templater if it isn't already on.
 | `.obsidian/app.json` | the settings that matter (below) |
 | `.obsidian/core-plugins.json`, `community-plugins.json` | which plugins are on |
 | `.obsidian/plugins/templater-obsidian/data.json` | Templater's template folder |
-| `_templates/` | the card scaffolds (generated — issue #55) |
+| `_templates/` | the card scaffolds (generated — `npm run generate:card-templates`) |
 | `.obsidian/plugins/*/` (code) | **ignored** — install plugins per device |
 | `.obsidian/workspace*.json`, `cache`, `.trash/` | **ignored** — per-device churn |
 
@@ -78,6 +78,17 @@ The `[!_]` alone only guards a file's *own* name; without the second pattern,
 
 Anything else that needs to live in the vault without being published goes in an
 underscore-prefixed folder for the same reason.
+
+### The scaffolds are generated
+
+`_templates/` holds one Templater card scaffold per container folder, emitted by
+`scripts/generate-card-templates.mjs` (decisions in `src/lib/templater-scaffold.ts`)
+from the folder tree's `_config.yaml` cascade plus the content schema. Running one
+prompts for a title and creates `<folder>/<slug>/index.md` with `status: draft`.
+
+Never hand-edit a scaffold — regen with `npm run generate:card-templates` (it also
+runs from `predev`/`prebuild`) after any folder or schema change. Details and the
+full field-derivation rules: `src/content/_templates/README.md`.
 
 ## Editing from the laptop: SSHFS, not sync
 
