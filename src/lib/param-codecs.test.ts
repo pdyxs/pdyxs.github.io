@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildLookup } from './stack-manifest';
-import { encodeParam, decodeParam, filterCodec, rawCodec } from './param-codecs';
+import { encodeParam, decodeParam, rawCodec } from './param-codecs';
+import { filterCodec } from '../dimensions/codec';
 import type { CodecContext } from './param-codecs';
 
 // A tag manifest mixing dimensioned tags and a future dimensionless tag.

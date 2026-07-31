@@ -3,61 +3,24 @@
 // becomes a token `<sigil><body>`, where the sigil (a single char) names the
 // codec that produced it and the body is that codec's escape-free encoding.
 //
-// The registry is an ordered list; a param is encoded by the first codec whose
-// `encode` returns non-null. The raw fallback (`q`) never declines, so every
-// param — including ones no codec knows about — is always encodable.
+// Mechanism only. This module knows nothing about `filter.` or any other
+// param key — codecs come from the registered UrlParamProviders (see
+// url-param-providers.ts), each of which owns its own keys and their short
+// form. The raw fallback (`q`) never declines, so every param — including
+// ones no provider claims — is always encodable.
 //
-// Extension point: to give a new custom param a short form, register a codec
-// with a fresh sigil. Params whose author does nothing simply ride the raw
-// fallback: correct and escape-free, just longer.
+// Extension point: a provider gives its params a short form by declaring a
+// codec with a fresh sigil. A provider that declares none simply rides the
+// raw fallback: correct and escape-free, just longer.
 //
 // Bodies are drawn only from `[A-Za-z0-9-_]` (base62 manifest codes and
 // base64url), so tokens survive URLSearchParams / display / copy without any
 // percent-escaping. Tokens are `~`-separated and entries `.`-separated by
 // stack-codec; neither char appears in a body.
-import type { ManifestLookup } from './stack-manifest';
+import { URL_PARAM_PROVIDERS } from './url-param-providers';
+import type { CodecContext, ParamCodec } from './url-params';
 
-export interface CodecContext {
-  /** Lookup for the tag manifest (tag string <-> short code). */
-  tags: ManifestLookup;
-}
-
-export interface ParamCodec {
-  /** Single-char, unique across the registry. */
-  readonly sigil: string;
-  /** Returns the escape-free token body, or null to decline this pair. */
-  encode(key: string, value: string, ctx: CodecContext): string | null;
-  /** Inverse of encode. Returns null when the body can't be resolved. */
-  decode(body: string, ctx: CodecContext): [string, string] | null;
-}
-
-const FILTER_KEY = 'filter';
-const FILTER_PREFIX = 'filter.';
-
-/**
- * Filter selections. A dimensioned filter `filter.what=art` and a (future)
- * dimensionless filter `filter=boardgames` both resolve to a canonical tag
- * string (`what:art` / `boardgames`) that the tag manifest codes. The tag
- * string is self-describing — presence of a `:` tells decode whether to
- * re-emit a dimensioned or a dimensionless key — so a single sigil covers both.
- */
-export const filterCodec: ParamCodec = {
-  sigil: 'f',
-  encode(key, value, ctx) {
-    let canonical: string;
-    if (key === FILTER_KEY) canonical = value;
-    else if (key.startsWith(FILTER_PREFIX)) canonical = `${key.slice(FILTER_PREFIX.length)}:${value}`;
-    else return null;
-    return ctx.tags.codeForUid(canonical) ?? null;
-  },
-  decode(body, ctx) {
-    const canonical = ctx.tags.uidForCode(body);
-    if (canonical === undefined) return null;
-    const colon = canonical.indexOf(':');
-    if (colon === -1) return [FILTER_KEY, canonical];
-    return [`${FILTER_PREFIX}${canonical.slice(0, colon)}`, canonical.slice(colon + 1)];
-  },
-};
+export type { CodecContext, ParamCodec } from './url-params';
 
 // --- base64url (unpadded) for the raw fallback -----------------------------
 // Uses only [A-Za-z0-9-_]; the '=' padding is stripped and recomputed on decode.
@@ -93,8 +56,21 @@ export const rawCodec: ParamCodec = {
   },
 };
 
-/** Ordered registry: the raw fallback must remain last (it never declines). */
-export const PARAM_CODECS: ParamCodec[] = [filterCodec, rawCodec];
+/**
+ * Ordered registry: every provider's codecs, then the raw fallback — which
+ * must remain last, since it never declines.
+ */
+export const PARAM_CODECS: ParamCodec[] = [
+  ...URL_PARAM_PROVIDERS.flatMap(p => p.codecs ?? []),
+  rawCodec,
+];
+
+// A sigil collision would silently route decode to the wrong codec, so fail
+// loudly at module load rather than corrupting shared links.
+const sigils = PARAM_CODECS.map(c => c.sigil);
+if (new Set(sigils).size !== sigils.length) {
+  throw new Error(`duplicate param codec sigil among: ${sigils.join(', ')}`);
+}
 
 /** Encodes one param pair to a `<sigil><body>` token. */
 export function encodeParam(key: string, value: string, ctx: CodecContext): string {
