@@ -23,7 +23,7 @@
 // the shared lensFilterStore (src/stores/lens-filter-store.ts) — see that
 // store's header comment.
 import { getImage } from 'astro:assets';
-import { resolveLocalImage } from '../lib/images';
+import { resolveLocalImage, isRemoteImageUrl } from '../lib/images';
 import { getLensDefinition } from '../lib/lens-registry';
 import { deriveLensChrome } from '../lib/lens-chrome';
 import { getAllCards } from '../lib/cards';
@@ -36,8 +36,6 @@ import { DIMENSIONS } from '../lib/filters';
 import type { FilterState } from '../lib/filters';
 import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '../lib/lens-components';
 import LensFilterShell from './LensFilterShell.svelte';
-
-const REMOTE_IMAGE_URL = /^https?:\/\/.*\.(jpe?g|png|gif|webp|avif)(\?.*)?$/i;
 
 interface Props {
   name: string;
@@ -113,7 +111,7 @@ if (lens) {
         const generated = await getImage({ src: localImage, widths: [360, 720], format: 'webp' });
         thumb = generated.src;
         thumbSrcset = generated.srcSet.attribute;
-      } else if (card.image && REMOTE_IMAGE_URL.test(card.image)) {
+      } else if (card.image && isRemoteImageUrl(card.image)) {
         thumb = card.image;
       }
       return { ...card, date: card.date?.toISOString() ?? null, thumb, thumbSrcset };

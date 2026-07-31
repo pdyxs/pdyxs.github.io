@@ -1,6 +1,7 @@
 import type { APIContext } from 'astro';
 import { getAllCards } from '../lib/cards';
 import { buildSitemapEntries, renderSitemap } from '../lib/sitemap';
+import { SITE_URL } from '../lib/seo';
 import { LENS_REGISTRY, isLensVisible } from '../lib/lens-registry';
 
 /**
@@ -25,7 +26,7 @@ export async function GET(context: APIContext) {
 
   const xml = renderSitemap(
     buildSitemapEntries(cards, staticPaths),
-    context.site?.href ?? 'https://pdyxs.wtf'
+    context.site?.href ?? SITE_URL
   );
 
   return new Response(xml, {

@@ -34,6 +34,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: the redirect generator (a prebuild step) reads the
+          # retired Jekyll site from `master`. At the default depth-1 fetch of
+          # the pushed ref alone, `master` is absent and the generator takes
+          # its warn-and-keep path, so CI would never validate the map.
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4

@@ -8,6 +8,7 @@ import {
   resolveCanonical,
   resolveOgImage,
   SITE_NAME,
+  SITE_URL,
 } from '../lib/seo';
 
 interface Props {
@@ -25,9 +26,10 @@ const { title = SITE_NAME, description, image, ogType = 'website', date } = Astr
 const pageTitle = title === SITE_NAME ? title : `${title} — ${SITE_NAME}`;
 
 // Thin applier: every decision below is made by pure functions in src/lib/seo.ts.
-// Astro.site is configured in astro.config.mjs, so the `?? ''` is only a
-// type-narrowing fallback.
-const site = Astro.site?.href ?? '';
+// Astro.site is configured in astro.config.mjs, so SITE_URL is only a
+// type-narrowing fallback — but it must be the same one /sitemap.xml uses, or a
+// page's canonical and its sitemap <loc> could disagree.
+const site = Astro.site?.href ?? SITE_URL;
 const seoPage = {
   title,
   description,
@@ -37,10 +39,14 @@ const seoPage = {
   publishedTime: date?.toISOString(),
 };
 const socialMeta = buildSocialMeta(seoPage);
-// A dated card is an Article; everything else carries only the site identity.
-const jsonLd = seoPage.type === 'article' && seoPage.publishedTime
-  ? [buildSiteJsonLd(site), buildArticleJsonLd(seoPage)]
-  : [buildSiteJsonLd(site)];
+// Person/WebSite identity belongs at the root only (issue #71) — repeating it on
+// every card would assert the site's identity 293 times over. A dated card
+// carries an Article instead.
+const isRoot = resolveCanonical('/', site) === seoPage.canonical;
+const jsonLd = [
+  ...(isRoot ? [buildSiteJsonLd(site)] : []),
+  ...(seoPage.type === 'article' && seoPage.publishedTime ? [buildArticleJsonLd(seoPage)] : []),
+];
 ---
 
 <!doctype html>

@@ -7,8 +7,18 @@
 // astro:assets; image *resolution* (local asset → emitted URL) happens in the
 // route and arrives here as a plain string.
 
-export const SITE_NAME = 'pdyxs.wtf';
+import { SITE_TITLE } from './lens-chrome';
+
+/** The site's name, shared with the lens chrome so the two can't drift. */
+export const SITE_NAME = SITE_TITLE;
 export const SITE_AUTHOR = 'Paul Sztajer';
+
+/**
+ * Fallback origin for the rare case `Astro.site` is unset. Astro.config sets
+ * `site`, so this is type narrowing rather than real configuration — but every
+ * consumer must share it, or canonical URLs and sitemap <loc>s could disagree.
+ */
+export const SITE_URL = 'https://pdyxs.wtf';
 export const SITE_DESCRIPTION = 'Paul Sztajer — writing, projects, and work';
 
 /**

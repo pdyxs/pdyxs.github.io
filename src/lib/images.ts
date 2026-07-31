@@ -60,6 +60,16 @@ export interface GalleryImageSource {
 
 const IMAGE_URL_PATTERN = /\.(jpe?g|png|gif|webp|avif)$/i;
 const VIDEO_URL_PATTERN = /\.(mp4|webm|mov)$/i;
+const REMOTE_IMAGE_URL = /^https?:\/\/.*\.(jpe?g|png|gif|webp|avif)(\?.*)?$/i;
+
+/**
+ * Whether a remote URL is safe to use as an image source (thumbnail, og:image).
+ * The extension check matters because the legacy `images[]` field carries video
+ * and embed URLs too — using one as an image yields a broken reference.
+ */
+export function isRemoteImageUrl(url: string): boolean {
+  return REMOTE_IMAGE_URL.test(url);
+}
 
 /**
  * Resolves the set of media to show in a card's gallery.
