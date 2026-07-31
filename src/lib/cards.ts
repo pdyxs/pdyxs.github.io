@@ -4,6 +4,7 @@ import { resolveFolderCascade, makeFileReader } from './folder-config';
 import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
 import { interpolate } from './interpolate';
 import { computeStatusVisibility, resolveStatus } from './status-visibility';
+import { resolveDescription } from './description';
 import type { StatusValue, StatusVisibility } from './status-visibility';
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
@@ -99,7 +100,15 @@ export async function getAllCards(): Promise<CardMeta[]> {
         const cascade = await resolveFolderCascade(uid, reader, overrideKeys);
 
         const title = resolveCardTitle(uid, e.data);
-        const description = resolveCardDescription(e.data, cascade.cardDescriptionParts);
+        // Two-stage: the frontmatter/cascade-template description first, then
+        // resolveDescription's body excerpt when neither produced anything.
+        // This is the ONE place a card's summary is decided — OG/Twitter meta,
+        // JSON-LD, RSS and browse-card subtitles all read CardMeta.description
+        // (issue #71).
+        const description = resolveDescription(
+          { description: resolveCardDescription(e.data, cascade.cardDescriptionParts) },
+          e.body
+        );
 
         const baseTags = effectiveTags(uid, e.data.tags, cascade.cascadeTags);
         const overrides: Record<string, string | undefined> = {};

@@ -1,19 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildFeedItems } from './rss';
-import type { CardMeta } from './cards';
-
-function card(overrides: Partial<CardMeta> = {}): CardMeta {
-  return {
-    uid: 'posts/example',
-    title: 'Example',
-    tags: [],
-    renderer: 'card',
-    contentHash: 'hash',
-    status: 'published',
-    visibility: { listed: true, reachable: true },
-    ...overrides,
-  } as CardMeta;
-}
+import { card } from '../test/card-fixtures';
 
 describe('buildFeedItems', () => {
   it('includes a listed, dated card as a feed item', () => {

@@ -10,6 +10,7 @@
 // shared with the lens routes.
 import { getCollection, render } from 'astro:content';
 import { computeContentHash, resolveCardTitle, resolveCardDescription } from '../lib/cards';
+import { resolveDescription } from '../lib/description';
 import type { CardMeta } from '../lib/cards';
 import { resolveLocation, resolveCardRenderer, resolveNavRenderer } from '../lib/location-resolver';
 import { resolveFolderCascade, makeFileReader } from '../lib/folder-config';
@@ -92,7 +93,10 @@ const contentHash: string | undefined =
   resolution.kind === 'card' && entry
     ? computeContentHash(
         resolveCardTitle(resolution.path, entry.data),
-        resolveCardDescription(entry.data, cardDescriptionParts),
+        resolveDescription(
+          { description: resolveCardDescription(entry.data, cardDescriptionParts) },
+          entry.body
+        ),
         entry.body
       )
     : undefined;

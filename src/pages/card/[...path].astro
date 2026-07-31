@@ -1,9 +1,11 @@
 ---
+import { getImage } from 'astro:assets';
 import { getAllCards } from '../../lib/cards';
 import type { CardMeta } from '../../lib/cards';
 import { getTagRegistry, flattenTagDisplay } from '../../lib/tag-registry';
 import type { TagDisplay } from '../../lib/tag-display';
 import { computeRelatedCardsIndex } from '../../lib/card-identity';
+import { resolveLocalImage } from '../../lib/images';
 import Base from '../../layouts/Base.astro';
 import StackNav from '../../components/StackNav.astro';
 import CardStackCard from '../../components/CardStackCard.astro';
@@ -20,21 +22,47 @@ export async function getStaticPaths() {
   const tagDisplay = flattenTagDisplay(await getTagRegistry(reachableCards));
   const relatedCardsIndex = computeRelatedCardsIndex(reachableCards);
   // Title comes along as a prop so this page never has to re-derive it itself.
+  // Description/date/image ride along for the same reason — they're the share
+  // metadata Base.astro turns into canonical/OG/Twitter/JSON-LD (issue #71).
   return reachableCards.map(c => ({
     params: { path: c.uid },
-    props: { title: c.title, tagDisplay, relatedCards: relatedCardsIndex.get(c.uid) ?? [] },
+    props: {
+      title: c.title,
+      description: c.description,
+      date: c.date,
+      image: c.image,
+      tagDisplay,
+      relatedCards: relatedCardsIndex.get(c.uid) ?? [],
+    },
   }));
 }
 
 const { path } = Astro.params;
-const { title, tagDisplay, relatedCards } = Astro.props as {
+const { title, description, date, image, tagDisplay, relatedCards } = Astro.props as {
   title: string;
+  description?: string;
+  date?: Date;
+  image?: string;
   tagDisplay: Record<string, TagDisplay>;
   relatedCards: CardMeta[];
 };
+
+// Share-image resolution (the thin effect): a colocated header image goes
+// through astro:assets at OG's canonical 1200px width; a remote image is used
+// as-is only when the URL ends in a known image extension (dead Jekyll-era
+// embed/video links would otherwise become a broken og:image). Anything else
+// leaves `ogImage` undefined and resolveOgImage falls back to the site default.
+const REMOTE_IMAGE_URL = /^https?:\/\/.*\.(jpe?g|png|gif|webp|avif)(\?.*)?$/i;
+const localImage = resolveLocalImage(path!, image);
+let ogImage: string | undefined;
+if (localImage) {
+  ogImage = (await getImage({ src: localImage, width: 1200, format: 'jpeg' })).src;
+} else if (image && REMOTE_IMAGE_URL.test(image)) {
+  ogImage = image;
+}
 ---
 
-<Base {title}>
+<Base {title} {description} {date} image={ogImage} ogType={date ? 'article' : 'website'}>
   <div id="homepage" hidden></div>
   <StackNav activeUid={path}>
     <CardStackCard path={path!} {tagDisplay} {relatedCards} />

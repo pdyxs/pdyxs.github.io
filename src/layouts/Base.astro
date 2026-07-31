@@ -1,14 +1,46 @@
 ---
 import '../styles/global.css';
 import ThemeToggle from '../components/ThemeToggle.astro';
+import {
+  buildArticleJsonLd,
+  buildSiteJsonLd,
+  buildSocialMeta,
+  resolveCanonical,
+  resolveOgImage,
+  SITE_NAME,
+} from '../lib/seo';
 
 interface Props {
   title?: string;
   description?: string;
+  /** Resolved header-image URL (emitted asset path or remote URL). Falls back to the site default — see resolveOgImage. */
+  image?: string;
+  /** `article` for a dated card; `website` for lenses and the front page. */
+  ogType?: 'article' | 'website';
+  /** Publish date of a dated card — drives article:published_time / datePublished. */
+  date?: Date;
 }
 
-const { title = 'pdyxs.wtf', description } = Astro.props;
-const pageTitle = title === 'pdyxs.wtf' ? title : `${title} — pdyxs.wtf`;
+const { title = SITE_NAME, description, image, ogType = 'website', date } = Astro.props as Props;
+const pageTitle = title === SITE_NAME ? title : `${title} — ${SITE_NAME}`;
+
+// Thin applier: every decision below is made by pure functions in src/lib/seo.ts.
+// Astro.site is configured in astro.config.mjs, so the `?? ''` is only a
+// type-narrowing fallback.
+const site = Astro.site?.href ?? '';
+const seoPage = {
+  title,
+  description,
+  canonical: resolveCanonical(Astro.url.pathname, site),
+  image: resolveOgImage(image, site),
+  type: ogType,
+  publishedTime: date?.toISOString(),
+};
+const socialMeta = buildSocialMeta(seoPage);
+// A dated card is an Article; everything else carries only the site identity.
+const jsonLd = seoPage.type === 'article' && seoPage.publishedTime
+  ? [buildSiteJsonLd(site), buildArticleJsonLd(seoPage)]
+  : [buildSiteJsonLd(site)];
 ---
 
 <!doctype html>
@@ -18,6 +50,16 @@ const pageTitle = title === 'pdyxs.wtf' ? title : `${title} — pdyxs.wtf`;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={seoPage.canonical} />
+    {socialMeta.map(tag => (
+      tag.property
+        ? <meta property={tag.property} content={tag.content} />
+        : <meta name={tag.name} content={tag.content} />
+    ))}
+    {jsonLd.map(doc => (
+      <script is:inline type="application/ld+json" set:html={JSON.stringify(doc)} />
+    ))}
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;700&family=Saira+Stencil&display=swap" />
