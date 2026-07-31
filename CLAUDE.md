@@ -149,6 +149,21 @@ Body content links to the rest of the site through one of three protocols, all h
 
 Aliases in `src/content.config.ts` tag schema are a runtime safety net, not a feature to rely on. Content should always link to canonical slugs; aliased links in content are a data bug.
 
+### Old-URL redirects are generated, never hand-edited
+
+`src/data/redirects.generated.ts` is produced by `scripts/generate-redirects.mjs`
+(a `predev`/`prebuild` step) from the retired Jekyll site on the `master` branch —
+`_config.yml` for the permalink patterns, `collections/` for the inventory —
+resolved against the current `src/content` tree. `astro.config.mjs` feeds the map
+to Astro's `redirects`, which emits one meta-refresh page per entry in the static
+build (GitHub Pages has no server-side redirects).
+
+All resolution logic is pure and tested in `src/lib/redirect-map.ts`. Two rules
+hold: every old URL gets a redirect (an unresolvable one falls back to the
+closest lens rather than 404ing), and every fallback is reported — in
+`UNRESOLVED_OLD_URLS`, in the generated file's header, and on stdout. If content
+moves, re-run `npm run generate:redirects` and check the report.
+
 ### CSS-first responsive, no JS breakpoint detection
 
 Layout responds to viewport via media queries. `matchMedia` in JS is reserved for cases where *interaction state itself* differs by breakpoint (e.g. a desktop-only peek state), not for layout switching. Document the exception narrowly when it applies.

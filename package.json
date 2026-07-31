@@ -6,9 +6,9 @@
         "node": ">=22.12.0"
     },
     "scripts": {
-        "predev": "npm run generate:lenses && npm run generate:lens-icons && npm run generate:dither && node scripts/generate-stack-manifest.mjs",
+        "predev": "npm run generate:lenses && npm run generate:lens-icons && npm run generate:dither && node scripts/generate-stack-manifest.mjs && npm run generate:redirects",
         "dev": "astro dev",
-        "prebuild": "npm run generate:lenses && npm run generate:lens-icons && npm run generate:dither && node scripts/generate-stack-manifest.mjs",
+        "prebuild": "npm run generate:lenses && npm run generate:lens-icons && npm run generate:dither && node scripts/generate-stack-manifest.mjs && npm run generate:redirects",
         "build": "astro build",
         "preview": "astro preview",
         "astro": "astro",
@@ -17,6 +17,7 @@
         "generate:lens-icons": "node scripts/generate-lens-icons.mjs",
         "generate:dither": "node scripts/gen-dither.mjs",
         "generate:manifest": "node scripts/generate-stack-manifest.mjs",
+        "generate:redirects": "node scripts/generate-redirects.mjs",
         "test": "vitest run",
         "test:watch": "vitest",
         "restart-server": "systemctl --user restart astro-preview.service"
