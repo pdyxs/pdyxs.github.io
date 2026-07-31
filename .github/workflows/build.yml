@@ -44,8 +44,12 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          # Pinned to the floor declared in package.json `engines`.
-          node-version: "22.12.0"
+          # Pinned to the floor declared in package.json `engines`, so CI is the
+          # thing that catches a script relying on a newer Node than we claim to
+          # support. The floor is 22.18 rather than 22.12 because the generator
+          # scripts in scripts/ import `.ts` modules directly, and unflagged
+          # type stripping only arrived in 22.18.
+          node-version: "22.18.0"
           cache: npm
 
       - name: Install dependencies
