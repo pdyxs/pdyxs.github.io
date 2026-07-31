@@ -62,6 +62,14 @@ jobs:
       - name: Run generators (prebuild)
         run: npm run prebuild
 
+      # The component tests render .astro components against the content
+      # collection, which reads node_modules/.astro/data-store.json. A dev
+      # server populates that locally, so the dependency is invisible until a
+      # cold checkout — `sync` is what creates it from nothing. (It does not
+      # *refresh* an existing store; that's a separate, local-only trap.)
+      - name: Sync content collections
+        run: npx astro sync
+
       - name: Test
         run: npm test
 
