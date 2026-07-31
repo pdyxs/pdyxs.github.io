@@ -1,0 +1,22 @@
+# Lens definition — id "audit", dimension "what" ("what still needs work").
+# Dev-only content-audit dashboard (issue #72): groups every card by the
+# findings it triggers — dead image hosts, missing title/date/description,
+# Liquid and raw-HTML leftovers, untagged cards, unresolved local images — with
+# per-finding card and reference counts. The decision is the pure auditCards()
+# in src/lib/audit.ts; this lens is only its renderer.
+#
+# It is INSTRUMENTATION, not a fixer: the counts are a worklist that falls as
+# content work lands. devOnly: true keeps it out of the production manifest and
+# static-path enumeration (its route 404s outside the dev/preview server) —
+# see isLensVisible() in src/lib/lens-registry.ts.
+#
+# acceptsFilters: false — the audit always reports on the whole content set
+# (including drafts and series members that browse lenses collapse away), so a
+# dimension filter would silently understate the counts.
+label: Audit
+icon: dot
+component: audit
+devOnly: true
+acceptsFilters: false
+order: 100
+width: 960px
