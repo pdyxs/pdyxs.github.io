@@ -1,0 +1,67 @@
+name: Build
+
+# Build-only CI for the Astro rebuild (issue #69).
+#
+# There is NO deploy job here, and there must not be one until the cutover
+# ticket (#74) lands. This repo has exactly one GitHub Pages site and it is
+# already live: build_type `legacy`, source `master /`, cname `pdyxs.wtf`,
+# served by GitHub's built-in Jekyll builder. Adding `actions/deploy-pages`
+# (or `actions/configure-pages` with `enablement`) would not stand up a second
+# site — it would replace the live one. Keep this workflow to build + gates +
+# artifact upload only.
+
+on:
+  push:
+    branches:
+      - astro-rebuild
+  schedule:
+    # Daily rebuild, 18:00 UTC (~4-5am Melbourne). Inert while this workflow is
+    # build-only; it exists now so the shape is proven for when #74 adds the
+    # deploy job and the `scheduled` card status becomes meaningful.
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Pinned to the floor declared in package.json `engines`.
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `npm run build` runs this via `prebuild`; running it explicitly first
+      # means the test and type gates see freshly generated lens registry, lens
+      # icons, dither CSS and stack/tag manifests, and a generator failure is
+      # reported as its own step.
+      - name: Run generators (prebuild)
+        run: npm run prebuild
+
+      - name: Test
+        run: npm test
+
+      - name: Type check
+        run: npm run check
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
