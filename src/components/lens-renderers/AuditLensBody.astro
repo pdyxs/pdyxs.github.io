@@ -1,0 +1,183 @@
+---
+// Dev-only content-audit dashboard (issue #72) — the thin renderer around the
+// pure auditCards() decision in src/lib/audit.ts. All of the logic lives there;
+// this file only gathers the raw material and prints the result.
+//
+// Plain Astro, no island: the audit is a static server-rendered worklist with
+// no interaction beyond `card:` links, which CardStack's delegated
+// onDocumentClick already handles. (Contrast EditorialLensBody.astro, which
+// needs a Svelte shim because it participates in the live lensFilterStore.)
+//
+// It deliberately does NOT use the `cards` prop LensStackCard passes every lens
+// body. That pool is listing-filtered and folder-collapsed — exactly the cards
+// most in need of auditing (unlisted drafts, individual series members like the
+// arctic story chapters) are missing from it, and it carries no bodies. The
+// audit reads the raw collection instead, so its counts cover everything.
+import { getCollection } from 'astro:content';
+import { makeFileReader, resolveFolderCascade } from '../../lib/folder-config';
+import { resolveCardDescription, resolveCardTitle } from '../../lib/cards';
+import { localAssetFilenames } from '../../lib/images';
+import { auditCards, auditedCardCount, type AuditCard } from '../../lib/audit';
+
+interface Props {
+  cards?: unknown[];
+  tagDisplay?: Record<string, unknown>;
+  config?: Record<string, unknown>;
+}
+
+const entries = await getCollection('content');
+const reader = makeFileReader();
+
+const auditInput: AuditCard[] = await Promise.all(
+  entries.map(async e => {
+    const cascade = await resolveFolderCascade(e.id, reader);
+    return {
+      uid: e.id,
+      title: resolveCardTitle(e.id, e.data),
+      // The description *before* body-excerpt fallback — resolveDescription is
+      // what the audit applies, so handing it an already-excerpted value would
+      // make the "no description" finding structurally unreachable.
+      description: resolveCardDescription(e.data, cascade.cardDescriptionParts),
+      date: e.data.date,
+      // Frontmatter tags only: path-derived, cascade and generated tags are all
+      // excluded so "declares nothing of its own" stays decidable.
+      authoredTags: e.data.tags,
+      image: e.data.image,
+      images: e.data.images,
+      body: e.body,
+      localAssets: localAssetFilenames(e.id),
+    } satisfies AuditCard;
+  }),
+);
+
+const findings = auditCards(auditInput);
+const flaggedCards = auditedCardCount(findings);
+const totalRefs = findings.reduce((sum, f) => sum + f.refCount, 0);
+---
+
+<div class="audit" aria-label="Content audit findings">
+  <p class="audit-summary">
+    <b>{flaggedCards}</b> of <b>{auditInput.length}</b> cards have at least one finding.
+    Dev-only worklist — every count below should fall to zero as content work lands.
+  </p>
+
+  {findings.map(finding => (
+    <section class="audit-finding">
+      <h2 class="audit-finding-heading">
+        {finding.label}
+        <span class="audit-count">
+          {finding.cardCount} {finding.cardCount === 1 ? 'card' : 'cards'}
+          {finding.refCount > 0 && ` / ${finding.refCount} ${finding.refCount === 1 ? 'ref' : 'refs'}`}
+        </span>
+      </h2>
+      <p class="audit-hint">{finding.hint}</p>
+      {finding.cardCount === 0 ? (
+        <p class="audit-clear">Nothing to do.</p>
+      ) : (
+        <ul class="audit-list">
+          {finding.cards.map(hit => (
+            <li class="audit-item">
+              <a class="audit-item-link" href={`card:${hit.uid}`}>{hit.title}</a>
+              <code class="audit-item-uid">{hit.uid}</code>
+              {hit.refs.length > 0 && (
+                <ul class="audit-refs">
+                  {[...new Set(hit.refs)].map(ref => <li class="audit-ref"><code>{ref}</code></li>)}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  ))}
+
+  <p class="audit-footer">{totalRefs} offending references in total.</p>
+</div>
+
+<style>
+  .audit {
+    padding: var(--space-md) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .audit-summary,
+  .audit-footer {
+    margin: 0;
+    font-family: var(--font-heading);
+  }
+
+  .audit-footer {
+    border-top: 1px solid var(--color-border-light);
+    padding-top: var(--space-md);
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+
+  .audit-finding-heading {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    margin: 0 0 var(--space-xs) 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-sm);
+  }
+
+  .audit-count {
+    color: var(--color-text-muted);
+    font-weight: normal;
+    font-size: 0.85em;
+    white-space: nowrap;
+  }
+
+  .audit-hint {
+    margin: 0 0 var(--space-sm) 0;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+
+  .audit-clear {
+    margin: 0;
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  .audit-list,
+  .audit-refs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .audit-item {
+    padding: var(--space-sm) 0;
+    border-top: 1px solid var(--color-border-light);
+  }
+
+  .audit-item-link {
+    font-weight: 600;
+  }
+
+  .audit-item-uid,
+  .audit-ref code {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    word-break: break-all;
+  }
+
+  .audit-item-uid {
+    margin-inline-start: var(--space-sm);
+  }
+
+  .audit-refs {
+    margin-top: var(--space-xs);
+    /* Long dead-host URLs must scroll inside the row, never widen the card. */
+    overflow-x: auto;
+  }
+
+  .audit-ref {
+    padding-inline-start: var(--space-md);
+  }
+</style>

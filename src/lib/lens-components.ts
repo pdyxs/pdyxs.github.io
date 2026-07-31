@@ -27,6 +27,16 @@ export type LensBodyLoader = () => Promise<{ default: AstroComponentFactory }>;
 export const LENS_BODY_LOADERS: Record<string, LensBodyLoader> = {
   home: () => import('../components/lens-renderers/HomeLensBody.astro'),
   editorial: () => import('../components/lens-renderers/EditorialLensBody.astro'),
+  // The audit lens (issue #72) is devOnly, and its loader is gated on
+  // import.meta.env.DEV as well as on isLensVisible(). Registry-level gating
+  // alone only stops the *route* being emitted — the loader would still be in
+  // the production module graph, dragging AuditLensBody's scoped CSS into the
+  // shared stylesheet on every page. import.meta.env.DEV is substituted at
+  // build time, so a production build dead-code-eliminates this entry and the
+  // component is never bundled at all.
+  ...(import.meta.env.DEV
+    ? { audit: () => import('../components/lens-renderers/AuditLensBody.astro') }
+    : {}),
 };
 
 export const DEFAULT_BODY_LOADER: LensBodyLoader = () =>

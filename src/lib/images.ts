@@ -35,6 +35,21 @@ export function resolveLocalVideo(entryId: string, filename: string | undefined)
   return localVideos[path];
 }
 
+/**
+ * Every colocated asset filename in a card's own directory, relative to that
+ * directory (e.g. "hero.png", "shots/wide.jpg"). Images and videos both count —
+ * a body reference resolves against whatever is actually sitting next to the
+ * card. Used by the dev-only audit lens to decide whether a local image
+ * reference resolves (see auditCards in src/lib/audit.ts).
+ */
+export function localAssetFilenames(entryId: string): string[] {
+  const prefix = `/src/content/${entryId}/`;
+  return [...Object.keys(localImages), ...Object.keys(localVideos)]
+    .filter(path => path.startsWith(prefix))
+    .map(path => path.slice(prefix.length))
+    .sort();
+}
+
 export type MediaKind = 'image' | 'video';
 
 export interface GalleryImageSource {

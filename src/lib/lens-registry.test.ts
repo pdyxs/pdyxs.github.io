@@ -32,9 +32,11 @@ describe('LENS_REGISTRY', () => {
     expect(newest?.acceptsFilters).toBe(true);
   });
 
-  it('home is the sole acceptsFilters:false lens', () => {
+  it('home is the sole shipping acceptsFilters:false lens', () => {
+    // audit (devOnly, issue #72) also opts out — it reports on the whole
+    // content set, so a dimension filter would understate its counts.
     const noFilters = LENS_REGISTRY.filter(l => !l.acceptsFilters);
-    expect(noFilters.map(l => l.id)).toEqual(['home']);
+    expect(noFilters.map(l => l.id)).toEqual(['home', 'audit']);
   });
 
   it('component field is a plain string key, never a function — guards the lazy-load boundary', () => {
@@ -75,9 +77,9 @@ describe('lensesForDimension', () => {
     expect(lensesForDimension('who')).toEqual([]);
   });
 
-  it('returns the home and editorial lenses filed under what', () => {
+  it('returns the home, editorial and audit lenses filed under what', () => {
     const what = lensesForDimension('what');
-    expect(what.map(l => l.id)).toEqual(['home', 'editorial']);
+    expect(what.map(l => l.id)).toEqual(['home', 'editorial', 'audit']);
   });
 
   it('excludes home from every 5W dimension other than what', () => {
@@ -163,6 +165,16 @@ describe('allLensUids', () => {
     const editorial = getLensDefinition('editorial');
     expect(editorial?.devOnly).toBe(true);
     expect(allLensUids()).not.toContain('lens/editorial');
+  });
+
+  it('excludes the devOnly audit lens the same way (issue #72)', () => {
+    const audit = getLensDefinition('audit');
+    expect(audit?.devOnly).toBe(true);
+    // The DEV branch of the registration logic — the same predicate
+    // src/pages/lens/[name].astro's getStaticPaths feeds import.meta.env.DEV.
+    expect(isLensVisible(audit!, true)).toBe(true);
+    expect(isLensVisible(audit!, false)).toBe(false);
+    expect(allLensUids()).not.toContain('lens/audit');
   });
 
   it('every uid is resolvable back to a definition via getLensDefinition', () => {

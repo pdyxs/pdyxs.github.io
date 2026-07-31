@@ -64,6 +64,16 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     "devOnly": true
   },
   {
+    "id": "audit",
+    "dimension": "what",
+    "label": "Audit",
+    "icon": "dot",
+    "component": "audit",
+    "width": "960px",
+    "acceptsFilters": false,
+    "devOnly": true
+  },
+  {
     "id": "newest",
     "dimension": "when",
     "label": "Newest",
