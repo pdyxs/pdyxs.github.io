@@ -6,7 +6,7 @@ import { FIVE_W_DIMENSIONS } from '../lib/five-w';
 import { makeFiveWDimension } from './five-w';
 import { nullDimension } from './null-dimension';
 import { statusDimension } from './status';
-import type { Dimension, DimensionSelection, FilterState, MatchContext } from './types';
+import type { Dimension, DimensionId, DimensionSelection, FilterState, MatchContext } from './types';
 
 /**
  * All registered dimensions.
@@ -28,8 +28,14 @@ export const DIMENSIONS: readonly Dimension<any>[] = [
 
 const BY_ID = new Map(DIMENSIONS.map(d => [d.id, d]));
 
+/**
+ * Lookup for an id of unknown provenance — a URL param key, a lens YAML key.
+ * Deliberately takes `string`, not DimensionId: validating an untrusted id is
+ * the whole job, and returning undefined is how it says "no such dimension".
+ * Callers that already hold a DimensionId don't need it.
+ */
 export function dimensionById(id: string): Dimension<any> | undefined {
-  return BY_ID.get(id);
+  return BY_ID.get(id as DimensionId);
 }
 
 /**
@@ -45,13 +51,13 @@ export function isDimensionVisible(
 }
 
 /** The selection held for one dimension, or undefined when it isn't narrowing. */
-export function selectionFor(state: FilterState, id: string): DimensionSelection | undefined {
+export function selectionFor(state: FilterState, id: DimensionId): DimensionSelection | undefined {
   return state[id];
 }
 
 /** Selected values for one dimension, flattened — chips and panel highlighting
  * use this rather than knowing any dimension's selection shape. */
-export function selectedValues(state: FilterState, id: string): string[] {
+export function selectedValues(state: FilterState, id: DimensionId): string[] {
   const dimension = BY_ID.get(id);
   if (!dimension) return [];
   return dimension.values(state[id]);
@@ -64,7 +70,7 @@ export function hasAnySelection(state: FilterState): boolean {
 
 /** Toggles one value within one dimension, dropping the key entirely when
  * nothing remains selected — so hasAnySelection never sees a phantom empty. */
-export function toggleValue(state: FilterState, id: string, value: string): FilterState {
+export function toggleValue(state: FilterState, id: DimensionId, value: string): FilterState {
   const dimension = BY_ID.get(id);
   if (!dimension) return state;
   const next = dimension.toggle(state[id], value);
@@ -73,7 +79,7 @@ export function toggleValue(state: FilterState, id: string, value: string): Filt
 }
 
 /** Clears one dimension entirely (the panel's "clear" control). */
-export function clearDimension(state: FilterState, id: string): FilterState {
+export function clearDimension(state: FilterState, id: DimensionId): FilterState {
   const { [id]: _dropped, ...rest } = state;
   return rest;
 }

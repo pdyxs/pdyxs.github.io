@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { dimensionById } from '../dimensions';
 import { LENS_REGISTRY, lensUid, getLensDefinition, allLensUids, lensesForDimension, lensIdFromUid, activeLensIcon, DEFAULT_BROWSE_LENS_ID, isLensVisible } from './lens-registry';
 
 describe('LENS_REGISTRY', () => {
@@ -47,6 +48,31 @@ describe('LENS_REGISTRY', () => {
     // separate lookup (lens-components.ts) that this module never imports.
     for (const lens of LENS_REGISTRY) {
       expect(typeof lens.component).toBe('string');
+    }
+  });
+
+  // Issue #79. A lens's `config` is free-form data that crosses into a body
+  // component's typed prop unchecked (LensStackCard passes `lens.config`
+  // straight to `<BodyComponent config=… />`), so an authoring slip in the
+  // YAML — nesting the selections one level deeper under `selections:` —
+  // type-checked clean and silently produced an *empty* FilterState: every
+  // dimension saw "not narrowing", so all three home slots drew from the
+  // whole pool. This guards the real generated registry rather than a
+  // hand-built fixture, which is the gap that let the mismatch survive.
+  it('every filter slot names only known dimensions in its filter', () => {
+    for (const lens of LENS_REGISTRY) {
+      const slots = (lens.config as { slots?: unknown[] } | undefined)?.slots ?? [];
+      for (const slot of slots) {
+        const s = slot as { type?: string; filter?: Record<string, unknown> };
+        if (s.type !== 'filter') continue;
+        expect(s.filter, `lens "${lens.id}" has a filter slot with no filter`).toBeDefined();
+        for (const key of Object.keys(s.filter!)) {
+          expect(
+            dimensionById(key),
+            `lens "${lens.id}" filter slot names unknown dimension "${key}"`,
+          ).toBeDefined();
+        }
+      }
     }
   });
 });

@@ -7,12 +7,12 @@
 // Vitest sets import.meta.env.DEV, so the dev-only status dimension is present
 // in the registry here even though production never sees it.
 import { describe, expect, it } from 'vitest';
-import { DIMENSIONS, hasAnySelection, toggleValue } from './registry';
+import { DIMENSIONS, dimensionById, hasAnySelection, toggleValue } from './registry';
 import { filterStateFromParams, filterStateToParams, stripFilterParams } from './params';
 import { encodeParam, decodeParam } from '../lib/param-codecs';
 import { isValidFilterValue } from '../lib/five-w';
 import type { CardMeta } from '../lib/cards';
-import type { Dimension, DimensionSelection, NodeContext } from './types';
+import type { Dimension, DimensionId, DimensionSelection, NodeContext } from './types';
 import { fakeCardMeta } from '../test/fixtures';
 
 interface Fixture {
@@ -206,6 +206,38 @@ describe.each(DIMENSIONS as Dimension<any>[])('dimension "$id"', (dimension) => 
       // Unknown to the tag manifest here, so this exercises the raw fallback —
       // the path any dimension without its own codec always takes.
       expect(decodeParam(encodeParam(key, value, ctx), ctx)).toEqual([key, value]);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DimensionId agrees with the registry
+//
+// DimensionId (dimensions/id.ts) hand-restates DIMENSIONS' membership — it
+// can't be derived, since Dimension.id is typed *by* that union. So the two
+// can drift: a dimension registered without its id added to the union, or an
+// id in the union that nothing registers. Neither is caught by the compiler,
+// and the second is exactly the failure mode #79 was about — a FilterState key
+// that type-checks but narrows nothing.
+// ---------------------------------------------------------------------------
+
+describe('DimensionId', () => {
+  // Every arm of the union, restated as values. `satisfies` makes this fail to
+  // compile if an arm is added to DimensionId and not listed here — which is
+  // what forces a new dimension id past the runtime checks below.
+  const ALL_IDS = ['', 'who', 'what', 'when', 'where', 'why', 'status'] as const satisfies readonly DimensionId[];
+
+  it('covers every registered dimension', () => {
+    for (const dimension of DIMENSIONS) {
+      expect(ALL_IDS, `dimension "${dimension.id}" is registered but missing from DimensionId`).toContain(dimension.id);
+    }
+  });
+
+  it('registers a dimension for every id it admits', () => {
+    // Vitest sets import.meta.env.DEV, so the dev-only status dimension is
+    // present here — every id in the union must resolve.
+    for (const id of ALL_IDS) {
+      expect(dimensionById(id), `DimensionId admits "${id}" but no dimension is registered for it`).toBeDefined();
     }
   });
 });

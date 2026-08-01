@@ -20,35 +20,29 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
           "type": "filter",
           "label": "A Project",
           "filter": {
-            "selections": {
-              "what": [
-                "what:games",
-                "what:art",
-                "what:software"
-              ]
-            }
+            "what": [
+              "what:games",
+              "what:art",
+              "what:software"
+            ]
           }
         },
         {
           "type": "filter",
           "label": "A Puzzle",
           "filter": {
-            "selections": {
-              "what": [
-                "what:puzzles"
-              ]
-            }
+            "what": [
+              "what:puzzles"
+            ]
           }
         },
         {
           "type": "filter",
           "label": "A Post",
           "filter": {
-            "selections": {
-              "what": [
-                "what:writing"
-              ]
-            }
+            "what": [
+              "what:writing"
+            ]
           }
         }
       ]

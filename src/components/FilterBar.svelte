@@ -3,7 +3,7 @@
   import { FIVE_W_DIMENSIONS } from '../lib/five-w';
   import type { FiveWDimension } from '../lib/five-w';
   import { DIMENSIONS, filterStateToParams, selectedValues } from '../dimensions';
-  import type { FilterState } from '../dimensions';
+  import type { DimensionId, FilterState } from '../dimensions';
   import type { TagNode, TagSection } from '../lib/browse-helpers';
   import { filterVisibleNodes, groupNodesIntoSections } from '../lib/browse-helpers';
   import { lensesForDimension, lensIdFromUid, activeLensIcon, isLensVisible } from '../lib/lens-registry';
@@ -18,8 +18,8 @@
      * (alphabetical) group ordering. */
     groupOrder?: Partial<Record<FiveWDimension, string[]>>;
     filterState: FilterState;
-    onFilterToggle: (dimensionId: string, value: string) => void;
-    onClearDimension: (dimensionId: string) => void;
+    onFilterToggle: (dimensionId: DimensionId, value: string) => void;
+    onClearDimension: (dimensionId: DimensionId) => void;
   }
 
   let { hierarchies, groupOrder = {}, filterState, onFilterToggle, onClearDimension }: Props = $props();

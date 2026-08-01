@@ -14,9 +14,12 @@ import type { CardMeta } from '../lib/cards';
 import type { TagNode } from '../lib/browse-helpers';
 import type { TagDisplay } from '../lib/tag-display';
 import type { FiveWDimension } from '../lib/five-w';
+import type { DimensionId } from './id';
 
 /** One `[key, value]` URL param pair. Matches stack-codec's ParamPairs. */
 export type ParamPair = [string, string];
+
+export type { DimensionId } from './id';
 
 /**
  * What a dimension holds when something is selected. `undefined` always means
@@ -58,7 +61,7 @@ export interface Dimension<TSel extends DimensionSelection = DimensionSelection>
    * Stable identity. Also the param-key suffix: `filter.<id>`, or a bare
    * `filter` for the null dimension, whose id is the empty string.
    */
-  readonly id: string;
+  readonly id: DimensionId;
 
   /**
    * Excluded from production builds. Gated twice, mirroring lens-registry +
@@ -100,5 +103,9 @@ export interface Dimension<TSel extends DimensionSelection = DimensionSelection>
 /**
  * The whole filter selection: a flat dimension-id -> selection map. Absent and
  * undefined keys both mean "this dimension is not narrowing anything".
+ *
+ * Keyed by DimensionId rather than `string`, so a key naming no dimension is a
+ * type error at the construction site instead of a no-op dimension nobody
+ * notices (issue #79).
  */
-export type FilterState = Readonly<Record<string, DimensionSelection | undefined>>;
+export type FilterState = Readonly<Partial<Record<DimensionId, DimensionSelection>>>;

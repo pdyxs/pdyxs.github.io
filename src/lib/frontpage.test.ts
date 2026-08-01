@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { buildBrowseUrl, resolvePinnedCards, resolveFrontPageSlots } from './frontpage';
-import type { FrontPageConfig, SerialisedCardFull } from './frontpage';
+import type { FilterSlotConfig, FrontPageConfig, ResolvedFilter, SerialisedCardFull } from './frontpage';
 import { fakeCardMeta } from '../test/fixtures';
 import { clearViewState } from './card-view-state';
 import type { FilterState } from '../dimensions';
-import { DEFAULT_BROWSE_LENS_ID } from './lens-registry';
+import { DIMENSIONS, selectedValues } from '../dimensions';
+import { DEFAULT_BROWSE_LENS_ID, getLensDefinition } from './lens-registry';
 
 // ---------------------------------------------------------------------------
 // buildBrowseUrl
@@ -143,5 +144,86 @@ describe('resolveFrontPageSlots', () => {
     const { displayed } = resolveFrontPageSlots(config, cards, new Date('2024-03-15T08:00:00Z'));
 
     expect(displayed).toEqual([{ uid: 'projects/a', contentHash: 'hash:a' }]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The real home lens config (issue #79)
+//
+// Every test above hand-builds its FrontPageConfig, so the suite only ever
+// exercised the shape the code expects — never the shape the YAML actually
+// produces. That is exactly how the `selections:` nesting survived: it made
+// each slot's FilterState empty, so all three slots drew from the whole pool
+// and the day-seed picked the same card three times. These run against the
+// generated registry, so an authoring slip fails here rather than on the page.
+// ---------------------------------------------------------------------------
+
+// Compile-time half of the #79 fix: FilterState is keyed by DimensionId, so
+// the shape the YAML used to produce is now rejected outright. `npm run check`
+// fails if this stops being an error — i.e. if the key ever reopens to string.
+// @ts-expect-error — "selections" names no dimension
+const _rejectsUnknownDimensionKey: FilterState = { selections: { what: ['what:puzzles'] } };
+void _rejectsUnknownDimensionKey;
+
+describe('resolveFrontPageSlots against the real home lens config', () => {
+  beforeEach(() => {
+    clearViewState();
+  });
+
+  const SEED = new Date('2024-03-15T08:00:00Z');
+
+  const homeConfig = getLensDefinition('home')!.config as unknown as FrontPageConfig;
+  const filterSlots = (): FilterSlotConfig[] =>
+    homeConfig.slots.filter((s): s is FilterSlotConfig => s.type === 'filter');
+
+  /** What a slot's filter asks for, read the way applyFilters reads it — via
+   * the dimension registry, never Object.values. A filter nested under a key
+   * that names no dimension yields nothing here, which is the whole point:
+   * the registry is what can tell "narrows by `what`" from "narrows by
+   * nothing", and a raw key walk cannot. */
+  const wantedTags = (slot: FilterSlotConfig): string[] =>
+    DIMENSIONS.flatMap(d => selectedValues(slot.filter, d.id));
+
+  // One card per tag the slot actually asks for, so a slot that isn't
+  // narrowing gets an empty pool and can't help but reveal itself.
+  const pool = (): SerialisedCardFull[] =>
+    filterSlots().flatMap((slot, i) =>
+      wantedTags(slot).map(tag =>
+        fakeSerialisedCard({ uid: `pool/${i}-${tag}`, tags: [tag], contentHash: `hash:${i}-${tag}` }),
+      ),
+    );
+
+  const resolvedFilterSlots = (): ResolvedFilter[] =>
+    resolveFrontPageSlots(homeConfig, pool(), SEED).slots.filter(
+      (s): s is ResolvedFilter => s.type === 'filter',
+    );
+
+  it('gives every filter slot a filter that actually narrows a dimension', () => {
+    for (const slot of filterSlots()) {
+      expect(wantedTags(slot), `slot "${slot.label}" narrows no dimension`).not.toHaveLength(0);
+    }
+  });
+
+  it("picks a card matching that slot's own filter, for every slot", () => {
+    const resolved = resolvedFilterSlots();
+    const slots = filterSlots();
+
+    expect(resolved).toHaveLength(slots.length);
+    resolved.forEach((slot, i) => {
+      expect(slot.card, `slot "${slot.label}" picked no card`).not.toBeNull();
+      expect(wantedTags(slots[i])).toContain(slot.card!.tags[0]);
+    });
+  });
+
+  it('does not show the same card in every slot', () => {
+    const uids = resolvedFilterSlots().map(s => s.card?.uid);
+    expect(new Set(uids).size).toBe(uids.length);
+  });
+
+  it('gives every See-more link its slot filter params', () => {
+    for (const slot of resolvedFilterSlots()) {
+      const parsed = new URL(slot.browseUrl, 'http://x');
+      expect([...parsed.searchParams.keys()], `slot "${slot.label}" links to a bare lens`).not.toHaveLength(0);
+    }
   });
 });

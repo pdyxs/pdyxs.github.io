@@ -10,7 +10,7 @@
     stripFilterParams,
     toggleValue,
   } from '../dimensions';
-  import type { FilterState } from '../dimensions';
+  import type { DimensionId, FilterState } from '../dimensions';
   import type { FiveWDimension } from '../lib/five-w';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid, DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
@@ -88,7 +88,7 @@
   let fallthroughTrigger: HTMLButtonElement;
   let fallthroughParams = $state('');
 
-  async function fallthroughToDefaultBrowseLens(dimensionId: string, value: string) {
+  async function fallthroughToDefaultBrowseLens(dimensionId: DimensionId, value: string) {
     fallthroughParams = filterStateToParams(
       toggleValue(emptyFilterState(), dimensionId, value),
     ).toString();
@@ -99,7 +99,7 @@
   // One handler for every dimension. The panel reports which axis a value came
   // from (TagNode.dimensionId), so nothing here has to recognise a value by its
   // shape — which is what the old `status:` prefix sniffing existed to do.
-  function handleFilterToggle(dimensionId: string, value: string) {
+  function handleFilterToggle(dimensionId: DimensionId, value: string) {
     if (!lens.acceptsFilters) {
       fallthroughToDefaultBrowseLens(dimensionId, value);
       return;
@@ -107,7 +107,7 @@
     commit(toggleValue($lensFilterStore, dimensionId, value));
   }
 
-  function handleClearDimension(dimensionId: string) {
+  function handleClearDimension(dimensionId: DimensionId) {
     if (!lens.acceptsFilters) return; // Home never accumulates a selection to clear.
     commit(clearDimension($lensFilterStore, dimensionId));
   }

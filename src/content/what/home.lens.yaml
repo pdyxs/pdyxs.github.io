@@ -13,18 +13,19 @@ config:
   slots:
     - type: pinned
       uid: who/about-me
+    # `filter` IS the FilterState: a flat dimension-id -> values map. Don't
+    # nest the dimensions under a `selections:` key — that reads as a
+    # dimension named "selections", which matches nothing and silently
+    # widens the slot to the whole card pool (issue #79).
     - type: filter
       label: A Project
       filter:
-        selections:
-          what: [what:games, what:art, what:software]
+        what: [what:games, what:art, what:software]
     - type: filter
       label: A Puzzle
       filter:
-        selections:
-          what: [what:puzzles]
+        what: [what:puzzles]
     - type: filter
       label: A Post
       filter:
-        selections:
-          what: [what:writing]
+        what: [what:writing]

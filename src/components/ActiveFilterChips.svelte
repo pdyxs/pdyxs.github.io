@@ -1,13 +1,13 @@
 <script lang="ts">
   import { DIMENSIONS } from '../dimensions';
-  import type { FilterState } from '../dimensions';
+  import type { DimensionId, FilterState } from '../dimensions';
   import type { TagDisplay } from '../lib/tag-display';
 
   interface Props {
     filterState: FilterState;
     /** Removes one value from one dimension. Same handler the panel uses —
      * toggling an active value off is exactly what a chip's × means. */
-    onRemove: (dimensionId: string, value: string) => void;
+    onRemove: (dimensionId: DimensionId, value: string) => void;
     onClearAll: () => void;
     /** Flat value -> display-name map from the tag registry (see tag-registry.ts's flattenTagDisplay), serialised in from the server. */
     tagDisplay?: Record<string, TagDisplay>;

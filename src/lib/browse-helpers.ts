@@ -6,6 +6,7 @@
 import type { CardMeta } from './cards';
 import { FIVE_W_DIMENSIONS, isValidFilterValue } from './five-w';
 import type { FiveWDimension } from './five-w';
+import type { DimensionId } from '../dimensions/id';
 import { cardOwnValues } from './card-identity';
 import { displayFor } from './tag-display';
 import type { TagDisplay } from './tag-display';
@@ -55,7 +56,7 @@ export type TagNode = {
   /** Which dimension offers this value. Carried on the node so a panel
    * selection routes by identity — without it the panel emits a bare string
    * and the receiver has to guess the axis from the value's shape. */
-  dimensionId: string;
+  dimensionId: DimensionId;
   value: string;         // e.g. 'what:projects/games'
   label: string;         // e.g. 'games'
   name: string;           // e.g. 'Games' or a declared display name

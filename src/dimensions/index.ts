@@ -1,6 +1,7 @@
 // The dimension seam (issue #76, DEC-008). Consumers import from here.
 export type {
   Dimension,
+  DimensionId,
   DimensionPlacement,
   DimensionSelection,
   FilterState,
