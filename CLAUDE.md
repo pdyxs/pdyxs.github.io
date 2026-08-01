@@ -90,6 +90,42 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`
 
+### Card resolution happens once, in `resolveCard()`
+
+`resolveCard(entry, cascade, ctx)` (`src/lib/cards.ts`) is the only place a card's
+title, description, tags, renderer, nav renderer, status, visibility and content
+hash are decided. It is pure and synchronous — the cascade is read by the caller,
+and `isDev`/`now` arrive in `ctx` — so the whole sequence is unit-testable without
+Astro. `getAllCards()` is the thin IO shell around it.
+
+Consumers take the result; they never re-derive it. `CardStackCard.astro`
+receives a `ResolvedCard` prop from its route's `getStaticPaths()` (which already
+calls `getAllCards()`) and resolves nothing itself — enforced by a guard in
+`CardStackCard.test.ts` that fails if the component references any resolution
+primitive. The content hash in particular must be byte-identical to the pool's,
+or client-side read tracking (`getViewState`, keyed on the hash) treats every
+visit as changed content.
+
+Two types, deliberately split:
+
+- **`CardMeta`** — the listing subset every card has, including ones with no
+  entry behind them (`collapse.ts` synthesises one per collapsed folder). This
+  is what sitemap, RSS, front-page slots and the browse pool consume.
+- **`ResolvedCard = CardMeta & { navRenderer?, titleSuffix?, width? }`** — adds
+  the fields only a full card render needs. Kept off `CardMeta` because
+  `CardMeta` crosses the wire to the browse client, where none of them mean
+  anything.
+
+To give the single-card view a new field, extend `ResolvedCard` — never resolve
+it locally in the component.
+
+### The client payload is an explicit pick, never a spread
+
+`LensStackCard.astro` builds each `SerialisedCardFull` by listing its fields.
+Spreading the card instead skips excess-property checking, so build-time-only
+fields ship to the browser silently and every field later added to `CardMeta`
+joins them. What crosses the wire is a decision.
+
 ### `data-uid` format is `collection/id`
 
 It's the round-trip key between DOM and `/card/...` fetches. Don't improvise the format at call sites.
@@ -125,7 +161,7 @@ These are applied as per-component rules rather than one shared class because Sv
 
 Two discovery rules live in exactly one place each:
 
-- **`resolveDescription` (`src/lib/description.ts`)** decides a card's one-line summary — hand-written `description` first, else a markdown-stripped, word-boundary-truncated body excerpt. `getAllCards()` runs it once and stores the result on `CardMeta.description`; OG/Twitter meta, JSON-LD, RSS and browse-card subtitles all read that field. Don't re-derive a summary at a call site. `CardStackCard.astro` must apply the same composition when it recomputes `contentHash` outside the card pool, or every card's hash changes between the two.
+- **`resolveDescription` (`src/lib/description.ts`)** decides a card's one-line summary — hand-written `description` first, else a markdown-stripped, word-boundary-truncated body excerpt. `resolveCard()` runs it once and stores the result on `CardMeta.description`; OG/Twitter meta, JSON-LD, RSS and browse-card subtitles all read that field. Don't re-derive a summary at a call site.
 - **`visibility.listed`** decides what is publicly advertised. `buildFeedItems` (`src/lib/rss.ts`) and `buildSitemapEntries` (`src/lib/sitemap.ts`) both filter on it; `src/lib/sitemap.test.ts` asserts they agree card-for-card against the shared fixtures in `src/test/card-fixtures.ts`. This is why `/sitemap.xml` is a hand-rolled route rather than `@astrojs/sitemap` — page enumeration would advertise `unlisted` cards, which are reachable by design.
 
 Share metadata itself (canonical URL, OG/Twitter tag list, JSON-LD documents) is decided by pure functions in `src/lib/seo.ts`; `Base.astro` is the thin applier that emits them. `og:image` falls back to `DEFAULT_OG_IMAGE` (`public/og-default.png`, 1200×630) whenever a card has no usable header image.

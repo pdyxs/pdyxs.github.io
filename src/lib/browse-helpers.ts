@@ -22,8 +22,6 @@ export type SerialisedCard = {
   description?: string;
   date: string | null;
   tags: string[];
-  collection: string;
-  id: string;
   renderer: string;
   /** Resolved header-image thumbnail URL (fallback src), or absent when the card has no usable image. */
   thumb?: string;

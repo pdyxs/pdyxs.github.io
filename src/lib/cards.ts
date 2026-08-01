@@ -1,6 +1,7 @@
 import { getCollection } from 'astro:content';
 import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
+import type { FolderCascade } from './folder-config';
 import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
 import { interpolate } from './interpolate';
 import { computeStatusVisibility, resolveStatus } from './status-visibility';
@@ -20,6 +21,53 @@ function effectiveTags(
   );
 }
 
+/**
+ * The frontmatter fields card *resolution* reads — a structural subset of the
+ * content collection's zod-inferred `data`, declared here so resolveCard() can
+ * be tested without constructing a full Astro entry. The index signature covers
+ * the fields read dynamically: `cardDescriptionParts` templates interpolate
+ * against arbitrary frontmatter, and generator override keys are looked up by
+ * name (see filter-generators.ts).
+ */
+export type CardFrontmatter = {
+  title?: string;
+  description?: string;
+  date?: Date;
+  tags?: string[];
+  renderer?: string;
+  navRenderer?: string;
+  status?: unknown;
+  image?: string;
+  order?: number;
+  titleSuffix?: string;
+  width?: string;
+  [key: string]: unknown;
+};
+
+/** The shape resolveCard() resolves from — an Astro content entry, structurally. */
+export type CardEntry = {
+  id: string;
+  data: CardFrontmatter;
+  body?: string;
+};
+
+/**
+ * The impure inputs of resolution, lifted out so resolveCard() stays pure and
+ * testable at a fixed clock (which `scheduled` status will need).
+ */
+export type ResolveContext = {
+  /** Generator override keys to cascade — see generatorOverrideKeys(). */
+  overrideKeys: string[];
+  isDev: boolean;
+  now: Date;
+};
+
+/**
+ * The subset of a resolved card that *every* card has, including ones with no
+ * markdown entry behind them — collapse.ts synthesises one of these per
+ * collapsed folder. This is the listing model: sitemap, RSS, front-page slots
+ * and the browse pool all consume it.
+ */
 export type CardMeta = {
   uid: string;        // full path relative to content/, e.g. "what/writing/why-portal"
   title: string;
@@ -42,14 +90,35 @@ export type CardMeta = {
   visibility: StatusVisibility;
 };
 
-const STORIES_PREFIX = 'what/stories/';
+/**
+ * Everything the single-card view needs: a CardMeta plus the three fields only
+ * a full card render consumes. Structurally a CardMeta, so every listing
+ * consumer accepts one unchanged.
+ *
+ * Kept off CardMeta deliberately — CardMeta is spread into the browse client's
+ * JSON payload, and none of these three mean anything there.
+ */
+export type ResolvedCard = CardMeta & {
+  /** Cascaded nav-shell renderer name (frontmatter, else nearest `_config.yaml`), or undefined for a plain card shell. */
+  navRenderer?: string;
+  /** Frontmatter `titleSuffix` — rendered by CardHeader after the title. */
+  titleSuffix?: string;
+  /** Frontmatter `width` — a CSS length overriding the global default for this card. */
+  width?: string;
+};
 
-/** Resolves a card's display title, applying the stories-fallback-to-series rule. */
-export function resolveCardTitle(
-  uid: string,
-  data: { title?: string; series?: string }
-): string {
-  return data.title ?? (uid.startsWith(STORIES_PREFIX) ? (data.series ?? '') : '') ?? '';
+/**
+ * Resolves a card's display title. There is no fallback: a card with no
+ * frontmatter `title` renders as ''.
+ *
+ * (A stories-fallback-to-series rule lived here until #77. It had been dead
+ * since stories moved from `what/stories/` to `what/posts/stories/`, and it
+ * would have produced the lowercase slug — "arctic", not "Arctic" — if
+ * revived. Untitled story chapters get a frontmatter title like their
+ * siblings.)
+ */
+export function resolveCardTitle(data: { title?: string }): string {
+  return data.title ?? '';
 }
 
 /**
@@ -86,56 +155,83 @@ export function computeContentHash(title: string, description?: string, body?: s
   return String(djb2Hash(`${title}||${description ?? ''}||${body ?? ''}`));
 }
 
-export async function getAllCards(): Promise<CardMeta[]> {
+/**
+ * Resolves one content entry, against its already-resolved folder cascade, into
+ * the card the rest of the site consumes — title, description, tags, renderer,
+ * nav renderer, status, visibility and content hash.
+ *
+ * This is the single place that sequence happens. `CardStackCard.astro` used to
+ * re-derive most of it independently for the single-card view, guarded only by
+ * comments asserting the two agreed; it now consumes a ResolvedCard produced
+ * here (#77), so there is nothing left to keep in sync.
+ *
+ * Pure and synchronous: the cascade is resolved by the caller (it reads files)
+ * and the clock/dev flag arrive in `ctx`, so this is directly unit-testable
+ * without Astro. `getAllCards()` is the thin async shell that does the IO.
+ */
+export function resolveCard(
+  entry: CardEntry,
+  cascade: FolderCascade,
+  ctx: ResolveContext,
+): ResolvedCard {
+  const { id: uid, data, body } = entry;
+
+  const title = resolveCardTitle(data);
+  // Two-stage: the frontmatter/cascade-template description first, then
+  // resolveDescription's body excerpt when neither produced anything.
+  // This is the ONE place a card's summary is decided — OG/Twitter meta,
+  // JSON-LD, RSS and browse-card subtitles all read CardMeta.description
+  // (issue #71).
+  const description = resolveDescription(
+    { description: resolveCardDescription(data, cascade.cardDescriptionParts) },
+    body
+  );
+
+  const baseTags = effectiveTags(uid, data.tags ?? [], cascade.cascadeTags);
+  const overrides: Record<string, string | undefined> = {};
+  for (const key of ctx.overrideKeys) {
+    overrides[key] = (data[key] as string | undefined) ?? cascade.overrides[key];
+  }
+  const tags = generatedTagsForCard(baseTags, { date: data.date, overrides });
+
+  const status: StatusValue = resolveStatus(data.status, cascade.status);
+  const visibility = computeStatusVisibility(status, data.date, {
+    isDev: ctx.isDev,
+    now: ctx.now,
+  });
+
+  return {
+    uid,
+    title,
+    description,
+    date: data.date,
+    tags,
+    renderer: data.renderer ?? cascade.renderer ?? 'card',
+    image: data.image,
+    contentHash: computeContentHash(title, description, body),
+    order: data.order,
+    status,
+    visibility,
+    navRenderer: data.navRenderer ?? cascade.navRenderer,
+    titleSuffix: data.titleSuffix,
+    width: data.width,
+  } satisfies ResolvedCard;
+}
+
+/** Reads the content collection and resolves every entry — the thin IO shell around resolveCard(). */
+export async function getAllCards(): Promise<ResolvedCard[]> {
   const allContent = await getCollection('content');
 
   const reader = makeFileReader();
-  const overrideKeys = generatorOverrideKeys();
-  const now = new Date();
+  const ctx: ResolveContext = {
+    overrideKeys: generatorOverrideKeys(),
+    isDev: import.meta.env.DEV,
+    now: new Date(),
+  };
 
-  const contentMeta = await Promise.all(
-    allContent
-      .map(async e => {
-        const uid = e.id;
-        const cascade = await resolveFolderCascade(uid, reader, overrideKeys);
-
-        const title = resolveCardTitle(uid, e.data);
-        // Two-stage: the frontmatter/cascade-template description first, then
-        // resolveDescription's body excerpt when neither produced anything.
-        // This is the ONE place a card's summary is decided — OG/Twitter meta,
-        // JSON-LD, RSS and browse-card subtitles all read CardMeta.description
-        // (issue #71).
-        const description = resolveDescription(
-          { description: resolveCardDescription(e.data, cascade.cardDescriptionParts) },
-          e.body
-        );
-
-        const baseTags = effectiveTags(uid, e.data.tags, cascade.cascadeTags);
-        const overrides: Record<string, string | undefined> = {};
-        for (const key of overrideKeys) {
-          overrides[key] = (e.data as Record<string, unknown>)[key] as string | undefined
-            ?? cascade.overrides[key];
-        }
-        const finalTags = generatedTagsForCard(baseTags, { date: e.data.date, overrides });
-
-        const status: StatusValue = resolveStatus((e.data as { status?: unknown }).status, cascade.status);
-        const visibility = computeStatusVisibility(status, e.data.date, { isDev: import.meta.env.DEV, now });
-
-        return {
-          uid,
-          title,
-          description,
-          date: e.data.date,
-          tags: finalTags,
-          renderer: e.data.renderer ?? cascade.renderer ?? 'card',
-          image: e.data.image,
-          contentHash: computeContentHash(title, description, e.body),
-          order: e.data.order,
-          status,
-          visibility,
-        } satisfies CardMeta;
-      })
+  return Promise.all(
+    allContent.map(async e =>
+      resolveCard(e, await resolveFolderCascade(e.id, reader, ctx.overrideKeys), ctx)
+    )
   );
-
-  return contentMeta;
 }

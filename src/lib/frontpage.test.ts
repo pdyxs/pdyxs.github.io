@@ -83,8 +83,6 @@ function fakeSerialisedCard(overrides?: Partial<SerialisedCardFull>): Serialised
     title: 'A Post',
     date: null,
     tags: [],
-    collection: 'posts',
-    id: 'a',
     renderer: 'card',
     contentHash: 'hash:a',
     ...overrides,

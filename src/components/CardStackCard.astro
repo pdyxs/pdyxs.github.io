@@ -1,27 +1,29 @@
 ---
-// Renders the `.stack-card` fragment for a card-collection location
-// ("posts", "what/posts/about-me", ...). Shared by the full-page route
-// (src/pages/card/[...path].astro) and the fragment-partial route
-// (src/pages/fragment/card/[...path].astro) — both wrap this in whatever
+// Renders the `.stack-card` fragment for a card location. Shared by the
+// full-page route (src/pages/card/[...path].astro) and the fragment-partial
+// route (src/pages/fragment/card/[...path].astro) — both wrap this in whatever
 // shell they need (or none, for the fragment).
 //
-// Dispatch (collection-view vs nav-owned-shell vs plain card) goes through
-// resolveLocation() (src/lib/location-resolver.ts), the single resolver
-// shared with the lens routes.
+// This component resolves NOTHING. Every piece of card metadata it renders —
+// title, description hash, status, renderer names, width — arrives on the
+// `card` prop as a ResolvedCard, produced once by resolveCard() (src/lib/cards.ts)
+// in the route's getStaticPaths(), which already calls getAllCards().
+//
+// That is the whole point of #77. This file used to re-derive title, status,
+// renderer, nav renderer and content hash independently, guarded only by
+// comments asserting it matched getAllCards(); a content-hash mismatch would
+// silently break client-side read tracking (getViewState keys on the hash).
+// There is now one computation, so there is nothing to keep in sync — and
+// CardStackCard.test.ts guards against local resolution creeping back in.
 import { getCollection, render } from 'astro:content';
-import { computeContentHash, resolveCardTitle, resolveCardDescription } from '../lib/cards';
-import { resolveDescription } from '../lib/description';
-import type { CardMeta } from '../lib/cards';
-import { resolveLocation, resolveCardRenderer, resolveNavRenderer } from '../lib/location-resolver';
-import { resolveFolderCascade, makeFileReader } from '../lib/folder-config';
-import { resolveStatus } from '../lib/status-visibility';
-import type { StatusValue } from '../lib/status-visibility';
+import type { ResolvedCard, CardMeta } from '../lib/cards';
+import { resolveCardRenderer, resolveNavRenderer } from '../lib/location-resolver';
 import type { TagDisplay } from '../lib/tag-display';
 import CardHeader from './CardHeader.astro';
-import GenericRenderer from './card-renderers/GenericRenderer.astro';
 
 interface Props {
-  path: string;
+  /** The resolved card to render — produced by resolveCard() in the route's getStaticPaths(). */
+  card: ResolvedCard;
   /** Flat value -> display-name map from the tag registry, threaded down to whichever renderer shows per-card tag chips. */
   tagDisplay?: Record<string, TagDisplay>;
   /** Cards that link to this one via a card-backed tag, threaded down to GenericRenderer's "Related" section. */
@@ -31,86 +33,46 @@ interface Props {
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { path, tagDisplay = {}, relatedCards = [] } = Astro.props as Props;
-const resolution = resolveLocation(path);
+const { card, tagDisplay = {}, relatedCards = [] } = Astro.props as Props;
 
-let entries: any[] = [];
-let entry: any = null;
-let Content: any = null;
+// Entry lookup is IO, not resolution: the renderers take the raw entry for its
+// frontmatter, and a NavComponent takes the full collection as sibling
+// candidates (getSeriesSiblings in src/lib/series.ts narrows by matching
+// `data.series`, so no path-prefix filtering is needed here). Both routes would
+// otherwise duplicate this, and getCollection() is cached per build.
+const allEntries = await getCollection('content');
+const entry = allEntries.find((e: any) => e.id === card.uid) ?? null;
+const rendered = entry ? await render(entry as any) : null;
+const Content = rendered?.Content;
 
-if (resolution.kind === 'card') {
-  const allContent = await getCollection('content');
-  // Passed to a NavComponent (if any) as sibling candidates; getSeriesSiblings
-  // (src/lib/series.ts) narrows by matching `data.series`, so no path-prefix
-  // filtering is needed here.
-  entries = allContent;
-  entry = allContent.find((e: any) => e.id === resolution.path);
-  const rendered = entry ? await render(entry as any) : null;
-  Content = rendered?.Content;
-}
-
-// Same cascaded resolution as getAllCards() (src/lib/cards.ts): a per-entry
-// frontmatter override wins, else the nearest-ancestor _config.yaml value.
-// Both the content renderer (else 'card') and the nav renderer (else none)
-// cascade the same way.
-let rendererName = 'card';
-let NavComponent: any = null;
-let cardDescriptionParts: string[] | undefined;
-// Resolved the same way as getAllCards() (src/lib/cards.ts) via the shared
-// resolveStatus() precedence — this is a single-card view outside that
-// pool, so it can't reuse a CardMeta already carrying `status`. Dev-only
-// status badge (issue #51): threaded to CardHeader directly and to
-// NavComponent (which owns its own CardHeader call) so a nav-owned shell
-// (e.g. SeriesNavRenderer) still shows it.
-let status: StatusValue = 'published';
-let date: Date | undefined;
-if (resolution.kind === 'card') {
-  const cascade = await resolveFolderCascade(resolution.path, makeFileReader());
-  rendererName = (entry?.data as any)?.renderer ?? cascade.renderer ?? 'card';
-  const navRendererName = (entry?.data as any)?.navRenderer ?? cascade.navRenderer;
-  NavComponent = resolveNavRenderer(navRendererName);
-  cardDescriptionParts = cascade.cardDescriptionParts;
-  status = resolveStatus((entry?.data as any)?.status, cascade.status);
-  date = (entry?.data as any)?.date;
-}
-const Renderer = resolution.kind === 'card' ? resolveCardRenderer(rendererName) : GenericRenderer;
-
-const CollectionViewComponent = resolution.kind === 'collection-view' ? resolution.component : null;
-
-const title: string = (entry?.data as any)?.title ?? (entry?.data as any)?.name ?? '';
-const titleSuffix: string | undefined = (entry?.data as any)?.titleSuffix;
-// Per-location responsive width (issue #27) — travels as a data attribute
-// since CardStack.svelte (client-side) has no access to astro:content.
-// Tag entries have no `width` in their schema, so this is naturally
-// undefined for tag locations too.
-const width: string | undefined = resolution.kind === 'card' ? (entry?.data as any)?.width : undefined;
-
-// Content hash for client-side view-state tracking (markRead/markDisplayed).
-// Uses the exact same formula as getAllCards() (resolveCardTitle/resolveCardDescription
-// + computeContentHash) so a card opened here hashes identically to its FrontPage slot
-// entry — a mismatch would make getViewState() think the content changed on every visit.
-const contentHash: string | undefined =
-  resolution.kind === 'card' && entry
-    ? computeContentHash(
-        resolveCardTitle(resolution.path, entry.data),
-        resolveDescription(
-          { description: resolveCardDescription(entry.data, cardDescriptionParts) },
-          entry.body
-        ),
-        entry.body
-      )
-    : undefined;
+const Renderer = resolveCardRenderer(card.renderer);
+const NavComponent = resolveNavRenderer(card.navRenderer);
 ---
-<div class="stack-card stack-card--active" data-uid={path} data-content-hash={contentHash} data-width={width}>
-  {CollectionViewComponent ? (
-    <CollectionViewComponent />
-  ) : NavComponent ? (
-    <NavComponent {title} {titleSuffix} {entry} allEntries={entries} {status} {date}>
+<div
+  class="stack-card stack-card--active"
+  data-uid={card.uid}
+  data-content-hash={card.contentHash}
+  data-width={card.width}
+>
+  {NavComponent ? (
+    <NavComponent
+      title={card.title}
+      titleSuffix={card.titleSuffix}
+      {entry}
+      {allEntries}
+      status={card.status}
+      date={card.date}
+    >
       <Renderer {entry} {Content} {tagDisplay} {relatedCards} />
     </NavComponent>
   ) : (
     <>
-      <CardHeader {title} {titleSuffix} {status} {date}>
+      <CardHeader
+        title={card.title}
+        titleSuffix={card.titleSuffix}
+        status={card.status}
+        date={card.date}
+      >
         <button class="stack-card-close" aria-label="Close">×</button>
       </CardHeader>
       <div class="body-wrapper open">

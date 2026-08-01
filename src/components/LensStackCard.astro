@@ -30,6 +30,7 @@ import { getAllCards } from '../lib/cards';
 import { getTagRegistry, getDimensionGroupOrder, flattenTagDisplay, makeContentTreeReader } from '../lib/tag-registry';
 import { discoverCollapseConfig } from '../lib/collapse-config';
 import { collapseCollections } from '../lib/collapse';
+import type { SerialisedCardFull } from '../lib/frontpage';
 import { FIVE_W_DIMENSIONS } from '../lib/five-w';
 import { DIMENSIONS, emptyFilterState } from '../dimensions';
 import type { FilterState } from '../dimensions';
@@ -113,7 +114,27 @@ if (lens) {
       } else if (card.image && isRemoteImageUrl(card.image)) {
         thumb = card.image;
       }
-      return { ...card, date: card.date?.toISOString() ?? null, thumb, thumbSrcset };
+      // Explicit pick, never a spread of the card (issue #77): a spread skips
+      // excess-property checking, so build-time-only fields (`visibility`,
+      // `image`, `order`) silently shipped to the browser despite
+      // SerialisedCard not declaring them — and every field later added to
+      // CardMeta/ResolvedCard would have joined them. Listing what crosses the
+      // wire keeps the payload a decision rather than a leak.
+      return {
+        uid: card.uid,
+        title: card.title,
+        description: card.description,
+        date: card.date?.toISOString() ?? null,
+        tags: card.tags,
+        renderer: card.renderer,
+        collapsed: card.collapsed,
+        status: card.status,
+        // Required: every lens body declares `cards: SerialisedCardFull[]`, and
+        // HomeLensSlots keys markDisplayed() on this hash.
+        contentHash: card.contentHash,
+        thumb,
+        thumbSrcset,
+      } satisfies SerialisedCardFull;
     })
   );
 

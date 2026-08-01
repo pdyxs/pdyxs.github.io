@@ -33,7 +33,7 @@ const auditInput: AuditCard[] = await Promise.all(
     const cascade = await resolveFolderCascade(e.id, reader);
     return {
       uid: e.id,
-      title: resolveCardTitle(e.id, e.data),
+      title: resolveCardTitle(e.data),
       // The description *before* body-excerpt fallback — resolveDescription is
       // what the audit applies, so handing it an already-excerpted value would
       // make the "no description" finding structurally unreachable.
