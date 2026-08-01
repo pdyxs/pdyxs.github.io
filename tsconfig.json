@@ -1,5 +1,6 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  "//": "svelte-check-types is excluded on purpose: it holds a `declare module '*.astro'` shim for svelte-check only. Pulled in here it would shadow Astro's real component types. See svelte-check-types/astro-modules.d.ts.",
+  "exclude": ["dist", "svelte-check-types"]
 }

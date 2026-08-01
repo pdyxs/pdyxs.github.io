@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SerialisedCard } from '../lib/browse-helpers';
+  import type { BrowseCardData } from '../lib/browse-helpers';
   import { displayFor } from '../lib/tag-display';
   import type { TagDisplay } from '../lib/tag-display';
   import type { FilterState } from '../dimensions';
@@ -7,7 +7,7 @@
   import { computeStatusBadge } from '../lib/status-badge';
 
   interface Props {
-    card: SerialisedCard;
+    card: BrowseCardData;
     /** Flat value -> display-name map from the tag registry (see tag-registry.ts's flattenTagDisplay), serialised in from the server. */
     tagDisplay?: Record<string, TagDisplay>;
     /** Active filter selections — drives which tags are hidden/highlighted. */
@@ -183,6 +183,7 @@
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

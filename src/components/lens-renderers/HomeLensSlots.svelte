@@ -25,7 +25,17 @@
     // lens body and stays correct if that ever changes — "further filtering
     // on top of the shared narrowed set" is exactly what Home's day-seeded
     // slot curation already does.
-    const cardMetas = cards.map(c => ({ ...c, date: c.date ? new Date(c.date) : undefined }));
+    // status/visibility don't cross the wire on SerialisedCard, and the pool
+    // reaching here is already listing-filtered server-side (LensStackCard
+    // filters on `.listed` before serialising), so synthesising the published/
+    // visible defaults is accurate — the same reasoning, and the same values,
+    // as resolveFrontPageSlots applies to this pool a few lines below.
+    const cardMetas = cards.map(c => ({
+      ...c,
+      date: c.date ? new Date(c.date) : undefined,
+      status: 'published' as const,
+      visibility: { listed: true, reachable: true },
+    }));
     const filtered = applyFilters(cardMetas, get(lensFilterStore));
     const serialisedFiltered = filtered.map(c => ({ ...c, date: c.date?.toISOString() ?? null }));
 

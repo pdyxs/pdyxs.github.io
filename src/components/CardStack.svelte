@@ -384,7 +384,7 @@
           applyMaxWidth(uid);
         }
         // One rAF so the browser paints the closed card before we start opening it
-        await new Promise<void>(r => requestAnimationFrame(r));
+        await new Promise<void>(r => requestAnimationFrame(() => r()));
       }
 
       document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`)

@@ -38,6 +38,23 @@ export type SerialisedCard = {
 };
 
 /**
+ * What BrowseCard needs to render one row.
+ *
+ * Identical to SerialisedCard except `date`, which it tolerates unserialised:
+ * the same component renders both the client-side browse pool (dates already
+ * strings, having crossed the wire) and server-side CardMeta lists that never
+ * serialise — GenericRenderer's `relatedCards`, the editorial status groups.
+ * BrowseCard only ever does `new Date(card.date)`, which is happy either way.
+ *
+ * Widening here rather than at each call site keeps the coercion out of the
+ * templates: the alternative is every CardMeta caller mapping dates to strings
+ * purely to satisfy a prop, which is work that exists only to appease a type.
+ */
+export type BrowseCardData = Omit<SerialisedCard, 'date'> & {
+  date?: string | Date | null;
+};
+
+/**
  * A single node in the tag hierarchy for one dimension.
  *
  * Example for the tag `what:projects/games`:
