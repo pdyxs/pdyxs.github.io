@@ -2,4 +2,6 @@ renderer: post
 name: Writing
 description: >
   Essays, articles and posts on games, design, technology and interactive experiences.
-
+# Cards here are dated things: the date is a publication date, so it shows in
+# the card header worded as such. See resolveDateline in src/lib/card-date.ts.
+dateLabel: Published
