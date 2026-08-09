@@ -77,7 +77,7 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     "config": {
       "sortKey": "date",
       "sortDirection": "desc",
-      "limit": 6
+      "limit": 100
     }
   },
   {
