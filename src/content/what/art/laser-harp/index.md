@@ -4,6 +4,9 @@ title: The Laser Harp
 description: An interactive artwork celebrating the International Year of Light
 images:
   - overview_trees.jpg
+  - fireworks.jpg
+  - pond.jpg
+  - trees.jpg
 image: crowd.jpg
 feature: crowd
 tags:
@@ -12,10 +15,6 @@ tags:
   - installation
 date: 2015-06-01
 medium: Installation artwork
-cvDescription: >-
-  An interactive artwork celebrating the International Year of Light, the Laser
-  Harp allowed users to see different representations of waves appear as they
-  played an optical instrument.
 actions: []
 quotes: []
 meta:
