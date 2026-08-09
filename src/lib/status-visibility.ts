@@ -12,10 +12,9 @@
 // testable in isolation and so future slices can extend it without touching
 // its callers' plumbing.
 
-/** All five publish-lifecycle values. The schema enum includes every one of
- * these even though enforcement lands incrementally — #46 added `draft`/
- * `published`, #48 added `scheduled`; later issues add the rest without
- * needing a schema change. */
+/** All five publish-lifecycle values, all enforced by
+ * computeStatusVisibility below. Kept in sync with the `status` enum in
+ * src/content.config.ts. */
 export const STATUS_VALUES = ['draft', 'published', 'scheduled', 'unlisted', 'archived'] as const;
 
 export type StatusValue = typeof STATUS_VALUES[number];

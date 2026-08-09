@@ -109,10 +109,12 @@ const content = defineCollection({
         // `renderer` (folder default is "published"). See
         // computeStatusVisibility (src/lib/status-visibility.ts) for the pure
         // rules and getAllCards() (src/lib/cards.ts) for how frontmatter and
-        // the folder cascade are resolved together. Only `draft`/`published`
-        // are enforced so far (issue #46); `scheduled`/`unlisted`/`archived`
-        // are declared here so #47/#48 can add their enforcement without a
-        // schema change.
+        // the folder cascade are resolved together. All five values are
+        // enforced: `published` (listed + reachable), `unlisted` (reachable
+        // only), `draft`/`archived` (neither), `scheduled` (neither until its
+        // `date` is reached at build time, then as `published`). Note every
+        // rule is bypassed under `isDev`, so status only takes effect in a
+        // production build.
         status: z.enum(['draft', 'published', 'scheduled', 'unlisted', 'archived']).optional(),
         // bare filename → resolved against the entry's own directory via
         // resolveLocalImage() (src/lib/images.ts); full URL → rendered as-is.
@@ -127,7 +129,6 @@ const content = defineCollection({
         // ── projects ──
         cvDescription: z.string().optional(),
         priority: z.number().optional(),
-        feature: z.string().optional(),
         // Legacy shorthands for what are now `meta` rows — resolveMetaRows folds
         // them in at the front, so a card must not carry both.
         medium: z.string().optional(),
