@@ -1111,6 +1111,19 @@ pre,
   margin: 0;
 }
 
+/* Dateline for a dated card (see resolveDateline in lib/card-date.ts).
+   Deliberately NOT a .generic-meta row, whose uppercase dt/dd grid frames its
+   contents as credits — this is a light right-aligned line opening the body,
+   matching how .browse-card-date sits in a preview (same 0.75rem, same
+   right-hand corner), so a card's date reads the same in a listing and on the
+   card itself. The palette has no grey, so "lighter" is size, not value. */
+.generic-dateline {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  text-align: right;
+  margin: 0 0 var(--space-md);
+}
+
 .generic-meta {
   display: grid;
   grid-template-columns: max-content 1fr;

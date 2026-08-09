@@ -41,6 +41,7 @@ export type CardFrontmatter = {
   order?: number;
   titleSuffix?: string;
   width?: string;
+  dateLabel?: string;
   [key: string]: unknown;
 };
 
@@ -105,6 +106,13 @@ export type ResolvedCard = CardMeta & {
   titleSuffix?: string;
   /** Frontmatter `width` — a CSS length overriding the global default for this card. */
   width?: string;
+  /**
+   * Resolved meaning of this card's date (frontmatter `dateLabel`, else the
+   * nearest `_config.yaml`'s). Doubles as the switch for whether a dateline
+   * renders at all — see resolveDateline in card-date.ts. Kept off CardMeta
+   * because browse listings show a bare date with no label.
+   */
+  dateLabel?: string;
 };
 
 /**
@@ -215,6 +223,7 @@ export function resolveCard(
     navRenderer: data.navRenderer ?? cascade.navRenderer,
     titleSuffix: data.titleSuffix,
     width: data.width,
+    dateLabel: data.dateLabel ?? cascade.dateLabel,
   } satisfies ResolvedCard;
 }
 

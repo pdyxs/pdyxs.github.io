@@ -146,6 +146,14 @@ const content = defineCollection({
         // ── cards ──
         panel: z.boolean().optional(),
         titleSuffix: z.string().optional(),
+        // What this card's date *means* — "Published", "Released", … Almost
+        // every card has a `date` (it feeds the when:* tags and sort order), so
+        // presence says nothing; declaring a label is what makes a dateline
+        // show, and says how to word it. Normally set per-folder in
+        // _config.yaml, where it cascades nearest-wins like `renderer`; the
+        // reserved value "none" suppresses an inherited label. See
+        // resolveDateline in src/lib/card-date.ts.
+        dateLabel: z.string().optional(),
         // Per-location responsive width (issue #27): a plain CSS length/expr
         // (e.g. "900px") that overrides the global --max-width default for
         // this card in both card mode and page mode. Undeclared → falls back

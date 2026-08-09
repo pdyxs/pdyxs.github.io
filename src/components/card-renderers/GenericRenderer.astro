@@ -7,6 +7,7 @@ import { computeCardTagDisplay } from '../../lib/card-tag-display';
 import type { TagDisplay } from '../../lib/tag-display';
 import type { BrowseCardData } from '../../lib/browse-helpers';
 import { resolveMetaRows } from '../../lib/card-meta';
+import { resolveDateline } from '../../lib/card-date';
 import type { RawMetaRow } from '../../lib/card-meta';
 import ImageGallery from '../ImageGallery.svelte';
 import CardStrip from '../CardStrip.svelte';
@@ -47,13 +48,22 @@ interface Props {
   subjectCards?: BrowseCardData[];
   /** The card's RESOLVED tags (folder-derived + cascade + frontmatter + generated), from `ResolvedCard.tags`. Not `entry.data.tags`, which is frontmatter only and omits the card's own folder category. */
   cardTags?: string[];
+  /** `ResolvedCard.date` — the card's date, if it has one (most do). */
+  date?: Date;
+  /** `ResolvedCard.dateLabel` — what that date *means*, and the switch for showing it at all. Absent → no dateline. */
+  dateLabel?: string;
 }
 
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], cardTags = [] } = Astro.props as Props;
+const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], cardTags = [], date, dateLabel } = Astro.props as Props;
 const data = entry?.data;
+
+// Whether this card is a dated thing, and how its date is worded — decided by
+// resolveDateline (card-date.ts) from the cascaded `dateLabel`, since nearly
+// every card carries a `date` and presence alone would show it everywhere.
+const dateline = resolveDateline(dateLabel, date);
 
 const localImage = entry ? resolveLocalImage(entry.id, data?.image) : undefined;
 // A header `image:` that points to a colocated video renders as <video>.
@@ -134,6 +144,15 @@ const galleryImages = await Promise.all(
           </div>
         )}
       </div>
+    )}
+
+    {/* A byline, not a credit row: it opens the body as a line of prose above
+        everything else, rather than joining the labelled `.generic-meta` facts.
+        The date is the reader-facing fact; the label just words it. */}
+    {dateline && (
+      <p class="generic-dateline">
+        {dateline.label}{' '}<time datetime={dateline.iso}>{dateline.text}</time>
+      </p>
     )}
 
     {/* Credits lead the body: the labels are self-describing, so the list needs

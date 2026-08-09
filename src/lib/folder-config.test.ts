@@ -170,6 +170,22 @@ describe('resolveFolderCascade', () => {
     expect(result.status).toBeUndefined();
   });
 
+  it('cascades dateLabel nearest-wins, and lets a subfolder suppress it with "none"', async () => {
+    const files: Record<string, string> = {
+      'what/posts/_config.yaml': 'dateLabel: Published\n',
+      'what/posts/stories/_config.yaml': 'dateLabel: none\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/posts/x', readFile)).dateLabel).toBe('Published');
+    expect((await resolveFolderCascade('what/posts/stories/x', readFile)).dateLabel).toBe('none');
+  });
+
+  it('leaves dateLabel undefined when no ancestor declares one, so no dateline shows', async () => {
+    const files: Record<string, string> = { 'what/games/_config.yaml': 'name: Games\n' };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/games/x', readFile)).dateLabel).toBeUndefined();
+  });
+
   it('walks a dimension-rooted uid, checking every ancestor including the dimension root', async () => {
     const files: Record<string, string> = {
       'what/projects/_config.yaml': 'renderer: project\n',

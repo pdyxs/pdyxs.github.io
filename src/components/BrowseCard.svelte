@@ -5,6 +5,9 @@
   import type { FilterState } from '../dimensions';
   import { computeCardTagDisplay } from '../lib/card-tag-display';
   import { computeStatusBadge } from '../lib/status-badge';
+  // Shared with GenericRenderer's dateline so a card's date reads identically
+  // in a listing and on the card itself — see lib/card-date.ts.
+  import { formatCardDate } from '../lib/card-date';
 
   interface Props {
     card: BrowseCardData;
@@ -58,11 +61,7 @@
             class="browse-card-date"
             datetime={new Date(card.date).toISOString()}
           >
-            {new Date(card.date).toLocaleDateString('en-AU', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            })}
+            {formatCardDate(new Date(card.date))}
           </time>
         {/if}
       </span>

@@ -281,5 +281,18 @@ describe('resolveCard', () => {
     it('leaves width undefined when unset, so the global default applies', () => {
       expect(resolveFixture({ id: 'a/b' }).width).toBeUndefined();
     });
+
+    it('prefers a frontmatter dateLabel over the folder cascade', () => {
+      const card = resolveFixture(
+        { id: 'a/b', data: { dateLabel: 'Released' } },
+        { dateLabel: 'Published' },
+      );
+      expect(card.dateLabel).toBe('Released');
+    });
+
+    it('falls back to the cascaded dateLabel, and to undefined when neither declares one', () => {
+      expect(resolveFixture({ id: 'a/b' }, { dateLabel: 'Published' }).dateLabel).toBe('Published');
+      expect(resolveFixture({ id: 'a/b' }).dateLabel).toBeUndefined();
+    });
   });
 });

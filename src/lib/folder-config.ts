@@ -48,6 +48,13 @@ export type FolderCascade = {
    * declare none (see resolveCardDescription). Nearest-wins, like `renderer`.
    */
   cardDescriptionParts?: string[];
+  /**
+   * Nearest-ancestor `dateLabel` — the declared meaning of a card's date
+   * ("Published", "Released", …), which doubles as the switch for whether a
+   * dateline shows at all (see resolveDateline in card-date.ts). Nearest-wins,
+   * like `renderer`; the reserved value "none" suppresses an inherited label.
+   */
+  dateLabel?: string;
   /** This folder's own tag identity (name/description) — not inherited by descendants. */
   tagIdentity: { name?: string; description?: string };
 };
@@ -60,6 +67,7 @@ type ConfigFile = {
   name?: string;
   description?: string;
   cardDescriptionParts?: string[];
+  dateLabel?: string;
   [key: string]: unknown;
 };
 
@@ -91,6 +99,7 @@ export async function resolveFolderCascade(
   let navRenderer: string | undefined;
   let status: string | undefined;
   let cardDescriptionParts: string[] | undefined;
+  let dateLabel: string | undefined;
   const cascadeTags: string[] = [];
   const seenTags = new Set<string>();
   const overrides: Record<string, string> = {};
@@ -104,6 +113,7 @@ export async function resolveFolderCascade(
     if (parsed.renderer) renderer = parsed.renderer;
     if (parsed.navRenderer) navRenderer = parsed.navRenderer;
     if (parsed.status) status = parsed.status;
+    if (parsed.dateLabel) dateLabel = parsed.dateLabel;
     if (Array.isArray(parsed.cardDescriptionParts)) {
       cardDescriptionParts = parsed.cardDescriptionParts.filter(
         (p): p is string => typeof p === 'string'
@@ -134,5 +144,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, navRenderer, status, cardDescriptionParts, cascadeTags, overrides, tagIdentity };
+  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, cascadeTags, overrides, tagIdentity };
 }
