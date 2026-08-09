@@ -2,8 +2,6 @@
 inspected: false
 title: 'Innovations in Games: My Thoughts'
 date: '2013-07-20 17:00:00 +1000'
-image: >-
-  https://i1.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/07/539690_568598346508143_2027712395_n.jpg?w=851
 source: seethroughstudios
 tags:
   - where:work/seethrough

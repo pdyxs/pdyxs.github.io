@@ -6,7 +6,6 @@ tags:
   - what:games/digital/flatland-fallen-angle
   - where:work/seethrough
 canonical_url: https://www.kotaku.com.au/2012/02/the-seethrough-diaries-the-hour-of-pain/
-image: https://edge.alluremedia.com.au/m/k/2012/02/diary-2-1.jpg
 source: kotaku
 ---
 ***Note: The images and links for this post are long gone (hosted on kotaku au, which is no more).***
@@ -36,8 +35,6 @@ In retrospect, there had been some red flags. For the first two days of the proj
 I was wrong, but I don't think our predicament really hit me until Sunday afternoon.
 
 ### The tech problems and the confused non-coders
-
-[![](https://edge.alluremedia.com.au/m/k/2012/02/diary-2-3.jpg)](https://edge.alluremedia.com.au/m/k/2012/02/diary-2-3.jpg)
 
 We're developing on the Unity platform, and one of its strengths is the wide array of user-made plug-ins that can be downloaded to streamline the development process (especially on such a tight schedule). We needed a short-cut to building geometric shapes for our characters and buildings. We also needed to be able to export to Flash. We had already discarded two plug-in tools before finding RageSpline -- it cost us a bit, but it did the things we needed it to do. It looked like we'd dodged all the javelins the day was going to throw at us.
 

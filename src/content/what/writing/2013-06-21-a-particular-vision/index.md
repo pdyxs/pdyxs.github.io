@@ -5,8 +5,6 @@ date: '2013-06-21 17:00:00 +1000'
 tags:
   - what:games/digital/particulars
   - where:work/seethrough
-image: >-
-  https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/06/stairs.png?resize=220%2C300
 source: seethroughstudios
 ---
 Last night, I was having drinks with a couple of devs after an [IGDA Sydney](https://www.facebook.com/groups/SydneyIGDA/) event (a [panel about games and narrative](http://www.mcvpacific.com/news/read/narrative-in-games-talk-at-qantm-well-received/0117510) which was quite excellent). These devs had played the current build of Particulars, and I started talking about my vision for the rest of the game.
@@ -20,8 +18,6 @@ The hard thing, however, is that to me, *these things should be normal*. I don'
 So I'm going to take a middle ground and give a sort of vision statement, without discussing too many of the particulars (pun not intended, discovered and then happily left in place). I'd then like some advice: how much should we be talking about this stuff? In the world of indie development, where being heard is so hard, should we care about spoilers?
 
 * * * * *
-
-![Particulars v0.4.1 edited](https://i2.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/04/Screnshot-for-website.png?resize=300%2C221)
 
 **Particulars is a minimalist meditation on chaotic flows.** It's an examination of the control we have over the games we play, the worlds we inhabit, our minds and our lives.
 
@@ -39,7 +35,6 @@ Let's pause for a second and examine what's just happened, because it's somethin
 
 * * * * *
 
-![stairs](https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/06/stairs.png?resize=220%2C300)
 
 A theme and a control scheme, however, do not a game make. At some point, the game has to be 'fun' (whatever that means). And being one of our first games, I don't really want to screw too much with the 'goals-rules-rewards' kind of formula that we all know and love. I also really don't want to do something too non-linear just yet (coz, well... hard).
 
@@ -49,7 +44,6 @@ In the case of Particulars, the good news is that this kind of built in. There a
 
 In short: for gravity, we'll be adding black holes (because otherwise gravity is far too weak). A black hole is a nexus: an irrefutable force that you can't help to be sucked into. The weak force is about change: both of yourself and of others. The strong force is, more than anything else, disorienting. It forces you to question, and then think through, how you relate with others.
 
-![spawns](https://i1.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/05/spawns.png?resize=300%2C198)
 
 If we look at just these elements, a story starts to emerge. We start with someone who's kind of drifting and without control of their own lives. They then start an obsession: a loss of control over themselves, as they're sucked into a new passion. They begin to change, and change those around them, though whether the change is good or bad is unclear. And then, the bottom falls out: something happens that is so bizarre that they're completely disoriented and unsure of themselves and their place in the world.
 
