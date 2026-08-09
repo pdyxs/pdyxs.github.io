@@ -48,8 +48,8 @@ describe('auditCards — shape', () => {
       'missing-title',
       'missing-date',
       'no-description',
-      'no-authored-tags',
       'not-inspected',
+      'no-authored-tags',
     ]);
   });
 
@@ -236,8 +236,8 @@ describe('multiple findings', () => {
       'missing-title',
       'missing-date',
       'no-description',
-      'no-authored-tags',
       'not-inspected',
+      'no-authored-tags',
     ]);
     expect(auditedCardCount(findings)).toBe(1);
   });

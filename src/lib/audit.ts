@@ -252,23 +252,24 @@ const FINDING_SPECS: readonly FindingSpec[] = [
         ? []
         : undefined,
   },
-  {
-    type: 'no-authored-tags',
-    label: 'No tags beyond derived ones',
-    hint: 'Every tag on this card comes from its path or a generator — it declares nothing of its own.',
-    detect: card => ((card.authoredTags?.length ?? 0) > 0 ? undefined : []),
-  },
   // TEMPORARY (pre-MVP) — the manual pre-launch read-through worklist. Unlike
   // every other finding here it detects nothing about the content: it just
-  // reports a human judgement recorded in frontmatter. Last in display order
-  // because it is the least mechanical, and because until the sweep is underway
-  // it catches nearly every card and would bury the real findings above it.
+  // reports a human judgement recorded in frontmatter. It sits below the
+  // mechanical findings (until the sweep is underway it catches nearly every
+  // card and would bury them) but above `no-authored-tags`, because the
+  // read-through is the active worklist and tagging follows from it.
   // Remove with the `inspected` schema field and scripts/backfill-inspected.mjs.
   {
     type: 'not-inspected',
     label: 'Not yet inspected',
     hint: 'Nobody has read this card end to end yet. Tick `inspected` in Obsidian once you have.',
     detect: card => (card.inspected === true ? undefined : []),
+  },
+  {
+    type: 'no-authored-tags',
+    label: 'No tags beyond derived ones',
+    hint: 'Every tag on this card comes from its path or a generator — it declares nothing of its own.',
+    detect: card => ((card.authoredTags?.length ?? 0) > 0 ? undefined : []),
   },
 ];
 
