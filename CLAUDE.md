@@ -254,6 +254,42 @@ header and renders a labelled tile rather than a broken image.
 
 New CSS contract: `.video-embed` (global.css). New tokens: none.
 
+### Card credits (`meta:`) are one flat shape, for Metadata Menu
+
+A card's credit/fact rows ("Medium", "Technology", "Accolades", "Made with") are
+an open-ended list, ported from the Jekyll site's `definitions:` — 22 distinct
+labels across 25 cards, most used once, which is why they are a list and not
+named schema fields.
+
+The authored shape is **uniform and unconditional**, because `src/content` is an
+Obsidian vault and this field is meant to be edited through a Metadata Menu
+fileClass:
+
+```
+meta     Object List
+├ label  Input
+└ values Multi
+```
+
+Metadata Menu declares **one static shape per Object List item**. So two things
+are banned in this schema, and both were tried and reverted:
+
+- **No unions in `values`.** It is always `string[]`. A link is written as an
+  ordinary markdown link inside the string —
+  `"[Libby Heaney](http://libbyheaney.co.uk/)"` — which is the native Obsidian
+  idiom. `parseMetaItem` (`src/lib/card-meta.ts`) unwraps a value that is
+  *exactly* one link; a value that merely contains one stays literal text, so
+  surrounding words can't be silently dropped.
+- **No variant keys.** No `value`-vs-`values` pair where setting one implies the
+  other is absent. Metadata Menu has no conditional fields, so it would render
+  both as editable everywhere and guide authors no better than raw YAML.
+
+`resolveMetaRows` (`src/lib/card-meta.ts`) is the single decision point: it folds
+the legacy shorthands `medium` / `when` / `roles` in at the front (a card must
+not express the same fact twice) and returns display rows. `GenericRenderer`
+takes the result. `WorkRenderer` still has its own `when`/`roles` `<dl>` — unify
+it when that renderer is next touched.
+
 ### Canonical tag slugs in content; aliases only in tag YAML
 
 Aliases in `src/content.config.ts` tag schema are a runtime safety net, not a feature to rely on. Content should always link to canonical slugs; aliased links in content are a data bug.

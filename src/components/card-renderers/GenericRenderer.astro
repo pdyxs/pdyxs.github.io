@@ -5,6 +5,8 @@ import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages } from '../.
 import { displayFor } from '../../lib/tag-display';
 import type { TagDisplay } from '../../lib/tag-display';
 import type { CardMeta } from '../../lib/cards';
+import { resolveMetaRows } from '../../lib/card-meta';
+import type { RawMetaRow } from '../../lib/card-meta';
 import ImageGallery from '../ImageGallery.svelte';
 import BrowseResults from '../BrowseResults.svelte';
 
@@ -26,6 +28,7 @@ interface Props {
       description?: string;
       image?: string;
       medium?: string;
+      meta?: RawMetaRow[];
       canonical_url?: string;
       source?: string;
       actions?: Action[];
@@ -56,6 +59,9 @@ const sourceLabel = data?.source
   ? data.source.charAt(0).toUpperCase() + data.source.slice(1)
   : undefined;
 
+// Credits/facts, with the legacy `medium:` shorthand folded in — see card-meta.ts.
+const metaRows = resolveMetaRows(data);
+
 const actions = data?.actions?.filter((a: Action) => a.text && a.url) ?? [];
 const quotes = data?.quotes?.filter((q: Quote) => q.quote) ?? [];
 const tags = data?.tags ?? [];
@@ -84,9 +90,23 @@ const galleryImages = await Promise.all(
     {localImage && <Image src={localImage} alt="" class="generic-image" />}
     {localVideo && <video src={localVideo} class="generic-video" controls preload="metadata"></video>}
 
-    {data.medium && (
+    {metaRows.length > 0 && (
       <dl class="generic-meta">
-        <dt>Medium</dt><dd>{data.medium}</dd>
+        {metaRows.map((row) => (
+          <>
+            <dt>{row.label}</dt>
+            <dd>
+              {row.items.map((item, i) => (
+                <>
+                  {i > 0 && <br />}
+                  {item.url
+                    ? <a href={item.url} target="_blank" rel="noopener noreferrer">{item.text}</a>
+                    : item.text}
+                </>
+              ))}
+            </dd>
+          </>
+        ))}
       </dl>
     )}
 

@@ -21,6 +21,31 @@ const quote = z.object({
         .optional(),
 });
 
+// A credit/fact row on a card ("Medium: Video Game", "Accolades: …"). Ported
+// from the Jekyll site's open-ended `definitions:` list — the label set is a
+// long tail (22 distinct labels across 25 cards, most used once), so this stays
+// a list rather than becoming named schema fields.
+//
+// Deliberately ONE shape, with no unions and no variants, so it maps onto a
+// Metadata Menu fileClass:
+//
+//     meta    Object List
+//     ├ label Input
+//     └ values Multi
+//
+// Metadata Menu declares a single static shape per Object List item, so a
+// `string | {text, url}` union or a `value`-vs-`values` variant would be
+// unrepresentable — the plugin would have to pick one and the other authoring
+// style would fall outside what it can render. Hence: `values` is always a list
+// of plain strings, and a link is written as an ordinary markdown link inside
+// the string (`[Libby Heaney](http://libbyheaney.co.uk/)`), which is the native
+// Obsidian authoring idiom anyway. parseMetaItems (card-meta.ts) pulls the
+// links back out at render time.
+const metaRow = z.object({
+    label: z.string(),
+    values: z.array(z.string()).default([]),
+});
+
 // ─── Unified content collection ───────────────────────────────────────────────
 //
 // All markdown content lives under src/content/, rooted at the filter
@@ -94,7 +119,10 @@ const content = defineCollection({
         cvDescription: z.string().optional(),
         priority: z.number().optional(),
         feature: z.string().optional(),
+        // Legacy shorthands for what are now `meta` rows — resolveMetaRows folds
+        // them in at the front, so a card must not carry both.
         medium: z.string().optional(),
+        meta: z.array(metaRow).default([]),
         actions: z.array(action).default([]),
         quotes: z.array(quote).default([]),
         images: z.array(z.string()).default([]),

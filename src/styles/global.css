@@ -591,7 +591,7 @@ pre,
    horizontal padding of its own either (see .stack-card-body-inner above);
    desktop restores it below. */
 .stack-card--page > .body-wrapper .stack-card-body-inner {
-  padding-inline: 0;
+  --body-inset-inline: 0px;
 }
 
 /* Lenses open with their own sticky filter bar as the first thing in the
@@ -684,8 +684,13 @@ pre,
 .stack-card-body-inner {
   /* Mobile: no horizontal padding of our own — #card-stack's padding is
      the only horizontal inset content should get. Desktop restores the
-     original inline padding below. */
-  padding: var(--space-lg) 0;
+     original inline padding below.
+
+     --body-inset-inline is the single source of truth for that padding, so
+     full-bleed content (see .generic-image) can cancel it with a negative
+     margin without re-deriving which breakpoint/card mode it's in. */
+  --body-inset-inline: 0px;
+  padding: var(--space-lg) var(--body-inset-inline);
 }
 
 .stack-card--collapsed .stack-card-body { display: none; }
@@ -790,11 +795,11 @@ pre,
   }
 
   .stack-card-body-inner {
-    padding-inline: var(--space-lg);
+    --body-inset-inline: var(--space-lg);
   }
 
   .stack-card--page > .body-wrapper .stack-card-body-inner {
-    padding-inline: var(--space-md);
+    --body-inset-inline: var(--space-md);
   }
 
   #card-stack {
@@ -1057,12 +1062,20 @@ pre,
 
 /* ── Generic card ──────────────────────────────────────────────── */
 
+/* Full-bleed: the header image is the top edge of the card, so it cancels
+   the body's top padding and its inline inset (--body-inset-inline, set on
+   .stack-card-body-inner) rather than sitting in a framed well. Only the
+   bottom border survives — the sides are the card's own border now. */
 .generic-image,
 .generic-video {
-  width: 100%;
+  display: block;
+  width: calc(100% + 2 * var(--body-inset-inline, 0px));
+  /* global img { max-width: 100% } would clamp the bleed back to the content box */
+  max-width: none;
   height: auto;
-  border: var(--border-width) solid var(--color-border);
-  margin-bottom: var(--space-lg);
+  border: none;
+  border-bottom: var(--border-width) solid var(--color-border);
+  margin: calc(-1 * var(--space-lg)) calc(-1 * var(--body-inset-inline, 0px)) var(--space-lg);
 }
 
 .generic-meta {
@@ -1083,10 +1096,12 @@ pre,
   align-self: center;
 }
 
+/* No text-transform: the rows carry authored prose now ("Sub-atomic particle
+   physics", "Winner, Best Narrative, Freeplay Awards 2013"), not the single
+   title-cased `medium:` word this started as. */
 .generic-meta dd {
   margin: 0;
   align-self: center;
-  text-transform: capitalize;
 }
 
 .generic-source-note {
