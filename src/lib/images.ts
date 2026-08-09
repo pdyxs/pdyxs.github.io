@@ -1,4 +1,5 @@
 import type { ImageMetadata } from 'astro';
+import { parseEmbedUrl, embedPosterUrl } from './embeds.ts';
 
 const localImages = import.meta.glob<{ default: ImageMetadata }>(
   '/src/content/**/*.{jpg,jpeg,png,gif,webp,avif}',
@@ -50,12 +51,21 @@ export function localAssetFilenames(entryId: string): string[] {
     .sort();
 }
 
-export type MediaKind = 'image' | 'video';
+export type MediaKind = 'image' | 'video' | 'embed';
 
 export interface GalleryImageSource {
-  /** ImageMetadata for local images; a URL string for remote images and all videos. */
+  /**
+   * ImageMetadata for local images; a URL string for remote images and all
+   * videos. For `kind: 'embed'` it is the provider's iframe URL.
+   */
   src: ImageMetadata | string;
   kind: MediaKind;
+  /**
+   * Embeds only: the still frame to show before playback. Undefined when the
+   * provider has no resolvable poster (see embedPosterUrl), in which case the
+   * gallery renders a labelled tile.
+   */
+  poster?: string;
 }
 
 const IMAGE_URL_PATTERN = /\.(jpe?g|png|gif|webp|avif)$/i;
@@ -78,9 +88,11 @@ export function isRemoteImageUrl(url: string): boolean {
  * each entry is resolved the same way as the `image:` field (bare filename →
  * colocated asset, full URL → used as-is), dropping any that don't resolve.
  * Image filenames/URLs resolve to `kind: 'image'`; video filenames/URLs (mp4,
- * webm, mov) resolve to `kind: 'video'`. Remote URLs without a known media
- * extension (e.g. YouTube/Vimeo/Facebook embed links left over from the Jekyll
- * migration) are dropped rather than rendered as a broken `<img>`.
+ * webm, mov) resolve to `kind: 'video'`. YouTube and Vimeo URLs — which the
+ * Jekyll migration left scattered through `images[]` — resolve to
+ * `kind: 'embed'`, carrying the iframe URL and a poster. Any other remote URL
+ * without a known media extension is dropped rather than rendered as a broken
+ * `<img>`.
  *
  * Otherwise (no `images` override, or every entry in it fails to resolve),
  * defaults to every colocated image and video in the entry's own directory,
@@ -97,6 +109,8 @@ export function resolveGalleryImages(
         if (filename.startsWith('http')) {
           if (IMAGE_URL_PATTERN.test(filename)) return { src: filename, kind: 'image' };
           if (VIDEO_URL_PATTERN.test(filename)) return { src: filename, kind: 'video' };
+          const embed = parseEmbedUrl(filename);
+          if (embed) return { src: embed.embedUrl, kind: 'embed', poster: embedPosterUrl(embed) };
           return undefined;
         }
         const localImg = resolveLocalImage(entryId, filename);

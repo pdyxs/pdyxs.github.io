@@ -29,9 +29,31 @@ describe('resolveGalleryImages', () => {
     expect(result).toEqual([{ src: 'https://example.com/clip.mp4', kind: 'video' }]);
   });
 
-  it('drops non-media remote URLs (e.g. YouTube embeds) from images[]', () => {
+  it('resolves YouTube URLs in images[] to an embed with a poster', () => {
     const result = resolveGalleryImages('what/art/art-heist', 'outside.jpg', [
-      'https://www.youtube.com/embed/abc123',
+      'https://www.youtube.com/embed/HS1Xem613Rw',
+    ]);
+    expect(result).toEqual([
+      {
+        src: 'https://www.youtube-nocookie.com/embed/HS1Xem613Rw',
+        kind: 'embed',
+        poster: 'https://i.ytimg.com/vi/HS1Xem613Rw/mqdefault.jpg',
+      },
+    ]);
+  });
+
+  it('resolves Vimeo URLs in images[] even with no generated poster', () => {
+    const result = resolveGalleryImages('what/art/art-heist', 'outside.jpg', [
+      'https://player.vimeo.com/video/257695244',
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].kind).toBe('embed');
+    expect(result[0].src).toBe('https://player.vimeo.com/video/257695244');
+  });
+
+  it('still drops remote URLs that are neither media nor a known embed host', () => {
+    const result = resolveGalleryImages('what/art/art-heist', 'outside.jpg', [
+      'https://www.facebook.com/plugins/video.php?href=x',
     ]);
     expect(result).toEqual([]);
   });
@@ -58,7 +80,7 @@ describe('resolveGalleryImages', () => {
 
   it('falls back to the folder default when every images[] entry fails to resolve', () => {
     const result = resolveGalleryImages('what/art/art-heist', undefined, [
-      'https://www.youtube.com/embed/abc123',
+      'https://www.facebook.com/plugins/video.php?href=x',
       'missing.jpg',
     ]);
     expect(result).toHaveLength(1);

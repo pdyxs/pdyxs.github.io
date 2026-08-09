@@ -163,6 +163,27 @@ img { max-width: 100%; height: auto; display: block; }
 
 strong { font-weight: 700; }
 
+/* ── Video embeds ──────────────────────────────────────────────── */
+
+/* Emitted by rehypeVideoEmbeds (src/lib/video-embeds.ts) in place of a
+   paragraph holding nothing but a bare YouTube/Vimeo link. Replaces the Jekyll
+   markup, which hardcoded 560×315 inside a Bootstrap `col-xs-12` wrapper and
+   overflowed a narrow card. `.video-embed` is a CSS contract — renaming it is
+   a plugin change too. */
+.video-embed {
+  margin: 0 0 var(--space-md);
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: var(--border-width) solid var(--color-border);
+}
+
+.video-embed iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 /* ── Code ──────────────────────────────────────────────────────── */
 
 /* Syntax highlighting is disabled in astro.config.mjs, so these are bare

@@ -196,6 +196,40 @@ Body content links to the rest of the site through one of three protocols, all h
 
 `<uid>` is the full dimension-rooted content path (`what/games/digital/numbeanies`), the same string as `data-uid`. Use `card:` for a single entry and `collection:` for a folder/series — a series folder has no card of its own, so `collection:what:posts/stories/arctic` is the only way to reach it.
 
+### Video embeds are a bare link on its own line
+
+YouTube and Vimeo embeds are never raw `<iframe>` — that's Jekyll-era markup the
+audit lens flags as `legacy-markup`. Put the URL alone in its own paragraph and
+`rehypeVideoEmbeds` (`src/lib/video-embeds.ts`) turns it into a responsive
+`figure.video-embed`:
+
+```
+https://www.youtube.com/watch?v=u0nnn_4ZKGs
+```
+
+Only a paragraph containing *nothing but* the autolinked URL is rewritten, so a
+video referenced mid-sentence, or a link with its own label, stays an ordinary
+external link. `parseEmbedUrl` (`src/lib/embeds.ts`) is the single decision
+point for what counts as an embed and accepts every shape the migrated content
+carries (`/embed/<id>`, `watch?v=`, `youtu.be/`, `vimeo.com/<id>`,
+`player.vimeo.com/video/<id>`).
+
+The same parser handles embed URLs left in the legacy `images[]` frontmatter:
+`resolveGalleryImages` resolves them to `kind: 'embed'` and `ImageGallery`
+renders them as a **facade** — provider poster plus a play badge, with the
+iframe only mounted once the lightbox opens, so no third-party player script
+loads for a card nobody clicks.
+
+Posters are asymmetric. YouTube has a predictable path (`i.ytimg.com/vi/<id>/mqdefault.jpg`
+— `mqdefault`, since `hqdefault` letterboxes 16:9 into 4:3). Vimeo has none, so
+`scripts/generate-vimeo-posters.mjs` resolves them via oEmbed into
+`src/data/vimeo-posters.generated.ts` at predev/prebuild. That fetch is
+incremental — an id already in the committed map is never re-fetched, so offline
+builds are a no-op — and an unresolved id is reported in the generated file's
+header and renders a labelled tile rather than a broken image.
+
+New CSS contract: `.video-embed` (global.css). New tokens: none.
+
 ### Canonical tag slugs in content; aliases only in tag YAML
 
 Aliases in `src/content.config.ts` tag schema are a runtime safety net, not a feature to rely on. Content should always link to canonical slugs; aliased links in content are a data bug.

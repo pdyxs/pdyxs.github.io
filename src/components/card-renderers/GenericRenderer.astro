@@ -62,7 +62,11 @@ const tags = data?.tags ?? [];
 
 const gallerySources = entry ? resolveGalleryImages(entry.id, data?.image, data?.images) : [];
 const galleryImages = await Promise.all(
-  gallerySources.map(async ({ src, kind }) => {
+  gallerySources.map(async ({ src, kind, poster }) => {
+    // An embed's `full` is the iframe URL and its `thumb` is the provider
+    // poster, which may not exist (Vimeo without a generated poster) — the
+    // gallery falls back to a labelled tile.
+    if (kind === 'embed') return { thumb: poster ?? '', full: src as string, kind };
     // Videos and remote images are plain URL strings — only local images (ImageMetadata) go through astro:assets.
     if (kind === 'video' || typeof src === 'string') return { thumb: src as string, full: src as string, kind };
     const [thumb, full] = await Promise.all([

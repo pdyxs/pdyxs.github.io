@@ -6,9 +6,9 @@
     "node": ">=22.18.0"
   },
   "scripts": {
-    "predev": "npm run generate:lenses && npm run generate:lens-icons && npm run generate:dither && node scripts/generate-stack-manifest.mjs && npm run generate:redirects && npm run generate:card-templates",
+    "predev": "npm run generate:lenses && npm run generate:lens-icons && npm run generate:dither && node scripts/generate-stack-manifest.mjs && npm run generate:redirects && npm run generate:card-templates && npm run generate:vimeo-posters",
     "dev": "astro dev",
-    "prebuild": "npm run generate:lenses && npm run generate:lens-icons && npm run generate:dither && node scripts/generate-stack-manifest.mjs && npm run generate:redirects && npm run generate:card-templates",
+    "prebuild": "npm run generate:lenses && npm run generate:lens-icons && npm run generate:dither && node scripts/generate-stack-manifest.mjs && npm run generate:redirects && npm run generate:card-templates && npm run generate:vimeo-posters",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
@@ -19,6 +19,7 @@
     "generate:manifest": "node scripts/generate-stack-manifest.mjs",
     "generate:redirects": "node scripts/generate-redirects.mjs",
     "generate:card-templates": "node scripts/generate-card-templates.mjs",
+    "generate:vimeo-posters": "node scripts/generate-vimeo-posters.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "restart-server": "systemctl --user restart astro-preview.service"

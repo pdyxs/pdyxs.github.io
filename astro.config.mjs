@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
 import { REDIRECTS } from './src/data/redirects.generated.ts';
 import { rehypeExternalLinks } from './src/lib/external-links.ts';
+import { rehypeVideoEmbeds } from './src/lib/video-embeds.ts';
 
 // https://astro.build/config
 export default defineConfig({
@@ -21,9 +22,12 @@ export default defineConfig({
     // case lands as `<code>` with no class, which is the hook the wrap rule
     // uses to tell prose-in-a-fence from real code.
     syntaxHighlight: false,
-    // Off-site links open in a new tab, decided in one place instead of the
-    // per-link `{:target="_blank"}` annotations the Jekyll content carried.
-    rehypePlugins: [rehypeExternalLinks],
+    // Order matters: rehypeVideoEmbeds replaces a bare-video-link paragraph
+    // with a figure, so the anchor is gone before rehypeExternalLinks (which
+    // opens off-site links in a new tab, decided in one place instead of the
+    // per-link `{:target="_blank"}` annotations the Jekyll content carried)
+    // could give it a target.
+    rehypePlugins: [rehypeVideoEmbeds, rehypeExternalLinks],
   },
   vite: {
     server: {
