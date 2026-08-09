@@ -8,5 +8,6 @@ scale: 45
 status: draft
 series: arctic
 order: 1
+title: Map
 ---
 
