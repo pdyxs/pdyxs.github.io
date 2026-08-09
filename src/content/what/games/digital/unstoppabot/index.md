@@ -5,7 +5,6 @@ description: A hybrid of an infinitely running bot and a puzzle game, complement
 images:
   - https://www.youtube.com/embed/BZxVzL2ssms
   - Unstoppabot3.jpg
-  - 1-6b
 image: Unstoppabot1.jpg
 tags:
   - when/released

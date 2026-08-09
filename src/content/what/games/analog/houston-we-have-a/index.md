@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: "Houston, we have a #$!?"
 description: A hybrid digital/analog game made at Global Game Jam Sydney 2015
 tags:
