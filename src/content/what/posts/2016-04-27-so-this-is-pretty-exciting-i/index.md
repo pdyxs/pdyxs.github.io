@@ -7,7 +7,7 @@ tags:
   - "itbelongsinamuseum"
   - "science"
   - "waterhouse"
-  - "what:art/the-neighbourhood"
+  - what/art/the-neighbourhood
 image: "17856050521035082.jpg"
 source: instagram
 ---

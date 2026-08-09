@@ -3,7 +3,7 @@ inspected: true
 title: Art Heist
 description: Make a plan. Steal a painting. Don't get caught.
 tags:
-  - when:released
+  - when/released
   - installation
 date: 2017-05-01
 location: australia/sydney

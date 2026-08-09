@@ -3,8 +3,8 @@ inspected: false
 title: Qistigram
 description: A concept for quantum-powered Instagram stories
 tags:
-  - what:software
-  - when:released
+  - what/software
+  - when/released
 date: 2019-09-14
 image: qiskigram_header_full.jpg
 images:

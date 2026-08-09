@@ -3,7 +3,7 @@ inspected: false
 title: Genetic Sequences
 description: An exploration of the structures of genetic sequences
 tags:
-  - when:shelved
+  - when/shelved
   - development
   - science
   - visualisation

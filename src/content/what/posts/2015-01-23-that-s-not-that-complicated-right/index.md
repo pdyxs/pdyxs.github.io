@@ -6,7 +6,7 @@ tags:
   - "ggj15"
   - "ggjsyd"
   - "houstonproblems"
-  - "what:games/analog/houston-we-have-a"
+  - what/games/analog/houston-we-have-a
 image: "17843021794027766.jpg"
 source: instagram
 ---

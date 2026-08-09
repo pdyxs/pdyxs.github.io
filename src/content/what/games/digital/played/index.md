@@ -5,7 +5,7 @@ description: A web platform to help primary school teachers bring games into the
 image: cover.jpeg
 tags:
   - education
-  - when:released
+  - when/released
 date: 2022-01-01
 actions:
   - text: Read the case study

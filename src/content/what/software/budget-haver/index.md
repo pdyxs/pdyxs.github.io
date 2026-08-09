@@ -5,7 +5,7 @@ description: >-
   A minimalistic budgeting app, focusing on helping you to control your everyday
   spending
 tags:
-  - when:shelved
+  - when/shelved
   - development
 images:
   - icon

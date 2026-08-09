@@ -8,7 +8,7 @@ tags:
   - "gamedev"
   - "indiegames"
   - "particlephysics"
-  - "what:games/digital/particulars"
+  - what/games/digital/particulars
 image: "17849018243230515.mp4"
 source: instagram
 ---

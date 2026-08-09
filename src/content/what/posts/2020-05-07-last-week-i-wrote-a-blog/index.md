@@ -10,7 +10,7 @@ tags:
   - "maygoals"
   - "postage"
   - "robotuprising"
-  - "what:games/analog/gotta-get-outta-this-space"
+  - what/games/analog/gotta-get-outta-this-space
 image: "17866009219798401.jpg"
 source: instagram
 ---

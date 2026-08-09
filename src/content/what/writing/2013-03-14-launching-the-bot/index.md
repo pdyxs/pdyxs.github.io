@@ -3,8 +3,8 @@ inspected: false
 title: Launching the Bot
 date: '2013-03-14 17:00:00 +1000'
 tags:
-  - what:games/digital/unstoppabot
-  - where:work/seethrough
+  - what/games/digital/unstoppabot
+  - where/work/seethrough
 image: /pastprojects/unstoppabot/gallery/Unstoppabot1.jpg
 source: seethroughstudios
 ---

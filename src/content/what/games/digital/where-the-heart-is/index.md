@@ -3,7 +3,7 @@ inspected: false
 title: Where the Heart Is
 description: A reflection on globalised life
 tags:
-  - when:released
+  - when/released
   - game-jam
 date: 2019-01-26
 images:

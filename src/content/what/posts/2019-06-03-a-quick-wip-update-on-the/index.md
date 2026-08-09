@@ -13,7 +13,7 @@ tags:
   - "stars"
   - "walking"
   - "wip"
-  - "what:art/the-neighbourhood"
+  - what/art/the-neighbourhood
 image: "17866410289397484.mp4"
 images:
   - "17961652246274877.mp4"

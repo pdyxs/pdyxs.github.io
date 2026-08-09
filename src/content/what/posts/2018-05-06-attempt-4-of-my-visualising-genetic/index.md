@@ -8,7 +8,7 @@ tags:
   - "genetics"
   - "science"
   - "scienceart"
-  - "what:art/genetic-sequences"
+  - what/art/genetic-sequences
 image: "17870839507238223.jpg"
 source: instagram
 ---

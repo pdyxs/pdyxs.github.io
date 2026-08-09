@@ -5,7 +5,7 @@ date: '2024-11-27 22:32:00 +1000'
 tags:
   - "linocut"
   - "linoprint"
-  - "what:art/lino-printing"
+  - what/art/lino-printing
 image: "18143938591361010.jpg"
 images:
   - "18067310560681016.jpg"

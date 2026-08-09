@@ -5,7 +5,7 @@ description: An interactive exhibit for a science museum about farming
 image: farm-1.jpg
 tags:
   - education
-  - when:released
+  - when/released
 date: 2022-10-01
 actions:
   - text: Read the case study

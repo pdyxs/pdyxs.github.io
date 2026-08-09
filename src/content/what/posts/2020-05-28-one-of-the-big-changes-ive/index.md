@@ -9,7 +9,7 @@ tags:
   - "gottagetouttathisspace"
   - "printandplay"
   - "robotuprising"
-  - "what:games/analog/gotta-get-outta-this-space"
+  - what/games/analog/gotta-get-outta-this-space
 image: "17848582868116795.jpg"
 source: instagram
 ---

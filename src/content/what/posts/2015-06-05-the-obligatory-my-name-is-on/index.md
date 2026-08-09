@@ -6,7 +6,7 @@ tags:
   - "canicallitanobelix"
   - "lazers"
   - "vivid"
-  - "what:art/laser-harp"
+  - what/art/laser-harp
 image: "17841565060027766.jpg"
 source: instagram
 ---

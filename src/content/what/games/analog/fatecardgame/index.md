@@ -10,5 +10,6 @@ medium: Card Game
 actions: []
 quotes: []
 images: []
+location:
 ---
 The Odysseys is a game about fate

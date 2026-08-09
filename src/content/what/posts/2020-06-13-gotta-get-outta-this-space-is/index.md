@@ -11,7 +11,7 @@ tags:
   - "ifitsthelastthingweeverdo"
   - "printandplay"
   - "space"
-  - "what:games/analog/gotta-get-outta-this-space"
+  - what/games/analog/gotta-get-outta-this-space
 image: "17843372078222512.jpg"
 images:
   - "17863552891881751.jpg"

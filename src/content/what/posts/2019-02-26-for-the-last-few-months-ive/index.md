@@ -5,7 +5,7 @@ date: '2019-02-26 13:39:00 +1000'
 tags:
   - "app"
   - "finance"
-  - "what:software/budget-haver"
+  - what/software/budget-haver
 image: "17961201709240609.jpg"
 source: instagram
 ---

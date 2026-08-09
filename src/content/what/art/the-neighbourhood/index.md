@@ -10,7 +10,7 @@ portfolio: the_neighbourhood_2500x1250.jpg
 tags:
   - science
   - visualisation
-  - when:released
+  - when/released
 date: 2016-02-01
 medium: 'Data visualisation, artwork'
 actions: []

@@ -7,7 +7,7 @@ description: >-
 image: cover.jpg
 tags:
   - education
-  - when:released
+  - when/released
 date: 2018-04-01
 actions:
   - text: Get on the iOS App Store

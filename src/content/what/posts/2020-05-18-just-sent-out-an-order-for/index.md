@@ -10,7 +10,7 @@ tags:
   - "robots"
   - "somuchtodo"
   - "spacegame"
-  - "what:games/analog/gotta-get-outta-this-space"
+  - what/games/analog/gotta-get-outta-this-space
 image: "17877220126644083.jpg"
 images:
   - "17890332898526048.jpg"

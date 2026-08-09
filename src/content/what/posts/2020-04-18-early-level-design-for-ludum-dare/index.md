@@ -5,7 +5,7 @@ date: '2020-04-18 03:32:00 +1000'
 tags:
   - "gamedesign"
   - "ld46"
-  - "what:games/analog/gotta-get-outta-this-space"
+  - what/games/analog/gotta-get-outta-this-space
 image: "18050664001225795.jpg"
 source: instagram
 ---

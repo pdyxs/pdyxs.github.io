@@ -3,8 +3,8 @@ inspected: false
 title: Inspiration and emulation – the drive to create
 date: '2014-05-08 17:00:00 +1000'
 tags:
-  - what:games/digital/particulars
-  - where:work/seethrough
+  - what/games/digital/particulars
+  - where/work/seethrough
 source: seethroughstudios
 ---
 I've been doing a fair bit of reflection about Particulars lately. We've been planning the final stages of the game's development, forcing me to really think about what's important in the game, and why we've made it this way.

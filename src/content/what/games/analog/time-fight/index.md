@@ -5,7 +5,7 @@ description: >-
   A board game where players' turns move through time in different
   directions, colliding and colluding with their own past and future moves
 tags:
-  - when:released
+  - when/released
 date: 2013-02-16
 medium: Board Game
 actions: []

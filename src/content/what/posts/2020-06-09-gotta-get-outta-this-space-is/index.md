@@ -9,7 +9,7 @@ tags:
   - "gamedev"
   - "printandplay"
   - "robots"
-  - "what:games/analog/gotta-get-outta-this-space"
+  - what/games/analog/gotta-get-outta-this-space
 image: "17951691322330379.jpg"
 images:
   - "18101664067155682.jpg"

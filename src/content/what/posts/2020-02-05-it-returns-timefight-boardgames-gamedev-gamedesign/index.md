@@ -7,7 +7,7 @@ tags:
   - "gamedesign"
   - "gamedev"
   - "timefight"
-  - "what:games/analog/time-fight"
+  - what/games/analog/time-fight
 image: "18105674827111057.jpg"
 source: instagram
 ---

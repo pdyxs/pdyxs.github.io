@@ -5,7 +5,7 @@ description: >-
   A game that teaches players to program a Quantum Computer, by having them tell
   stories about the inner lives of others.
 tags:
-  - when:shelved
+  - when/shelved
   - science
   - development
   - interactive

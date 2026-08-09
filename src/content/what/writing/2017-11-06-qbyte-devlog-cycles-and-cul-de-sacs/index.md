@@ -3,7 +3,7 @@ inspected: false
 title: QByte Devlog - Cycles and Cul-de-sacs
 date: '2017-11-06 17:00:00 +0100'
 tags:
-  - what:games/digital/quantum-byte
+  - what/games/digital/quantum-byte
 description: Getting lost in the quantum (but also the actual) desert
 canonical_url: >-
   https://medium.com/seethrough-studios/qbyte-devlog-cycles-and-cul-de-sacs-2a0c361845a2

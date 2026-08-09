@@ -4,7 +4,7 @@ title: 'Innovations in Games: My Thoughts'
 date: '2013-07-20 17:00:00 +1000'
 source: seethroughstudios
 tags:
-  - where:work/seethrough
+  - where/work/seethrough
 ---
 Yesterday, I was in a panel at PAX Australia on the topic: "Games Can Be Anything -- Are We Seeing Enough Innovation or Not, and Why?". In preparation for the panel, the moderator (the amazing Epona Schweer) asked me to write up some of my thoughts. I ended up writing something of a mini-essay, which I've edited into readable form below.
 

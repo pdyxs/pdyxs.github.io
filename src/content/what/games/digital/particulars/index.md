@@ -6,7 +6,7 @@ image: 5-1b.jpg
 feature: 5-1b
 tags:
   - science
-  - when:released
+  - when/released
 date: 2014-09-01
 actions:
   - text: Download on Steam

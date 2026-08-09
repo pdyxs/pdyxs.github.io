@@ -3,8 +3,8 @@ inspected: false
 title: 'A Particular Vision: What I want Particulars (and all our games) to do'
 date: '2013-06-21 17:00:00 +1000'
 tags:
-  - what:games/digital/particulars
-  - where:work/seethrough
+  - what/games/digital/particulars
+  - where/work/seethrough
 source: seethroughstudios
 ---
 Last night, I was having drinks with a couple of devs after an [IGDA Sydney](https://www.facebook.com/groups/SydneyIGDA/) event (a [panel about games and narrative](http://www.mcvpacific.com/news/read/narrative-in-games-talk-at-qantm-well-received/0117510) which was quite excellent). These devs had played the current build of Particulars, and I started talking about my vision for the rest of the game.

@@ -5,7 +5,7 @@ description: >-
   A Ludum Dare prototype exploring interactive fiction and a custom game
   engine
 tags:
-  - when:released
+  - when/released
 date: 2012-04-20
 medium: Video Game
 actions: []

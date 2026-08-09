@@ -7,7 +7,7 @@ images:
 image: Flatland1.jpg
 feature: Flatland1
 tags:
-  - when:released
+  - when/released
 date: 2012-02-01
 quotes:
   - quote: >-

@@ -8,7 +8,7 @@ image: crowd.jpg
 feature: crowd
 tags:
   - science
-  - when:released
+  - when/released
   - installation
 date: 2015-06-01
 medium: Installation artwork

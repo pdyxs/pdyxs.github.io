@@ -5,7 +5,7 @@ description: An interactive game designed to keep kids safe
 image: bravehearts-1.jpg
 tags:
   - education
-  - when:released
+  - when/released
 date: 2023-10-01
 actions:
   - text: Read the case study

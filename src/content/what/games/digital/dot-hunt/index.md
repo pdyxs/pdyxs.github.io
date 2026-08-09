@@ -5,7 +5,7 @@ description: >-
   A digital alternate-reality scavenger-hunt game, starting with a San
   Francisco-based prototype
 tags:
-  - when:released
+  - when/released
 date: 2018-09-01
 medium: Digital ARG
 actions: []
