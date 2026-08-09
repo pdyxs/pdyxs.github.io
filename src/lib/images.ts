@@ -95,48 +95,64 @@ export function isRemoteImageUrl(url: string): boolean {
  * `<img>`.
  *
  * Otherwise (no `images` override, or every entry in it fails to resolve),
- * defaults to every colocated image and video in the entry's own directory,
- * excluding the entry's header image.
+ * defaults to every colocated image and video in the entry's own directory.
+ *
+ * The header image leads the gallery in both branches — it's the card's own
+ * media and belongs in the lightbox set — and is only prepended when the
+ * resolved list doesn't already carry it, so an `images[]` that names the
+ * header doesn't show it twice.
  */
 export function resolveGalleryImages(
   entryId: string,
   headerImage: string | undefined,
   images: string[] | undefined,
 ): GalleryImageSource[] {
+  const header = resolveMediaRef(entryId, headerImage);
+  const withHeader = (sources: GalleryImageSource[]): GalleryImageSource[] =>
+    header && !sources.some(s => s.src === header.src) ? [header, ...sources] : sources;
+
   if (images && images.length > 0) {
     const resolved = images
-      .map((filename): GalleryImageSource | undefined => {
-        if (filename.startsWith('http')) {
-          if (IMAGE_URL_PATTERN.test(filename)) return { src: filename, kind: 'image' };
-          if (VIDEO_URL_PATTERN.test(filename)) return { src: filename, kind: 'video' };
-          const embed = parseEmbedUrl(filename);
-          if (embed) return { src: embed.embedUrl, kind: 'embed', poster: embedPosterUrl(embed) };
-          return undefined;
-        }
-        const localImg = resolveLocalImage(entryId, filename);
-        if (localImg) return { src: localImg, kind: 'image' };
-        const localVid = resolveLocalVideo(entryId, filename);
-        if (localVid) return { src: localVid, kind: 'video' };
-        return undefined;
-      })
+      .map(filename => resolveMediaRef(entryId, filename))
       .filter((m): m is GalleryImageSource => m !== undefined);
 
-    if (resolved.length > 0) return resolved;
+    if (resolved.length > 0) return withHeader(resolved);
   }
 
   const prefix = `/src/content/${entryId}/`;
-  const headerPath = headerImage && !headerImage.startsWith('http')
-    ? `${prefix}${headerImage}`
-    : undefined;
 
   const imageEntries = Object.keys(localImages)
-    .filter(path => path.startsWith(prefix) && path !== headerPath)
+    .filter(path => path.startsWith(prefix))
     .map(path => ({ path, item: { src: localImages[path].default, kind: 'image' as const } }));
   const videoEntries = Object.keys(localVideos)
-    .filter(path => path.startsWith(prefix) && path !== headerPath)
+    .filter(path => path.startsWith(prefix))
     .map(path => ({ path, item: { src: localVideos[path], kind: 'video' as const } }));
 
-  return [...imageEntries, ...videoEntries]
-    .sort((a, b) => a.path.localeCompare(b.path))
-    .map(e => e.item);
+  return withHeader(
+    [...imageEntries, ...videoEntries]
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .map(e => e.item)
+  );
+}
+
+/**
+ * Resolves one media reference — a bare colocated filename or a full URL — to a
+ * gallery source. Shared by the `images[]` override and the header image so
+ * both accept the same shapes. Returns undefined for a filename with no
+ * colocated file, or a remote URL that is neither media nor a known embed.
+ */
+function resolveMediaRef(entryId: string, ref: string | undefined): GalleryImageSource | undefined {
+  if (!ref) return undefined;
+  if (ref.startsWith('http')) {
+    if (IMAGE_URL_PATTERN.test(ref)) return { src: ref, kind: 'image' };
+    if (VIDEO_URL_PATTERN.test(ref)) return { src: ref, kind: 'video' };
+    const embed = parseEmbedUrl(ref);
+    if (embed) return { src: embed.embedUrl, kind: 'embed', poster: embedPosterUrl(embed) };
+    return undefined;
+  }
+  const localImg = resolveLocalImage(entryId, ref);
+  if (localImg) return { src: localImg, kind: 'image' };
+  const localVid = resolveLocalVideo(entryId, ref);
+  if (localVid) return { src: localVid, kind: 'video' };
+  return undefined;
 }

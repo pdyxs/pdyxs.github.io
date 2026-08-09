@@ -141,7 +141,7 @@ describe('GenericRenderer', () => {
     expect(div.querySelector('a[href="https://thebrag.com"]')?.textContent).toBe('The Brag');
   });
 
-  it('renders a gallery of colocated media excluding the header image', async () => {
+  it('renders a gallery of colocated media including the header image', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
       props: { entry: fakeEntry({ id: 'what/art/art-heist', image: 'outside.jpg' }), Content: undefined },
@@ -149,8 +149,8 @@ describe('GenericRenderer', () => {
 
     const div = document.createElement('div');
     div.innerHTML = html;
-    // outside.jpg is the header, so only trailer.mp4 is left to show.
-    expect(div.querySelectorAll('.image-gallery-thumb img')).toHaveLength(0);
+    // outside.jpg is the header and still leads the gallery, ahead of trailer.mp4.
+    expect(div.querySelectorAll('.image-gallery-thumb img')).toHaveLength(1);
     expect(div.querySelectorAll('.image-gallery-thumb video')).toHaveLength(1);
   });
 
