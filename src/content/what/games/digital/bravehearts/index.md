@@ -1,20 +1,20 @@
 ---
-inspected: false
+inspected: true
 title: Ditto's Keep Safe Adventure
 description: An interactive game designed to keep kids safe
 image: bravehearts-1.jpg
 tags:
   - education
   - when/released
+  - where/work/chaostheory
 date: 2023-10-01
 actions:
   - text: Read the case study
-    url: >-
-      https://www.chaostheorygames.com/work/case-study-bravehearts-ditto-keep-safe-adventure
+    url: https://www.chaostheorygames.com/work/case-study-bravehearts-ditto-keep-safe-adventure
   - text: Play on iOS
-    url: 'https://apps.apple.com/us/app/dittos-keep-safe-adventure/id6451194489'
+    url: https://apps.apple.com/us/app/dittos-keep-safe-adventure/id6451194489
   - text: Play on Android
-    url: 'https://play.google.com/store/apps/details?id=org.bravehearts.dksa'
+    url: https://play.google.com/store/apps/details?id=org.bravehearts.dksa
 medium: Mobile game
 quotes: []
 images: []
