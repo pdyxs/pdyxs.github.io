@@ -10,7 +10,7 @@ canonical_url: >-
 image: Screen-Shot-2012-07-09-at-10.34.56-PM.png
 source: gamasutra
 ---
-The weekend before last, I went to Canberra iFest as a speaker (I'll get a summary of that talk and the slides up shortly!). As a part of that, I saw a talk by Daniel Fisher of [Halfbrick](http://halfbrick.com/){:target="_blank"} about their design process, where he said, amongst other gems, that one of their key processes is to decide what the 'three pillars' of their game is. That is, the three things that wholly describe and are wholly important to their game look, feel, sound, taste and smell, possible sans the taste and smell.
+The weekend before last, I went to Canberra iFest as a speaker (I'll get a summary of that talk and the slides up shortly!). As a part of that, I saw a talk by Daniel Fisher of [Halfbrick](http://halfbrick.com/) about their design process, where he said, amongst other gems, that one of their key processes is to decide what the 'three pillars' of their game is. That is, the three things that wholly describe and are wholly important to their game look, feel, sound, taste and smell, possible sans the taste and smell.
 
 So last Wednesday night, we crowded around a table at a local pub and worked out our pillars between the impassioned yelling of the local sports fans (State of Origin Rugby, for those of you playing along at home). Below are a combination of minutes of the meeting, conclusions from it and the process that we took to get to our pillars.
 

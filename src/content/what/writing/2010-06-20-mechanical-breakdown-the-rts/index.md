@@ -7,8 +7,6 @@ tags: []
 > I find your lack of control disturbing.
 >
 > *Protoss High Templar, in response to repeated abuse with a mouse cursor.*
-> {:.blockquote-footer}
-{:.blockquote}
 
 I've neglected this column for a couple of weeks (though to call it a column is a bit generous, considering this is the 2nd post) and was fully intending to do the next Mechanical Breakdown on the inventory and the varying systems that are used for it (which will come eventually, I promise). I realised, however, that I have a lot of ideas about the thematic content of the RTS genre, and I should probably get them down.
 

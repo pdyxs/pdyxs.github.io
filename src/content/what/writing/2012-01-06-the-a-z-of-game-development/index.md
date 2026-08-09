@@ -10,7 +10,7 @@ source: kotaku
 ---
 *At the end of 2011, seven game developers from six different studios sat together to record a podcast. The theme they were given was the top tips for game development, and over the course of the recording they pooled together their experience to come up with 26 pieces of advice that every developer should at least consider. I realised that there was a wealth of knowledge being shared, and that someone should write it down in an article. This is that article.*
 
-*Special thanks to [Andrew Bittman](http://www.twitter.com/abittman){:target="_blank"}, [Dan Graf](http://www.twitter.com/dangraf){:target="_blank"}, [Paul Gray](http://twitter.com/BGIStudio){:target="_blank"}, [Saul Alexander](http://www.twitter.com/unknownsavage){:target="_blank"}, [Tim Grants](http://twitter.com/#!/termi){:target="_blank"} and [Tim Taylor](https://twitter.com/#!/mortalitygames){:target="_blank"}, my co-hosts for the podcast and the co-authors of this list.*
+*Special thanks to [Andrew Bittman](http://www.twitter.com/abittman), [Dan Graf](http://www.twitter.com/dangraf), [Paul Gray](http://twitter.com/BGIStudio), [Saul Alexander](http://www.twitter.com/unknownsavage), [Tim Grants](http://twitter.com/#!/termi) and [Tim Taylor](https://twitter.com/#!/mortalitygames), my co-hosts for the podcast and the co-authors of this list.*
 
 So without further ado, here are the A-Z of Game Development Tips (it's seriously a coincidence that there were 26 of them).
 
@@ -20,11 +20,11 @@ This one kinda speaks for itself. When you're working in a team, even a small te
 
 ### B. Always focus on your audience (a.k.a 'The User Experience')
 
-Know who you're making your game for: their age, gender, likes, dislikes, what other games they play, what they like and why they like it. Then, make sure you're thinking about the experience you're creating for these people. As [HalfBrick's Luke Muscat](http://www.halfbrick.com/about-us/){:target="_blank"} put it in a talk at GCAP, "it's how the player perceives it" that's important.
+Know who you're making your game for: their age, gender, likes, dislikes, what other games they play, what they like and why they like it. Then, make sure you're thinking about the experience you're creating for these people. As [HalfBrick's Luke Muscat](http://www.halfbrick.com/about-us/) put it in a talk at GCAP, "it's how the player perceives it" that's important.
 
 ### C. Networking
 
-The number of really supportive groups of game developers is somewhat ridiculous (the [IGDA](http://www.igda.org/){:target="_blank"} and [TIGSource](http://forums.tigsource.com/index.php){:target="_blank"} are a couple of examples), and the people in these communities will give you some amazing advice. So ask them.
+The number of really supportive groups of game developers is somewhat ridiculous (the [IGDA](http://www.igda.org/) and [TIGSource](http://forums.tigsource.com/index.php) are a couple of examples), and the people in these communities will give you some amazing advice. So ask them.
 
 ### D. Culture is more important than skills
 
@@ -34,7 +34,7 @@ You can have a team with the most amazing set of skills ever, but if you don't h
 
 There are so many aspects to making a game (art, music, programming and design are the big four), not to mention making a game studio (leadership, legals, marketing, accounting) that it's a little overwhelming. You can't know everything, but you really don't want to go in blind. Make sure you go in equipped -- being aware of the logistics of game development will put you ahead by miles.
 
-[![](./game-jam-1.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/game-jam-1.jpg){:target="_blank"}
+[![](./game-jam-1.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/game-jam-1.jpg)
 
 ### F. 48 Hours
 
@@ -52,9 +52,9 @@ Every so often you hear a story of an awesome indie team whose work is utterly r
 
 Version control is simply a way of keeping track of changes to a software project over time. Typically, all team members commit changes to a central (ideally remote) server, ensuring not only that everything you do is backed up, but that conflicts between programmers working simultaneously are easily resolved. As a bonus, this means that if you screw up your entire codebase with bad refactoring, you can easily revert to your last working version.
 
-As an extra measure, I like to put my source repositories inside a [dropbox](http://dropbox.com/){:target="_blank"} account for super-extra-backup goodness.
+As an extra measure, I like to put my source repositories inside a [dropbox](http://dropbox.com/) account for super-extra-backup goodness.
 
-[![](https://edge.alluremedia.com.au/m/k/2012/01/halfbrick-6-300x169.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/halfbrick-6.jpg){:target="_blank"}
+[![](https://edge.alluremedia.com.au/m/k/2012/01/halfbrick-6-300x169.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/halfbrick-6.jpg)
 
 ### I. Dissect your Competition
 
@@ -74,7 +74,7 @@ When you're developing, it's important to be constantly updating your processes,
 
 A counter to this is to anchor parts of your process: don't allow your requirements to change for a few weeks at a time and lock down versions of your tools for your designers to use.
 
-[![](./scope-creep.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/scope-creep.jpg){:target="_blank"}
+[![](./scope-creep.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/scope-creep.jpg)
 
 ### L. Set your Scope (a.k.a Stop Scope Creep)
 
@@ -90,7 +90,7 @@ There's currently a lack of good producers in the game development community, an
 
 Every game needs to be playtested. You cannot know how a fresh player will react to a game. Unless you playtest. So playtest.
 
-[![](./instructor.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/instructor.jpg){:target="_blank"}
+[![](./instructor.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/instructor.jpg)
 
 ### O. Don't tell your Playtesters what to do
 
@@ -112,7 +112,7 @@ In general, it's a good policy to have as shallow a management structure as poss
 
 Anyone who thinks that they've learnt everything they need to before they start making games (whether it be through self-study, university, a college or other) is deluding themselves. One of the most important things about being a game developer, or any other profession, is your curiosity and ability to continually learn new things. You'll never be done learning, and that's a great thing.
 
-[![](./Escher1.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/Escher1.jpg){:target="_blank"}
+[![](./Escher1.jpg)](https://edge.alluremedia.com.au/m/k/2012/01/Escher1.jpg)
 
 ### T. Reflect on Everything
 
@@ -142,4 +142,4 @@ As a part of this business aspect, it's important to realise that self-funding y
 
 Finally, a reminder that these are tips, or guidelines, and not hard-and-fast rules. It's just as important to understand them thoroughly so that you know where, why and how to break them as it is to follow them.
 
-So ends our alphabetical journey through game development tips. Be sure to check out the [podcast episode](http://www.gameenginepodcast.com/2011/12/09/ep-20-game-development-bingo/){:target="_blank"} that inspired this article and other episodes of [The Game Engine Podcast](http://www.gameenginepodcast.com/){:target="_blank"}, and good luck with all of your game development endeavours!
+So ends our alphabetical journey through game development tips. Be sure to check out the [podcast episode](http://www.gameenginepodcast.com/2011/12/09/ep-20-game-development-bingo/) that inspired this article and other episodes of [The Game Engine Podcast](http://www.gameenginepodcast.com/), and good luck with all of your game development endeavours!

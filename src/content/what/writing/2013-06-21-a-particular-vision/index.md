@@ -9,7 +9,7 @@ image: >-
   https://i0.wp.com/www.seethroughstudios.com/wp-content/uploads/2013/06/stairs.png?resize=220%2C300
 source: seethroughstudios
 ---
-Last night, I was having drinks with a couple of devs after an [IGDA Sydney](https://www.facebook.com/groups/SydneyIGDA/){:target="_blank"} event (a [panel about games and narrative](http://www.mcvpacific.com/news/read/narrative-in-games-talk-at-qantm-well-received/0117510){:target="_blank"} which was quite excellent). These devs had played the current build of Particulars, and I started talking about my vision for the rest of the game.
+Last night, I was having drinks with a couple of devs after an [IGDA Sydney](https://www.facebook.com/groups/SydneyIGDA/) event (a [panel about games and narrative](http://www.mcvpacific.com/news/read/narrative-in-games-talk-at-qantm-well-received/0117510) which was quite excellent). These devs had played the current build of Particulars, and I started talking about my vision for the rest of the game.
 
 What became apparent is that the sorts of things I want to do with Particulars -- the things that, to me, are now things that the game should obviously do, are not actually obvious at all. They've become obvious to me because they're the things I want *all* games that I'm involved with to do, and if we don't get there, I'll be sad.
 

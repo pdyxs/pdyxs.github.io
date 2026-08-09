@@ -15,7 +15,7 @@ Today, we tackle this question for quantitative data.
 
 So I'm not going to mince words here: you need to record data in your game. It's a thing you just have to do. You *can* sit next to the person playing and count things like number of deaths, but there's usually a bunch of other things you want to watch in that case.
 
-You've got 2 main choices: use an existing logging system or roll your own. On the side of the existing logging systems, there's [Playtomic](http://playtomic.com/ "Playtomic"){:target="_blank"}: a great tool for recording data for Flash, HTML5, Unity and iOS.
+You've got 2 main choices: use an existing logging system or roll your own. On the side of the existing logging systems, there's [Playtomic](http://playtomic.com/ "Playtomic"): a great tool for recording data for Flash, HTML5, Unity and iOS.
 
 If you're in one of these categories, you should really use it: it gives you both raw data and analysis tools such as graphing and heat maps for free!
 

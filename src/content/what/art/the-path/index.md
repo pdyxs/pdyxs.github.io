@@ -18,7 +18,7 @@ actions: []
 quotes: []
 images: []
 ---
-The Path is a visualisation of the draft publication of the [Open Tree of Life](http://opentreeoflife.org){:target="_blank"}, a database of 2.3 million species and their genetic origins published in September 2015.
+The Path is a visualisation of the draft publication of the [Open Tree of Life](http://opentreeoflife.org), a database of 2.3 million species and their genetic origins published in September 2015.
 
 Each leaf in the image represents one or more species. The branches, trunks, shadows and paths show how those species are grouped. The symbols on the trees represent the types of organisms there.
 

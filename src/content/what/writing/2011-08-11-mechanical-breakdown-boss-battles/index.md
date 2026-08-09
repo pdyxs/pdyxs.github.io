@@ -31,7 +31,7 @@ I'm going to start this off by talking about one of the games I talk about a lot
 
 > The game ending comes (crucially) after all your weapons have been taken away and you're left to resort to the gravity gun that the rest of the game has been patiently teaching you how to use to best effect... It brings together elements the entire game has been building up to, rather than teleporting you to a different galaxy altogether to fight a couple of the big things that live there for some slightly arbitrary reason.
 >
->[*Yahtzee Croshaw*](http://www.escapistmagazine.com/profiles/articles/Yahtzee%20Croshaw){:target="_blank"}*, [Extra Punctuation: Boss Fights](http://www.escapistmagazine.com/articles/view/columns/extra-punctuation/7726-Extra-Punctuation-Boss-Fights){:target="_blank"}*
+>[*Yahtzee Croshaw*](http://www.escapistmagazine.com/profiles/articles/Yahtzee%20Croshaw)*, [Extra Punctuation: Boss Fights](http://www.escapistmagazine.com/articles/view/columns/extra-punctuation/7726-Extra-Punctuation-Boss-Fights)*
 
 Half-Life 2's final chapter is, in a word, stunning. The genius of it was in unexpected wish-fulfillment: as soon as we grab hold of the gravity gun, we think "wouldn't it be awesome if I could throw people and these bigger objects around with this", followed quickly by "they'll never do that - it'd unbalance the game". That's the set up. The pay off is doing it anyway.
 
@@ -45,7 +45,7 @@ Half-Life 2 teaches us a really important thing for the boss fight: you *don't*
 
 > concluding a game experience with a big fight when a game might have had you doing all sorts of thing besides fighting up to then, may be missing the point
 >
->[*Yahtzee Croshaw*](http://www.escapistmagazine.com/profiles/articles/Yahtzee%20Croshaw){:target="_blank"}*, [Extra Punctuation: Boss Fights](http://www.escapistmagazine.com/articles/view/columns/extra-punctuation/7726-Extra-Punctuation-Boss-Fights){:target="_blank"}*
+>[*Yahtzee Croshaw*](http://www.escapistmagazine.com/profiles/articles/Yahtzee%20Croshaw)*, [Extra Punctuation: Boss Fights](http://www.escapistmagazine.com/articles/view/columns/extra-punctuation/7726-Extra-Punctuation-Boss-Fights)*
 
 ### All the choices in the world...
 
@@ -61,7 +61,7 @@ While both of these can work, I prefer the latter approach, and I'll use my own 
 
 > I do believe the "boss" for Fable 2 is a noted example of suckatude. You walk up to a guy with a mcguffin and either blast him in the chest with a pistol or wait for Stephen Fry to do it.
 >
->*[Booze Zombie](http://www.escapistmagazine.com/profiles/view/Booze+Zombie){:target="_blank"}, [Escapist Forums](http://www.escapistmagazine.com/forums/read/9.127082-Worst-Boss-fight-in-a-game-ever#2689188){:target="_blank"}*
+>*[Booze Zombie](http://www.escapistmagazine.com/profiles/view/Booze+Zombie), [Escapist Forums](http://www.escapistmagazine.com/forums/read/9.127082-Worst-Boss-fight-in-a-game-ever#2689188)*
 
 So what's wrong with this boss? In order to make the choice-making an integral part of the boss fight, the game ignores the fight: that other integral part of the game. While I'd argue that the choice given after the death of Lucien paid off the choice-making quite splendidly, the game robs itself of paying off the build-up to a confrontation with Lucien.
 
@@ -75,7 +75,7 @@ Regarding the fighting boss in an RPG, Yahtzee says it best in his summation of 
 
 > if you haven't been cultivating the specific combat abilities necessary to counter the boss's various attack phases, then get ready to open wide and chew on the overloaded spoonful of shit that's coming your way
 >
->[*Yahtzee Croshaw*](http://www.escapistmagazine.com/profiles/articles/Yahtzee%20Croshaw){:target="_blank"}*, [Extra Punctuation: Boss Fights](http://www.escapistmagazine.com/articles/view/columns/extra-punctuation/7726-Extra-Punctuation-Boss-Fights){:target="_blank"}*
+>[*Yahtzee Croshaw*](http://www.escapistmagazine.com/profiles/articles/Yahtzee%20Croshaw)*, [Extra Punctuation: Boss Fights](http://www.escapistmagazine.com/articles/view/columns/extra-punctuation/7726-Extra-Punctuation-Boss-Fights)*
 
 The moral of the story: if you've got a bunch of different skills and stats in an RPG, make sure that your boss can be killed by players who take each available path. Or, you know, have different ways of approaching the boss (or hell, different bosses), and let them choose - that way, it's the *player's* fault for not recognising their own strengths.
 
@@ -85,21 +85,21 @@ Difficulty is often a problem in bosses: not only in whether they're actually di
 
 > The boss itself is not hard, it's just that you have to fight the boss in an area filled with poisonous air that slowly kills you. It takes to damn long to kill the boss so you can die easily.
 >
->*[Internet Kraken](http://www.escapistmagazine.com/profiles/view/Internet+Kraken{:target="_blank"}), [Escapist Forums](http://www.escapistmagazine.com/forums/jump/9.127082.2689201){:target="_blank"}*
+>*[Internet Kraken](http://www.escapistmagazine.com/profiles/view/Internet+Kraken), [Escapist Forums](http://www.escapistmagazine.com/forums/jump/9.127082.2689201)*
 
 In this case, the designer has made the boss harder using two simple factors: a time limit (albeit a creative one), and a super-dose of health. I'd argue that unless time limits or dispatching specifically tough enemies has been a staple of the game so far, that these are a symptom of lazy design trying to make the climax of the game *bigger* by making it artificially *harder*, instead of following the gameplay thus far to a logical conclusion.
 
 Which begs us the question: does a boss actually have to be hard?
 
-> [Galaxy](http://www.1up.com/do/gameOverview?cId=3150586 "Super Mario Galaxy"){:target="_blank"} pits the mustachioed hero against a fairly normal Bowser, but the game's gravity bending physics are what set this battle above every other Mario-Bowser face-off -- it really puts this Bowser battle in a league of its own. It's not the most difficult confrontation, but that very fact that also makes it so satisfying.
+> [Galaxy](http://www.1up.com/do/gameOverview?cId=3150586 "Super Mario Galaxy") pits the mustachioed hero against a fairly normal Bowser, but the game's gravity bending physics are what set this battle above every other Mario-Bowser face-off -- it really puts this Bowser battle in a league of its own. It's not the most difficult confrontation, but that very fact that also makes it so satisfying.
 >
->*1UP.com, [25 of the Most Badass Boss Fights of all time](http://www.1up.com/features/25-badass-boss-fights-time_2){:target="_blank"}*
+>*1UP.com, [25 of the Most Badass Boss Fights of all time](http://www.1up.com/features/25-badass-boss-fights-time_2)*
 
 This implies that no, it doesn't. Galaxy's boss isn't about punishing the player in the hardest thing ever, but about combining the set-up of the gravity-bending game with the set-up of every other Bowser fight ever to create a stupendous, fun (and big) experience. The climax is almost a *celebration* of the wonders of the game thus far.
 
 > Personally, I try and make the boss fight on par or slightly easier than the final level in that chapter. I don't want to defeat the player just as they are about to unlock a new set of levels.
 >
->[Edmund McMillen](http://edmundm.com/ "Edmund McMillen"){:target="_blank"} via [Andrew Webster](http://www.escapistmagazine.com/profiles/articles/Andrew%20Webster){:target="_blank"}, [Who's the Boss](http://www.escapistmagazine.com/articles/view/issues/issue_255/7592-Whos-The-Boss){:target="_blank"}
+>[Edmund McMillen](http://edmundm.com/ "Edmund McMillen") via [Andrew Webster](http://www.escapistmagazine.com/profiles/articles/Andrew%20Webster), [Who's the Boss](http://www.escapistmagazine.com/articles/view/issues/issue_255/7592-Whos-The-Boss)
 
 *Super Meat Boy*'s Edmund McMillen puts it stupendously here. By ensuring that the boss is tough, but not so tough that you can't defeat them if you finished previous levels, you can ensure that the boss battle is a great experience.
 
@@ -107,6 +107,6 @@ In practice, the exact difficulty of a boss battle will depend on the mechanics 
 
 ### The end of all things
 
-Well that's about it for this installment of Mechanical Breakdown. The moral: if you set up story, pay it off. If you set up gameplay, pay it off. Think of it as [Checkov's Gameplay](http://tvtropes.org/pmwiki/pmwiki.php/Main/ChekhovsSkill "Checkov's Skill"){:target="_blank"}.
+Well that's about it for this installment of Mechanical Breakdown. The moral: if you set up story, pay it off. If you set up gameplay, pay it off. Think of it as [Checkov's Gameplay](http://tvtropes.org/pmwiki/pmwiki.php/Main/ChekhovsSkill "Checkov's Skill").
 
 What's your favourite boss fight? Is there a case where the rule of set-up and pay-off didn't ring true? I'd love to hear your thoughts.

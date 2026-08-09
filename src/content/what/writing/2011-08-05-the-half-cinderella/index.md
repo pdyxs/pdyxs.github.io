@@ -7,7 +7,7 @@ canonical_url: >-
 source: gamasutra
 tags: []
 ---
-So I was thinking about Kurt Vonnegut's [lecture on the shapes of stories](http://www.youtube.com/watch?v=oP3c1h8v2ZQ "Shapes of Stories"){:target="_blank"} again, and it occurred to me that the ludonarrative* arc of most games is good at going up on the Good/Ill Fortune graph, but very bad at going down it. In fact, most ludonarratives are a cut-down version of the Cinderella story that ends at 11:59pm.
+So I was thinking about Kurt Vonnegut's [lecture on the shapes of stories](http://www.youtube.com/watch?v=oP3c1h8v2ZQ "Shapes of Stories") again, and it occurred to me that the ludonarrative* arc of most games is good at going up on the Good/Ill Fortune graph, but very bad at going down it. In fact, most ludonarratives are a cut-down version of the Cinderella story that ends at 11:59pm.
 
 \* *I'm using ludonarrative here to mean 'the gameplay story', though I'm not 100% sure it's the right usage.*
 
@@ -15,7 +15,7 @@ Bear with me a moment as I explain exactly what all that means and why it matter
 
 Let's begin by talking about the ludonarrative arc in terms of Vonnegut's Good/Ill fortune graph**.
 
-\*\* *If you haven't [watched the video](http://www.youtube.com/watch?v=oP3c1h8v2ZQ "Shapes of Stories"){:target="_blank"}, you'll need to in order to understand this post. It's really rather good.*
+\*\* *If you haven't [watched the video](http://www.youtube.com/watch?v=oP3c1h8v2ZQ "Shapes of Stories"), you'll need to in order to understand this post. It's really rather good.*
 
 In this case, we're tracking the good or ill fortune of the player character as determined by gameplay *alone*: so looking at how the player's gameplay experience changes with no reference to writing, lighting, sound or other components of the directed narrative. Suddenly, placing good and ill fortune stories is really quite easy: good fortune is when your gameplay becomes enriched: you have more stuff, do more damage, have beefier stats. Ill fortune is the opposite: you have less equipment, do less damage, and are generally less able to kick serious butt.
 

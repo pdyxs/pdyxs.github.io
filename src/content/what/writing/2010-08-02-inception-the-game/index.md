@@ -6,7 +6,7 @@ tags: []
 ---
 After watching Inception, one of my friends mentioned that one of the great qualities of the movie was that it was something that was completely suited to the medium: that no other medium could capture the ideas and story posed by Christopher Nolan's film as well as film itself. In this I agree -- while the specific action could be described by a novel, in a radio play or (and I kinda want to see this) in a musical, none of these mediums are as effective at telling this particular story as the filmic one.
 
-In addition to this, Inception has gotten a decent amount of attention in the critical game community on its [game-like](http://kotaku.com/5590647/inception-review-video-games-should-be-jealous){:target="_blank"} [ characteristics](http://www.gamermelodico.com/2010/07/inceptions-usability-problem.html){:target="_blank"}. This got me thinking about how Inception would work as a game, both in terms of how you would bring across the same ideas in their complexity and whether this medium can achieve the dizzy heights of the film.
+In addition to this, Inception has gotten a decent amount of attention in the critical game community on its [game-like](http://kotaku.com/5590647/inception-review-video-games-should-be-jealous) [ characteristics](http://www.gamermelodico.com/2010/07/inceptions-usability-problem.html). This got me thinking about how Inception would work as a game, both in terms of how you would bring across the same ideas in their complexity and whether this medium can achieve the dizzy heights of the film.
 
 So how would I make Inception: The Game? We'll find out, right after the kick...
 
