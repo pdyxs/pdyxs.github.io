@@ -73,10 +73,25 @@
   // content *after* the store already changed, so that path calls this
   // explicitly once the real fragment lands (mirrors why that swap already
   // patches .stack-card-body-inner by hand rather than relying on reactivity).
+  //
+  // Written to BOTH <html> and #card-stack, and that is not redundant. The
+  // server renders #card-stack with the *initial* location's width as an inline
+  // style (see `initialWidth` below) so the first paint is correct before
+  // hydration. An inline style on #card-stack beats an inherited value from
+  // <html> for everything inside it — so a card pushed on top of, say, the
+  // browse lens (960px) would keep wearing the lens's width no matter what this
+  // wrote to <html>. Setting the element too replaces that stale SSR value
+  // rather than leaving it to shadow every later navigation.
   function applyMaxWidth(activeKey: string | null) {
     const width = activeKey ? extractLocationWidth(cardHtmlCache.get(activeKey)) : undefined;
-    if (width) document.documentElement.style.setProperty('--max-width', width);
-    else document.documentElement.style.removeProperty('--max-width');
+    const stackEl = document.getElementById('card-stack');
+    if (width) {
+      document.documentElement.style.setProperty('--max-width', width);
+      stackEl?.style.setProperty('--max-width', width);
+    } else {
+      document.documentElement.style.removeProperty('--max-width');
+      stackEl?.style.removeProperty('--max-width');
+    }
   }
 
   $effect(() => {
