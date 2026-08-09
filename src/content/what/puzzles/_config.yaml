@@ -13,3 +13,7 @@ description: >
 cardDescriptionParts:
   - "{{puzzle_type}}"
   - "{{difficulty}}"
+
+# Puzzle cards are their grid image, and it is already the masthead — the
+# gallery would only ever repeat it. Cascades to the series folders below.
+gallery: false
