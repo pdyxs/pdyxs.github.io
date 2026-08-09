@@ -1,0 +1,5 @@
+navRenderer: series
+name: Convergent Clues
+description: >
+  Puzzles built on clues that don't tell you what they mean. Two different clue
+  types share one value, and working out which value is the puzzle.

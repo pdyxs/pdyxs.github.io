@@ -1,0 +1,5 @@
+name: Experimental Fog
+description: >
+  Sudoku where the fog is the puzzle. Each of these asks what happens when
+  clearing fog is itself information — the grid changes shape as you solve it,
+  and what you can see depends on what you've already worked out.

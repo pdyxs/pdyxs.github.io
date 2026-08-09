@@ -2,6 +2,8 @@
 inspected: false
 title: This is how you learn the Time War
 date: 2025-02-26
+series: timeline
+order: 2
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000M6F
 sudokupad_url: https://sudokupad.app/pdyxs/this-is-how-you-learn-the-time-war
 image: bild.png

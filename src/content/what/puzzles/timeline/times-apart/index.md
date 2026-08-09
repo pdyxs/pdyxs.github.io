@@ -2,6 +2,8 @@
 inspected: false
 title: Times Apart
 date: 2025-03-29
+series: timeline
+order: 0
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000MMV
 sudokupad_url: https://sudokupad.app/pdyxs/times-apart
 image: bild.png

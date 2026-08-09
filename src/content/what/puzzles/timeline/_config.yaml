@@ -1,0 +1,6 @@
+navRenderer: series
+name: Timeline
+description: >
+  Time-travel sudoku. Every row is a moment and every column a place, and the
+  marked columns track a traveller's age as they jump around space-time. Best
+  played in order — each puzzle teaches the ruleset for the next.

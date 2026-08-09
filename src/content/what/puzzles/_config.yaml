@@ -1,4 +1,10 @@
-renderer: puzzle
+renderer: card
+dateLabel: Published
+# A puzzle card is its grid image, and the grids are square (or taller). At the
+# site's default 680px that image dominates the viewport on desktop, so puzzles
+# declare a narrower card and the full-bleed image follows it down. Cascades to
+# every series folder below (see FolderCascade.width in src/lib/folder-config.ts).
+width: 520px
 name: Puzzles
 description: >
   Puzzle design and construction — logic puzzles, sudoku variants, and the craft of making something satisfyingly solvable.
