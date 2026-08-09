@@ -1,37 +1,31 @@
 ---
 inspected: false
 title: Art Heist
-description: >-
-  An interactive theatre experience where teams of four develop and execute a
-  plan to steal a painting from an art gallery
+description: Make a plan. Steal a painting. Don't get caught.
 tags:
   - when:released
   - installation
 date: 2017-06-01
 images:
-  - >-
-    https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FJetpackTheatre%2Fvideos%2F1038102896289787%2F&show_text=0
+  - https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FJetpackTheatre%2Fvideos%2F1038102896289787%2F&show_text=0
   - outside
 image: outside.jpg
-portfolio: >-
-  https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FJetpackTheatre%2Fvideos%2F1038102896289787%2F&show_text=0
+portfolio: https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FJetpackTheatre%2Fvideos%2F1038102896289787%2F&show_text=0
 actions:
   - text: Website
-    url: 'https://www.jetpacktheatre.com/art-heist/'
+    url: https://www.jetpacktheatre.com/art-heist/
 quotes:
   - quote: It’s the most fun you can have without spending a night in jail.
     by: David Molloy
     in:
       text: The Brag
-      url: 'http://thebrag.com/art-heist-morphs-friends-oceans-eleven'
+      url: http://thebrag.com/art-heist-morphs-friends-oceans-eleven
   - quote: If you have the opportunity to experience it you’d be crazy not to.
     in:
       text: Escape Me
-      url: 'https://escapeme.net/2017/07/09/jetpack-theatre-art-heist/#more-276'
+      url: https://escapeme.net/2017/07/09/jetpack-theatre-art-heist/#more-276
 medium: Escape Room/Interactive Theatre
-cvDescription: >-
-  Art Heist is an interactive theatre experience where teams of four develop and
-  execute a daring plan to steal a painting from an art gallery.
+cvDescription: Art Heist is an interactive theatre experience where teams of four develop and execute a daring plan to steal a painting from an art gallery.
 ---
 Sydney’s newest immersive escape room.
 
