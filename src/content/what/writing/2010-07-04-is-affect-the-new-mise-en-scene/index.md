@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Is Affect The New Mise-En-Scene?
 date: '2010-07-04 17:00:00 +1000'
 tags: []

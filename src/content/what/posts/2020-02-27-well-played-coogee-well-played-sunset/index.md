@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Well played, Coogee."
 date: '2020-02-27 03:23:00 +1000'
 tags:

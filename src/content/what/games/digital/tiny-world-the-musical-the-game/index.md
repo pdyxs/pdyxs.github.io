@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Tiny World, the Musical, the Game
 description: >-
   A Ludum Dare prototype exploring interactive fiction and a custom game

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 3P Learning
 priority: 201502
 image: intoscience.png

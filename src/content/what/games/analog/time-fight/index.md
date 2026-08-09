@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Time Fight
 description: >-
   A board game where players' turns move through time in different

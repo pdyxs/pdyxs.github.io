@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Ensuring your project has depth: the Triple Threat test'
 date: '2013-05-08 17:00:00 +1000'
 tags:

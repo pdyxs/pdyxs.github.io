@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Taghazout, in profile"
 date: '2017-09-06 09:41:00 +1000'
 tags: []

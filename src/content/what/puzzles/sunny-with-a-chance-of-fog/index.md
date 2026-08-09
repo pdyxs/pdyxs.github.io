@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Sunny, with a Chance of Fog
 date: 2025-03-23
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000MJC

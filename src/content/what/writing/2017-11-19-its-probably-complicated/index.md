@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'It’s probably complicated: Visualising the states of a quantum computer'
 date: '2017-11-06 17:00:00 +0100'
 tags:

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Blood and Stakes
 date: '2011-02-18 17:00:00 +1000'
 tags: []

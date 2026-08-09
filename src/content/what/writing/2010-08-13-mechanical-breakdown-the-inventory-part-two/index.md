@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Mechanical Breakdown: The Inventory (Part 2)'
 date: '2010-08-13 17:00:00 +1000'
 image: 18j38dsj7ymsbjpg.jpg

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Having a Budget
 date: '2019-03-11 13:00:00 -0500'
 tags:

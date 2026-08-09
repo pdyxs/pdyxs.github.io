@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Views from \"The Devil's Noise\", the most \"Oh God why would you try to…"
 date: '2019-02-07 09:18:00 +1000'
 tags: []

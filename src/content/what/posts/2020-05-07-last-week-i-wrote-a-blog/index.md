@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Last week, I wrote a blog post about how shelving can be a mentally…"
 date: '2020-05-07 18:33:00 +1000'
 tags:

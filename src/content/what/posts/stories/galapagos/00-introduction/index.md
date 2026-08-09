@@ -1,4 +1,5 @@
 ---
+inspected: false
 image: social.png
 title: The Galapagos Islands
 date: '2019-07-04 04:00:00 +1000'

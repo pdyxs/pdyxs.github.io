@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Virtual Farm
 description: An interactive exhibit for a science museum about farming
 image: farm-1.jpg

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Whispers in the Mist
 date: 2025-02-02
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LUE

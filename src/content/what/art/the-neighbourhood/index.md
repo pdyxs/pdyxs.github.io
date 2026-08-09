@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: The Neighbourhood
 description: >-
   An artwork about stars and our place amongst them, generated from the 8912

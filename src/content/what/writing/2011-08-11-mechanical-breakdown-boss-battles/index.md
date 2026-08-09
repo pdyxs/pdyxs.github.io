@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Mechanical Breakdown: Boss Battles and other Climactic Events'
 date: '2011-08-11 17:00:00 +1000'
 canonical_url: >-

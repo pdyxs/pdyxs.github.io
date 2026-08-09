@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Leaving from the actual bond villain lair where the ridiculous…"
 date: '2019-09-13 10:05:00 +1000'
 tags:

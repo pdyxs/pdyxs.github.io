@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: How many players should you playtest with?
 date: '2011-06-18 17:00:00 +1000'
 canonical_url: >-

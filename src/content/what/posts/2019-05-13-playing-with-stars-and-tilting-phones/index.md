@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Playing with stars and tilting phones #dataart #interactiveart…"
 date: '2019-05-13 23:43:00 +1000'
 tags:

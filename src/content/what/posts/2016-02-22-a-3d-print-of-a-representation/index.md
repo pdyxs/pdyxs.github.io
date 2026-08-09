@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "A 3d print of a representation of stars within 10 parsecs of the sun…"
 date: '2016-02-22 15:50:00 +1000'
 tags:

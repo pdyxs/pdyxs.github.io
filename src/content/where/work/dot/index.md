@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Dot
 image: dot.png
 imgSize: cover

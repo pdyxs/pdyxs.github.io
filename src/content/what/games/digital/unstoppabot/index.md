@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Unstoppabot
 description: >-
   A hybrid of an infinitely running bot and a puzzle game, complemented with

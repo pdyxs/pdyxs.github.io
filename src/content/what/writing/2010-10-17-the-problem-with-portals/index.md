@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: The Problem With Portals
 date: '2010-10-17 17:00:00 +1000'
 tags: []

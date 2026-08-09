@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: The Path
 description: >-
   An artwork about life and the paths it ventured down, generated from the Open

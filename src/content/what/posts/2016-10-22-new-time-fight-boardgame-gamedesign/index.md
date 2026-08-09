@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "New time fight #boardgame #gamedesign"
 date: '2016-10-22 03:15:00 +1000'
 tags:

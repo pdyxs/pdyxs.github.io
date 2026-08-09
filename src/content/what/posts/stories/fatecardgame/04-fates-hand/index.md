@@ -1,4 +1,5 @@
 ---
+inspected: false
 image: original.png
 title: Fate's Hand
 series: fatecardgame

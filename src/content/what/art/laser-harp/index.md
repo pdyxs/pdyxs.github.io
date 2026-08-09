@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: The Laser Harp
 description: An interactive artwork celebrating the International Year of Light
 images:

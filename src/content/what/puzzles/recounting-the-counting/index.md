@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Recounting the Counting
 date: 2025-01-14
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LL7

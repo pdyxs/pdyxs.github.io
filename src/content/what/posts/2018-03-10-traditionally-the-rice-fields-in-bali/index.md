@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Traditionally, the rice fields in Bali are owned and run by…"
 date: '2018-03-10 00:26:00 +1000'
 tags: []

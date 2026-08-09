@@ -1,4 +1,5 @@
 ---
+inspected: false
 image: image.png
 title: Glaciers
 series: arctic

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Plans of a Medic
 date: 2025-01-16
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LMU

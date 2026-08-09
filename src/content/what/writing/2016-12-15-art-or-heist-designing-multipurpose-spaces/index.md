@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Art or Heist? Designing Multi-Purpose spaces
 date: '2016-12-15 17:00:00 +1000'
 tags:

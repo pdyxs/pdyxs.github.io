@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Particulars
 description: >-
   A minimalist meditation on the chaos of life, the universe and sub-atomic

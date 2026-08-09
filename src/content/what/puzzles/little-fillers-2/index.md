@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Little Fillers 2
 date: 2025-01-27
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LS4

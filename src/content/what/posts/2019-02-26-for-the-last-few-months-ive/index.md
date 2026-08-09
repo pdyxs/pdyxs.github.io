@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "For the last few months, I’ve been using a super simple app that I…"
 date: '2019-02-26 13:39:00 +1000'
 tags:

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: dot-hunt
 description: >-
   A digital alternate-reality scavenger-hunt game, starting with a San

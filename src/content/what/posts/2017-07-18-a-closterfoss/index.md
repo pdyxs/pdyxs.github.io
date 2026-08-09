@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "A closterfoss"
 date: '2017-07-18 02:47:00 +1000'
 tags: []

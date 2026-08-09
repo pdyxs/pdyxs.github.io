@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "I think the thing that's struck me the most during #MIGW17 is how…"
 date: '2017-10-27 01:26:00 +1000'
 tags:

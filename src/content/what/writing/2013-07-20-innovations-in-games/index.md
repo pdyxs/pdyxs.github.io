@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Innovations in Games: My Thoughts'
 date: '2013-07-20 17:00:00 +1000'
 image: >-

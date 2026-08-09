@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "When I headed into the desert proper, I was struck by (apart from how…"
 date: '2017-10-02 06:16:00 +1000'
 tags: []

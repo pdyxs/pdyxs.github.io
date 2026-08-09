@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Playtesting 102: Who and where'
 date: '2011-07-19 17:00:00 +1000'
 canonical_url: >-

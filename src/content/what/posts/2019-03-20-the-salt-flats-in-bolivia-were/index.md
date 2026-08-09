@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "The salt flats in Bolivia were breathtaking, going on forever in a…"
 date: '2019-03-20 13:01:00 +1000'
 tags:

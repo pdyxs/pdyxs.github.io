@@ -13,6 +13,7 @@ date: <% tp.date.now("YYYY-MM-DD") %>
 tags: []
 # Optional fields for this folder — uncomment the ones you need.
 # description:    # string
+# inspected:      # true | false
 # image:          # string
 # url:            # url
 # sudokupad_url:  # url

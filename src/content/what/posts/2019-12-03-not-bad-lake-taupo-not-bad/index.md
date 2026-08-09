@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Not bad, lake Taupo."
 date: '2019-12-03 13:40:00 +1000'
 tags:

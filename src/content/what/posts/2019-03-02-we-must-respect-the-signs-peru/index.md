@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "We must respect the signs..."
 date: '2019-03-02 17:00:00 +1000'
 tags:

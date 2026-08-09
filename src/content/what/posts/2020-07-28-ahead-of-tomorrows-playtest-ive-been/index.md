@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Ahead of tomorrow’s playtest, I’ve been working on making the Island…"
 date: '2020-07-28 01:03:00 +1000'
 tags:

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Making it together: Parallel Implementation'
 date: '2011-11-27 17:00:00 +1000'
 tags:

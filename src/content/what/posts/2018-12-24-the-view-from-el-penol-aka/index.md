@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "The view from El Penol (aka the big rock) near Guatape, Colombia."
 date: '2018-12-24 09:16:00 +1000'
 tags:

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: The Grid of Forking Paths
 date: 2025-01-02
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LE5

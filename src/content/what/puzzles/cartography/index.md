@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Cartography
 date: 2025-01-26
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LRL

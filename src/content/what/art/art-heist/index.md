@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Art Heist
 description: >-
   An interactive theatre experience where teams of four develop and execute a

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Flatland: Fallen Angle'
 description: A neo-noir adventure set in a two-dimensional world
 images:

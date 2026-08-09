@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Wrecking The Curve: An Analysis Of The Teach/Tell Connundrum'
 date: '2010-12-21 17:00:00 +1000'
 tags: []

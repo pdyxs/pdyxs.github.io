@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Postmortem: “The Enemy Of My Enemy Is My Heat-Seeking Missile”'
 date: '2010-08-26 17:00:00 +1000'
 image: IMG_0088.jpg

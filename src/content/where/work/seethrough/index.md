@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: SeeThrough Studios
 priority: 201201
 image: seethroughstudios.png

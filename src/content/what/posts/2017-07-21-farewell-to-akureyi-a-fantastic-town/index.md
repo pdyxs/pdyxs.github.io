@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Farewell to Akureyi, a fantastic town with love in its traffic lights"
 date: '2017-07-21 12:05:00 +1000'
 tags: []

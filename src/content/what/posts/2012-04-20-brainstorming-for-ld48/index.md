@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Brainstorming for #ld48"
 date: '2012-04-20 19:25:00 +1000'
 tags:

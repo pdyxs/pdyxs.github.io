@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Data that listens
 date: '2016-11-19 17:00:00 +1000'
 description: Why we need more responsive data visualisations

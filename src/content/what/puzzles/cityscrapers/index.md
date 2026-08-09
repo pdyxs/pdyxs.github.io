@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Cityscrapers
 date: 2025-03-16
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000MFZ

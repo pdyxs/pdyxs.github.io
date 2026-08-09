@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Today's work station"
 date: '2017-12-12 22:39:00 +1000'
 tags: []

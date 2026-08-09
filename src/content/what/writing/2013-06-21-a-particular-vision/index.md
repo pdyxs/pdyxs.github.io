@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'A Particular Vision: What I want Particulars (and all our games) to do'
 date: '2013-06-21 17:00:00 +1000'
 tags:

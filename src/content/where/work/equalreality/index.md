@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Equal Reality
 priority: 201810
 image: mixedreality.png

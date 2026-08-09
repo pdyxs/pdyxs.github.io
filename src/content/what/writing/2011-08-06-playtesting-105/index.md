@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Playtesting 105: How to Measure Qualitatively'
 date: '2011-08-06 17:00:00 +1000'
 canonical_url: >-

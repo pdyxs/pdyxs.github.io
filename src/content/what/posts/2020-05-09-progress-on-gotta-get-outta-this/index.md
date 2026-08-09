@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Progress on 'Gotta Get Outta This Space' - prototype complete!"
 date: '2020-05-09 17:36:00 +1000'
 tags:

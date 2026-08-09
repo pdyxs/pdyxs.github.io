@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Today I mocked up an app that would let me own a generic set of…"
 date: '2018-02-09 04:33:00 +1000'
 tags:

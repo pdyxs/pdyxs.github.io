@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Early level design for ludum dare (a 48 hour game making competition)."
 date: '2020-04-18 03:32:00 +1000'
 tags:

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Some Things Fogn
 date: 2025-02-08
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LXM

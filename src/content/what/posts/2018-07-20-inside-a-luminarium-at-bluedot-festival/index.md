@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Inside a Luminarium at #bluedot festival."
 date: '2018-07-20 23:34:00 +1000'
 tags:

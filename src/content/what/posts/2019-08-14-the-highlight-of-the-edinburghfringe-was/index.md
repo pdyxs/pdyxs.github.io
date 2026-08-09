@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "The highlight of the #edinburghfringe was probably the game of…"
 date: '2019-08-14 08:32:00 +1000'
 tags:

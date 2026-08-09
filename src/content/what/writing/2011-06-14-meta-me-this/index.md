@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Meta-me-this: Are the best games about games?'
 date: '2011-06-14 17:00:00 +1000'
 canonical_url: >-

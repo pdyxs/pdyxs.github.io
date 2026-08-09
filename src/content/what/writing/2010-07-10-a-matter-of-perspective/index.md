@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: A Matter Of Perspective
 date: '2010-07-10 17:00:00 +1000'
 tags: []

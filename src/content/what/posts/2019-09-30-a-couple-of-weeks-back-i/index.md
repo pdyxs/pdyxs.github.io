@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "A couple of weeks back, I went to Switzerland to take part in…"
 date: '2019-09-30 13:27:00 +1000'
 tags:

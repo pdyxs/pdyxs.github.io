@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "I've always found it strange that personality traits in games almost…"
 date: '2019-06-18 13:45:00 +1000'
 tags:

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Send me something
 status: draft
 ---

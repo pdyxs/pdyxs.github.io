@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "This is the journey so far for the rules, art and layout for one of…"
 date: '2020-07-25 22:34:00 +1000'
 tags:

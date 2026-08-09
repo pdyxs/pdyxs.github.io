@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'The SeeThrough Diaries: The Hour Of Pain'
 date: '2012-02-17 17:00:00 +1000'
 tags:

@@ -1,4 +1,5 @@
 ---
+inspected: false
 image: image.png
 title: Polar Bear Encounter
 date: '2018-08-06 15:00:00 +1000'

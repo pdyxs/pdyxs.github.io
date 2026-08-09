@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "This is Green School - it’s a school here in Bali which was founded…"
 date: '2018-03-04 18:33:00 +1000'
 tags: []

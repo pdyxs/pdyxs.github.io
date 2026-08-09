@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: A Murder Most Fogged
 date: 2025-01-24
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LQI

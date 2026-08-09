@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Recounting the Rooms
 date: 2025-02-14
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000M09

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "My artwork, in a museum!"
 date: '2016-06-09 01:42:00 +1000'
 tags:

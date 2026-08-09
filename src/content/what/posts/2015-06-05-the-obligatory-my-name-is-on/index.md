@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "The obligatory 'my name is on a plinth' picture #canicallitanobelix?"
 date: '2015-06-05 00:45:00 +1000'
 tags:

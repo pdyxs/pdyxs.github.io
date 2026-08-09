@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Fate's Role
 video: true
 series: fatecardgame

@@ -1,4 +1,5 @@
 ---
+inspected: false
 image: original.png
 title: Art
 series: fatecardgame

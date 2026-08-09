@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "My morning commute here in Wellington"
 date: '2019-10-05 15:05:00 +1000'
 tags:

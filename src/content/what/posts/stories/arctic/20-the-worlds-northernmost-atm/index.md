@@ -1,4 +1,5 @@
 ---
+inspected: false
 image: image.png
 title: The World's Northernmost ATM
 date: '2018-08-24 04:00:00 +1000'

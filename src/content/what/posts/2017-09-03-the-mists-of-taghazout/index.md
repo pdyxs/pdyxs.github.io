@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "The mists of Taghazout"
 date: '2017-09-03 10:42:00 +1000'
 tags: []

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: This is how you learn the Time War
 date: 2025-02-26
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000M6F

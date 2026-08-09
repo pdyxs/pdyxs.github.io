@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Commonality
 date: 2024-12-16
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000L5D

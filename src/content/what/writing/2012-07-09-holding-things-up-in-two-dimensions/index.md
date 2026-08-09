@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Holding things up in two dimensions: The Pillars of Flatland'
 date: '2012-07-09 17:00:00 +1000'
 tags:

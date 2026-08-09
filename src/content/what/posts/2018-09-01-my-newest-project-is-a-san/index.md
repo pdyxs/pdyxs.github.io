@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "My newest project is a San Francisco-based scavenger hunt-esque game."
 date: '2018-09-01 06:34:00 +1000'
 tags:

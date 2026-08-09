@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Finally got around to printing clearer island cards for #fatecardgame"
 date: '2019-10-18 20:37:00 +1000'
 tags:

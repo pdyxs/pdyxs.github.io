@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Genetic Sequences
 description: An exploration of the structures of genetic sequences
 tags:

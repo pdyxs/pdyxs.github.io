@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Mechanical Breakdown: The Inventory (Part 1)'
 date: '2010-06-27 17:00:00 +1000'
 tags: []

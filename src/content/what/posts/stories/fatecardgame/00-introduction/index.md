@@ -1,4 +1,5 @@
 ---
+inspected: false
 image: original.png
 title: In Fate's Hands
 icon: info-circle

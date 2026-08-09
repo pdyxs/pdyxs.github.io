@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Gotta Get Outta This Space
 date: 2020-07-01
 description: >-

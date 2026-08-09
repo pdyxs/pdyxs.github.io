@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Just got this lovely little case and screen for my raspberry pi."
 date: '2020-07-21 03:54:00 +1000'
 tags: []

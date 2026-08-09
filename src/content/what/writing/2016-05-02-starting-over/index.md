@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Starting Over
 date: '2016-05-02 17:00:00 +1000'
 description: Musings about starting again after a long break

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Inspiration and emulation – the drive to create
 date: '2014-05-08 17:00:00 +1000'
 tags:

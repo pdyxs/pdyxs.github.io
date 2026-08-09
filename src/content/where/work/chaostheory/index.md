@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: Chaos Theory Games
 priority: 202011
 image: chaostheory.png

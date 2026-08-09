@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Brighton ruins - maybe an old pier?"
 date: '2017-06-01 02:42:00 +1000'
 tags: []

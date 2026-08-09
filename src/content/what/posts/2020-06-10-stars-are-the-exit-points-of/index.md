@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Stars are the exit points of Gotta Get Outta This Space - you can use…"
 date: '2020-06-10 14:20:00 +1000'
 tags:

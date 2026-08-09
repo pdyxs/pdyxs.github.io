@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "A quick wip update on ‘The Neighbourhood’ project (watch the second…"
 date: '2019-06-03 22:58:00 +1000'
 tags:

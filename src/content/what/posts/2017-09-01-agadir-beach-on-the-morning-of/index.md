@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: "Agadir beach on the morning of Eid al-Adha"
 date: '2017-09-01 00:57:00 +1000'
 tags: []

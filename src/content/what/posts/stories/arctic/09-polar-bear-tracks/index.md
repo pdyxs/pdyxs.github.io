@@ -1,4 +1,5 @@
 ---
+inspected: false
 image: image.png
 title: Polar Bear Tracks
 date: '2018-08-05 15:00:00 +1000'

@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'QByte Devlog - v0.1: The Simulator Lives!'
 date: '2017-09-19 17:00:00 +0100'
 tags:

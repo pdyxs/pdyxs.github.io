@@ -1,4 +1,5 @@
 ---
+inspected: false
 title: 'Edinburgh Reactions: Whist'
 date: '2017-08-12 17:00:00 +0100'
 description: A reaction to an interactive theatre piece I saw in Edinburgh

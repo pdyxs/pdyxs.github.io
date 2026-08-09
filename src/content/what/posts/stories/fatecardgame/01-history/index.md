@@ -1,4 +1,5 @@
 ---
+inspected: false
 image: original.jpg
 title: Where it’s from
 series: fatecardgame
