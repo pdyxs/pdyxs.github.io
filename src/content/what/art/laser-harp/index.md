@@ -3,7 +3,7 @@ inspected: false
 title: The Laser Harp
 description: An interactive artwork celebrating the International Year of Light
 images:
-  - overview_trees
+  - overview_trees.jpg
 image: crowd.jpg
 feature: crowd
 tags:

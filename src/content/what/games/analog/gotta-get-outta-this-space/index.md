@@ -13,9 +13,9 @@ actions:
 image: frontpage.jpg
 feature: frontpage
 images:
-  - frontpage
-  - howtoplay
-  - whatthingsare
+  - frontpage.jpg
+  - howtoplay.jpg
+  - whatthingsare.jpg
 medium: Hybrid digital/physical board game
 quotes: []
 meta:

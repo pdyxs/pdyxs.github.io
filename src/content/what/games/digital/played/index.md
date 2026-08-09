@@ -6,14 +6,15 @@ image: cover.jpeg
 tags:
   - education
   - when/released
+  - where/work/chaostheory
 date: 2022-01-01
 actions:
   - text: Read the case study
-    url: 'https://www.chaostheorygames.com/work/played'
+    url: https://www.chaostheorygames.com/work/played
   - text: Product Website
-    url: 'https://www.played.com.au/'
+    url: https://www.played.com.au/
 images:
-  - 'https://www.youtube.com/embed/PyyA5uSamhM'
+  - https://www.youtube.com/embed/PyyA5uSamhM
 medium: Web Platform
 quotes: []
 meta:

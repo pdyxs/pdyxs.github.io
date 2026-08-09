@@ -9,7 +9,7 @@ date: 2017-05-01
 location: australia/sydney
 images:
   - trailer.mp4
-  - outside
+  - outside.jpg
 image: outside.jpg
 actions:
   - text: Website

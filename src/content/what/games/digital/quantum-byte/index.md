@@ -16,10 +16,10 @@ actions:
     url: 'https://medium.com/series/283d69ca9f7b'
 images:
   - 'https://medium.com/series/283d69ca9f7b'
-  - gameplay
-  - dating
-  - entangled-drinks
-  - beer
+  - gameplay.jpg
+  - dating.jpg
+  - entangled-drinks.jpg
+  - beer.jpg
 medium: Video Game
 quotes: []
 meta:

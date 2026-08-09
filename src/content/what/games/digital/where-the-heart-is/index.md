@@ -7,7 +7,7 @@ tags:
   - game-jam
 date: 2019-01-26
 images:
-  - wheretheheartis
+  - wheretheheartis.jpg
 image: wheretheheartis.jpg
 feature: wheretheheartis
 actions:

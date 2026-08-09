@@ -8,7 +8,7 @@ tags:
 date: 2019-09-14
 image: qiskigram_header_full.jpg
 images:
-  - qiskigram_header_full
+  - qiskigram_header_full.jpg
   - 'https://www.youtube.com/embed/HS1Xem613Rw'
   - 'https://www.youtube.com/embed/xVTsdk7Hdbc'
 actions:

@@ -1,11 +1,12 @@
 ---
-inspected: false
+inspected: true
 title: "Numbeanies: Number Forest"
 description: An augmented reality app to help children learn numeracy using physical cards and adorable numbeanies
 image: cover.jpg
 tags:
   - education
   - when/released
+  - where/work/3p
 date: 2018-04-01
 actions:
   - text: Get on the iOS App Store

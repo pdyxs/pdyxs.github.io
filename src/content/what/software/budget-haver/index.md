@@ -8,7 +8,7 @@ tags:
   - when/shelved
   - development
 images:
-  - icon
+  - icon.jpg
 image: icon.jpg
 feature: icon
 blogtag: budgethaver

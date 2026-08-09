@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Particulars
 description: A minimalist meditation on the chaos of life, the universe and sub-atomic particle physics
 image: 5-1b.jpg
@@ -7,6 +7,7 @@ feature: 5-1b
 tags:
   - science
   - when/released
+  - where/work/seethrough
 date: 2014-09-01
 actions:
   - text: Download on Steam
@@ -27,26 +28,24 @@ quotes:
 images:
   - https://www.youtube.com/embed/ILsgP2vX6Po
   - https://www.youtube.com/embed/S7Oo97kO3rc
-  - comic-d
-  - 1-6b
-  - 1-10b
-  - 1-12b
-  - comic-b
-  - 2-12c
-  - 2-7b
-  - 2-9a
-  - comic-a
-  - 3-10b
-  - 3-3d
-  - 4-11b
-  - comic-c
-  - 4-8a
-  - 5-1b
-  - 5-5b
-  - comic-e
-portfolio: https://www.youtube.com/embed/S7Oo97kO3rc
+  - comic-d.jpg
+  - 1-6b.jpg
+  - 1-10b.jpg
+  - 1-12b.jpg
+  - comic-b.jpg
+  - 2-12c.jpg
+  - 2-7b.jpg
+  - 2-9a.jpg
+  - comic-a.jpg
+  - 3-10b.jpg
+  - 3-3d.jpg
+  - 4-11b.jpg
+  - comic-c.jpg
+  - 4-8a.jpg
+  - 5-1b.jpg
+  - 5-5b.jpg
+  - comic-e.jpg
 medium: Video Game
-cvDescription: Particulars is a video game based on the mechanics of high-energy physics, allowing players to viscerally experience the fundamental particles and forces that make up our universe. I'm particularly proud of the way that the game presents information about the particles, densely packing a large amount of information into a small space while highlighting what's important to the player.
 meta:
   - label: Topic
     values:
@@ -76,6 +75,6 @@ meta:
       - Winner, Sydney Indie Showcase, iFest 2013
       - Finalist, Best Audio Design, Australian Game Development Awards, 2013
 ---
-Particulars is a game based on the science of sub-atomic [[Sub-atomic Particle Physics]]. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
+Particulars is a game based on the science of sub-atomic particle Physics. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
 
 The game follows the story of a young physicist Alison, as she navigates the forces affecting her life.
