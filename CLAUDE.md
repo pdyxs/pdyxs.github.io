@@ -166,22 +166,22 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 
 The palette is **two colours**: ink (`--color-text`) and paper (`--color-bg`), pure black and pure white, swapped by `data-theme`. Everything greyscale derives from those two — `--color-surface`, `--color-border-light` and `--color-text-muted` are aliases, and every other tone is a `--dither-N` level built from the same two colours. There is no grey. De-emphasis is expressed by size and weight, never by a faded value; **an `opacity` used to soften a colour is a bug**, because it renders as the grey the palette doesn't have.
 
-### A dither can only go on a surface that doesn't move
+### The dither is one fixed, viewport-anchored grid — never give it a transformed ancestor
 
-Every `--dither-N` is a stack of `radial-gradient(circle at 0.5px 0.5px, … 0.564px, #0000 0.584px) 0 0/4px 4px` layers — sub-pixel dots in 1px cells — and `background-position` is anchored to **the element's own box**. `gen-dither.mjs` picked `TILE = 4` precisely so those cells land on the device pixel grid (`// 4px/4 = 1px cells, pixel-aligned (5px's 1.25px cells alias)`).
+Every `--dither-N` is a stack of `radial-gradient(circle at 0.5px 0.5px, … 0.564px, #0000 0.584px) 0 0/4px 4px **fixed**` layers — sub-pixel dots in 1px cells. `gen-dither.mjs` picked `TILE = 4` so those cells land on the device pixel grid (`// 4px/4 = 1px cells, pixel-aligned`), and `fixed` anchors the grid to the **viewport** rather than to each element's own box.
 
-Move a dithered element and its pattern moves with it: each frame the dots are re-rasterised at a new sub-pixel phase, every dot lands differently on the grid, and the surface visibly shimmers. So:
+That makes the dither a single global dot screen; a dithered element just clips its window onto it. Elements can therefore scroll, animate, resize or slide freely — the pattern never moves, so it is never re-rasterised at a new sub-pixel phase. (Element-anchored, it was: any movement made the 0.564px dots land differently on the pixel grid every frame and the surface visibly shimmered.)
 
-**Never animate the position or size of an element carrying a `--dither-N` background.** If a moving thing needs an intermediate tone, paint the dither on a *static* element and move a `clip-path` (or mask) over it instead. `CardStrip.svelte`'s scrollbar thumb is the worked example: the thumb element spans the whole track and never moves; only its `clip-path` inset changes.
+**`fixed` must stay inside the token.** Consumers write `background: var(--dither-N)`, and the `background` shorthand *resets* `background-attachment` — a separate longhand would have to follow the shorthand at all ~49 call sites and would be forgotten. Add it in `dot()` in `gen-dither.mjs`, nowhere else.
 
-This has no workaround via a flat colour — the palette has no greys to fall back on, which is exactly why the rule matters.
+**The trap:** a `transform`, `filter`, `backdrop-filter`, `will-change: transform`, `contain: paint` or `perspective` on any **ancestor** of a dithered element creates a containing block for fixed backgrounds. The grid silently re-anchors to that ancestor and the shimmer comes back, with no error and no obvious cause. Before adding any of those to a container (a drag interaction, a parallax, a compositing hint), check whether anything inside it carries a dither.
 
-Two known-safe cases, for reference:
+Two consequences worth knowing:
 
-- **Card stack positioning** sets `top`/`left` from `--stack-index` with no `transition`, so cards jump rather than slide. Adding a transition there would put every collapsed card's `--dither-2` header into the failure mode above.
-- **View Transitions** (`panel-card-open`/`close`) snapshot the element to a bitmap and transform *that*, so a dithered header scales as an image rather than re-rasterising. It can look soft mid-morph; it does not shimmer.
+- **All levels share one grid**, so adjacent surfaces at different levels line up dot-for-dot.
+- **View Transitions** are unaffected either way: they snapshot the element to a bitmap and transform *that*, so a dithered header scales as an image. It can look soft mid-morph; it does not shimmer.
 
-One open instance: `.body-wrapper`'s `transition: grid-template-rows 300ms` animates a card's height, which on mobile (where `#card-stack` is a vertical flex column) slides the following cards' dithered headers for those 300ms. Desktop is unaffected — cards are positioned absolutely there.
+`background-attachment: fixed` is a known scroll-performance cost (the background repaints rather than being translated by the compositor) and is unreliable on iOS Safari, where it may degrade to `scroll`. Treat the no-shimmer guarantee as solid on desktop and best-effort on iOS.
 
 ### Code blocks are monochrome, and an untagged fence wraps
 

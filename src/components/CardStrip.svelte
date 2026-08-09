@@ -171,15 +171,10 @@
         {#each dots as dot, i (i)}
           <span class="card-strip-dot" style:left="{dot.leftPct}%"></span>
         {/each}
-        <!-- The thumb spans the whole track and is revealed by a moving clip,
-             rather than being a small box that moves. A dithered surface is
-             built from sub-pixel radial-gradient dots anchored to its own box
-             (see gen-dither.mjs), so moving the box re-rasterises the pattern at
-             a new sub-pixel phase every frame and it visibly shimmers. Clipping
-             leaves the pattern pinned to the static track. -->
         <span
           class="card-strip-thumb"
-          style:clip-path="inset(0 {100 - thumb.leftPct - thumb.widthPct}% 0 {thumb.leftPct}%)"
+          style:left="{thumb.leftPct}%"
+          style:width="{thumb.widthPct}%"
         ></span>
       </div>
 
@@ -305,12 +300,14 @@
     z-index: 1;
   }
 
-  /* Spans the whole track; `clip-path` (set inline) is what makes only the
-     thumb's slice visible. Position must stay fixed — see the template comment:
-     a moving dithered box shimmers, a clipped static one does not. */
+  /* An ordinary moving box. It carries a dither and moves every frame while
+     scrolling, which is exactly the case that used to shimmer — the dot grid is
+     viewport-anchored now (background-attachment: fixed, see gen-dither.mjs), so
+     the pattern stays put and only this element's window onto it moves. */
   .card-strip-thumb {
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
     /* A few steps down from solid ink (L16): the thumb is a passive indicator,
        not a selected control, so it shouldn't wear the full selected fill. It
        still reads as a solid block against the bare track and keeps enough
