@@ -2,9 +2,9 @@
 // Source: the retired Jekyll site on the `master` branch (_config.yml + collections/),
 // resolved against src/content by src/lib/redirect-map.ts. Regenerated on predev/prebuild.
 //
-// 123 old URLs: 120 resolved to a card, 3 fell back to a lens.
+// 123 old URLs: 119 resolved to a card, 4 fell back to a lens.
 //   arctic: 21/22 resolved
-//   currentprojects: 1/1 resolved
+//   currentprojects: 0/1 resolved
 //   fatecardgame: 6/6 resolved
 //   futureprojects: 3/3 resolved
 //   galapagos: 6/6 resolved
@@ -116,7 +116,7 @@ export const REDIRECTS: Record<string, string> = {
   "/what/projects/bravehearts": "/card/what/games/digital/bravehearts",
   "/what/projects/budget-haver": "/card/what/software/budget-haver",
   "/what/projects/cybersecurity": "/card/what/games/digital/cybersecurity",
-  "/what/projects/fatecardgame": "/card/what/games/analog/fatecardgame",
+  "/what/projects/fatecardgame": "/lens/newest",
   "/what/projects/flatland-fallen-angle": "/card/what/games/digital/flatland-fallen-angle",
   "/what/projects/genetic-sequences": "/card/what/art/genetic-sequences",
   "/what/projects/gottagetouttathisspace": "/card/what/games/analog/gotta-get-outta-this-space",
@@ -152,6 +152,7 @@ export const REDIRECTS: Record<string, string> = {
  */
 export const UNRESOLVED_OLD_URLS: readonly { from: string; to: string; reason: string }[] = [
   { from: "/arctic/0-1-map", to: "/card/what/posts/stories/arctic/00-introduction", reason: "no match for slug \"0-1-map\"; sent to the start of the \"arctic\" story" },
+  { from: "/what/projects/fatecardgame", to: "/lens/newest", reason: "no match for slug \"fatecardgame\"" },
   { from: "/who", to: "/", reason: "no such card: who/about-me" },
   { from: "/cv", to: "/", reason: "no such card: who/about-me" },
 ];
