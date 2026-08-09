@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Art Heist
 description: Make a plan. Steal a painting. Don't get caught.
 tags:
@@ -11,7 +11,6 @@ images:
   - trailer.mp4
   - outside
 image: outside.jpg
-portfolio: https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FJetpackTheatre%2Fvideos%2F1038102896289787%2F&show_text=0
 actions:
   - text: Website
     url: https://www.jetpacktheatre.com/art-heist/
@@ -26,7 +25,6 @@ quotes:
       text: Escape Me
       url: https://escapeme.net/2017/07/09/jetpack-theatre-art-heist/#more-276
 medium: Escape Room/Interactive Theatre
-cvDescription: Art Heist is an interactive theatre experience where teams of four develop and execute a daring plan to steal a painting from an art gallery.
 meta:
   - label: Developed By
     values:
