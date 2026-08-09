@@ -1,11 +1,9 @@
 ---
 inspected: false
 title: Time Fight
-description: >-
-  A board game where players' turns move through time in different
-  directions, colliding and colluding with their own past and future moves
+description: A board game where players' turns move through time in different directions, colliding and colluding with their own past and future moves
 tags:
-  - when/released
+  - when/shelved
 date: 2013-02-16
 medium: Board Game
 actions: []
