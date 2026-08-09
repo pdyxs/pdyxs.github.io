@@ -3,7 +3,7 @@
   "fileClassQueries": [],
   "displayFieldsInContextMenu": true,
   "globallyIgnoredFields": [],
-  "classFilesPath": null,
+  "classFilesPath": ".obsidian/fileClass/",
   "isAutosuggestEnabled": true,
   "fileClassAlias": "fileClass",
   "settingsVersion": "5.0",
