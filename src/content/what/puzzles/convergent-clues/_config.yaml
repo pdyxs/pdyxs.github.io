@@ -1,3 +1,6 @@
+# Panel section: the series sit above the generated Difficulty group when you
+# drill into Puzzles (order fixed by groupOrder in what/_config.yaml).
+group: Series
 navRenderer: series
 name: Convergent Clues
 description: >
