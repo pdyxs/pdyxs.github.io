@@ -1,15 +1,16 @@
 ---
-inspected: false
+inspected: true
 title: Virtual Farm
 description: An interactive exhibit for a science museum about farming
 image: farm-1.jpg
 tags:
   - education
   - when/released
+  - where/work/chaostheory
 date: 2022-10-01
 actions:
   - text: Read the case study
-    url: 'https://www.chaostheorygames.com/work/virtual-farm'
+    url: https://www.chaostheorygames.com/work/virtual-farm
 medium: Tabletop computer and iPad game
 quotes: []
 images: []
