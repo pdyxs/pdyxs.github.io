@@ -15,4 +15,4 @@ config:
   # Show only the leading cards — this is a "what's recent" lens, not the
   # whole archive. Applied after filtering, so it's the top 6 of whatever
   # the active filters leave. See limitCardsForBrowse in browse-helpers.ts.
-  limit: 6
+  limit: 100
