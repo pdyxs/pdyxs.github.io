@@ -9,8 +9,8 @@ tags:
 date: 2019-01-01
 image: dating.jpg
 actions:
-  - text: Follow the progress of the project
-    url: https://medium.com/series/283d69ca9f7b
+  - text: Use the simulator
+    url: https://qbyte.surge.sh
 images:
   - https://medium.com/series/283d69ca9f7b
   - gameplay.jpg

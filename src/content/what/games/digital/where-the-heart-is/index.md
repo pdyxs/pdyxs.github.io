@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Where the Heart Is
 description: A reflection on globalised life
 tags:
@@ -12,9 +12,9 @@ image: wheretheheartis.jpg
 feature: wheretheheartis
 actions:
   - text: Play it
-    url: 'https://wheretheheartis.surge.sh/'
+    url: https://wheretheheartis.surge.sh/
   - text: Read the Postmortem
-    url: 'https://medium.com/@pdyxs/deciding-where-the-heart-is-4484b5476fa1'
+    url: https://medium.com/@pdyxs/deciding-where-the-heart-is-4484b5476fa1
 medium: Interactive Art/Game
 quotes: []
 meta:

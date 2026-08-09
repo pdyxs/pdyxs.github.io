@@ -6,7 +6,9 @@ tags:
   - when/released
 date: 2018-10-15
 medium: Digital ARG
-actions: []
+actions:
+  - text: Play the prototype
+  - 
 quotes: []
 status: draft
 ---
