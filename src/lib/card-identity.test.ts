@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ownValueForCard, cardOwnValues, computeRelatedCardsIndex } from './card-identity';
+import { ownValueForCard, cardOwnValues, computeRelatedCardsIndex, computeSubjectCardsIndex } from './card-identity';
 import { fakeCardMeta } from '../test/fixtures';
 
 describe('ownValueForCard', () => {
@@ -51,5 +51,50 @@ describe('computeRelatedCardsIndex', () => {
     const index = computeRelatedCardsIndex(cards);
 
     expect(index.size).toBe(0);
+  });
+});
+
+describe('computeSubjectCardsIndex', () => {
+  it('finds the cards a card points at through its own card-backed tags', () => {
+    const project = fakeCardMeta({ uid: 'what/projects/foo', title: 'Foo' });
+    const post = fakeCardMeta({ uid: 'posts/bar', tags: ['what:projects/foo', 'what:puzzles'] });
+
+    const index = computeSubjectCardsIndex([project, post]);
+
+    // The plain category tag has no card behind it and is not a subject.
+    expect(index.get('posts/bar')).toEqual([project]);
+  });
+
+  it('is the mirror of computeRelatedCardsIndex', () => {
+    const project = fakeCardMeta({ uid: 'what/projects/foo' });
+    const post = fakeCardMeta({ uid: 'posts/bar', tags: ['what:projects/foo'] });
+    const cards = [project, post];
+
+    expect(computeSubjectCardsIndex(cards).get('posts/bar')).toEqual([project]);
+    expect(computeRelatedCardsIndex(cards).get('what/projects/foo')).toEqual([post]);
+  });
+
+  it('preserves authoring tag order so chips and previews agree', () => {
+    const a = fakeCardMeta({ uid: 'what/projects/a' });
+    const b = fakeCardMeta({ uid: 'what/projects/b' });
+    const post = fakeCardMeta({ uid: 'posts/p', tags: ['what:projects/b', 'what:projects/a'] });
+
+    expect(computeSubjectCardsIndex([a, b, post]).get('posts/p')).toEqual([b, a]);
+  });
+
+  it('excludes the card itself and de-duplicates repeated targets', () => {
+    const self = fakeCardMeta({ uid: 'what/projects/foo', tags: ['what:projects/foo'] });
+    const target = fakeCardMeta({ uid: 'what/projects/bar' });
+    const post = fakeCardMeta({ uid: 'posts/p', tags: ['what:projects/bar', 'what:projects/bar'] });
+
+    const index = computeSubjectCardsIndex([self, target, post]);
+
+    expect(index.get('what/projects/foo')).toBeUndefined();
+    expect(index.get('posts/p')).toEqual([target]);
+  });
+
+  it('returns no entries when no tag is card-backed', () => {
+    const cards = [fakeCardMeta({ uid: 'posts/bar', tags: ['what:puzzles'] })];
+    expect(computeSubjectCardsIndex(cards).size).toBe(0);
   });
 });

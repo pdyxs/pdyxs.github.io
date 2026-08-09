@@ -66,3 +66,37 @@ export function computeRelatedCardsIndex(cards: CardMeta[]): Map<string, CardMet
   }
   return index;
 }
+
+/**
+ * Forward index of card-backed tags — the mirror of
+ * `computeRelatedCardsIndex`: for every card, the cards its own tags point at
+ * (its subjects). Used for a "This is about" section, where the same
+ * card-backed tags that appear as chips are re-listed as card previews.
+ *
+ * The renderer can already *identify* these tags on its own (a tag is
+ * card-backed exactly when `displayFor(tag, tagDisplay).cardUid` is set), but
+ * a preview needs the target's CardMeta, which the display map doesn't carry —
+ * hence this index, built from the same pool the route already has.
+ */
+export function computeSubjectCardsIndex(cards: CardMeta[]): Map<string, CardMeta[]> {
+  const cardByOwnValue = new Map<string, CardMeta>();
+  for (const card of cards) {
+    const value = ownValueForCard(card.uid);
+    if (value && !cardByOwnValue.has(value)) cardByOwnValue.set(value, card);
+  }
+
+  const index = new Map<string, CardMeta[]>();
+  for (const card of cards) {
+    const subjects: CardMeta[] = [];
+    const seen = new Set<string>();
+    // Tag order is authoring order — keep it, so chips and previews agree.
+    for (const tag of card.tags) {
+      const subject = cardByOwnValue.get(tag);
+      if (!subject || subject.uid === card.uid || seen.has(subject.uid)) continue;
+      seen.add(subject.uid);
+      subjects.push(subject);
+    }
+    if (subjects.length > 0) index.set(card.uid, subjects);
+  }
+  return index;
+}

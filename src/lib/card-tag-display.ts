@@ -13,11 +13,29 @@
 
 import { FIVE_W_DIMENSIONS } from './five-w';
 import type { FiveWDimension } from './five-w';
+import { isDerivedWhenTag } from './when-tags';
 import { selectedValues } from '../dimensions';
 import type { FilterState } from '../dimensions';
 
 export type TagChip = { value: string; active: boolean };
 export type CardTagDisplay = { tags: TagChip[]; overflow: number };
+
+/**
+ * Tags that are never rendered as a chip, wherever a card is shown.
+ *
+ * Only the date-derived `when:<era>/<yyyy>/<mm>` tag qualifies. It displays as
+ * a bare humanised month ("June") with no year or era, which says less than the
+ * date every card already shows — and it costs a slot in the chip cap that a
+ * real tag would use. Everything else a card carries is kept: its folder
+ * category (`what:art`), its cascade and frontmatter tags (including authored
+ * `when:` markers like `when:released`), and its date-derived `where:` location.
+ *
+ * This is deliberately the ONE place the rule lives, so a card's chips are
+ * identical on its own masthead and in every listing.
+ */
+export function isChipHidden(tag: string): boolean {
+  return isDerivedWhenTag(tag);
+}
 
 /** The dimension a tag belongs to, or null for a dimensionless (colon-less) tag. */
 function dimensionOf(tag: string): FiveWDimension | null {
@@ -53,6 +71,7 @@ export function computeCardTagDisplay(
   const kept: TagChip[] = [];
 
   for (const tag of cardTags) {
+    if (isChipHidden(tag)) continue;
     const selected = selectedFor(tag, filter);
     if (selected.length === 1) {
       if (tag === selected[0]) continue; // redundant: on every result

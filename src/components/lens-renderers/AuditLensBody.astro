@@ -14,10 +14,10 @@
 // arctic story chapters) are missing from it, and it carries no bodies. The
 // audit reads the raw collection instead, so its counts cover everything.
 import { getCollection } from 'astro:content';
-import { getImage } from 'astro:assets';
 import { makeFileReader, resolveFolderCascade } from '../../lib/folder-config';
 import { getAllCards, resolveCardDescription, resolveCardTitle } from '../../lib/cards';
-import { isRemoteImageUrl, localAssetFilenames, resolveLocalImage } from '../../lib/images';
+import { localAssetFilenames } from '../../lib/images';
+import { serialiseBrowseCards } from '../../lib/browse-card';
 import { auditCards, auditedCardCount, type AuditCard } from '../../lib/audit';
 import type { BrowseCardData } from '../../lib/browse-helpers';
 import type { TagDisplay } from '../../lib/tag-display';
@@ -84,36 +84,11 @@ const previewUids = new Set(
 // audit pool is the whole content set, and getImage() over all of it would
 // cost far more than this dashboard is worth.
 const previewCards = new Map<string, BrowseCardData>(
-  await Promise.all(
-    (await getAllCards())
-      .filter(card => previewUids.has(card.uid))
-      .map(async card => {
-        const localImage = resolveLocalImage(card.uid, card.image);
-        let thumb: string | undefined;
-        let thumbSrcset: string | undefined;
-        if (localImage) {
-          const generated = await getImage({ src: localImage, widths: [360, 720], format: 'webp' });
-          thumb = generated.src;
-          thumbSrcset = generated.srcSet.attribute;
-        } else if (card.image && isRemoteImageUrl(card.image)) {
-          thumb = card.image;
-        }
-        return [
-          card.uid,
-          {
-            uid: card.uid,
-            title: card.title,
-            description: card.description,
-            date: card.date ?? null,
-            tags: card.tags,
-            renderer: card.renderer,
-            status: card.status,
-            thumb,
-            thumbSrcset,
-          },
-        ] as const;
-      }),
-  ),
+  (
+    await serialiseBrowseCards(
+      (await getAllCards()).filter(card => previewUids.has(card.uid)),
+    )
+  ).map(card => [card.uid, card] as const),
 );
 ---
 

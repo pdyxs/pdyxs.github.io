@@ -38,6 +38,26 @@ export function deriveWhenTag(date: Date, eras: WhenEra[]): string | null {
   return `when:${era}/${yyyy}/${mm}`;
 }
 
+// The shape deriveWhenTag emits: an era slug (no slashes) then a 4-digit year
+// and 2-digit month.
+const DERIVED_WHEN_TAG = /^when:[^/]+\/\d{4}\/\d{2}$/;
+
+/**
+ * Whether a tag was produced by this generator, as opposed to authored.
+ *
+ * The `when` dimension carries both: `when:released` is a hand-written
+ * lifecycle marker, `when:nomad/2017/06` is derived from the card's date. Only
+ * the derived one is suppressed as a chip (see isChipHidden in
+ * card-tag-display.ts) — it renders as a bare humanised month ("June"), which
+ * says less than the date the card already displays.
+ *
+ * The shape test lives here, beside the function that builds the tag, so the
+ * format is described in exactly one place.
+ */
+export function isDerivedWhenTag(tag: string): boolean {
+  return DERIVED_WHEN_TAG.test(tag);
+}
+
 /**
  * Every `when:<era>/<yyyy>/<mm>` leaf the generator could ever emit, from the
  * earliest era's start year through `currentYear` inclusive. This is a superset

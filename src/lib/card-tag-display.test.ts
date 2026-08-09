@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeCardTagDisplay } from './card-tag-display';
+import { computeCardTagDisplay, isChipHidden } from './card-tag-display';
 import type { FilterState } from '../dimensions';
 
 const noFilter: FilterState = { };
@@ -60,5 +60,55 @@ describe('computeCardTagDisplay', () => {
     const { tags: shown } = computeCardTagDisplay(cardTags, filter, 2);
     expect(shown[0]).toEqual({ value: 'what:b', active: true });
     expect(shown).toHaveLength(2);
+  });
+});
+
+describe('isChipHidden — which generated tags reach a chip', () => {
+  it('hides the date-derived when tag', () => {
+    // Renders as a bare humanised month ("June"), which says less than the date
+    // the card already shows.
+    expect(isChipHidden('when:nomad/2017/06')).toBe(true);
+  });
+
+  it('keeps an authored when tag', () => {
+    // `when:released` is a hand-written lifecycle marker, not a date derivation.
+    expect(isChipHidden('when:released')).toBe(false);
+  });
+
+  it('keeps the folder-derived category, the very tag this rule exists to surface', () => {
+    expect(isChipHidden('what:art')).toBe(false);
+    expect(isChipHidden('what:games/digital')).toBe(false);
+  });
+
+  it('keeps the date-derived travel location', () => {
+    expect(isChipHidden('where:australia/sydney')).toBe(false);
+  });
+
+  it('keeps bare, dimensionless tags', () => {
+    expect(isChipHidden('installation')).toBe(false);
+  });
+
+  it('drops the derived when tag out of a real card tag set, keeping the rest in order', () => {
+    // Art Heist's actual resolved tags.
+    const resolved = [
+      'what:art',
+      'when:released',
+      'installation',
+      'where:australia/sydney',
+      'when:nomad/2017/05',
+    ];
+    expect(computeCardTagDisplay(resolved, {}, Infinity).tags.map(c => c.value)).toEqual([
+      'what:art',
+      'when:released',
+      'installation',
+      'where:australia/sydney',
+    ]);
+  });
+
+  it('does not count a hidden tag towards the overflow badge', () => {
+    const resolved = ['what:art', 'when:released', 'installation', 'when:nomad/2017/05'];
+    const display = computeCardTagDisplay(resolved, {}, 4);
+    expect(display.tags).toHaveLength(3);
+    expect(display.overflow).toBe(0);
   });
 });

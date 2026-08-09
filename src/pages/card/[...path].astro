@@ -1,10 +1,12 @@
 ---
 import { getImage } from 'astro:assets';
 import { getAllCards } from '../../lib/cards';
-import type { CardMeta, ResolvedCard } from '../../lib/cards';
+import type { ResolvedCard } from '../../lib/cards';
+import type { BrowseCardData } from '../../lib/browse-helpers';
 import { getTagRegistry, flattenTagDisplay } from '../../lib/tag-registry';
 import type { TagDisplay } from '../../lib/tag-display';
-import { computeRelatedCardsIndex } from '../../lib/card-identity';
+import { computeRelatedCardsIndex, computeSubjectCardsIndex } from '../../lib/card-identity';
+import { serialiseBrowseCards } from '../../lib/browse-card';
 import { resolveLocalImage, isRemoteImageUrl } from '../../lib/images';
 import Base from '../../layouts/Base.astro';
 import StackNav from '../../components/StackNav.astro';
@@ -21,25 +23,34 @@ export async function getStaticPaths() {
   // shared across every static path this route generates.
   const tagDisplay = flattenTagDisplay(await getTagRegistry(reachableCards));
   const relatedCardsIndex = computeRelatedCardsIndex(reachableCards);
+  const subjectCardsIndex = computeSubjectCardsIndex(reachableCards);
   // The whole resolved card rides along, so neither this page nor
   // CardStackCard ever re-derives any of it (issue #77). Base.astro's share
   // metadata (canonical/OG/Twitter/JSON-LD, issue #71) reads it here; the card
   // fragment reads it via the `card` prop.
-  return reachableCards.map(c => ({
-    params: { path: c.uid },
-    props: {
-      card: c,
-      tagDisplay,
-      relatedCards: relatedCardsIndex.get(c.uid) ?? [],
-    },
-  }));
+  // Both card lists are serialised through the shared browse-card serialiser so
+  // a preview on a card body is byte-for-byte the preview a lens shows —
+  // thumbnails included. getImage() memoises per source, so the repeated work
+  // across paths collapses.
+  return Promise.all(
+    reachableCards.map(async c => ({
+      params: { path: c.uid },
+      props: {
+        card: c,
+        tagDisplay,
+        relatedCards: await serialiseBrowseCards(relatedCardsIndex.get(c.uid) ?? []),
+        subjectCards: await serialiseBrowseCards(subjectCardsIndex.get(c.uid) ?? []),
+      },
+    })),
+  );
 }
 
 const { path } = Astro.params;
-const { card, tagDisplay, relatedCards } = Astro.props as {
+const { card, tagDisplay, relatedCards, subjectCards } = Astro.props as {
   card: ResolvedCard;
   tagDisplay: Record<string, TagDisplay>;
-  relatedCards: CardMeta[];
+  relatedCards: BrowseCardData[];
+  subjectCards: BrowseCardData[];
 };
 const { title, description, date, image } = card;
 
@@ -60,6 +71,6 @@ if (localImage) {
 <Base {title} {description} {date} image={ogImage} ogType={date ? 'article' : 'website'}>
   <div id="homepage" hidden></div>
   <StackNav activeUid={path}>
-    <CardStackCard {card} {tagDisplay} {relatedCards} />
+    <CardStackCard {card} {tagDisplay} {relatedCards} {subjectCards} />
   </StackNav>
 </Base>

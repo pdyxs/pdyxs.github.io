@@ -3,12 +3,13 @@ import type { RenderResult } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
 import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages } from '../../lib/images';
 import { displayFor } from '../../lib/tag-display';
+import { computeCardTagDisplay } from '../../lib/card-tag-display';
 import type { TagDisplay } from '../../lib/tag-display';
-import type { CardMeta } from '../../lib/cards';
+import type { BrowseCardData } from '../../lib/browse-helpers';
 import { resolveMetaRows } from '../../lib/card-meta';
 import type { RawMetaRow } from '../../lib/card-meta';
 import ImageGallery from '../ImageGallery.svelte';
-import BrowseResults from '../BrowseResults.svelte';
+import CardStrip from '../CardStrip.svelte';
 
 interface Action {
   text: string;
@@ -40,14 +41,18 @@ interface Props {
   Content: RenderResult['Content'] | undefined;
   /** Flat value -> display-name map from the tag registry (see tag-registry.ts's flattenTagDisplay). */
   tagDisplay?: Record<string, TagDisplay>;
-  /** Cards that link to this one via a card-backed tag (see card-identity.ts's computeRelatedCardsIndex) — rendered as a "Related" section. */
-  relatedCards?: CardMeta[];
+  /** Cards that link to this one via a card-backed tag (see card-identity.ts's computeRelatedCardsIndex) — the "Cards about this" section. */
+  relatedCards?: BrowseCardData[];
+  /** Cards this one points at via its own card-backed tags (computeSubjectCardsIndex) — the "This is about" section. Same tags as the masthead chips, re-listed as previews. */
+  subjectCards?: BrowseCardData[];
+  /** The card's RESOLVED tags (folder-derived + cascade + frontmatter + generated), from `ResolvedCard.tags`. Not `entry.data.tags`, which is frontmatter only and omits the card's own folder category. */
+  cardTags?: string[];
 }
 
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { entry, Content, tagDisplay = {}, relatedCards = [] } = Astro.props as Props;
+const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], cardTags = [] } = Astro.props as Props;
 const data = entry?.data;
 
 const localImage = entry ? resolveLocalImage(entry.id, data?.image) : undefined;
@@ -64,7 +69,16 @@ const metaRows = resolveMetaRows(data);
 
 const actions = data?.actions?.filter((a: Action) => a.text && a.url) ?? [];
 const quotes = data?.quotes?.filter((q: Quote) => q.quote) ?? [];
-const tags = data?.tags ?? [];
+
+// Same chip rule as every listing (computeCardTagDisplay) so a card's tags read
+// identically on its own masthead and in a browse result — including dropping
+// the date-derived `when:` tag. No filter state here (a single card is never a
+// filtered view) and no cap: the masthead is the card's own header and has room
+// for the full set, where a condensed preview does not.
+const tags = computeCardTagDisplay(cardTags, {}, Infinity).tags.map(chip => chip.value);
+
+const hasHeaderMedia = Boolean(remoteImageSrc || localImage || localVideo);
+const hasMasthead = tags.length > 0 || actions.length > 0;
 
 const gallerySources = entry ? resolveGalleryImages(entry.id, data?.image, data?.images) : [];
 const galleryImages = await Promise.all(
@@ -86,10 +100,44 @@ const galleryImages = await Promise.all(
 
 {data && (
   <>
-    {remoteImageSrc && <img src={remoteImageSrc} alt="" class="generic-image" />}
-    {localImage && <Image src={localImage} alt="" class="generic-image" />}
-    {localVideo && <video src={localVideo} class="generic-video" controls preload="metadata"></video>}
+    {/* Full-bleed masthead: the header image and the tags/actions band are the
+        top edge of the card, so one wrapper cancels the body's inset for both
+        rather than each element redoing the margin maths. */}
+    {(hasHeaderMedia || hasMasthead) && (
+      <div class="generic-bleed">
+        {remoteImageSrc && <img src={remoteImageSrc} alt="" class="generic-image" />}
+        {localImage && <Image src={localImage} alt="" class="generic-image" />}
+        {localVideo && <video src={localVideo} class="generic-video" controls preload="metadata"></video>}
 
+        {hasMasthead && (
+          <div class="generic-masthead">
+            {tags.length > 0 && (
+              <ul class="generic-tags" aria-label="Tags">
+                {tags.map((tag: string) => {
+                  const info = displayFor(tag, tagDisplay);
+                  return info.cardUid ? (
+                    <li><a href={`/card/${info.cardUid}`} data-push-card={info.cardUid} class="generic-tag">{info.name}</a></li>
+                  ) : (
+                    <li><a href={`tag:${tag}`} class="generic-tag">{info.name}</a></li>
+                  );
+                })}
+              </ul>
+            )}
+
+            {actions.length > 0 && (
+              <div class="generic-actions">
+                {actions.map((a: Action) => (
+                  <a href={a.url} target="_blank" rel="noopener noreferrer" class="generic-action-link">{a.text}</a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* Credits lead the body: the labels are self-describing, so the list needs
+        no heading of its own to be read as facts-about-the-thing. */}
     {metaRows.length > 0 && (
       <dl class="generic-meta">
         {metaRows.map((row) => (
@@ -125,49 +173,42 @@ const galleryImages = await Promise.all(
 
     {galleryImages.length > 0 && <ImageGallery images={galleryImages} client:load />}
 
+    {/* Grouped and labelled so press reviews read as a different class of thing
+        from a blockquote the body itself uses. */}
     {quotes.length > 0 && (
-      <ul class="generic-quotes">
-        {quotes.map((q: Quote) => (
-          <li>
-            <blockquote class="generic-quote">{q.quote}</blockquote>
-            {(q.by || q.in) && (
-              <p class="generic-quote-attribution">
-                {q.by}
-                {q.by && q.in && ', '}
-                {q.in && <a href={q.in.url} target="_blank" rel="noopener noreferrer">{q.in.text}</a>}
-              </p>
-            )}
-          </li>
-        ))}
-      </ul>
+      <section class="generic-section">
+        <h3 class="generic-section-heading">Press</h3>
+        <ul class="generic-quotes">
+          {quotes.map((q: Quote) => (
+            <li>
+              <blockquote class="generic-quote">{q.quote}</blockquote>
+              {(q.by || q.in) && (
+                <p class="generic-quote-attribution">
+                  {q.by}
+                  {q.by && q.in && ', '}
+                  {q.in && <a href={q.in.url} target="_blank" rel="noopener noreferrer">{q.in.text}</a>}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
     )}
 
-    {actions.length > 0 && (
-      <div class="generic-actions">
-        {actions.map((a: Action) => (
-          <a href={a.url} target="_blank" rel="noopener noreferrer" class="generic-action-link">{a.text}</a>
-        ))}
-      </div>
-    )}
-
-    {tags.length > 0 && (
-      <ul class="generic-tags" aria-label="Tags">
-        {tags.map((tag: string) => {
-          const info = displayFor(tag, tagDisplay);
-          return info.cardUid ? (
-            <li><a href={`/card/${info.cardUid}`} data-push-card={info.cardUid} class="generic-tag">{info.name}</a></li>
-          ) : (
-            <li><a href={`tag:${tag}`} class="generic-tag">{info.name}</a></li>
-          );
-        })}
-      </ul>
+    {/* The two directions of a card-backed tag, named so the arrow is obvious:
+        this card's own tags point out, other cards' tags point in. */}
+    {subjectCards.length > 0 && (
+      <section class="generic-section">
+        <h3 class="generic-section-heading">This is about</h3>
+        <CardStrip cards={subjectCards} {tagDisplay} label="Cards this is about" client:load />
+      </section>
     )}
 
     {relatedCards.length > 0 && (
-      <div class="generic-related">
-        <h3 class="generic-related-heading">Related</h3>
-        <BrowseResults cards={relatedCards} {tagDisplay} client:load />
-      </div>
+      <section class="generic-section generic-related">
+        <h3 class="generic-section-heading">Cards about this</h3>
+        <CardStrip cards={relatedCards} {tagDisplay} label="Cards about this" client:load />
+      </section>
     )}
   </>
 )}

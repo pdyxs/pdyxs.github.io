@@ -10,10 +10,12 @@
 export const partial = true;
 
 import { getAllCards } from '../../../lib/cards';
-import type { CardMeta, ResolvedCard } from '../../../lib/cards';
+import type { ResolvedCard } from '../../../lib/cards';
+import type { BrowseCardData } from '../../../lib/browse-helpers';
 import { getTagRegistry, flattenTagDisplay } from '../../../lib/tag-registry';
 import type { TagDisplay } from '../../../lib/tag-display';
-import { computeRelatedCardsIndex } from '../../../lib/card-identity';
+import { computeRelatedCardsIndex, computeSubjectCardsIndex } from '../../../lib/card-identity';
+import { serialiseBrowseCards } from '../../../lib/browse-card';
 import CardStackCard from '../../../components/CardStackCard.astro';
 
 export async function getStaticPaths() {
@@ -27,20 +29,32 @@ export async function getStaticPaths() {
   // shared across every static path this route generates.
   const tagDisplay = flattenTagDisplay(await getTagRegistry(reachableCards));
   const relatedCardsIndex = computeRelatedCardsIndex(reachableCards);
+  const subjectCardsIndex = computeSubjectCardsIndex(reachableCards);
   // The whole resolved card rides along so CardStackCard re-derives none of it
   // (issue #77) — in particular the content hash, which must be byte-identical
   // to the one the browse/front-page pool carries or client-side read tracking
   // (getViewState, keyed on the hash) treats every visit as changed content.
-  return reachableCards.map(c => ({
-    params: { path: c.uid },
-    props: { card: c, tagDisplay, relatedCards: relatedCardsIndex.get(c.uid) ?? [] },
-  }));
+  // Serialised through the shared browse-card serialiser, same as the full
+  // route — a card fetched as a fragment must render identically to one that
+  // was server-rendered, thumbnails included.
+  return Promise.all(
+    reachableCards.map(async c => ({
+      params: { path: c.uid },
+      props: {
+        card: c,
+        tagDisplay,
+        relatedCards: await serialiseBrowseCards(relatedCardsIndex.get(c.uid) ?? []),
+        subjectCards: await serialiseBrowseCards(subjectCardsIndex.get(c.uid) ?? []),
+      },
+    })),
+  );
 }
 
-const { card, tagDisplay, relatedCards } = Astro.props as {
+const { card, tagDisplay, relatedCards, subjectCards } = Astro.props as {
   card: ResolvedCard;
   tagDisplay: Record<string, TagDisplay>;
-  relatedCards: CardMeta[];
+  relatedCards: BrowseCardData[];
+  subjectCards: BrowseCardData[];
 };
 ---
-<CardStackCard {card} {tagDisplay} {relatedCards} />
+<CardStackCard {card} {tagDisplay} {relatedCards} {subjectCards} />

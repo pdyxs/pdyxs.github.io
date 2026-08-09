@@ -166,6 +166,23 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 
 The palette is **two colours**: ink (`--color-text`) and paper (`--color-bg`), pure black and pure white, swapped by `data-theme`. Everything greyscale derives from those two — `--color-surface`, `--color-border-light` and `--color-text-muted` are aliases, and every other tone is a `--dither-N` level built from the same two colours. There is no grey. De-emphasis is expressed by size and weight, never by a faded value; **an `opacity` used to soften a colour is a bug**, because it renders as the grey the palette doesn't have.
 
+### A dither can only go on a surface that doesn't move
+
+Every `--dither-N` is a stack of `radial-gradient(circle at 0.5px 0.5px, … 0.564px, #0000 0.584px) 0 0/4px 4px` layers — sub-pixel dots in 1px cells — and `background-position` is anchored to **the element's own box**. `gen-dither.mjs` picked `TILE = 4` precisely so those cells land on the device pixel grid (`// 4px/4 = 1px cells, pixel-aligned (5px's 1.25px cells alias)`).
+
+Move a dithered element and its pattern moves with it: each frame the dots are re-rasterised at a new sub-pixel phase, every dot lands differently on the grid, and the surface visibly shimmers. So:
+
+**Never animate the position or size of an element carrying a `--dither-N` background.** If a moving thing needs an intermediate tone, paint the dither on a *static* element and move a `clip-path` (or mask) over it instead. `CardStrip.svelte`'s scrollbar thumb is the worked example: the thumb element spans the whole track and never moves; only its `clip-path` inset changes.
+
+This has no workaround via a flat colour — the palette has no greys to fall back on, which is exactly why the rule matters.
+
+Two known-safe cases, for reference:
+
+- **Card stack positioning** sets `top`/`left` from `--stack-index` with no `transition`, so cards jump rather than slide. Adding a transition there would put every collapsed card's `--dither-2` header into the failure mode above.
+- **View Transitions** (`panel-card-open`/`close`) snapshot the element to a bitmap and transform *that*, so a dithered header scales as an image rather than re-rasterising. It can look soft mid-morph; it does not shimmer.
+
+One open instance: `.body-wrapper`'s `transition: grid-template-rows 300ms` animates a card's height, which on mobile (where `#card-stack` is a vertical flex column) slides the following cards' dithered headers for those 300ms. Desktop is unaffected — cards are positioned absolutely there.
+
 ### Code blocks are monochrome, and an untagged fence wraps
 
 `markdown.syntaxHighlight` is `false` in `astro.config.mjs`. Shiki's themes hardcode hex (the default `github-dark` painted every block `#24292e` in *both* themes), and a two-colour palette has nowhere to put syntax hues. Astro therefore emits bare `<pre><code>` and `global.css` owns the surface: ink on `--dither-2`, with the `.dither-text` paper stroke so the dots don't read through the mono glyphs.

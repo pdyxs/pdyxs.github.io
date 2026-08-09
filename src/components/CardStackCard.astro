@@ -16,7 +16,8 @@
 // There is now one computation, so there is nothing to keep in sync — and
 // CardStackCard.test.ts guards against local resolution creeping back in.
 import { getCollection, render } from 'astro:content';
-import type { ResolvedCard, CardMeta } from '../lib/cards';
+import type { ResolvedCard } from '../lib/cards';
+import type { BrowseCardData } from '../lib/browse-helpers';
 import { resolveCardRenderer, resolveNavRenderer } from '../lib/location-resolver';
 import type { TagDisplay } from '../lib/tag-display';
 import CardHeader from './CardHeader.astro';
@@ -27,13 +28,15 @@ interface Props {
   /** Flat value -> display-name map from the tag registry, threaded down to whichever renderer shows per-card tag chips. */
   tagDisplay?: Record<string, TagDisplay>;
   /** Cards that link to this one via a card-backed tag, threaded down to GenericRenderer's "Related" section. */
-  relatedCards?: CardMeta[];
+  relatedCards?: BrowseCardData[];
+  /** Cards this one points at via its own card-backed tags (see computeSubjectCardsIndex) — the "This is about" section. */
+  subjectCards?: BrowseCardData[];
 }
 
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { card, tagDisplay = {}, relatedCards = [] } = Astro.props as Props;
+const { card, tagDisplay = {}, relatedCards = [], subjectCards = [] } = Astro.props as Props;
 
 // Entry lookup is IO, not resolution: the renderers take the raw entry for its
 // frontmatter, and a NavComponent takes the full collection as sibling
@@ -63,7 +66,7 @@ const NavComponent = resolveNavRenderer(card.navRenderer);
       status={card.status}
       date={card.date}
     >
-      <Renderer {entry} {Content} {tagDisplay} {relatedCards} />
+      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} cardTags={card.tags} />
     </NavComponent>
   ) : (
     <>
@@ -78,7 +81,7 @@ const NavComponent = resolveNavRenderer(card.navRenderer);
       <div class="body-wrapper open">
         <div class="stack-card-body">
           <div class="stack-card-body-inner">
-            <Renderer {entry} {Content} {tagDisplay} {relatedCards} />
+            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} cardTags={card.tags} />
           </div>
         </div>
       </div>

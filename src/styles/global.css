@@ -1062,20 +1062,49 @@ pre,
 
 /* ── Generic card ──────────────────────────────────────────────── */
 
-/* Full-bleed: the header image is the top edge of the card, so it cancels
-   the body's top padding and its inline inset (--body-inset-inline, set on
-   .stack-card-body-inner) rather than sitting in a framed well. Only the
-   bottom border survives — the sides are the card's own border now. */
-.generic-image,
-.generic-video {
+/* Full-bleed masthead. The header image and the tags/actions band are the top
+   edge of the card, not content floating inside it — so this one wrapper
+   cancels the body's top padding and its inline inset (--body-inset-inline, set
+   on .stack-card-body-inner) and its children just fill it. Doing the maths
+   once here is what keeps image and band edges aligned. */
+.generic-bleed {
+  margin: calc(-1 * var(--space-lg)) calc(-1 * var(--body-inset-inline, 0px)) var(--space-lg);
+}
+
+.generic-bleed > .generic-image,
+.generic-bleed > .generic-video {
   display: block;
-  width: calc(100% + 2 * var(--body-inset-inline, 0px));
-  /* global img { max-width: 100% } would clamp the bleed back to the content box */
+  width: 100%;
+  /* global img { max-width: 100% } resolves against the padded content box */
   max-width: none;
   height: auto;
+  /* Sides are the card's own border now; only the bottom edge is ours. */
   border: none;
   border-bottom: var(--border-width) solid var(--color-border);
-  margin: calc(-1 * var(--space-lg)) calc(-1 * var(--body-inset-inline, 0px)) var(--space-lg);
+  margin: 0;
+}
+
+/* Tags left, actions right — the card's "what it is" and "go do it" on one
+   line, above the fold. Padding re-inserts --body-inset-inline so the band's
+   contents line up with the prose below while its border still spans the card. */
+.generic-masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm) var(--space-md);
+  /* Floor the inset: --body-inset-inline is 0 on mobile, which is fine for
+     prose running to the card edge but not for the band's bordered chips and
+     buttons — their borders would sit flush against the card frame and read as
+     a collision. Desktop's inset is already well above the floor. */
+  padding: var(--space-sm) max(var(--body-inset-inline, 0px), var(--space-sm));
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+/* Both sit in the band now, so their standalone block spacing goes. */
+.generic-masthead .generic-tags,
+.generic-masthead .generic-actions {
+  margin: 0;
 }
 
 .generic-meta {
@@ -1121,16 +1150,25 @@ pre,
   margin-bottom: var(--space-md);
 }
 
+.generic-quotes li:last-child {
+  margin-bottom: 0;
+}
+
+/* Set tighter and smaller than body text: a press pull-quote is a citation,
+   not something the body is saying, and at body size it competes with a real
+   blockquote in the prose above. */
 .generic-quote {
   margin: 0;
   padding-left: var(--space-md);
   border-left: var(--border-width) solid var(--color-border-light);
   font-style: italic;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .generic-quote-attribution {
-  margin: var(--space-xs) 0 0;
-  font-size: 0.875rem;
+  margin: var(--space-xs) 0 0 var(--space-md);
+  font-size: 0.8rem;
   color: var(--color-text-muted);
 }
 
@@ -1183,16 +1221,24 @@ pre,
   border-color: var(--color-border);
 }
 
-.generic-related {
+/* The three trailing regions — Credits, Press, Related — share one rule-plus-
+   heading treatment so they read as a run of appendices to the prose rather
+   than three unrelated blocks. .generic-related is kept as a hook only. */
+.generic-section {
   margin: var(--space-lg) 0 0;
   padding-top: var(--space-lg);
   border-top: var(--border-width) solid var(--color-border-light);
 }
 
-.generic-related-heading {
+.generic-section-heading {
   font-family: var(--font-heading);
   font-size: 1rem;
   margin: 0 0 var(--space-sm);
+}
+
+/* The regions own their spacing; their contents must not add a trailing gap. */
+.generic-section > .generic-quotes:last-child {
+  margin-bottom: 0;
 }
 
 /* ── Site footer ───────────────────────────────────────────────── */

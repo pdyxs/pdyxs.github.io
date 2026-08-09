@@ -141,7 +141,7 @@ describe('GenericRenderer', () => {
     expect(div.querySelector('a[href="https://thebrag.com"]')?.textContent).toBe('The Brag');
   });
 
-  it('renders a gallery of colocated images excluding the header image', async () => {
+  it('renders a gallery of colocated media excluding the header image', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
       props: { entry: fakeEntry({ id: 'what/art/art-heist', image: 'outside.jpg' }), Content: undefined },
@@ -149,7 +149,9 @@ describe('GenericRenderer', () => {
 
     const div = document.createElement('div');
     div.innerHTML = html;
-    expect(div.querySelector('.image-gallery')).toBeNull();
+    // outside.jpg is the header, so only trailer.mp4 is left to show.
+    expect(div.querySelectorAll('.image-gallery-thumb img')).toHaveLength(0);
+    expect(div.querySelectorAll('.image-gallery-thumb video')).toHaveLength(1);
   });
 
   it('renders a gallery from colocated images when no header image is set', async () => {
@@ -208,8 +210,9 @@ describe('GenericRenderer', () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
       props: {
-        entry: fakeEntry({ tags: ['gamedev', 'who:about'] }),
+        entry: fakeEntry({}),
         Content: undefined,
+        cardTags: ['gamedev', 'who:about'],
       },
     });
 
@@ -227,8 +230,9 @@ describe('GenericRenderer', () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
       props: {
-        entry: fakeEntry({ tags: ['what:puzzles'] }),
+        entry: fakeEntry({}),
         Content: undefined,
+        cardTags: ['what:puzzles'],
         tagDisplay: { 'what:puzzles': { name: 'Puzzles' } },
       },
     });
@@ -244,8 +248,9 @@ describe('GenericRenderer', () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
       props: {
-        entry: fakeEntry({ tags: ['what:software/budget-haver'] }),
+        entry: fakeEntry({}),
         Content: undefined,
+        cardTags: ['what:software/budget-haver'],
         tagDisplay: {
           'what:software/budget-haver': {
             name: 'Budget Haver',
@@ -264,7 +269,7 @@ describe('GenericRenderer', () => {
     expect(link?.getAttribute('data-push-card')).toBe('what/software/budget-haver');
   });
 
-  it('renders no tags list when entry has no tags', async () => {
+  it('renders no tags list when the card has no tags', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
       props: { entry: fakeEntry({ description: 'x' }), Content: undefined },
@@ -288,8 +293,26 @@ describe('GenericRenderer', () => {
     const div = document.createElement('div');
     div.innerHTML = html;
     expect(div.querySelector('.generic-related')).not.toBeNull();
-    expect(div.textContent).toContain('Related');
+    expect(div.textContent).toContain('Cards about this');
     expect(div.textContent).toContain('Bar');
+  });
+
+  it('renders a subject-cards section when subjectCards are given', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(GenericRenderer, {
+      props: {
+        entry: fakeEntry({ description: 'x' }),
+        Content: undefined,
+        subjectCards: [fakeCardMeta({ uid: 'what/projects/foo', title: 'Foo' })],
+      },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    expect(div.textContent).toContain('This is about');
+    expect(div.textContent).toContain('Foo');
+    // The inbound section is a separate concern and must stay absent.
+    expect(div.querySelector('.generic-related')).toBeNull();
   });
 
   it('renders no related-cards section when relatedCards is empty', async () => {

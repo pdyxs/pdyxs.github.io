@@ -22,8 +22,7 @@
 // across independent hydration boundaries, so they coordinate only through
 // the shared lensFilterStore (src/stores/lens-filter-store.ts) — see that
 // store's header comment.
-import { getImage } from 'astro:assets';
-import { resolveLocalImage, isRemoteImageUrl } from '../lib/images';
+import { serialiseBrowseCards } from '../lib/browse-card';
 import { getLensDefinition } from '../lib/lens-registry';
 import { deriveLensChrome } from '../lib/lens-chrome';
 import { getAllCards } from '../lib/cards';
@@ -96,47 +95,9 @@ if (lens) {
     DIMENSIONS.map(dimension => [dimension.id, dimension.nodes(nodeContext)]),
   );
 
-  // Resolve each card's header `image` to a small thumbnail URL for the
-  // condensed browse cards: local images go through astro:assets; remote images
-  // are used as-is only when the URL ends in a known image extension (dead
-  // Jekyll-era embed/video links are dropped so they never render a broken img).
-  serialisedCards = await Promise.all(
-    browseCards.map(async card => {
-      const localImage = resolveLocalImage(card.uid, card.image);
-      let thumb: string | undefined;
-      let thumbSrcset: string | undefined;
-      if (localImage) {
-        // Responsive widths cover a full-width mobile card at 2x (720) down to a
-        // 3-up desktop column; `sizes` on the <img> lets the browser pick.
-        const generated = await getImage({ src: localImage, widths: [360, 720], format: 'webp' });
-        thumb = generated.src;
-        thumbSrcset = generated.srcSet.attribute;
-      } else if (card.image && isRemoteImageUrl(card.image)) {
-        thumb = card.image;
-      }
-      // Explicit pick, never a spread of the card (issue #77): a spread skips
-      // excess-property checking, so build-time-only fields (`visibility`,
-      // `image`, `order`) silently shipped to the browser despite
-      // SerialisedCard not declaring them — and every field later added to
-      // CardMeta/ResolvedCard would have joined them. Listing what crosses the
-      // wire keeps the payload a decision rather than a leak.
-      return {
-        uid: card.uid,
-        title: card.title,
-        description: card.description,
-        date: card.date?.toISOString() ?? null,
-        tags: card.tags,
-        renderer: card.renderer,
-        collapsed: card.collapsed,
-        status: card.status,
-        // Required: every lens body declares `cards: SerialisedCardFull[]`, and
-        // HomeLensSlots keys markDisplayed() on this hash.
-        contentHash: card.contentHash,
-        thumb,
-        thumbSrcset,
-      } satisfies SerialisedCardFull;
-    })
-  );
+  // One shared serialiser for every card preview on the site — see
+  // browse-card.ts for the thumbnail rules and the explicit-pick invariant.
+  serialisedCards = await serialiseBrowseCards(browseCards);
 
   const bodyLoader = LENS_BODY_LOADERS[lens.component] ?? DEFAULT_BODY_LOADER;
   BodyComponent = (await bodyLoader()).default;
