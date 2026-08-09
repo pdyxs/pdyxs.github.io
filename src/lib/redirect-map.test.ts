@@ -306,9 +306,14 @@ describe('the generated redirect map', () => {
       expect(entry.reason, entry.from).toBeTruthy();
       expect(REDIRECTS[entry.from], entry.from).toBe(entry.to);
     }
-    // The known misses are the three cards still marked `status: draft`, which
-    // have no reachable page in a production build.
-    expect(UNRESOLVED_OLD_URLS.map(u => u.from).sort()).toEqual(['/arctic/0-1-map', '/cv', '/who']);
+    // The known misses are the cards still marked `status: draft`, which have
+    // no reachable page in a production build.
+    expect(UNRESOLVED_OLD_URLS.map(u => u.from).sort()).toEqual([
+      '/arctic/0-1-map',
+      '/cv',
+      '/what/projects/fatecardgame',
+      '/who',
+    ]);
   });
 
   it('only ever targets a lens, a card, or an external URL', () => {

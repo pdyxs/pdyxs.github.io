@@ -22,7 +22,7 @@ meta:
     values:
       - UCSC Ebola Genome Portal
 status: unlisted
-date:
+date: 2018-03-26
 ---
 Genetic Sequences is an exploratory project, looking into different ways of visualising and exploring genetic sequences. The goal is to eventually produce an interactive artwork that helps people understand the basic structures of DNA.
 
