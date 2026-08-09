@@ -65,6 +65,7 @@ const NavComponent = resolveNavRenderer(card.navRenderer);
       {allEntries}
       status={card.status}
       date={card.date}
+      {tagDisplay}
     >
       <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} />
     </NavComponent>

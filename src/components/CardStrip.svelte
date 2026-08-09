@@ -21,6 +21,7 @@
     computeStripDots,
     computeStripOverflow,
     computeThumbGeometry,
+    scrollLeftForCard,
     scrollLeftForFraction,
     stripScrollStep,
     type CardExtent,
@@ -33,9 +34,17 @@
     tagDisplay?: Record<string, TagDisplay>;
     /** Accessible name for the strip's scroll region. */
     label?: string;
+    /**
+     * uid of the card the reader is already on, when the strip includes it (a
+     * series strip does). It renders as a non-navigating tile and the strip
+     * opens scrolled to it.
+     */
+    currentUid?: string;
   }
 
-  let { cards, tagDisplay = {}, label = 'Cards' }: Props = $props();
+  let { cards, tagDisplay = {}, label = 'Cards', currentUid }: Props = $props();
+
+  const currentIndex = $derived(currentUid ? cards.findIndex(c => c.uid === currentUid) : -1);
 
   let scroller = $state<HTMLElement | null>(null);
   let track = $state<HTMLElement | null>(null);
@@ -115,11 +124,30 @@
     event.preventDefault();
   }
 
+  // Open on the current card. Deliberately once and only at mount: a later
+  // resize must not yank the strip back after the reader has scrolled away.
+  //
+  // One frame late, and re-measuring first, because the geometry it centres on
+  // is read from layout — measured during the same tick as mount, the flex
+  // children have no widths yet, the strip doesn't overflow, and the clamp in
+  // scrollLeftForCard correctly resolves that to 0.
+  let openedOnCurrent = false;
+  function openOnCurrent() {
+    if (openedOnCurrent || !scroller || currentIndex < 0) return;
+    openedOnCurrent = true;
+    requestAnimationFrame(() => {
+      if (!scroller) return;
+      measure();
+      scroller.scrollTo({ left: scrollLeftForCard(extents, currentIndex, metrics), behavior: 'auto' });
+    });
+  }
+
   // ResizeObserver as well as scroll: overflow, thumb size and card extents all
   // change when the card is resized (stack layout, viewport) with no scrolling.
   $effect(() => {
     if (!scroller) return;
     measure();
+    openOnCurrent();
     const observer = new ResizeObserver(measure);
     observer.observe(scroller);
     for (const child of scroller.children) observer.observe(child);
@@ -135,7 +163,7 @@
     onscroll={measure}
   >
     {#each cards as card (card.uid)}
-      <BrowseCard {card} {tagDisplay} />
+      <BrowseCard {card} {tagDisplay} current={card.uid === currentUid} />
     {/each}
   </ul>
 

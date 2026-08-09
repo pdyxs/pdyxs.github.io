@@ -370,8 +370,9 @@ export function filterVisibleNodes(nodes: TagNode[], activeValues: Set<string>):
  * `label` carries the group name for identity/ordering, but panels render only
  * a divider between sections — the name is not shown (see DimensionPanel).
  *
- * Grouping is only meaningful at the root drill level; drilled-in levels
- * render flat. The caller decides when to apply it (see FilterBar.svelte).
+ * Applied at every drill level (see FilterBar.svelte): most levels have no
+ * grouped nodes at all and collapse to a single section, which renders exactly
+ * as a flat list.
  */
 export function groupNodesIntoSections(
   nodes: TagNode[],

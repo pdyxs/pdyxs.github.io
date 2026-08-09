@@ -181,7 +181,9 @@ const galleryImages = await Promise.all(
                   {i > 0 && <br />}
                   {item.url
                     ? <a href={item.url} target="_blank" rel="noopener noreferrer">{item.text}</a>
-                    : item.text}
+                    : item.ariaLabel
+                      ? <span role="img" aria-label={item.ariaLabel}>{item.text}</span>
+                      : item.text}
                 </>
               ))}
             </dd>

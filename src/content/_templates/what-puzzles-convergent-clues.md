@@ -22,6 +22,7 @@ tags: []
 # Inherited from the _config.yaml cascade — don't repeat these here:
 #   renderer: card
 #   navRenderer: series
+#   location: none
 ---
 
 <% tp.file.cursor() %>

@@ -1,12 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  generatedTagsForCard,
-  generatorOverrideKeys,
-  allGeneratedFilterValues,
-  declaredGeneratedFilterValues,
-  generatedDisplayName,
-  generatedSortOrder,
-} from './filter-generators';
+import { generatedTagsForCard, generatorOverrideKeys, allGeneratedFilterValues, declaredGeneratedFilterValues, generatedDisplayName, generatedSortOrder, generatedGroup } from './filter-generators';
 import { TRAVEL_LOG } from '../data/travel-log';
 
 describe('generatedTagsForCard', () => {
@@ -147,9 +140,16 @@ describe('allGeneratedFilterValues', () => {
     expect(values).toEqual([...new Set(values)].sort());
   });
 
-  it('emits where:* and when:* values (all in dimension:value form)', () => {
+  it('emits only dimension:value forms, across every generator', () => {
     for (const value of allGeneratedFilterValues()) {
-      expect(value).toMatch(/^(where|when):.+/);
+      expect(value).toMatch(/^(where|when|what):.+/);
+    }
+  });
+
+  it('covers every difficulty rating', () => {
+    const values = allGeneratedFilterValues();
+    for (let level = 1; level <= 5; level++) {
+      expect(values).toContain(`what:puzzles/level-${level}`);
     }
   });
 
@@ -239,5 +239,42 @@ describe('generatedSortOrder', () => {
     expect(generatedSortOrder('when:seethrough/2013')).toBeUndefined();
     expect(generatedSortOrder('when:current/2020/01')).toBeUndefined();
     expect(generatedSortOrder('where:europe/uk')).toBeUndefined();
+  });
+});
+
+describe('puzzle difficulty generator', () => {
+  it('derives a level tag from the difficulty frontmatter', () => {
+    expect(generatedTagsForCard(['what:puzzles/timeline'], {
+      overrides: { difficulty: 'Level 3 (Medium)' },
+    })).toContain('what:puzzles/level-3');
+  });
+
+  it('leaves a card with no difficulty alone', () => {
+    expect(generatedTagsForCard(['what:posts'], { overrides: {} })).toEqual(['what:posts']);
+  });
+
+  it('leaves a difficulty it cannot read alone', () => {
+    expect(generatedTagsForCard(['what:puzzles'], { overrides: { difficulty: 'Fiendish' } }))
+      .toEqual(['what:puzzles']);
+  });
+
+  it('does not duplicate a level the card already carries', () => {
+    const tags = ['what:puzzles', 'what:puzzles/level-2'];
+    expect(generatedTagsForCard(tags, { overrides: { difficulty: 'Level 2 (Easy)' } })).toEqual(tags);
+  });
+
+  it('declares `difficulty` as an override key so the cascade plumbing supplies it', () => {
+    expect(generatorOverrideKeys()).toContain('difficulty');
+  });
+
+  it('labels a level with its stars and sorts it by rating', () => {
+    expect(generatedDisplayName('what:puzzles/level-4')).toBe('★★★★☆');
+    expect(generatedSortOrder('what:puzzles/level-4')).toBe(4);
+  });
+
+  it('puts levels in their own panel section, and nothing else', () => {
+    expect(generatedGroup('what:puzzles/level-4')).toBe('Difficulty');
+    expect(generatedGroup('what:puzzles/timeline')).toBeUndefined();
+    expect(generatedGroup('when:seethrough/2013/06')).toBeUndefined();
   });
 });

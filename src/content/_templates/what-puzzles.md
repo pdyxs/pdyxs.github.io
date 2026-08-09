@@ -21,6 +21,7 @@ tags: []
 # puzzle_type:    # string
 # Inherited from the _config.yaml cascade — don't repeat these here:
 #   renderer: card
+#   location: none
 ---
 
 <% tp.file.cursor() %>

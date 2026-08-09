@@ -20,7 +20,7 @@ import type { CardMeta } from './cards';
 import { FIVE_W_DIMENSIONS, isValidFilterValue } from './five-w';
 import type { FiveWDimension } from './five-w';
 import { ownValueForCard } from './card-identity';
-import { declaredGeneratedFilterValues, generatedDisplayName, generatedSortOrder } from './filter-generators';
+import { declaredGeneratedFilterValues, generatedDisplayName, generatedGroup, generatedSortOrder } from './filter-generators';
 import { humaniseSegment } from './tag-display';
 import type { TagDisplay } from './tag-display';
 
@@ -308,10 +308,12 @@ export async function getTagRegistry(
   const generatedDeclarations: ValueIdentity[] = declaredGeneratedFilterValues(presentTags).map(value => {
     const name = generatedDisplayName(value);
     const order = generatedSortOrder(value);
+    const group = generatedGroup(value);
     return {
       value,
       ...(name ? { name } : {}),
       ...(order !== undefined ? { order } : {}),
+      ...(group !== undefined ? { group } : {}),
     };
   });
   return computeTagRegistry(cards, containerIdentities, [...tagDeclarations, ...generatedDeclarations]);

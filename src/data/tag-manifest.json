@@ -2694,5 +2694,25 @@
   {
     "uid": "what:puzzles/experimental-fog/sunny-with-a-chance-of-fog",
     "code": "aR"
+  },
+  {
+    "uid": "what:puzzles/level-1",
+    "code": "aS"
+  },
+  {
+    "uid": "what:puzzles/level-2",
+    "code": "aT"
+  },
+  {
+    "uid": "what:puzzles/level-3",
+    "code": "aU"
+  },
+  {
+    "uid": "what:puzzles/level-4",
+    "code": "aV"
+  },
+  {
+    "uid": "what:puzzles/level-5",
+    "code": "aW"
   }
 ]

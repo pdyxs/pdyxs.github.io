@@ -13,10 +13,18 @@
 //
 // Pure: takes frontmatter data, returns display rows. No IO, no Astro.
 
+import { parseDifficultyLevel, formatDifficultyStars, difficultyAriaLabel } from './difficulty';
+
 /** One item inside a row's value — plain text, or text carrying a link. */
 export interface MetaItem {
   text: string;
   url?: string;
+  /**
+   * Spoken form, when `text` is a glyph rather than words (the difficulty star
+   * row). Renders as an `aria-label` on a `role="img"` wrapper so a screen
+   * reader says "Difficulty 3 out of 5" instead of five star characters.
+   */
+  ariaLabel?: string;
 }
 
 /** A resolved row, ready to render. `items` is never empty. */
@@ -84,9 +92,23 @@ export function resolveMetaRows(data: MetaSource | undefined): MetaRow[] {
 
   for (const [field, label] of LEGACY_FIELDS) {
     const value = data[field];
-    if (typeof value === 'string' && value.trim()) {
-      rows.push({ label, items: [parseMetaItem(value)] });
+    if (typeof value !== 'string' || !value.trim()) continue;
+
+    // Difficulty is a rating, not a phrase: "Level 3 (Medium)" reads as stars.
+    // An unparseable string falls through to its authored text rather than
+    // being dropped or guessed at — see parseDifficultyLevel.
+    if (field === 'difficulty') {
+      const level = parseDifficultyLevel(value);
+      if (level !== undefined) {
+        rows.push({
+          label,
+          items: [{ text: formatDifficultyStars(level), ariaLabel: difficultyAriaLabel(level) }],
+        });
+        continue;
+      }
     }
+
+    rows.push({ label, items: [parseMetaItem(value)] });
   }
 
   for (const raw of data.meta ?? []) {

@@ -15,9 +15,15 @@
     tagDisplay?: Record<string, TagDisplay>;
     /** Active filter selections — drives which tags are hidden/highlighted. */
     filterState?: FilterState;
+    /**
+     * This preview is the card you're already looking at (a series strip
+     * includes the open card). Renders as a marked, non-navigating tile:
+     * linking to where you already are is a dead click.
+     */
+    current?: boolean;
   }
 
-  let { card, tagDisplay = {}, filterState = { } }: Props = $props();
+  let { card, tagDisplay = {}, filterState = { }, current = false }: Props = $props();
 
   const tagChips = $derived(computeCardTagDisplay(card.tags, filterState));
   // Dev-only status pill (issue #51) — same pure decision as the open-card
@@ -26,11 +32,19 @@
   const statusBadge = $derived(computeStatusBadge(card.status, card.date ? new Date(card.date) : undefined));
 </script>
 
-<li class="browse-card-item">
+<li class="browse-card-item" class:browse-card-item--current={current}>
   <!-- A real anchor: keyboard-focusable and cmd/middle-clickable. The delegated
        data-push-card handler in CardStack.svelte intercepts left-clicks and
-       preventDefaults, doing the in-stack push instead of a full navigation. -->
-  <a class="browse-card-link" href={`/card/${card.uid}`} data-push-card={card.uid}>
+       preventDefaults, doing the in-stack push instead of a full navigation.
+       The current card renders the same tile as a plain element instead — no
+       href and no data-push-card, so there is nothing to click or tab to. -->
+  <svelte:element
+    this={current ? 'div' : 'a'}
+    class="browse-card-link"
+    href={current ? undefined : `/card/${card.uid}`}
+    data-push-card={current ? undefined : card.uid}
+    aria-current={current ? 'true' : undefined}
+  >
     {#if card.thumb}
       <img
         class="browse-card-thumb"
@@ -82,7 +96,7 @@
       </ul>
     {/if}
     </div>
-  </a>
+  </svelte:element>
 </li>
 
 <style>
@@ -103,6 +117,37 @@
     color: inherit;
     text-decoration: none;
     cursor: pointer;
+  }
+
+  /* "You are here": the page inverted, same as any other selected control —
+     see the --color-selected-* table in CLAUDE.md. The text stroke has to be
+     restated because it is inherited and paper-coloured, which fattens glyphs
+     on an inverted surface instead of clearing dots behind them. */
+  .browse-card-item--current,
+  .browse-card-item--current:hover {
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    -webkit-text-stroke-color: var(--color-selected-bg);
+  }
+
+  .browse-card-item--current .browse-card-link {
+    cursor: default;
+  }
+
+  /* The mirror of every muted rule in this component. --color-text-muted is an
+     alias of the ink, so on the inverted surface the date, the summary and the
+     tag chips would all be ink on ink — invisible. The chips carry the
+     inversion through: paper text and border on the ink fill. */
+  .browse-card-item--current .browse-card-date,
+  .browse-card-item--current .browse-card-desc,
+  .browse-card-item--current .browse-card-badge,
+  .browse-card-item--current .browse-card-tag {
+    color: var(--color-selected-fg);
+  }
+
+  .browse-card-item--current .browse-card-tag {
+    border-color: var(--color-selected-fg);
+    background: var(--color-selected-bg);
   }
 
   .browse-card-link:focus-visible {

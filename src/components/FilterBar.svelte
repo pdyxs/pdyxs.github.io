@@ -56,13 +56,13 @@
 
   const currentSections = $derived.by<TagSection[]>(() => {
     if (!openDimension) return [];
-    // At the root level, partition into declared sections; drilled-in levels
-    // render flat (a single unlabelled section).
+    const order = groupOrder[openDimension] ?? [];
+    // Every level partitions into declared sections, not just the root: the
+    // puzzle difficulties (a generated group) sit below the puzzle series one
+    // drill down. A level whose nodes are all ungrouped yields one section,
+    // which renders as a flat list with no divider — i.e. unchanged.
     if (drillPath.length === 0) {
-      const sections = groupNodesIntoSections(
-        visibleNodesFor(openDimension),
-        groupOrder[openDimension] ?? [],
-      );
+      const sections = groupNodesIntoSections(visibleNodesFor(openDimension), order);
       // A dimension that declares this panel as its placement (the dev-only
       // status dimension does) contributes its own section at the very top,
       // below the lens list and above this panel's own values. In production
@@ -70,7 +70,7 @@
       const guests = guestNodesFor(openDimension);
       return guests.length > 0 ? [{ nodes: guests }, ...sections] : sections;
     }
-    return [{ nodes: resolveDrill(openDimension, drillPath).nodes }];
+    return groupNodesIntoSections(resolveDrill(openDimension, drillPath).nodes, order);
   });
 
   // Display name of the drilled-into node, for the panel header (empty at root).

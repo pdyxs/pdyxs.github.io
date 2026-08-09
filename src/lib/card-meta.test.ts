@@ -95,3 +95,25 @@ describe('resolveMetaRows', () => {
     expect(rows[0]).toEqual({ label: 'Client', items: [{ text: 'ABC' }] });
   });
 });
+
+describe('resolveMetaRows difficulty', () => {
+  it('renders an LMD rating as stars, with a spoken label', () => {
+    const rows = resolveMetaRows({ difficulty: 'Level 3 (Medium)' });
+    expect(rows).toEqual([
+      { label: 'Difficulty', items: [{ text: '★★★☆☆', ariaLabel: 'Difficulty 3 out of 5' }] },
+    ]);
+  });
+
+  it('falls back to the authored text when there is no rating to read', () => {
+    const rows = resolveMetaRows({ difficulty: 'Fiendish' });
+    expect(rows).toEqual([{ label: 'Difficulty', items: [{ text: 'Fiendish' }] }]);
+  });
+
+  it('leaves the type row above it as plain text', () => {
+    const rows = resolveMetaRows({ puzzle_type: 'Wordoku', difficulty: 'Level 2 (Easy)' });
+    expect(rows.map(r => [r.label, r.items[0].text])).toEqual([
+      ['Type', 'Wordoku'],
+      ['Difficulty', '★★☆☆☆'],
+    ]);
+  });
+});

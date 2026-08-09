@@ -5,6 +5,7 @@ import {
   computeThumbGeometry,
   scrollLeftForFraction,
   stripScrollStep,
+  scrollLeftForCard,
 } from './card-strip';
 
 describe('computeStripOverflow', () => {
@@ -140,5 +141,40 @@ describe('scrollLeftForFraction', () => {
 
   it('clamps a drag past the start to zero', () => {
     expect(scrollLeftForFraction(-0.5, { scrollWidth: 2400, clientWidth: 600 })).toBe(0);
+  });
+});
+
+describe('scrollLeftForCard', () => {
+  // Five 100px cards in a 250px viewport: scrollWidth 500.
+  const cards = [
+    { start: 0, end: 100 },
+    { start: 100, end: 200 },
+    { start: 200, end: 300 },
+    { start: 300, end: 400 },
+    { start: 400, end: 500 },
+  ];
+  const metrics = { scrollWidth: 500, clientWidth: 250 };
+
+  it('centres the card in the viewport', () => {
+    // Card 2 spans 200-300; centring it in 250px puts its left edge 75px in.
+    expect(scrollLeftForCard(cards, 2, metrics)).toBe(125);
+  });
+
+  it('parks at the start rather than scrolling negative for the first card', () => {
+    expect(scrollLeftForCard(cards, 0, metrics)).toBe(0);
+  });
+
+  it('parks at the end rather than overshooting for the last card', () => {
+    expect(scrollLeftForCard(cards, 4, metrics)).toBe(250);
+  });
+
+  it('returns 0 when the index is not in the extents', () => {
+    expect(scrollLeftForCard(cards, -1, metrics)).toBe(0);
+    expect(scrollLeftForCard(cards, 9, metrics)).toBe(0);
+    expect(scrollLeftForCard([], 0, metrics)).toBe(0);
+  });
+
+  it('stays at 0 when nothing overflows', () => {
+    expect(scrollLeftForCard(cards, 2, { scrollWidth: 250, clientWidth: 250 })).toBe(0);
   });
 });

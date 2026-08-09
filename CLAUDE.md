@@ -217,6 +217,12 @@ Share metadata itself (canonical URL, OG/Twitter tag list, JSON-LD documents) is
 
 Any new content collection must set its default renderer via `_config.yaml` in its content directory (resolved by `resolveFolderCascade` in `src/lib/folder-config.ts`, which walks every ancestor `_config.yaml` from the dimension root down — nearest wins); any new renderer component must be registered in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
 
+Panel sections (`group:` on a container `_config.yaml`, ordered by the dimension
+root's `groupOrder`) apply at **every** drill level, not just the root: drilling
+into Puzzles shows the three `group: Series` folders, then a divider, then the
+generated difficulty ratings. A level whose nodes are all ungrouped collapses to
+one section and renders as a flat list, which is every other level on the site.
+
 `width` and `gallery` cascade the same way (`_config.yaml` → `FolderCascade` → `ResolvedCard`, with a card's own frontmatter winning). Cards in a folder usually share a shape, and the shape is what sets the width: `what/puzzles` declares `520px` because a puzzle card *is* its square grid image, and at the site's 680px default that image dominates the viewport. Declare both per-folder, not per-card.
 
 The applier is `applyMaxWidth` in `CardStack.svelte`, and it writes `--max-width` to **both** `<html>` and `#card-stack`. That is not redundant: the server renders `#card-stack` with the initial location's width inline so the first paint is right before hydration, and an inline style on `#card-stack` beats an inherited value from `<html>` for everything inside it. Writing only to `<html>` left a card pushed on top of a wide lens (browse is 960px) wearing the lens's width forever.
@@ -227,11 +233,31 @@ Collections that need custom navigation (e.g. prev/next chapter buttons, positio
 
 A nav renderer is usually declared by the folder (`navRenderer: series` in a
 `_config.yaml`), but `getSeriesSiblings` matches on the `series:` frontmatter
-value alone — so a *subset* of a folder can be its own ordered run by declaring
-`navRenderer`/`series`/`order` in frontmatter instead. The two Recounting
-puzzles inside the (unordered) Experimental Fog folder are the case in hand:
-sequels to each other, not to the folder. Keep `series:` values globally unique;
-they are matched across the whole collection, not within a folder.
+value alone — so a *subset* of a folder could be its own ordered run by
+declaring `navRenderer`/`series`/`order` in frontmatter instead. Keep `series:`
+values globally unique; they are matched across the whole collection, not
+within a folder.
+
+`SeriesNavRenderer` shows the whole series as a `CardStrip` — the same component
+as the "Cards about this" section — rather than prev/next buttons. Two buttons
+can only say what is immediately adjacent, which is the least interesting thing
+about a series; the strip shows the run, where you are in it, and lets you jump
+anywhere. The open card is in the strip, passed as `currentUid`: `BrowseCard`
+renders it as a marked, non-navigating tile (`current`) and the strip opens
+scrolled to it.
+
+Two traps that cost a round each:
+
+- **The current tile is an inverted surface**, so it needs the mirror of *every*
+  muted rule in `BrowseCard`, not just background and title. `--color-text-muted`
+  is an alias of the ink — left alone, the date, the summary and the tag chips
+  are ink on ink and simply vanish.
+- **Open-on-current runs one frame late**, and re-measures first. The geometry
+  it centres on is read from layout; measured in the same tick as mount, the
+  flex children have no widths, the strip doesn't overflow, and the clamp in
+  `scrollLeftForCard` correctly resolves that to "don't scroll". It also runs
+  exactly once — a later resize must not yank the strip back after the reader
+  has scrolled away.
 
 ### Collection view renderer pattern (`COLLECTION_VIEW_RENDERERS`)
 
@@ -367,8 +393,36 @@ display rows. `GenericRenderer` takes the result. `WorkRenderer` still has its
 own `when`/`roles` `<dl>` — unify it when that renderer is next touched.
 
 `difficulty` and `puzzle_type` stay named fields rather than authored `meta`
-rows because the puzzles folder's `cardDescriptionParts` template reads
-frontmatter, not resolved rows.
+rows because `difficulty` feeds three renderings, not one.
+
+### Difficulty is parsed once and rendered as stars
+
+`src/lib/difficulty.ts` owns the whole of it. LMD rates a puzzle 1–5 and words
+it "Level 3 (Medium)", which is what frontmatter carries — that string stays the
+source of truth (it's what the LMD page says, and it round-trips on a re-rate),
+but it isn't what a reader reads and it sorts alphabetically, which files Level 5
+next to Level 1. So `parseDifficultyLevel` reads the rating out once and three
+consumers render it:
+
+- the card's credits row (`resolveMetaRows`) — `★★★☆☆`, with an `ariaLabel` so a
+  screen reader says "Difficulty 3 out of 5" rather than five star characters
+- `puzzleDifficultyGenerator` (`filter-generators.ts`) — the `what:puzzles/level-3`
+  filter tag
+- `generatedDisplayName` — that value's label in the panel, the same stars
+
+A string it can't read (`Fiendish`) falls back to its authored text and
+generates no tag: better a card that says what was written than one that
+invents a rating.
+
+The generator is the first to read a *field* rather than a date, which it does
+by declaring `difficulty` as an override key — the existing frontmatter ??
+cascade plumbing then hands it over, and no new channel is needed. Its values
+are rooted at `what:puzzles` so they drill in under Puzzles beside the series;
+only puzzles carry a `difficulty:`, which is what keeps that rooting honest.
+
+Puzzle listings therefore *don't* repeat the rating in their description —
+`cardDescriptionParts` is `puzzle_type` alone, because the star chip is already
+on every preview.
 
 ### Action links are resolved, never read raw
 

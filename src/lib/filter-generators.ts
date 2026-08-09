@@ -23,6 +23,13 @@ import { TRAVEL_LOG } from '../data/travel-log.ts';
 import { lookupLocationForDate, injectWhereTags } from './where-tags.ts';
 import { WHEN_ERAS } from '../data/when-eras.ts';
 import { deriveWhenTag, enumerateWhenTags } from './when-tags.ts';
+import {
+  MAX_DIFFICULTY,
+  difficultyLevelFromTag,
+  difficultyTagValue,
+  formatDifficultyStars,
+  parseDifficultyLevel,
+} from './difficulty.ts';
 
 /** The card fields a generator may read. Kept minimal and view-free. */
 export type FilterGeneratorCard = {
@@ -122,8 +129,44 @@ const dateEraGenerator: FilterGenerator = {
   },
 };
 
+/** The attribute the difficulty generator reads — a puzzle's `difficulty:` frontmatter. */
+const DIFFICULTY_OVERRIDE_KEY = 'difficulty';
+
+/** Panel section the difficulty values form, below the (ungrouped) puzzle series. */
+const DIFFICULTY_GROUP = 'Difficulty';
+
+/**
+ * `what:puzzles/level-<n>` tags derived from a puzzle's `difficulty:` string.
+ *
+ * Unlike the other two generators this one reads a field rather than a date, so
+ * it declares that field as its override key and the existing frontmatter ??
+ * cascade plumbing hands it over — there is no separate "derive" path for it to
+ * override, and `difficulty` is simply the input.
+ *
+ * Rooted at `what:puzzles` so the values drill in under Puzzles alongside the
+ * series folders. Only puzzles carry a `difficulty:`, which is what keeps the
+ * value honest; a non-puzzle card that grew one would land under Puzzles, so
+ * the field stays puzzle-only (see the `difficulty` note in card-meta.ts).
+ */
+const puzzleDifficultyGenerator: FilterGenerator = {
+  overrideKeys: [DIFFICULTY_OVERRIDE_KEY],
+  apply(tags, { overrides }) {
+    const level = parseDifficultyLevel(overrides?.[DIFFICULTY_OVERRIDE_KEY]);
+    if (level === undefined) return tags;
+    const derived = difficultyTagValue(level);
+    return tags.includes(derived) ? tags : [...tags, derived];
+  },
+  allValues() {
+    return Array.from({ length: MAX_DIFFICULTY }, (_, i) => difficultyTagValue(i + 1));
+  },
+};
+
 /** The active generators, applied in order. Add new generators here. */
-export const FILTER_GENERATORS: FilterGenerator[] = [travelWhereGenerator, dateEraGenerator];
+export const FILTER_GENERATORS: FilterGenerator[] = [
+  travelWhereGenerator,
+  dateEraGenerator,
+  puzzleDifficultyGenerator,
+];
 
 /**
  * Display-name overrides for generated values whose humanised last segment
@@ -160,6 +203,10 @@ const WHEN_ERA_ORDER: Record<string, number> = Object.fromEntries(
  */
 export function generatedDisplayName(value: string): string | undefined {
   if (GENERATED_DISPLAY_NAMES[value]) return GENERATED_DISPLAY_NAMES[value];
+  // A difficulty reads as its rating, not as "Level 3" — same stars the card
+  // itself shows (see difficulty.ts).
+  const difficulty = difficultyLevelFromTag(value);
+  if (difficulty !== undefined) return formatDifficultyStars(difficulty);
   if (WHEN_ERA_LABELS[value]) return WHEN_ERA_LABELS[value];
   const monthMatch = value.match(/^when:[^/]+\/\d{4}\/(0[1-9]|1[0-2])$/);
   if (monthMatch) return MONTH_NAMES[Number(monthMatch[1]) - 1];
@@ -173,7 +220,20 @@ export function generatedDisplayName(value: string): string | undefined {
  * and month (`.../03`) segments already sort chronologically as strings.
  */
 export function generatedSortOrder(value: string): number | undefined {
+  // Difficulties sort by rating: as strings, ★★★★★ and ★☆☆☆☆ are indistinguishable
+  // to a collator, and the underlying slugs would sort level-10 before level-2.
+  const difficulty = difficultyLevelFromTag(value);
+  if (difficulty !== undefined) return difficulty;
   return WHEN_ERA_ORDER[value];
+}
+
+/**
+ * Panel section a generated value belongs to, or undefined to leave it in the
+ * default (ungrouped) section. The tag-registry equivalent of a `group:` key in
+ * a `_config.yaml` — see groupNodesIntoSections in browse-helpers.ts.
+ */
+export function generatedGroup(value: string): string | undefined {
+  return difficultyLevelFromTag(value) !== undefined ? DIFFICULTY_GROUP : undefined;
 }
 
 /** Runs every generator over a card's tags, returning the augmented list. */

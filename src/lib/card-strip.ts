@@ -128,6 +128,27 @@ export function scrollLeftForFraction(
   return clamp(fraction * scrollWidth, 0, Math.max(0, scrollWidth - clientWidth));
 }
 
+/**
+ * Where to scroll so the card at `index` is centred in the viewport — how a
+ * series strip opens on the puzzle you're reading.
+ *
+ * Centred rather than aligned to the left edge, because the point of opening
+ * there is to show what sits on *either* side of it. Clamped, so the first and
+ * last cards park at their end of the run instead of leaving a dead gap.
+ * Returns 0 when the index isn't in the extents (nothing to scroll to).
+ */
+export function scrollLeftForCard(
+  cards: CardExtent[],
+  index: number,
+  metrics: Pick<StripMetrics, 'scrollWidth' | 'clientWidth'>,
+): number {
+  const card = cards[index];
+  if (!card) return 0;
+  const { scrollWidth, clientWidth } = metrics;
+  const centred = card.start - (clientWidth - (card.end - card.start)) / 2;
+  return clamp(centred, 0, Math.max(0, scrollWidth - clientWidth));
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }

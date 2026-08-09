@@ -18,3 +18,8 @@ cardDescriptionParts:
 # Puzzle cards are their grid image, and it is already the masthead — the
 # gallery would only ever repeat it. Cascades to the series folders below.
 gallery: false
+# No derived `where:` tag. The travel generator would stamp each puzzle with
+# wherever I happened to be on its publication date, which says nothing about a
+# puzzle — they're made anywhere, over months. `none` is the generator's
+# suppress sentinel (see travelWhereGenerator in src/lib/filter-generators.ts).
+location: none
