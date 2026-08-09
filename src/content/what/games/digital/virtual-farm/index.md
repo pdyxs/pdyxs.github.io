@@ -13,8 +13,20 @@ actions:
 medium: Tabletop computer and iPad game
 quotes: []
 images: []
+meta:
+  - label: Technology
+    values:
+      - Unity (C#),
+  - label: Release
+    values:
+      - Late 2022
+  - label: Client
+    values:
+      - Gateway to Science
+  - label: Created by
+    values:
+      - Chaos Theory Games
+  - label: Roles
+    values:
+      - Producer, Designer
 ---
-
-Virtual Farm is a museum exhibit at Gateway to Science, where guests can manage one of 4 farms on a tabletop computer. The game was designed based on real farming practices in North Dakota, where Gateway to Science is based.
-
-As the producer of this project, I was the primary contact with Gateway to Science, and worked with them to develop a concept for a game that would best teach farming practices in a museum environment. Through prototyping and playtesting, we honed the design, and I managed the development of the final product.

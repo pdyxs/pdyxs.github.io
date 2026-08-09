@@ -26,10 +26,14 @@ quotes:
       url: https://escapeme.net/2017/07/09/jetpack-theatre-art-heist/#more-276
 medium: Escape Room/Interactive Theatre
 cvDescription: Art Heist is an interactive theatre experience where teams of four develop and execute a daring plan to steal a painting from an art gallery.
+meta:
+  - label: Developed By
+    values:
+      - Jetpack Theatre Collective
+  - label: Role
+    values:
+      - Game Designer, technology developer (arduino, Unity)
+  - label: Season
+    values:
+      - May-August 2017, Dulwich Hill, Sydney
 ---
-An immersive escape room, run in Sydney in 2017.
-
-You and your crew plan and carry out a robbery in our purpose-built art gallery.
-
-Distract guards. Avoid cameras. Fool alarms. Dodge lasers. Steal art.
-But be quick, time’s already running out…

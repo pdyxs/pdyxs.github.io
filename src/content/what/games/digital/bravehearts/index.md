@@ -18,8 +18,20 @@ actions:
 medium: Mobile game
 quotes: []
 images: []
+meta:
+  - label: Technology
+    values:
+      - Unity (C#),
+  - label: Release
+    values:
+      - Late 2023
+  - label: Client
+    values:
+      - Bravehearts
+  - label: Created by
+    values:
+      - Chaos Theory Games
+  - label: Roles
+    values:
+      - Producer
 ---
-
-Ditto's Keep Safe Adventure is a mobile game, designed for young children (aged 4-8) to educate them with the knowledge and personal safety skills to help keep them safe.
-
-I was the producer of this project for its early stages, and was particularly proud of the processes I put in place for communication and ideation for the game. Through consultation, workshops and a prototyping process, I was able to bring the clients with us on the game design journey. This ensured that we always had their subject matter expertise at hand, giving us confidence that we were creating a game that would have real impact.

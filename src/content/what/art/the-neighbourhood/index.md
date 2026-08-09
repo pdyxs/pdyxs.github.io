@@ -16,11 +16,25 @@ medium: 'Data visualisation, artwork'
 actions: []
 quotes: []
 images: []
+meta:
+  - label: Topic
+    values:
+      - Astronomy
+  - label: Technology
+    values:
+      - Python, Unity
+  - label: Data Source
+    values:
+      - The HIPPARCOS main star catalog
+  - label: Released
+    values:
+      - February 2016
+  - label: Accolades
+    values:
+      - Finalist in the 2016 Waterhouse Natural Science Art Prize
+  - label: Exhibited at
+    values:
+      - Art Heist, 2016
+      - Art Attacks the Little Guy, 2016
+      - The 2016 Waterhouse Natural Science Art Prize (at the South Australian Museum)
 ---
-The Neighbourhood re-imagines the 8912 stars visible from Earth with the naked eye as a city.
-
-Each building's height and brightness is based on the star's brightness. Their colour is based on star's colour. The reflections in the water are the stars' emission spectra.
-
-Buildings are arranged based on their distance from the galactic plane (the centre of which lies in the middle).
-
-Somewhere in the image, small and dim, lies our sun.

@@ -14,5 +14,15 @@ date: 2013-03-01
 medium: Video Game
 actions: []
 quotes: []
+meta:
+  - label: Release
+    values:
+      - March 2013
+  - label: Developed By
+    values:
+      - SeeThrough Studios
+  - label: Roles
+    values:
+      - Lead Developer
+      - Designer
 ---
-Unstoppabot is a hybrid of an infinite runner and a puzzle game, revolving around a robot that cannot stop, but which needs help to get past various traps and terrain. The game was released for iPhone and iPad.

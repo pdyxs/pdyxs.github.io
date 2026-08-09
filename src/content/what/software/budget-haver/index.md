@@ -18,7 +18,8 @@ actions:
 date: 2019-03-11
 medium: Productivity App
 quotes: []
+meta:
+  - label: Role
+    values:
+      - Designer, Developer
 ---
-Budget Haver is a budgeting app that I built for myself in late 2018, as I found myself wanting to have better control over my own spending, and didn't see an existing solution that fit my needs.
-
-In early 2019, I've been adapting the app to be ready for a public release.

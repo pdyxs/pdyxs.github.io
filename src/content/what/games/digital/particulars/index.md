@@ -67,7 +67,32 @@ cvDescription: >-
   presents information about the particles, densely packing a large amount of
   information into a small space while highlighting what's important to the
   player.
+meta:
+  - label: Topic
+    values:
+      - Sub-atomic particle physics
+  - label: Platform(s)
+    values:
+      - Standalone (PC, Mac, Linux)
+  - label: Release
+    values:
+      - November 2014
+  - label: Technology
+    values:
+      - Unity
+  - label: Developed by
+    values:
+      - SeeThrough Studios
+  - label: Published by
+    values:
+      - Surprise Attack
+  - label: Roles
+    values:
+      - Producer, Lead Designer, Programmer, Writer
+  - label: Accolades
+    values:
+      - Winner, Best Narrative, Freeplay Awards 2013
+      - Winner, Best Audio Design, Freeplay Awards 2013
+      - Winner, Sydney Indie Showcase, iFest 2013
+      - Finalist, Best Audio Design, Australian Game Development Awards, 2013
 ---
-Particulars is a game based on the science of sub-atomic [[Sub-atomic Particle Physics]]. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
-
-The game follows the story of a young physicist Alison, as she navigates the forces affecting her life.
