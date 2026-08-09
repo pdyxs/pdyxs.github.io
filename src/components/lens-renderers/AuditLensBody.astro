@@ -54,6 +54,10 @@ const auditInput: AuditCard[] = await Promise.all(
 const findings = auditCards(auditInput);
 const flaggedCards = auditedCardCount(findings);
 const totalRefs = findings.reduce((sum, f) => sum + f.refCount, 0);
+// auditCards() returns every finding type, including cleared ones, because the
+// count is its deliverable. The dashboard is a worklist, so a cleared section is
+// noise here — drop it and let the summary line carry "done".
+const openFindings = findings.filter(f => f.cardCount > 0);
 ---
 
 <div class="audit" aria-label="Content audit findings">
@@ -62,7 +66,11 @@ const totalRefs = findings.reduce((sum, f) => sum + f.refCount, 0);
     Dev-only worklist — every count below should fall to zero as content work lands.
   </p>
 
-  {findings.map(finding => (
+  {openFindings.length === 0 && (
+    <p class="audit-clear">Nothing to do — every finding is clear.</p>
+  )}
+
+  {openFindings.map(finding => (
     <section class="audit-finding">
       <h2 class="audit-finding-heading">
         {finding.label}
@@ -72,23 +80,19 @@ const totalRefs = findings.reduce((sum, f) => sum + f.refCount, 0);
         </span>
       </h2>
       <p class="audit-hint">{finding.hint}</p>
-      {finding.cardCount === 0 ? (
-        <p class="audit-clear">Nothing to do.</p>
-      ) : (
-        <ul class="audit-list">
-          {finding.cards.map(hit => (
-            <li class="audit-item">
-              <a class="audit-item-link" href={`card:${hit.uid}`}>{hit.title}</a>
-              <code class="audit-item-uid">{hit.uid}</code>
-              {hit.refs.length > 0 && (
-                <ul class="audit-refs">
-                  {[...new Set(hit.refs)].map(ref => <li class="audit-ref"><code>{ref}</code></li>)}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul class="audit-list">
+        {finding.cards.map(hit => (
+          <li class="audit-item">
+            <a class="audit-item-link" href={`card:${hit.uid}`}>{hit.title}</a>
+            <code class="audit-item-uid">{hit.uid}</code>
+            {hit.refs.length > 0 && (
+              <ul class="audit-refs">
+                {[...new Set(hit.refs)].map(ref => <li class="audit-ref"><code>{ref}</code></li>)}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
     </section>
   ))}
 
