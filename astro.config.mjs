@@ -4,6 +4,7 @@ import svelte from '@astrojs/svelte';
 import { REDIRECTS } from './src/data/redirects.generated.ts';
 import { rehypeExternalLinks } from './src/lib/external-links.ts';
 import { rehypeVideoEmbeds } from './src/lib/video-embeds.ts';
+import { devReloadPlugin } from './scripts/dev-reload-plugin.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -32,6 +33,21 @@ export default defineConfig({
   vite: {
     server: {
       allowedHosts: ['preview.pdyxs.wtf'],
+      // The glob loader reads a changed file on the watcher event, with no
+      // settling delay of its own. An editor that saves by truncate-then-write
+      // (Obsidian does) can therefore be read at zero length: the entry parses
+      // as empty frontmatter and empty body, and the *defaults* — no title, no
+      // rendered html — are what gets written into `.astro/data-store.json`.
+      // The card then renders as an untitled, bodiless shell until something
+      // makes the loader read the file again. Waiting for the write to settle
+      // is the fix; it costs 100ms on every content save.
+      watch: {
+        awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 10 },
+      },
     },
+    // Dev only: content YAML (`_config.yaml`, `*.tag.yaml`, `*.lens.yaml`) is
+    // read by fs / consumed by a pre* generator, so nothing in the module graph
+    // changes when it does. See scripts/dev-reload-plugin.mjs.
+    plugins: [devReloadPlugin()],
   },
 });

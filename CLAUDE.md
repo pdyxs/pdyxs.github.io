@@ -14,6 +14,30 @@ systemctl --user status astro-preview.service --no-pager
 
 If you clear the `.astro` cache directory, always restart the service afterwards so Astro can rebuild the content database.
 
+## Content hot-reload (`scripts/dev-reload-plugin.mjs`)
+
+Markdown hot-reloads on its own: the glob loader reloads the entry, and Astro's
+dev app responds to the resulting `astro:content-changed` by calling
+`pipeline.routeCache.clearAll()`. That route cache is the whole story — it holds
+each route's `getStaticPaths()` props, which is where `getAllCards()` /
+`resolveCard()` run. Nothing else drops it: not a module invalidation, not a
+`vite server.restart()`. Only a full process restart or a content-layer change.
+
+The YAML half of the content tree pulls no such lever. `_config.yaml`,
+`<name>.tag.yaml` and `<id>.lens.yaml` are read with node's `fs` (or consumed by
+a `pre*` generator), so they are in no module graph and used to need a service
+restart to show up. A dev-only Vite plugin now watches them, re-runs whichever
+generator the change feeds, and sends `astro:content-changed` itself.
+
+The decision — which generator, whether to refresh — is pure and tested in
+`src/lib/dev-reload.ts`; the plugin only watches, debounces, spawns and signals.
+It also covers **adding or deleting** a card (a new `index.md` needs a short code
+in `src/data/stack-manifest.json`) and `src/icons/lenses/*.svg`. Anything else
+that reads a non-module file at request time belongs in `planDevReload`.
+
+Still needs a manual step: `npm run generate:redirects` (reads the retired Jekyll
+site on `master`) and `npm run generate:vimeo-posters` (network fetch).
+
 ## Architecture
 
 ### Theme switching (`data-theme`)
