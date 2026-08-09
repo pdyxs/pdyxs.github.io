@@ -37,3 +37,9 @@ meta:
     values:
       - May-August 2017, Dulwich Hill, Sydney
 ---
+An immersive escape room, run in Sydney in 2017.
+
+You and your crew plan and carry out a robbery in our purpose-built art gallery.
+
+Distract guards. Avoid cameras. Fool alarms. Dodge lasers. Steal art.
+But be quick, time’s already running out…

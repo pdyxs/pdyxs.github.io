@@ -96,3 +96,6 @@ meta:
       - Winner, Sydney Indie Showcase, iFest 2013
       - Finalist, Best Audio Design, Australian Game Development Awards, 2013
 ---
+Particulars is a game based on the science of sub-atomic [[Sub-atomic Particle Physics]]. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
+
+The game follows the story of a young physicist Alison, as she navigates the forces affecting her life.

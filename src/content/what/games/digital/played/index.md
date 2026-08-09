@@ -30,3 +30,7 @@ meta:
     values:
       - Producer, Lead Designer, Front-End Developer
 ---
+
+PlayEd is a web platform that enables primary school teachers to utilise games in the classroom, by injecting their own custom questions into pre-built games.
+
+In developing this platform, I spearheaded the design of interfaces that allowed teachers to intuitively create questions, customise their games and assign differentiated games to different students. I also helped the development team utilise best practices in the front-end development.

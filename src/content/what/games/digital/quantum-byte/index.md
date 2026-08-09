@@ -36,3 +36,8 @@ meta:
     values:
       - Daniel Keogh
 ---
+Completely Accurate Thought Simulator is an attempt to help people understand what a quantum computer is and how it differs from a regular computer.
+
+To do this, it allows its users to play with a quantum circuit, utilising the actual operations and standards utilised by academics in the field.
+
+To connect the world of quantum computing with something more immediately accessible, each bit represents a person's opinion of a concept or another person. Players will then construct narratives (circuits) which change the character's mind (quantum state) in order to create an intended result.

@@ -44,3 +44,6 @@ meta:
     values:
       - Vivid Sydney, 2015
 ---
+The Laser Harp is a musical instrument which combines light, sound and interactive art.
+
+When a note is triggered, it both plays a note and affects a projected scene. Each scene demonstrates some aspect of waves and their various forms.
