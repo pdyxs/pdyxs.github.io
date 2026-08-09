@@ -2,6 +2,9 @@ import { load as parseYaml } from 'js-yaml';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Explicit .ts extension: this module is loaded by Node build scripts via
+// type stripping, which does no extension resolution.
+import { normaliseAuthoredTags } from './five-w.ts';
 
 const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
 
@@ -121,7 +124,10 @@ export async function resolveFolderCascade(
     }
 
     if (parsed.tags) {
-      for (const tag of parsed.tags) {
+      // Same authored → canonical normalisation as the frontmatter `tags`
+      // field in content.config.ts, so a folder default is written the same
+      // way a card's own tag is. See normaliseAuthoredTag in five-w.ts.
+      for (const tag of normaliseAuthoredTags(parsed.tags)) {
         if (!seenTags.has(tag)) {
           seenTags.add(tag);
           cascadeTags.push(tag);

@@ -8,7 +8,10 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
-const WHEN_LIFECYCLE_TAGS = ['when:released', 'when:in-progress', 'when:shelved'];
+// Written in the *authored* form (`when/released`), since this scans raw
+// markdown rather than going through content.config.ts's normalising
+// transform. See normaliseAuthoredTag in five-w.ts.
+const WHEN_LIFECYCLE_TAGS = ['when/released', 'when/in-progress', 'when/shelved'];
 
 // The cards that carried `status: past|current|future` before this migration
 // (captured from the pre-migration content tree). Every one of these must now

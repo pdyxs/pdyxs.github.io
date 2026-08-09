@@ -41,3 +41,47 @@ export function isValidFilterValue(value: string): boolean {
 export function isValidDimensionlessValue(value: string): boolean {
     return value.length > 0 && !value.includes(":");
 }
+
+// ---------------------------------------------------------------------------
+// Authored form → canonical form
+// ---------------------------------------------------------------------------
+
+/**
+ * Rewrites the *authored* tag form into the canonical `dimension:value` form.
+ *
+ * Content authors write `where/work/seethrough`, not `where:work/seethrough`,
+ * because `src/content` is an Obsidian vault and `tags` is one of Obsidian's
+ * reserved frontmatter keys: it rejects `:` outright ("invalid tag name"),
+ * which cost autocomplete, the tag pane and tag search on every dimensioned
+ * tag. `/` is what Obsidian uses for nested tags, so the authored form is both
+ * valid *and* renders the dimension hierarchy in the tag pane for free — and,
+ * having no colon, it no longer needs YAML quoting.
+ *
+ * Everything downstream of the schema keeps the colon: it is the canonical
+ * form in URLs, generated data (`src/data/*.generated.ts`), lens/tag YAML,
+ * `stack-manifest.json` and every `indexOf(':')` split site. This function is
+ * the *only* boundary between the two, and is applied in exactly two places —
+ * the `tags` field in `src/content.config.ts` and the `_config.yaml` cascade
+ * in `resolveFolderCascade`. Anything reading raw frontmatter without going
+ * through those sees the authored form.
+ *
+ * Conversion happens only when the first `/`-segment is a known dimension and
+ * something follows it. So bare tags pass through untouched — including ones
+ * that collide with a dimension name (`why` is an authored tag) — as does a
+ * value that already carries a colon.
+ */
+export function normaliseAuthoredTag(value: string): string {
+    if (value.includes(":")) return value;
+    const slashIdx = value.indexOf("/");
+    if (slashIdx === -1) return value;
+    const dim = value.slice(0, slashIdx) as FiveWDimension;
+    if (!FIVE_W_DIMENSIONS.includes(dim)) return value;
+    const rest = value.slice(slashIdx + 1);
+    if (rest.length === 0) return value;
+    return `${dim}:${rest}`;
+}
+
+/** normaliseAuthoredTag over a list. */
+export function normaliseAuthoredTags(values: string[]): string[] {
+    return values.map(normaliseAuthoredTag);
+}

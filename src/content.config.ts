@@ -2,6 +2,7 @@ import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 import { CONTENT_GLOB_PATTERN } from "./lib/content-glob";
+import { normaliseAuthoredTags } from "./lib/five-w";
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
@@ -63,7 +64,15 @@ const content = defineCollection({
         // ── common ──
         title: z.string().optional(),
         description: z.string().optional(),
-        tags: z.array(z.string()).default([]),
+        // Authored in Obsidian's nested-tag form (`where/work/seethrough`) and
+        // normalised to the canonical `where:work/seethrough` here — this
+        // transform is one of the two boundaries between the two forms (the
+        // other is the `_config.yaml` cascade in resolveFolderCascade). See
+        // normaliseAuthoredTag in src/lib/five-w.ts for why.
+        tags: z
+            .array(z.string())
+            .default([])
+            .transform(normaliseAuthoredTags),
         date: z.coerce.date().optional(),
         // ── generated-tag overrides ──
         // Bare travel-log location path (e.g. "europe/norway/svalbard") that

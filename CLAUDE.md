@@ -311,6 +311,43 @@ it when that renderer is next touched.
 
 Aliases in `src/content.config.ts` tag schema are a runtime safety net, not a feature to rely on. Content should always link to canonical slugs; aliased links in content are a data bug.
 
+### Tags are authored with `/`, canonical with `:`
+
+`src/content` is an Obsidian vault and `tags` is one of Obsidian's reserved
+frontmatter keys — it rejects `:` as an invalid tag name, which cost
+autocomplete, the tag pane and tag search on every dimensioned tag. So content
+is authored in Obsidian's **nested-tag form**:
+
+```yaml
+tags:
+  - where/work/seethrough
+  - when/released
+```
+
+`normaliseAuthoredTag` (`src/lib/five-w.ts`) rewrites the leading segment to the
+canonical `where:work/seethrough` — which stays the form used **everywhere
+downstream**: URLs, `src/data/*.generated.ts`, lens/tag YAML,
+`stack-manifest.json` and every `indexOf(':')` split site. Conversion fires only
+when the first `/`-segment is a known dimension and something follows it, so
+dimensionless tags (`interactive`, and even the bare tag `why`) pass through
+untouched, and the function is idempotent.
+
+Three call sites, and they are the whole boundary:
+
+- the `tags` field transform in `src/content.config.ts`
+- the `_config.yaml` cascade in `resolveFolderCascade` (`src/lib/folder-config.ts`)
+- `scripts/generate-stack-manifest.mjs`, which reads frontmatter through
+  gray-matter and so never sees the schema transform
+
+**Anything else that reads raw frontmatter tags must normalise them itself** —
+that includes tests that scan markdown directly (see
+`project-status-vacate.test.ts`, which asserts against the authored form). Body
+content is unaffected: the `card:` / `collection:` / `tag:` link protocols are
+markdown link targets, not tags, and keep their colons.
+
+A side benefit worth not undoing: without a colon, these values no longer need
+YAML quoting.
+
 ### Old-URL redirects are generated, never hand-edited
 
 `src/data/redirects.generated.ts` is produced by `scripts/generate-redirects.mjs`

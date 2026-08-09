@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import { assignCodes } from '../src/lib/stack-manifest.ts';
 import { uidFromContentPath, uidFromTagPath } from '../src/lib/content-uid.ts';
+import { normaliseAuthoredTag } from '../src/lib/five-w.ts';
 import { isVaultInfrastructurePath } from '../src/lib/content-glob.ts';
 import { derivePathTags } from '../src/lib/tag-inheritance.ts';
 import { allLensUids } from '../src/lib/lens-registry.ts';
@@ -158,8 +159,12 @@ async function collectTags() {
     }
 
     if (Array.isArray(data?.tags)) {
-      for (const raw of data.tags) {
-        if (typeof raw !== 'string' || !raw) continue;
+      for (const rawAuthored of data.tags) {
+        if (typeof rawAuthored !== 'string' || !rawAuthored) continue;
+        // gray-matter hands us the *authored* form (`where/work/seethrough`) —
+        // this script reads frontmatter directly rather than through the
+        // content collection, so it doesn't get content.config.ts's transform.
+        const raw = normaliseAuthoredTag(rawAuthored);
         if (raw.includes(':')) {
           for (const prefix of dimensionedPrefixes(raw)) tags.add(prefix);
         } else {
