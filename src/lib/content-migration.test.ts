@@ -17,9 +17,10 @@ const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content
 function walk(dir: string): string[] {
   const out: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    // Mirrors what the content glob can reach: underscore-prefixed folders are
-    // excluded by CONTENT_GLOB_PATTERN, dot-prefixed ones (the vault's
-    // `.obsidian/`) by the glob engine's default of ignoring dotfiles.
+    // Mirrors what the content glob can reach: CONTENT_GLOB_PATTERN only
+    // matches under the five dimension roots, so neither underscore-prefixed
+    // folders (`_templates/`) nor dot-prefixed ones (the vault's `.obsidian/`,
+    // `.trash/`) are reachable.
     if (entry.name.startsWith('_') || entry.name.startsWith('.')) continue;
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {

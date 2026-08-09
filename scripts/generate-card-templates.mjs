@@ -26,9 +26,9 @@
  * scripts. Safe to run manually:
  *   npm run generate:card-templates
  *
- * Note: `_templates` is kept out of the content collection by
- * CONTENT_GLOB_PATTERN's `!**\/_*\/**` rule (src/lib/content-glob.ts), so
- * nothing written here can become a card.
+ * Note: `_templates` is kept out of the content collection because
+ * CONTENT_GLOB_PATTERN (src/lib/content-glob.ts) only matches under the five
+ * dimension roots, so nothing written here can become a card.
  */
 
 import { readdir, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
