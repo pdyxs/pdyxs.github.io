@@ -2,6 +2,8 @@
 inspected: false
 title: The Grid of Forking Paths
 date: 2025-01-02
+series: experimental-fog
+order: 0
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LE5
 sudokupad_url: https://sudokupad.app/pdyxs/the-grid-of-forking-paths
 image: bild.png

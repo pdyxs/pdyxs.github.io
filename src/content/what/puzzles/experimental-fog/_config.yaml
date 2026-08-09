@@ -1,6 +1,7 @@
 # Panel section: the series sit above the generated Difficulty group when you
 # drill into Puzzles (order fixed by groupOrder in what/_config.yaml).
 group: Series
+navRenderer: series
 name: Experimental Fog
 description: >
   Sudoku where the fog is the puzzle. Each of these asks what happens when

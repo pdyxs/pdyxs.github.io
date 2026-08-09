@@ -8,11 +8,12 @@ width: 520px
 name: Puzzles
 description: >
   Puzzle design and construction — logic puzzles, sudoku variants, and the craft of making something satisfyingly solvable.
-# Fallback description for puzzle cards that declare none — each part drops when
-# its field is absent (most puzzles have `difficulty` but no `puzzle_type`).
+# Fallback description for puzzle cards that declare none — the part drops when
+# the field is absent (most puzzles have no `puzzle_type`). `difficulty` used to
+# be a second part; it now rides along as a star-rating tag chip on every
+# preview, and a listing shouldn't say the same thing twice.
 cardDescriptionParts:
   - "{{puzzle_type}}"
-  - "{{difficulty}}"
 
 # Puzzle cards are their grid image, and it is already the masthead — the
 # gallery would only ever repeat it. Cascades to the series folders below.

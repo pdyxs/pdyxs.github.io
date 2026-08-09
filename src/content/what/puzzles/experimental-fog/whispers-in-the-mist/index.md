@@ -2,6 +2,8 @@
 inspected: false
 title: Whispers in the Mist
 date: 2025-02-02
+series: experimental-fog
+order: 4
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LUE
 sudokupad_url: https://sudokupad.app/pdyxs/whispers-in-the-mist
 image: bild.png

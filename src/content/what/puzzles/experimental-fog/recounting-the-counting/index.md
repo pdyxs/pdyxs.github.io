@@ -2,9 +2,8 @@
 inspected: false
 title: Recounting the Counting
 date: 2025-01-14
-navRenderer: series
-series: recounting
-order: 0
+series: experimental-fog
+order: 1
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LL7
 sudokupad_url: https://sudokupad.app/pdyxs/recounting-the-counting
 image: bild.png

@@ -2,6 +2,8 @@
 inspected: false
 title: Friends in the Fog
 date: 2025-04-13
+series: experimental-fog
+order: 8
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000MVQ
 sudokupad_url: https://sudokupad.app/pdyxs/friends-in-the-fog
 image: bild.png

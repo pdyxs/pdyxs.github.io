@@ -2,6 +2,8 @@
 inspected: false
 title: Some Things Fogn
 date: 2025-02-08
+series: experimental-fog
+order: 5
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LXM
 sudokupad_url: https://sudokupad.app/pdyxs/some-things-fogn
 image: bild.png
