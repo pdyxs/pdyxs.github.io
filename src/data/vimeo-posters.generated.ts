@@ -4,9 +4,6 @@
 // referenced in src/content. Vimeo has no predictable poster path, so these
 // come from its oEmbed API at build time. Re-run `npm run generate:vimeo-posters`
 // after adding a Vimeo link; ids already present here are never re-fetched.
-//
-// UNRESOLVED (poster fetch failed — these render a labelled tile instead):
-//   257695244 (src/content/what/games/digital/numbeanies/index.md): oEmbed responded 404
 
 export const VIMEO_POSTERS: Record<string, string> = {
 };
