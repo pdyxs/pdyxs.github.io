@@ -5,7 +5,8 @@ description: Make a plan. Steal a painting. Don't get caught.
 tags:
   - when:released
   - installation
-date: 2017-06-01
+date: 2017-05-01
+location: australia/sydney
 images:
   - trailer.mp4
   - outside
