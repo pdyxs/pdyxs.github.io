@@ -403,10 +403,11 @@ pre > code:not([class]) {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  /* Mobile: no horizontal padding of our own — #card-stack's padding is
-     the only horizontal inset content should get. Desktop restores the
-     original inline padding below. */
-  padding: var(--space-md) 0;
+  /* A stack card draws its own border, so the title needs an inset off that
+     frame; #card-stack's padding sits *outside* the border and can't provide
+     it. Mobile uses the tighter --space-sm; desktop widens to --space-lg
+     below. Page mode is borderless and overrides this to 0. */
+  padding: var(--space-md) var(--space-sm);
   font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 400;
@@ -474,7 +475,9 @@ pre,
 
 .stack-card--collapsed .card-header {
   font-size: 0.75em;
-  padding: var(--space-xs) 0;
+  /* Tighter vertically than an open header, but the same inline inset off the
+     card border — a collapsed title must line up with the open one it becomes. */
+  padding: var(--space-xs) var(--space-sm);
   background: var(--dither-2);
 }
 
@@ -682,14 +685,15 @@ pre,
 }
 
 .stack-card-body-inner {
-  /* Mobile: no horizontal padding of our own — #card-stack's padding is
-     the only horizontal inset content should get. Desktop restores the
-     original inline padding below.
+  /* A stack card draws its own border, so body content needs an inset off
+     that frame; #card-stack's padding sits *outside* the border and can't
+     provide it. Mobile uses the tighter --space-sm; desktop widens to
+     --space-lg below. Page mode is borderless and overrides this to 0.
 
      --body-inset-inline is the single source of truth for that padding, so
      full-bleed content (see .generic-image) can cancel it with a negative
      margin without re-deriving which breakpoint/card mode it's in. */
-  --body-inset-inline: 0px;
+  --body-inset-inline: var(--space-sm);
   padding: var(--space-lg) var(--body-inset-inline);
 }
 
@@ -1093,10 +1097,10 @@ pre,
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm) var(--space-md);
-  /* Floor the inset: --body-inset-inline is 0 on mobile, which is fine for
-     prose running to the card edge but not for the band's bordered chips and
-     buttons — their borders would sit flush against the card frame and read as
-     a collision. Desktop's inset is already well above the floor. */
+  /* Floor the inset. Mobile sits exactly on the floor and desktop well above
+     it, so this is a guard rather than a correction: the band's bordered chips
+     and buttons must never sit flush against the card frame — which reads as a
+     collision — if a card mode drops --body-inset-inline to 0 (page mode does). */
   padding: var(--space-sm) max(var(--body-inset-inline, 0px), var(--space-sm));
   border-bottom: var(--border-width) solid var(--color-border);
 }
