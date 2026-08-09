@@ -45,6 +45,7 @@ const auditInput: AuditCard[] = await Promise.all(
       image: e.data.image,
       images: e.data.images,
       body: e.body,
+      inspected: e.data.inspected,
       localAssets: localAssetFilenames(e.id),
     } satisfies AuditCard;
   }),

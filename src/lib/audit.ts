@@ -22,7 +22,8 @@ export type AuditFindingType =
   | 'no-description'
   | 'legacy-markup'
   | 'no-authored-tags'
-  | 'unresolved-local-image';
+  | 'unresolved-local-image'
+  | 'not-inspected';
 
 /**
  * A card as the audit sees it: resolved metadata plus the raw material the
@@ -56,6 +57,12 @@ export interface AuditCard {
   images?: readonly string[];
   /** Raw markdown body, frontmatter stripped. */
   body?: string;
+  /**
+   * TEMPORARY (pre-MVP): frontmatter `inspected` — has a human eyeballed this
+   * card? Absent counts as false, so a card that never got the backfill still
+   * shows up on the worklist. Goes away with the `not-inspected` finding.
+   */
+  inspected?: boolean;
   /**
    * Asset filenames that exist alongside the card, relative to its own
    * directory (e.g. "game-jam-1.jpg", "shots/wide.png"). Used to decide whether
@@ -250,6 +257,18 @@ const FINDING_SPECS: readonly FindingSpec[] = [
     label: 'No tags beyond derived ones',
     hint: 'Every tag on this card comes from its path or a generator — it declares nothing of its own.',
     detect: card => ((card.authoredTags?.length ?? 0) > 0 ? undefined : []),
+  },
+  // TEMPORARY (pre-MVP) — the manual pre-launch read-through worklist. Unlike
+  // every other finding here it detects nothing about the content: it just
+  // reports a human judgement recorded in frontmatter. Last in display order
+  // because it is the least mechanical, and because until the sweep is underway
+  // it catches nearly every card and would bury the real findings above it.
+  // Remove with the `inspected` schema field and scripts/backfill-inspected.mjs.
+  {
+    type: 'not-inspected',
+    label: 'Not yet inspected',
+    hint: 'Nobody has read this card end to end yet. Tick `inspected` in Obsidian once you have.',
+    detect: card => (card.inspected === true ? undefined : []),
   },
 ];
 

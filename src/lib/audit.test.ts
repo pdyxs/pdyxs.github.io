@@ -24,6 +24,7 @@ function cleanCard(overrides: Partial<AuditCard> = {}): AuditCard {
     image: 'hero.png',
     body: 'Some ordinary prose with a [card link](card:what/games/digital/numbeanies).',
     localAssets: ['hero.png'],
+    inspected: true,
     ...overrides,
   };
 }
@@ -48,6 +49,7 @@ describe('auditCards — shape', () => {
       'missing-date',
       'no-description',
       'no-authored-tags',
+      'not-inspected',
     ]);
   });
 
@@ -204,6 +206,28 @@ describe('no-authored-tags', () => {
   });
 });
 
+describe('not-inspected', () => {
+  it('flags a card that has not been ticked', () => {
+    expect(uidsFor([cleanCard({ uid: 'what/unread', inspected: false })], 'not-inspected'))
+      .toEqual(['what/unread']);
+  });
+
+  it('flags a card with no `inspected` field at all — absent is not inspected', () => {
+    expect(uidsFor([cleanCard({ inspected: undefined })], 'not-inspected')).toHaveLength(1);
+  });
+
+  it('clears once the card is ticked', () => {
+    expect(uidsFor([cleanCard({ inspected: true })], 'not-inspected')).toEqual([]);
+  });
+
+  it('is independent of every other finding — a scruffy card can still be inspected', () => {
+    const card: AuditCard = { uid: 'what/scruffy-but-read', inspected: true };
+    const findings = auditCards([card]);
+    expect(finding(findings, 'not-inspected').cardCount).toBe(0);
+    expect(finding(findings, 'missing-title').cardCount).toBe(1);
+  });
+});
+
 describe('multiple findings', () => {
   it('lists one card under every finding it triggers and counts it once overall', () => {
     const card: AuditCard = { uid: 'what/writing/legacy' };
@@ -213,6 +237,7 @@ describe('multiple findings', () => {
       'missing-date',
       'no-description',
       'no-authored-tags',
+      'not-inspected',
     ]);
     expect(auditedCardCount(findings)).toBe(1);
   });

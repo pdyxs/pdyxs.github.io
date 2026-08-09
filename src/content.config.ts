@@ -57,6 +57,13 @@ const content = defineCollection({
         // Named `era` (not `when`) so it never reads as a raw dimension tag —
         // it is the override knob, mirroring how `location` feeds `where`.
         era: z.string().optional(),
+        // TEMPORARY (pre-MVP): manual "I have eyeballed this card" flag. Set on
+        // every card by scripts/backfill-inspected.mjs so Obsidian's Properties
+        // view renders it as a checkbox on every post; tick it as you go and
+        // watch the `not-inspected` count on the dev-only audit lens fall to
+        // zero. Delete this field, the finding in src/lib/audit.ts and the
+        // backfill script together once the sweep is done.
+        inspected: z.boolean().optional(),
         renderer: z.string().optional(),
         // Nav renderer name (owns the card shell + custom navigation, e.g.
         // series prev/next). Cascades via _config.yaml like `renderer`; keyed
