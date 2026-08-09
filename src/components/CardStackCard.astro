@@ -66,7 +66,7 @@ const NavComponent = resolveNavRenderer(card.navRenderer);
       status={card.status}
       date={card.date}
     >
-      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} />
+      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} />
     </NavComponent>
   ) : (
     <>
@@ -81,7 +81,7 @@ const NavComponent = resolveNavRenderer(card.navRenderer);
       <div class="body-wrapper open">
         <div class="stack-card-body">
           <div class="stack-card-body-inner">
-            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} />
+            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} />
           </div>
         </div>
       </div>

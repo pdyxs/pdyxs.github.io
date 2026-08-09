@@ -42,6 +42,7 @@ export type CardFrontmatter = {
   titleSuffix?: string;
   width?: string;
   dateLabel?: string;
+  gallery?: boolean;
   [key: string]: unknown;
 };
 
@@ -113,6 +114,12 @@ export type ResolvedCard = CardMeta & {
    * because browse listings show a bare date with no label.
    */
   dateLabel?: string;
+  /**
+   * Whether this card shows an image gallery (frontmatter, else the nearest
+   * `_config.yaml`; default true). Kept off CardMeta — a browse listing has no
+   * gallery to suppress.
+   */
+  gallery?: boolean;
 };
 
 /**
@@ -222,8 +229,9 @@ export function resolveCard(
     visibility,
     navRenderer: data.navRenderer ?? cascade.navRenderer,
     titleSuffix: data.titleSuffix,
-    width: data.width,
+    width: data.width ?? cascade.width,
     dateLabel: data.dateLabel ?? cascade.dateLabel,
+    gallery: data.gallery ?? cascade.gallery,
   } satisfies ResolvedCard;
 }
 

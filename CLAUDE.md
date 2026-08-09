@@ -217,9 +217,21 @@ Share metadata itself (canonical URL, OG/Twitter tag list, JSON-LD documents) is
 
 Any new content collection must set its default renderer via `_config.yaml` in its content directory (resolved by `resolveFolderCascade` in `src/lib/folder-config.ts`, which walks every ancestor `_config.yaml` from the dimension root down — nearest wins); any new renderer component must be registered in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
 
+`width` and `gallery` cascade the same way (`_config.yaml` → `FolderCascade` → `ResolvedCard`, with a card's own frontmatter winning). Cards in a folder usually share a shape, and the shape is what sets the width: `what/puzzles` declares `520px` because a puzzle card *is* its square grid image, and at the site's 680px default that image dominates the viewport. Declare both per-folder, not per-card.
+
+The applier is `applyMaxWidth` in `CardStack.svelte`, and it writes `--max-width` to **both** `<html>` and `#card-stack`. That is not redundant: the server renders `#card-stack` with the initial location's width inline so the first paint is right before hydration, and an inline style on `#card-stack` beats an inherited value from `<html>` for everything inside it. Writing only to `<html>` left a card pushed on top of a wide lens (browse is 960px) wearing the lens's width forever.
+
 ### Nav renderer pattern (`NAV_RENDERERS`)
 
 Collections that need custom navigation (e.g. prev/next chapter buttons, position indicators) register a nav renderer in `NAV_RENDERERS` (`src/lib/renderers.ts`). A nav renderer owns the full card shell — header and body structure — and receives the content renderer as `<slot />`. It is responsible for rendering `<CardHeader>` (or a custom header), the `.body-wrapper` / `.stack-card-body` structure, and any footer nav. Props passed by `card/[...path].astro`: `title`, `titleSuffix`, `entry`, `allEntries`.
+
+A nav renderer is usually declared by the folder (`navRenderer: series` in a
+`_config.yaml`), but `getSeriesSiblings` matches on the `series:` frontmatter
+value alone — so a *subset* of a folder can be its own ordered run by declaring
+`navRenderer`/`series`/`order` in frontmatter instead. The two Recounting
+puzzles inside the (unordered) Experimental Fog folder are the case in hand:
+sequels to each other, not to the folder. Keep `series:` values globally unique;
+they are matched across the whole collection, not within a folder.
 
 ### Collection view renderer pattern (`COLLECTION_VIEW_RENDERERS`)
 
@@ -271,6 +283,53 @@ header and renders a labelled tile rather than a broken image.
 
 New CSS contract: `.video-embed` (global.css). New tokens: none.
 
+### A gallery never repeats what the body already shows
+
+With no `images:` frontmatter, `resolveGalleryImages` (`src/lib/images.ts`)
+sweeps the card's own folder — so a card whose prose walks through a worked
+example image by image (the puzzle "Plans of a Medic") would show every one of
+those images a second time as a gallery strip. The sweep therefore skips any
+colocated file the body already links by name. An explicit `images[]` is never
+filtered this way: naming a file there is a deliberate request to gallery it.
+
+A folder can drop the strip entirely with `gallery: false` in its
+`_config.yaml` (cascading nearest-wins like `renderer`, overridable per card in
+frontmatter). `what/puzzles` does: a puzzle card *is* its grid image, which is
+already the masthead, so the gallery had nothing to add.
+
+### One lightbox, two ways in
+
+`Lightbox.svelte` is the full-screen viewer — overlay, keyboard map, prev/next
+wrap — and nothing else. Two callers decide what the set is:
+
+- **`ImageGallery.svelte`** — the thumbnail strip, opening the gallery set.
+- **`InlineImageViewer.svelte`** — the images a card's *body* renders inline.
+  It has no UI at all: a delegated click listener plus a `<Lightbox>`. The set
+  is every inline image in the card, in document order, so prev/next steps
+  through a worked example rather than dead-ending on the one you clicked.
+
+The listener binds to the enclosing `.stack-card-body-inner`, never `document`,
+so a click in one card of the stack can't open another card's viewer.
+`GenericRenderer` mounts the island only when `bodyHasInlineImage(entry.body)`
+— most cards have none, and an island that can never fire is a download for
+nothing.
+
+Which images those are is one decision, `INLINE_BODY_IMAGE_SELECTOR`
+(`src/lib/inline-images.ts`): `:is(p, li) > img`, since Astro's markdown wraps a
+lone image in a paragraph. `global.css` writes the same selector out by hand
+(CSS can't import it) to cap the height at `--inline-image-max-height` and set
+the zoom cursor. **Change one, change both.**
+
+The cap is `max-height` plus `object-fit: contain` — never `width: auto`. Astro
+markdown images are `loading="lazy"` and carry width/height attributes, and
+those attributes are what reserves the box before the file arrives; `width:
+auto` discards them, an unloaded image has no intrinsic width, and the box
+collapses to zero — so the image never intersects the viewport, never loads, and
+the page jumps as each one finally pops in.
+
+The header image is the exception to the no-repeats rule above — it always leads
+the gallery, because the lightbox is the only way to see it full size.
+
 ### Card credits (`meta:`) are one flat shape, for Metadata Menu
 
 A card's credit/fact rows ("Medium", "Technology", "Accolades", "Made with") are
@@ -302,10 +361,27 @@ are banned in this schema, and both were tried and reverted:
   both as editable everywhere and guide authors no better than raw YAML.
 
 `resolveMetaRows` (`src/lib/card-meta.ts`) is the single decision point: it folds
-the legacy shorthands `medium` / `when` / `roles` in at the front (a card must
-not express the same fact twice) and returns display rows. `GenericRenderer`
-takes the result. `WorkRenderer` still has its own `when`/`roles` `<dl>` — unify
-it when that renderer is next touched.
+the named shorthands `when` / `medium` / `roles` / `puzzle_type` / `difficulty`
+in at the front (a card must not express the same fact twice) and returns
+display rows. `GenericRenderer` takes the result. `WorkRenderer` still has its
+own `when`/`roles` `<dl>` — unify it when that renderer is next touched.
+
+`difficulty` and `puzzle_type` stay named fields rather than authored `meta`
+rows because the puzzles folder's `cardDescriptionParts` template reads
+frontmatter, not resolved rows.
+
+### Action links are resolved, never read raw
+
+`resolveActions` (`src/lib/card-actions.ts`) decides the masthead's "go do it"
+links. Most cards author them as `actions:` rows; puzzles instead carry
+`sudokupad_url` and `url` as named fields (both are load-bearing elsewhere), and
+those fold in as *Play* and *LMD* the same way `medium` folds
+into a meta row. `GenericRenderer` renders whatever comes back — it does not
+filter, reorder, or reach for `data.actions` itself.
+
+This fold is why there is no `PuzzleRenderer`. It was retired once its meta rows
+and play link became ordinary folded fields: a puzzle is a `renderer: card` like
+anything else, and `puzzle` now resolves to `GenericRenderer` by fallback.
 
 ### Canonical tag slugs in content; aliases only in tag YAML
 

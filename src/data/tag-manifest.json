@@ -2678,5 +2678,21 @@
   {
     "uid": "what:software/pdyxs.wtf",
     "code": "aN"
+  },
+  {
+    "uid": "what:puzzles/convergent-clues",
+    "code": "aO"
+  },
+  {
+    "uid": "what:puzzles/experimental-fog",
+    "code": "aP"
+  },
+  {
+    "uid": "what:puzzles/timeline",
+    "code": "aQ"
+  },
+  {
+    "uid": "what:puzzles/experimental-fog/sunny-with-a-chance-of-fog",
+    "code": "aR"
   }
 ]

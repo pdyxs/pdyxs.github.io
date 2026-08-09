@@ -123,11 +123,11 @@ describe("CardStackCard", () => {
         const container = await makeContainer();
         const html = await container.renderToString(CardStackCard, {
             props: {
-                card: card({ uid: "what/puzzles/cartography", renderer: "puzzle" }),
+                card: card({ uid: "where/work/equalreality", renderer: "work" }),
             },
         });
 
-        expect(dom(html).querySelector(".puzzle-meta")).not.toBeNull();
+        expect(dom(html).querySelector(".work-meta")).not.toBeNull();
     });
 
     it("renders no status badge for a published card", async () => {

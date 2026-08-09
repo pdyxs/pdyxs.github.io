@@ -86,7 +86,7 @@ describe('derivePathTags value parity (no re-tagging across the relocation)', ()
   const samples: Array<[uid: string, expected: string]> = [
     ['what/posts/about-me', 'what:posts'],
     ['what/projects/interactive-theatre/art-heist', 'what:projects/interactive-theatre'],
-    ['what/puzzles/cartography', 'what:puzzles'],
+    ['what/puzzles/experimental-fog/cartography', 'what:puzzles/experimental-fog'],
     ['what/work/dot', 'what:work'],
     ['what/writing/2008-07-27-why-portal', 'what:writing'],
     ['what/stories/arctic/00-introduction', 'what:stories/arctic'],

@@ -7,15 +7,14 @@ import { computeCardTagDisplay } from '../../lib/card-tag-display';
 import type { TagDisplay } from '../../lib/tag-display';
 import type { BrowseCardData } from '../../lib/browse-helpers';
 import { resolveMetaRows } from '../../lib/card-meta';
+import { resolveActions } from '../../lib/card-actions';
+import { bodyHasInlineImage } from '../../lib/inline-images';
 import { resolveDateline } from '../../lib/card-date';
 import type { RawMetaRow } from '../../lib/card-meta';
+import type { Action } from '../../lib/card-actions';
 import ImageGallery from '../ImageGallery.svelte';
+import InlineImageViewer from '../InlineImageViewer.svelte';
 import CardStrip from '../CardStrip.svelte';
-
-interface Action {
-  text: string;
-  url: string;
-}
 
 interface Quote {
   quote: string;
@@ -26,10 +25,16 @@ interface Quote {
 interface Props {
   entry: {
     id: string;
+    /** Raw markdown — read only to spot images the body already renders inline (see resolveGalleryImages). */
+    body?: string;
     data: {
       description?: string;
       image?: string;
       medium?: string;
+      puzzle_type?: string;
+      difficulty?: string;
+      sudokupad_url?: string;
+      url?: string;
       meta?: RawMetaRow[];
       canonical_url?: string;
       source?: string;
@@ -52,12 +57,14 @@ interface Props {
   date?: Date;
   /** `ResolvedCard.dateLabel` — what that date *means*, and the switch for showing it at all. Absent → no dateline. */
   dateLabel?: string;
+  /** `ResolvedCard.gallery` — `false` suppresses the gallery strip. Default true. */
+  gallery?: boolean;
 }
 
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], cardTags = [], date, dateLabel } = Astro.props as Props;
+const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], cardTags = [], date, dateLabel, gallery = true } = Astro.props as Props;
 const data = entry?.data;
 
 // Whether this card is a dated thing, and how its date is worded — decided by
@@ -77,7 +84,9 @@ const sourceLabel = data?.source
 // Credits/facts, with the legacy `medium:` shorthand folded in — see card-meta.ts.
 const metaRows = resolveMetaRows(data);
 
-const actions = data?.actions?.filter((a: Action) => a.text && a.url) ?? [];
+// Authored `actions:` plus the named URL fields that fold in as actions — see
+// resolveActions (card-actions.ts). Never filtered or reordered here.
+const actions = resolveActions(data);
 const quotes = data?.quotes?.filter((q: Quote) => q.quote) ?? [];
 
 // Same chip rule as every listing (computeCardTagDisplay) so a card's tags read
@@ -87,10 +96,14 @@ const quotes = data?.quotes?.filter((q: Quote) => q.quote) ?? [];
 // for the full set, where a condensed preview does not.
 const tags = computeCardTagDisplay(cardTags, {}, Infinity).tags.map(chip => chip.value);
 
+const hasInlineImages = bodyHasInlineImage(entry?.body);
+
 const hasHeaderMedia = Boolean(remoteImageSrc || localImage || localVideo);
 const hasMasthead = tags.length > 0 || actions.length > 0;
 
-const gallerySources = entry ? resolveGalleryImages(entry.id, data?.image, data?.images) : [];
+const gallerySources = entry && gallery
+  ? resolveGalleryImages(entry.id, data?.image, data?.images, entry.body)
+  : [];
 const galleryImages = await Promise.all(
   gallerySources.map(async ({ src, kind, poster }) => {
     // An embed's `full` is the iframe URL and its `thumb` is the provider
@@ -191,6 +204,11 @@ const galleryImages = await Promise.all(
         : null}
 
     {galleryImages.length > 0 && <ImageGallery images={galleryImages} client:load />}
+
+    {/* No UI of its own — it makes the images the body rendered inline openable
+        full-screen. Mounted only when the markdown actually has one, so the
+        island isn't shipped to the ~250 cards with none. */}
+    {hasInlineImages && <InlineImageViewer client:load />}
 
     {/* Grouped and labelled so press reviews read as a different class of thing
         from a blockquote the body itself uses. */}

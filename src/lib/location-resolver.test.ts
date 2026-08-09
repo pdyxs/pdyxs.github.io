@@ -46,7 +46,6 @@ describe('resolveLocation', () => {
 
 describe('resolveCardRenderer', () => {
   it('maps a registered renderer name to its component', () => {
-    expect(resolveCardRenderer('puzzle')).toBe(COLLECTION_RENDERERS.puzzle);
     expect(resolveCardRenderer('work')).toBe(COLLECTION_RENDERERS.work);
   });
 

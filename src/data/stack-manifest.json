@@ -1202,5 +1202,77 @@
   {
     "uid": "what/software/pdyxs-wtf",
     "code": "4Q"
+  },
+  {
+    "uid": "what/puzzles/convergent-clues/cityscrapers",
+    "code": "4R"
+  },
+  {
+    "uid": "what/puzzles/convergent-clues/little-fillers",
+    "code": "4S"
+  },
+  {
+    "uid": "what/puzzles/convergent-clues/little-fillers-2",
+    "code": "4T"
+  },
+  {
+    "uid": "what/puzzles/experimental-fog/a-murder-most-fogged",
+    "code": "4U"
+  },
+  {
+    "uid": "what/puzzles/experimental-fog/cartography",
+    "code": "4V"
+  },
+  {
+    "uid": "what/puzzles/experimental-fog/friends-in-the-fog",
+    "code": "4W"
+  },
+  {
+    "uid": "what/puzzles/experimental-fog/recounting-the-counting",
+    "code": "4X"
+  },
+  {
+    "uid": "what/puzzles/experimental-fog/recounting-the-rooms",
+    "code": "4Y"
+  },
+  {
+    "uid": "what/puzzles/experimental-fog/some-things-fogn",
+    "code": "4Z"
+  },
+  {
+    "uid": "what/puzzles/experimental-fog/sunny-with-a-chance-of-fog",
+    "code": "50"
+  },
+  {
+    "uid": "what/puzzles/experimental-fog/the-grid-of-forking-paths",
+    "code": "51"
+  },
+  {
+    "uid": "what/puzzles/experimental-fog/whispers-in-the-mist",
+    "code": "52"
+  },
+  {
+    "uid": "what/puzzles/timeline/ships-in-the-time",
+    "code": "53"
+  },
+  {
+    "uid": "what/puzzles/timeline/this-is-how-you-learn-the-time-war",
+    "code": "54"
+  },
+  {
+    "uid": "what/puzzles/timeline/this-is-how-you-live-the-time-war",
+    "code": "55"
+  },
+  {
+    "uid": "what/puzzles/timeline/times-apart",
+    "code": "56"
+  },
+  {
+    "uid": "what/puzzles/convergent-clues/commonality",
+    "code": "57"
+  },
+  {
+    "uid": "what/puzzles/convergent-clues/the-clone-gunmen",
+    "code": "58"
   }
 ]

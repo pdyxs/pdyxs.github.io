@@ -35,15 +35,23 @@ export interface MetaSource {
   medium?: string;
   when?: string;
   roles?: string;
+  puzzle_type?: string;
+  difficulty?: string;
   meta?: RawMetaRow[];
 }
 
-// The legacy shorthands, in the order they led the Jekyll definition lists:
-// work-history cards opened with When/Roles, project cards with Medium.
+// The named shorthands, in the order they lead the row list: the legacy Jekyll
+// three first (work-history cards opened with When/Roles, project cards with
+// Medium), then the puzzle pair. `puzzle_type` and `difficulty` are named
+// fields rather than authored `meta` rows because every puzzle has a
+// difficulty and it also feeds the folder's `cardDescriptionParts` template —
+// which reads frontmatter, not resolved rows.
 const LEGACY_FIELDS: ReadonlyArray<readonly [keyof MetaSource, string]> = [
   ['when', 'When'],
   ['medium', 'Medium'],
   ['roles', 'Roles'],
+  ['puzzle_type', 'Type'],
+  ['difficulty', 'Difficulty'],
 ];
 
 // A whole value that is exactly one markdown link, e.g.

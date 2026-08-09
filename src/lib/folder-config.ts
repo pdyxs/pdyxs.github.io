@@ -58,6 +58,20 @@ export type FolderCascade = {
    * like `renderer`; the reserved value "none" suppresses an inherited label.
    */
   dateLabel?: string;
+  /**
+   * Nearest-ancestor `width` — the per-location card width (a CSS length) every
+   * card in the folder gets unless its own frontmatter overrides it. Cards in a
+   * folder usually share a shape: puzzles are a square grid image and want a
+   * narrower card than a page of prose. Nearest-wins, like `renderer`.
+   */
+  width?: string;
+  /**
+   * Nearest-ancestor `gallery` — `false` suppresses the card's image gallery.
+   * The gallery exists to surface media the body doesn't show; a folder whose
+   * cards *are* one image (puzzles: the grid, already the masthead) has nothing
+   * left for it to add. Nearest-wins, like `renderer`.
+   */
+  gallery?: boolean;
   /** This folder's own tag identity (name/description) — not inherited by descendants. */
   tagIdentity: { name?: string; description?: string };
 };
@@ -71,6 +85,8 @@ type ConfigFile = {
   description?: string;
   cardDescriptionParts?: string[];
   dateLabel?: string;
+  width?: string;
+  gallery?: boolean;
   [key: string]: unknown;
 };
 
@@ -103,6 +119,8 @@ export async function resolveFolderCascade(
   let status: string | undefined;
   let cardDescriptionParts: string[] | undefined;
   let dateLabel: string | undefined;
+  let width: string | undefined;
+  let gallery: boolean | undefined;
   const cascadeTags: string[] = [];
   const seenTags = new Set<string>();
   const overrides: Record<string, string> = {};
@@ -117,6 +135,9 @@ export async function resolveFolderCascade(
     if (parsed.navRenderer) navRenderer = parsed.navRenderer;
     if (parsed.status) status = parsed.status;
     if (parsed.dateLabel) dateLabel = parsed.dateLabel;
+    if (parsed.width) width = parsed.width;
+    // Explicit typeof check, not truthiness: `gallery: false` is the whole point.
+    if (typeof parsed.gallery === 'boolean') gallery = parsed.gallery;
     if (Array.isArray(parsed.cardDescriptionParts)) {
       cardDescriptionParts = parsed.cardDescriptionParts.filter(
         (p): p is string => typeof p === 'string'
@@ -150,5 +171,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, cascadeTags, overrides, tagIdentity };
+  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, width, gallery, cascadeTags, overrides, tagIdentity };
 }

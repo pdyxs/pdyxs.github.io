@@ -14,6 +14,24 @@ describe('resolveGalleryImages', () => {
     expect(result).toHaveLength(2);
   });
 
+  it('drops a colocated image the body already renders inline', () => {
+    const body = 'Here is the worked example:\n\n![](trailer.mp4)\n';
+    const result = resolveGalleryImages('what/art/art-heist', 'outside.jpg', [], body);
+    expect(result.map(m => m.kind)).toEqual(['image']);
+  });
+
+  it('keeps an inlined image when images[] names it explicitly', () => {
+    const body = '![](trailer.mp4)';
+    const result = resolveGalleryImages('what/art/art-heist', undefined, ['trailer.mp4'], body);
+    expect(result).toHaveLength(1);
+  });
+
+  it('keeps the header image even when the body inlines it', () => {
+    const body = '![](outside.jpg)';
+    const result = resolveGalleryImages('what/art/art-heist', 'outside.jpg', [], body);
+    expect(result.map(m => m.kind)).toEqual(['image', 'video']);
+  });
+
   it('leads with a remote header image', () => {
     const result = resolveGalleryImages('what/art/art-heist', 'https://example.com/hero.jpg', []);
     expect(result[0]).toEqual({ src: 'https://example.com/hero.jpg', kind: 'image' });

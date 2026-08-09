@@ -95,7 +95,12 @@ export function isRemoteImageUrl(url: string): boolean {
  * `<img>`.
  *
  * Otherwise (no `images` override, or every entry in it fails to resolve),
- * defaults to every colocated image and video in the entry's own directory.
+ * defaults to every colocated image and video in the entry's own directory —
+ * minus any the body already renders inline. A card whose prose walks through
+ * a worked example image by image (see the puzzle "Plans of a Medic") would
+ * otherwise show every one of those images a second time as a gallery strip.
+ * An explicit `images[]` is never filtered this way: naming a file there is a
+ * deliberate request to gallery it.
  *
  * The header image leads the gallery in both branches — it's the card's own
  * media and belongs in the lightbox set — and is only prepended when the
@@ -106,6 +111,8 @@ export function resolveGalleryImages(
   entryId: string,
   headerImage: string | undefined,
   images: string[] | undefined,
+  /** The card's raw markdown body, used to spot images it already renders inline. */
+  body?: string,
 ): GalleryImageSource[] {
   const header = resolveMediaRef(entryId, headerImage);
   const withHeader = (sources: GalleryImageSource[]): GalleryImageSource[] =>
@@ -121,11 +128,18 @@ export function resolveGalleryImages(
 
   const prefix = `/src/content/${entryId}/`;
 
+  // A colocated file the body links to by name is already on the page.
+  const inlined = (path: string) => {
+    if (!body) return false;
+    const filename = path.slice(prefix.length);
+    return body.includes(`(${filename})`) || body.includes(`(./${filename})`);
+  };
+
   const imageEntries = Object.keys(localImages)
-    .filter(path => path.startsWith(prefix))
+    .filter(path => path.startsWith(prefix) && !inlined(path))
     .map(path => ({ path, item: { src: localImages[path].default, kind: 'image' as const } }));
   const videoEntries = Object.keys(localVideos)
-    .filter(path => path.startsWith(prefix))
+    .filter(path => path.startsWith(prefix) && !inlined(path))
     .map(path => ({ path, item: { src: localVideos[path], kind: 'video' as const } }));
 
   return withHeader(

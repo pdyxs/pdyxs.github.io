@@ -164,6 +164,9 @@ const content = defineCollection({
         // reserved value "none" suppresses an inherited label. See
         // resolveDateline in src/lib/card-date.ts.
         dateLabel: z.string().optional(),
+        // `false` suppresses this card's image gallery. Normally set per-folder
+        // in _config.yaml, where it cascades nearest-wins like `renderer`.
+        gallery: z.boolean().optional(),
         // Per-location responsive width (issue #27): a plain CSS length/expr
         // (e.g. "900px") that overrides the global --max-width default for
         // this card in both card mode and page mode. Undeclared → falls back
