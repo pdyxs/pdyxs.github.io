@@ -27,7 +27,7 @@ quotes:
 medium: Escape Room/Interactive Theatre
 cvDescription: Art Heist is an interactive theatre experience where teams of four develop and execute a daring plan to steal a painting from an art gallery.
 ---
-An immersive escape room, run in Sydney in 2017.
+An immersive escape room, run in Sydney in 2017. blah
 
 You and your crew plan and carry out a robbery in our purpose-built art gallery.
 
