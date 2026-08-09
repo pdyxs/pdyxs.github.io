@@ -54,11 +54,9 @@ I ended up with this:
 Now that I had the ability to show stories in the engine, it was time to actually build those stories. I built a really simple ‘Explainer’ system, where you click on an object to find out more about it. This presented a really nice opportunity to actually explain the science in an exploratory style, and so I decided to focus on the circuit skin’s version: describing the circuit elements before tackling the harder task of storytelling.
 
 Very quickly, it became clear that this wasn’t going to be trivial. To describe a gate, for instance, you need to have information about whether it has controls, which bits control it and so on. I found myself building a small templating language (somewhat based on [Jekyll](http://jekyllrb.com)) to make this happen. For example, this is the string for a Not gate with at least 1 control.
-{% raw %}
 ```
 A {{controls | repeat: 'Controlled '}}Not Gate. Turns 0’s into 1’s and vice versa, if {{ controlNames | list: ', ',' and ' }} {{ controls | pluralize : 'has', 'have' }} a value of 1.
 ```
-{% endraw %}
 
 And this is the result:
 
