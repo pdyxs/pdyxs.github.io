@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: "Flatland: Fallen Angle"
 description: A neo-noir adventure set in a two-dimensional world
 images:
@@ -16,9 +16,6 @@ quotes:
     in:
       text: Rock Paper Shotgun
       url: http://www.rockpapershotgun.com/2012/02/27/a-game-with-a-point-flatland-fallen-angle/
-actions:
-  - text: Download for Free
-    url: http://www.seethroughstudios.com/games/#flatland
 medium: Video Game
 meta:
   - label: Release
