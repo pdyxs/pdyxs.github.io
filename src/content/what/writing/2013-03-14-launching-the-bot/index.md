@@ -5,7 +5,7 @@ date: '2013-03-14 17:00:00 +1000'
 tags:
   - what/games/digital/unstoppabot
   - where/work/seethrough
-image: /pastprojects/unstoppabot/gallery/Unstoppabot1.jpg
+image: Unstoppabot1.jpg
 source: seethroughstudios
 ---
 Launching a game is tiring. Launching a game where the launch doesn't really work is exhausting, especially when those who actually play the game seem to really like it.
