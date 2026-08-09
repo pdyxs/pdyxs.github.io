@@ -3,7 +3,6 @@ inspected: true
 title: Particulars
 description: A minimalist meditation on the chaos of life, the universe and sub-atomic particle physics
 image: 5-1b.jpg
-feature: 5-1b
 tags:
   - science
   - when/released

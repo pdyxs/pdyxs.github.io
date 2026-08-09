@@ -1,10 +1,7 @@
 ---
-inspected: false
+inspected: true
 title: The Path
-description: >-
-  An artwork about life and the paths it ventured down, generated from the Open
-  Tree of Life: a database of 2.3 million species and their genetic origins
-feature: the_path_2500x1250
+description: "An artwork about life and the paths it ventured down, generated from the Open Tree of Life: a database of 2.3 million species and their genetic origins"
 image: the_path_2500x1250.jpg
 portfolio: the_path_2500x1250.jpg
 tags:
@@ -12,7 +9,7 @@ tags:
   - visualisation
   - when/released
 date: 2016-02-01
-medium: 'Data visualisation, artwork'
+medium: Data visualisation, artwork
 width: 900px
 actions: []
 quotes: []

@@ -9,7 +9,6 @@ date: 2019-01-26
 images:
   - wheretheheartis.jpg
 image: wheretheheartis.jpg
-feature: wheretheheartis
 actions:
   - text: Play it
     url: https://wheretheheartis.surge.sh/

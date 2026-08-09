@@ -1,8 +1,7 @@
 ---
-inspected: false
+inspected: true
 title: Lino Printing
-description: >-
-  Hand-carved lino block prints, exploring printmaking as a new craft
+description: Hand-carved lino block prints, exploring printmaking as a new craft
 tags:
   - when/in-progress
 date: 2024-10-08

@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Qistigram
 description: A concept for quantum-powered Instagram stories
 tags:
@@ -9,11 +9,11 @@ date: 2019-09-14
 image: qiskigram_header_full.jpg
 images:
   - qiskigram_header_full.jpg
-  - 'https://www.youtube.com/embed/HS1Xem613Rw'
-  - 'https://www.youtube.com/embed/xVTsdk7Hdbc'
+  - https://www.youtube.com/embed/HS1Xem613Rw
+  - https://www.youtube.com/embed/xVTsdk7Hdbc
 actions:
   - text: Github Repository
-    url: 'https://github.com/pdyxs/QuantumInstaStories-Unity'
+    url: https://github.com/pdyxs/QuantumInstaStories-Unity
 medium: Speculative Artwork
 quotes: []
 meta:

@@ -1,10 +1,7 @@
 ---
-inspected: false
+inspected: true
 title: The Neighbourhood
-description: >-
-  An artwork about stars and our place amongst them, generated from the 8912
-  stars visible from Earth with the naked eye
-feature: the_neighbourhood_2500x1250
+description: An artwork about stars and our place amongst them, generated from the 8912 stars visible from Earth with the naked eye
 image: the_neighbourhood_2500x1250.jpg
 portfolio: the_neighbourhood_2500x1250.jpg
 tags:
@@ -12,7 +9,7 @@ tags:
   - visualisation
   - when/released
 date: 2016-02-01
-medium: 'Data visualisation, artwork'
+medium: Data visualisation, artwork
 actions: []
 quotes: []
 images: []

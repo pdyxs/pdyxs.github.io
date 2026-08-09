@@ -5,7 +5,6 @@ description: A neo-noir adventure set in a two-dimensional world
 images:
   - https://www.youtube.com/embed/NY7sIlyq5Zg
 image: Flatland1.jpg
-feature: Flatland1
 tags:
   - when/released
   - where/work/seethrough

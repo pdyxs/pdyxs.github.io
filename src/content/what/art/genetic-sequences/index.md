@@ -9,7 +9,6 @@ tags:
 images:
   - https://medium.com/series/visualising-genetic-sequences-bea25751f4b7
 image: output4.png
-actions:
 medium: Data visualisation, artwork
 quotes: []
 meta:

@@ -11,7 +11,6 @@ actions:
   - text: Buy a nice copy
     url: https://ko-fi.com/pdyxs/shop
 image: frontpage.jpg
-feature: frontpage
 images:
   - frontpage.jpg
   - howtoplay.jpg
