@@ -69,9 +69,10 @@ export function selectSlotCard(
   filterState: FilterState,
   date: Date,
   timezone?: string,
+  cardBackedValues?: Set<string>,
 ): CardMeta | null {
   const tz = timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const filtered = applyFilters(cards, filterState);
+  const filtered = applyFilters(cards, filterState, cardBackedValues);
   if (filtered.length === 0) return null;
 
   const daySeed = toDateString(date, tz);

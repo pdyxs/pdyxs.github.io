@@ -84,6 +84,8 @@ export function resolveFrontPageSlots(
   config: FrontPageConfig,
   cards: SerialisedCardFull[],
   now: Date,
+  /** Card-backed values from the FULL card set — see applyFilters. */
+  cardBackedValues?: Set<string>,
 ): ResolvedFrontPageSlots {
   const byUid = new Map(cards.map(c => [c.uid, c]));
   // SerialisedCard (browse-helpers.ts) doesn't carry status/visibility across
@@ -107,7 +109,7 @@ export function resolveFrontPageSlots(
       const card = byUid.get(slotConfig.uid);
       if (card) slots.push({ type: 'pinned', uid: card.uid, title: card.title, description: card.description });
     } else {
-      const meta = selectSlotCard(cardMetas, slotConfig.filter, now);
+      const meta = selectSlotCard(cardMetas, slotConfig.filter, now, undefined, cardBackedValues);
       if (meta) displayed.push({ uid: meta.uid, contentHash: meta.contentHash });
       const card = meta ? byUid.get(meta.uid) ?? null : null;
       slots.push({ type: 'filter', label: slotConfig.label, card, browseUrl: buildBrowseUrl(slotConfig.filter) });

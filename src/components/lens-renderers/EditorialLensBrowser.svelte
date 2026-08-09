@@ -15,9 +15,11 @@
     cards: EditorialCard[];
     tagDisplay?: Record<string, TagDisplay>;
     config?: Record<string, unknown>;
+    /** Card-backed values from the FULL card set — see applyFilters. */
+    cardBackedValues?: string[];
   }
 
-  let { cards, tagDisplay = {} }: Props = $props();
+  let { cards, tagDisplay = {}, cardBackedValues }: Props = $props();
 
   // The dev-only "what's in flight" dashboard (issue #53): filters the pool
   // by the shared lensFilterStore (same as BrowseLensBrowser.svelte — see its
@@ -39,7 +41,8 @@
     }))
   );
   const activeFilter: FilterState = $derived(mounted ? $lensFilterStore : { });
-  const filteredCards = $derived(applyFilters(cardMetas, activeFilter));
+  const cardBackedSet = $derived(cardBackedValues ? new Set(cardBackedValues) : undefined);
+  const filteredCards = $derived(applyFilters(cardMetas, activeFilter, cardBackedSet));
   const groups = $derived(groupCardsByStatus(filteredCards));
 
   // Same anti-FOUC clearing as BrowseLensBrowser.svelte.

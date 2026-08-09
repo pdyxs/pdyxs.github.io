@@ -156,9 +156,17 @@ export function extractDimensionTags(
  * Exception: a tag that is some *other* card's own path (a "card-backed
  * tag") is a direct link to that card, not category membership, so it only
  * counts on an exact match — see cardOwnValues.
+ *
+ * As in applyFilters, `cardBackedValues` must come from the FULL card set:
+ * `cards` here is the listing-filtered browse pool, so deriving it locally
+ * misses draft/unlisted targets and over-counts their ancestors. Omitting it
+ * keeps the pool-derived behaviour, correct only when `cards` is the full set.
  */
-export function countMatchingCards(cards: CardMeta[], value: string): number {
-  const cardBackedValues = cardOwnValues(cards);
+export function countMatchingCards(
+  cards: CardMeta[],
+  value: string,
+  cardBackedValues: Set<string> = cardOwnValues(cards),
+): number {
   return cards.filter(card =>
     card.tags.some(tag =>
       tag === value || (!cardBackedValues.has(tag) && tag.startsWith(value + '/'))
@@ -184,6 +192,7 @@ export function buildTagHierarchy(
   dimension: FiveWDimension,
   declaredValues: string[] = [],
   display: Record<string, TagDisplay> = {},
+  cardBackedValues: Set<string> = cardOwnValues(cards),
 ): TagNode[] {
   const allTags = extractDimensionTags(cards, dimension, declaredValues);
   if (allTags.length === 0) return [];
@@ -208,7 +217,7 @@ export function buildTagHierarchy(
       value: tag,
       label: tagLabel(tag),
       ...displayFor(tag, display),
-      count: countMatchingCards(cards, tag),
+      count: countMatchingCards(cards, tag, cardBackedValues),
       children: [],
     });
   }

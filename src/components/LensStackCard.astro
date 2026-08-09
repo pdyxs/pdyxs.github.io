@@ -31,6 +31,7 @@ import { discoverCollapseConfig } from '../lib/collapse-config';
 import { collapseCollections } from '../lib/collapse';
 import type { SerialisedCardFull } from '../lib/frontpage';
 import { FIVE_W_DIMENSIONS } from '../lib/five-w';
+import { cardOwnValues } from '../lib/card-identity';
 import { DIMENSIONS, emptyFilterState } from '../dimensions';
 import type { FilterState } from '../dimensions';
 import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '../lib/lens-components';
@@ -61,6 +62,8 @@ let hierarchies: any = null;
 let groupOrder: any = {};
 let tagDisplay: any = {};
 let serialisedCards: any[] = [];
+// Serialised (array) form of the card-backed value set, for the client island.
+let cardBackedValuesList: string[] = [];
 let BodyComponent: any = null;
 
 if (lens) {
@@ -71,6 +74,13 @@ if (lens) {
   // reachability filter (getStaticPaths in card/[...path].astro) applies
   // independently over the same source list.
   const listedCards = allCards.filter(c => c.visibility.listed);
+  // Deliberately from the UNFILTERED list: whether a tag points at a specific
+  // card is a property of the content graph, not of what's currently listed.
+  // Derived from listedCards instead, a draft/unlisted target would drop out
+  // and every post tagged with it would prefix-match into that card's parent
+  // category. See applyFilters (src/dimensions/apply.ts).
+  const cardBackedValues = cardOwnValues(allCards);
+  cardBackedValuesList = [...cardBackedValues];
   const registry = await getTagRegistry(listedCards);
   groupOrder = await getDimensionGroupOrder();
   tagDisplay = flattenTagDisplay(registry);
@@ -90,7 +100,7 @@ if (lens) {
   // hand-injection site here any more — a dimension that renders nowhere (the
   // null dimension) simply returns none, and the dev-only status dimension
   // isn't in the registry at all in a production build.
-  const nodeContext = { cards: browseCards, declaredValues, display: tagDisplay };
+  const nodeContext = { cards: browseCards, declaredValues, display: tagDisplay, cardBackedValues };
   hierarchies = Object.fromEntries(
     DIMENSIONS.map(dimension => [dimension.id, dimension.nodes(nodeContext)]),
   );
@@ -122,7 +132,7 @@ if (lens) {
         <div class="stack-card-body-inner">
           <LensFilterShell client:load lens={lens} hierarchies={hierarchies} groupOrder={groupOrder} tagDisplay={tagDisplay} />
           {BodyComponent && (
-            <BodyComponent cards={serialisedCards} tagDisplay={tagDisplay} config={lens.config} />
+            <BodyComponent cards={serialisedCards} tagDisplay={tagDisplay} config={lens.config} cardBackedValues={cardBackedValuesList} />
           )}
         </div>
       </div>

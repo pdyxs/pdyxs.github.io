@@ -12,9 +12,12 @@
     cards: SerialisedCardFull[];
     tagDisplay?: Record<string, TagDisplay>;
     config?: Record<string, unknown>;
+    /** Card-backed values from the FULL card set — see applyFilters. The pool
+     * above is listing-filtered, so this cannot be re-derived from it. */
+    cardBackedValues?: string[];
   }
 
-  let { cards, tagDisplay = {}, config }: Props = $props();
+  let { cards, tagDisplay = {}, config, cardBackedValues }: Props = $props();
 
   // The generic body for any filter-accepting lens with no bespoke rendering
   // (the "browse lens family" — see lens-registry.ts). Filtering is derived
@@ -56,7 +59,8 @@
     }))
   );
   const activeFilter: FilterState = $derived(mounted ? $lensFilterStore : { });
-  const filteredCards = $derived(applyFilters(cardMetas, activeFilter));
+  const cardBackedSet = $derived(cardBackedValues ? new Set(cardBackedValues) : undefined);
+  const filteredCards = $derived(applyFilters(cardMetas, activeFilter, cardBackedSet));
   const sortedCards = $derived(limitCardsForBrowse(sortCardsForBrowse(filteredCards, config), config));
 
   // Clear the pre-paint anti-FOUC guard (set by Base.astro's inline script when

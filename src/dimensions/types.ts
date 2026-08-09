@@ -36,6 +36,12 @@ export interface NodeContext {
   declaredValues: string[];
   /** Flat `value -> {name, description}` map from the tag registry. */
   display: Record<string, TagDisplay>;
+  /**
+   * Card-backed values from the FULL card set — see applyFilters for why this
+   * must not be re-derived from `cards`. Optional so a caller with a
+   * self-contained pool can omit it.
+   */
+  cardBackedValues?: Set<string>;
 }
 
 /** Shared per-pool derivation, computed once per applyFilters call. */

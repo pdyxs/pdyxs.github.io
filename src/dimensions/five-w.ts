@@ -36,7 +36,13 @@ export function makeFiveWDimension(id: FiveWDimension): Dimension<string[]> {
     paramKeys: [paramKey],
 
     nodes(ctx: NodeContext): TagNode[] {
-      return buildTagHierarchy(ctx.cards, id, ctx.declaredValues, ctx.display);
+      return buildTagHierarchy(
+        ctx.cards,
+        id,
+        ctx.declaredValues,
+        ctx.display,
+        ctx.cardBackedValues,
+      );
     },
 
     matches(card: CardMeta, sel: string[] | undefined, ctx: MatchContext): boolean {

@@ -120,6 +120,17 @@ describe('applyFilters — prefix matching', () => {
     expect(applyFilters([project, post], state)).toEqual([project]);
   });
 
+  it('a card-backed tag does not prefix-match even when its target card is absent from the pool', () => {
+    // The target card is a draft (or otherwise unlisted), so it never reaches
+    // the browse pool. Deriving card-backed values from the pool alone would
+    // fail open here and file the post under the ancestor category — hence
+    // the explicit cardBackedValues argument, computed from the FULL card set.
+    const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:writing', 'what:projects/where-the-heart-is'] });
+    const state: FilterState = { what: ['what:projects'] };
+    const allCardBackedValues = new Set(['what:projects/where-the-heart-is']);
+    expect(applyFilters([post], state, allCardBackedValues)).toEqual([]);
+  });
+
   it('a card-backed tag still matches when selected exactly', () => {
     const project = fakeCardMeta({ uid: 'what/projects/where-the-heart-is', tags: ['what:projects'] });
     const post = fakeCardMeta({ uid: 'what/writing/deciding-where-the-heart-is', tags: ['what:writing', 'what:projects/where-the-heart-is'] });

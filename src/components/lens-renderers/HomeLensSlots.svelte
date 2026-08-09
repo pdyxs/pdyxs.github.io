@@ -11,9 +11,11 @@
   interface Props {
     config: FrontPageConfig;
     cards: SerialisedCardFull[];
+    /** Card-backed values from the FULL card set — see applyFilters. */
+    cardBackedValues?: string[];
   }
 
-  let { config, cards }: Props = $props();
+  let { config, cards, cardBackedValues }: Props = $props();
 
   let resolvedSlots = $state<ResolvedSlot[]>([]);
 
@@ -36,10 +38,19 @@
       status: 'published' as const,
       visibility: { listed: true, reachable: true },
     }));
-    const filtered = applyFilters(cardMetas, get(lensFilterStore));
+    const filtered = applyFilters(
+      cardMetas,
+      get(lensFilterStore),
+      cardBackedValues ? new Set(cardBackedValues) : undefined,
+    );
     const serialisedFiltered = filtered.map(c => ({ ...c, date: c.date?.toISOString() ?? null }));
 
-    const { slots, displayed } = resolveFrontPageSlots(config, serialisedFiltered, new Date());
+    const { slots, displayed } = resolveFrontPageSlots(
+      config,
+      serialisedFiltered,
+      new Date(),
+      cardBackedValues ? new Set(cardBackedValues) : undefined,
+    );
     for (const d of displayed) markDisplayed(d.uid, d.contentHash);
     resolvedSlots = slots;
   });
