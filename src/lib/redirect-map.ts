@@ -80,12 +80,35 @@ export interface Resolution {
   candidates?: string[];
 }
 
+/**
+ * An old URL that fell back *only* because the card it names is unreachable —
+ * drafted, archived, or scheduled for later. The card still exists in the
+ * content tree, so unlike the rest of `unresolved` this one has somebody to
+ * blame, and un-drafting that card fixes the URL.
+ *
+ * Decided by resolving twice: once against the reachable uids (what the real
+ * map is built from) and once against every uid in the tree. A URL that fails
+ * the first and succeeds the second was orphaned by its own card's status.
+ */
+export interface OrphanedOldUrl {
+  /** The card that would have caught this URL if it were reachable. */
+  uid: string;
+  from: string;
+  /** Where the URL goes instead, i.e. the fallback lens. */
+  to: string;
+}
+
 export interface RedirectMapReport {
   /** Config-ready `from → to` map, key-sorted. */
   redirects: Record<string, string>;
   resolved: Resolution[];
   /** Every entry that fell back. Never empty-by-omission — this is the report. */
   unresolved: Resolution[];
+  /**
+   * The subset of `unresolved` traceable to an existing-but-unreachable card.
+   * Empty when `buildRedirectMap` is called without `allUids`.
+   */
+  orphaned: OrphanedOldUrl[];
   stats: {
     total: number;
     resolved: number;
@@ -307,9 +330,34 @@ export function resolveOldUrl(old: OldUrl, uids: readonly string[]): Resolution 
 /**
  * Resolves every old URL and assembles the config-ready map plus the report.
  * The map is key-sorted so regenerating it produces a stable diff.
+ *
+ * `uids` is the *reachable* set — the map must never aim at a URL that 404s.
+ * `allUids` additionally includes unreachable cards, and is used only to
+ * attribute fallbacks to the card that caused them (see OrphanedOldUrl).
+ * Omitting it yields an empty `orphaned` list rather than a wrong one.
  */
-export function buildRedirectMap(oldUrls: readonly OldUrl[], uids: readonly string[]): RedirectMapReport {
+export function buildRedirectMap(
+  oldUrls: readonly OldUrl[],
+  uids: readonly string[],
+  allUids?: readonly string[],
+): RedirectMapReport {
   const resolutions = oldUrls.map(old => resolveOldUrl(old, uids));
+
+  const orphaned: OrphanedOldUrl[] = [];
+  if (allUids) {
+    for (const [i, resolution] of resolutions.entries()) {
+      if (resolution.via !== 'fallback') continue;
+      const retry = resolveOldUrl(oldUrls[i], allUids);
+      // An ambiguous or still-missing retry names no single card, so there is
+      // nobody to attribute the fallback to.
+      if (retry.via === 'fallback' || !retry.to.startsWith(CARD_PREFIX)) continue;
+      orphaned.push({
+        uid: retry.to.slice(CARD_PREFIX.length),
+        from: resolution.from,
+        to: resolution.to,
+      });
+    }
+  }
 
   const redirects: Record<string, string> = {};
   for (const r of [...resolutions].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0))) {
@@ -333,6 +381,7 @@ export function buildRedirectMap(oldUrls: readonly OldUrl[], uids: readonly stri
     redirects,
     resolved: resolutions.filter(r => r.via !== 'fallback'),
     unresolved,
+    orphaned,
     stats: {
       total: resolutions.length,
       resolved: resolutions.length - unresolved.length,

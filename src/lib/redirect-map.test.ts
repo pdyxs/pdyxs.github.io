@@ -10,7 +10,7 @@ import {
   type OldUrl,
   type JekyllCollectionRule,
 } from './redirect-map';
-import { REDIRECTS, UNRESOLVED_OLD_URLS } from '../data/redirects.generated';
+import { ORPHANED_OLD_URLS, REDIRECTS, UNRESOLVED_OLD_URLS } from '../data/redirects.generated';
 
 // ---------------------------------------------------------------------------
 // Fixture: a miniature stand-in for the real content tree. Every case in here
@@ -260,6 +260,48 @@ describe('buildRedirectMap', () => {
   it('never redirects a URL to itself', () => {
     for (const [from, to] of Object.entries(report.redirects)) expect(to).not.toBe(from);
   });
+
+  it('reports no orphans when called without the full uid list', () => {
+    expect(report.orphaned).toEqual([]);
+  });
+});
+
+describe('buildRedirectMap orphan attribution', () => {
+  // /what/blog/long-gone has no card at all; /what/blog/drafted has one that
+  // exists but is unreachable. Both fall back — only the second has a culprit.
+  const OLD: OldUrl[] = [
+    { from: '/what/blog/why-portal', label: 'posts', strategy: 'slug', slug: 'why-portal' },
+    { from: '/what/blog/long-gone', label: 'posts', strategy: 'slug', slug: 'long-gone' },
+    { from: '/what/blog/drafted', label: 'posts', strategy: 'slug', slug: 'drafted' },
+  ];
+  const ALL = [...UIDS, 'what/writing/drafted'];
+
+  const report = buildRedirectMap(OLD, UIDS, ALL);
+
+  it('names the unreachable card behind a fallback', () => {
+    expect(report.orphaned).toEqual([
+      { uid: 'what/writing/drafted', from: '/what/blog/drafted', to: BROWSE_LENS_FALLBACK },
+    ]);
+  });
+
+  it('leaves a fallback with no card behind it unattributed', () => {
+    expect(report.orphaned.map(o => o.from)).not.toContain('/what/blog/long-gone');
+  });
+
+  it('still sends the orphaned URL to the fallback — attribution changes no routing', () => {
+    expect(report.redirects['/what/blog/drafted']).toBe(BROWSE_LENS_FALLBACK);
+    expect(report.unresolved.map(u => u.from)).toContain('/what/blog/drafted');
+  });
+
+  it('attributes nothing when the retry is ambiguous', () => {
+    const ambiguous = buildRedirectMap(
+      [{ from: '/what/blog/twin', label: 'posts', strategy: 'slug', slug: 'twin' }],
+      UIDS,
+      [...UIDS, 'what/writing/twin', 'what/games/digital/twin'],
+    );
+    expect(ambiguous.unresolved).toHaveLength(1);
+    expect(ambiguous.orphaned).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -313,6 +355,22 @@ describe('the generated redirect map', () => {
       '/cv',
       '/what/projects/fatecardgame',
       '/who',
+    ]);
+  });
+
+  it('attributes every orphaned old URL to a card that exists', () => {
+    for (const entry of ORPHANED_OLD_URLS) {
+      // Every orphan is a genuine fallback, and still redirects somewhere.
+      expect(UNRESOLVED_OLD_URLS.map(u => u.from), entry.from).toContain(entry.from);
+      expect(REDIRECTS[entry.from], entry.from).toBe(entry.to);
+    }
+    // All four current misses trace to a card that exists but is `status:
+    // draft`. Publishing one restores its old URL and drops it from this list.
+    expect(ORPHANED_OLD_URLS.map(o => `${o.uid} ${o.from}`).sort()).toEqual([
+      'what/games/analog/fatecardgame /what/projects/fatecardgame',
+      'what/posts/stories/arctic/01-map /arctic/0-1-map',
+      'who/about-me /cv',
+      'who/about-me /who',
     ]);
   });
 

@@ -156,3 +156,16 @@ export const UNRESOLVED_OLD_URLS: readonly { from: string; to: string; reason: s
   { from: "/who", to: "/", reason: "no such card: who/about-me" },
   { from: "/cv", to: "/", reason: "no such card: who/about-me" },
 ];
+
+/**
+ * The subset of UNRESOLVED_OLD_URLS traceable to a card that still exists but
+ * is unreachable in a production build (`status: draft`/`archived`, or a
+ * `scheduled` date not yet reached). Consumed by the audit lens, which lists
+ * the offending cards by name — publishing one closes its entry here.
+ */
+export const ORPHANED_OLD_URLS: readonly { uid: string; from: string; to: string }[] = [
+  { uid: "what/posts/stories/arctic/01-map", from: "/arctic/0-1-map", to: "/card/what/posts/stories/arctic/00-introduction" },
+  { uid: "what/games/analog/fatecardgame", from: "/what/projects/fatecardgame", to: "/lens/newest" },
+  { uid: "who/about-me", from: "/who", to: "/" },
+  { uid: "who/about-me", from: "/cv", to: "/" },
+];

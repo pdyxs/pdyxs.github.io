@@ -19,6 +19,7 @@ import { getAllCards, resolveCardDescription, resolveCardTitle } from '../../lib
 import { localAssetFilenames } from '../../lib/images';
 import { serialiseBrowseCards } from '../../lib/browse-card';
 import { auditCards, auditedCardCount, type AuditCard } from '../../lib/audit';
+import { ORPHANED_OLD_URLS } from '../../data/redirects.generated';
 import type { BrowseCardData } from '../../lib/browse-helpers';
 import type { TagDisplay } from '../../lib/tag-display';
 import BrowseCard from '../BrowseCard.svelte';
@@ -33,6 +34,16 @@ const { tagDisplay = {} } = Astro.props as Props;
 
 const entries = await getCollection('content');
 const reader = makeFileReader();
+
+// uid → the old Jekyll URLs it orphaned. One card can own several (a project
+// had both a /what/projects/ and a collection permalink), so this is a
+// multimap, not a lookup.
+const orphanedByUid = new Map<string, string[]>();
+for (const { uid, from } of ORPHANED_OLD_URLS) {
+  const list = orphanedByUid.get(uid);
+  if (list) list.push(from);
+  else orphanedByUid.set(uid, [from]);
+}
 
 const auditInput: AuditCard[] = await Promise.all(
   entries.map(async e => {
@@ -53,6 +64,7 @@ const auditInput: AuditCard[] = await Promise.all(
       body: e.body,
       inspected: e.data.inspected,
       localAssets: localAssetFilenames(e.id),
+      orphanedOldUrls: orphanedByUid.get(e.id),
     } satisfies AuditCard;
   }),
 );

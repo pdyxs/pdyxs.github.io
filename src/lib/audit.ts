@@ -23,6 +23,7 @@ export type AuditFindingType =
   | 'legacy-markup'
   | 'no-authored-tags'
   | 'unresolved-local-image'
+  | 'orphaned-old-url'
   | 'not-inspected';
 
 /**
@@ -69,6 +70,14 @@ export interface AuditCard {
    * a local image reference resolves.
    */
   localAssets?: readonly string[];
+  /**
+   * Old Jekyll URLs that used to land on this card and now fall back to a lens,
+   * because the card is unreachable in a production build (`status: draft` /
+   * `archived`, or a `scheduled` date not yet reached). Supplied from
+   * ORPHANED_OLD_URLS in the generated redirect map — the audit cannot derive
+   * it, since it depends on the retired Jekyll site's URL inventory.
+   */
+  orphanedOldUrls?: readonly string[];
 }
 
 /** One card caught by one finding, with the offending values that caught it. */
@@ -237,6 +246,15 @@ const FINDING_SPECS: readonly FindingSpec[] = [
         [...body.matchAll(pattern)].map(m => m[0]),
       );
       return matched.length > 0 ? matched : undefined;
+    },
+  },
+  {
+    type: 'orphaned-old-url',
+    label: 'Old Jekyll URL now falls back to a lens',
+    hint: 'This card is unreachable in a production build, so inbound links to its old URL land on a lens instead. Publish it, or accept the URL is gone.',
+    detect: card => {
+      const urls = card.orphanedOldUrls ?? [];
+      return urls.length > 0 ? [...urls] : undefined;
     },
   },
   {

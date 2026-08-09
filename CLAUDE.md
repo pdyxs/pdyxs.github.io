@@ -363,6 +363,14 @@ closest lens rather than 404ing), and every fallback is reported — in
 `UNRESOLVED_OLD_URLS`, in the generated file's header, and on stdout. If content
 moves, re-run `npm run generate:redirects` and check the report.
 
+A fallback caused by a card's **status** rather than by a missing card is
+additionally attributed to that card in `ORPHANED_OLD_URLS`. `buildRedirectMap`
+resolves twice for this — against the reachable uids (which the map is built
+from, so it can never aim at a 404) and against every uid in the tree — and a
+URL that fails the first but resolves in the second was orphaned by its own
+card. The audit lens turns that into the `orphaned-old-url` finding, naming the
+cards; publishing one restores its old URL and drops it off the list.
+
 ### CSS-first responsive, no JS breakpoint detection
 
 Layout responds to viewport via media queries. `matchMedia` in JS is reserved for cases where *interaction state itself* differs by breakpoint (e.g. a desktop-only peek state), not for layout switching. Document the exception narrowly when it applies.

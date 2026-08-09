@@ -128,17 +128,22 @@ async function walk(dir) {
 
 
 /**
- * Enumerates the uids that actually have a `/card/<uid>` page in a production
- * build. Mirrors the reachability filter in src/pages/card/[...path].astro
- * (`visibility.reachable`, evaluated with isDev: false) so a redirect can never
- * be aimed at a URL that 404s — an old URL whose card is unreachable falls back
- * to a lens instead, and shows up in the report.
+ * Enumerates the uids in the content tree, split by whether they actually have
+ * a `/card/<uid>` page in a production build. `reachable` mirrors the filter in
+ * src/pages/card/[...path].astro (`visibility.reachable`, evaluated with
+ * isDev: false) so a redirect can never be aimed at a URL that 404s — an old
+ * URL whose card is unreachable falls back to a lens instead, and shows up in
+ * the report.
+ *
+ * `all` includes the unreachable ones, and exists purely so buildRedirectMap
+ * can attribute those fallbacks to the card whose status caused them.
  */
-async function collectReachableUids() {
+async function collectUids() {
   const files = await walk(CONTENT_DIR);
   const reader = makeFileReader();
   const now = new Date();
   const uids = [];
+  const all = [];
 
   for (const file of files) {
     const rel = path.relative(CONTENT_DIR, file).split(path.sep).join('/');
@@ -156,11 +161,13 @@ async function collectReachableUids() {
     const cascade = await resolveFolderCascade(uid, reader);
     const status = resolveStatus(data?.status, cascade.status);
     const visibility = computeStatusVisibility(status, data?.date, { isDev: false, now });
+    all.push(uid);
     if (!visibility.reachable) continue;
     uids.push(uid);
   }
 
-  return [...new Set(uids)].sort();
+  const dedupe = list => [...new Set(list)].sort();
+  return { reachable: dedupe(uids), all: dedupe(all) };
 }
 
 /** Story folder names in the new tree, e.g. `arctic` from `what/posts/stories/arctic/…`. */
@@ -209,6 +216,18 @@ function renderModule(report) {
     ),
     '];',
     '',
+    '/**',
+    ' * The subset of UNRESOLVED_OLD_URLS traceable to a card that still exists but',
+    ' * is unreachable in a production build (`status: draft`/`archived`, or a',
+    ' * `scheduled` date not yet reached). Consumed by the audit lens, which lists',
+    ' * the offending cards by name — publishing one closes its entry here.',
+    ' */',
+    'export const ORPHANED_OLD_URLS: readonly { uid: string; from: string; to: string }[] = [',
+    ...report.orphaned.map(
+      o => `  { uid: ${JSON.stringify(o.uid)}, from: ${JSON.stringify(o.from)}, to: ${JSON.stringify(o.to)} },`,
+    ),
+    '];',
+    '',
   ];
   return lines.join('\n');
 }
@@ -223,6 +242,10 @@ function printReport(report) {
   if (report.unresolved.length > 0) {
     console.log('  unresolved (redirected to a lens, not dropped):');
     for (const u of report.unresolved) console.log(`    ${u.from} → ${u.to}  (${u.reason})`);
+  }
+  if (report.orphaned.length > 0) {
+    console.log('  orphaned by an unreachable card (publish it to restore the URL):');
+    for (const o of report.orphaned) console.log(`    ${o.uid.padEnd(40)} ${o.from}`);
   }
 }
 
@@ -242,13 +265,16 @@ async function main() {
     return;
   }
 
-  const uids = await collectReachableUids();
-  const storyNames = storyNamesFrom(uids);
+  const { reachable: uids, all: allUids } = await collectUids();
+  // Story names come from the full tree: a story whose every chapter is still
+  // drafted must keep its permalink rule, or its old URLs stop being enumerated
+  // at all and silently vanish from the report instead of falling back.
+  const storyNames = storyNamesFrom(allUids);
   const rules = permalinkRules(parseYaml(configYaml), storyNames);
   const paths = treeListing.split('\n').filter(Boolean);
 
   const oldUrls = [...enumerateOldUrls(paths, rules), ...STATIC_PAGE_REDIRECTS];
-  const report = buildRedirectMap(oldUrls, uids);
+  const report = buildRedirectMap(oldUrls, uids, allUids);
 
   await mkdir(path.dirname(OUT_PATH), { recursive: true });
   await writeFile(OUT_PATH, renderModule(report), 'utf-8');

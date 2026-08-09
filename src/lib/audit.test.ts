@@ -45,6 +45,7 @@ describe('auditCards — shape', () => {
       'dead-image-host',
       'unresolved-local-image',
       'legacy-markup',
+      'orphaned-old-url',
       'missing-title',
       'missing-date',
       'no-description',
@@ -240,6 +241,28 @@ describe('not-inspected', () => {
     const findings = auditCards([card]);
     expect(finding(findings, 'not-inspected').cardCount).toBe(0);
     expect(finding(findings, 'missing-title').cardCount).toBe(1);
+  });
+});
+
+describe('orphaned-old-url', () => {
+  it('catches a card whose old URLs now fall back, listing them as refs', () => {
+    const cards = [
+      cleanCard({ uid: 'what/games/analog/fate', orphanedOldUrls: ['/what/projects/fate'] }),
+      cleanCard({ uid: 'who/about-me', orphanedOldUrls: ['/who', '/cv'] }),
+    ];
+    const hit = finding(auditCards(cards), 'orphaned-old-url');
+    expect(hit.cards).toEqual([
+      { uid: 'what/games/analog/fate', title: 'A Clean Card', refs: ['/what/projects/fate'] },
+      { uid: 'who/about-me', title: 'A Clean Card', refs: ['/who', '/cv'] },
+    ]);
+    // One card, several dead URLs — the ref count is what tracks the URLs.
+    expect(hit.cardCount).toBe(2);
+    expect(hit.refCount).toBe(3);
+  });
+
+  it('clears a card with no orphaned URLs, and one with an empty list', () => {
+    const cards = [cleanCard({ uid: 'a' }), cleanCard({ uid: 'b', orphanedOldUrls: [] })];
+    expect(uidsFor(cards, 'orphaned-old-url')).toEqual([]);
   });
 });
 
