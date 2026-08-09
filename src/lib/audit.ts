@@ -174,9 +174,17 @@ export function localImageRefs(card: AuditCard): string[] {
   const fromBody = [...(card.body ?? '').matchAll(MARKDOWN_IMAGE)]
     .map(m => m[1])
     .filter(r => !isRemote(r));
-  return [...fromFrontmatter, ...fromBody]
-    .filter(r => !r.startsWith('/'))
-    .filter(looksLikeImage);
+  // Deliberately NOT filtered through looksLikeImage, unlike remoteImageRefs.
+  // Both of these refs are *declared* to be images by where they sit — a
+  // frontmatter `image`/`images` entry, or markdown `![](…)` syntax — so an
+  // extension tells us nothing we don't already know. Requiring one used to
+  // hide the exact refs most likely to be broken: the Jekyll import left 29
+  // extension-less stems (`comic-d` for `comic-d.jpg`), which resolve to
+  // nothing and render as broken images, and every one of them was filtered
+  // out of this check for not looking like an image. remoteImageRefs still
+  // needs the filter, because URL_IN_TEXT matches every URL in the body, not
+  // just image ones.
+  return [...fromFrontmatter, ...fromBody].filter(r => !r.startsWith('/'));
 }
 
 /** Normalises a local ref to the form localAssets uses: no "./", no query/hash. */

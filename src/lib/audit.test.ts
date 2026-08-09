@@ -121,6 +121,21 @@ describe('unresolved-local-image', () => {
     expect(group.cards[0].refs).toEqual(['missing.png']);
   });
 
+  it('flags an extension-less frontmatter stem, which resolves to nothing', () => {
+    // The Jekyll import left refs like `comic-d` for a colocated `comic-d.jpg`.
+    // These render broken, and used to be filtered out of this check for not
+    // "looking like an image" — precisely because they lack the extension.
+    const card = cleanCard({ images: ['comic-d'], localAssets: ['hero.png', 'comic-d.jpg'] });
+    const group = finding(auditCards([card]), 'unresolved-local-image');
+    expect(group.cardCount).toBe(1);
+    expect(group.cards[0].refs).toEqual(['comic-d']);
+  });
+
+  it('does not flag the same stem once the extension is written out', () => {
+    const card = cleanCard({ images: ['comic-d.jpg'], localAssets: ['hero.png', 'comic-d.jpg'] });
+    expect(finding(auditCards([card]), 'unresolved-local-image').cardCount).toBe(0);
+  });
+
   it('resolves a "./"-prefixed body reference against the colocated assets', () => {
     const resolves = cleanCard({ body: '![](./game-jam-1.jpg)', localAssets: ['hero.png', 'game-jam-1.jpg'] });
     const broken = cleanCard({ uid: 'what/writing/b', body: '![](./gone.jpg)', localAssets: ['hero.png'] });
