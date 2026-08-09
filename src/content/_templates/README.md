@@ -3,8 +3,9 @@
 Card-scaffold templates for the content vault. Templater's template folder is
 set to `_templates` (`.obsidian/plugins/templater-obsidian/data.json`).
 
-`_templates` is excluded from the content collection by `CONTENT_GLOB_PATTERN`
-(`src/lib/content-glob.ts`), so nothing here can become a card.
+`_templates` is excluded from the content collection because
+`CONTENT_GLOB_PATTERN` (`src/lib/content-glob.ts`) only matches under the five
+dimension roots, so nothing here can become a card.
 
 ## What's here
 

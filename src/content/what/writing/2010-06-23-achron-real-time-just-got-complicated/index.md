@@ -14,7 +14,7 @@ So what does it mean to screw with time in a genre where time is the key? See ho
 
 First, a bit of a primer for the uninitiated: Achron is an RTS which allows for the player and units to travel in time, whether it be in single or multi-player. Achron uses a propagation model of time: that is, you can change something in the past, but those changes will take time to affect more recent events. The propagation occurs in specific waves which move at a speed of 2 Yues (where a Yue is the unit of the speed time, at 1 second per second). If you want to see how this all works in action (and if you haven't seen any Achron, you really should), you can watch Hazardous Software's explanatory video below.
 
-<div class="col-xs-12 text-center"><iframe width="560" height="315" src="https://www.youtube.com/embed/TR9E5apzw-U" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+https://www.youtube.com/watch?v=TR9E5apzw-U
 
 While your mouth is hanging open, I'll also mention that this is all available now for pre-order, and that Hazzardous games are releasing alpha builds to those who pre-order as they make them.
 

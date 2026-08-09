@@ -27,7 +27,7 @@ In QByte, you can drag and drop 3 things: Gates, Controls and Measurements. Each
 
 This also allowed me to clean up a lot of the interactions for controls. There’s still a bit of jankiness here or there, but mostly the interaction is really nice and smooth.
 
-<center><iframe width="560" height="315" src="https://www.youtube.com/embed/u0nnn_4ZKGs" frameborder="0" allowfullscreen></iframe></center>
+https://www.youtube.com/watch?v=u0nnn_4ZKGs
 
 Finally, I added a drag and drop interaction for Measurement (replacing the ‘tap to measure’ approach from last time). Because of all the groundwork I’d already done, this was actually quite nice and easy.
 

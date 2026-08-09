@@ -29,7 +29,7 @@ Here are a few examples from my time in Science Revue:
 -   One of my favourite sketches was of a group of Titanic survivors, speaking seriously about their harrowing experiences. It completely changed the mood of the theatre, was moving, tense and shocking (when the drop finally came), topical and funny.
 -   Climate change, topical, song parody, boy band dance, funny and the freaking CSIRO
 
-<div class="col-xs-12 text-center"><iframe width="560" height="315" src="https://www.youtube.com/embed/QWmivumLLLw" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+https://www.youtube.com/watch?v=QWmivumLLLw
 
 When applied to games, the Triple Threat test pretty much remains unchanged (except I'd probably change "being funny" to "being fun", before banning the word fun and changing it to something more useful like 'engaging', 'challenging' or pretty much any other word).
 
