@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import { load as parseYaml } from 'js-yaml';
 import { uidFromContentPath } from '../src/lib/content-uid.ts';
+import { isVaultInfrastructurePath } from '../src/lib/content-glob.ts';
 import { resolveFolderCascade, makeFileReader } from '../src/lib/folder-config.ts';
 import { computeStatusVisibility, resolveStatus } from '../src/lib/status-visibility.ts';
 import {
@@ -125,9 +126,6 @@ async function walk(dir) {
   return out;
 }
 
-function isUnderscorePrefixed(relPath) {
-  return relPath.split('/').some(segment => segment.startsWith('_'));
-}
 
 /**
  * Enumerates the uids that actually have a `/card/<uid>` page in a production
@@ -144,7 +142,7 @@ async function collectReachableUids() {
 
   for (const file of files) {
     const rel = path.relative(CONTENT_DIR, file).split(path.sep).join('/');
-    if (isUnderscorePrefixed(rel)) continue;
+    if (isVaultInfrastructurePath(rel)) continue;
     if (rel.startsWith('tag/')) continue;
     if (!/\.(md|mdx)$/i.test(rel)) continue;
 

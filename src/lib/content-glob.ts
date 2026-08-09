@@ -1,4 +1,4 @@
-import { FIVE_W_DIMENSIONS } from "./five-w";
+import { FIVE_W_DIMENSIONS } from "./five-w.ts";
 
 /**
  * The glob the content collection is loaded with (see src/content.config.ts).
@@ -36,3 +36,25 @@ import { FIVE_W_DIMENSIONS } from "./five-w";
  * element that could match. tinyglobby accepts both spellings.
  */
 export const CONTENT_GLOB_PATTERN = `{${FIVE_W_DIMENSIONS.join(",")}}/**/[^_.]*.{md,mdx}`;
+
+/**
+ * Whether a path under src/content is vault infrastructure rather than content.
+ *
+ * The build scripts that walk src/content themselves (generate-stack-manifest,
+ * generate-redirects) can't use CONTENT_GLOB_PATTERN: they legitimately consume
+ * `tag/*.yaml`, which is not under a dimension root and so isn't a card. They
+ * need the *other* half of the pattern's job — the exclusion — on its own.
+ *
+ * Both `_` and `.` prefixes count, on any segment. Underscore is the authored
+ * convention (`_templates/`, `_config.yaml`); dot is Obsidian's (`.obsidian/`
+ * rewritten on every pane change, `.trash/` holding soft-deleted cards that are
+ * still intact markdown). Missing the dot case let `.trash/` into the manifests,
+ * where it was assigned permanent uid codes.
+ *
+ * Accepts either separator so callers can pass a raw `path.relative()` result.
+ */
+export function isVaultInfrastructurePath(relPath: string): boolean {
+  return relPath
+    .split(/[\\/]/)
+    .some(segment => segment.startsWith("_") || segment.startsWith("."));
+}

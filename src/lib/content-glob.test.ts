@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { CONTENT_GLOB_PATTERN } from "./content-glob";
+import { CONTENT_GLOB_PATTERN, isVaultInfrastructurePath } from "./content-glob";
 
 /**
  * The content collection is loaded by Astro's glob loader with
@@ -76,5 +76,38 @@ describe("CONTENT_GLOB_PATTERN", () => {
         // picomatch compiles `[!…]` to a literal, so a POSIX-spelled negated
         // class silently stops matching on watcher events. Use `[^…]`.
         expect(CONTENT_GLOB_PATTERN).not.toContain("[!");
+    });
+});
+
+/**
+ * The build scripts that walk src/content themselves (generate-stack-manifest,
+ * generate-redirects) can't use CONTENT_GLOB_PATTERN — they also consume
+ * `tag/*.yaml`, which sits outside the dimension roots. They share this
+ * predicate instead. Both previously carried a local copy that checked `_` only,
+ * which let `.trash/` into the manifests and assigned it permanent uid codes.
+ */
+describe("isVaultInfrastructurePath", () => {
+    it("rejects Obsidian's dot-prefixed vault directories", () => {
+        expect(isVaultInfrastructurePath(".trash/2010/06/23/achron.html.md")).toBe(true);
+        expect(isVaultInfrastructurePath(".obsidian/workspace.json")).toBe(true);
+    });
+
+    it("rejects underscore-prefixed files and directories at any depth", () => {
+        expect(isVaultInfrastructurePath("_templates/card.md")).toBe(true);
+        expect(isVaultInfrastructurePath("what/posts/_config.yaml")).toBe(true);
+        expect(isVaultInfrastructurePath("what/_drafts/thing/index.md")).toBe(true);
+    });
+
+    it("accepts real cards and the tag YAML the scripts also walk", () => {
+        expect(isVaultInfrastructurePath("what/games/digital/numbeanies/index.md")).toBe(false);
+        expect(isVaultInfrastructurePath("tag/where/europe.yaml")).toBe(false);
+    });
+
+    it("does not mistake a dot inside a segment for a dot prefix", () => {
+        expect(isVaultInfrastructurePath("what/posts/2010-06-23-a.b.c/index.md")).toBe(false);
+    });
+
+    it("accepts either separator, so a raw path.relative() result works", () => {
+        expect(isVaultInfrastructurePath(".trash\\2010\\achron.md")).toBe(true);
     });
 });

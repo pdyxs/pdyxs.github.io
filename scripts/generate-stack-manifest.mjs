@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import { assignCodes } from '../src/lib/stack-manifest.ts';
 import { uidFromContentPath, uidFromTagPath } from '../src/lib/content-uid.ts';
+import { isVaultInfrastructurePath } from '../src/lib/content-glob.ts';
 import { derivePathTags } from '../src/lib/tag-inheritance.ts';
 import { allLensUids } from '../src/lib/lens-registry.ts';
 import { allGeneratedFilterValues } from '../src/lib/filter-generators.ts';
@@ -49,9 +50,6 @@ async function walk(dir) {
   return out;
 }
 
-function isUnderscorePrefixed(relPath) {
-  return relPath.split(path.sep).some(segment => segment.startsWith('_'));
-}
 
 async function collectUids() {
   const allFiles = await walk(CONTENT_DIR);
@@ -59,7 +57,7 @@ async function collectUids() {
 
   for (const file of allFiles) {
     const relToContent = path.relative(CONTENT_DIR, file).split(path.sep).join('/');
-    if (isUnderscorePrefixed(relToContent)) continue;
+    if (isVaultInfrastructurePath(relToContent)) continue;
 
     if (relToContent.startsWith('tag/')) {
       if (!/\.yaml$/i.test(relToContent)) continue;
@@ -135,7 +133,7 @@ async function collectTags() {
 
   for (const file of allFiles) {
     const relToContent = path.relative(CONTENT_DIR, file).split(path.sep).join('/');
-    if (isUnderscorePrefixed(relToContent)) continue;
+    if (isVaultInfrastructurePath(relToContent)) continue;
     if (relToContent.startsWith('tag/')) continue;
     if (!/\.(md|mdx)$/i.test(relToContent)) continue;
 
