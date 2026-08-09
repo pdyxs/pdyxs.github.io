@@ -64,10 +64,14 @@ describe('content migration invariants', () => {
     for (const name of names) {
       expect(statSync(join(CONTENT_DIR, name)).isDirectory()).toBe(true);
     }
-    // "what" is the only dimension with real card content — who/when/where
-    // also have thin folder roots now, but only ever holding `.tag.yaml`
-    // declarations (no index.md cards); "why" has neither yet.
-    expect(names.sort()).toEqual(['what', 'when', 'where', 'who']);
+    // Every top-level folder must be one of the five dimensions, but not every
+    // dimension has to exist yet — they materialise as content arrives, and an
+    // empty one (git can't track an empty directory) is present locally and
+    // absent in a fresh clone. Asserting the exact set made this fail whenever
+    // a dimension root was created ahead of its first card; the invariant being
+    // guarded is "nothing but a dimension up here", so check the subset.
+    const DIMENSIONS = ['what', 'when', 'where', 'who', 'why'];
+    expect(names.filter(n => !DIMENSIONS.includes(n))).toEqual([]);
   });
 });
 

@@ -14,6 +14,13 @@ export default defineConfig({
   // entry, which is the only redirect mechanism GitHub Pages offers.
   redirects: REDIRECTS,
   markdown: {
+    // Shiki is off: its themes hardcode hex colours (the default `github-dark`
+    // painted every code block #24292e in both themes), and the palette here is
+    // two colours — ink and paper — with no room for syntax hues. Astro then
+    // emits bare `<pre><code>` and global.css owns the surface. The untagged
+    // case lands as `<code>` with no class, which is the hook the wrap rule
+    // uses to tell prose-in-a-fence from real code.
+    syntaxHighlight: false,
     // Off-site links open in a new tab, decided in one place instead of the
     // per-link `{:target="_blank"}` annotations the Jekyll content carried.
     rehypePlugins: [rehypeExternalLinks],

@@ -73,6 +73,7 @@
   --font-body:    'Montserrat', system-ui, sans-serif;
   --font-ui:      'Montserrat', system-ui, sans-serif;
   --font-heading: 'Saira Stencil', system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
 
   --font-size-base: 18px;
   --radius:       0px;          /* sharp corners suit e-ink */
@@ -161,6 +162,52 @@ li { margin-bottom: var(--space-xs); }
 img { max-width: 100%; height: auto; display: block; }
 
 strong { font-weight: 700; }
+
+/* ── Code ──────────────────────────────────────────────────────── */
+
+/* Syntax highlighting is disabled in astro.config.mjs, so these are bare
+   `<pre><code>` and the surface is ours: ink on an L2 dither, the same tone a
+   hover fill uses. No hex, no theme override needed — --dither-N is already
+   theme-aware. */
+code, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+/* Inline code only. The `pre >` descendant is excluded so a block doesn't get
+   the inline padding and border on top of the block's own. */
+:not(pre) > code {
+  background: var(--dither-2);
+  border: 1px solid var(--color-border-light);
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  background: var(--dither-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  margin: 0 0 var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  line-height: 1.5;
+  /* Real code keeps its horizontal scroll rather than being wrapped into
+     ambiguity; the untagged case below opts out. */
+  overflow-x: auto;
+}
+
+pre:last-child { margin-bottom: 0; }
+
+/* A fence with no language is prose someone reached for a code block to quote —
+   a tooltip string, a snippet of dialogue — not code whose line breaks carry
+   meaning. Wrap it. Astro emits no class on `<code>` in that case, so the
+   absence of the attribute is the signal. Continuation lines get a hanging
+   indent so a wrap still reads as a wrap. */
+pre > code:not([class]) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  display: block;
+  text-indent: -2ch;
+  padding-left: 2ch;
+}
 
 /* ── Layout ────────────────────────────────────────────────────── */
 
@@ -369,6 +416,10 @@ strong { font-weight: 700; }
 .browse-dim-drill,
 .stack-overflow,
 .stack-overflow-item,
+/* Code sits on an L2 dither at rest, not just on hover — without the stroke the
+   dots read through the mono glyphs and the block turns to noise. */
+pre,
+:not(pre) > code,
 .theme-toggle button {
   -webkit-text-stroke: var(--dither-text-stroke, 4px) var(--color-bg);
   paint-order: stroke fill;
@@ -384,6 +435,8 @@ strong { font-weight: 700; }
 .browse-dim-drill,
 .stack-overflow,
 .stack-overflow-item,
+pre,
+:not(pre) > code,
 .theme-toggle button {
   --dither-text-stroke: 3px;
 }

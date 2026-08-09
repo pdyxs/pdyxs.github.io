@@ -142,6 +142,12 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 
 The palette is **two colours**: ink (`--color-text`) and paper (`--color-bg`), pure black and pure white, swapped by `data-theme`. Everything greyscale derives from those two — `--color-surface`, `--color-border-light` and `--color-text-muted` are aliases, and every other tone is a `--dither-N` level built from the same two colours. There is no grey. De-emphasis is expressed by size and weight, never by a faded value; **an `opacity` used to soften a colour is a bug**, because it renders as the grey the palette doesn't have.
 
+### Code blocks are monochrome, and an untagged fence wraps
+
+`markdown.syntaxHighlight` is `false` in `astro.config.mjs`. Shiki's themes hardcode hex (the default `github-dark` painted every block `#24292e` in *both* themes), and a two-colour palette has nowhere to put syntax hues. Astro therefore emits bare `<pre><code>` and `global.css` owns the surface: ink on `--dither-2`, with the `.dither-text` paper stroke so the dots don't read through the mono glyphs.
+
+The language tag is the wrap switch. A tagged fence keeps `overflow-x: auto` — wrapping real code makes its line breaks ambiguous. An **untagged** fence is almost always prose someone reached for a code block to quote, so `pre > code:not([class])` gets `white-space: pre-wrap` plus a `-2ch` hanging indent. Turning `syntaxHighlight` back on would break that selector, since Shiki always emits a class.
+
 ### Selected states use the `--color-selected-*` tokens
 
 A selected control is the page inverted — it sits at the ink end of the dither ramp, so it needs the *mirror* of every flat-surface rule, not just swapped text and background:
