@@ -1,5 +1,9 @@
 {
   "types": {
-    "inspected": "checkbox"
+    "inspected": "checkbox",
+    "aliases": "aliases",
+    "cssclasses": "multitext",
+    "tags": "tags",
+    "actions": "multitext"
   }
 }
