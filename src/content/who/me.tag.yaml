@@ -1,0 +1,11 @@
+# Affiliation — "Me". Unlike the employer affiliations below it, this one is
+# seeded from the two places that are *about* me rather than about an
+# organisation. `where/contact` is a container with no card of its own; its
+# children carry it as their path tag, which is enough to reach them.
+name: Me
+order: 0
+description: >
+  Who I am and how to reach me.
+seeds:
+  - who/about-me
+  - where/contact
