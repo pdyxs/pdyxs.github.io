@@ -11,7 +11,7 @@ difficulty: Level 2 (Easy)
 tags:
   - what/games/analog/time-fight
 imagePad: 1%
-description:
+description: More time, more travel
 ---
 
 Here's a follow-up to [Times Apart](card:what/puzzles/timeline/times-apart), taking the timeline mechanic to a 9x9.
