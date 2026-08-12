@@ -8,6 +8,7 @@ tags:
   - science
   - visualisation
   - when/released
+  - who/me
 date: 2016-02-01
 medium: Data visualisation, artwork
 width: 900px
