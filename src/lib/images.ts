@@ -1,5 +1,6 @@
 import type { ImageMetadata } from 'astro';
 import { parseEmbedUrl, embedPosterUrl } from './embeds.ts';
+import { isVaultInfrastructurePath } from './content-glob.ts';
 
 const localImages = import.meta.glob<{ default: ImageMetadata }>(
   '/src/content/**/*.{jpg,jpeg,png,gif,webp,avif}',
@@ -48,7 +49,22 @@ export function localAssetFilenames(entryId: string): string[] {
   return [...Object.keys(localImages), ...Object.keys(localVideos)]
     .filter(path => path.startsWith(prefix))
     .map(path => path.slice(prefix.length))
+    .filter(isCardOwnAsset)
     .sort();
+}
+
+/**
+ * Whether a path *below* a card's directory is one of the card's own assets.
+ *
+ * `startsWith(prefix)` alone also matches infrastructure the card carries but
+ * does not display — `_original/<file>`, the unpadded source kept by
+ * `npm run pad:images` (see src/lib/image-padding.ts). Left in, the gallery
+ * sweep below would show every padded image twice: once padded, once not.
+ * Reuses the vault-infrastructure rule rather than naming `_original/`, so any
+ * future `_`-prefixed sidecar is excluded by construction.
+ */
+function isCardOwnAsset(pathWithinCard: string): boolean {
+  return !isVaultInfrastructurePath(pathWithinCard);
 }
 
 export type MediaKind = 'image' | 'video' | 'embed';
@@ -135,11 +151,14 @@ export function resolveGalleryImages(
     return body.includes(`(${filename})`) || body.includes(`(./${filename})`);
   };
 
+  const swept = (path: string) =>
+    path.startsWith(prefix) && isCardOwnAsset(path.slice(prefix.length)) && !inlined(path);
+
   const imageEntries = Object.keys(localImages)
-    .filter(path => path.startsWith(prefix) && !inlined(path))
+    .filter(swept)
     .map(path => ({ path, item: { src: localImages[path].default, kind: 'image' as const } }));
   const videoEntries = Object.keys(localVideos)
-    .filter(path => path.startsWith(prefix) && !inlined(path))
+    .filter(swept)
     .map(path => ({ path, item: { src: localVideos[path], kind: 'video' as const } }));
 
   return withHeader(

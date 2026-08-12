@@ -323,6 +323,56 @@ A folder can drop the strip entirely with `gallery: false` in its
 frontmatter). `what/puzzles` does: a puzzle card *is* its grid image, which is
 already the masthead, so the gallery had nothing to add.
 
+### Header-image padding is authored, and the original is kept
+
+Some source images are cropped flush to their content — every logic-masters
+puzzle export sits at a 0–1% margin — and the full-bleed masthead then butts
+that content against the card border. Whether that reads as damage or as a
+deliberate frame depends on *what* is at the edge: Cityscrapers has unknown-clue
+boxes outside the grid and looks clipped; a plain fog grid at the identical crop
+looks intentional. No bounding-box heuristic separates those, so the amount is
+authored per card and `npm run pad:images` applies it:
+
+```yaml
+image: bild.png
+imagePad: 5%      # or 40px; a percentage resolves against the longer side
+```
+
+**The unpadded source is preserved at `<card>/_original/<file>` and every run
+re-pads from it.** That is what makes the value adjustable: changing 5% to 8% is
+a fresh pad of the original, never 8% added on top of 5%. Removing `imagePad`
+(or setting it to `0`) restores the original — so backing a change out can't
+strand a padded file with nothing in the frontmatter to explain it. An explicit
+`0` is worth writing rather than deleting the key: it records "I looked at this
+one and it needs nothing".
+
+Decisions are pure in `src/lib/image-padding.ts`; `scripts/pad-card-images.mjs`
+is the fs + sharp shell. The border colour is sampled from the original's own
+four corners (`chooseBackground`), not hardcoded white — a dark or transparent
+source would otherwise get a white frame that reads as damage.
+
+Three things that bite:
+
+- **It is deliberately not a `predev`/`prebuild` step.** Its output is committed
+  image files and it only needs running when a value changes; wired into every
+  dev boot it would rewrite assets on a machine that never touched them. Run it
+  by hand, `--check` to preview.
+- **Nothing reads `imagePad` at runtime.** It is in the schema for
+  discoverability and Obsidian's Properties pane only. Zod *strips* unknown
+  frontmatter keys rather than rejecting them, so a typo (`imagePadding:`) is
+  silent — the script's run summary ("18 untouched") is the only signal, which
+  is why it prints one.
+- **`_original/` is under the card directory**, so every `startsWith(prefix)`
+  sweep in `images.ts` would pick the unpadded source up and gallery it as a
+  second, subtly different thumbnail. `isCardOwnAsset` (reusing
+  `isVaultInfrastructurePath`) excludes it from both the gallery sweep and the
+  audit lens's `localAssetFilenames`. Any new sweep over a card's colocated
+  files must do the same.
+
+`imagePad` is declared in the schema's `── puzzles ──` section although it works
+on any card — the section is what keeps it out of every other folder's Templater
+scaffold, and puzzles are the only folder that routinely needs it.
+
 ### One lightbox, two ways in
 
 `Lightbox.svelte` is the full-screen viewer — overlay, keyboard map, prev/next

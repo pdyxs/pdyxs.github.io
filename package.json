@@ -22,7 +22,8 @@
     "generate:vimeo-posters": "node scripts/generate-vimeo-posters.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "restart-server": "systemctl --user restart astro-preview.service"
+    "restart-server": "systemctl --user restart astro-preview.service",
+    "pad:images": "node scripts/pad-card-images.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",

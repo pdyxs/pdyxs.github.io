@@ -153,6 +153,18 @@ const content = defineCollection({
         sudokupad_url: z.url().optional(),
         difficulty: z.string().optional(),
         puzzle_type: z.string().optional(),
+        // Whitespace to add around the header image, as a length ("5%", "40px";
+        // a percentage resolves against the image's longer side). Consumed only
+        // by `npm run pad:images`, which rewrites the file on disk from the
+        // unpadded original it keeps at <card>/_original/ — nothing reads this
+        // field at runtime. Remove it (or set 0) and the next run puts the
+        // original back. See src/lib/image-padding.ts.
+        //
+        // Declared in the puzzles section, though it works on any card: the
+        // logic-masters exports are cropped flush to their content, so this is
+        // the only folder where it is routinely needed, and the section is what
+        // keeps it out of every other folder's Templater scaffold.
+        imagePad: z.string().optional(),
         // ── cards ──
         panel: z.boolean().optional(),
         titleSuffix: z.string().optional(),
