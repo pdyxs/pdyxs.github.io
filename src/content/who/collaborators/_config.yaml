@@ -1,0 +1,6 @@
+# Declares the container so the panel keeps it. filterVisibleNodes drops any
+# undeclared node *and its children*, so a nested `who:collaborators/<x>` value
+# is invisible without this file, however well-declared the child itself is.
+name: Collaborators
+description: >
+  People and groups I've made things with.

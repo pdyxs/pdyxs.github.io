@@ -1,0 +1,5 @@
+# See the note in ../collaborators/_config.yaml — a nested value needs its
+# container declared or the whole branch is filtered out of the panel.
+name: Employers
+description: >
+  Places I've worked.
