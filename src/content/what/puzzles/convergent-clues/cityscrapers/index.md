@@ -9,6 +9,7 @@ sudokupad_url: https://sudokupad.app/pdyxs/cityscrapers
 image: bild.png
 difficulty: Level 3 (Medium)
 tags: []
+imagePad: 5%
 ---
 
 Here's another puzzle where all you know is that two different clue types have the same value. Plus a bunch of renbans...

@@ -19,6 +19,7 @@ tags: []
 # sudokupad_url:  # url
 # difficulty:     # string
 # puzzle_type:    # string
+# imagePad:       # string
 # Inherited from the _config.yaml cascade — don't repeat these here:
 #   renderer: card
 #   location: none
