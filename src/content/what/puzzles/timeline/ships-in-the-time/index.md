@@ -8,8 +8,10 @@ url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000MNK
 sudokupad_url: https://sudokupad.app/pdyxs/ships-in-the-time
 image: bild.png
 difficulty: Level 2 (Easy)
-tags: []
+tags:
+  - what/games/analog/time-fight
 imagePad: 1%
+description:
 ---
 
 Here's a follow-up to [Times Apart](card:what/puzzles/timeline/times-apart), taking the timeline mechanic to a 9x9.

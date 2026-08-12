@@ -8,6 +8,7 @@ image: bild.png
 difficulty: Level 4 (Hard)
 tags: []
 imagePad: 1.5%
+description: Pandemic, but Sudoku
 ---
 
 This is a puzzle based on the board game Pandemic, where you start at a city and move between cities to treat diseases, prevent outbreaks and find cures.

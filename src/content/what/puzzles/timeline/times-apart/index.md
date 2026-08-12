@@ -8,8 +8,10 @@ url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000MMV
 sudokupad_url: https://sudokupad.app/pdyxs/times-apart
 image: bild.png
 difficulty: Level 2 (Easy)
-tags: []
+tags:
+  - what/games/analog/time-fight
 imagePad: 1%
+description: A time travel sudoku
 ---
 
 This is a prequel to my [Time War puzzles](collection:what:puzzles/timeline), aimed at creating a smoother on-ramp to the time travel ruleset.
