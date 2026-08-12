@@ -10,6 +10,7 @@ image: bild.png
 difficulty: Level 3 (Medium)
 tags: []
 imagePad: 2.5%
+description: Never stop counting
 ---
 
 This is an approachable puzzle, based on the idea that a counting circle's value might need to change if more counting circles are revealed.

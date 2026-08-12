@@ -10,6 +10,7 @@ image: bild.png
 difficulty: Level 2 (Easy)
 tags: []
 imagePad: 2%
+description: What fog?
 ---
 
 What a bright and shiny day - even the renbans have turned yellow! Surely nothing could possibly go wrong...

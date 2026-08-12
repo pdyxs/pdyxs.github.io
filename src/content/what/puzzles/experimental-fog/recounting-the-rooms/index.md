@@ -9,6 +9,7 @@ sudokupad_url: https://sudokupad.app/pdyxs/recounting-the-rooms
 image: bild.png
 difficulty: Level 2 (Easy)
 tags: []
+description: Counts are never stopping
 ---
 
 This is a direct sequel to [Recounting the Counting](card:what/puzzles/experimental-fog/recounting-the-counting), this time adding numbered rooms into the mix!
