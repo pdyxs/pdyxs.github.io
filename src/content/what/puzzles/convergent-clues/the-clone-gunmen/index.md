@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: The Clone Gunmen
 date: 2026-06-10
 series: convergent-clues
@@ -10,7 +10,7 @@ image: bild.png
 difficulty: Level 4 (Hard)
 tags: []
 imagePad: 2.5%
-description:
+description: Where killers repeat themselves
 ---
 
 After not creating any puzzles for over a year, the concept for this rule came to me while solving another puzzle. It's turned out to be a nice and simple ruleset with some quite interesting consequences.
