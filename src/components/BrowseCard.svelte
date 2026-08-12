@@ -25,7 +25,9 @@
 
   let { card, tagDisplay = {}, filterState = { }, current = false }: Props = $props();
 
-  const tagChips = $derived(computeCardTagDisplay(card.tags, filterState));
+  const tagChips = $derived(
+    computeCardTagDisplay(card.tags, filterState, 4, tag => displayFor(tag, tagDisplay).name),
+  );
   // Dev-only status pill (issue #51) — same pure decision as the open-card
   // header (CardHeader.astro). import.meta.env.DEV is the thin gate at the
   // template `{#if}` below, not here, so this stays a plain derivation.

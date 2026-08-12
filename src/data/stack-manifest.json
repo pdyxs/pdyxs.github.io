@@ -1274,5 +1274,13 @@
   {
     "uid": "what/puzzles/convergent-clues/the-clone-gunmen",
     "code": "58"
+  },
+  {
+    "uid": "who/collaborators/Untitled",
+    "code": "59"
+  },
+  {
+    "uid": "who/collaborators/jetpack.tag.yaml",
+    "code": "5a"
   }
 ]

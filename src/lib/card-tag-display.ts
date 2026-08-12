@@ -62,16 +62,42 @@ function matchesValue(tag: string, value: string): boolean {
  * Hidden tags are dropped; the rest are ordered active-first (so highlighted
  * matches survive the cap), then truncated to `cap` with the remainder count
  * returned as `overflow`.
+ *
+ * `labelOf` resolves a tag's display name and enables same-label deduping —
+ * see the note on `labelOf` in the signature.
  */
 export function computeCardTagDisplay(
   cardTags: string[],
   filter: FilterState,
   cap = 4,
+  /**
+   * Resolves a tag's display name, for deduping chips that would render
+   * identically. An affiliation (`who:seethrough`, see affiliations.ts) is
+   * named after the organisation, and every card in the first hop of its
+   * closure also carries the card-backed tag for the org's own card
+   * (`where:work/seethrough`) — which resolves to the same name. Two chips
+   * reading "SeeThrough Studios" say nothing the first didn't; the earlier one
+   * wins, since tag order puts the authored, card-linking tag first.
+   *
+   * Cards deeper in the closure (an old post that names only the game) have no
+   * such twin, so their affiliation chip survives — which is exactly where it
+   * carries information.
+   *
+   * Omitted (the default) means no deduping: callers without a display map
+   * resolve names downstream and would only ever compare raw values.
+   */
+  labelOf?: (tag: string) => string,
 ): CardTagDisplay {
   const kept: TagChip[] = [];
+  const seenLabels = new Set<string>();
 
   for (const tag of cardTags) {
     if (isChipHidden(tag)) continue;
+    if (labelOf) {
+      const label = labelOf(tag);
+      if (seenLabels.has(label)) continue;
+      seenLabels.add(label);
+    }
     const selected = selectedFor(tag, filter);
     if (selected.length === 1) {
       if (tag === selected[0]) continue; // redundant: on every result

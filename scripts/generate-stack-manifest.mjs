@@ -174,6 +174,23 @@ async function collectTags() {
     }
   }
 
+  // `<name>.tag.yaml`-declared values. Most of these also appear as an authored
+  // tag above, but an *affiliation* (a declaration with `seeds:` — see
+  // affiliations.ts) never does: no card writes `who:seethrough` in its
+  // frontmatter, membership is derived from the pool at request time. Without
+  // this they'd fall back to raw URL encoding.
+  for (const file of allFiles) {
+    const relToContent = path.relative(CONTENT_DIR, file).split(path.sep).join('/');
+    if (isVaultInfrastructurePath(relToContent)) continue;
+    if (relToContent.startsWith('tag/')) continue;
+    if (!relToContent.endsWith('.tag.yaml')) continue;
+    const declPath = relToContent.slice(0, -'.tag.yaml'.length);
+    const slashIdx = declPath.indexOf('/');
+    if (slashIdx === -1) continue;
+    const value = `${declPath.slice(0, slashIdx)}:${declPath.slice(slashIdx + 1)}`;
+    for (const prefix of dimensionedPrefixes(value)) tags.add(prefix);
+  }
+
   // Filter values injected at runtime by generators (src/lib/filter-generators.ts)
   // — e.g. the travel-log `where:*` tags. These never appear in the filesystem
   // walked above, so enumerate them here (with ancestor prefixes) or they'd

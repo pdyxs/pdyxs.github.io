@@ -94,7 +94,12 @@ const quotes = data?.quotes?.filter((q: Quote) => q.quote) ?? [];
 // the date-derived `when:` tag. No filter state here (a single card is never a
 // filtered view) and no cap: the masthead is the card's own header and has room
 // for the full set, where a condensed preview does not.
-const tags = computeCardTagDisplay(cardTags, {}, Infinity).tags.map(chip => chip.value);
+const tags = computeCardTagDisplay(
+  cardTags,
+  {},
+  Infinity,
+  tag => displayFor(tag, tagDisplay).name,
+).tags.map(chip => chip.value);
 
 const hasInlineImages = bodyHasInlineImage(entry?.body);
 

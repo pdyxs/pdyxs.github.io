@@ -23,6 +23,7 @@ import { ownValueForCard } from './card-identity';
 import { declaredGeneratedFilterValues, generatedDisplayName, generatedGroup, generatedSortOrder } from './filter-generators';
 import { humaniseSegment } from './tag-display';
 import type { TagDisplay } from './tag-display';
+import type { AffiliationDeclaration } from './affiliations';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -52,6 +53,15 @@ export type ValueIdentity = {
   group?: string;
   /** Explicit sibling sort order (lower first); see sortNodes in browse-helpers.ts. */
   order?: number;
+  /**
+   * Content paths this value's membership grows from, making it an
+   * *affiliation*: a value no card carries in its frontmatter, earned instead
+   * by tagging a seed (transitively). Resolved by computeAffiliationTags
+   * (affiliations.ts) and applied in getAllCards(). Only `.tag.yaml`
+   * declarations may carry seeds — a container `_config.yaml` already owns its
+   * folder's cards by path.
+   */
+  seeds?: string[];
 };
 
 // ---------------------------------------------------------------------------
@@ -199,8 +209,15 @@ function fsPathToValue(path: string): string | undefined {
   return `${path.slice(0, slashIdx)}:${path.slice(slashIdx + 1)}`;
 }
 
-type YamlIdentity = { name?: string; description?: string; group?: string; order?: unknown };
+type YamlIdentity = { name?: string; description?: string; group?: string; order?: unknown; seeds?: unknown };
 type YamlDimensionConfig = { groupOrder?: unknown };
+
+/** Coerces a parsed `seeds` value to a clean string[], or undefined if it isn't a non-empty string list. */
+function parseSeeds(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const seeds = raw.filter((s): s is string => typeof s === 'string' && s.length > 0);
+  return seeds.length > 0 ? seeds : undefined;
+}
 
 /** Coerces a parsed `groupOrder` value to a clean string[], or undefined if it isn't a string list. */
 function parseGroupOrder(raw: unknown): string[] | undefined {
@@ -250,7 +267,8 @@ async function walkDir(
         const stem = entry.name.slice(0, -TAG_YAML_SUFFIX.length);
         const declPath = dir ? `${dir}/${stem}` : stem;
         const value = fsPathToValue(declPath);
-        if (value) tagDeclarations.push({ value, name: parsed.name, description: parsed.description, group: parsed.group, order });
+        const seeds = parseSeeds(parsed.seeds);
+        if (value) tagDeclarations.push({ value, name: parsed.name, description: parsed.description, group: parsed.group, order, seeds });
       }
     }
   }
@@ -287,6 +305,21 @@ export async function getDimensionGroupOrder(
 ): Promise<Partial<Record<FiveWDimension, string[]>>> {
   const { dimensionGroupOrder } = await discoverTagSources(reader);
   return dimensionGroupOrder;
+}
+
+/**
+ * Every `.tag.yaml` declaration that carries `seeds:`, as affiliation
+ * declarations. Read by getAllCards() (cards.ts) — which needs them *before*
+ * the registry runs, since the affiliation tags it applies are part of what the
+ * registry then aggregates.
+ */
+export async function discoverAffiliations(
+  reader: TreeReader = makeContentTreeReader(),
+): Promise<AffiliationDeclaration[]> {
+  const { tagDeclarations } = await discoverTagSources(reader);
+  return tagDeclarations
+    .filter((decl): decl is ValueIdentity & { seeds: string[] } => !!decl.seeds)
+    .map(({ value, seeds }) => ({ value, seeds }));
 }
 
 /**

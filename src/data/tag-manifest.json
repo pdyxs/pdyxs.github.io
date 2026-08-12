@@ -2714,5 +2714,61 @@
   {
     "uid": "what:puzzles/level-5",
     "code": "aW"
+  },
+  {
+    "uid": "who:3p",
+    "code": "aX"
+  },
+  {
+    "uid": "who:chaostheory",
+    "code": "aY"
+  },
+  {
+    "uid": "who:dot",
+    "code": "aZ"
+  },
+  {
+    "uid": "who:equalreality",
+    "code": "b0"
+  },
+  {
+    "uid": "who:me",
+    "code": "b1"
+  },
+  {
+    "uid": "who:plan-a",
+    "code": "b2"
+  },
+  {
+    "uid": "who:seethrough",
+    "code": "b3"
+  },
+  {
+    "uid": "who:employees",
+    "code": "b4"
+  },
+  {
+    "uid": "who:employees/seethrough",
+    "code": "b5"
+  },
+  {
+    "uid": "who:collaborators",
+    "code": "b6"
+  },
+  {
+    "uid": "who:collaborators/jetpack",
+    "code": "b7"
+  },
+  {
+    "uid": "who:employers",
+    "code": "b8"
+  },
+  {
+    "uid": "who:employers/3p",
+    "code": "b9"
+  },
+  {
+    "uid": "who:employers/chaostheory",
+    "code": "ba"
   }
 ]

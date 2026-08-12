@@ -3,6 +3,8 @@ import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
 import type { FolderCascade } from './folder-config';
 import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
+import { computeAffiliationTags } from './affiliations';
+import { discoverAffiliations } from './tag-registry';
 import { interpolate } from './interpolate';
 import { computeStatusVisibility, resolveStatus } from './status-visibility';
 import { resolveDescription } from './description';
@@ -235,7 +237,16 @@ export function resolveCard(
   } satisfies ResolvedCard;
 }
 
-/** Reads the content collection and resolves every entry — the thin IO shell around resolveCard(). */
+/**
+ * Reads the content collection and resolves every entry — the thin IO shell
+ * around resolveCard().
+ *
+ * The affiliation pass afterwards is the one thing resolveCard() can't do: a
+ * `who:*` affiliation is a fixed point over the whole pool's tags (see
+ * affiliations.ts), so it can only be decided once every card has resolved. It
+ * stays a *merge* onto the already-resolved tags — the decision itself is pure
+ * and lives in computeAffiliationTags.
+ */
 export async function getAllCards(): Promise<ResolvedCard[]> {
   const allContent = await getCollection('content');
 
@@ -246,9 +257,21 @@ export async function getAllCards(): Promise<ResolvedCard[]> {
     now: new Date(),
   };
 
-  return Promise.all(
+  const cards = await Promise.all(
     allContent.map(async e =>
       resolveCard(e, await resolveFolderCascade(e.id, reader, ctx.overrideKeys), ctx)
     )
   );
+
+  const declarations = await discoverAffiliations();
+  if (declarations.length === 0) return cards;
+
+  // Membership is computed over the *whole* pool, hidden cards included: a
+  // draft card is still a real link in the chain, and dropping it here would
+  // silently break the closure behind it.
+  const affiliations = computeAffiliationTags(declarations, cards);
+  return cards.map(card => {
+    const extra = affiliations.get(card.uid);
+    return extra ? { ...card, tags: mergeEffectiveTags(card.tags, extra) } : card;
+  });
 }

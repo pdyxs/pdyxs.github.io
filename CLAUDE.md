@@ -424,6 +424,68 @@ Puzzle listings therefore *don't* repeat the rating in their description —
 `cardDescriptionParts` is `puzzle_type` alone, because the star chip is already
 on every preview.
 
+### Affiliations are a pool-wide closure, not a filter generator
+
+`who:*` values (the employers, plus `who:me`) are **affiliations**: a
+`.tag.yaml` declares `seeds:` (content paths) and a card belongs to that value
+if it is a seed, or if it tags a member — transitively.
+
+```yaml
+# src/content/who/seethrough.tag.yaml
+name: SeeThrough Studios
+seeds:
+  - where/work/seethrough
+```
+
+That reaches the studio card, then the 20 cards tagging it, then 5 older posts
+that name only *Particulars* and never named the studio. The transitive hop is
+the entire point — it picks up content that predates the organisation's own
+card. A seed may also name a **container** folder (`who/me` seeds
+`where/contact`, which has no card): its children carry it as their path tag, so
+the same edge rule reaches them with no special case. Folder descendants are
+free for the same reason — `derivePathTags` already gives every card its parent.
+
+**This is deliberately not a `FilterGenerator`.** A generator's
+`apply(tags, card)` decides one card from its own date and overrides;
+affiliation membership is a fixed point over every card's tags and can only be
+decided once, over the pool. So it is a separate pass:
+
+- `computeAffiliationTags` (`src/lib/affiliations.ts`) is the pure decision —
+  BFS from the seeds over a reverse-tag index, `members` set per declaration so
+  cycles terminate.
+- `getAllCards()` runs it after every card has resolved and merges the result.
+  `resolveCard()` stays per-card and pure. Membership is computed over the
+  **whole** pool, hidden cards included — a draft is still a real link in the
+  chain, and skipping it would silently sever the closure behind it.
+- `discoverAffiliations` (`tag-registry.ts`) reads the seed lists, since
+  `.tag.yaml` is already walked there. This is a second tree walk per
+  `getAllCards()`; don't memoise it, or a dev-time YAML edit goes stale.
+
+**A nested value needs its container declared.** `filterVisibleNodes`
+(`browse-helpers.ts`) drops any node that isn't `declared` *and recurses into
+children*, so an undeclared parent takes its perfectly-declared children down
+with it — silently, with no error and a filter that simply isn't in the panel.
+`buildTagHierarchy` synthesises the ancestor node for `who:collaborators/jetpack`,
+but synthesised is not declared. Every nested value on the site therefore needs a
+container `_config.yaml` (`who/collaborators/`, `who/employers/`, mirroring
+`where/work/` and `what/puzzles/`). This bites hardest with affiliations, since
+they're the one filter kind with no folder of content behind them to prompt you
+to make one.
+
+An affiliation value never appears in any markdown, so
+`generate-stack-manifest.mjs` enumerates `.tag.yaml`-declared values explicitly
+— without that they'd fall back to raw (long) URL encoding.
+
+The trap this creates: an affiliation is named after the organisation, and every
+card in the closure's *first* hop also carries the card-backed tag for that
+organisation's own card, which resolves to the same name. Left alone Particulars
+showed two chips both reading "SeeThrough Studios". `computeCardTagDisplay` takes
+an optional `labelOf` and drops a chip whose label is already on the card;
+earlier wins, so the authored card-linking tag survives. Cards deeper in the
+closure have no twin and keep their affiliation chip, which is exactly where it
+tells you something. Both chip call sites (`GenericRenderer`, `BrowseCard`) pass
+`labelOf` — a new one that doesn't will reintroduce the duplicate.
+
 ### Action links are resolved, never read raw
 
 `resolveActions` (`src/lib/card-actions.ts`) decides the masthead's "go do it"
