@@ -9,6 +9,7 @@ sudokupad_url: https://sudokupad.app/pdyxs/friends-in-the-fog
 image: bild.png
 difficulty: Level 2 (Easy)
 tags: []
+imagePad: 2.5%
 ---
 
 This is a follow-up to [Whispers in the Mist](card:what/puzzles/experimental-fog/whispers-in-the-mist), where fog clearance has a clear and defined meaning.

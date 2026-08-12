@@ -8,6 +8,7 @@ image: bild.png
 difficulty: Level 2 (Easy)
 puzzle_type: Wordoku
 tags: []
+imagePad: 2.5%
 ---
 
 This is a hybrid between a sudoku puzzle and a word puzzle, which is aiming to integrate both skills.

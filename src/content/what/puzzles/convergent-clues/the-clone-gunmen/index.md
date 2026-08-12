@@ -9,6 +9,8 @@ sudokupad_url: https://sudokupad.app/pdyxs/the-clone-gunmen
 image: bild.png
 difficulty: Level 4 (Hard)
 tags: []
+imagePad: 2.5%
+description:
 ---
 
 After not creating any puzzles for over a year, the concept for this rule came to me while solving another puzzle. It's turned out to be a nice and simple ruleset with some quite interesting consequences.

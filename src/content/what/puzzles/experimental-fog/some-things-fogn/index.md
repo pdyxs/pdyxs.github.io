@@ -9,6 +9,7 @@ sudokupad_url: https://sudokupad.app/pdyxs/some-things-fogn
 image: bild.png
 difficulty: Level 4 (Hard)
 tags: []
+imagePad: 2.5%
 ---
 
 Some things are fogn, and others are wrogn. On the heels of [Whispers in the Mist](card:what/puzzles/experimental-fog/whispers-in-the-mist), I had a fun idea of how yin-yang fog could be used in a wrogn puzzle.

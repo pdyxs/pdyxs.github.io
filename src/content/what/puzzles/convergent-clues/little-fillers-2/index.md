@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Little Fillers 2
 date: 2025-01-27
 series: convergent-clues
@@ -9,6 +9,8 @@ sudokupad_url: https://sudokupad.app/pdyxs/little-fillers-2
 image: bild.png
 difficulty: Level 3 (Medium)
 tags: []
+imagePad: 2%
+description: Now without digits!
 ---
 
 A sequel to [Little Fillers](card:what/puzzles/convergent-clues/little-fillers), this time without any digits! This has been percolating in my mind ever since I made Little Fillers - I think I've found some really nice logic using these combined variants.

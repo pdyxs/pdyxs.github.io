@@ -9,6 +9,7 @@ sudokupad_url: https://sudokupad.app/pdyxs/recounting-the-counting
 image: bild.png
 difficulty: Level 3 (Medium)
 tags: []
+imagePad: 2.5%
 ---
 
 This is an approachable puzzle, based on the idea that a counting circle's value might need to change if more counting circles are revealed.

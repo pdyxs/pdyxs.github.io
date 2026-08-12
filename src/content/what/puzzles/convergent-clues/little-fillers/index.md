@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Little Fillers
 date: 2024-12-20
 series: convergent-clues
@@ -9,6 +9,8 @@ sudokupad_url: https://sudokupad.app/vnbsxmljuc
 image: bild.png
 difficulty: Level 3 (Medium)
 tags: []
+imagePad: 1%
+description: When fillers are killers
 ---
 
 ## Rules

@@ -9,6 +9,7 @@ sudokupad_url: https://sudokupad.app/pdyxs/ships-in-the-time
 image: bild.png
 difficulty: Level 2 (Easy)
 tags: []
+imagePad: 1%
 ---
 
 Here's a follow-up to [Times Apart](card:what/puzzles/timeline/times-apart), taking the timeline mechanic to a 9x9.

@@ -9,6 +9,7 @@ sudokupad_url: https://sudokupad.app/pdyxs/sunny-with-a-chance-of-fog
 image: bild.png
 difficulty: Level 2 (Easy)
 tags: []
+imagePad: 2%
 ---
 
 What a bright and shiny day - even the renbans have turned yellow! Surely nothing could possibly go wrong...

@@ -9,6 +9,7 @@ sudokupad_url: https://sudokupad.app/pdyxs/times-apart
 image: bild.png
 difficulty: Level 2 (Easy)
 tags: []
+imagePad: 1%
 ---
 
 This is a prequel to my [Time War puzzles](collection:what:puzzles/timeline), aimed at creating a smoother on-ramp to the time travel ruleset.
