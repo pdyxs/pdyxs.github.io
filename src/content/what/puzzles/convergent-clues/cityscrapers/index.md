@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Cityscrapers
 date: 2025-03-16
 series: convergent-clues
@@ -9,7 +9,8 @@ sudokupad_url: https://sudokupad.app/pdyxs/cityscrapers
 image: bild.png
 difficulty: Level 3 (Medium)
 tags: []
-imagePad: 5%
+imagePad: 2%
+description: X-sums in the City
 ---
 
 Here's another puzzle where all you know is that two different clue types have the same value. Plus a bunch of renbans...

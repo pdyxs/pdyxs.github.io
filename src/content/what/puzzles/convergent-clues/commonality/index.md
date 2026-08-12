@@ -10,6 +10,8 @@ image: bild.png
 difficulty: Level 3 (Medium)
 puzzle_type: Killer Sudoku
 tags: []
+imagePad: 2%
+description: When killers overlap
 ---
 
 ## Rules
