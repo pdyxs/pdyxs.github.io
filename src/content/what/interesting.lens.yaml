@@ -19,7 +19,10 @@ label: Most* Interesting
 # the lens chrome beside the label — never on the nav chip (see LensChrome).
 note: "*an attempt at that, anyway"
 icon: interesting
-order: -1
+# Second in the `what` panel, behind home. Home is the stack root — you are
+# always already in it — so it keeps the top slot; this sits directly under it
+# as the way out of it. (Editorial/Audit are dev-only and sit at 99/100.)
+order: 1
 width: 960px
 config:
   # The site-wide comparator chain (src/lib/ranking.ts) — the SAME ordering the
