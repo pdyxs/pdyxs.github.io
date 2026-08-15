@@ -96,7 +96,9 @@ describe('getLensDefinition', () => {
 describe('lensesForDimension', () => {
   it('returns the lenses filed under a given dimension', () => {
     const when = lensesForDimension('when');
-    expect(when.map(l => l.id)).toEqual(['newest', 'oldest']);
+    // Ordered by each file's declared `order` — the two publication-time
+    // timelines, then the two visitor-history lenses (issue #84).
+    expect(when.map(l => l.id)).toEqual(['newest', 'oldest', 'seen', 'unseen']);
   });
 
   it('returns an empty array for a dimension with no filed lenses', () => {
@@ -195,9 +197,34 @@ describe('the capped timeline lenses', () => {
   }
 });
 
+describe('the history lenses', () => {
+  // Seen and Unseen (issue #84) are one body told apart by `config.readState`
+  // — a declaration that loses it silently becomes an ordinary browse lens
+  // showing the whole pool, which is exactly what neither of them means.
+  for (const [id, readState] of [['seen', 'seen'], ['unseen', 'unseen']] as const) {
+    it(`${id} declares readState: ${readState} and rides the shared history body`, () => {
+      const lens = getLensDefinition(id);
+      expect(lens?.component).toBe('history');
+      expect(lens?.config?.readState).toBe(readState);
+      // Filed with the publication timelines: Seen sorts on time too, just the
+      // visitor's; Unseen is filed for the complement.
+      expect(lens?.dimension).toBe('when');
+      // Uncapped — a history only shrinks (Unseen) or is exactly as long as
+      // the visitor made it (Seen).
+      expect(lens?.config?.limit).toBeUndefined();
+    });
+  }
+});
+
 describe('allLensUids', () => {
   it('enumerates every registry entry as a uid, resolvable without importing any component', () => {
-    expect(allLensUids().sort()).toEqual(['lens/home', 'lens/newest', 'lens/oldest']);
+    expect(allLensUids().sort()).toEqual([
+      'lens/home',
+      'lens/newest',
+      'lens/oldest',
+      'lens/seen',
+      'lens/unseen',
+    ]);
   });
 
   it('excludes a devOnly lens even though it is in LENS_REGISTRY (never gets a manifest code)', () => {

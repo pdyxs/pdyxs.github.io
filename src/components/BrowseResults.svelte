@@ -26,6 +26,13 @@
     layout?: 'grid' | 'strip';
     /** Strip layout only: the tile closing a capped run (see stripTerminal). */
     terminal?: StripTerminal | null;
+    /**
+     * What to say when nothing is rendered. The default blames the filters,
+     * which is the only reason an ordinary browse lens can be empty — the
+     * history lenses (issue #84) have several, and decide theirs from the
+     * reason (see historyEmptyMessage in src/lib/history-lens.ts).
+     */
+    emptyMessage?: string;
   }
 
   let {
@@ -35,6 +42,7 @@
     totalCount,
     layout = 'grid',
     terminal,
+    emptyMessage = 'No cards match the current filters.',
   }: Props = $props();
 
   const count = $derived(totalCount ?? cards.length);
@@ -46,7 +54,7 @@
   </p>
 
   {#if cards.length === 0}
-    <p class="fp-browse-empty">No cards match the current filters.</p>
+    <p class="fp-browse-empty">{emptyMessage}</p>
   {:else if layout === 'strip'}
     <CardStrip cards={cards} {tagDisplay} label="Browse results" {terminal} />
   {:else}

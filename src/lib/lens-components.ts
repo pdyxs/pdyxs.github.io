@@ -27,6 +27,12 @@ export type LensBodyLoader = () => Promise<{ default: AstroComponentFactory }>;
 export const LENS_BODY_LOADERS: Record<string, LensBodyLoader> = {
   home: () => import('../components/lens-renderers/HomeLensBody.astro'),
   editorial: () => import('../components/lens-renderers/EditorialLensBody.astro'),
+  // Both history lenses (Seen and Unseen — issue #84) share one body; which of
+  // the two it is comes from the lens's `config.readState`, not from a second
+  // entry here. They are genuinely bespoke rather than browse-family: the pool
+  // is narrowed and sorted by localStorage, which no server-side sort config
+  // can express.
+  history: () => import('../components/lens-renderers/HistoryLensBody.astro'),
   // The audit lens (issue #72) is devOnly, and its loader is gated on
   // import.meta.env.DEV as well as on isLensVisible(). Registry-level gating
   // alone only stops the *route* being emitted — the loader would still be in

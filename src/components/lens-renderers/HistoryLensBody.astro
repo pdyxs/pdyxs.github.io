@@ -1,0 +1,22 @@
+---
+// Thin Astro shim for the two history lenses (Seen and Unseen — issue #84),
+// only here so HistoryLensBrowser.svelte can be a static import (client:load
+// requires a statically analyzable component reference). The lazy-load
+// boundary is one level up: lens-components.ts dynamically imports *this file*.
+//
+// Both lenses share this one body; `config.readState` is what tells them apart
+// (see historyMode in src/lib/history-lens.ts).
+import HistoryLensBrowser from './HistoryLensBrowser.svelte';
+import type { SerialisedCardFull } from '../../lib/frontpage';
+import type { TagDisplay } from '../../lib/tag-display';
+
+interface Props {
+  cards: SerialisedCardFull[];
+  tagDisplay?: Record<string, TagDisplay>;
+  config?: Record<string, unknown>;
+  cardBackedValues?: string[];
+}
+
+const { cards, tagDisplay, config, cardBackedValues } = Astro.props;
+---
+<HistoryLensBrowser client:load {cards} {tagDisplay} {config} {cardBackedValues} />

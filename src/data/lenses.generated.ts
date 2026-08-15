@@ -97,5 +97,27 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
       "display": "strip",
       "limit": 30
     }
+  },
+  {
+    "id": "seen",
+    "dimension": "when",
+    "label": "Seen",
+    "icon": "seen",
+    "component": "history",
+    "width": "960px",
+    "config": {
+      "readState": "seen"
+    }
+  },
+  {
+    "id": "unseen",
+    "dimension": "when",
+    "label": "Unseen",
+    "icon": "unseen",
+    "component": "history",
+    "width": "960px",
+    "config": {
+      "readState": "unseen"
+    }
   }
 ];

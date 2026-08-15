@@ -21,6 +21,13 @@ export const LENS_ICON_DEFS: Record<string, LensIconDef> = {
       { kind: 'path', d: "M4.396 1.082a4.233 4.25 0 1 0 0 8.502 4.233 4.25 0 1 0 0-8.502M22.24 6.185a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 1 0 0-3.4M3.947 13.3a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 1 0 0-3.4m15.641-3.432a3.432 3.432 0 1 0 0 6.864 3.432 3.432 0 1 0 0-6.864M8.397 16.7a2.75 2.738 0 1 0 0 5.476 2.75 2.738 0 1 0 0-5.476" },
     ],
   },
+  "seen": {
+    filled: false,
+    shapes: [
+      { kind: 'path', d: "M1.5 12s4-6.5 10.5-6.5S22.5 12 22.5 12s-4 6.5-10.5 6.5S1.5 12 1.5 12" },
+      { kind: 'path', d: "M12 9.25a2.75 2.75 0 1 0 0 5.5 2.75 2.75 0 1 0 0-5.5" },
+    ],
+  },
   "timeline-oldest": {
     filled: false,
     shapes: [
@@ -31,6 +38,13 @@ export const LENS_ICON_DEFS: Record<string, LensIconDef> = {
     filled: false,
     shapes: [
       { kind: 'path', d: "M3.5 5.5v13m0-6.5h17m-11-2.5v5m5.5-5v5M17 8l4 4-4 4" },
+    ],
+  },
+  "unseen": {
+    filled: false,
+    shapes: [
+      { kind: 'path', d: "M1.5 12s4-6.5 10.5-6.5S22.5 12 22.5 12s-4 6.5-10.5 6.5S1.5 12 1.5 12" },
+      { kind: 'path', d: "M12 9.25a2.75 2.75 0 1 0 0 5.5 2.75 2.75 0 1 0 0-5.5M4 20 20 4" },
     ],
   }
 };

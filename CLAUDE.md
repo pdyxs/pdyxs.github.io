@@ -459,6 +459,45 @@ height is the tallest card in the *whole* run, not the tallest one on screen —
 already true of every strip, but far more visible over 30 heterogeneous cards
 than over a six-chapter series.
 
+### The history lenses partition the pool on `uid` alone
+
+Seen and Unseen (issue #84) are one body — `HistoryLensBrowser.svelte`, keyed
+`history` in `LENS_BODY_LOADERS` — told apart by `config.readState` in their
+YAML. Both are filed under `when`: Seen sorts on time, just the visitor's clock
+rather than the publication date, and Unseen is filed with it for the complement
+(it has no sort of its own — it is `rankCards`, like everything else).
+
+**Both key on `uid` alone** (`hasBeenRead`), never on `uid + contentHash`. So a
+card you read that the author has since edited stays in Seen and stays out of
+Unseen, and the two lenses **partition the browse pool exactly** — every card is
+in one of them, and none is in both. That is the ruling, and the reasoning is:
+Seen is a record of what you did, which no edit can undo; Unseen is a to-read
+list, and if edits pushed cards back into it, it could never empty and would
+lose its ending. "This changed, look again" is not given up — it already lives
+in the hash-*sensitive* `getViewState` behind rung 3 of the ranking chain, so an
+edited card floats back up the ranked lenses. **Freshness is a ranking signal;
+membership here is a fact about the visitor.**
+
+They are the only lenses that decide their content entirely client-side, and
+that is fine *here* in a way it is not for the default browse lens: neither is
+a link target, and an empty Seen lens is the **correct** rendering for a
+first-time visitor. The pre-mount render is an empty history, which is both what
+the server must render and what is honestly true of a browser that has never
+been here — so Unseen prerenders the full pool and Seen prerenders nothing.
+
+Because empty is the *common* state at launch, the message is decided from the
+**reason**, by `historyEmptyMessage` (`src/lib/history-lens.ts`), with
+`anyHistory` / `anyUnread` read from the **unfiltered** pool: "you haven't
+opened anything yet" and "you have read everything" are claims about the site,
+and a filter excluding your history is a different thing entirely. `BrowseResults`
+takes the result as `emptyMessage` (defaulting to the filter wording).
+
+One thing worth knowing about the cutover: a returning visitor does **not** see
+an empty Seen lens. Pre-#83 entries are reads with no `readAt`, and `hasBeenRead`
+counts them — they show up, sorted last by `compareReadAt`, which is exactly the
+graceful degradation #68 asked for. Membership is `hasBeenRead`, never
+`getReadAt() !== null`; the latter would silently delete history on day one.
+
 ### Collection view renderer pattern (`COLLECTION_VIEW_RENDERERS`)
 
 Collection views are browsing cards for an entire collection — e.g. `/card/posts` lists all posts with tag filter chips. They use bare collection-name UIDs (`posts`, `projects`) with no id component, which is a deliberate exception to the `collection/id` invariant. Register them in `COLLECTION_VIEW_RENDERERS` (`src/lib/renderers.ts`). The renderer is a plain Astro component that fetches all cards server-side and passes them to `<CollectionBrowser client:load />`. To link to a collection view from card content, use `[text](collection:posts)` — `CardStack.onDocumentClick` handles the `collection:` protocol and pushes `/card/posts`.
