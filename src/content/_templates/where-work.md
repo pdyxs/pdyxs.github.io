@@ -21,8 +21,6 @@ tags: []
 # image:        # string
 # when:         # string
 # roles:        # string
-# Inherited from the _config.yaml cascade — don't repeat these here:
-#   renderer: work
 ---
 
 <% tp.file.cursor() %>
