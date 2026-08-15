@@ -80,7 +80,8 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     "config": {
       "sortKey": "date",
       "sortDirection": "desc",
-      "limit": 100
+      "display": "strip",
+      "limit": 30
     }
   },
   {
@@ -93,7 +94,8 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     "config": {
       "sortKey": "date",
       "sortDirection": "asc",
-      "limit": 6
+      "display": "strip",
+      "limit": 30
     }
   }
 ];

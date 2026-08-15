@@ -2,7 +2,9 @@
   import type { CardMeta } from '../lib/cards';
   import type { TagDisplay } from '../lib/tag-display';
   import type { FilterState } from '../dimensions';
+  import type { StripTerminal } from '../lib/strip-lens';
   import BrowseCard from './BrowseCard.svelte';
+  import CardStrip from './CardStrip.svelte';
 
   interface Props {
     cards: CardMeta[];
@@ -15,9 +17,25 @@
      * rendered, so a capped lens still shows the true size of the match.
      * Defaults to the rendered count for uncapped callers. */
     totalCount?: number;
+    /**
+     * How the results are laid out. `grid` (the default) wraps; `strip` is one
+     * scrolling row with the dot track — a capped timeline lens, see
+     * strip-lens.ts. The count line and the empty state are shared, which is
+     * why this is a prop here rather than a second results component.
+     */
+    layout?: 'grid' | 'strip';
+    /** Strip layout only: the tile closing a capped run (see stripTerminal). */
+    terminal?: StripTerminal | null;
   }
 
-  let { cards, tagDisplay = {}, filterState = { }, totalCount }: Props = $props();
+  let {
+    cards,
+    tagDisplay = {},
+    filterState = { },
+    totalCount,
+    layout = 'grid',
+    terminal,
+  }: Props = $props();
 
   const count = $derived(totalCount ?? cards.length);
 </script>
@@ -29,6 +47,8 @@
 
   {#if cards.length === 0}
     <p class="fp-browse-empty">No cards match the current filters.</p>
+  {:else if layout === 'strip'}
+    <CardStrip cards={cards} {tagDisplay} label="Browse results" {terminal} />
   {:else}
     <ul class="fp-browse-list">
       {#each cards as card (card.uid)}

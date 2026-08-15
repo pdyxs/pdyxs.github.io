@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
-  import { applyFilters } from '../../dimensions';
+  import { applyFilters, filterStateToParams } from '../../dimensions';
   import type { FilterState } from '../../dimensions';
   import { sortCardsForBrowse, limitCardsForBrowse } from '../../lib/browse-helpers';
   import type { SerialisedCardFull } from '../../lib/frontpage';
   import type { TagDisplay } from '../../lib/tag-display';
+  import { isStripLens, stripTerminal } from '../../lib/strip-lens';
+  import { archiveLensId } from '../../lib/lens-registry';
   import BrowseResults from '../BrowseResults.svelte';
 
   interface Props {
@@ -63,6 +65,23 @@
   const filteredCards = $derived(applyFilters(cardMetas, activeFilter, cardBackedSet));
   const sortedCards = $derived(limitCardsForBrowse(sortCardsForBrowse(filteredCards, config), config));
 
+  // A capped timeline lens (Newest/Oldest) lays its results out as a strip and
+  // closes the run with a tile to the archive. The count the tile states is the
+  // full match, not the capped run — filteredCards, the same value the count
+  // line reports. Both are derived from `activeFilter`, so before mount they
+  // describe the unfiltered pool exactly as the server rendered it.
+  const layout = $derived(isStripLens(config) ? 'strip' : 'grid');
+  const terminal = $derived(
+    layout === 'strip'
+      ? stripTerminal(
+          filteredCards.length,
+          sortedCards.length,
+          filterStateToParams(activeFilter).toString(),
+          archiveLensId(),
+        )
+      : null,
+  );
+
   // Clear the pre-paint anti-FOUC guard (set by Base.astro's inline script when
   // the URL carries filters) once this island has mounted (so sortedCards now
   // reflects the store, not the SSR-matching full set) AND the shell has synced
@@ -82,4 +101,6 @@
   totalCount={filteredCards.length}
   {tagDisplay}
   filterState={$lensFilterStore}
+  layout={layout}
+  terminal={terminal}
 />

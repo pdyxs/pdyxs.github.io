@@ -417,6 +417,48 @@ Two traps that cost a round each:
   exactly once — a later resize must not yank the strip back after the reader
   has scrolled away.
 
+### A capped lens browses as a strip, and the cap is what makes it work
+
+Newest and Oldest are timelines, not grids: `display: strip` plus `limit: 30`
+in the lens `config` (`src/content/when/*.lens.yaml`), decided by `isStripLens`
+(`src/lib/strip-lens.ts`) and applied by `BrowseResults`'s `layout` prop, which
+swaps the wrapping grid for a `CardStrip` — the same component as "Cards about
+this" and the series run.
+
+**The cap protects the dot track.** `computeStripDots` emits one dot per card,
+positioned proportionally; at 154 cards on a ~600px track that is a dot every
+4px — a solid line carrying no information. Raising or removing the limit
+silently degrades the strip's best feature rather than breaking anything, which
+is why `lens-registry.test.ts` asserts both keys.
+
+**Each lens is anchored by its own sort, not by scrolling.** Newest sorts
+descending and Oldest ascending, so in both the anchor card is index 0 and the
+run reads outward from it — Newest away from now, Oldest forward from the start.
+No `scrollLeftForCard` call and none of its one-frame-late trap; the terminal
+tile lands at the far end, where scrolling naturally takes you.
+
+**The terminal tile is the door to the archive, and a fade is not.** A gradient
+edge reads as "scrollable", which the strip already is, and cannot distinguish
+"you have seen all 12" from "this is 30 of 154". `stripTerminal` decides it:
+the label states the **true match count** (`filteredCards.length`, the same
+value `BrowseResults` reports in its count line — never the rendered 30), and
+the tile is a `<button>` carrying `data-replace-slot` / `data-replace-params`,
+so `CardStack.svelte` swaps the lens and carries the active filters across.
+
+Its target is `ARCHIVE_LENS_ID` (`interesting`, issue #81) and `archiveLensId()`
+returns **null until that lens is declared**, which omits the tile entirely.
+That is deliberate: a capped lens can only honestly hand off to an uncapped one,
+and falling back to `DEFAULT_BROWSE_LENS_ID` would point at `newest` — itself
+now capped. Authoring `src/content/what/interesting.lens.yaml` is the whole of
+the hookup.
+
+Two smaller things the strip layout implies. Dots are computed from
+`extents.slice(0, cards.length)`, because the terminal tile is a child of the
+scroller and would otherwise claim a dot it isn't a card for. And the row's
+height is the tallest card in the *whole* run, not the tallest one on screen —
+already true of every strip, but far more visible over 30 heterogeneous cards
+than over a six-chapter series.
+
 ### Collection view renderer pattern (`COLLECTION_VIEW_RENDERERS`)
 
 Collection views are browsing cards for an entire collection — e.g. `/card/posts` lists all posts with tag filter chips. They use bare collection-name UIDs (`posts`, `projects`) with no id component, which is a deliberate exception to the `collection/id` invariant. Register them in `COLLECTION_VIEW_RENDERERS` (`src/lib/renderers.ts`). The renderer is a plain Astro component that fetches all cards server-side and passes them to `<CollectionBrowser client:load />`. To link to a collection view from card content, use `[text](collection:posts)` — `CardStack.onDocumentClick` handles the `collection:` protocol and pushes `/card/posts`.

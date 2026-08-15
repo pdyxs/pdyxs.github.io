@@ -182,6 +182,19 @@ describe('DEFAULT_BROWSE_LENS_ID', () => {
   });
 });
 
+describe('the capped timeline lenses', () => {
+  // Newest and Oldest are strips, not grids (issue #82). The cap is what keeps
+  // the strip's dot track legible, so a config that lost it would silently
+  // degrade the track to a solid line rather than fail anything.
+  for (const id of ['newest', 'oldest']) {
+    it(`${id} is a strip capped at 30`, () => {
+      const config = getLensDefinition(id)?.config;
+      expect(config?.display).toBe('strip');
+      expect(config?.limit).toBe(30);
+    });
+  }
+});
+
 describe('allLensUids', () => {
   it('enumerates every registry entry as a uid, resolvable without importing any component', () => {
     expect(allLensUids().sort()).toEqual(['lens/home', 'lens/newest', 'lens/oldest']);

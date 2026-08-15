@@ -73,6 +73,30 @@ export const LENS_REGISTRY: LensDefinition[] = LENS_DECLARATIONS.map(normaliseLe
  */
 export const DEFAULT_BROWSE_LENS_ID = 'newest';
 
+/**
+ * The uncapped archive lens — where a capped lens's terminal tile sends a
+ * reader who wants the whole set (see strip-lens.ts).
+ *
+ * Named rather than derived: a capped lens can only honestly hand off to a lens
+ * that shows everything, and "everything, ranked" is exactly one lens (Most*
+ * Interesting, issue #81). Falling back to DEFAULT_BROWSE_LENS_ID would be a
+ * lie the moment that default is itself capped — which, since it is `newest`,
+ * it now is.
+ */
+export const ARCHIVE_LENS_ID = 'interesting';
+
+/**
+ * The archive lens's id, or null when it isn't declared yet.
+ *
+ * Null is a real answer, not a defect: until #81 lands there is nowhere honest
+ * to send a reader past the cap, so the terminal tile is simply omitted rather
+ * than pointing at another capped lens. Authoring
+ * `src/content/what/interesting.lens.yaml` is the whole of the hookup.
+ */
+export function archiveLensId(): string | null {
+  return getLensDefinition(ARCHIVE_LENS_ID) ? ARCHIVE_LENS_ID : null;
+}
+
 /** Builds a lens location uid ("lens/<id>"), matching the "collection/id" uid shape. */
 export function lensUid(id: string): string {
   return `lens/${id}`;

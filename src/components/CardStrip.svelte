@@ -17,6 +17,7 @@
   // applies, and handles pointers.
   import type { BrowseCardData } from '../lib/browse-helpers';
   import type { TagDisplay } from '../lib/tag-display';
+  import type { FilterState } from '../dimensions';
   import {
     computeStripDots,
     computeStripOverflow,
@@ -27,6 +28,7 @@
     type CardExtent,
     type StripMetrics,
   } from '../lib/card-strip';
+  import type { StripTerminal } from '../lib/strip-lens';
   import BrowseCard from './BrowseCard.svelte';
 
   interface Props {
@@ -35,6 +37,15 @@
     /** Accessible name for the strip's scroll region. */
     label?: string;
     /**
+     * Closing tile for a run that is only part of the match (a capped lens —
+     * see stripTerminal). Absent for a strip showing everything it has, which
+     * is every strip inside a card body.
+     */
+    terminal?: StripTerminal | null;
+    /** Active filter selections, forwarded to each preview so its tag chips
+     * hide/highlight exactly as they do in the grid. Only a lens has one. */
+    filterState?: FilterState;
+    /**
      * uid of the card the reader is already on, when the strip includes it (a
      * series strip does). It renders as a non-navigating tile and the strip
      * opens scrolled to it.
@@ -42,7 +53,14 @@
     currentUid?: string;
   }
 
-  let { cards, tagDisplay = {}, label = 'Cards', currentUid }: Props = $props();
+  let {
+    cards,
+    tagDisplay = {},
+    label = 'Cards',
+    currentUid,
+    terminal,
+    filterState = { },
+  }: Props = $props();
 
   // role="scrollbar" requires aria-controls naming the region it scrolls, and a
   // page can hold several strips (a series run plus "Cards about this"), so the
@@ -59,7 +77,9 @@
 
   const overflow = $derived(computeStripOverflow(metrics));
   const thumb = $derived(computeThumbGeometry(metrics));
-  const dots = $derived(computeStripDots(extents, metrics));
+  // Cards only: the terminal tile is a child of the scroller and so has an
+  // extent, but it isn't a card and a dot for it would overstate the run.
+  const dots = $derived(computeStripDots(extents.slice(0, cards.length), metrics));
   const overflowing = $derived(overflow.canScrollBack || overflow.canScrollOn);
 
   function measure() {
@@ -170,8 +190,24 @@
     onscroll={measure}
   >
     {#each cards as card (card.uid)}
-      <BrowseCard {card} {tagDisplay} current={card.uid === currentUid} />
+      <BrowseCard {card} {tagDisplay} {filterState} current={card.uid === currentUid} />
     {/each}
+
+    {#if terminal}
+      <!-- A button, not an anchor: this swaps the lens the reader is standing
+           in rather than pushing a card on top of it, which is what
+           data-replace-slot means to CardStack.svelte (the same mechanism the
+           lens chips in DimensionPanel use). Keyboard-reachable in the ordinary
+           tab order, which is the whole reason it exists instead of a fade. -->
+      <li class="card-strip-terminal">
+        <button
+          type="button"
+          class="card-strip-terminal-button"
+          data-replace-slot={terminal.uid}
+          data-replace-params={terminal.params}
+        >{terminal.label}</button>
+      </li>
+    {/if}
   </ul>
 
   {#if overflowing}
@@ -264,6 +300,37 @@
     width: min(280px, 80%);
     scroll-snap-align: start;
     margin: 0;
+  }
+
+  /* The closing tile. Narrower than a card — it carries one line, and the run
+     it terminates should still be what the eye lands on — and stretched to the
+     row's height so it reads as the wall at the end rather than a short card. */
+  .card-strip-terminal {
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: min(200px, 60%);
+    scroll-snap-align: end;
+    display: flex;
+  }
+
+  .card-strip-terminal-button {
+    flex: 1 1 auto;
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    text-align: left;
+    background: var(--dither-2);
+    color: var(--color-text);
+    border: var(--border-width) solid var(--color-border);
+    padding: var(--space-md);
+    cursor: pointer;
+  }
+
+  .card-strip-terminal-button:hover {
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    /* Inherited stroke is paper-coloured; on an inverted surface it fattens
+       paper glyphs instead of clearing dots behind them. */
+    -webkit-text-stroke-color: var(--color-selected-bg);
   }
 
   /* Arrows pinned to the ends, scrollbar taking the space between. */
