@@ -1,13 +1,21 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
-  import { applyFilters, filterStateToParams } from '../../dimensions';
+  import {
+    applyFilters,
+    countSelectedValueMatches,
+    filterStateToParams,
+    makeMatchContext,
+  } from '../../dimensions';
   import type { FilterState } from '../../dimensions';
-  import { sortCardsForBrowse, limitCardsForBrowse } from '../../lib/browse-helpers';
+  import { isRankingLens, sortCardsForBrowse, limitCardsForBrowse } from '../../lib/browse-helpers';
+  import type { CardMeta } from '../../lib/cards';
   import type { SerialisedCardFull } from '../../lib/frontpage';
   import type { TagDisplay } from '../../lib/tag-display';
+  import { getViewState } from '../../lib/card-view-state';
   import { isStripLens, stripTerminal } from '../../lib/strip-lens';
   import { archiveLensId } from '../../lib/lens-registry';
+  import { revealSettings } from '../../lib/progressive-reveal';
   import BrowseResults from '../BrowseResults.svelte';
 
   interface Props {
@@ -42,7 +50,25 @@
   // reproducing SSR. Post-mount the store drives a normal reconcile, which
   // updates src/srcset correctly (the freeze is hydration-only).
   let mounted = $state(false);
-  onMount(() => { mounted = true; });
+
+  // Rung 3 of the ranking chain (unseen before seen), for a lens that ranks.
+  // Snapshotted once on mount rather than read live: 264 localStorage lookups
+  // is not something to redo on every filter keystroke, and a list reshuffling
+  // under a reader because they opened a card in another stack entry would be
+  // worse than being one navigation stale. Skipped entirely for a lens that
+  // doesn't rank (Newest/Oldest sort on date and would pay the cost for
+  // nothing).
+  let seenSnapshot = $state<Set<string>>(new Set());
+  onMount(() => {
+    if (isRankingLens(config)) {
+      const seen = new Set<string>();
+      for (const card of cards) {
+        if (getViewState(card.uid, card.contentHash) === 'read') seen.add(card.uid);
+      }
+      seenSnapshot = seen;
+    }
+    mounted = true;
+  });
 
   // status/visibility don't cross the serialisation boundary on the
   // SerialisedCard type by default (see browse-helpers.ts); this pool is
@@ -63,7 +89,28 @@
   const activeFilter: FilterState = $derived(mounted ? $lensFilterStore : { });
   const cardBackedSet = $derived(cardBackedValues ? new Set(cardBackedValues) : undefined);
   const filteredCards = $derived(applyFilters(cardMetas, activeFilter, cardBackedSet));
-  const sortedCards = $derived(limitCardsForBrowse(sortCardsForBrowse(filteredCards, config), config));
+
+  // The two runtime rungs of the ranking chain, which is why the browser owns
+  // them and browse-helpers only takes them: which values are selected is this
+  // lens's business, and seen-ness is the visitor's. Before mount both are
+  // inert — `activeFilter` is empty and `seenSnapshot` is empty — so the
+  // hydration render reproduces the server's build-time-only ranking exactly.
+  // See the anti-FOUC note above: that is also why the swap to the real order
+  // happens behind the `data-filters-pending` guard rather than on screen.
+  const matchContext = $derived(makeMatchContext(cardBackedSet ?? new Set<string>()));
+  const rankingCtx = $derived({
+    matchCount: (card: CardMeta) => countSelectedValueMatches(card, activeFilter, matchContext),
+    isSeen: (card: CardMeta) => seenSnapshot.has(card.uid),
+  });
+
+  const sortedCards = $derived(
+    limitCardsForBrowse(sortCardsForBrowse(filteredCards, config, rankingCtx), config),
+  );
+
+  // Progressive reveal, for the grid layout only (BrowseResults ignores it on a
+  // strip). Decided from the lens config here so the results component stays a
+  // pure applier.
+  const reveal = $derived(revealSettings(config));
 
   // A capped timeline lens (Newest/Oldest) lays its results out as a strip and
   // closes the run with a tile to the archive. The count the tile states is the
@@ -103,4 +150,5 @@
   filterState={$lensFilterStore}
   layout={layout}
   terminal={terminal}
+  reveal={reveal}
 />

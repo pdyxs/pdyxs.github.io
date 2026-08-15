@@ -776,6 +776,41 @@ describe("sortCardsForBrowse", () => {
         ]);
     });
 
+    it("defers to the site-wide ranking chain on sortKey: ranking", () => {
+        // Most* Interesting (issue #81). This is NOT a second ordering — it is
+        // rankCards, the same comparator the home slots and Unseen use, so a
+        // higher `priority` leads regardless of date.
+        const boosted = fakeCardMeta({
+            uid: "posts/boosted",
+            priority: 100,
+            date: new Date("2019-01-01"),
+        });
+        const plain = fakeCardMeta({
+            uid: "posts/plain",
+            date: new Date("2025-01-01"),
+        });
+        const result = sortCardsForBrowse([plain, boosted], {
+            sortKey: "ranking",
+        });
+        expect(result.map((c) => c.uid)).toEqual([
+            "posts/boosted",
+            "posts/plain",
+        ]);
+    });
+
+    it("passes the runtime rungs through to the chain", () => {
+        // Rung 3: unseen before seen. The accessor is the caller's, because
+        // localStorage is only knowable in the browser.
+        const a = fakeCardMeta({ uid: "posts/a" });
+        const b = fakeCardMeta({ uid: "posts/b" });
+        const result = sortCardsForBrowse(
+            [a, b],
+            { sortKey: "ranking" },
+            { isSeen: (card) => card.uid === "posts/a" },
+        );
+        expect(result.map((c) => c.uid)).toEqual(["posts/b", "posts/a"]);
+    });
+
     it("leaves order untouched when config is absent", () => {
         const result = sortCardsForBrowse([newer, older]);
         expect(result.map((c) => c.uid)).toEqual([

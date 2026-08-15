@@ -41,7 +41,7 @@ const DIMENSIONS = ['who', 'what', 'when', 'where', 'why'];
 
 // Keys emitted onto a declaration, in a stable order. `order` is intentionally
 // absent: it drives sorting here, then is dropped (it isn't a registry field).
-const DECL_KEYS = ['id', 'dimension', 'label', 'icon', 'component', 'width', 'acceptsFilters', 'presentation', 'devOnly', 'config'];
+const DECL_KEYS = ['id', 'dimension', 'label', 'note', 'icon', 'component', 'width', 'acceptsFilters', 'presentation', 'devOnly', 'config'];
 
 async function walk(dir) {
   const out = [];
@@ -90,6 +90,7 @@ async function collectLenses() {
       // order is generator-only: it sorts the output, then is dropped.
       order: typeof parsed.order === 'number' ? parsed.order : Number.POSITIVE_INFINITY,
     };
+    if (typeof parsed.note === 'string') decl.note = parsed.note;
     if (typeof parsed.icon === 'string') decl.icon = parsed.icon;
     if (typeof parsed.width === 'string') decl.width = parsed.width;
     if (typeof parsed.acceptsFilters === 'boolean') decl.acceptsFilters = parsed.acceptsFilters;

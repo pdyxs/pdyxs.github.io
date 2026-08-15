@@ -12,6 +12,7 @@ import { displayFor } from './tag-display';
 import type { TagDisplay } from './tag-display';
 import type { StatusValue } from './status-visibility';
 import type { FolderSort } from './folder-sort';
+import { rankCards, type RankingContext } from './ranking';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -447,13 +448,29 @@ export function dimensionHasTags(
 // Browse-lens sorting
 // ---------------------------------------------------------------------------
 
+/** Whether a lens's registry `config` asks for the site-wide ranking chain. */
+export function isRankingLens(config?: Record<string, unknown>): boolean {
+  return config?.sortKey === 'ranking';
+}
+
 /**
  * Sorts cards for a browse-family lens per its registry `config` (see
  * lens-registry.ts, e.g. `{ sortKey: 'date', sortDirection: 'desc' }` on the
  * `newest` entry). Unrecognised or absent config leaves the input order
  * untouched — a lens declaring no sort config just shows cards as given.
+ *
+ * `sortKey: 'ranking'` is the one non-field sort: it defers to the site-wide
+ * comparator chain (src/lib/ranking.ts), which is what Most* Interesting is.
+ * There is exactly one ordering on this site and this is not a second one —
+ * the chain's two runtime rungs (filter-match count, seen-ness) can only be
+ * known by the caller, so they arrive as `ctx` rather than being re-derived.
  */
-export function sortCardsForBrowse(cards: CardMeta[], config?: Record<string, unknown>): CardMeta[] {
+export function sortCardsForBrowse(
+  cards: CardMeta[],
+  config?: Record<string, unknown>,
+  ctx?: RankingContext<CardMeta>,
+): CardMeta[] {
+  if (isRankingLens(config)) return rankCards<CardMeta>(cards, ctx ?? {});
   if (config?.sortKey !== 'date') return cards;
   const descending = config.sortDirection !== 'asc';
   return [...cards].sort((a, b) => {

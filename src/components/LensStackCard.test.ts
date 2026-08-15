@@ -3,6 +3,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { getContainerRenderer } from '@astrojs/svelte';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
 import LensStackCard from './LensStackCard.astro';
+import { DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
 
 async function makeContainer() {
   const renderers = [{ ...getContainerRenderer(), ssr: svelteServerRenderer }];
@@ -149,7 +150,7 @@ describe('LensStackCard', () => {
     const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });
     const div = dom(html);
 
-    expect(div.querySelector('[data-replace-slot="lens/newest"]')).not.toBeNull();
+    expect(div.querySelector(`[data-replace-slot="lens/${DEFAULT_BROWSE_LENS_ID}"]`)).not.toBeNull();
   });
 
   it('does not render active-filter chips on a cold load with no active filters', async () => {

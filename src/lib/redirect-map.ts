@@ -18,8 +18,18 @@
 //   2. Every fallback is reported. `RedirectMapReport.unresolved` is the audit
 //      trail — the generator prints it and the generated file records it.
 
-/** Browse-lens fallback for content URLs whose card can't be identified. */
-export const BROWSE_LENS_FALLBACK = '/lens/newest';
+import { DEFAULT_BROWSE_LENS_ID } from './lens-registry.ts';
+
+/**
+ * Browse-lens fallback for content URLs whose card can't be identified.
+ *
+ * The ARCHIVE lens, deliberately (issue #81): a reader arriving on a dead old
+ * URL is looking for one specific thing, and Newest is a 30-card strip anchored
+ * at now — the least likely place to find something written years ago. Built
+ * from DEFAULT_BROWSE_LENS_ID rather than hardcoded so this can't drift away
+ * from the lens every other fallthrough uses.
+ */
+export const BROWSE_LENS_FALLBACK = `/lens/${DEFAULT_BROWSE_LENS_ID}`;
 
 /** Home-lens fallback, used for old static pages that have no card equivalent. */
 export const HOME_LENS_FALLBACK = '/';

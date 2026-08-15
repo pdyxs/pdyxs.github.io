@@ -105,9 +105,12 @@ describe('lensesForDimension', () => {
     expect(lensesForDimension('who')).toEqual([]);
   });
 
-  it('returns the home, editorial and audit lenses filed under what', () => {
+  it('returns the home, interesting, editorial and audit lenses filed under what', () => {
     const what = lensesForDimension('what');
-    expect(what.map(l => l.id)).toEqual(['home', 'editorial', 'audit']);
+    // Most* Interesting is filed here rather than under `when` because it does
+    // not sort on time (issue #68), and sits directly under home — the stack
+    // root you are always already in — as the way out of it.
+    expect(what.map(l => l.id)).toEqual(['home', 'interesting', 'editorial', 'audit']);
   });
 
   it('excludes home from every 5W dimension other than what', () => {
@@ -179,8 +182,20 @@ describe('DEFAULT_BROWSE_LENS_ID', () => {
     expect(getLensDefinition(DEFAULT_BROWSE_LENS_ID)?.acceptsFilters).toBe(true);
   });
 
-  it('is the newest lens', () => {
-    expect(DEFAULT_BROWSE_LENS_ID).toBe('newest');
+  it('is Most* Interesting', () => {
+    expect(DEFAULT_BROWSE_LENS_ID).toBe('interesting');
+  });
+
+  it('is UNCAPPED — a capped default is the bug this lens exists to close', () => {
+    // ~279 of 285 cards were unreachable by browsing because the default lens
+    // showed a slice. A `limit` reappearing here would restore that silently.
+    expect(getLensDefinition(DEFAULT_BROWSE_LENS_ID)?.config?.limit).toBeUndefined();
+  });
+
+  it('ranks, and carries the footnote that admits the ranking is a judgement call', () => {
+    const lens = getLensDefinition(DEFAULT_BROWSE_LENS_ID);
+    expect(lens?.config?.sortKey).toBe('ranking');
+    expect(lens?.note).toBe('*an attempt at that, anyway');
   });
 });
 
@@ -220,6 +235,7 @@ describe('allLensUids', () => {
   it('enumerates every registry entry as a uid, resolvable without importing any component', () => {
     expect(allLensUids().sort()).toEqual([
       'lens/home',
+      'lens/interesting',
       'lens/newest',
       'lens/oldest',
       'lens/seen',

@@ -15,6 +15,12 @@ export const LENS_ICON_DEFS: Record<string, LensIconDef> = {
       { kind: 'path', d: "M6 3v18M6 4h12l-4 5 4 5H6" },
     ],
   },
+  "interesting": {
+    filled: true,
+    shapes: [
+      { kind: 'path', d: "M12 2.2 14.85 8l6.4.93-4.63 4.51 1.1 6.36-5.72-3-5.72 3 1.1-6.36-4.63-4.51L9.15 8Z" },
+    ],
+  },
   "scatter": {
     filled: true,
     shapes: [

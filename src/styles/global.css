@@ -449,6 +449,8 @@ pre > code:not([class]) {
    including a JS string in CardStack.svelte), so it can't rely on a class. */
 .dither-text,
 .card-header-title,
+/* The lens footnote shares the header's dithered surface (see .lens-note). */
+.lens-note,
 /* Surfaces whose background becomes a dither on hover (--color-bg-hover).
    The stroke is inert until that dither appears, so applying it at rest is
    free. Class names are matched from here rather than each component's
@@ -460,6 +462,7 @@ pre > code:not([class]) {
 .browse-dim-lens-item,
 .browse-dim-item-btn,
 .browse-dim-drill,
+.fp-reveal-more,
 .stack-overflow,
 .stack-overflow-item,
 /* Code sits on an L2 dither at rest, not just on hover — without the stroke the
@@ -495,6 +498,36 @@ pre,
 .card-header-title {
   background: none;
   padding: 0;
+}
+
+/* A lens's footnote (LensDefinition.note — only Most* Interesting has one).
+   Rendered beside the label in both chrome modes rather than folded into it:
+   the label makes a claim and this is the asterisk on it, so it must read as
+   an aside, which here means smaller and lighter — never a faded colour, since
+   an opacity over the two-colour palette renders as the grey it doesn't have.
+   `margin-right: auto` keeps it hugging the title against .card-header's
+   space-between, which would otherwise centre it between title and close. */
+.lens-note {
+  margin-left: 0.35em;
+  font-family: var(--font-ui);
+  font-size: 0.7em;
+  letter-spacing: 0;
+  color: var(--color-text);
+}
+
+/* A collapsed card's header is a rotated wayfinding rail, not a claim — the
+   footnote there just runs a second line of tiny type down the whole viewport
+   edge. Hidden rather than truncated: it reappears in full the moment the lens
+   is expanded again. */
+.stack-card--collapsed .lens-note {
+  display: none;
+}
+
+.card-header > .lens-note {
+  margin-right: auto;
+  /* Cancels the 2px inline padding .card-header gives its children, so the
+     footnote sits tight against the title it annotates. */
+  padding-left: 0;
 }
 
 .stack-card--collapsed .card-header {

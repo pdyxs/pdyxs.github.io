@@ -94,15 +94,39 @@ const jsonLd = [
       // and reduces the set. Set a pre-paint flag when the URL carries filters;
       // CSS hides the browse results until BrowseLensBrowser clears it once the
       // filtered view is in the DOM (see lensFiltersSynced).
+      //
+      // A second trigger, same guard (issue #81): a RANKED lens's order also
+      // changes on hydration, because the chain's unseen-before-seen rung
+      // (src/lib/ranking.ts) can only be evaluated against localStorage. The
+      // server can't know that state, so it renders the build-time rungs and
+      // the browser re-sorts — which, unguarded, is a whole grid visibly
+      // reshuffling a beat after it paints, and reads as a bug rather than as
+      // "cards you've read moved down".
+      //
+      // Deliberately conditional on there BEING a read history: a first-time
+      // visitor's hydration re-sort is a no-op, so they get an instant paint
+      // and pay nothing. Scoped to /lens/ paths — a card page has no results
+      // grid to hold, and `/` (the home lens) has slots, not a grid.
       (function () {
         var s = window.location.search;
-        if (!s) return;
         var active = false;
-        new URLSearchParams(s).forEach(function (_value, key) {
-          if (key === 'filter' || key.indexOf('filter.') === 0) {
-            active = true;
-          }
-        });
+        if (s) {
+          new URLSearchParams(s).forEach(function (_value, key) {
+            if (key === 'filter' || key.indexOf('filter.') === 0) {
+              active = true;
+            }
+          });
+        }
+        if (!active && window.location.pathname.indexOf('/lens/') === 0) {
+          try {
+            for (var i = 0; i < localStorage.length; i++) {
+              if ((localStorage.key(i) || '').indexOf('pdyxs:view-state:') === 0) {
+                active = true;
+                break;
+              }
+            }
+          } catch (e) { /* storage blocked — nothing to re-rank on */ }
+        }
         if (!active) return;
         document.documentElement.setAttribute('data-filters-pending', '');
         // Safety net: if the filter island never hydrates (script error, etc.),

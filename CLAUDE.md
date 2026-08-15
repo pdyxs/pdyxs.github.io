@@ -502,6 +502,80 @@ graceful degradation #68 asked for. Membership is `hasBeenRead`, never
 
 Collection views are browsing cards for an entire collection — e.g. `/card/posts` lists all posts with tag filter chips. They use bare collection-name UIDs (`posts`, `projects`) with no id component, which is a deliberate exception to the `collection/id` invariant. Register them in `COLLECTION_VIEW_RENDERERS` (`src/lib/renderers.ts`). The renderer is a plain Astro component that fetches all cards server-side and passes them to `<CollectionBrowser client:load />`. To link to a collection view from card content, use `[text](collection:posts)` — `CardStack.onDocumentClick` handles the `collection:` protocol and pushes `/card/posts`.
 
+### The default browse lens is Most\* Interesting, and it is uncapped
+
+`DEFAULT_BROWSE_LENS_ID` (`src/lib/lens-registry.ts`) is **`interesting`**, not
+`newest`. Everything that "falls through to browse" lands there: every
+`collection:` and `tag:` link, the front page's *See more →*, a filter toggled
+on a lens that can't accept it, and an unresolvable old URL
+(`BROWSE_LENS_FALLBACK` in `redirect-map.ts`, built from the same constant).
+`ARCHIVE_LENS_ID` — where a capped strip's *See all N →* tile sends you — is the
+same lens, and is still a separate constant: the default is "where a filter
+lands", the archive is "the lens that shows everything", and a future default
+that acquired a cap must not silently become a capped lens's overflow.
+
+**The lens must never gain a `limit`.** ~279 of 285 cards were unreachable by
+browsing because the default lens showed a slice; a `limit:` reappearing in
+`interesting.lens.yaml` restores that bug silently, which is why
+`lens-registry.test.ts` asserts its absence. Length is paced by progressive
+reveal instead, never by truncation.
+
+Two things are unique to it:
+
+- **`sortKey: ranking`** is the only non-field sort. `sortCardsForBrowse`
+  delegates to `rankCards` (`src/lib/ranking.ts`) — the same comparator the home
+  page's day-seeded slots and the Unseen lens use. Don't write a second ordering.
+- **`note:`** is a lens-level footnote (*"\*an attempt at that, anyway"*),
+  rendered by `deriveLensChrome` beside the title in both chrome modes and
+  hidden on a collapsed card. It is kept a **separate string from the title**:
+  `CardStack` reads `.card-header-title`'s `textContent` as a placeholder card's
+  name and would otherwise name the card after its own disclaimer.
+
+**The chain has two runtime rungs, so the browser's order differs from the
+server's.** Filter-match count and seen-ness are only knowable client-side, so
+the static build renders rungs 2/4/5/6 and `BrowseLensBrowser` re-sorts on
+hydration. Unguarded that is a whole grid visibly reshuffling a beat after it
+paints, which reads as a bug — so `Base.astro`'s inline anti-FOUC script sets
+`data-filters-pending` for a `/lens/` path when localStorage holds **any**
+`pdyxs:view-state:` key, and the browser clears it once the re-sorted DOM is
+committed. Deliberately conditional on there *being* a read history: a
+first-time visitor's re-sort is a no-op, so they pay nothing. The seen set is
+snapshotted once in `onMount`, never read live — a list reshuffling because you
+opened a card elsewhere in the stack is worse than being one navigation stale.
+
+### Progressive reveal appends; it never windows
+
+`BrowseResults` renders a leading slice of a **grid** and asks for the next step
+from an `IntersectionObserver` sentinel with a deliberately generous
+`REVEAL_ROOT_MARGIN`, so the reader never arrives at an end. Decisions are pure
+in `src/lib/progressive-reveal.ts`; the observer and the fallback button are the
+thin applier. On by default for every grid lens (`revealSettings()` — a lens
+opts out with `reveal: false` or resizes the step with `reveal: <n>`); a short
+result set costs nothing, since with nothing held back neither the sentinel nor
+the button renders.
+
+Four things that bite:
+
+- **Never virtualise.** Removing DOM nodes on scroll invites `contain: paint` or
+  `will-change: transform` on the scroll container, and per the dither section
+  above that re-anchors every dithered surface inside it and brings the shimmer
+  back. Thumbnails are already `loading="lazy"`, so reveal buys DOM weight and
+  fetch pacing — not first-paint bytes.
+- **Reveal position is a step COUNT, not a card count.** SSR runs no effects, so
+  a card count would have to be seeded from a prop (which Svelte warns about);
+  step zero needs no seeding.
+- **The sentinel lives outside `.fp-browse-list`.** The anti-FOUC guard hides
+  that list with `display: none`, and an element with no box never intersects —
+  inside it, the reveal would never start on a filtered cold load.
+- **Re-arm the observer after every step.** `IntersectionObserver` reports only
+  a *change*; if the sentinel is still inside the root margin after the append
+  it sits there intersecting and never fires again. `unobserve` + `observe`
+  forces a fresh callback against the new layout.
+
+The strip lenses answer the same question differently — a hard `limit` plus the
+terminal *See all N →* tile (`strip-lens.ts`). `BrowseResults` ignores `reveal`
+in strip layout for that reason.
+
 ### Internal links in card content use a protocol, never an absolute URL
 
 Body content links to the rest of the site through one of three protocols, all handled by `onDocumentClick` in `CardStack.svelte`. Each stays inside the card stack — an ordinary `https://pdyxs.wtf/...` or `/card/...` href is a full page load that discards the stack, and is treated as a data bug (guarded by `src/lib/content-links.test.ts`).

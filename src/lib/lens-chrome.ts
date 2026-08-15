@@ -25,6 +25,11 @@ export interface LensChrome {
   cardTitle: string;
   /** Page-mode subtitle beneath the H1. */
   pageSubtitle: string;
+  /** The lens's footnote, if it declares one — rendered beside the title in
+   * both chrome modes, never folded INTO it. Keeping it a separate string is
+   * what lets CardStack keep reading `.card-header-title` for a placeholder
+   * card's title without picking the footnote up as part of the name. */
+  note?: string;
 }
 
 /** True for the home lens. Identified by id, not dimension — home is filed
@@ -61,5 +66,5 @@ export function deriveLensChrome(lens: LensDefinition, filterState: FilterState)
     return { pageTitle: SITE_TITLE, cardTitle: SITE_TITLE, pageSubtitle: lens.label };
   }
   const title = [lens.label, ...activeFilterLabels(filterState)].join(' · ');
-  return { pageTitle: SITE_TITLE, cardTitle: title, pageSubtitle: title };
+  return { pageTitle: SITE_TITLE, cardTitle: title, pageSubtitle: title, note: lens.note };
 }

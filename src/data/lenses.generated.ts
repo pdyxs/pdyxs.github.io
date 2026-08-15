@@ -52,6 +52,18 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     }
   },
   {
+    "id": "interesting",
+    "dimension": "what",
+    "label": "Most* Interesting",
+    "note": "*an attempt at that, anyway",
+    "icon": "interesting",
+    "component": "interesting",
+    "width": "960px",
+    "config": {
+      "sortKey": "ranking"
+    }
+  },
+  {
     "id": "editorial",
     "dimension": "what",
     "label": "Editorial",

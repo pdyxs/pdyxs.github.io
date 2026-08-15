@@ -13,6 +13,7 @@
     selectHistoryCards,
     type ReadHistory,
   } from '../../lib/history-lens';
+  import { revealSettings } from '../../lib/progressive-reveal';
   import BrowseResults from '../BrowseResults.svelte';
 
   interface Props {
@@ -103,6 +104,11 @@
     mode ? historyEmptyMessage(mode, { anyHistory, anyUnread }) : undefined
   );
 
+  // Progressive reveal (issue #81). Unseen is uncapped and starts out as very
+  // nearly the whole site, so it wants the same pacing the archive lens gets —
+  // "will apply to every grid lens at once", as unseen.lens.yaml put it.
+  const reveal = $derived(revealSettings(config));
+
   // Same anti-FOUC clearing as BrowseLensBrowser.svelte.
   $effect(() => {
     resultCards;
@@ -117,4 +123,5 @@
   {tagDisplay}
   filterState={activeFilter}
   {emptyMessage}
+  {reveal}
 />

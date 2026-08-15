@@ -1290,5 +1290,9 @@
   {
     "uid": "lens/unseen",
     "code": "5c"
+  },
+  {
+    "uid": "lens/interesting",
+    "code": "5d"
   }
 ]

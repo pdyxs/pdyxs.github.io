@@ -5,6 +5,7 @@ import type { FilterState } from '../dimensions';
 
 const home = getLensDefinition('home')!;
 const newest = getLensDefinition('newest')!;
+const interesting = getLensDefinition('interesting')!;
 const empty: FilterState = { };
 
 describe('deriveLensChrome', () => {
@@ -13,6 +14,19 @@ describe('deriveLensChrome', () => {
     expect(chrome.cardTitle).toBe(SITE_TITLE);
     expect(chrome.pageTitle).toBe(SITE_TITLE);
     expect(chrome.pageSubtitle).toBe('A bit of everything');
+  });
+
+  it('carries a lens note alongside the title, never folded into it', () => {
+    // The footnote is a separate string on purpose: CardStack reads
+    // .card-header-title's textContent as a placeholder card's name, and would
+    // otherwise name the card after its own disclaimer.
+    const chrome = deriveLensChrome(interesting, empty);
+    expect(chrome.cardTitle).toBe('Most* Interesting');
+    expect(chrome.note).toBe('*an attempt at that, anyway');
+  });
+
+  it('leaves note undefined for a lens that declares none', () => {
+    expect(deriveLensChrome(newest, empty).note).toBeUndefined();
   });
 
   it('a filter lens with no active filters: card title is the lens label', () => {

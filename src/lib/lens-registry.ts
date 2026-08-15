@@ -23,6 +23,13 @@ export interface LensDefinition {
   /** Human-readable label — used both for nav chips and, combined with any
    * active filters, the chrome title once the lens is active. */
   label: string;
+  /** A footnote shown beside the label in the lens chrome (never on the nav
+   * chip, which has no room for one). Optional, and used by exactly one lens:
+   * Most* Interesting's "*an attempt at that, anyway". That is load-bearing
+   * rather than decorative — the ranking is a judgement call driven by a
+   * hand-authored `priority`, and the label admits it rather than claiming an
+   * objectivity the mechanism doesn't have (issue #68). */
+  note?: string;
   /** Icon *key* resolved to monochrome SVG markup by lens-icons.ts — kept a
    * plain string here so the registry stays pure data (no markup, no import). */
   icon?: string;
@@ -68,10 +75,17 @@ export const LENS_REGISTRY: LensDefinition[] = LENS_DECLARATIONS.map(normaliseLe
  * The fallback browse lens: where a filter lands when it's added somewhere
  * that can't accept it (e.g. the home lens, acceptsFilters: false) — it
  * "falls through" here carrying the accumulated FilterState rather than
- * leaving the visitor stuck. Also the default member of the browse lens
- * family (concrete sort lenses under a shared grid) until more are added.
+ * leaving the visitor stuck. Every `collection:` link, `tag:` link and the
+ * front page's "See more →" land here too.
+ *
+ * It is Most* Interesting (issue #81), not `newest`. Two reasons, both from
+ * #68: the default lens must be UNCAPPED, since a capped default is what left
+ * ~279 of 285 cards unreachable by browsing; and sorting the whole pool by
+ * recency is what drowns 54 essays and 20 puzzles in 154 micro-posts, which no
+ * cap value fixes. `newest`/`oldest` keep their own URLs and the stack manifest
+ * is append-only, so shared stacks pointing at /lens/newest keep working.
  */
-export const DEFAULT_BROWSE_LENS_ID = 'newest';
+export const DEFAULT_BROWSE_LENS_ID = 'interesting';
 
 /**
  * The uncapped archive lens — where a capped lens's terminal tile sends a
@@ -79,19 +93,21 @@ export const DEFAULT_BROWSE_LENS_ID = 'newest';
  *
  * Named rather than derived: a capped lens can only honestly hand off to a lens
  * that shows everything, and "everything, ranked" is exactly one lens (Most*
- * Interesting, issue #81). Falling back to DEFAULT_BROWSE_LENS_ID would be a
- * lie the moment that default is itself capped — which, since it is `newest`,
- * it now is.
+ * Interesting, issue #81). It happens to equal DEFAULT_BROWSE_LENS_ID today,
+ * and is still not derived from it: the default is "where a filter lands", the
+ * archive is "the lens that shows everything", and a future default that
+ * acquired a cap must not silently become a capped lens's own overflow.
  */
 export const ARCHIVE_LENS_ID = 'interesting';
 
 /**
- * The archive lens's id, or null when it isn't declared yet.
+ * The archive lens's id, or null when it isn't declared.
  *
- * Null is a real answer, not a defect: until #81 lands there is nowhere honest
- * to send a reader past the cap, so the terminal tile is simply omitted rather
- * than pointing at another capped lens. Authoring
- * `src/content/what/interesting.lens.yaml` is the whole of the hookup.
+ * Null is a real answer, not a defect: with no archive lens there is nowhere
+ * honest to send a reader past a cap, so the terminal tile is simply omitted
+ * rather than pointing at another capped lens. Since #81 the lens IS declared
+ * (`src/content/what/interesting.lens.yaml`), so this returns the id — the null
+ * branch survives as the guard for anyone who deletes that file.
  */
 export function archiveLensId(): string | null {
   return getLensDefinition(ARCHIVE_LENS_ID) ? ARCHIVE_LENS_ID : null;

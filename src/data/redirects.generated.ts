@@ -116,7 +116,7 @@ export const REDIRECTS: Record<string, string> = {
   "/what/projects/bravehearts": "/card/what/games/digital/bravehearts",
   "/what/projects/budget-haver": "/card/what/software/budget-haver",
   "/what/projects/cybersecurity": "/card/what/games/digital/cybersecurity",
-  "/what/projects/fatecardgame": "/lens/newest",
+  "/what/projects/fatecardgame": "/lens/interesting",
   "/what/projects/flatland-fallen-angle": "/card/what/games/digital/flatland-fallen-angle",
   "/what/projects/genetic-sequences": "/card/what/art/genetic-sequences",
   "/what/projects/gottagetouttathisspace": "/card/what/games/analog/gotta-get-outta-this-space",
@@ -131,7 +131,7 @@ export const REDIRECTS: Record<string, string> = {
   "/what/projects/unstoppabot": "/card/what/games/digital/unstoppabot",
   "/what/projects/virtual-farm": "/card/what/games/digital/virtual-farm",
   "/what/projects/where-the-heart-is": "/card/what/games/digital/where-the-heart-is",
-  "/when": "/lens/newest",
+  "/when": "/lens/interesting",
   "/where": "/",
   "/where/arctic": "/card/what/posts/stories/arctic/00-introduction",
   "/where/galapagos": "/card/what/posts/stories/galapagos/00-introduction",
@@ -152,7 +152,7 @@ export const REDIRECTS: Record<string, string> = {
  */
 export const UNRESOLVED_OLD_URLS: readonly { from: string; to: string; reason: string }[] = [
   { from: "/arctic/0-1-map", to: "/card/what/posts/stories/arctic/00-introduction", reason: "no match for slug \"0-1-map\"; sent to the start of the \"arctic\" story" },
-  { from: "/what/projects/fatecardgame", to: "/lens/newest", reason: "no match for slug \"fatecardgame\"" },
+  { from: "/what/projects/fatecardgame", to: "/lens/interesting", reason: "no match for slug \"fatecardgame\"" },
   { from: "/who", to: "/", reason: "no such card: who/about-me" },
   { from: "/cv", to: "/", reason: "no such card: who/about-me" },
 ];
@@ -165,7 +165,7 @@ export const UNRESOLVED_OLD_URLS: readonly { from: string; to: string; reason: s
  */
 export const ORPHANED_OLD_URLS: readonly { uid: string; from: string; to: string }[] = [
   { uid: "what/posts/stories/arctic/01-map", from: "/arctic/0-1-map", to: "/card/what/posts/stories/arctic/00-introduction" },
-  { uid: "what/games/analog/fatecardgame", from: "/what/projects/fatecardgame", to: "/lens/newest" },
+  { uid: "what/games/analog/fatecardgame", from: "/what/projects/fatecardgame", to: "/lens/interesting" },
   { uid: "who/about-me", from: "/who", to: "/" },
   { uid: "who/about-me", from: "/cv", to: "/" },
 ];
