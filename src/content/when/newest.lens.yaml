@@ -12,7 +12,13 @@ width: 960px
 config:
   sortKey: date
   sortDirection: desc
-  # Show only the leading cards — this is a "what's recent" lens, not the
-  # whole archive. Applied after filtering, so it's the top 100 of whatever
-  # the active filters leave. See limitCardsForBrowse in browse-helpers.ts.
-  limit: 100
+  # A timeline, not the archive: one scrolling row reading outward from now,
+  # with a dot per card on the strip's track. See src/lib/strip-lens.ts.
+  display: strip
+  # Hard cap, and the reason the strip works at all: computeStripDots places
+  # one dot per card proportionally, so at 154 cards on a ~600px track that is
+  # a dot every 4px — a solid line carrying no information. Applied after
+  # filtering (limitCardsForBrowse in browse-helpers.ts), so it's the 30 most
+  # recent of whatever the active filters leave; anything past it is reached
+  # through the strip's terminal "See all N →" tile, not by scrolling further.
+  limit: 30

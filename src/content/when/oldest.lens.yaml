@@ -9,5 +9,8 @@ width: 960px
 config:
   sortKey: date
   sortDirection: asc
-  # Mirror of newest: only the leading 6 cards after filtering.
-  limit: 6
+  # Mirror of newest, and that mirroring is what anchors each lens at its own
+  # end: the sort puts the anchor card first, so both strips open at scrollLeft
+  # 0 and read outward — Newest away from now, Oldest forward from the start.
+  display: strip
+  limit: 30
