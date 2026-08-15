@@ -1101,6 +1101,28 @@ Two consequences for code:
   container folder or a schema field means a regen. See
   `src/content/_templates/README.md`.
 
+### An automated edit to a card re-flags it `inspected: false`
+
+Any script, generator or AI agent that changes a card's frontmatter **or**
+body — not a human editing directly in Obsidian — must set `inspected: false`
+on that card's frontmatter as part of the same change. This reuses the
+existing pre-MVP read-through flag (`src/content.config.ts`, `src/lib/audit.ts`,
+`scripts/backfill-inspected.mjs`) rather than adding a second mechanism: an
+automated edit is exactly the kind of change Paul hasn't personally read yet,
+so it belongs on the same worklist the `not-inspected` audit finding already
+surfaces. Set it even if the card was previously ticked `true` — an automated
+change is new content a human hasn't seen, regardless of what was reviewed
+before it.
+
+This does **not** apply to `content: auto-sync` commits that carry Paul's own
+edits from Obsidian mobile — those are authored directly by him and need no
+re-flagging. It also doesn't apply to `scripts/backfill-inspected.mjs` itself,
+which only ever writes `inspected: false` onto a card that has no `inspected`
+key at all.
+
+This rule — and the flag it reuses — goes away together: see the `inspected`
+field's own TEMPORARY comment for the three other pieces that retire with it.
+
 ### Experiments live on dev-only routes
 
 `/experiment` should create throwaway pages under `src/pages/experiments/` with synthetic fixtures (e.g. 10 fake cards for an overflow experiment). Don't prototype by mutating production components and reverting.
