@@ -1,0 +1,33 @@
+# Lens definition — id "interesting", dimension "what" (issue #81, decided in
+# #68). THE default browse lens: see DEFAULT_BROWSE_LENS_ID and ARCHIVE_LENS_ID
+# in src/lib/lens-registry.ts.
+#
+# This is the lens that closes the bug the whole launch effort started from —
+# ~279 of 285 cards were unreachable by browsing. The fix was not a bigger cap.
+# Sorting the whole pool by recency is what buries 54 essays and 20 puzzles
+# under 154 travel micro-posts, so the default lens needed a different
+# IDENTITY, not a different number: everything, ranked, with nothing held back.
+#
+# Filed under `what` rather than `when` because it does not sort on time.
+# Newest, Oldest, Seen and Unseen all live under `when` for exactly that reason
+# (Seen sorts on the visitor's clock rather than the publication date, but it
+# still sorts on a clock). This one sorts on judgement.
+label: Most* Interesting
+# The footnote is load-bearing, not decoration. Rung 2 of the chain is a
+# hand-authored `priority:`, so the ordering is an opinion; the label says so
+# rather than claiming an objectivity the mechanism doesn't have. Rendered in
+# the lens chrome beside the label — never on the nav chip (see LensChrome).
+note: "*an attempt at that, anyway"
+icon: interesting
+order: -1
+width: 960px
+config:
+  # The site-wide comparator chain (src/lib/ranking.ts) — the SAME ordering the
+  # home page's day-seeded slots and the Unseen lens use, not a second one.
+  # Rungs 1 and 3 (filter-match count, seen-ness) are only knowable in the
+  # browser, so the server renders rungs 2/4/5/6 and BrowseLensBrowser re-sorts
+  # on hydration; see that component for how the swap is kept off screen.
+  sortKey: ranking
+  # NO `limit`. Deliberately, and it is the entire point of the lens — a capped
+  # archive is the bug. The long list is paced by progressive reveal instead
+  # (src/lib/progressive-reveal.ts), which appends rather than windows.
