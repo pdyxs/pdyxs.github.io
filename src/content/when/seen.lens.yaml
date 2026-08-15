@@ -1,0 +1,22 @@
+# Lens definition — id "seen", dimension "when" (issue #84, decided in #68).
+#
+# The visitor's own reading history, most recently opened first. Filed beside
+# Newest and Oldest because it sorts on TIME — the same reason those two live
+# under `when`, and the same reason #68 filed Most* Interesting under `what`
+# instead ("it doesn't sort on time"). The only difference is whose clock:
+# Newest reads the publication date, Seen reads the moment you opened the card.
+#
+# Entirely client-side, and unlike every other lens that is fine here: `readAt`
+# lives in localStorage, so this server-renders empty and fills in on
+# hydration. Neither Seen nor Unseen is a link target, and an empty Seen lens
+# is the CORRECT rendering for a first-time visitor rather than a failure —
+# see historyEmptyMessage in src/lib/history-lens.ts for what it says instead.
+label: Seen
+icon: seen
+component: history
+order: 2
+width: 960px
+config:
+  # Read by historyMode() — picks the narrowing, the sort and the empty state
+  # together. Both history lenses share the one body (HistoryLensBody).
+  readState: seen

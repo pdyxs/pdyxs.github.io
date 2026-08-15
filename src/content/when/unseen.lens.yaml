@@ -1,0 +1,23 @@
+# Lens definition — id "unseen", dimension "when" (issue #84, decided in #68).
+#
+# Seen's exact complement: everything you have never opened, in the site's
+# ordinary ranking order (src/lib/ranking.ts) rather than a sort of its own.
+#
+# Filed under `when` for the complement, not for a sort — this lens doesn't
+# have one. Splitting the pair across two dimensions would put two halves of
+# one idea in two different panels, which is worse than filing one of them by
+# association.
+#
+# Uncapped on purpose: this list only ever shrinks as the visitor reads, and
+# its empty state is the ending it is heading towards. Progressive reveal for
+# long ranked lists is #81's job and will apply to every grid lens at once.
+label: Unseen
+icon: unseen
+component: history
+order: 3
+width: 960px
+config:
+  # See seen.lens.yaml. A card you read that the author has since edited counts
+  # as READ here and is not resurrected into this list — the reasoning is in
+  # the header of src/lib/history-lens.ts.
+  readState: unseen
