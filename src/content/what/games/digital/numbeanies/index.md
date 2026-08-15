@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: "Numbeanies: Number Forest"
 description: An augmented reality app to help children learn numeracy using physical cards and adorable numbeanies
 image: cover.jpg

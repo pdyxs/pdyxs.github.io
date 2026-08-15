@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: Completely Accurate Human Thought Simulator
 description: A game that teaches players to program a Quantum Computer, by having them tell stories about the inner lives of others.
 tags:

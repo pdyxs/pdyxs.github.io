@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: PlayEd
 description: A web platform to help primary school teachers bring games into the classroom
 image: cover.jpeg

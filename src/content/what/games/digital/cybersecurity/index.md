@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: Cybersecurity Ethics
 description: A game designed to teach the moral dimensions of cybersecurity quandries
 image: cyber-2.jpg

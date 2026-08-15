@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: Art Heist
 description: Make a plan. Steal a painting. Don't get caught.
 tags:
