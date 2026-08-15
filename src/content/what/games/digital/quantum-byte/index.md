@@ -11,6 +11,7 @@ image: dating.jpg
 actions:
   - text: Use the simulator
     url: https://qbyte.surge.sh
+    kind: play
 images:
   - https://medium.com/series/283d69ca9f7b
   - gameplay.jpg

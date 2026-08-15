@@ -11,10 +11,13 @@ date: 2023-10-01
 actions:
   - text: Read the case study
     url: https://www.chaostheorygames.com/work/case-study-bravehearts-ditto-keep-safe-adventure
+    kind: read
   - text: Play on iOS
     url: https://apps.apple.com/us/app/dittos-keep-safe-adventure/id6451194489
+    kind: play
   - text: Play on Android
     url: https://play.google.com/store/apps/details?id=org.bravehearts.dksa
+    kind: play
 medium: Mobile game
 quotes: []
 images: []

@@ -12,8 +12,10 @@ image: wheretheheartis.jpg
 actions:
   - text: Play it
     url: https://wheretheheartis.surge.sh/
+    kind: play
   - text: Read the Postmortem
     url: https://medium.com/@pdyxs/deciding-where-the-heart-is-4484b5476fa1
+    kind: read
 medium: Interactive Art/Game
 quotes: []
 meta:

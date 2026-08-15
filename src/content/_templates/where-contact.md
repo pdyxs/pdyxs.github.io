@@ -14,6 +14,9 @@ tags: []
 # Optional fields for this folder — uncomment the ones you need.
 # description:  # string
 # priority:     # number
+# playable:     # always | never
+# viewable:     # always | never
+# buyable:      # always | never
 # inspected:    # true | false
 # image:        # string
 ---

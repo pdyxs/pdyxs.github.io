@@ -11,6 +11,7 @@ date: 2021-09-01
 actions:
   - text: Read the case study
     url: https://www.chaostheorygames.com/work/cybersecurity-ethics
+    kind: read
 medium: WebGL game
 quotes: []
 images: []

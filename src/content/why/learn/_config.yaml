@@ -1,0 +1,15 @@
+# Declares the container so the panel keeps it. filterVisibleNodes drops any
+# undeclared node *and its children*, so `why:learn/game-development` and
+# `why:learn/travel` are invisible without this file, however well-declared
+# they are themselves — silently, with no error and no missing-filter warning.
+# Same trap the affiliation containers hit; see CLAUDE.md.
+#
+# Nothing lives in this directory but declarations: the two topics below are
+# authored curation (issue #87), tagged card by card rather than derived. A
+# generator *could* fill `learn/travel` from the `where:` hierarchy for free,
+# and that is precisely the reason not to — it would tag all ~154 travel
+# cards, and the value is in the handful worth reading.
+name: Learn
+order: 3
+description: >
+  Things I've written to be useful to someone else.

@@ -1,0 +1,13 @@
+# Dimension-level config for the `why` panel.
+#
+# `why` is the one dimension with no content tree under it: no card lives at
+# `why/…`, because "what this offers you" is a property of a card that lives
+# somewhere else. Everything here is declaration only — the three affordances
+# below are derived per-card by the generator in src/lib/why-tags.ts, and the
+# two `learn/` topics are authored by hand.
+#
+# No `groupOrder`: the four root values are one ungrouped section, ordered by
+# the explicit `order` on each declaration (Play, Look, Buy, then Learn).
+name: Why
+description: >
+  What a card is here to offer you.

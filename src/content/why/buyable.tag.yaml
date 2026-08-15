@@ -1,0 +1,8 @@
+# Derived, not authored: an action with `kind: buy`. Narrower than it sounds —
+# a store link to software is `kind: play` (the store is how you get to play
+# it), so this is only the shop selling a physical thing. One card today, with
+# a second project coming. Override with `buyable: always` / `buyable: never`.
+name: Buy
+order: 2
+description: >
+  Things you can own a copy of.

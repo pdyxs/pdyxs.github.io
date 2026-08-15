@@ -14,6 +14,7 @@ image: outside.jpg
 actions:
   - text: Website
     url: https://www.jetpacktheatre.com/art-heist/
+    kind: site
 quotes:
   - quote: It’s the most fun you can have without spending a night in jail.
     by: David Molloy

@@ -1,0 +1,8 @@
+# Derived, not authored: a header image plus a body short enough to be its
+# caption. Override per card with `viewable: always` / `viewable: never` —
+# `always` is the one to reach for on a visual piece whose write-up ran long.
+# See src/lib/why-tags.ts.
+name: Look
+order: 1
+description: >
+  Photos, prints and art where the picture is the point.

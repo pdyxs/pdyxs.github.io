@@ -8,8 +8,10 @@ tags:
 actions:
   - text: Play it at gottagetouttathis.space
     url: https://gottagetouttathis.space
+    kind: play
   - text: Buy a nice copy
     url: https://ko-fi.com/pdyxs/shop
+    kind: buy
 image: frontpage.jpg
 images:
   - frontpage.jpg

@@ -12,6 +12,7 @@ blogtag: budgethaver
 actions:
   - text: Sign up to the beta
     url: https://budgethaver.app
+    kind: site
 date: 2019-03-11
 medium: Productivity App
 quotes: []

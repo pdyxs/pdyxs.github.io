@@ -11,6 +11,7 @@ date: 2014-09-01
 actions:
   - text: Download on Steam
     url: http://store.steampowered.com/app/259470/Particulars/
+    kind: play
 quotes:
   - quote: I haven’t cried playing a video game before; it’s not like it’s a habit. But there’s something about the loneliness of being a down quark all alone in a subatomic space that really underlined the joy in finding an anti-down quark to combine with.
     by: Grant Howitt

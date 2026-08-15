@@ -15,6 +15,7 @@ images:
 actions:
   - text: Github Repository
     url: https://github.com/pdyxs/QuantumInstaStories-Unity
+    kind: source
 medium: Speculative Artwork
 quotes: []
 meta:

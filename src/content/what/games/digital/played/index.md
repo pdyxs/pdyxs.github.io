@@ -11,8 +11,10 @@ date: 2022-01-01
 actions:
   - text: Read the case study
     url: https://www.chaostheorygames.com/work/played
+    kind: read
   - text: Product Website
     url: https://www.played.com.au/
+    kind: site
 images:
   - https://www.youtube.com/embed/PyyA5uSamhM
 medium: Web Platform

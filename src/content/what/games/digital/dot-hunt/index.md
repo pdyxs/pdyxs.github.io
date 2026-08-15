@@ -7,6 +7,7 @@ medium: Digital ARG
 actions:
   - text: Play the prototype
     url: https://space-archeology.surge.sh/map
+    kind: play
 quotes: []
 status: draft
 tags:
