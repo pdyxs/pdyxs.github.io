@@ -14,9 +14,9 @@
 
 import { load as parseYaml } from 'js-yaml';
 import { readdir, readFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import type { CardMeta } from './cards';
+import { assertContentRoot } from './content-root';
 import { FIVE_W_DIMENSIONS, isValidFilterValue } from './five-w';
 import type { FiveWDimension } from './five-w';
 import { ownValueForCard } from './card-identity';
@@ -185,14 +185,15 @@ export type TreeReader = {
   readFile(path: string): Promise<string | null>;
 };
 
-const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
-
 /** Real filesystem-backed TreeReader, rooted at src/content. */
 export function makeContentTreeReader(): TreeReader {
+  // Resolved (and verified) once per reader, never from this module's own
+  // location — see content-root.ts for why that distinction is load-bearing.
+  const contentRoot = assertContentRoot();
   return {
     async listDir(dir: string): Promise<TreeEntry[]> {
       try {
-        const entries = await readdir(resolve(CONTENT_DIR, dir), { withFileTypes: true });
+        const entries = await readdir(resolve(contentRoot, dir), { withFileTypes: true });
         return entries.map(e => ({ name: e.name, isDirectory: e.isDirectory() }));
       } catch {
         return [];
@@ -200,7 +201,7 @@ export function makeContentTreeReader(): TreeReader {
     },
     async readFile(path: string): Promise<string | null> {
       try {
-        return await readFile(resolve(CONTENT_DIR, path), 'utf-8');
+        return await readFile(resolve(contentRoot, path), 'utf-8');
       } catch {
         return null;
       }

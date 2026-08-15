@@ -1,21 +1,22 @@
 import { load as parseYaml } from 'js-yaml';
 import { readFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 // Explicit .ts extension: this module is loaded by Node build scripts via
 // type stripping, which does no extension resolution.
+import { assertContentRoot } from './content-root.ts';
 import { normaliseAuthoredTags } from './five-w.ts';
 import { parseFolderSort, type FolderSort } from './folder-sort.ts';
 
-const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
-
 /** A cached reader of files under src/content, shared by any caller that needs to read `_config.yaml`s (or other content-relative files) without re-reading the same path twice. */
 export function makeFileReader() {
+  // Resolved (and verified) once per reader, never from this module's own
+  // location — see content-root.ts for why that distinction is load-bearing.
+  const contentRoot = assertContentRoot();
   const cache = new Map<string, string | null>();
   return async (path: string): Promise<string | null> => {
     if (cache.has(path)) return cache.get(path)!;
     try {
-      const text = await readFile(resolve(CONTENT_DIR, path), 'utf-8');
+      const text = await readFile(resolve(contentRoot, path), 'utf-8');
       cache.set(path, text);
       return text;
     } catch {

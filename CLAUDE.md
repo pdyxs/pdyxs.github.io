@@ -213,6 +213,28 @@ Two discovery rules live in exactly one place each:
 
 Share metadata itself (canonical URL, OG/Twitter tag list, JSON-LD documents) is decided by pure functions in `src/lib/seo.ts`; `Base.astro` is the thin applier that emits them. `og:image` falls back to `DEFAULT_OG_IMAGE` (`public/og-default.png`, 1200×630) whenever a card has no usable header image.
 
+### Content-relative paths resolve from the working directory, not the module
+
+Anything that reads `src/content` at request time goes through
+`assertContentRoot()` / `CONTENT_ROOT` (`src/lib/content-root.ts`) — never
+`fileURLToPath(import.meta.url)`. The module's own location is not the project's:
+`astro build` bundles these modules into the prerender output, where
+`../content` resolves to `dist/.prerender/content`, which has never existed.
+Both `_config.yaml` readers caught the ENOENT and returned null, so the whole
+folder cascade silently yielded nothing in production while `astro dev` (running
+from source) looked correct — issue #88, live for the entire life of the
+cascade. `process.cwd()` is stable across all three contexts these modules run
+in (`astro dev`, `astro build`, plain Node for `scripts/*.mjs` and vitest); an
+Astro virtual module would only have fixed the middle one.
+
+The second half of the rule is that it must fail *loudly*. A per-file
+"no such file" is the normal case and has to stay cheap, which is exactly what
+made a broken root indistinguishable from an empty tree. So the distinction is
+drawn once, at reader construction: `assertContentRoot()` throws if the root is
+missing or contains zero `_config.yaml` files. `src/lib/content-root.test.ts`
+covers the real resolution and guards both readers' source against
+`import.meta.url` coming back.
+
 ### Renderer registration is mandatory
 
 Any new content collection must set its default renderer via `_config.yaml` in its content directory (resolved by `resolveFolderCascade` in `src/lib/folder-config.ts`, which walks every ancestor `_config.yaml` from the dimension root down — nearest wins); any new renderer component must be registered in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
