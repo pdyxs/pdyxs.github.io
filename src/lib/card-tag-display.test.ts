@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeCardTagDisplay, isChipHidden } from './card-tag-display';
+import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import type { FilterState } from '../dimensions';
 
 const noFilter: FilterState = { };
@@ -86,6 +87,21 @@ describe('isChipHidden — which generated tags reach a chip', () => {
 
   it('keeps bare, dimensionless tags', () => {
     expect(isChipHidden('installation')).toBe(false);
+  });
+
+  it('hides a bare dimension root, which is not a filterable value', () => {
+    // `who/about-me` sits one folder under the dimension root, so derivePathTags
+    // joins no directory segments and yields `who:`. Its chip linked to
+    // `/lens/...?filter.who=` — a selection with no value (#94).
+    expect(isChipHidden('who:')).toBe(true);
+    expect(isChipHidden(derivePathTags('who/about-me')[0])).toBe(true);
+  });
+
+  it('produces no chip for the dimension root a one-segment-deep card derives', () => {
+    const resolved = mergeEffectiveTags(derivePathTags('who/about-me'), ['what:projects']);
+    expect(computeCardTagDisplay(resolved, {}, Infinity).tags.map(c => c.value)).toEqual([
+      'what:projects',
+    ]);
   });
 
   it('drops the derived when tag out of a real card tag set, keeping the rest in order', () => {

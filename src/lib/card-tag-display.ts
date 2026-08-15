@@ -23,18 +23,34 @@ export type CardTagDisplay = { tags: TagChip[]; overflow: number };
 /**
  * Tags that are never rendered as a chip, wherever a card is shown.
  *
- * Only the date-derived `when:<era>/<yyyy>/<mm>` tag qualifies. It displays as
- * a bare humanised month ("June") with no year or era, which says less than the
- * date every card already shows — and it costs a slot in the chip cap that a
- * real tag would use. Everything else a card carries is kept: its folder
- * category (`what:art`), its cascade and frontmatter tags (including authored
- * `when:` markers like `when:released`), and its date-derived `where:` location.
+ * Two kinds qualify:
+ *
+ *   - The date-derived `when:<era>/<yyyy>/<mm>` tag. It displays as a bare
+ *     humanised month ("June") with no year or era, which says less than the
+ *     date every card already shows — and it costs a slot in the chip cap that
+ *     a real tag would use.
+ *   - A bare dimension root — a tag with a colon and nothing after it (`who:`).
+ *     `derivePathTags` joins the directory segments *between* the dimension and
+ *     the slug, so a card one folder under the dimension root (`who/about-me`)
+ *     derives an empty value. Every chip is a `tag:` link, and that one resolves
+ *     to `/lens/…?filter.who=` — a selection with no value, a state no other
+ *     route can reach, and a chip with no label worth clicking.
+ *     `isValidFilterValue` already draws this line ("returns false for bare
+ *     dimension roots"); the guard belongs here, in the one shared decision,
+ *     rather than at `GenericRenderer` and `BrowseCard` separately (#94).
+ *     Dimensionless tags (`installation`) are untouched — they filter fine.
+ *
+ * Everything else a card carries is kept: its folder category (`what:art`), its
+ * cascade and frontmatter tags (including authored `when:` markers like
+ * `when:released`), and its date-derived `where:` location.
  *
  * This is deliberately the ONE place the rule lives, so a card's chips are
  * identical on its own masthead and in every listing.
  */
 export function isChipHidden(tag: string): boolean {
-  return isDerivedWhenTag(tag);
+  if (isDerivedWhenTag(tag)) return true;
+  const colonIdx = tag.indexOf(':');
+  return colonIdx !== -1 && tag.slice(colonIdx + 1).length === 0;
 }
 
 /** The dimension a tag belongs to, or null for a dimensionless (colon-less) tag. */
