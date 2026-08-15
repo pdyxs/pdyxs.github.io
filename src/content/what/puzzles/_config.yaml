@@ -15,6 +15,15 @@ description: >
 cardDescriptionParts:
   - "{{puzzle_type}}"
 
+# Once the ranking chain gets past priority and seen-ness, puzzles order by how
+# hard they are rather than by when they were published — a solver picking one
+# is choosing a difficulty, and the publication date of a puzzle says nothing.
+# `difficulty` is the authored LMD string ("Level 3 (Medium)"); parseDifficultyLevel
+# reads the rating out of it (src/lib/difficulty.ts) and an unreadable one sorts
+# last. Cascades to the series folders below, nearest-wins — unlike `priority`,
+# which sums. See src/lib/folder-sort.ts.
+sort: difficulty asc
+
 # Puzzle cards are their grid image, and it is already the masthead — the
 # gallery would only ever repeat it. Cascades to the series folders below.
 gallery: false

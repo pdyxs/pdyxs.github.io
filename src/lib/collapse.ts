@@ -119,6 +119,12 @@ export function collapseCollections(
       // the representative's own status/visibility through unchanged.
       status: dest.status,
       visibility: dest.visibility,
+      // The folder ranks as its strongest member, the same way its date is the
+      // latest and its tags the union: boosting one chapter is a statement
+      // about the folder the reader actually sees, and taking the
+      // representative's own priority would silently discard it.
+      priority: Math.max(...members.map(m => m.priority ?? 0)),
+      sort: dest.sort,
     });
     for (const m of members) dropUids.add(m.uid);
   }

@@ -23,7 +23,7 @@ export {
   toggleValue,
 } from './registry';
 
-export { applyFilters } from './apply';
+export { applyFilters, countSelectedValueMatches } from './apply';
 export {
   filterStateFromParams,
   filterStateToParams,

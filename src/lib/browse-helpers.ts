@@ -11,6 +11,7 @@ import { cardOwnValues } from './card-identity';
 import { displayFor } from './tag-display';
 import type { TagDisplay } from './tag-display';
 import type { StatusValue } from './status-visibility';
+import type { FolderSort } from './folder-sort';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,6 +36,20 @@ export type SerialisedCard = {
    * lens's client-side card pool by real status, and so the dev-only status
    * badge (issue #51) can render per-card in listings. */
   status?: StatusValue;
+  /**
+   * Summed build-time priority (see priority.ts) and the card's folder-declared
+   * sort with its own value resolved (folder-sort.ts). Both cross the wire
+   * because the ranking comparator runs CLIENT-side — two of its six rungs
+   * (filter-match count, seen-ness) are only knowable there, so the build-time
+   * rungs have to travel with the card. See ranking.ts.
+   *
+   * Required, like `contentHash` and unlike `status`: every card has both (a
+   * card declaring nothing resolves to 0 / the default sort), so the four
+   * places that rehydrate a CardMeta from this payload can carry them straight
+   * through instead of each inventing a neutral value.
+   */
+  priority: number;
+  sort: FolderSort & { value?: number | string };
 };
 
 /**

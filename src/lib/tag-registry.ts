@@ -62,6 +62,14 @@ export type ValueIdentity = {
    * folder's cards by path.
    */
   seeds?: string[];
+  /**
+   * Declared `priority` for this value — added to the priority of every card
+   * carrying it (see priority.ts; `priority` is the one cascading key that
+   * SUMS). Only ever set from a `.tag.yaml`: a container `_config.yaml`'s
+   * priority reaches its cards as an *ancestor*, through resolveFolderCascade,
+   * and counting it a second time here as a filter value would double it.
+   */
+  priority?: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -209,7 +217,7 @@ function fsPathToValue(path: string): string | undefined {
   return `${path.slice(0, slashIdx)}:${path.slice(slashIdx + 1)}`;
 }
 
-type YamlIdentity = { name?: string; description?: string; group?: string; order?: unknown; seeds?: unknown };
+type YamlIdentity = { name?: string; description?: string; group?: string; order?: unknown; seeds?: unknown; priority?: unknown };
 type YamlDimensionConfig = { groupOrder?: unknown };
 
 /** Coerces a parsed `seeds` value to a clean string[], or undefined if it isn't a non-empty string list. */
@@ -268,7 +276,8 @@ async function walkDir(
         const declPath = dir ? `${dir}/${stem}` : stem;
         const value = fsPathToValue(declPath);
         const seeds = parseSeeds(parsed.seeds);
-        if (value) tagDeclarations.push({ value, name: parsed.name, description: parsed.description, group: parsed.group, order, seeds });
+        const priority = typeof parsed.priority === 'number' ? parsed.priority : undefined;
+        if (value) tagDeclarations.push({ value, name: parsed.name, description: parsed.description, group: parsed.group, order, seeds, priority });
       }
     }
   }
@@ -320,6 +329,25 @@ export async function discoverAffiliations(
   return tagDeclarations
     .filter((decl): decl is ValueIdentity & { seeds: string[] } => !!decl.seeds)
     .map(({ value, seeds }) => ({ value, seeds }));
+}
+
+/**
+ * Every `.tag.yaml`-declared `priority`, as a value → number map. Read by
+ * getAllCards() (cards.ts), which adds each card's tagged values' priorities to
+ * the sum — see resolveCardPriority in priority.ts.
+ *
+ * Container `_config.yaml` priorities are deliberately absent: a folder counts
+ * once, as an ancestor.
+ */
+export async function discoverTagPriorities(
+  reader: TreeReader = makeContentTreeReader(),
+): Promise<Record<string, number>> {
+  const { tagDeclarations } = await discoverTagSources(reader);
+  const priorities: Record<string, number> = {};
+  for (const decl of tagDeclarations) {
+    if (decl.priority !== undefined) priorities[decl.value] = decl.priority;
+  }
+  return priorities;
 }
 
 /**

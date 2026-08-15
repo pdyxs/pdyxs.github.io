@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 // Explicit .ts extension: this module is loaded by Node build scripts via
 // type stripping, which does no extension resolution.
 import { normaliseAuthoredTags } from './five-w.ts';
+import { parseFolderSort, type FolderSort } from './folder-sort.ts';
 
 const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
 
@@ -72,6 +73,25 @@ export type FolderCascade = {
    * left for it to add. Nearest-wins, like `renderer`.
    */
   gallery?: boolean;
+  /**
+   * The SUM of every ancestor `_config.yaml` `priority` — the one cascading key
+   * that accumulates rather than nearest-wins, because a boost on `what` and a
+   * boost on `what/puzzles` are two separate statements and the deeper one is
+   * not a correction of the shallower. See priority.ts for the whole rule
+   * (frontmatter and `.tag.yaml` declarations add on top of this) and CLAUDE.md
+   * for why the name is kept anyway.
+   *
+   * Absent when no ancestor declares one, so a caller can tell "nothing said"
+   * from a deliberate `priority: 0`.
+   */
+  priority?: number;
+  /**
+   * Nearest-ancestor `sort` — how this folder's cards order among themselves
+   * once the ranking chain gets that far (rung 5). Parsed from `sort:
+   * difficulty asc`; an unparseable value is treated as undeclared. Nearest-
+   * wins, like `renderer` — NOT additive like `priority`.
+   */
+  sort?: FolderSort;
   /** This folder's own tag identity (name/description) — not inherited by descendants. */
   tagIdentity: { name?: string; description?: string };
 };
@@ -87,6 +107,8 @@ type ConfigFile = {
   dateLabel?: string;
   width?: string;
   gallery?: boolean;
+  priority?: number;
+  sort?: string;
   [key: string]: unknown;
 };
 
@@ -121,6 +143,8 @@ export async function resolveFolderCascade(
   let dateLabel: string | undefined;
   let width: string | undefined;
   let gallery: boolean | undefined;
+  let priority: number | undefined;
+  let sort: FolderSort | undefined;
   const cascadeTags: string[] = [];
   const seenTags = new Set<string>();
   const overrides: Record<string, string> = {};
@@ -138,6 +162,10 @@ export async function resolveFolderCascade(
     if (parsed.width) width = parsed.width;
     // Explicit typeof check, not truthiness: `gallery: false` is the whole point.
     if (typeof parsed.gallery === 'boolean') gallery = parsed.gallery;
+    // `priority` ACCUMULATES — every other key here replaces. See priority.ts.
+    if (typeof parsed.priority === 'number') priority = (priority ?? 0) + parsed.priority;
+    const parsedSort = parseFolderSort(parsed.sort);
+    if (parsedSort) sort = parsedSort;
     if (Array.isArray(parsed.cardDescriptionParts)) {
       cardDescriptionParts = parsed.cardDescriptionParts.filter(
         (p): p is string => typeof p === 'string'
@@ -171,5 +199,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, width, gallery, cascadeTags, overrides, tagIdentity };
+  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, width, gallery, priority, sort, cascadeTags, overrides, tagIdentity };
 }

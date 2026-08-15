@@ -186,6 +186,62 @@ describe('resolveFolderCascade', () => {
     expect((await resolveFolderCascade('what/games/x', readFile)).dateLabel).toBeUndefined();
   });
 
+  // ── priority: the one key that accumulates ────────────────────────────────
+
+  it('SUMS priority across ancestors instead of taking the nearest', async () => {
+    const files: Record<string, string> = {
+      'what/_config.yaml': 'priority: 10\n',
+      'what/puzzles/_config.yaml': 'priority: 100\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/puzzles/fog', readFile)).priority).toBe(110);
+  });
+
+  it('sums negative priorities too, so a folder can push itself down', async () => {
+    const files: Record<string, string> = {
+      'what/_config.yaml': 'priority: 100\n',
+      'what/posts/_config.yaml': 'priority: -30\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/posts/a', readFile)).priority).toBe(70);
+  });
+
+  it('leaves priority undefined when no ancestor declares one', async () => {
+    const files: Record<string, string> = { 'what/posts/_config.yaml': 'renderer: card\n' };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/posts/a', readFile)).priority).toBeUndefined();
+  });
+
+  // ── sort: nearest-wins, unlike priority ───────────────────────────────────
+
+  it('cascades sort nearest-wins, parsed into a key and a direction', async () => {
+    const files: Record<string, string> = {
+      'what/_config.yaml': 'sort: date desc\n',
+      'what/puzzles/_config.yaml': 'sort: difficulty asc\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/posts/a', readFile)).sort)
+      .toEqual({ key: 'date', direction: 'desc' });
+    expect((await resolveFolderCascade('what/puzzles/fog', readFile)).sort)
+      .toEqual({ key: 'difficulty', direction: 'asc' });
+  });
+
+  it('treats an unparseable sort as undeclared, so the inherited one survives', async () => {
+    const files: Record<string, string> = {
+      'what/_config.yaml': 'sort: title asc\n',
+      'what/puzzles/_config.yaml': 'sort: rating\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/puzzles/fog', readFile)).sort)
+      .toEqual({ key: 'title', direction: 'asc' });
+  });
+
+  it('leaves sort undefined when no ancestor declares one', async () => {
+    const files: Record<string, string> = { 'what/posts/_config.yaml': 'renderer: card\n' };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/posts/a', readFile)).sort).toBeUndefined();
+  });
+
   it('walks a dimension-rooted uid, checking every ancestor including the dimension root', async () => {
     const files: Record<string, string> = {
       'what/projects/_config.yaml': 'renderer: project\n',

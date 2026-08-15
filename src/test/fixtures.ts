@@ -1,4 +1,6 @@
 import type { CardMeta } from '../lib/cards';
+import { DEFAULT_PRIORITY } from '../lib/priority';
+import { DEFAULT_FOLDER_SORT } from '../lib/folder-sort';
 
 interface Action {
   text: string;
@@ -76,6 +78,8 @@ export function fakeCardMeta(overrides?: Partial<CardMeta>): CardMeta {
     contentHash: 'default-hash',
     status: 'published',
     visibility: { listed: true, reachable: true },
+    priority: DEFAULT_PRIORITY,
+    sort: DEFAULT_FOLDER_SORT,
     ...overrides,
   };
   // Re-derive contentHash from title if not explicitly overridden, so distinct

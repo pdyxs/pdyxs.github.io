@@ -1,7 +1,6 @@
 ---
 inspected: false
 title: Plan A
-priority: 201806
 nocv: true
 when: June 2018
 roles: 'Designer, Developer, Business Analyst'

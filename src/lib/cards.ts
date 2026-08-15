@@ -4,10 +4,12 @@ import { resolveFolderCascade, makeFileReader } from './folder-config';
 import type { FolderCascade } from './folder-config';
 import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
 import { computeAffiliationTags } from './affiliations';
-import { discoverAffiliations } from './tag-registry';
+import { discoverAffiliations, discoverTagPriorities } from './tag-registry';
 import { interpolate } from './interpolate';
 import { computeStatusVisibility, resolveStatus } from './status-visibility';
 import { resolveDescription } from './description';
+import { resolveCardPriority, tagPrioritySum, type TagPriorities } from './priority';
+import { DEFAULT_FOLDER_SORT, resolveSortValue, type FolderSort } from './folder-sort';
 import type { StatusValue, StatusVisibility } from './status-visibility';
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
@@ -41,6 +43,8 @@ export type CardFrontmatter = {
   status?: unknown;
   image?: string;
   order?: number;
+  priority?: number;
+  difficulty?: string;
   titleSuffix?: string;
   width?: string;
   dateLabel?: string;
@@ -64,6 +68,8 @@ export type ResolveContext = {
   overrideKeys: string[];
   isDev: boolean;
   now: Date;
+  /** Declared `.tag.yaml` priorities, by filter value — see priority.ts. */
+  tagPriorities?: TagPriorities;
 };
 
 /**
@@ -92,6 +98,21 @@ export type CardMeta = {
   status: StatusValue;
   /** Build-time listing/reachability visibility, computed from `status`/`date`/isDev — see computeStatusVisibility. */
   visibility: StatusVisibility;
+  /**
+   * How far up the ranking this card is pushed — the SUM of its own
+   * frontmatter `priority`, every ancestor folder's, and every `.tag.yaml`'s
+   * for a tag it carries. Negative pushes down; 0 is neutral. The one
+   * cascading key that accumulates: see priority.ts for the rule and why the
+   * name kept its misleading singular.
+   */
+  priority: number;
+  /**
+   * This card's folder-declared sort, with this card's own value for its key
+   * already resolved (rung 5 of the ranking chain — see ranking.ts). Resolved
+   * at build so the comparator never re-reads what `difficulty` means, and so
+   * the client payload carries one primitive instead of four fields.
+   */
+  sort: FolderSort & { value?: number | string };
 };
 
 /**
@@ -211,6 +232,8 @@ export function resolveCard(
   }
   const tags = generatedTagsForCard(baseTags, { date: data.date, overrides });
 
+  const sort = cascade.sort ?? DEFAULT_FOLDER_SORT;
+
   const status: StatusValue = resolveStatus(data.status, cascade.status);
   const visibility = computeStatusVisibility(status, data.date, {
     isDev: ctx.isDev,
@@ -227,6 +250,14 @@ export function resolveCard(
     image: data.image,
     contentHash: computeContentHash(title, description, body),
     order: data.order,
+    priority: resolveCardPriority(
+      { uid, own: data.priority, cascade: cascade.priority, tags },
+      ctx.tagPriorities,
+    ),
+    sort: {
+      ...sort,
+      value: resolveSortValue(sort.key, { date: data.date, difficulty: data.difficulty, order: data.order, title }),
+    },
     status,
     visibility,
     navRenderer: data.navRenderer ?? cascade.navRenderer,
@@ -255,6 +286,7 @@ export async function getAllCards(): Promise<ResolvedCard[]> {
     overrideKeys: generatorOverrideKeys(),
     isDev: import.meta.env.DEV,
     now: new Date(),
+    tagPriorities: await discoverTagPriorities(),
   };
 
   const cards = await Promise.all(
@@ -272,6 +304,15 @@ export async function getAllCards(): Promise<ResolvedCard[]> {
   const affiliations = computeAffiliationTags(declarations, cards);
   return cards.map(card => {
     const extra = affiliations.get(card.uid);
-    return extra ? { ...card, tags: mergeEffectiveTags(card.tags, extra) } : card;
+    if (!extra) return card;
+    return {
+      ...card,
+      tags: mergeEffectiveTags(card.tags, extra),
+      // An affiliation is a `.tag.yaml` value like any other, so a priority
+      // declared on one applies to the members it just reached. resolveCard
+      // couldn't have seen these tags — they only exist once the closure runs
+      // over the whole pool — so the sum is topped up rather than recomputed.
+      priority: card.priority + tagPrioritySum(card.uid, extra, ctx.tagPriorities ?? {}),
+    };
   });
 }

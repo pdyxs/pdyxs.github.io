@@ -37,6 +37,8 @@ function card(overrides?: Partial<ResolvedCard>): ResolvedCard {
         contentHash: "sentinel-hash-12345",
         status: "published",
         visibility: { listed: true, reachable: true },
+        priority: 0,
+        sort: { key: "date", direction: "desc" },
         ...overrides,
     };
 }

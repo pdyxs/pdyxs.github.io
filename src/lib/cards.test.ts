@@ -271,6 +271,55 @@ describe('resolveCard', () => {
     });
   });
 
+  describe('priority (issue #80)', () => {
+    it('is zero for a card nothing declares anything about', () => {
+      expect(resolveFixture({ id: 'what/posts/a' }).priority).toBe(0);
+    });
+
+    it('SUMS frontmatter, ancestor folders and tag declarations', () => {
+      const card = resolveFixture(
+        { id: 'what/puzzles/fog', data: { priority: 5, tags: ['who:me'] } },
+        { priority: 100 },
+        { tagPriorities: { 'who:me': 200 } },
+      );
+      expect(card.priority).toBe(305);
+    });
+
+    it('counts an ancestor folder once, not again as the card\'s path tag', () => {
+      // derivePathTags gives this card `what:puzzles`, which the cascade has
+      // already counted as an ancestor.
+      const card = resolveFixture(
+        { id: 'what/puzzles/fog' },
+        { priority: 100 },
+        { tagPriorities: { 'what:puzzles': 100 } },
+      );
+      expect(card.priority).toBe(100);
+    });
+  });
+
+  describe('sort (issue #80)', () => {
+    it('defaults to newest-first when no folder declares a sort', () => {
+      const card = resolveFixture({ id: 'what/posts/a', data: { date: new Date('2024-01-02') } });
+      expect(card.sort).toEqual({ key: 'date', direction: 'desc', value: new Date('2024-01-02').getTime() });
+    });
+
+    it('resolves the folder\'s declared key into this card\'s own value', () => {
+      const card = resolveFixture(
+        { id: 'what/puzzles/fog', data: { difficulty: 'Level 4 (Hard)' } },
+        { sort: { key: 'difficulty', direction: 'asc' } },
+      );
+      expect(card.sort).toEqual({ key: 'difficulty', direction: 'asc', value: 4 });
+    });
+
+    it('leaves the value undefined when the card has nothing for that key, so it sorts last', () => {
+      const card = resolveFixture(
+        { id: 'what/puzzles/fog' },
+        { sort: { key: 'difficulty', direction: 'asc' } },
+      );
+      expect(card.sort.value).toBeUndefined();
+    });
+  });
+
   describe('render-only fields', () => {
     it('carries titleSuffix and width through from frontmatter', () => {
       const card = resolveFixture({ id: 'a/b', data: { titleSuffix: '(draft)', width: '900px' } });

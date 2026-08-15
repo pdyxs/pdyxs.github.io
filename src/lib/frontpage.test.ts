@@ -6,6 +6,8 @@ import { clearViewState } from './card-view-state';
 import type { FilterState } from '../dimensions';
 import { DIMENSIONS, selectedValues } from '../dimensions';
 import { DEFAULT_BROWSE_LENS_ID, getLensDefinition } from './lens-registry';
+import { DEFAULT_PRIORITY } from './priority';
+import { DEFAULT_FOLDER_SORT } from './folder-sort';
 
 // ---------------------------------------------------------------------------
 // buildBrowseUrl
@@ -86,6 +88,8 @@ function fakeSerialisedCard(overrides?: Partial<SerialisedCardFull>): Serialised
     tags: [],
     renderer: 'card',
     contentHash: 'hash:a',
+    priority: DEFAULT_PRIORITY,
+    sort: DEFAULT_FOLDER_SORT,
     ...overrides,
   };
 }

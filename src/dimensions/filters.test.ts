@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { isValidFilterValue } from '../lib/five-w';
-import { applyFilters, filterStateToParams, filterStateFromParams, filterUrlForTagValue, stripFilterParams } from './index';
+import { applyFilters, countSelectedValueMatches, filterStateToParams, filterStateFromParams, filterUrlForTagValue, stripFilterParams } from './index';
 import type { FilterState } from './index';
 import { fakeCardMeta } from '../test/fixtures';
 import { DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
@@ -392,5 +392,44 @@ describe('dimensionless filter URL round-trip', () => {
   it('stripFilterParams removes the bare filter param', () => {
     const params = new URLSearchParams('filter=science&stack=abc');
     expect(stripFilterParams(params).toString()).toBe('stack=abc');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// countSelectedValueMatches — rung 1 of the ranking chain (issue #80)
+// ---------------------------------------------------------------------------
+
+describe('countSelectedValueMatches', () => {
+  const ctx = { cardBackedValues: new Set<string>() };
+
+  it('is zero when nothing is selected, so rung 1 is a no-op on an unfiltered pool', () => {
+    const card = fakeCardMeta({ tags: ['what:games', 'what:art'] });
+    expect(countSelectedValueMatches(card, {}, ctx)).toBe(0);
+  });
+
+  it('counts each selected value the card matches, not just "did it match"', () => {
+    // applyFilters can't answer this: values within one dimension OR, so its
+    // `matches` collapses both of these into the same `true`.
+    const both = fakeCardMeta({ uid: 'a', tags: ['what:games', 'what:art'] });
+    const one = fakeCardMeta({ uid: 'b', tags: ['what:games'] });
+    const state = { what: ['what:games', 'what:art'] };
+    expect(countSelectedValueMatches(both, state, ctx)).toBe(2);
+    expect(countSelectedValueMatches(one, state, ctx)).toBe(1);
+  });
+
+  it('counts across dimensions as well as within one', () => {
+    const card = fakeCardMeta({ tags: ['what:games', 'where:work/seethrough'] });
+    const state = { what: ['what:games'], where: ['where:work/seethrough'] };
+    expect(countSelectedValueMatches(card, state, ctx)).toBe(2);
+  });
+
+  it('counts a value the card matches by prefix', () => {
+    const card = fakeCardMeta({ tags: ['what:games/digital'] });
+    expect(countSelectedValueMatches(card, { what: ['what:games'] }, ctx)).toBe(1);
+  });
+
+  it('counts dimensionless tags too', () => {
+    const card = fakeCardMeta({ tags: ['interactive'] });
+    expect(countSelectedValueMatches(card, { '': ['interactive'] }, ctx)).toBe(1);
   });
 });
