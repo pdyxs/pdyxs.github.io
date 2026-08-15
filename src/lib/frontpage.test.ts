@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { buildBrowseUrl, resolvePinnedCards, resolveFrontPageSlots } from './frontpage';
 import type { FilterSlotConfig, FrontPageConfig, ResolvedFilter, SerialisedCardFull } from './frontpage';
 import { fakeCardMeta } from '../test/fixtures';
-import { clearViewState } from './card-view-state';
+import { clearViewState, getViewState, hasBeenRead } from './card-view-state';
 import type { FilterState } from '../dimensions';
 import { DIMENSIONS, selectedValues } from '../dimensions';
 import { DEFAULT_BROWSE_LENS_ID, getLensDefinition } from './lens-registry';
@@ -139,15 +139,31 @@ describe('resolveFrontPageSlots', () => {
     expect(slots).toEqual([{ type: 'filter', label: 'A Project', card: null, browseUrl: `/lens/${DEFAULT_BROWSE_LENS_ID}?filter.what=projects` }]);
   });
 
-  it('reports the picked filter-slot card as displayed, without writing view-state itself', () => {
+  it('writes no view-state — showing a card is not an event the site records', () => {
     const config: FrontPageConfig = {
       slots: [{ type: 'filter', label: 'A Project', filter: { what: ['what:projects'] } }],
     };
     const cards = [fakeSerialisedCard({ uid: 'projects/a', tags: ['what:projects'], contentHash: 'hash:a' })];
 
-    const { displayed } = resolveFrontPageSlots(config, cards, new Date('2024-03-15T08:00:00Z'));
+    resolveFrontPageSlots(config, cards, new Date('2024-03-15T08:00:00Z'));
 
-    expect(displayed).toEqual([{ uid: 'projects/a', contentHash: 'hash:a' }]);
+    expect(getViewState('projects/a', 'hash:a')).toBe('unseen');
+    expect(hasBeenRead('projects/a')).toBe(false);
+  });
+
+  it("honours a slot's declared pool: pool 1 pins the top-priority card", () => {
+    const config: FrontPageConfig = {
+      slots: [{ type: 'filter', label: 'A Project', filter: { what: ['what:projects'] }, pool: 1 }],
+    };
+    const cards = [
+      fakeSerialisedCard({ uid: 'projects/a', tags: ['what:projects'], priority: 0 }),
+      fakeSerialisedCard({ uid: 'projects/top', tags: ['what:projects'], priority: 100 }),
+    ];
+
+    for (const day of ['2024-03-15T08:00:00Z', '2024-06-02T08:00:00Z']) {
+      const { slots } = resolveFrontPageSlots(config, cards, new Date(day));
+      expect((slots[0] as ResolvedFilter).card?.uid).toBe('projects/top');
+    }
   });
 });
 

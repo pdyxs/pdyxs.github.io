@@ -2,7 +2,6 @@
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { resolveFrontPageSlots } from '../../lib/frontpage';
-  import { markDisplayed } from '../../lib/card-view-state';
   import type { FrontPageConfig, ResolvedSlot, SerialisedCardFull } from '../../lib/frontpage';
   import { lensFilterStore } from '../../stores/lens-filter-store';
   import { applyFilters } from '../../dimensions';
@@ -45,13 +44,12 @@
     );
     const serialisedFiltered = filtered.map(c => ({ ...c, date: c.date?.toISOString() ?? null }));
 
-    const { slots, displayed } = resolveFrontPageSlots(
+    const { slots } = resolveFrontPageSlots(
       config,
       serialisedFiltered,
       new Date(),
       cardBackedValues ? new Set(cardBackedValues) : undefined,
     );
-    for (const d of displayed) markDisplayed(d.uid, d.contentHash);
     resolvedSlots = slots;
   });
 </script>

@@ -14,6 +14,12 @@ export type FilterSlotConfig = {
   type: 'filter';
   filter: FilterState;
   label: string;
+  /**
+   * How many of this slot's top-ranked cards the day-seed picks between
+   * (issue #83). Declared per slot in the lens YAML; DEFAULT_SLOT_POOL when
+   * absent. A bigger pool trades day-to-day variety for authored control.
+   */
+  pool?: number;
 };
 
 export type SlotConfig = PinnedSlotConfig | FilterSlotConfig;
@@ -67,18 +73,16 @@ export function resolvePinnedCards(uids: string[], allCards: CardMeta[]): CardMe
 
 export type ResolvedFrontPageSlots = {
   slots: ResolvedSlot[];
-  /** Filter-slot picks to record as "displayed" — the caller applies this side effect (markDisplayed). */
-  displayed: { uid: string; contentHash: string }[];
 };
 
 /**
  * Resolves a FrontPageConfig's slots against a card set: pinned slots resolve
  * directly by uid; filter slots use the day-seeded selectSlotCard() pick.
  *
- * Pure decision, no side effects — selectSlotCard reads view-state (localStorage)
- * to bias selection, but this function doesn't write it. The caller
- * (HomeLensSlots.svelte, the home lens body) applies `displayed` itself via
- * markDisplayed().
+ * Pure decision, no side effects — selectSlotCard reads view-state
+ * (localStorage) as one rung of the ranking chain, but nothing here writes it.
+ * Showing a card is no longer an event the site records at all (issue #83):
+ * only opening one is.
  */
 export function resolveFrontPageSlots(
   config: FrontPageConfig,
@@ -102,19 +106,24 @@ export function resolveFrontPageSlots(
   }));
 
   const slots: ResolvedSlot[] = [];
-  const displayed: { uid: string; contentHash: string }[] = [];
 
   for (const slotConfig of config.slots) {
     if (slotConfig.type === 'pinned') {
       const card = byUid.get(slotConfig.uid);
       if (card) slots.push({ type: 'pinned', uid: card.uid, title: card.title, description: card.description });
     } else {
-      const meta = selectSlotCard(cardMetas, slotConfig.filter, now, undefined, cardBackedValues);
-      if (meta) displayed.push({ uid: meta.uid, contentHash: meta.contentHash });
+      const meta = selectSlotCard(
+        cardMetas,
+        slotConfig.filter,
+        now,
+        undefined,
+        cardBackedValues,
+        slotConfig.pool,
+      );
       const card = meta ? byUid.get(meta.uid) ?? null : null;
       slots.push({ type: 'filter', label: slotConfig.label, card, browseUrl: buildBrowseUrl(slotConfig.filter) });
     }
   }
 
-  return { slots, displayed };
+  return { slots };
 }

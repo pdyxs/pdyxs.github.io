@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getViewState,
-  markDisplayed,
+  getReadAt,
+  hasBeenRead,
+  compareReadAt,
   markRead,
   clearViewState,
 } from './card-view-state';
@@ -21,25 +23,8 @@ describe('getViewState', () => {
   });
 
   it('returns unseen when content hash does not match stored hash', () => {
-    markDisplayed('posts/foo', 'hash-v1');
+    markRead('posts/foo', 'hash-v1');
     expect(getViewState('posts/foo', 'hash-v2')).toBe('unseen');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// markDisplayed
-// ---------------------------------------------------------------------------
-
-describe('markDisplayed', () => {
-  it('transitions state from unseen to displayed', () => {
-    markDisplayed('posts/bar', 'h1');
-    expect(getViewState('posts/bar', 'h1')).toBe('displayed');
-  });
-
-  it('does not downgrade read to displayed', () => {
-    markRead('posts/bar', 'h1');
-    markDisplayed('posts/bar', 'h1');
-    expect(getViewState('posts/bar', 'h1')).toBe('read');
   });
 });
 
@@ -53,18 +38,32 @@ describe('markRead', () => {
     expect(getViewState('posts/baz', 'h2')).toBe('read');
   });
 
-  it('upgrades displayed to read', () => {
-    markDisplayed('posts/baz', 'h2');
-    markRead('posts/baz', 'h2');
-    expect(getViewState('posts/baz', 'h2')).toBe('read');
+  it('different uids are tracked independently', () => {
+    markRead('posts/b', 'h');
+    expect(getViewState('posts/b', 'h')).toBe('read');
+    expect(getViewState('posts/c', 'h')).toBe('unseen');
+  });
+
+  it('records readAt, defaulting to now', () => {
+    const before = new Date().toISOString();
+    markRead('posts/now', 'h');
+    const readAt = getReadAt('posts/now');
+    expect(readAt).not.toBeNull();
+    expect(readAt! >= before).toBe(true);
+  });
+
+  it('re-reading updates readAt to the later time', () => {
+    markRead('posts/again', 'h', '2024-01-01T00:00:00.000Z');
+    markRead('posts/again', 'h', '2024-06-01T00:00:00.000Z');
+    expect(getReadAt('posts/again')).toBe('2024-06-01T00:00:00.000Z');
   });
 });
 
 // ---------------------------------------------------------------------------
-// content hash keying — editing a card resets its state
+// Split keying: unseen-ness follows the hash, readAt does not
 // ---------------------------------------------------------------------------
 
-describe('content hash keying', () => {
+describe('split keying (issue #83)', () => {
   it('returns unseen after the card content changes (different hash)', () => {
     markRead('posts/edited', 'original-hash');
     expect(getViewState('posts/edited', 'original-hash')).toBe('read');
@@ -72,12 +71,64 @@ describe('content hash keying', () => {
     expect(getViewState('posts/edited', 'new-hash')).toBe('unseen');
   });
 
-  it('different uids are tracked independently', () => {
-    markDisplayed('posts/a', 'h');
-    markRead('posts/b', 'h');
-    expect(getViewState('posts/a', 'h')).toBe('displayed');
-    expect(getViewState('posts/b', 'h')).toBe('read');
-    expect(getViewState('posts/c', 'h')).toBe('unseen');
+  it('keeps readAt across a content change — the read still happened', () => {
+    markRead('posts/edited', 'original-hash', '2024-03-15T10:00:00.000Z');
+    expect(getViewState('posts/edited', 'new-hash')).toBe('unseen');
+    expect(getReadAt('posts/edited')).toBe('2024-03-15T10:00:00.000Z');
+    expect(hasBeenRead('posts/edited')).toBe(true);
+  });
+
+  it('hasBeenRead is false for a card never opened', () => {
+    expect(hasBeenRead('posts/never')).toBe(false);
+    expect(getReadAt('posts/never')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Migration from pre-#83 entries
+// ---------------------------------------------------------------------------
+
+describe('legacy entries', () => {
+  const write = (uid: string, value: unknown) =>
+    localStorage.setItem(`pdyxs:view-state:${uid}`, JSON.stringify(value));
+
+  it('honours a legacy read entry that has no readAt', () => {
+    write('posts/legacy-read', { hash: 'h', state: 'read' });
+    expect(getViewState('posts/legacy-read', 'h')).toBe('read');
+    expect(hasBeenRead('posts/legacy-read')).toBe(true);
+    expect(getReadAt('posts/legacy-read')).toBeNull();
+  });
+
+  it('treats a legacy displayed entry as unseen', () => {
+    write('posts/legacy-displayed', { hash: 'h', state: 'displayed', displayedDate: '2024-03-15' });
+    expect(getViewState('posts/legacy-displayed', 'h')).toBe('unseen');
+    expect(hasBeenRead('posts/legacy-displayed')).toBe(false);
+  });
+
+  it('treats unparseable storage as unseen', () => {
+    localStorage.setItem('pdyxs:view-state:posts/junk', 'not json');
+    expect(getViewState('posts/junk', 'h')).toBe('unseen');
+    expect(hasBeenRead('posts/junk')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// compareReadAt
+// ---------------------------------------------------------------------------
+
+describe('compareReadAt', () => {
+  it('orders most recent first', () => {
+    const sorted = ['2024-01-01T00:00:00.000Z', '2024-06-01T00:00:00.000Z'].sort(compareReadAt);
+    expect(sorted[0]).toBe('2024-06-01T00:00:00.000Z');
+  });
+
+  it('sorts a missing timestamp last, not first', () => {
+    const sorted = [null, '2024-01-01T00:00:00.000Z', null, '2024-06-01T00:00:00.000Z'].sort(compareReadAt);
+    expect(sorted).toEqual(['2024-06-01T00:00:00.000Z', '2024-01-01T00:00:00.000Z', null, null]);
+  });
+
+  it('is zero for two missing timestamps', () => {
+    expect(compareReadAt(null, null)).toBe(0);
   });
 });
 
@@ -87,10 +138,11 @@ describe('content hash keying', () => {
 
 describe('clearViewState', () => {
   it('resets all tracked state', () => {
-    markDisplayed('posts/p1', 'h');
+    markRead('posts/p1', 'h');
     markRead('posts/p2', 'h');
     clearViewState();
     expect(getViewState('posts/p1', 'h')).toBe('unseen');
     expect(getViewState('posts/p2', 'h')).toBe('unseen');
+    expect(getReadAt('posts/p1')).toBeNull();
   });
 });

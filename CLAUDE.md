@@ -316,6 +316,48 @@ cards of the same folder.
 Results are **not** grouped by folder. Rung 5 fires only between adjacent
 same-folder cards — which is exactly what boosting a folder produces.
 
+### One seen concept, keyed two ways
+
+`src/lib/card-view-state.ts` records exactly one thing: **did the visitor open
+this card?** There is no "displayed" state — a card appearing as an excerpt
+leaves no trace at all. (It used to: `markDisplayed` removed the card from the
+unseen tier, re-rolling the day-seeded home pick, so the tier existed mainly to
+undo its own churn. Its one real job — walking the visitor through the unseen
+set — was given up **deliberately** in #83: if you were shown a card and didn't
+open it, the front page failing to show it again is the bug, not the repetition.)
+
+The one entry answers two questions, and they are keyed differently on purpose:
+
+| question | key | reader |
+|---|---|---|
+| is this unseen? | `uid` + `contentHash` | `getViewState` |
+| when was it read? | `uid` alone | `getReadAt` / `hasBeenRead` |
+
+Editing a card changes its hash and returns it to `unseen` — "this changed, look
+again" is the feature, and it is what feeds rung 3 of the ranking chain. But a
+card you definitely read vanishing from your history because the author fixed a
+typo is a lie, so `readAt` ignores the hash entirely. The hash affects
+*freshness*, not *whether it happened*.
+
+`readAt` is the **most recent** read, and is **absent** on state written before
+#83. Missing means "read, at an unknown time", never "not read" — sort it last
+(`compareReadAt`), never at the epoch end where it would claim to be the oldest
+thing the visitor ever read. Legacy `displayed` entries decay to `unseen`; they
+are left in localStorage rather than swept, and are overwritten the moment the
+card is actually read.
+
+Writes go through `markRead`, called only from `CardStack.svelte` — the same
+invariant as every other card-stack mutation.
+
+### Home slots are the ranking chain, day-seeded
+
+A home filter slot is **the top `pool` cards its filter leaves, with the calendar
+day picking between them** (`selectSlotCard`, `src/lib/slot-selection.ts`). The
+ordering is `rankCards` — the site's one comparator, not a second selection rule
+— so authored `priority` decides what is eligible and the day decides which of
+those you get. `pool` is declared per slot in `src/content/what/home.lens.yaml`;
+`DEFAULT_SLOT_POOL` (5) when absent.
+
 ### A folder's `sort` is a key *and* a direction
 
 `sort: difficulty asc` in a `_config.yaml`, cascading nearest-wins like

@@ -58,7 +58,7 @@ export async function serialiseBrowseCard(card: CardMeta): Promise<SerialisedCar
     collapsed: card.collapsed,
     status: card.status,
     // Required: every lens body declares `cards: SerialisedCardFull[]`, and
-    // HomeLensSlots keys markDisplayed() on this hash.
+    // the ranking chain's unseen rung keys view-state on this hash.
     contentHash: card.contentHash,
     // The build-time rungs of the ranking chain (ranking.ts): the comparator
     // itself runs in the browser, since filter-match count and seen-ness are

@@ -43,12 +43,18 @@ export type RankableCard = {
   sort?: FolderSort & { value?: number | string };
 };
 
-/** The runtime half of the chain, injected so the comparator stays pure. */
-export type RankingContext = {
+/**
+ * The runtime half of the chain, injected so the comparator stays pure.
+ *
+ * Generic over the caller's own card type so an accessor can read fields the
+ * comparator itself never touches (a slot's isSeen needs `contentHash`) without
+ * casting back from RankableCard at every call.
+ */
+export type RankingContext<T extends RankableCard = RankableCard> = {
   /** How many selected filter values this card matches (rung 1). */
-  matchCount?: (card: RankableCard) => number;
+  matchCount?: (card: T) => number;
   /** Whether the visitor has already read this card (rung 3). */
-  isSeen?: (card: RankableCard) => boolean;
+  isSeen?: (card: T) => boolean;
 };
 
 /** A card's containing folder, or '' for a card sitting at the tree root. */
@@ -63,7 +69,7 @@ export function folderOf(uid: string): string {
  * Every rung returns as soon as it separates the pair, so a lower rung is only
  * ever consulted on a genuine tie above it.
  */
-export function compareCards(a: RankableCard, b: RankableCard, ctx: RankingContext = {}): number {
+export function compareCards<T extends RankableCard>(a: T, b: T, ctx: RankingContext<T> = {}): number {
   // 1. Filter-match count, descending.
   if (ctx.matchCount) {
     const diff = ctx.matchCount(b) - ctx.matchCount(a);
@@ -101,6 +107,6 @@ export function compareCards(a: RankableCard, b: RankableCard, ctx: RankingConte
 }
 
 /** Ranks a card list. Does not mutate the input. */
-export function rankCards<T extends RankableCard>(cards: readonly T[], ctx: RankingContext = {}): T[] {
+export function rankCards<T extends RankableCard>(cards: readonly T[], ctx: RankingContext<T> = {}): T[] {
   return [...cards].sort((a, b) => compareCards(a, b, ctx));
 }

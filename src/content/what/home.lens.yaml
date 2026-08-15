@@ -17,15 +17,24 @@ config:
     # nest the dimensions under a `selections:` key — that reads as a
     # dimension named "selections", which matches nothing and silently
     # widens the slot to the whole card pool (issue #79).
+    #
+    # `pool` is how many of the slot's TOP-RANKED cards the day-seed picks
+    # between — the ranking being the site-wide one (src/lib/ranking.ts), so
+    # authored `priority` decides what is eligible and the calendar day decides
+    # which of them you get. Optional; DEFAULT_SLOT_POOL (5) when absent.
+    # Raise it for variety, lower it to hold a slot to your very best.
     - type: filter
       label: A Project
+      pool: 5
       filter:
         what: [what:games, what:art, what:software]
     - type: filter
       label: A Puzzle
+      pool: 5
       filter:
         what: [what:puzzles]
     - type: filter
       label: A Post
+      pool: 5
       filter:
         what: [what:writing]

@@ -19,6 +19,7 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
         {
           "type": "filter",
           "label": "A Project",
+          "pool": 5,
           "filter": {
             "what": [
               "what:games",
@@ -30,6 +31,7 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
         {
           "type": "filter",
           "label": "A Puzzle",
+          "pool": 5,
           "filter": {
             "what": [
               "what:puzzles"
@@ -39,6 +41,7 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
         {
           "type": "filter",
           "label": "A Post",
+          "pool": 5,
           "filter": {
             "what": [
               "what:writing"
