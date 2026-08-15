@@ -90,6 +90,34 @@ Interactive components use Svelte 5 (runes syntax) with `client:load`. Key conve
 - `CardStack.svelte` is the only Svelte island currently. New islands follow the same shape: `$state` for local reactive state, `$derived` for computed values, `$effect` for thin DOM side effects that can't be done with template bindings.
 - `{@html}` silently drops `<script>` tags in injected HTML strings. Future card renderers must not rely on inline scripts — renderer interactivity must be a Svelte component or a global delegated listener, not an inline `<script>` in the rendered HTML fragment.
 
+### Arriving at a card is reading it
+
+Read state (`markRead`, `src/lib/card-view-state.ts`) is recorded on **arrival**,
+not only on a client-side push. A cold load of `/card/...` renders the body
+open, so arrival and reading are the same act there in a way they aren't for a
+stack push — and the visitor who arrives that way (search result, shared link,
+RSS, social preview, an old Jekyll URL redirect) never touches a push path at
+all. Recording only pushes meant read state accumulated exclusively from people
+already browsing in-stack, which silently throttled everything built on it: the
+Seen/Unseen lenses, the ranking chain's unseen-before-seen rung, and home slot
+rotation (#92).
+
+Exactly one location is marked on mount: the SSR-seeded active one, and only if
+it is a card. Two deliberate exclusions —
+
+- **A lens initial location is not a read.** A lens is a listing with no single
+  card identity; its fragment carries no `data-content-hash` to key an entry on.
+  Same for a collection view (`posts`).
+- **`from`/`to` entries restored from a short code are not reads.** They arrive
+  *collapsed* — shown but not opened, the same state a front-page slot is in.
+  Marking them would claim a visitor read a stack of cards they only saw the
+  spine of.
+
+The rule is "a card actually rendered open", and `readToRecord`
+(`card-view-state.ts`) is the single decision that encodes it — every
+`markRead` call site goes through it. `CardStack.svelte` owns the write, in its
+mount path, per the card-stack-mutation invariant below.
+
 ## Invariants
 
 These are load-bearing. Plans and experiments must respect them; violating any of them is a refactor, not a local change.
@@ -1018,6 +1046,21 @@ The config (`vitest.config.ts`) uses a custom environment at `src/test/vitest-en
 
 - `document.startViewTransition` — not available; VT paths must be guarded and tested via instant-fallback branch only.
 - `element.animate()` — not available in this happy-dom version; future StackNav tests that exercise animation paths must guard with `typeof el.animate === 'function'`.
+
+### A Svelte island cannot be mounted in a test
+
+`mount()` from `svelte` throws `lifecycle_function_unavailable` here. The
+`viteEnvironment: "ssr"` that `.astro` imports require (see above) also makes
+Svelte resolve to its **server** build, which has no client lifecycle — and
+because that resolution comes from Astro's vite config via `getViteConfig`, it
+is project-wide: neither a `@vitest-environment happy-dom` docblock nor
+`--environment happy-dom` changes it.
+
+So an island's mount-path behaviour is covered in two pieces: the decision, as
+a pure function in `src/lib/` with its own tests, plus a **source-level wiring
+guard** asserting the component applies it in the right place — see
+`CardStack.cold-load.test.ts`, which reads `CardStack.svelte` as text. Anything
+beyond that is browser verification.
 
 ### Component tests
 

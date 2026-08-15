@@ -11,7 +11,7 @@
   import { parseCollectionLink } from '../lib/collection-link';
   import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../dimensions';
-  import { markRead } from '../lib/card-view-state';
+  import { markRead, readToRecord } from '../lib/card-view-state';
   import { extractLocationWidth } from '../lib/location-width';
 
   interface Props {
@@ -172,17 +172,12 @@
     return tmp.querySelector('.card-header-title')?.textContent?.trim() ?? key;
   }
 
-  // Reads the data-content-hash the card's own page rendered (see
-  // card/[...path].astro) and records the view-state transition to 'read'.
-  // No-op if the card's HTML isn't cached yet or carries no hash (e.g. a
-  // collection view has no single card identity to hash).
+  // Records the view-state transition to 'read' for a location we hold the HTML
+  // for. `readToRecord` owns the decision (card locations with a rendered
+  // data-content-hash, nothing else); this is the thin write.
   function markReadIfKnown(key: string) {
-    const html = cardHtmlCache.get(key);
-    if (!html) return;
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    const hash = tmp.querySelector('.stack-card')?.getAttribute('data-content-hash');
-    if (hash) markRead(key, hash);
+    const record = readToRecord(key, cardHtmlCache.get(key));
+    if (record) markRead(record.uid, record.hash);
   }
 
   function toggleOverflow(side: 'left' | 'right') {
@@ -538,6 +533,16 @@
     if (get(stackStore).entries.length > 0 && homepage) {
       homepage.hidden = true;
     }
+
+    // Arriving at a card IS reading it (#92, and see CLAUDE.md). Every other
+    // markRead call sits on a client-side navigation, so a visitor who lands
+    // straight on /card/... from search, a shared link, RSS or an old-URL
+    // redirect used to record nothing at all.
+    //
+    // Only the SSR-active location, and only when it's a card: the from/to
+    // entries initFromUrl restores below arrive collapsed, which is the same
+    // "shown but not opened" state the front page's slots are in.
+    if (activeUid) markReadIfKnown(activeUid);
 
     // Restore from/to context cards in URL
     initFromUrl();

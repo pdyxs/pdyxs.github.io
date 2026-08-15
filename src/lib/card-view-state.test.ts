@@ -6,6 +6,7 @@ import {
   compareReadAt,
   markRead,
   clearViewState,
+  readToRecord,
 } from './card-view-state';
 
 // Clear localStorage before each test so tests are isolated
@@ -144,5 +145,50 @@ describe('clearViewState', () => {
     expect(getViewState('posts/p1', 'h')).toBe('unseen');
     expect(getViewState('posts/p2', 'h')).toBe('unseen');
     expect(getReadAt('posts/p1')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// readToRecord — the one decision behind every markRead call site
+// ---------------------------------------------------------------------------
+
+/** The `.stack-card` fragment a card's own page renders (CardStackCard.astro). */
+function cardFragment(uid: string, hash?: string): string {
+  const hashAttr = hash === undefined ? '' : ` data-content-hash="${hash}"`;
+  return `<div class="stack-card" data-uid="${uid}"${hashAttr}>` +
+    `<div class="card-header"><span class="card-header-title"><b>A Card</b></span></div>` +
+    `<div class="body-wrapper"><div class="stack-card-body">` +
+    `<div class="stack-card-body-inner">body</div>` +
+    `</div></div></div>`;
+}
+
+describe('readToRecord', () => {
+  it('records a card location against the hash its fragment declares', () => {
+    // This is the cold-load case (#92): the fragment is the one the server
+    // rendered into StackNav's slot, with no navigation involved.
+    expect(readToRecord('what/posts/foo', cardFragment('what/posts/foo', 'h-abc')))
+      .toEqual({ uid: 'what/posts/foo', hash: 'h-abc' });
+  });
+
+  it('feeds markRead so an arrival reads back as read', () => {
+    const record = readToRecord('what/posts/foo', cardFragment('what/posts/foo', 'h-abc'))!;
+    markRead(record.uid, record.hash);
+    expect(getViewState('what/posts/foo', 'h-abc')).toBe('read');
+    expect(getReadAt('what/posts/foo')).not.toBeNull();
+  });
+
+  it('records nothing for a lens: a listing has no single card identity', () => {
+    expect(readToRecord('lens/interesting', cardFragment('lens/interesting', 'h-abc'))).toBeNull();
+  });
+
+  it('records nothing for a fragment with no content hash', () => {
+    // A collection view (`posts`) renders one, and has nothing to key on.
+    expect(readToRecord('posts', cardFragment('posts'))).toBeNull();
+  });
+
+  it('records nothing with no uid or no cached html', () => {
+    expect(readToRecord(undefined, cardFragment('what/posts/foo', 'h'))).toBeNull();
+    expect(readToRecord('what/posts/foo', undefined)).toBeNull();
+    expect(readToRecord(null, null)).toBeNull();
   });
 });

@@ -29,6 +29,8 @@
 //
 // Stored in localStorage under namespaced keys.
 
+import { locationKind } from './stack-layout';
+
 export type CardViewState = 'unseen' | 'read';
 
 const LS_PREFIX = 'pdyxs:view-state:';
@@ -121,6 +123,34 @@ export function markRead(uid: string, contentHash: string, readAt?: string): voi
     readAt: readAt ?? new Date().toISOString(),
   };
   localStorage.setItem(storageKey(uid), JSON.stringify(entry));
+}
+
+/**
+ * The read to record for a location, given the HTML fragment rendered for it —
+ * or null when there is nothing to record.
+ *
+ * The one decision behind every `markRead` call site, so the same rules hold on
+ * a client-side stack push, a popstate, and a cold page load (#92):
+ *
+ *   - **Only card locations count.** A lens (`lens/<name>`) and a collection
+ *     view (`posts`) are listings; they have no single card identity, and their
+ *     fragments carry no `data-content-hash` for a hash-keyed entry anyway.
+ *   - **Only a fragment that declares a hash counts.** The hash is rendered by
+ *     `CardStackCard.astro`, and it must be byte-identical to the pool's or
+ *     `getViewState` treats every later visit as changed content.
+ *
+ * Pure: it parses the fragment and decides; the caller does the writing.
+ */
+export function readToRecord(
+  uid: string | null | undefined,
+  html: string | null | undefined,
+): { uid: string; hash: string } | null {
+  if (!uid || !html) return null;
+  if (locationKind(uid) !== 'card') return null;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const hash = tmp.querySelector('.stack-card')?.getAttribute('data-content-hash');
+  return hash ? { uid, hash } : null;
 }
 
 /**
