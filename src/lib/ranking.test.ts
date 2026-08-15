@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { compareCards, folderOf, rankCards, type RankableCard } from './ranking';
+import { serialiseBrowseCard } from './browse-card';
+import type { CardMeta } from './cards';
+import type { SerialisedCard } from './browse-helpers';
 
 /** A card in `what/posts` with nothing declared, unless overridden. */
 function c(overrides: Partial<RankableCard> & { uid: string }): RankableCard {
@@ -134,6 +137,71 @@ describe('rung precedence', () => {
     const newer = c({ uid: 'what/posts/z', sort: { key: 'date', direction: 'desc', value: 2000 } });
     const older = c({ uid: 'what/posts/a', sort: { key: 'date', direction: 'desc', value: 1000 } });
     expect(uidsOf(rankCards([older, newer]))).toEqual([newer.uid, older.uid]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The seam: the comparator runs CLIENT-side, so every rung it reads has to be
+// on the client payload, not just on CardMeta.
+// ---------------------------------------------------------------------------
+
+/**
+ * Type-level guard. `keyof RankableCard` is the comparator's whole field list;
+ * anything in it that SerialisedCard doesn't declare is a rung that reads
+ * `undefined` in the browser. Assigning that leftover to `never` is a
+ * `npm run check` failure naming the missing field — which is what issue #90
+ * needed and didn't have: `order` was in the chain but not in the payload, and
+ * an absent optional field is silently assignable, so a plain
+ * `SerialisedCard extends RankableCard` check would have stayed green.
+ */
+type RungFieldsMissingFromPayload = Exclude<keyof RankableCard, keyof SerialisedCard>;
+const _everyRungFieldCrossesTheWire: never = undefined as unknown as RungFieldsMissingFromPayload;
+void _everyRungFieldCrossesTheWire;
+
+describe('the ranking chain over SERIALISED cards', () => {
+  /** A minimal CardMeta with no header image, so serialisation needs no assets. */
+  function meta(overrides: Partial<CardMeta> & { uid: string }): CardMeta {
+    return {
+      title: overrides.uid,
+      tags: [],
+      renderer: 'card',
+      contentHash: `hash:${overrides.uid}`,
+      status: 'published',
+      visibility: { listed: true, reachable: true },
+      priority: 0,
+      sort: { key: 'date', direction: 'desc' },
+      ...overrides,
+    };
+  }
+
+  // The runtime half of the guard: the type check proves the field is declared,
+  // this proves it is actually PICKED and that rung 4 fires on the result. Both
+  // cards tie on rungs 1-3 (no context, equal priority) and rung 5 actively
+  // disagrees with `order`, so nothing but rung 4 can produce this ordering.
+  it('4. `order` survives serialisation and still outranks the folder sort', async () => {
+    const cards = await Promise.all([
+      serialiseBrowseCard(meta({
+        uid: 'what/posts/stories/arctic/a-last',
+        order: 2,
+        sort: { key: 'date', direction: 'desc', value: 2000 },
+      })),
+      serialiseBrowseCard(meta({
+        uid: 'what/posts/stories/arctic/z-first',
+        order: 1,
+        sort: { key: 'date', direction: 'desc', value: 1000 },
+      })),
+    ]);
+
+    expect(cards.map(card => card.order)).toEqual([2, 1]);
+    expect(uidsOf(rankCards(cards))).toEqual([
+      'what/posts/stories/arctic/z-first',
+      'what/posts/stories/arctic/a-last',
+    ]);
+  });
+
+  it('leaves `order` absent on a card that declares none', async () => {
+    const card = await serialiseBrowseCard(meta({ uid: 'what/posts/unordered' }));
+    expect(card.order).toBeUndefined();
   });
 });
 

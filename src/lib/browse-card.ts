@@ -42,7 +42,7 @@ async function resolveThumb(card: CardMeta): Promise<{ thumb?: string; thumbSrcs
  *
  * The field list is an explicit pick, never a spread of the card (see CLAUDE.md).
  * A spread skips excess-property checking, so build-time-only fields
- * (`visibility`, `image`, `order`) ship to the browser despite the type not
+ * (`visibility`, `image`) ship to the browser despite the type not
  * declaring them — and every field later added to CardMeta joins them. What
  * crosses the wire stays a decision.
  */
@@ -65,6 +65,11 @@ export async function serialiseBrowseCard(card: CardMeta): Promise<SerialisedCar
     // only knowable there.
     priority: card.priority,
     sort: card.sort,
+    // Rung 4, added deliberately (issue #90): `order` used to be build-time
+    // only, and stayed off the payload after it joined the chain — so the
+    // rung read `undefined` in the browser and never fired. Left absent when
+    // the card declares none; rung 4 needs both cards to declare one.
+    order: card.order,
     thumb,
     thumbSrcset,
   };

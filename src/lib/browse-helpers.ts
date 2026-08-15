@@ -50,6 +50,18 @@ export type SerialisedCard = {
    */
   priority: number;
   sort: FolderSort & { value?: number | string };
+  /**
+   * Sequence within this card's own folder (rung 4). Crosses the wire for the
+   * same reason as `priority` and `sort` — the comparator runs client-side, so
+   * a build-time rung left behind simply reads `undefined` and never fires.
+   *
+   * Optional, unlike those two, because absence is MEANINGFUL here: rung 4 only
+   * separates a pair when BOTH cards declare an `order`, since one card's
+   * sequence says nothing about a sibling that has none. Only 53 cards declare
+   * it; a synthesised neutral default would make every undeclared card a
+   * declared 0 and sort it ahead of an authored `order: 1`.
+   */
+  order?: number;
 };
 
 /**
