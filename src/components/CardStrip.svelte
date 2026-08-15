@@ -44,6 +44,12 @@
 
   let { cards, tagDisplay = {}, label = 'Cards', currentUid }: Props = $props();
 
+  // role="scrollbar" requires aria-controls naming the region it scrolls, and a
+  // page can hold several strips (a series run plus "Cards about this"), so the
+  // id has to be per-instance. $props.id() is the one generator that yields the
+  // same value on the server and on hydration — crypto.randomUUID() would not.
+  const scrollerId = $props.id();
+
   const currentIndex = $derived(currentUid ? cards.findIndex(c => c.uid === currentUid) : -1);
 
   let scroller = $state<HTMLElement | null>(null);
@@ -157,6 +163,7 @@
 
 <div class="card-strip">
   <ul
+    id={scrollerId}
     class="card-strip-track"
     aria-label={label}
     bind:this={scroller}
@@ -184,6 +191,7 @@
         role="scrollbar"
         tabindex="0"
         aria-label="{label} scrollbar"
+        aria-controls={scrollerId}
         aria-orientation="horizontal"
         aria-valuemin={0}
         aria-valuemax={100}

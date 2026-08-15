@@ -27,7 +27,7 @@
  *   npm run pad:images -- --check # report what would change, write nothing
  */
 
-import { readdir, readFile, writeFile, mkdir, rename, copyFile, access } from 'node:fs/promises';
+import { readdir, readFile, mkdir, rename, copyFile, access } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
