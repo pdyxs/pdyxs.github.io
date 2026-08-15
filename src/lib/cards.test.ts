@@ -8,7 +8,6 @@ import type { CardEntry, ResolveContext } from './cards';
 import type { FolderCascade } from './folder-config';
 import { COLLECTION_RENDERERS } from './renderers';
 import { resolveCardRenderer } from './location-resolver';
-import WorkRenderer from '../components/card-renderers/WorkRenderer.astro';
 import GenericRenderer from '../components/card-renderers/GenericRenderer.astro';
 
 const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
@@ -36,23 +35,16 @@ describe('renderer registry', () => {
     }
   });
 
-  it('renderer names with a dedicated component resolve to it', () => {
-    expect(COLLECTION_RENDERERS['work']).toBe(WorkRenderer);
+  it('every renderer name in use (post, story, card, puzzle, work) falls back to GenericRenderer', () => {
+    for (const name of ['post', 'story', 'card', 'puzzle', 'work']) {
+      expect(name in COLLECTION_RENDERERS).toBe(false);
+      expect(resolveCardRenderer(name)).toBe(GenericRenderer);
+    }
   });
 
-  it('generic renderer names (post, story, card, puzzle) are absent from the registry and fall back to GenericRenderer', () => {
-    expect('post' in COLLECTION_RENDERERS).toBe(false);
-    expect('story' in COLLECTION_RENDERERS).toBe(false);
-    expect('card' in COLLECTION_RENDERERS).toBe(false);
-    expect('puzzle' in COLLECTION_RENDERERS).toBe(false);
-    expect(resolveCardRenderer('post')).toBe(GenericRenderer);
-    expect(resolveCardRenderer('story')).toBe(GenericRenderer);
-    expect(resolveCardRenderer('card')).toBe(GenericRenderer);
-    expect(resolveCardRenderer('puzzle')).toBe(GenericRenderer);
-  });
-
-  it('the retired tag renderer name is no longer registered', () => {
+  it('the retired tag and work renderer names are no longer registered', () => {
     expect('tag' in COLLECTION_RENDERERS).toBe(false);
+    expect('work' in COLLECTION_RENDERERS).toBe(false);
   });
 });
 

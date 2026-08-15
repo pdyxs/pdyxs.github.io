@@ -121,15 +121,25 @@ describe("CardStackCard", () => {
         expect(div.querySelector(".body-wrapper.open")).not.toBeNull();
     });
 
-    it("dispatches to the renderer named on the card, not one re-cascaded from _config.yaml", async () => {
+    // COLLECTION_RENDERERS is empty (issue #89), so every renderer name now
+    // falls back to GenericRenderer — including the work cards' `work`, whose
+    // own component had no tag chips, no card strips and no gallery. The
+    // dispatch is still on the name the *card* carries; that it is never
+    // re-cascaded from _config.yaml is guarded by the resolveFolderCascade
+    // entry in FORBIDDEN, below.
+    it("dispatches an unregistered renderer name to GenericRenderer, which renders when/roles as meta rows", async () => {
         const container = await makeContainer();
         const html = await container.renderToString(CardStackCard, {
             props: {
                 card: card({ uid: "where/work/equalreality", renderer: "work" }),
             },
         });
+        const div = dom(html);
 
-        expect(dom(html).querySelector(".work-meta")).not.toBeNull();
+        expect(div.querySelector(".work-meta")).toBeNull();
+        expect(div.querySelector(".generic-meta")?.textContent).toContain(
+            "Head of Technology",
+        );
     });
 
     it("renders no status badge for a published card", async () => {

@@ -46,13 +46,22 @@ describe('resolveLocation', () => {
 
 describe('resolveCardRenderer', () => {
   it('maps a registered renderer name to its component', () => {
-    expect(resolveCardRenderer('work')).toBe(COLLECTION_RENDERERS.work);
+    // COLLECTION_RENDERERS is empty (issue #89) — the lookup itself is what is
+    // under test, so it is exercised against a stand-in entry rather than a
+    // real one, which would otherwise make this test unwritable.
+    COLLECTION_RENDERERS.stub = GenericRenderer;
+    try {
+      expect(resolveCardRenderer('stub')).toBe(COLLECTION_RENDERERS.stub);
+    } finally {
+      delete COLLECTION_RENDERERS.stub;
+    }
   });
 
   it('falls back to GenericRenderer for a renderer name with no dedicated component', () => {
     expect(resolveCardRenderer('post')).toBe(GenericRenderer);
     expect(resolveCardRenderer('story')).toBe(GenericRenderer);
     expect(resolveCardRenderer('card')).toBe(GenericRenderer);
+    expect(resolveCardRenderer('work')).toBe(GenericRenderer);
   });
 });
 

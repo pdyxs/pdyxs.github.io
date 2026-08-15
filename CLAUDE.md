@@ -597,8 +597,9 @@ are banned in this schema, and both were tried and reverted:
 `resolveMetaRows` (`src/lib/card-meta.ts`) is the single decision point: it folds
 the named shorthands `when` / `medium` / `roles` / `puzzle_type` / `difficulty`
 in at the front (a card must not express the same fact twice) and returns
-display rows. `GenericRenderer` takes the result. `WorkRenderer` still has its
-own `when`/`roles` `<dl>` — unify it when that renderer is next touched.
+display rows. `GenericRenderer` takes the result, and is the only renderer that
+does — `WorkRenderer`, which kept its own `when`/`roles` `<dl>`, was deleted for
+that reason (see the renderer-registry note below).
 
 `difficulty` and `puzzle_type` stay named fields rather than authored `meta`
 rows because `difficulty` feeds three renderings, not one.
@@ -708,6 +709,22 @@ filter, reorder, or reach for `data.actions` itself.
 This fold is why there is no `PuzzleRenderer`. It was retired once its meta rows
 and play link became ordinary folded fields: a puzzle is a `renderer: card` like
 anything else, and `puzzle` now resolves to `GenericRenderer` by fallback.
+
+`WorkRenderer` went the same way (issue #89), and **`COLLECTION_RENDERERS` is
+now empty**. Registration is still mandatory — an unregistered name is not an
+error, it is a silent fallback — but nothing has needed registering. The
+cautionary tale is worth keeping: a dedicated renderer starts as "the two fields
+this folder has extra" and then silently *lacks* everything `GenericRenderer`
+grew afterwards. `WorkRenderer` rendered a header image, a `when`/`roles` `<dl>`
+and the body, and that was all — so the six `where/work/*` cards had no tag
+chips, no gallery and no "Cards about this", which was the only route from the
+SeeThrough Studios card to the 25-card affiliation closure behind it. Nobody
+noticed for as long as they did because the folder cascade was dead in
+production (#88) and prod had been serving `GenericRenderer` all along.
+
+Before adding a card renderer, fold the fields instead: a named frontmatter
+field that folds into `resolveMetaRows` or `resolveActions` costs one line and
+keeps the card in the one renderer everything else improves.
 
 An action also carries a **`kind`** — `play` / `buy` / `read` / `source` /
 `site` (`ACTION_KINDS`) — because 13 cards word their actions 16 different ways
