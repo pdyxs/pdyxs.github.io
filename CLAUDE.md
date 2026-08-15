@@ -227,6 +227,89 @@ one section and renders as a flat list, which is every other level on the site.
 
 The applier is `applyMaxWidth` in `CardStack.svelte`, and it writes `--max-width` to **both** `<html>` and `#card-stack`. That is not redundant: the server renders `#card-stack` with the initial location's width inline so the first paint is right before hydration, and an inline style on `#card-stack` beats an inherited value from `<html>` for everything inside it. Writing only to `<html>` left a card pushed on top of a wide lens (browse is 960px) wearing the lens's width forever.
 
+### `priority` is additive — and it is the only cascading key that is
+
+Every other cascading key (`renderer`, `navRenderer`, `status`, `width`,
+`gallery`, `dateLabel`, `sort`) is **nearest-wins**: the deepest declaration
+replaces the ones above it. `priority` is the exception — a card's priority is
+the **SUM** of every declaration that applies to it:
+
+- its own frontmatter `priority`
+- **every** ancestor folder's `_config.yaml` `priority` (not just the nearest)
+- the `priority` on every `<value>.tag.yaml` for a tag it carries
+
+Negatives push a card down. Nothing about the word "priority" signals any of
+this, which is why it is stated here, at the top of `src/lib/priority.ts`, and
+in the schema comment in `src/content.config.ts` — three places, deliberately.
+The magnitude convention (hundreds to move a folder as a block, ones to sort
+within it) is the author's; the code enforces no scale.
+
+**A folder counts once, as an ancestor** — never a second time as a filter
+value. A card in `what/puzzles` carries `what:puzzles` as its path tag, so
+without that rule a folder that both cascades a priority and declares one as a
+tag would double it, and tuning becomes unpredictable exactly where you are
+trying to tune. `tagPrioritySum` skips any tag naming one of the card's own
+ancestors.
+
+The decision is pure (`src/lib/priority.ts`); `resolveCard()` calls it and
+stores one integer on `CardMeta.priority`. Affiliation tags land *after*
+resolution (they are a fixed point over the whole pool), so `getAllCards()`
+tops the sum up with whatever those tags declare rather than recomputing it.
+
+Container `_config.yaml` priorities deliberately do **not** enter the
+`.tag.yaml` priority map (`discoverTagPriorities`) — that is the same
+counted-once rule, enforced at the source.
+
+`imagePad`'s hazard applies here too: zod *strips* unknown frontmatter keys, so
+`priorty: 100` would be silently ignored. `src/lib/priority-frontmatter.test.ts`
+scans the raw markdown for near-misses and fails, because by the time content
+reaches the audit lens the offending key is already gone.
+
+### The ranking comparator is a chain, not a score
+
+`compareCards` (`src/lib/ranking.ts`) is what "Most\* Interesting" sorts by. Six
+rungs, each consulted only on a genuine tie above it, so any card's position is
+explainable by naming the rung that placed it:
+
+1. **filter-match count, descending** — `countSelectedValueMatches`
+   (`src/dimensions/apply.ts`)
+2. **`priority`**
+3. **unseen before seen**
+4. **`order`**, only between two cards sharing a folder
+5. **that folder's declared `sort`**
+6. **uid**, for determinism
+
+Rungs 1 and 3 are **runtime** (filters change, seen-ness is per-visitor) and
+arrive as accessors on the context; 2, 4, 5 and 6 are decided at build and ride
+on `CardMeta` — which is why `priority` and `sort` are required fields on
+`SerialisedCard` too. The comparator itself runs in the browser.
+
+Priority sits **above** seen deliberately: the other way round, an authored
+boost quietly stops mattering to exactly the returning visitors it was aimed at.
+
+`order` keeps its existing meaning — sequence *within* a folder. It is not
+overloaded into a global priority, which is why rung 4 only fires between two
+cards of the same folder.
+
+Results are **not** grouped by folder. Rung 5 fires only between adjacent
+same-folder cards — which is exactly what boosting a folder produces.
+
+### A folder's `sort` is a key *and* a direction
+
+`sort: difficulty asc` in a `_config.yaml`, cascading nearest-wins like
+`renderer`. Keys: `date`, `difficulty`, `order`, `title`; a bare key takes its
+natural direction (`date` desc, the rest asc); the default is `date desc`;
+**missing values sort last in both directions** — an unrated puzzle is not
+"difficulty zero", and flipping the direction must not promote every card that
+failed to say.
+
+`resolveSortValue` resolves the folder's key into one comparable primitive at
+build (`CardMeta.sort.value`), so the comparator never has to know what
+`difficulty` means and the client payload carries one field instead of four.
+`difficulty` is read by `parseDifficultyLevel` — this is that function's fourth
+consumer, not a second parse. `what/puzzles` declares `difficulty asc`: a solver
+picking a puzzle is choosing a difficulty, and its publication date says nothing.
+
 ### Nav renderer pattern (`NAV_RENDERERS`)
 
 Collections that need custom navigation (e.g. prev/next chapter buttons, position indicators) register a nav renderer in `NAV_RENDERERS` (`src/lib/renderers.ts`). A nav renderer owns the full card shell — header and body structure — and receives the content renderer as `<slot />`. It is responsible for rendering `<CardHeader>` (or a custom header), the `.body-wrapper` / `.stack-card-body` structure, and any footer nav. Props passed by `card/[...path].astro`: `title`, `titleSuffix`, `entry`, `allEntries`.
@@ -451,7 +534,7 @@ rows because `difficulty` feeds three renderings, not one.
 it "Level 3 (Medium)", which is what frontmatter carries — that string stays the
 source of truth (it's what the LMD page says, and it round-trips on a re-rate),
 but it isn't what a reader reads and it sorts alphabetically, which files Level 5
-next to Level 1. So `parseDifficultyLevel` reads the rating out once and three
+next to Level 1. So `parseDifficultyLevel` reads the rating out once and four
 consumers render it:
 
 - the card's credits row (`resolveMetaRows`) — `★★★☆☆`, with an `ariaLabel` so a
@@ -459,6 +542,8 @@ consumers render it:
 - `puzzleDifficultyGenerator` (`filter-generators.ts`) — the `what:puzzles/level-3`
   filter tag
 - `generatedDisplayName` — that value's label in the panel, the same stars
+- `resolveSortValue` (`folder-sort.ts`) — the value `what/puzzles`'s declared
+  `sort: difficulty asc` orders its cards by (rung 5 of the ranking chain)
 
 A string it can't read (`Fiendish`) falls back to its authored text and
 generates no tag: better a card that says what was written than one that

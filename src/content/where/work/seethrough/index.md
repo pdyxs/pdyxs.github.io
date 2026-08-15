@@ -1,7 +1,6 @@
 ---
 inspected: false
 title: SeeThrough Studios
-priority: 201201
 image: seethroughstudios.png
 imgHeight: 4cm
 when: March 2012 - November 2020

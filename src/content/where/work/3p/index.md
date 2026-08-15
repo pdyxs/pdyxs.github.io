@@ -1,7 +1,6 @@
 ---
 inspected: false
 title: 3P Learning
-priority: 201502
 image: intoscience.png
 when: February 2015-May 2018
 roles: 'Designer, Product Owner, Developer'

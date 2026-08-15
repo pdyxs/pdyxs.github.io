@@ -1,7 +1,6 @@
 ---
 inspected: false
 title: Chaos Theory Games
-priority: 202011
 image: chaostheory.png
 when: November 2019 - April 2023
 roles: 'Lead Producer, Creative Technologist'

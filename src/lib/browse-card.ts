@@ -60,6 +60,11 @@ export async function serialiseBrowseCard(card: CardMeta): Promise<SerialisedCar
     // Required: every lens body declares `cards: SerialisedCardFull[]`, and
     // HomeLensSlots keys markDisplayed() on this hash.
     contentHash: card.contentHash,
+    // The build-time rungs of the ranking chain (ranking.ts): the comparator
+    // itself runs in the browser, since filter-match count and seen-ness are
+    // only knowable there.
+    priority: card.priority,
+    sort: card.sort,
     thumb,
     thumbSrcset,
   };

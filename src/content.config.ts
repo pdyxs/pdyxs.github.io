@@ -74,6 +74,25 @@ const content = defineCollection({
             .default([])
             .transform(normaliseAuthoredTags),
         date: z.coerce.date().optional(),
+        // How far up the "Most* Interesting" ranking this card is pushed
+        // (issue #80). Negative pushes it down; absent is neutral.
+        //
+        // ─── READ THIS: `priority` is ADDITIVE, and it is the only key that is.
+        // Every other cascading key — `renderer`, `navRenderer`, `status`,
+        // `width`, `gallery`, `dateLabel`, `sort` — is nearest-wins: the
+        // deepest declaration replaces the ones above it. `priority` instead
+        // SUMS this frontmatter value, every ancestor folder's `_config.yaml`
+        // value, and the value on every `<tag>.tag.yaml` for a tag this card
+        // carries. (A folder counts once, as an ancestor — never a second time
+        // as a filter value.) Nothing in the name says so; see
+        // src/lib/priority.ts and CLAUDE.md.
+        //
+        // Convention, not enforced: hundreds move a folder as a block, ones
+        // sort within it.
+        //
+        // Zod strips unknown keys, so `priorty:` would be silently ignored —
+        // src/lib/priority-frontmatter.test.ts fails the build instead.
+        priority: z.number().optional(),
         // ── generated-tag overrides ──
         // Bare travel-log location path (e.g. "europe/norway/svalbard") that
         // overrides the date-derived where:* tag for this card (see the travel
@@ -128,7 +147,6 @@ const content = defineCollection({
         project: z.string().optional(),
         // ── projects ──
         cvDescription: z.string().optional(),
-        priority: z.number().optional(),
         // Legacy shorthands for what are now `meta` rows — resolveMetaRows folds
         // them in at the front, so a card must not carry both.
         medium: z.string().optional(),
