@@ -1,6 +1,13 @@
 ---
 // Nav shell for a card that belongs to an ordered series: the position in the
-// header, and the whole series as a card strip in the footer.
+// header.
+//
+// The run itself is a card strip, but it is NOT rendered here. A nav renderer
+// wraps the content renderer as a slot, so anything it appends lands *below*
+// the content renderer's own "This is about" / "Cards about this" strips —
+// which read as the same class of thing and belong together. CardStackCard
+// therefore resolves the series previews (resolveSeriesCards) and passes them
+// to the content renderer, which places "In this series" first among the three.
 //
 // The strip replaced prev/next buttons. Two buttons could only ever say what
 // is immediately adjacent, which is the least interesting thing about a series
@@ -8,13 +15,9 @@
 // it. It's the same CardStrip the "Cards about this" section uses, so a series
 // sibling previews identically to any other card reference on the site.
 import CardHeader from '../CardHeader.astro';
-import CardStrip from '../CardStrip.svelte';
 import { getSeriesSiblings } from '../../lib/series';
 import type { StoryEntry } from '../../lib/series';
 import type { StatusValue } from '../../lib/status-visibility';
-import type { TagDisplay } from '../../lib/tag-display';
-import { getAllCards } from '../../lib/cards';
-import { serialiseBrowseCards } from '../../lib/browse-card';
 
 interface Props {
   entry: StoryEntry | undefined;
@@ -24,27 +27,13 @@ interface Props {
   /** Dev-only status badge (issue #51) — forwarded straight through to this renderer's own CardHeader. */
   status?: StatusValue;
   date?: Date;
-  /** Flat value -> display-name map from the tag registry, for the strip's tag chips. */
-  tagDisplay?: Record<string, TagDisplay>;
 }
 
-const { entry, allEntries, title, titleSuffix, status, date, tagDisplay = {} } = Astro.props as Props;
+const { entry, allEntries, title, titleSuffix, status, date } = Astro.props as Props;
 
 const siblings = entry
   ? getSeriesSiblings(entry, allEntries, { isDev: import.meta.env.DEV, now: new Date() })
   : null;
-
-// getSeriesSiblings decides the run and its order (and drops chapters that
-// aren't reachable); this only turns those ids into the previews the strip
-// renders. getAllCards() is the same resolution every other consumer uses and
-// is cached per build — nothing is re-derived here.
-const allCards = siblings ? await getAllCards() : [];
-const byUid = new Map(allCards.map(card => [card.uid, card]));
-const seriesCards = siblings
-  ? await serialiseBrowseCards(
-      siblings.siblings.map(s => byUid.get(s.id)).filter(card => card !== undefined),
-    )
-  : [];
 ---
 
 <CardHeader {title} {titleSuffix} {status} {date}>
@@ -58,18 +47,6 @@ const seriesCards = siblings
   <div class="stack-card-body">
     <div class="stack-card-body-inner">
       <slot />
-      {seriesCards.length > 1 && (
-        <section class="generic-section series-strip">
-          <h3 class="generic-section-heading">In this series</h3>
-          <CardStrip
-            cards={seriesCards}
-            {tagDisplay}
-            label="Cards in this series"
-            currentUid={entry?.id}
-            client:load
-          />
-        </section>
-      )}
     </div>
   </div>
 </div>
@@ -79,11 +56,5 @@ const seriesCards = siblings
     font-size: 0.85em;
     opacity: 0.7;
     font-variant-numeric: tabular-nums;
-  }
-
-  .series-strip {
-    margin-top: var(--space-lg);
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--color-border);
   }
 </style>

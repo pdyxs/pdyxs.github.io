@@ -238,13 +238,24 @@ declaring `navRenderer`/`series`/`order` in frontmatter instead. Keep `series:`
 values globally unique; they are matched across the whole collection, not
 within a folder.
 
-`SeriesNavRenderer` shows the whole series as a `CardStrip` — the same component
-as the "Cards about this" section — rather than prev/next buttons. Two buttons
-can only say what is immediately adjacent, which is the least interesting thing
-about a series; the strip shows the run, where you are in it, and lets you jump
+A series shows its whole run as a `CardStrip` — the same component as the
+"Cards about this" section — rather than prev/next buttons. Two buttons can only
+say what is immediately adjacent, which is the least interesting thing about a
+series; the strip shows the run, where you are in it, and lets you jump
 anywhere. The open card is in the strip, passed as `currentUid`: `BrowseCard`
 renders it as a marked, non-navigating tile (`current`) and the strip opens
 scrolled to it.
+
+**The strip is not rendered by `SeriesNavRenderer`.** A nav renderer wraps the
+content renderer as a slot, so anything it appends lands *below* the content
+renderer's own "This is about" / "Cards about this" strips — three sections of
+the same kind, with the most relevant one last. So `CardStackCard` resolves the
+previews (`resolveSeriesCards`, `src/lib/series-cards.ts` — the IO shell around
+the pure `getSeriesSiblings`) and passes them to the content renderer as
+`seriesCards`; `GenericRenderer` renders "In this series" ahead of the other
+two. The trigger is the card's `series:` frontmatter alone, not the nav renderer,
+which is what lets a frontmatter-declared run get the strip. `SeriesNavRenderer`
+is left owning just the header's `current/total` indicator.
 
 Two traps that cost a round each:
 

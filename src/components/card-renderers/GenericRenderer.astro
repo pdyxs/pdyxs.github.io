@@ -51,6 +51,8 @@ interface Props {
   relatedCards?: BrowseCardData[];
   /** Cards this one points at via its own card-backed tags (computeSubjectCardsIndex) — the "This is about" section. Same tags as the masthead chips, re-listed as previews. */
   subjectCards?: BrowseCardData[];
+  /** The whole series this card belongs to, in order (resolveSeriesCards) — the "In this series" section. Empty for the cards with no `series:`, which is most of them. */
+  seriesCards?: BrowseCardData[];
   /** The card's RESOLVED tags (folder-derived + cascade + frontmatter + generated), from `ResolvedCard.tags`. Not `entry.data.tags`, which is frontmatter only and omits the card's own folder category. */
   cardTags?: string[];
   /** `ResolvedCard.date` — the card's date, if it has one (most do). */
@@ -64,7 +66,7 @@ interface Props {
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], cardTags = [], date, dateLabel, gallery = true } = Astro.props as Props;
+const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], seriesCards = [], cardTags = [], date, dateLabel, gallery = true } = Astro.props as Props;
 const data = entry?.data;
 
 // Whether this card is a dated thing, and how its date is worded — decided by
@@ -239,8 +241,23 @@ const galleryImages = await Promise.all(
       </section>
     )}
 
-    {/* The two directions of a card-backed tag, named so the arrow is obvious:
-        this card's own tags point out, other cards' tags point in. */}
+    {/* The card strips, closest relationship first: the run this card is part
+        of, then the two directions of a card-backed tag — named so the arrow is
+        obvious: this card's own tags point out, other cards' tags point in.
+        A one-card "series" is just this card, so it needs no strip. */}
+    {seriesCards.length > 1 && (
+      <section class="generic-section">
+        <h3 class="generic-section-heading">In this series</h3>
+        <CardStrip
+          cards={seriesCards}
+          {tagDisplay}
+          label="Cards in this series"
+          currentUid={entry.id}
+          client:load
+        />
+      </section>
+    )}
+
     {subjectCards.length > 0 && (
       <section class="generic-section">
         <h3 class="generic-section-heading">This is about</h3>

@@ -20,6 +20,7 @@ import type { ResolvedCard } from '../lib/cards';
 import type { BrowseCardData } from '../lib/browse-helpers';
 import { resolveCardRenderer, resolveNavRenderer } from '../lib/location-resolver';
 import type { TagDisplay } from '../lib/tag-display';
+import { resolveSeriesCards } from '../lib/series-cards';
 import CardHeader from './CardHeader.astro';
 
 interface Props {
@@ -50,6 +51,18 @@ const Content = rendered?.Content;
 
 const Renderer = resolveCardRenderer(card.renderer);
 const NavComponent = resolveNavRenderer(card.navRenderer);
+
+// The series strip is resolved here, not in SeriesNavRenderer: a nav renderer
+// takes the content renderer as a slot, so a strip it appended would sit below
+// "This is about" / "Cards about this" instead of leading them. The condition
+// is the `series:` frontmatter alone — the same thing getSeriesSiblings matches
+// on — so a subset of a folder that declares its own run gets the strip too.
+const seriesCards = entry?.data?.series
+  ? await resolveSeriesCards(entry as any, allEntries as any, {
+      isDev: import.meta.env.DEV,
+      now: new Date(),
+    })
+  : [];
 ---
 <div
   class="stack-card stack-card--active"
@@ -67,7 +80,7 @@ const NavComponent = resolveNavRenderer(card.navRenderer);
       date={card.date}
       {tagDisplay}
     >
-      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} />
+      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} />
     </NavComponent>
   ) : (
     <>
@@ -82,7 +95,7 @@ const NavComponent = resolveNavRenderer(card.navRenderer);
       <div class="body-wrapper open">
         <div class="stack-card-body">
           <div class="stack-card-body-inner">
-            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} />
+            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} />
           </div>
         </div>
       </div>

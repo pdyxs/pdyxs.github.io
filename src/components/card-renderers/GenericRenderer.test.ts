@@ -315,6 +315,47 @@ describe('GenericRenderer', () => {
     expect(div.querySelector('.generic-related')).toBeNull();
   });
 
+  // The series strip lives here rather than in SeriesNavRenderer precisely so
+  // it can lead the other two card strips — a nav renderer can only append
+  // below them. If it ever moves back, this ordering assertion is what fails.
+  it('renders the series section ahead of the subject and related sections', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(GenericRenderer, {
+      props: {
+        entry: fakeEntry({ description: 'x' }),
+        Content: undefined,
+        seriesCards: [
+          fakeCardMeta({ uid: 'what/puzzles/timeline/one', title: 'One' }),
+          fakeCardMeta({ uid: 'what/puzzles/timeline/two', title: 'Two' }),
+        ],
+        subjectCards: [fakeCardMeta({ uid: 'what/projects/foo', title: 'Foo' })],
+        relatedCards: [fakeCardMeta({ uid: 'posts/bar', title: 'Bar' })],
+      },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    const headings = [...div.querySelectorAll('.generic-section-heading')].map(h => h.textContent);
+    expect(headings).toEqual(['In this series', 'This is about', 'Cards about this']);
+  });
+
+  // One card is not a run — the "series" is just this card, and a strip
+  // containing only the card you are already reading says nothing.
+  it('renders no series section for a single-card series', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(GenericRenderer, {
+      props: {
+        entry: fakeEntry({ description: 'x' }),
+        Content: undefined,
+        seriesCards: [fakeCardMeta({ uid: 'what/puzzles/timeline/one', title: 'One' })],
+      },
+    });
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    expect(div.textContent).not.toContain('In this series');
+  });
+
   it('renders no related-cards section when relatedCards is empty', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(GenericRenderer, {
