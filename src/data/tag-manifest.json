@@ -2770,5 +2770,29 @@
   {
     "uid": "who:employers/chaostheory",
     "code": "ba"
+  },
+  {
+    "uid": "why:buyable",
+    "code": "bb"
+  },
+  {
+    "uid": "why:playable",
+    "code": "bc"
+  },
+  {
+    "uid": "why:viewable",
+    "code": "bd"
+  },
+  {
+    "uid": "why:learn",
+    "code": "be"
+  },
+  {
+    "uid": "why:learn/game-development",
+    "code": "bf"
+  },
+  {
+    "uid": "why:learn/travel",
+    "code": "bg"
   }
 ]

@@ -709,6 +709,54 @@ This fold is why there is no `PuzzleRenderer`. It was retired once its meta rows
 and play link became ordinary folded fields: a puzzle is a `renderer: card` like
 anything else, and `puzzle` now resolves to `GenericRenderer` by fallback.
 
+An action also carries a **`kind`** — `play` / `buy` / `read` / `source` /
+`site` (`ACTION_KINDS`) — because 13 cards word their actions 16 different ways
+and the `why:*` generators need intent, not prose. Two rulings hold the line: an
+app-store or Steam link is `play`, since for software the store *is* how you get
+to play it (which is why `buyable` is one card, not seven); and the folded
+`sudokupad_url` is `play` while the LMD page is `site`. `kind` is optional —
+an unkinded action renders normally and simply tells the generators nothing —
+so a new action row that forgets it fails silently, in the direction of
+under-tagging.
+
+### The `why` dimension is affordances, derived per card
+
+`why` is the one dimension with no cards under it: `src/content/why/` holds
+declarations only, because "what this offers you" is a property of a card that
+lives somewhere else. `why/_config.yaml` therefore declares **no `name`** — like
+`what/_config.yaml` it is panel-only config, and a dimension root is not a
+filter value, so an identity there would display nowhere while making
+`generate-card-templates.mjs` emit a Templater scaffold for creating cards in a
+folder that must never hold one.
+
+Three of its five values are generated (`whyAffordanceGenerator`, decisions in
+`src/lib/why-tags.ts`):
+
+| value | predicate | override |
+|---|---|---|
+| `why:playable` | any resolved action with `kind: play` | `playable: always \| never` |
+| `why:viewable` | a header `image` **and** a markdown-stripped body ≤ `VIEWABLE_MAX_PROSE` | `viewable: always \| never` |
+| `why:buyable` | any resolved action with `kind: buy` | `buyable: always \| never` |
+
+Three override keys rather than one `why:`-shaped field: the affordances are
+independent facts and a card is routinely two of them, so a single field would
+have to carry a list through override plumbing that is string-only by design.
+An unrecognised override value falls through to the derivation — a typo should
+leave a card where it was, not silently drop it out of a filter.
+
+`viewable` is the one that needs judgement. The image alone says nothing (246 of
+296 cards have one); it is the *absence* of an essay behind it that means the
+picture is the content, so the threshold is `2 × EXCERPT_MAX_LENGTH` — the body
+fits in about two summary lines. That keeps prose out (two story chapters, not
+nineteen) at the cost of the art cards, whose write-ups run just over; those are
+what `viewable: always` is for.
+
+The other two values, `why:learn/game-development` and `why:learn/travel`, are
+**authored**, and `why/learn/_config.yaml` is load-bearing for exactly the
+reason the affiliation containers are: `filterVisibleNodes` drops an undeclared
+node *and recurses into its children*, so an undeclared container takes both
+perfectly-declared topics out of the panel with no error anywhere.
+
 ### Canonical tag slugs in content; aliases only in tag YAML
 
 Aliases in `src/content.config.ts` tag schema are a runtime safety net, not a feature to rely on. Content should always link to canonical slugs; aliased links in content are a data bug.

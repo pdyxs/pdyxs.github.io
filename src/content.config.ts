@@ -1,14 +1,21 @@
 import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
+import { ACTION_KINDS } from "./lib/card-actions";
 import { CONTENT_GLOB_PATTERN } from "./lib/content-glob";
 import { normaliseAuthoredTags } from "./lib/five-w";
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
+// A "go do it" link in a card's masthead band. `text` is however the author
+// wants it worded; `kind` is what it *is* — see ACTION_KINDS in
+// src/lib/card-actions.ts for the five values and the rulings between them.
+// The `why:*` filter generators read `kind` and never the label, so an
+// unkinded action renders normally but contributes no affordance tag.
 const action = z.object({
     text: z.string(),
     url: z.string(),
+    kind: z.enum(ACTION_KINDS).optional(),
 });
 
 const quote = z.object({
@@ -110,6 +117,19 @@ const content = defineCollection({
         // Named `era` (not `when`) so it never reads as a raw dimension tag —
         // it is the override knob, mirroring how `location` feeds `where`.
         era: z.string().optional(),
+        // The three `why:*` affordances, each `always` or `never`, overriding
+        // what the affordance generator derives for this card (see
+        // src/lib/why-tags.ts). Also settable per-folder via _config.yaml,
+        // where they cascade nearest-wins.
+        //
+        // These are the escape hatch for the two ways a derivation can be
+        // wrong: `always` for the visual art card whose write-up is too long
+        // for the "short body" signal, `never` for the play link that leads
+        // somewhere no longer playable. Each key names its value, so a card
+        // that is two of the three says so twice — there is no combined field.
+        playable: z.enum(['always', 'never']).optional(),
+        viewable: z.enum(['always', 'never']).optional(),
+        buyable: z.enum(['always', 'never']).optional(),
         // TEMPORARY (pre-MVP): manual "I have eyeballed this card" flag. Set on
         // every card by scripts/backfill-inspected.mjs so Obsidian's Properties
         // view renders it as a checkbox on every post; tick it as you go and

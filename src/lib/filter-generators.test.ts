@@ -142,7 +142,7 @@ describe('allGeneratedFilterValues', () => {
 
   it('emits only dimension:value forms, across every generator', () => {
     for (const value of allGeneratedFilterValues()) {
-      expect(value).toMatch(/^(where|when|what):.+/);
+      expect(value).toMatch(/^(where|when|what|why):.+/);
     }
   });
 

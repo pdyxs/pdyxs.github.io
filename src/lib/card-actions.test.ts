@@ -43,14 +43,14 @@ describe('resolveActions', () => {
         url: 'https://logic-masters.de/x?id=000LRL',
       })
     ).toEqual([
-      { text: 'Play', url: 'https://sudokupad.app/pdyxs/cartography' },
-      { text: 'LMD', url: 'https://logic-masters.de/x?id=000LRL' },
+      { text: 'Play', url: 'https://sudokupad.app/pdyxs/cartography', kind: 'play' },
+      { text: 'LMD', url: 'https://logic-masters.de/x?id=000LRL', kind: 'site' },
     ]);
   });
 
   it('does not list the LMD page twice when it is also the play link', () => {
     expect(resolveActions({ url: 'https://logic-masters.de/x?id=000LRL' })).toEqual([
-      { text: 'Play', url: 'https://logic-masters.de/x?id=000LRL' },
+      { text: 'Play', url: 'https://logic-masters.de/x?id=000LRL', kind: 'play' },
     ]);
   });
 
@@ -62,5 +62,19 @@ describe('resolveActions', () => {
         actions: [{ text: 'Solution video', url: 'https://youtube.com/watch?v=x' }],
       }).map(a => a.text)
     ).toEqual(['Play', 'Solution video', 'LMD']);
+  });
+
+  it('passes an authored `kind` through, and leaves an unkinded action unkinded', () => {
+    expect(
+      resolveActions({
+        actions: [
+          { text: 'Buy a nice copy', url: 'https://ko-fi.com/pdyxs/shop', kind: 'buy' },
+          { text: 'Website', url: 'https://example.com' },
+        ],
+      })
+    ).toEqual([
+      { text: 'Buy a nice copy', url: 'https://ko-fi.com/pdyxs/shop', kind: 'buy' },
+      { text: 'Website', url: 'https://example.com' },
+    ]);
   });
 });

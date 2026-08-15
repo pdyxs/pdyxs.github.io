@@ -30,10 +30,23 @@ import {
   formatDifficultyStars,
   parseDifficultyLevel,
 } from './difficulty.ts';
+import type { Action } from './card-actions.ts';
+import { WHY_AFFORDANCES, WHY_OVERRIDE_KEYS, deriveWhyTags } from './why-tags.ts';
 
 /** The card fields a generator may read. Kept minimal and view-free. */
 export type FilterGeneratorCard = {
   date?: Date;
+  /**
+   * The card's action links, already resolved (see resolveActions in
+   * card-actions.ts) — so a generator reads the same list the masthead
+   * renders, including the puzzle fields folded in there, rather than
+   * reaching for raw frontmatter and re-deriving that fold.
+   */
+  actions?: Action[];
+  /** Frontmatter `image` — presence is half of the `why:viewable` signal. */
+  image?: string;
+  /** The card's raw markdown body — the length of its prose is the other half. */
+  body?: string;
   /**
    * Explicit override attributes, keyed by the frontmatter/`_config.yaml`
    * attribute name a generator declares in `overrideKeys`. Populated by
@@ -161,11 +174,35 @@ const puzzleDifficultyGenerator: FilterGenerator = {
   },
 };
 
+/**
+ * `why:playable` / `why:viewable` / `why:buyable` — what a card offers a
+ * visitor, derived from its actions, header image and body length. The whole
+ * decision lives in why-tags.ts; this is the shell that hands it the card.
+ *
+ * Three override keys rather than one: the affordances are independent facts
+ * (a card is routinely playable *and* viewable), so each gets its own
+ * `always`/`never` knob instead of a single field that would have to carry a
+ * list. The other two `why` values (`why:learn/*`) are authored curation and
+ * are not generated at all — see why-tags.ts.
+ */
+const whyAffordanceGenerator: FilterGenerator = {
+  overrideKeys: [...WHY_OVERRIDE_KEYS],
+  apply(tags, { actions, image, body, overrides }) {
+    const derived = deriveWhyTags({ actions, image, body }, overrides ?? {});
+    const missing = derived.filter(tag => !tags.includes(tag));
+    return missing.length === 0 ? tags : [...tags, ...missing];
+  },
+  allValues() {
+    return [...WHY_AFFORDANCES];
+  },
+};
+
 /** The active generators, applied in order. Add new generators here. */
 export const FILTER_GENERATORS: FilterGenerator[] = [
   travelWhereGenerator,
   dateEraGenerator,
   puzzleDifficultyGenerator,
+  whyAffordanceGenerator,
 ];
 
 /**

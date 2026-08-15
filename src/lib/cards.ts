@@ -3,6 +3,7 @@ import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
 import type { FolderCascade } from './folder-config';
 import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
+import { resolveActions, type ActionSource } from './card-actions';
 import { computeAffiliationTags } from './affiliations';
 import { discoverAffiliations, discoverTagPriorities } from './tag-registry';
 import { interpolate } from './interpolate';
@@ -230,7 +231,16 @@ export function resolveCard(
   for (const key of ctx.overrideKeys) {
     overrides[key] = (data[key] as string | undefined) ?? cascade.overrides[key];
   }
-  const tags = generatedTagsForCard(baseTags, { date: data.date, overrides });
+  // The affordance generator reads *resolved* actions, not `data.actions`, so
+  // the puzzle fields resolveActions folds into a play link count exactly as
+  // an authored `kind: play` row does — one fold, decided in one place.
+  const tags = generatedTagsForCard(baseTags, {
+    date: data.date,
+    overrides,
+    actions: resolveActions(data as ActionSource),
+    image: data.image,
+    body,
+  });
 
   const sort = cascade.sort ?? DEFAULT_FOLDER_SORT;
 

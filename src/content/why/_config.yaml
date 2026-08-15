@@ -8,6 +8,10 @@
 #
 # No `groupOrder`: the four root values are one ungrouped section, ordered by
 # the explicit `order` on each declaration (Play, Look, Buy, then Learn).
-name: Why
-description: >
-  What a card is here to offer you.
+#
+# Deliberately no `name`/`description` — like `what/_config.yaml`, this is
+# panel-only dimension config. A dimension root is not a filter value
+# (fsPathToValue drops it), so an identity here would display nowhere; what it
+# *would* do is make generate-card-templates.mjs treat `why/` as a card
+# container and emit a Templater scaffold for creating cards in a dimension
+# that holds none.

@@ -10,9 +10,39 @@
 //
 // Pure: takes frontmatter data, returns display actions. No IO, no Astro.
 
+/**
+ * What an action *is*, independent of how its label is worded.
+ *
+ * The 13 cards that carry actions word them 16 different ways ("Play it",
+ * "Play on iOS", "Download on Steam", "Get on the iOS App Store", "Use the
+ * simulator"), so anything downstream that wants to know "can I go and do this
+ * right now?" would otherwise have to regex prose — a heuristic that rots
+ * silently as new labels are written. `kind` states the intent once, at
+ * authoring time, and the `why:*` generators read it (see why-tags.ts).
+ *
+ * The five kinds, and the rulings that keep them apart:
+ *
+ *  - `play`   — go and use the thing itself. Includes app-store and Steam
+ *               links: for a piece of software the store *is* the way to play
+ *               it, so a store link is a play link, not a purchase.
+ *  - `buy`    — the destination exists to sell you an object you don't get by
+ *               playing (the Ko-fi shop's printed copy). One action today.
+ *  - `read`   — writing *about* the thing: a case study, a postmortem.
+ *  - `source` — the code.
+ *  - `site`   — the thing's own home on the web (or its publisher's), where
+ *               there is something to look at but nothing specific to do.
+ *
+ * Optional: an unkinded action still renders, it just tells the generators
+ * nothing.
+ */
+export const ACTION_KINDS = ['play', 'buy', 'read', 'source', 'site'] as const;
+
+export type ActionKind = (typeof ACTION_KINDS)[number];
+
 export interface Action {
   text: string;
   url: string;
+  kind?: ActionKind;
 }
 
 export interface ActionSource {
@@ -40,14 +70,18 @@ export function resolveActions(data: ActionSource | undefined): Action[] {
   const actions: Action[] = [];
 
   const playUrl = data.sudokupad_url ?? data.url;
-  if (playUrl) actions.push({ text: 'Play', url: playUrl });
+  if (playUrl) actions.push({ text: 'Play', url: playUrl, kind: 'play' });
 
   for (const action of data.actions ?? []) {
-    if (action?.text && action?.url) actions.push({ text: action.text, url: action.url });
+    if (action?.text && action?.url) {
+      actions.push({ text: action.text, url: action.url, ...(action.kind ? { kind: action.kind } : {}) });
+    }
   }
 
+  // The LMD page is where the puzzle was published, not where it's solved —
+  // the solvable link is already above as `play`.
   if (data.url && data.url !== playUrl) {
-    actions.push({ text: 'LMD', url: data.url });
+    actions.push({ text: 'LMD', url: data.url, kind: 'site' });
   }
 
   return actions;
