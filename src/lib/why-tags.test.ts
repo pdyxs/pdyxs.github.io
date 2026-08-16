@@ -1,13 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
-  VIEWABLE_MAX_PROSE,
   WHY_BUYABLE,
   WHY_PLAYABLE,
   WHY_VIEWABLE,
   deriveWhyTags,
   isBuyable,
   isPlayable,
-  isViewable,
 } from './why-tags';
 import { resolveActions } from './card-actions';
 import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
@@ -42,31 +40,6 @@ describe('isPlayable', () => {
   });
 });
 
-describe('isViewable', () => {
-  it('is true for a header image with a caption-length body', () => {
-    expect(isViewable({ image: 'photo.jpg', body: 'A puffin, landing.' })).toBe(true);
-  });
-
-  it('is false without a header image, however short the body', () => {
-    expect(isViewable({ body: 'A puffin, landing.' })).toBe(false);
-  });
-
-  it('is false once the body is long enough to be a read', () => {
-    expect(isViewable({ image: 'photo.jpg', body: 'x '.repeat(VIEWABLE_MAX_PROSE) })).toBe(false);
-  });
-
-  it('measures prose, not markdown: inline images and links do not count', () => {
-    // A body that is a run of image embeds is still a caption's worth of words.
-    const body = `![](a.png)\n![](b.png)\n[a link](https://a-very-long-url.example.com/${'x'.repeat(400)})`;
-    expect(body.length).toBeGreaterThan(VIEWABLE_MAX_PROSE);
-    expect(isViewable({ image: 'photo.jpg', body })).toBe(true);
-  });
-
-  it('is true for a header image with no body at all', () => {
-    expect(isViewable({ image: 'photo.jpg' })).toBe(true);
-  });
-});
-
 describe('isBuyable', () => {
   it('is true for a buy action', () => {
     expect(isBuyable({ actions: [{ text: 'Buy a nice copy', url: 'https://ko-fi.com/x', kind: 'buy' }] })).toBe(true);
@@ -80,25 +53,27 @@ describe('isBuyable', () => {
 describe('deriveWhyTags', () => {
   it('emits every affordance a card qualifies for, in panel order', () => {
     const tags = deriveWhyTags({
-      image: 'box.jpg',
-      body: 'A co-op game about escaping space.',
       actions: [
         { text: 'Play it', url: 'https://x', kind: 'play' },
         { text: 'Buy a nice copy', url: 'https://y', kind: 'buy' },
       ],
-    });
+    }, { viewable: 'always' });
     expect(tags).toEqual([WHY_PLAYABLE, WHY_VIEWABLE, WHY_BUYABLE]);
   });
 
   it('emits nothing for a card that qualifies for nothing', () => {
-    expect(deriveWhyTags({ body: 'An essay.'.repeat(200) })).toEqual([]);
+    expect(deriveWhyTags({})).toEqual([]);
   });
 
-  it('`always` forces an affordance the derivation would not have given', () => {
-    // The art-card case: genuinely visual, write-up too long for the signal.
-    const source = { image: 'print.jpg', body: 'x '.repeat(VIEWABLE_MAX_PROSE) };
-    expect(deriveWhyTags(source)).toEqual([]);
-    expect(deriveWhyTags(source, { viewable: 'always' })).toEqual([WHY_VIEWABLE]);
+  it('`viewable` is never derived — only `always` ever adds it', () => {
+    // Issue #96: viewable used to derive from image + short body. It no
+    // longer derives from anything; curation is the only way in.
+    expect(deriveWhyTags({})).toEqual([]);
+    expect(deriveWhyTags({}, { viewable: 'always' })).toEqual([WHY_VIEWABLE]);
+  });
+
+  it('`viewable: never` is a no-op, since nothing would have derived it anyway', () => {
+    expect(deriveWhyTags({}, { viewable: 'never' })).toEqual([]);
   });
 
   it('`never` suppresses an affordance the derivation would have given', () => {
@@ -108,12 +83,8 @@ describe('deriveWhyTags', () => {
   });
 
   it('overrides are per-value: one does not touch the others', () => {
-    const source = {
-      image: 'box.jpg',
-      body: 'Short.',
-      actions: [{ text: 'Play it', url: 'https://x', kind: 'play' as const }],
-    };
-    expect(deriveWhyTags(source, { playable: 'never' })).toEqual([WHY_VIEWABLE]);
+    const source = { actions: [{ text: 'Play it', url: 'https://x', kind: 'play' as const }] };
+    expect(deriveWhyTags(source, { playable: 'never', viewable: 'always' })).toEqual([WHY_VIEWABLE]);
   });
 
   it('an unrecognised override value falls through to the derivation', () => {
@@ -130,11 +101,9 @@ describe('the affordance filter generator', () => {
 
   it('merges its tags into the card tag list without disturbing existing ones', () => {
     const tags = generatedTagsForCard(['what:games/analog'], {
-      image: 'box.jpg',
-      body: 'Short.',
       actions: [{ text: 'Play it', url: 'https://x', kind: 'play' }],
     });
-    expect(tags).toEqual(expect.arrayContaining(['what:games/analog', WHY_PLAYABLE, WHY_VIEWABLE]));
+    expect(tags).toEqual(expect.arrayContaining(['what:games/analog', WHY_PLAYABLE]));
   });
 
   it('does not duplicate a why tag a card already carries', () => {

@@ -2,10 +2,14 @@
 // it is about (`what`), when it happened (`when`), where (`where`) or who was
 // involved (`who`).
 //
-// Three of the five `why` values are derived here; the other two
-// (`why:learn/*`) are curation and are authored by hand, because a generator
-// that could tag them would tag all ~154 travel cards and the whole point is
-// the handful worth reading.
+// Two of the five `why` values are derived here (`playable`, `buyable`); the
+// other three — `viewable` and the two `why:learn/*` topics — are curation
+// and are authored by hand. `viewable` used to be derived (image + short
+// body); issue #96 retired that in favour of `viewable: always` alone, for
+// the same reason `why:learn/travel` was never a generator over the ~154
+// travel cards: a mechanical check answers "does this have a picture", not
+// "is this worth looking at", and the two questions have different answers
+// on most of the Instagram-era archive.
 //
 // Pure: every function takes plain card data and returns plain data. The
 // generator shell that feeds it lives in filter-generators.ts.
@@ -14,7 +18,6 @@
 // which Node build scripts load via type stripping (no extension resolution).
 
 import type { Action } from './card-actions.ts';
-import { EXCERPT_MAX_LENGTH, stripMarkdown } from './description.ts';
 
 export const WHY_PLAYABLE = 'why:playable';
 export const WHY_VIEWABLE = 'why:viewable';
@@ -23,26 +26,10 @@ export const WHY_BUYABLE = 'why:buyable';
 /** Every affordance value the generator can emit, in panel order. */
 export const WHY_AFFORDANCES = [WHY_PLAYABLE, WHY_VIEWABLE, WHY_BUYABLE] as const;
 
-/**
- * The longest markdown-stripped body that still counts as a caption rather
- * than a read: two summaries' worth (resolveDescription truncates a body to
- * EXCERPT_MAX_LENGTH to make one). Under this, the words are describing the
- * picture; over it, the picture is illustrating the words.
- *
- * At 320 this covers 133 cards — 121 of the Instagram-era micro-posts, ten
- * project cards, and only two story chapters. Doubling it again pulls in
- * chapters of prose, which is exactly what `viewable` should not mean.
- */
-export const VIEWABLE_MAX_PROSE = EXCERPT_MAX_LENGTH * 2;
-
 /** The card data the affordance decisions read. */
 export type WhySource = {
   /** Already-resolved action links — see resolveActions in card-actions.ts. */
   actions?: Action[];
-  /** Frontmatter `image`: a bare colocated filename or a remote URL. */
-  image?: string;
-  /** The card's raw markdown body. */
-  body?: string;
 };
 
 /** True when the card carries at least one action of the given kind. */
@@ -61,22 +48,6 @@ function hasActionKind(source: WhySource, kind: Action['kind']): boolean {
  */
 export function isPlayable(source: WhySource): boolean {
   return hasActionKind(source, 'play');
-}
-
-/**
- * `why:viewable` — the card is something to look at.
- *
- * A header image plus a body short enough to be its caption. The image alone
- * says almost nothing (246 of 296 cards have one); it is the *absence* of an
- * essay behind it that means the picture is the content.
- *
- * The failure mode is a genuinely visual card with a long write-up — the art
- * pieces sit just over the line — which is what the `viewable: always`
- * frontmatter override is for.
- */
-export function isViewable(source: WhySource): boolean {
-  if (!source.image) return false;
-  return stripMarkdown(source.body ?? '').length <= VIEWABLE_MAX_PROSE;
 }
 
 /**
@@ -99,14 +70,24 @@ export const WHY_ALWAYS = 'always';
 /** Forces the affordance off, whatever the card's actions or body say. */
 export const WHY_NEVER = 'never';
 
+/** `why:viewable` is never derived — see the module comment. Its slot in
+ * the uniform decision loop below always declines, so only `viewable: always`
+ * ever adds the tag. */
+function neverDerived(_source: WhySource): boolean {
+  return false;
+}
+
 /**
  * Every affordance tag this card carries, in panel order.
  *
  * Each value's own override key wins outright over its derivation — the same
- * hybrid as `era`/`location`, split three ways because the three affordances
+ * hybrid `era`/`location` use, split three ways because the three affordances
  * are independent facts and a card is routinely two of them. An unrecognised
  * override value falls through to the derivation rather than suppressing it:
  * a typo should leave the card as it was, not silently drop it out of a filter.
+ * For `playable`/`buyable` that derivation is a real check; for `viewable`
+ * it's `neverDerived`, so the override IS the mechanism, not an escape hatch
+ * from one.
  */
 export function deriveWhyTags(
   source: WhySource,
@@ -114,7 +95,7 @@ export function deriveWhyTags(
 ): string[] {
   const decided: Array<[string, string, (s: WhySource) => boolean]> = [
     [WHY_PLAYABLE, 'playable', isPlayable],
-    [WHY_VIEWABLE, 'viewable', isViewable],
+    [WHY_VIEWABLE, 'viewable', neverDerived],
     [WHY_BUYABLE, 'buyable', isBuyable],
   ];
 

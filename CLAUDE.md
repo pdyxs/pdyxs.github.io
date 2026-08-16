@@ -919,7 +919,7 @@ an unkinded action renders normally and simply tells the generators nothing —
 so a new action row that forgets it fails silently, in the direction of
 under-tagging.
 
-### The `why` dimension is affordances, derived per card
+### The `why` dimension is affordances, and only two of five are derived
 
 `why` is the one dimension with no cards under it: `src/content/why/` holds
 declarations only, because "what this offers you" is a property of a card that
@@ -929,33 +929,36 @@ filter value, so an identity there would display nowhere while making
 `generate-card-templates.mjs` emit a Templater scaffold for creating cards in a
 folder that must never hold one.
 
-Three of its five values are generated (`whyAffordanceGenerator`, decisions in
+Two of its five values are generated (`whyAffordanceGenerator`, decisions in
 `src/lib/why-tags.ts`):
 
 | value | predicate | override |
 |---|---|---|
 | `why:playable` | any resolved action with `kind: play` | `playable: always \| never` |
-| `why:viewable` | a header `image` **and** a markdown-stripped body ≤ `VIEWABLE_MAX_PROSE` | `viewable: always \| never` |
 | `why:buyable` | any resolved action with `kind: buy` | `buyable: always \| never` |
 
-Three override keys rather than one `why:`-shaped field: the affordances are
-independent facts and a card is routinely two of them, so a single field would
-have to carry a list through override plumbing that is string-only by design.
-An unrecognised override value falls through to the derivation — a typo should
-leave a card where it was, not silently drop it out of a filter.
+Three override keys exist rather than one `why:`-shaped field: the affordances
+are independent facts and a card is routinely two of them, so a single field
+would have to carry a list through override plumbing that is string-only by
+design. An unrecognised override value falls through to the derivation — a
+typo should leave a card where it was, not silently drop it out of a filter.
 
-`viewable` is the one that needs judgement. The image alone says nothing (246 of
-296 cards have one); it is the *absence* of an essay behind it that means the
-picture is the content, so the threshold is `2 × EXCERPT_MAX_LENGTH` — the body
-fits in about two summary lines. That keeps prose out (two story chapters, not
-nineteen) at the cost of the art cards, whose write-ups run just over; those are
-what `viewable: always` is for.
+**`why:viewable` is not derived at all (issue #96).** It used to be a header
+`image` plus a markdown-stripped body under a length threshold — "does this
+have a picture", which is a different question from "is this worth looking
+at", and the two questions disagreed on most of the Instagram-era archive: the
+mechanical version caught 133 cards, dominated by micro-posts, while missing
+nothing about which ones were actually striking. `viewable: always` is now the
+*only* way a card becomes `why:viewable` — pure curation, the same shape as
+the two `learn/*` topics below. `viewable: never` still parses but is a no-op,
+kept only so the three override keys stay a uniform shape.
 
-The other two values, `why:learn/game-development` and `why:learn/travel`, are
-**authored**, and `why/learn/_config.yaml` is load-bearing for exactly the
-reason the affiliation containers are: `filterVisibleNodes` drops an undeclared
-node *and recurses into its children*, so an undeclared container takes both
-perfectly-declared topics out of the panel with no error anywhere.
+The two `why:learn/*` values, `why:learn/game-development` and
+`why:learn/travel`, are **authored** the same way, and `why/learn/_config.yaml`
+is load-bearing for exactly the reason the affiliation containers are:
+`filterVisibleNodes` drops an undeclared node *and recurses into its
+children*, so an undeclared container takes both perfectly-declared topics out
+of the panel with no error anywhere.
 
 ### Canonical tag slugs in content; aliases only in tag YAML
 

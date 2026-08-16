@@ -122,11 +122,19 @@ const content = defineCollection({
         // src/lib/why-tags.ts). Also settable per-folder via _config.yaml,
         // where they cascade nearest-wins.
         //
-        // These are the escape hatch for the two ways a derivation can be
-        // wrong: `always` for the visual art card whose write-up is too long
-        // for the "short body" signal, `never` for the play link that leads
-        // somewhere no longer playable. Each key names its value, so a card
-        // that is two of the three says so twice — there is no combined field.
+        // `playable`/`buyable` are the escape hatch for the two ways their
+        // derivation can be wrong: `always` when the signal missed something
+        // real, `never` for a play link that leads somewhere no longer
+        // playable. Each key names its value, so a card that is two of the
+        // three says so twice — there is no combined field.
+        //
+        // `viewable` is different: it is NOT derived at all (issue #96 —
+        // image-plus-short-body answered "does this have a picture", not "is
+        // this worth looking at", and caught the whole Instagram-era archive
+        // along with anything actually striking). `always` is the only way a
+        // card becomes `why:viewable` — curate deliberately, the same as
+        // `why:learn/*`. `never` on a `viewable` card is therefore a no-op,
+        // kept only so the three keys stay a uniform shape.
         playable: z.enum(['always', 'never']).optional(),
         viewable: z.enum(['always', 'never']).optional(),
         buyable: z.enum(['always', 'never']).optional(),

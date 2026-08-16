@@ -243,8 +243,6 @@ export function resolveCard(
     date: data.date,
     overrides,
     actions: resolveActions(data as ActionSource),
-    image: data.image,
-    body,
   });
   // Dev-only, and deliberately not a FilterGenerator — see
   // uninspected-facet.ts for why it can't go through the same allValues()/

@@ -43,10 +43,6 @@ export type FilterGeneratorCard = {
    * reaching for raw frontmatter and re-deriving that fold.
    */
   actions?: Action[];
-  /** Frontmatter `image` — presence is half of the `why:viewable` signal. */
-  image?: string;
-  /** The card's raw markdown body — the length of its prose is the other half. */
-  body?: string;
   /**
    * Explicit override attributes, keyed by the frontmatter/`_config.yaml`
    * attribute name a generator declares in `overrideKeys`. Populated by
@@ -187,8 +183,8 @@ const puzzleDifficultyGenerator: FilterGenerator = {
  */
 const whyAffordanceGenerator: FilterGenerator = {
   overrideKeys: [...WHY_OVERRIDE_KEYS],
-  apply(tags, { actions, image, body, overrides }) {
-    const derived = deriveWhyTags({ actions, image, body }, overrides ?? {});
+  apply(tags, { actions, overrides }) {
+    const derived = deriveWhyTags({ actions }, overrides ?? {});
     const missing = derived.filter(tag => !tags.includes(tag));
     return missing.length === 0 ? tags : [...tags, ...missing];
   },
