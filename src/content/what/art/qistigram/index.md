@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Qistigram
 description: A concept for quantum-powered Instagram stories
 tags:
