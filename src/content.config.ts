@@ -130,12 +130,18 @@ const content = defineCollection({
         playable: z.enum(['always', 'never']).optional(),
         viewable: z.enum(['always', 'never']).optional(),
         buyable: z.enum(['always', 'never']).optional(),
-        // TEMPORARY (pre-MVP): manual "I have eyeballed this card" flag. Set on
-        // every card by scripts/backfill-inspected.mjs so Obsidian's Properties
-        // view renders it as a checkbox on every post; tick it as you go and
-        // watch the `not-inspected` count on the dev-only audit lens fall to
-        // zero. Delete this field, the finding in src/lib/audit.ts and the
-        // backfill script together once the sweep is done.
+        // Manual "a human has read this card end to end" flag. Obsidian's
+        // Properties view only renders a checkbox for a key that actually
+        // exists in the file — scripts/backfill-inspected.mjs stamps it onto
+        // any card that lacks it (idempotent, safe to re-run). Absence counts
+        // the same as `false` everywhere this is read.
+        //
+        // Not a one-off: any automated edit to a card's frontmatter or body —
+        // a script, a generator, an AI agent — must reset this to `false` as
+        // part of that edit (see CLAUDE.md, "An automated edit to a card
+        // re-flags it `inspected: false`"). It also drives the dev-only
+        // `why:uninspected` filter (src/lib/uninspected-facet.ts), and the
+        // `not-inspected` finding on the dev-only audit lens (src/lib/audit.ts).
         inspected: z.boolean().optional(),
         renderer: z.string().optional(),
         // Nav renderer name (owns the card shell + custom navigation, e.g.

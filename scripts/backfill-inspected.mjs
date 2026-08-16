@@ -1,17 +1,22 @@
 #!/usr/bin/env node
-// TEMPORARY (pre-MVP) — one-off backfill of the `inspected` frontmatter flag.
+// Backfill of the `inspected` frontmatter flag, onto any card that lacks it.
 //
 // Obsidian's Properties view only renders a checkbox for a boolean property
 // that actually EXISTS in the file, so "absent means uninspected" would leave
 // you typing the key on every card instead of ticking a box. This writes
-// `inspected: false` into every card that lacks it, once.
+// `inspected: false` into every card that lacks it.
 //
-// Deliberately NOT wired into predev/prebuild: it mutates authored content, and
-// it must never re-stamp `false` over a card you have already ticked. Run it by
-// hand (`node scripts/backfill-inspected.mjs`) if new cards need stamping.
+// An ongoing tool, not a one-off: `inspected` is a permanent part of the
+// editorial workflow (see CLAUDE.md, "An automated edit to a card re-flags it
+// `inspected: false`") — it just isn't the mechanism that RESETS the flag on
+// an automated edit (that happens inline, in the edit itself), only the one
+// that gives a card its checkbox in the first place. Run it whenever a card
+// somehow lacks the key — a hand-authored card whose Templater scaffold left
+// `inspected` commented out and uncommented later, say.
 //
-// Delete this together with the `inspected` schema field (src/content.config.ts)
-// and the `not-inspected` finding (src/lib/audit.ts) once the sweep is done.
+// Deliberately NOT wired into predev/prebuild: it mutates authored content,
+// and running it unattended on every dev boot risks racing a concurrent
+// Obsidian edit. Run it by hand: `node scripts/backfill-inspected.mjs`.
 //
 // Idempotent: a file that already has an `inspected:` key is left untouched,
 // whatever its value.

@@ -1101,27 +1101,46 @@ Two consequences for code:
   container folder or a schema field means a regen. See
   `src/content/_templates/README.md`.
 
-### An automated edit to a card re-flags it `inspected: false`
+### `inspected` is a permanent editorial flag, not a pre-MVP sweep
 
-Any script, generator or AI agent that changes a card's frontmatter **or**
-body — not a human editing directly in Obsidian — must set `inspected: false`
-on that card's frontmatter as part of the same change. This reuses the
-existing pre-MVP read-through flag (`src/content.config.ts`, `src/lib/audit.ts`,
-`scripts/backfill-inspected.mjs`) rather than adding a second mechanism: an
-automated edit is exactly the kind of change Paul hasn't personally read yet,
-so it belongs on the same worklist the `not-inspected` audit finding already
-surfaces. Set it even if the card was previously ticked `true` — an automated
-change is new content a human hasn't seen, regardless of what was reviewed
-before it.
+`inspected` (`src/content.config.ts`) answers one question forever: has a
+human read this card end to end since its last change? It started as a
+one-off pre-launch backfill and stayed — the mechanism turned out to be a
+general-purpose "something changed this without me looking" signal, useful
+long after the initial sweep finishes. Three things read it, and all three
+are permanent:
+
+- **`scripts/backfill-inspected.mjs`** stamps `inspected: false` onto any card
+  that lacks the key, so Obsidian's Properties view has a checkbox to render.
+  Idempotent, run by hand — never wired into `predev`/`prebuild`, since it
+  mutates authored content and must never race a concurrent Obsidian edit.
+- **The `not-inspected` finding** on the dev-only audit lens (`src/lib/audit.ts`)
+  — the flat worklist view, grouped with every other content finding.
+- **The dev-only `why:uninspected` filter** (`src/lib/uninspected-facet.ts`) —
+  the same flag, but combinable with every other dimension while browsing
+  ("uninspected puzzles", "uninspected posts from 2019"), which the flat
+  audit list can't do. See that file for why it's deliberately *not* a
+  `FilterGenerator`: the value must never receive a stack-manifest short code.
+
+**The rule this drives:** any script, generator or AI agent that changes a
+card's frontmatter **or** body — not Paul editing directly in Obsidian — must
+set `inspected: false` on that card's frontmatter as part of the same change.
+An automated edit is exactly the kind of change nobody has personally read
+yet, so it belongs on the worklist the flag already drives. Set it even if the
+card was previously ticked `true` — an automated change is new content a
+human hasn't seen, regardless of what was reviewed before it.
 
 This does **not** apply to `content: auto-sync` commits that carry Paul's own
 edits from Obsidian mobile — those are authored directly by him and need no
 re-flagging. It also doesn't apply to `scripts/backfill-inspected.mjs` itself,
 which only ever writes `inspected: false` onto a card that has no `inspected`
-key at all.
+key at all — that is the one write this rule doesn't cover, since there was
+nothing there to have been "read" yet.
 
-This rule — and the flag it reuses — goes away together: see the `inspected`
-field's own TEMPORARY comment for the three other pieces that retire with it.
+New cards from the Templater scaffold do **not** get `inspected: false` by
+default — the field is commented out there, deliberately. A card Paul writes
+himself needs no confirmation of his own words; the flag is scoped to content
+something *other than him* touched.
 
 ### Experiments live on dev-only routes
 

@@ -11,6 +11,7 @@ import { computeStatusVisibility, resolveStatus } from './status-visibility';
 import { resolveDescription } from './description';
 import { resolveCardPriority, tagPrioritySum, type TagPriorities } from './priority';
 import { DEFAULT_FOLDER_SORT, resolveSortValue, type FolderSort } from './folder-sort';
+import { withUninspectedTag } from './uninspected-facet';
 import type { StatusValue, StatusVisibility } from './status-visibility';
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
@@ -46,6 +47,10 @@ export type CardFrontmatter = {
   order?: number;
   priority?: number;
   difficulty?: string;
+  /** Has a human read this card end to end since its last edit? See
+   * src/lib/uninspected-facet.ts for the dev-only `why:uninspected` filter it
+   * drives, and src/lib/audit.ts for the `not-inspected` finding. */
+  inspected?: boolean;
   titleSuffix?: string;
   width?: string;
   dateLabel?: string;
@@ -241,6 +246,10 @@ export function resolveCard(
     image: data.image,
     body,
   });
+  // Dev-only, and deliberately not a FilterGenerator — see
+  // uninspected-facet.ts for why it can't go through the same allValues()/
+  // manifest path as the others.
+  const tagsWithFacets = withUninspectedTag(tags, data.inspected, ctx.isDev);
 
   const sort = cascade.sort ?? DEFAULT_FOLDER_SORT;
 
@@ -255,7 +264,7 @@ export function resolveCard(
     title,
     description,
     date: data.date,
-    tags,
+    tags: tagsWithFacets,
     renderer: data.renderer ?? cascade.renderer ?? 'card',
     image: data.image,
     contentHash: computeContentHash(title, description, body),

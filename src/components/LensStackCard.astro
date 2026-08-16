@@ -34,6 +34,7 @@ import { cardOwnValues } from '../lib/card-identity';
 import { DIMENSIONS, emptyFilterState } from '../dimensions';
 import type { FilterState } from '../dimensions';
 import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '../lib/lens-components';
+import { UNINSPECTED_TAG } from '../lib/uninspected-facet';
 import LensFilterShell from './LensFilterShell.svelte';
 
 interface Props {
@@ -83,7 +84,17 @@ if (lens) {
   const registry = await getTagRegistry(listedCards);
   groupOrder = await getDimensionGroupOrder();
   tagDisplay = flattenTagDisplay(registry);
-  const declaredValues = FIVE_W_DIMENSIONS.flatMap(d => registry[d].values);
+  // Dev-only `why:uninspected` (see uninspected-facet.ts): not a real tag
+  // declaration, so it isn't in the registry — declared here instead, only in
+  // dev, so filterVisibleNodes shows it as a chip rather than dropping it as
+  // undeclared, and it never appears in a production build.
+  if (import.meta.env.DEV) {
+    tagDisplay[UNINSPECTED_TAG] = { name: 'Uninspected', declared: true };
+  }
+  const declaredValues = [
+    ...FIVE_W_DIMENSIONS.flatMap(d => registry[d].values),
+    ...(import.meta.env.DEV ? [UNINSPECTED_TAG] : []),
+  ];
 
   // Collapse opted-in folders (e.g. story series) to a single representative
   // card BEFORE building hierarchies/counts and serialising — so the results

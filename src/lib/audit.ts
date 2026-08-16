@@ -59,9 +59,10 @@ export interface AuditCard {
   /** Raw markdown body, frontmatter stripped. */
   body?: string;
   /**
-   * TEMPORARY (pre-MVP): frontmatter `inspected` — has a human eyeballed this
-   * card? Absent counts as false, so a card that never got the backfill still
-   * shows up on the worklist. Goes away with the `not-inspected` finding.
+   * Frontmatter `inspected` — has a human read this card end to end since its
+   * last change? Absent counts as false, so a brand-new card, or one an
+   * automated edit reset (see CLAUDE.md), shows up on the worklist until
+   * someone ticks it.
    */
   inspected?: boolean;
   /**
@@ -278,13 +279,15 @@ const FINDING_SPECS: readonly FindingSpec[] = [
         ? []
         : undefined,
   },
-  // TEMPORARY (pre-MVP) — the manual pre-launch read-through worklist. Unlike
-  // every other finding here it detects nothing about the content: it just
-  // reports a human judgement recorded in frontmatter. It sits below the
-  // mechanical findings (until the sweep is underway it catches nearly every
-  // card and would bury them) but above `no-authored-tags`, because the
-  // read-through is the active worklist and tagging follows from it.
-  // Remove with the `inspected` schema field and scripts/backfill-inspected.mjs.
+  // The ongoing read-through worklist. Unlike every other finding here it
+  // detects nothing about the content itself: it reports a human judgement
+  // recorded in frontmatter, kept current by automated edits resetting it
+  // (see CLAUDE.md). It sits below the mechanical findings — during the
+  // initial pre-launch sweep it catches nearly every card and would bury
+  // them — but above `no-authored-tags`, since a read-through naturally
+  // precedes tagging. See also src/lib/uninspected-facet.ts, the dev-only
+  // `why:uninspected` filter that reads the same flag for combining with
+  // other dimensions while browsing.
   {
     type: 'not-inspected',
     label: 'Not yet inspected',
