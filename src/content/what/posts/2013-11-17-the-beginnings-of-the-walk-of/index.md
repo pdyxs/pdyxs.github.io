@@ -6,6 +6,7 @@ tags:
   - where/work/seethrough
 image: "17842860628027766.jpg"
 source: instagram
+viewable: always
 ---
 
 The beginnings of the walk of art

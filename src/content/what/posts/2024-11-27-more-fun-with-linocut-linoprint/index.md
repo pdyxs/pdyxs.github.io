@@ -13,6 +13,7 @@ images:
   - "18040902788515305.jpg"
   - "18046978436034735.jpg"
 source: instagram
+viewable: always
 ---
 
 More fun with #linocut #linoprint

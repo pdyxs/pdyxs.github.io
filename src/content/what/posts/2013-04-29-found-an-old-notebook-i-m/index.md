@@ -7,6 +7,7 @@ tags:
   - where/work/seethrough
 image: "17842398724027766.jpg"
 source: instagram
+viewable: always
 ---
 
 Found an old notebook. I'm pretty sure this is an old design for a Particulars level, it's probably over a year old

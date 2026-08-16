@@ -9,6 +9,7 @@ images:
   - "17877611563109542.jpg"
   - "17877892783103554.jpg"
 source: instagram
+viewable: always
 ---
 
 A closterfoss

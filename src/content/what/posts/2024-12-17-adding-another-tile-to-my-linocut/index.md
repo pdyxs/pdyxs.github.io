@@ -9,6 +9,7 @@ image: "17951030222860243.jpg"
 images:
   - "17887852422158754.jpg"
 source: instagram
+viewable: always
 ---
 
 Adding another tile to my #linocut project

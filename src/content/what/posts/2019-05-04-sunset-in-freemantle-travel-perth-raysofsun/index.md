@@ -9,6 +9,7 @@ tags:
   - "travel"
 image: "17994649027221474.jpg"
 source: instagram
+viewable: always
 ---
 
 Sunset in freemantle #travel #perth #raysofsun #sunset

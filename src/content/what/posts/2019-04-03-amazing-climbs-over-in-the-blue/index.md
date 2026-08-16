@@ -8,6 +8,7 @@ images:
   - "18043781215074933.jpg"
   - "17985754540215819.jpg"
 source: instagram
+viewable: always
 ---
 
 Amazing climbs over in the Blue mountains, it's great to be climbing again, and to be back in the Aussie bush

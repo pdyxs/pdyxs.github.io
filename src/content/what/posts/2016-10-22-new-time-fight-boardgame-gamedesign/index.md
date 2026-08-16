@@ -8,6 +8,7 @@ tags:
   - what/games/analog/time-fight
 image: "17844189316134549.jpg"
 source: instagram
+viewable: always
 ---
 
 New time fight #boardgame #gamedesign

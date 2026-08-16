@@ -13,6 +13,7 @@ images:
   - "17875653007307395.jpg"
   - "17965462876220774.jpg"
 source: instagram
+viewable: always
 ---
 
 Quilotoa! Adding to my 'beautiful places hidden by fog' collection #nomad #travel #naturalfilter

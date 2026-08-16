@@ -7,6 +7,7 @@ tags:
   - "didimentiontheyhavebubbles"
 image: "17996461120188112.jpg"
 source: instagram
+viewable: always
 ---
 
 Bubbles! At Quito's museum of water. Photo by @federicabruniera 

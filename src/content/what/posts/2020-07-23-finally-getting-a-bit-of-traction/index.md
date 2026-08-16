@@ -11,6 +11,7 @@ tags:
   - what/games/digital/particulars
 image: "17849018243230515.mp4"
 source: instagram
+viewable: always
 ---
 
 Finally getting a bit of traction with the Particulars education edition - here's a really early concept of how this might look on a website

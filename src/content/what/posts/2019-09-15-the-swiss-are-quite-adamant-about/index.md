@@ -12,6 +12,7 @@ tags:
   - what/art/qistigram
 image: "17844507145649302.jpg"
 source: instagram
+viewable: always
 ---
 
 The Swiss are quite adamant about what does and does not constitute a suitable picnic spot

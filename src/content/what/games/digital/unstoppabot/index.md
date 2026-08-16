@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: Unstoppabot
 description: A hybrid of an infinitely running bot and a puzzle game, complemented with sarcastic wit
 images:
@@ -24,5 +24,6 @@ meta:
     values:
       - Lead Developer
       - Designer
+viewable: always
 ---
 Unstoppabot is a hybrid of an infinite runner and a puzzle game, revolving around a robot that cannot stop, but which needs help to get past various traps and terrain. The game was released for iPhone and iPad.

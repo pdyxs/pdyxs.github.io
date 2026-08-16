@@ -6,6 +6,7 @@ tags:
   - where/work/seethrough
 image: "17842860031027766.jpg"
 source: instagram
+viewable: always
 ---
 
 @SeeThruStudios move part 2 - the tech

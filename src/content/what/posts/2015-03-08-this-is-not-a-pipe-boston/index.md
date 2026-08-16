@@ -6,6 +6,7 @@ tags:
   - "art"
 image: "17843035390027766.jpg"
 source: instagram
+viewable: always
 ---
 
 This is not a pipe, Boston edition #art

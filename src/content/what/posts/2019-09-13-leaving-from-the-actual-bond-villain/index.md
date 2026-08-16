@@ -7,6 +7,7 @@ tags:
   - what/art/qistigram
 image: "17894669362377996.jpg"
 source: instagram
+viewable: always
 ---
 
 Leaving from the actual bond villain lair where the ridiculous #qiskitcamp hackathon is

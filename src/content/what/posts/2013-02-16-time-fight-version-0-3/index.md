@@ -6,6 +6,7 @@ tags:
   - what/games/analog/time-fight
 image: "17842312690027766.jpg"
 source: instagram
+viewable: always
 ---
 
 Time fight version 0.3

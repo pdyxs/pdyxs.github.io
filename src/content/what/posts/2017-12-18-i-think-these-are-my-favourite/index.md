@@ -9,6 +9,7 @@ tags:
   - "recycling"
 image: "17900221414118754.jpg"
 source: instagram
+viewable: always
 ---
 
 I think these are my favourite rubbish bins ever. They look fantastic and are made out of recycled tyres #recycling #design #neverthoughtidsaythat #alsothetempleherewasprettyrad

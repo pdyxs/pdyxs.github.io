@@ -7,6 +7,7 @@ tags:
   - what/games/analog/gotta-get-outta-this-space
 image: "17860070647977273.jpg"
 source: instagram
+viewable: always
 ---
 
 Just picked up the cover sheets for the #gottagetouttathisspace deluxe edition!

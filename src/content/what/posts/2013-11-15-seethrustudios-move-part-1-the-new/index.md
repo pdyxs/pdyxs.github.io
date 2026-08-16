@@ -6,6 +6,7 @@ tags:
   - where/work/seethrough
 image: "17842860028027766.jpg"
 source: instagram
+viewable: always
 ---
 
 @SeeThruStudios move part 1 (the new office!)

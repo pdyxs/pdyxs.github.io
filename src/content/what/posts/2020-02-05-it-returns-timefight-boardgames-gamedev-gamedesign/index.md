@@ -10,6 +10,7 @@ tags:
   - what/games/analog/time-fight
 image: "18105674827111057.jpg"
 source: instagram
+viewable: always
 ---
 
 It returns... #timefight #boardgames #gamedev #gamedesign

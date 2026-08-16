@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: The Laser Harp
 description: An interactive artwork celebrating the International Year of Light
 images:
@@ -41,6 +41,7 @@ meta:
   - label: Exhibited at
     values:
       - Vivid Sydney, 2015
+viewable: always
 ---
 The Laser Harp is a musical instrument which combines light, sound and interactive art.
 

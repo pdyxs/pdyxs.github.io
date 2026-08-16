@@ -6,6 +6,7 @@ tags:
   - where/work/seethrough
 image: "17842860310027766.jpg"
 source: instagram
+viewable: always
 ---
 
 Moving complete! Setup... Somewhat done, tomorrow's problem

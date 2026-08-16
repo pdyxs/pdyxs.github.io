@@ -6,6 +6,7 @@ tags:
   - what/art/lino-printing
 image: "18354718222138600.jpg"
 source: instagram
+viewable: always
 ---
 
 Last year I started playing with lino printing.This is the first print that I made.

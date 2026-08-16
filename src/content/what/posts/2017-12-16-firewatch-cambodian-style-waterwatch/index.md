@@ -7,6 +7,7 @@ tags:
   - "waterwatch"
 image: "17887045150152336.jpg"
 source: instagram
+viewable: always
 ---
 
 #firewatch, Cambodian style... #waterwatch?

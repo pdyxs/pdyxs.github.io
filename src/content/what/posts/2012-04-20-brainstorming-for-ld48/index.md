@@ -7,6 +7,7 @@ tags:
   - what/games/digital/tiny-world-the-musical-the-game
 image: "17842275751027766.jpg"
 source: instagram
+viewable: always
 ---
 
 Brainstorming for #ld48

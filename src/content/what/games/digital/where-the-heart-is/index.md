@@ -25,6 +25,7 @@ meta:
   - label: Role
     values:
       - Creator
+viewable: always
 ---
 *Where The Heart Is* is an interactive piece that explores the feelings associated with travel and having a distributed home.
 

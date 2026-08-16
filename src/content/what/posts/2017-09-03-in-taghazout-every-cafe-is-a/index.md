@@ -6,6 +6,7 @@ tags:
   - "somanycats"
 image: "17873606194132205.jpg"
 source: instagram
+viewable: always
 ---
 
 In Taghazout, every cafe is a cat cafe... #somanycats

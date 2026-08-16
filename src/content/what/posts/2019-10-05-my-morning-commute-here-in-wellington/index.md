@@ -16,6 +16,7 @@ images:
   - "18034306414211604.jpg"
   - "18038568601206599.jpg"
 source: instagram
+viewable: always
 ---
 
 My morning commute here in Wellington

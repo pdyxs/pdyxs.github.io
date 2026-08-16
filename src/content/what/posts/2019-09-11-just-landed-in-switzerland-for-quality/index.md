@@ -6,6 +6,7 @@ tags:
   - what/art/qistigram
 image: "17855558068539004.jpg"
 source: instagram
+viewable: always
 ---
 
 Just landed in Switzerland for quality camp - a quantum computing hackathon! Looking forward to a weekend hacking some qbits

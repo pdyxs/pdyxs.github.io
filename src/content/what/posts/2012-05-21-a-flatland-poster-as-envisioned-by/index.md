@@ -7,6 +7,7 @@ tags:
   - where/work/seethrough
 image: "17842277551027766.jpg"
 source: instagram
+viewable: always
 ---
 
 A flatland poster, as envisioned by Louise

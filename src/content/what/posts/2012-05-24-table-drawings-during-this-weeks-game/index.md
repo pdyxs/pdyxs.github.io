@@ -6,6 +6,7 @@ tags:
   - what/games/digital/tiny-world-the-musical-the-game
 image: "17842277635027766.jpg"
 source: instagram
+viewable: always
 ---
 
 Table drawings during this weeks game engine podcast.

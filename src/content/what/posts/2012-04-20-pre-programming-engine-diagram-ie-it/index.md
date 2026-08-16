@@ -6,6 +6,7 @@ tags:
   - what/games/digital/tiny-world-the-musical-the-game
 image: "17842275754027766.jpg"
 source: instagram
+viewable: always
 ---
 
 Pre programming engine diagram (ie it's most certainly wrong so far...)

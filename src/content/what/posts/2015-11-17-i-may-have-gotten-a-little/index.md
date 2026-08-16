@@ -10,6 +10,7 @@ tags:
   - "prototype"
 image: "17842533757084973.jpg"
 source: instagram
+viewable: always
 ---
 
 I may have gotten a little distracted... #meccano #arduino #flipclock #prototype #hashtags

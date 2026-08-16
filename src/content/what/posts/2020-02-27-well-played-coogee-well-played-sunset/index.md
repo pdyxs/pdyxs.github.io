@@ -9,6 +9,7 @@ tags:
   - "sunset"
 image: "17917744393387813.jpg"
 source: instagram
+viewable: always
 ---
 
 Well played, Coogee. Well played.,.

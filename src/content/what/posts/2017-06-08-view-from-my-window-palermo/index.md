@@ -6,6 +6,7 @@ tags:
   - "palermo"
 image: "17843438218197008.jpg"
 source: instagram
+viewable: always
 ---
 
 View from my window #Palermo

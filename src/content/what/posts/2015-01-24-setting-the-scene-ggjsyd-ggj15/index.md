@@ -8,6 +8,7 @@ tags:
   - what/games/analog/houston-we-have-a
 image: "17843022229027766.jpg"
 source: instagram
+viewable: always
 ---
 
 Setting the scene... #GGJSyd #ggj15

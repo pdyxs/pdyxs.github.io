@@ -18,6 +18,7 @@ image: "17866410289397484.mp4"
 images:
   - "17961652246274877.mp4"
 source: instagram
+viewable: always
 ---
 
 A quick wip update on ‘The Neighbourhood’ project (watch the second video with audio for the explanation)

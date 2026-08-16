@@ -11,6 +11,7 @@ meta:
     values:
       - React, phonegap, firebase
 status: unlisted
+viewable: always
 ---
 
 Dot was a startup that aimed to use cryptocurrency and non-fungible tokens to make ownership of digital assets more real. They contracted me to prototype a location-based game for the launch of their platform.

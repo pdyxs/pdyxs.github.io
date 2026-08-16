@@ -6,6 +6,7 @@ tags:
   - "design"
 image: "17873009482192818.jpg"
 source: instagram
+viewable: always
 ---
 
 #design

@@ -9,6 +9,7 @@ tags:
   - what/art/the-neighbourhood
 image: "17857975039051901.jpg"
 source: instagram
+viewable: always
 ---
 
 My artwork, in a museum! #waterhouse #art #science

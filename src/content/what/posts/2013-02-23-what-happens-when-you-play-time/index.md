@@ -6,6 +6,7 @@ tags:
   - what/games/analog/time-fight
 image: "17842313650027766.jpg"
 source: instagram
+viewable: always
 ---
 
 What happens when you play time fight with time going in different directions for different players...
