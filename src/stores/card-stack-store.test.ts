@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pushToStack, removeFromStack, activateCard, replaceActiveSlot, rekeyEntry } from './card-stack-store';
+import { seedStackState, pushToStack, removeFromStack, activateCard, replaceActiveSlot, rekeyEntry } from './card-stack-store';
 import { cardEntry, lensEntry } from '../lib/stack-layout';
 import type { StackState } from '../lib/stack-layout';
 
@@ -147,5 +147,37 @@ describe('rekeyEntry collisions', () => {
       { key: 'lens/interesting', uid: 'lens/interesting', slot: 'lens/interesting#2' },
     ]);
     expect(next.activeKey).toBe('lens/interesting');
+  });
+});
+
+describe('seedStackState', () => {
+  it('seeds the sole active entry when the render has an active location', () => {
+    expect(seedStackState(cardEntry('about/me'))).toEqual({
+      entries: [{ key: 'about/me', uid: 'about/me', slot: 'about/me' }],
+      activeKey: 'about/me',
+    });
+  });
+
+  it('seeds the EMPTY stack when the render has none (#102)', () => {
+    // Not "leave the store alone": the store is module-level and every page is
+    // prerendered in one process, so an absent active location has to be
+    // written, or the page inherits the previous one's stack.
+    expect(seedStackState(null)).toEqual({ entries: [], activeKey: null });
+  });
+
+  it('hands out a fresh object each time, never a shared empty state', () => {
+    const a = seedStackState(null);
+    const b = seedStackState(null);
+    expect(a).not.toBe(b);
+    a.entries.push(cardEntry('about/me'));
+    expect(b.entries).toEqual([]);
+  });
+
+  it('replaces, rather than merges with, whatever the state was', () => {
+    // The seed is a total statement of the initial stack — a two-entry stack
+    // from the previous render leaves nothing behind.
+    const previous = pushToStack({ entries: [cardEntry('a')], activeKey: 'a' }, lensEntry('home'));
+    expect(previous.entries).toHaveLength(2);
+    expect(seedStackState(null).entries).toEqual([]);
   });
 });

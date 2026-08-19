@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
-  import { stackStore, pushToStack, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '../stores/card-stack-store';
+  import { stackStore, seedStackState, pushToStack, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '../stores/card-stack-store';
   import { computeStackLayout, cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, keyForSlot } from '../lib/stack-layout';
   import type { LocationEntry } from '../lib/stack-layout';
   import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from '../lib/lens-key';
@@ -64,16 +64,25 @@
   let pendingBrowseStack: string[] = [];
 
   // Seed store from SSR prop once at mount — untrack to silence reactive-capture warning.
+  //
+  // The write is UNCONDITIONAL (issue #102). `stackStore` is module-level and
+  // `astro build` prerenders every page in one process, so a render that seeds
+  // nothing does not start empty — it inherits whatever the previous page's
+  // render left behind. The home page, which has neither prop, was the one that
+  // inherited. Every render therefore states its own initial stack, and a render
+  // with no active location states the empty one; `seedStackState` is that
+  // decision.
   untrack(() => {
+    let entry: LocationEntry | null = null;
     if (activeUid && activeHtml) {
       fragments.seed(activeUid, activeHtml);
       // A lens cold-loaded with `?filter.…` is *that filtered location*, not the
       // bare lens that happens to have a query string beside it — so the entry
       // is built from the URL, not from the uid alone (issue #100).
       const search = typeof window === 'undefined' ? '' : window.location.search;
-      const entry = locationEntryFor(activeUid, paramsFromSearch(search));
-      stackStore.set({ entries: [entry], activeKey: entry.key });
+      entry = locationEntryFor(activeUid, paramsFromSearch(search));
     }
+    stackStore.set(seedStackState(entry));
   });
 
   // Per-location responsive width (issue #27): a plain, non-reactive value
@@ -216,7 +225,7 @@
   // state `/` cold-loads into. Home must already be cached (see seedHomeActive).
   function applyHomeSeed() {
     const entry = lensEntry('home');
-    stackStore.set({ entries: [entry], activeKey: entry.key });
+    stackStore.set(seedStackState(entry));
   }
 
   // Seeds the home lens as the sole active entry, fetching it first if needed.
@@ -705,7 +714,7 @@
     document.addEventListener('cardparam', onCardParam);
 
     async function onPopstate() {
-      stackStore.set({ entries: [], activeKey: null });
+      stackStore.set(seedStackState(null));
       const path = window.location.pathname;
       if (path === '/' || path === '') {
         // `/` is the home lens as the sole page-mode entry.

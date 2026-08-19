@@ -159,6 +159,37 @@ island is server-rendered too, and the SSR seed is a write.
 
 The `writable<StackState>` store in `src/stores/card-stack-store.ts` is the single source of truth for which cards are in the stack and which is active. `CardStack.svelte` derives CSS classes (`stack-card--active`, `stack-card--collapsed`) and layout state from the store via `$derived` and applies them via `$effect`. The CSS classes are styling contracts only — never query them in JS to infer state.
 
+**That invariant is about the client, and on the server it is silently false**
+(issue #102). The store is module-level and `astro build` prerenders every page
+in **one process**, so it is per-visitor state in the browser and
+per-*process* state in the prerenderer — page N's stack is still sitting in it
+when page N+1 renders. The seed used to write only when both `activeUid` and
+`activeHtml` were present, so the home page (which has neither) inherited the
+previous page's stack. What that renders is `#card-stack` **without** its
+`hidden` attribute, wrapping an empty `.active-card-col` around no card at all —
+the card's own markup does not come with it, since the fragment cache is
+per-instance. It also made an SSR crash reachable: a `document`-touching applier
+ran because `activeKey` was non-null on a page that has no active card.
+
+Today every route that renders the island supplies both props (`LensPage.astro`
+seeds `lens/<name>`, so even `/` has an active location), so the leak is latent
+rather than live in the current build — which is precisely why no visible
+symptom was ever found. It becomes live again the moment any page renders
+`<StackNav>` without an active location, and nothing about that call site would
+signal it.
+
+So **the seed is unconditional and total**: every render states its own initial
+stack, and a render with no active location states the empty one. That decision
+is `seedStackState` (`card-stack-store.ts`), which returns a **fresh** object
+each call — a shared empty constant would let one render's push land in the
+next render's "empty". Any future module-level state the island writes at
+*render* time (not in `onMount`, not in an `$effect` — neither runs on the
+server) needs the same treatment. `CardStack.ssr-isolation.test.ts` guards it by
+rendering two pages back to back through `svelte/server`, which is the one
+CardStack path a test can exercise directly: `mount()` is unavailable here, but
+the same project-wide "ssr" vite environment that forbids it is what makes the
+server renderer work.
+
 ### Stable selector contract
 
 These class names are a CSS/layout contract — renaming any of them is a CardStack.svelte + CSS refactor, not a local change:
