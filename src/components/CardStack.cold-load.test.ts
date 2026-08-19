@@ -1,22 +1,15 @@
-// Cold-load read tracking (#92).
+// Cold-load read tracking (#92) — the half that is negative space.
 //
-// Every other markRead call in CardStack.svelte hangs off a client-side
-// navigation, so all the existing coverage exercises the push path — which is
-// exactly why arriving straight at /card/... recording nothing went unnoticed.
+// The positive half ("the mount path marks the SSR-seeded card read") is now a
+// real behavioural test: see `CardStack.island.test.ts`, which mounts the
+// island and reads localStorage. Issue #95 made that possible; this file used
+// to carry a source-level stand-in for it, and no longer needs to.
 //
-// The decision itself (`readToRecord`) is covered in card-view-state.test.ts.
-// What is left is the wiring: that the island's *mount* path applies it to the
-// SSR-seeded location, and applies it to nothing else.
-//
-// It is asserted against the component source rather than by mounting the
-// island, because mounting is not available here: vitest.config.ts wraps
-// Astro's vite config, which resolves every import through the "ssr"
-// environment (see src/test/vitest-env.ts and CLAUDE.md — .astro files need it),
-// and under "ssr" Svelte resolves to its server build, where `mount()` throws
-// lifecycle_function_unavailable. Neither a `@vitest-environment happy-dom`
-// docblock nor `--environment happy-dom` changes that; the vite side is
-// project-wide. Browser-verified instead, by cold-loading a /card/ URL and
-// reading localStorage.
+// What stays here is the assertion that has no behaviour to observe: that
+// `initFromUrl` marks *nothing*. The from/to entries it restores arrive
+// collapsed — shown but not opened, the same state a front-page slot is in —
+// so the correct outcome is an absence, and the cheapest honest guard against
+// a future `markRead` creeping into that function is to look at it.
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -27,27 +20,8 @@ const source = readFileSync(
   'utf8',
 );
 
-/** The body of `onMount(() => { ... })`, up to its `initFromUrl()` call. */
-function mountPathBeforeRestore(): string {
-  const start = source.indexOf('onMount(() => {');
-  expect(start).toBeGreaterThan(-1);
-  const restore = source.indexOf('initFromUrl()', start);
-  expect(restore).toBeGreaterThan(start);
-  return source.slice(start, restore);
-}
-
 describe('cold load records read state', () => {
-  it('marks the SSR-seeded location read on mount, before any navigation', () => {
-    // A visitor arriving from search, a shared link, RSS or an old-URL redirect
-    // never touches a push path, so the mount path is the only chance to record
-    // the read. `readToRecord` is what narrows this to actual cards.
-    expect(mountPathBeforeRestore()).toMatch(/markReadIfKnown\(activeUid\)/);
-  });
-
   it('does not mark the from/to entries restored from a short code', () => {
-    // Those arrive collapsed — shown, not opened — which is the same state the
-    // front page's slots are in, and they are deliberately not reads. They are
-    // restored by initFromUrl, so nothing in it may mark anything.
     const start = source.indexOf('async function initFromUrl()');
     expect(start).toBeGreaterThan(-1);
     const end = source.indexOf('\n  onMount(() => {', start);

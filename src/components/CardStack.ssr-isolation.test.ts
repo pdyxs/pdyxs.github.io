@@ -11,13 +11,12 @@
 // found — it is latent, and one props-less <StackNav> call site brings it back.
 // These tests hold the property at the island rather than at the route set.
 //
-// This is the one CardStack behaviour that CAN be exercised by rendering the
-// component: the island's mount path is out of reach (`mount()` throws
-// lifecycle_function_unavailable under the project-wide "ssr" vite environment
-// — see CardStack.cold-load.test.ts and CLAUDE.md), but that same environment
-// is precisely what makes Svelte's *server* renderer available, and the seed
-// runs during server render. Rendering two pages back to back in one module
-// instance is exactly what the prerenderer does.
+// This test belongs to the `astro` vitest project, and deliberately so: its
+// "ssr" vite environment is what makes Svelte's *server* renderer available,
+// and the seed is a server-render effect. Rendering two pages back to back in
+// one module instance is exactly what the prerenderer does — which the client
+// mount tests in `CardStack.island.test.ts` could not reproduce, since there
+// is no prerenderer in a browser.
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render } from 'svelte/server';
 import { get } from 'svelte/store';
