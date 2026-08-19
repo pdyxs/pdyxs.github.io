@@ -21,6 +21,7 @@ import {
   titleOfElement,
   uidToFetchUrl,
   urlToUid,
+  withSlotUid,
 } from './card-fragments';
 
 /** A rendered `.stack-card`, as the server would produce one. */
@@ -318,5 +319,35 @@ describe('stack flows against a fake fragment source', () => {
   it('popstate: a location whose page no longer exists is not stacked', async () => {
     const fragments = createCardFragments({ load: fakeSource({}) });
     expect(await fragments.ensure(urlToUid('/card/what/gone'))).toBe(false);
+  });
+});
+
+
+describe('the cache stores every fragment under its own handle (issue #100)', () => {
+  it('withSlotUid rewrites the root data-uid, and is a no-op when it already matches', () => {
+    const html = fragment('lens/newest');
+    expect(withSlotUid(html, 'lens/newest')).toBe(html);
+    expect(withSlotUid(html, 'lens/newest#2')).toContain('data-uid="lens/newest#2"');
+  });
+
+  it('two views of one lens are fetched from one url but cached under two handles', async () => {
+    // Left with the server's uid, both fragments would answer
+    // [data-uid="lens/newest"] and every querySelector in CardStack would find
+    // whichever mounted first.
+    const load = fakeSource({ 'lens/newest': fragment('lens/newest') });
+    const fragments = createCardFragments({ load });
+
+    expect(await fragments.ensure('lens/newest', 'lens/newest')).toBe(true);
+    expect(await fragments.ensure('lens/newest#2', 'lens/newest')).toBe(true);
+
+    expect(load.mock.calls.map(c => c[0])).toEqual(['lens/newest', 'lens/newest']);
+    expect(fragments.get('lens/newest')).toContain('data-uid="lens/newest"');
+    expect(fragments.get('lens/newest#2')).toContain('data-uid="lens/newest#2"');
+  });
+
+  it('a placeholder is built at its handle too', () => {
+    const fragments = createCardFragments({ load: fakeSource({}) });
+    fragments.seedPlaceholder('lens/newest#2', 'Most Interesting');
+    expect(fragments.get('lens/newest#2')).toContain('data-uid="lens/newest#2"');
   });
 });

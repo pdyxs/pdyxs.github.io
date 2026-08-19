@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeStackLayout, cardEntry, locationKind, presentationMode } from './stack-layout';
+import { computeStackLayout, cardEntry, lensEntry, allocateSlot, withFreeSlot, slotForKey, keyForSlot, locationKind, presentationMode } from './stack-layout';
 import type { StackState, RenderItem } from './stack-layout';
 
 describe('computeStackLayout', () => {
@@ -97,7 +97,7 @@ describe('computeStackLayout', () => {
     expect(result.renderItems[2]).toMatchObject({ kind: 'fan-corner', forKey: 'overflow-left', i: 1, n: 3 });
     expect(result.renderItems[3]).toMatchObject({ kind: 'overflow', side: 'left', stackIndex: 1 });
     const overflowItem = result.renderItems[3] as Extract<RenderItem, { kind: 'overflow' }>;
-    expect(overflowItem.hiddenKeys).toEqual(['b', 'c', 'd']);
+    expect(overflowItem.hidden.map(h => h.slot)).toEqual(['b', 'c', 'd']);
     expect(result.renderItems[4]).toMatchObject({ kind: 'fan-corner', forKey: 'e', i: 2, n: 3 });
     expect(result.renderItems[5]).toMatchObject({ kind: 'card', key: 'e', side: 'left', stackIndex: 2 });
     expect(result.renderItems[6]).toMatchObject({ kind: 'card', key: 'f', side: 'active' });
@@ -117,7 +117,7 @@ describe('computeStackLayout', () => {
     expect(result.renderItems[1]).toMatchObject({ kind: 'card', key: 'b', side: 'right' });
     expect(result.renderItems[2]).toMatchObject({ kind: 'overflow', side: 'right' });
     const overflowItem = result.renderItems[2] as Extract<RenderItem, { kind: 'overflow' }>;
-    expect(overflowItem.hiddenKeys).toEqual(['c', 'd', 'e']);
+    expect(overflowItem.hidden.map(h => h.slot)).toEqual(['c', 'd', 'e']);
     expect(result.renderItems[3]).toMatchObject({ kind: 'card', key: 'f', side: 'right' });
     expect(result.overflowKeys).toEqual(['c', 'd', 'e']);
   });
@@ -136,14 +136,14 @@ describe('computeStackLayout', () => {
     expect(result.renderItems[2]).toMatchObject({ kind: 'fan-corner', forKey: 'overflow-left', i: 1, n: 3 });
     expect(result.renderItems[3]).toMatchObject({ kind: 'overflow', side: 'left' });
     const leftOverflow = result.renderItems[3] as Extract<RenderItem, { kind: 'overflow' }>;
-    expect(leftOverflow.hiddenKeys).toEqual(['b']);
+    expect(leftOverflow.hidden.map(h => h.slot)).toEqual(['b']);
     expect(result.renderItems[4]).toMatchObject({ kind: 'fan-corner', forKey: 'c', i: 2, n: 3 });
     expect(result.renderItems[5]).toMatchObject({ kind: 'card', key: 'c', side: 'left' });
     expect(result.renderItems[6]).toMatchObject({ kind: 'card', key: 'act', side: 'active' });
     expect(result.renderItems[7]).toMatchObject({ kind: 'card', key: 'd', side: 'right' });
     expect(result.renderItems[8]).toMatchObject({ kind: 'overflow', side: 'right' });
     const rightOverflow = result.renderItems[8] as Extract<RenderItem, { kind: 'overflow' }>;
-    expect(rightOverflow.hiddenKeys).toEqual(['e']);
+    expect(rightOverflow.hidden.map(h => h.slot)).toEqual(['e']);
     expect(result.renderItems[9]).toMatchObject({ kind: 'card', key: 'f', side: 'right' });
   });
 
@@ -212,5 +212,72 @@ describe('presentationMode', () => {
   it('card mode: a card is always card mode, even at depth 1', () => {
     expect(presentationMode('card', 1)).toBe('card');
     expect(presentationMode('card', 3)).toBe('card');
+  });
+});
+
+
+// ── Location identity vs DOM handle (issue #100) ───────────────────────────
+
+describe('lensEntry', () => {
+  it('separates what is fetched from what the location is', () => {
+    const entry = lensEntry('interesting', [['filter.what', 'puzzles']]);
+    expect(entry.uid).toBe('lens/interesting');
+    expect(entry.key).toBe('lens/interesting?filter.what=puzzles');
+    // The handle defaults to the uid, so a lone filtered lens still mounts
+    // under the data-uid its SSR fragment already carries.
+    expect(entry.slot).toBe('lens/interesting');
+  });
+
+  it('leaves a card with all three equal', () => {
+    expect(cardEntry('posts/hello')).toEqual({
+      key: 'posts/hello', uid: 'posts/hello', slot: 'posts/hello',
+    });
+  });
+});
+
+describe('allocateSlot', () => {
+  it('hands back the preferred handle when it is free', () => {
+    expect(allocateSlot([cardEntry('a')], 'lens/newest')).toBe('lens/newest');
+  });
+
+  it('suffixes a second view of the same lens rather than colliding', () => {
+    const first = lensEntry('newest', [['filter.what', 'puzzles']]);
+    expect(allocateSlot([first], 'lens/newest')).toBe('lens/newest#2');
+    const second = { ...first, slot: 'lens/newest#2' };
+    expect(allocateSlot([first, second], 'lens/newest')).toBe('lens/newest#3');
+  });
+
+  it('withFreeSlot returns the same object when nothing clashes', () => {
+    const entry = lensEntry('newest');
+    expect(withFreeSlot([cardEntry('a')], entry)).toBe(entry);
+  });
+});
+
+describe('slotForKey / keyForSlot', () => {
+  const a = lensEntry('newest', [['filter.what', 'puzzles']]);
+  const b = { ...lensEntry('newest', [['filter.what', 'projects']]), slot: 'lens/newest#2' };
+  const state: StackState = { entries: [a, b], activeKey: b.key };
+
+  it('maps identity to handle and back', () => {
+    expect(slotForKey(state, a.key)).toBe('lens/newest');
+    expect(slotForKey(state, b.key)).toBe('lens/newest#2');
+    expect(keyForSlot(state, 'lens/newest#2')).toBe(b.key);
+  });
+
+  it('is null for anything not stacked', () => {
+    expect(slotForKey(state, 'lens/newest?filter.what=nope')).toBeNull();
+    expect(slotForKey(state, null)).toBeNull();
+    expect(keyForSlot(state, 'lens/nope')).toBeNull();
+  });
+});
+
+describe('layout carries both identities', () => {
+  it('gives every rendered card its own handle, so two filtered lenses can coexist', () => {
+    const a = lensEntry('newest', [['filter.what', 'puzzles']]);
+    const b = { ...lensEntry('newest', [['filter.what', 'projects']]), slot: 'lens/newest#2' };
+    const layout = computeStackLayout({ entries: [a, b], activeKey: b.key });
+    const cards = layout.renderItems.filter(i => i.kind === 'card');
+    expect(cards.map((c: any) => c.slot)).toEqual(['lens/newest', 'lens/newest#2']);
+    expect(new Set(cards.map((c: any) => c.key)).size).toBe(2);
   });
 });

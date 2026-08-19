@@ -58,7 +58,7 @@ describe('the cache is no longer the caller\'s problem', () => {
   it('reapplies the active width from the store\'s onChange hook', () => {
     // Previously pushCard had to call applyMaxWidth by hand after the
     // placeholder→real swap, because a bare Map .set() triggers no reactivity.
-    expect(source).toMatch(/createCardFragments\(\{[\s\S]*?onChange:[\s\S]*?applyMaxWidth\(key\)/);
+    expect(source).toMatch(/createCardFragments\(\{[\s\S]*?onChange:[\s\S]*?applyMaxWidth\(slot\)/);
   });
 
   it('pushCard does not reach for applyMaxWidth', () => {
@@ -66,14 +66,14 @@ describe('the cache is no longer the caller\'s problem', () => {
   });
 
   it('the layout effect is still the other applier', () => {
-    expect(source).toMatch(/applyMaxWidth\(\$stackStore\.activeKey\)/);
+    expect(source).toMatch(/applyMaxWidth\(slotForKey\(\$stackStore, \$stackStore\.activeKey\)\)/);
   });
 });
 
 describe('every flow goes through the fragment store', () => {
   it('push ensures or loads the fragment before stacking it', () => {
     const body = functionBody('pushCard');
-    expect(body).toMatch(/fragments\.has\(uid\)/);
+    expect(body).toMatch(/fragments\.has\(slot\)/);
     expect(body).toMatch(/fragments\.load\(uid\)/);
     expect(body).toMatch(/fragments\.seedPlaceholder\(/);
     expect(body).toMatch(/fragments\.replaceBody\(/);
@@ -82,7 +82,7 @@ describe('every flow goes through the fragment store', () => {
   it('the placeholder swap patches the mounted card, not the whole stack', () => {
     // Replacing the card wholesale would pull the header out from under the
     // running view transition.
-    expect(functionBody('pushCard')).toMatch(/fragments\.replaceBody\(uid, html, document\.querySelector\(/);
+    expect(functionBody('pushCard')).toMatch(/fragments\.replaceBody\(slot, html, elFor\(slot\)\)/);
   });
 
   it('close-to-empty ensures home before seeding it', () => {
@@ -97,23 +97,26 @@ describe('every flow goes through the fragment store', () => {
     const start = source.indexOf('async function onPopstate()');
     expect(start).toBeGreaterThan(-1);
     const body = source.slice(start, source.indexOf('window.addEventListener(\'popstate\'', start));
-    expect(body).toMatch(/await fragments\.ensure\(uid\)/);
+    expect(body).toMatch(/await fragments\.ensure\(entry\.slot, entry\.uid\)/);
     expect(body).toMatch(/seedHomeActive\(false\)/);
   });
 
   it('re-activating a stacked location reads the cache and fetches nothing', () => {
     const body = functionBody('pushCard');
     const alreadyStacked = body.slice(0, body.indexOf('const wasHomePageMode'));
-    expect(alreadyStacked).toMatch(/entries\.some\(e => e\.key === uid\)/);
+    // Identity, not uid: a differently-filtered lens link must NOT match here
+    // (issue #100) — it is a different location and has to push.
+    expect(alreadyStacked).toMatch(/entries\.find\(e => e\.key === target\.key\)/);
     expect(alreadyStacked).not.toMatch(/fragments\.(ensure|load)\(/);
-    // The overflow panel's titles and read tracking are cache reads.
-    expect(source).toMatch(/fragments\.factsFor\(key\)\.title/);
-    expect(source).toMatch(/readToRecord\(key, fragments\.get\(key\)\)/);
+    // The overflow panel's titles and read tracking are cache reads, keyed by
+    // the DOM/cache handle rather than by identity.
+    expect(source).toMatch(/fragments\.factsFor\(slot\)\.title/);
+    expect(source).toMatch(/readToRecord\(slot, fragments\.get\(slot\)\)/);
   });
 
   it('restoring a short-coded stack ensures each location', () => {
     const start = source.indexOf('async function initFromUrl()');
     const body = source.slice(start, source.indexOf('\n  onMount(', start));
-    expect(body.match(/await fragments\.ensure\(location\.uid\)/g)?.length).toBe(2);
+    expect(body.match(/await fragments\.ensure\(location\.slot, location\.uid\)/g)?.length).toBe(2);
   });
 });

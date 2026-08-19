@@ -24,6 +24,38 @@ export function activateCard(state: StackState, key: string): StackState {
   return { ...state, activeKey: key };
 }
 
+/**
+ * Re-identifies the entry occupying `slot` (a lens whose filters were just
+ * edited: its identity is the lens plus its filter set, so a filter change is
+ * an identity change). The DOM/cache handle is deliberately untouched, so the
+ * mounted fragment and its islands survive.
+ *
+ * `slot` rather than the old key, because the caller is the location itself
+ * reporting from its own DOM node, and the handle is the one thing that never
+ * moves under it.
+ *
+ * A re-key can land on an identity some OTHER entry already holds — clear the
+ * filters on the second view of a lens and it becomes the unfiltered view
+ * already sitting behind it. Keys must stay unique (every findIndex in the
+ * layout, the codec and the store resolves by key, and would silently pick the
+ * wrong one), so the collided-with entry is dropped. The one being edited is
+ * the one kept: it is where the visitor is.
+ */
+export function rekeyEntry(state: StackState, slot: string, newKey: string): StackState {
+  const idx = state.entries.findIndex(e => e.slot === slot);
+  if (idx === -1) return state;
+  const old = state.entries[idx];
+  if (old.key === newKey) return state;
+  const rekeyed = { ...old, key: newKey };
+  const entries = state.entries
+    .map(e => (e.slot === slot ? rekeyed : e))
+    .filter(e => e.slot === slot || e.key !== newKey);
+  return {
+    entries,
+    activeKey: state.activeKey === old.key || state.activeKey === newKey ? newKey : state.activeKey,
+  };
+}
+
 export function replaceActiveSlot(state: StackState, newEntry: LocationEntry): StackState {
   if (!state.activeKey) return state;
   const idx = state.entries.findIndex(e => e.key === state.activeKey);

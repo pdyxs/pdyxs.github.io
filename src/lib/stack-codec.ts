@@ -14,6 +14,8 @@
 // The active entry's own params ride as plain, readable query pairs instead
 // (e.g. ?filter.what=projects), keeping the address bar legible.
 import type { LocationEntry, StackState } from './stack-layout';
+import { allocateSlot, cardEntry, lensEntry } from './stack-layout';
+import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from './lens-key';
 import type { ManifestLookup } from './stack-manifest';
 import { encodeParam, decodeParam } from './param-codecs';
 import type { CodecContext } from './param-codecs';
@@ -44,6 +46,18 @@ function pathForActive(activeUid: string, basePath: string): string {
   return `${basePath}/${activeUid}`;
 }
 
+/**
+ * Every param a location puts in the URL: a lens's filter set (which lives in
+ * its KEY, issue #100 - it is what the location *is*) plus whatever side state
+ * the caller holds for it in `paramsByKey` (a card's `tab=bio`, the browse
+ * page's `stack=`). Identity first, so the readable query reads filter-first.
+ */
+function paramsForEntry(entry: LocationEntry, paramsByKey: ReadonlyMap<string, ParamPairs>): ParamPairs {
+  const side = paramsByKey.get(entry.key) ?? [];
+  const identity = filtersForKey(entry.key);
+  return identity.length ? [...identity, ...side] : side;
+}
+
 function encodeEntry(entry: LocationEntry, params: ParamPairs | undefined, manifest: ManifestLookup, ctx: CodecContext): string {
   const code = manifest.codeForUid(entry.uid) ?? entry.uid;
   if (!params || params.length === 0) return code;
@@ -63,20 +77,40 @@ function decodeEntryToken(token: string, manifest: ManifestLookup, ctx: CodecCon
   return { uid, params };
 }
 
-function decodeSide(value: string | null, manifest: ManifestLookup, ctx: CodecContext): LocationEntry[] {
-  if (!value) return [];
-  return value.split(ENTRY_SEP).filter(Boolean).map(tok => {
-    const { uid } = decodeEntryToken(tok, manifest, ctx);
-    return { key: uid, uid };
-  });
+/**
+ * Builds a location entry from a decoded uid + its params, splitting them the
+ * way serialisation joined them: a lens's filter params become part of its key
+ * (issue #100), everything else is returned as side state for `paramsByKey`.
+ *
+ * `taken` is the set of slots already allocated in this decode, so a URL
+ * holding two differently-filtered views of one lens gets two distinct
+ * handles rather than colliding on `lens/<name>`.
+ */
+function entryFrom(uid: string, params: ParamPairs, taken: LocationEntry[]): { entry: LocationEntry; side: ParamPairs } {
+  const { identity, other } = splitLocationParams(uid, params);
+  if (!isLensUid(uid)) return { entry: cardEntry(uid), side: other };
+  const name = lensNameForKey(uid)!;
+  const slot = allocateSlot(taken, uid);
+  return { entry: lensEntry(name, identity, slot), side: other };
 }
 
-function decodeSideParams(value: string | null, manifest: ManifestLookup, ctx: CodecContext, paramsByKey: Map<string, ParamPairs>): void {
-  if (!value) return;
+function decodeSide(
+  value: string | null,
+  manifest: ManifestLookup,
+  ctx: CodecContext,
+  taken: LocationEntry[],
+  paramsByKey: Map<string, ParamPairs>,
+): LocationEntry[] {
+  if (!value) return [];
+  const out: LocationEntry[] = [];
   for (const tok of value.split(ENTRY_SEP).filter(Boolean)) {
     const { uid, params } = decodeEntryToken(tok, manifest, ctx);
-    if (params.length) paramsByKey.set(uid, params);
+    const { entry, side } = entryFrom(uid, params, taken);
+    taken.push(entry);
+    out.push(entry);
+    if (side.length) paramsByKey.set(entry.key, side);
   }
+  return out;
 }
 
 /**
@@ -108,7 +142,7 @@ export function serialiseStack(
   const path = pathForActive(active.uid, basePath);
 
   const encodeSide = (entries: LocationEntry[]) =>
-    entries.map(e => encodeEntry(e, paramsByKey.get(e.key), manifest, ctx)).join(ENTRY_SEP);
+    entries.map(e => encodeEntry(e, paramsForEntry(e, paramsByKey), manifest, ctx)).join(ENTRY_SEP);
 
   // from/to values are drawn from a URL-safe palette, so we assemble them by
   // hand and keep them literal (no URLSearchParams re-escaping of '~'). The
@@ -119,7 +153,7 @@ export function serialiseStack(
   if (after.length) parts.push(`to=${encodeSide(after)}`);
 
   const activeParams = new URLSearchParams();
-  for (const [k, v] of paramsByKey.get(active.key) ?? []) activeParams.append(k, v);
+  for (const [k, v] of paramsForEntry(active, paramsByKey)) activeParams.append(k, v);
   const activeStr = activeParams.toString();
   if (activeStr) parts.push(activeStr);
 
@@ -154,18 +188,21 @@ export function deserialiseStack(
   const usp = new URLSearchParams(search);
   const paramsByKey = new Map<string, ParamPairs>();
 
-  const fromEntries = decodeSide(usp.get('from'), manifest, ctx);
-  decodeSideParams(usp.get('from'), manifest, ctx, paramsByKey);
-  const toEntries = decodeSide(usp.get('to'), manifest, ctx);
-  decodeSideParams(usp.get('to'), manifest, ctx, paramsByKey);
-
-  const activeParams: ParamPairs = [];
+  // The active location's slot is allocated first, so it keeps the unsuffixed
+  // handle: it is the one the SSR fragment on the page already carries.
+  const activeRawParams: ParamPairs = [];
   usp.forEach((v, k) => {
-    if (k !== 'from' && k !== 'to') activeParams.push([k, v]);
+    if (k !== 'from' && k !== 'to') activeRawParams.push([k, v]);
   });
-  if (activeParams.length) paramsByKey.set(activeUid, activeParams);
+  const taken: LocationEntry[] = [];
+  const { entry: activeEntry, side: activeSide } = entryFrom(activeUid, activeRawParams, taken);
+  taken.push(activeEntry);
+  if (activeSide.length) paramsByKey.set(activeEntry.key, activeSide);
 
-  const entries: LocationEntry[] = [...fromEntries, { key: activeUid, uid: activeUid }, ...toEntries];
+  const fromEntries = decodeSide(usp.get('from'), manifest, ctx, taken, paramsByKey);
+  const toEntries = decodeSide(usp.get('to'), manifest, ctx, taken, paramsByKey);
 
-  return { state: { entries, activeKey: activeUid }, paramsByKey };
+  const entries: LocationEntry[] = [...fromEntries, activeEntry, ...toEntries];
+
+  return { state: { entries, activeKey: activeEntry.key }, paramsByKey };
 }

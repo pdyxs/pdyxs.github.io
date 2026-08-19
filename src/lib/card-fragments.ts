@@ -15,7 +15,9 @@
 //   - uid ↔ URL mapping (which URL a location's fragment comes from)
 //   - the fetch, behind an **injected seam** (`load`) so tests can supply a
 //     fake fragment source
-//   - the string cache, keyed by `LocationEntry.key` (== uid for cards)
+//   - the string cache, keyed by `LocationEntry.slot` (== uid for cards; see
+//     stack-layout.ts for why a filtered lens needs a handle distinct from
+//     both its uid and its identity key)
 //   - every read of a fact out of a fragment (`factsFor`)
 //   - the placeholder fragment a view transition starts against, and the
 //     later swap of real content into it (`seedPlaceholder` / `replaceBody`)
@@ -112,14 +114,38 @@ export function escapeHtml(s: string): string {
  * body (so `replaceBody` has somewhere to write). Structurally identical to a
  * real fragment as far as the stable selector contract is concerned.
  */
-export function buildPlaceholderHtml(uid: string, title: string): string {
-  return `<div class="stack-card" data-uid="${escapeHtml(uid)}">` +
+export function buildPlaceholderHtml(slot: string, title: string): string {
+  return `<div class="stack-card" data-uid="${escapeHtml(slot)}">` +
     `<div class="card-header">` +
     `<span class="card-header-title"><b>${escapeHtml(title)}</b></span>` +
     `<button class="stack-card-close" aria-label="Close">×</button>` +
     `</div>` +
     `<div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner"></div></div></div>` +
     `</div>`;
+}
+
+/**
+ * The fragment as it must be cached under `slot`: its root `.stack-card`
+ * carries `data-uid="<slot>"`.
+ *
+ * A fragment is fetched by uid, but two differently-filtered views of one lens
+ * are fetched from the same URL and mount side by side (issue #100). Left with
+ * the server's uid, both would answer `[data-uid="lens/interesting"]` and every
+ * querySelector in CardStack would find whichever came first. The cache is the
+ * one place this can be enforced once. For a card, slot === uid and this is a
+ * no-op.
+ *
+ * The island is server-rendered too, and the SSR seed is a cache write, so
+ * this has to survive having no `document`: there, the fragment is the SSR
+ * active location's own markup and its uid is already its slot.
+ */
+export function withSlotUid(html: string, slot: string): string {
+  if (typeof document === 'undefined') return html;
+  const card = parseStackCard(html);
+  if (!card) return html;
+  if (card.getAttribute('data-uid') === slot) return html;
+  card.setAttribute('data-uid', slot);
+  return card.outerHTML;
 }
 
 /** The title a link (or any element) offers for the card it points at. */
@@ -130,18 +156,20 @@ export function titleOfElement(el: Element | null | undefined): string | null {
 // --- The store ----------------------------------------------------------
 
 export interface CardFragments {
-  /** The cached fragment for a location key, or undefined. */
-  get(key: string): string | undefined;
-  has(key: string): boolean;
+  /** The cached fragment for a location slot, or undefined. */
+  get(slot: string): string | undefined;
+  has(slot: string): boolean;
   /** Store a fragment we already hold (the SSR-rendered active location). */
-  seed(key: string, html: string): void;
+  seed(slot: string, html: string): void;
   /** Store a placeholder to render while the real fragment is in flight. */
-  seedPlaceholder(uid: string, title: string): void;
+  seedPlaceholder(slot: string, title: string): void;
   /**
-   * Ensure a fragment is cached, fetching it if needed. False means the fetch
-   * failed and nothing was cached — callers must not stack the location.
+   * Ensure a fragment is cached under `slot`, fetching `uid` if needed (they
+   * differ only for a second, differently-filtered view of one lens). False
+   * means the fetch failed and nothing was cached — callers must not stack
+   * the location.
    */
-  ensure(uid: string): Promise<boolean>;
+  ensure(slot: string, uid?: string): Promise<boolean>;
   /**
    * Fetch a fragment *without* caching it, for a caller that needs the request
    * in flight before it decides what to do with the result (the view-transition
@@ -153,9 +181,9 @@ export interface CardFragments {
    * caches it, and writes its body into the live card so the already-mounted
    * header — and with it the running view transition — is kept.
    */
-  replaceBody(uid: string, html: string, cardEl: Element | null): void;
+  replaceBody(slot: string, html: string, cardEl: Element | null): void;
   /** Every fact the stack reads out of a location's fragment. */
-  factsFor(key: string): FragmentFacts;
+  factsFor(slot: string): FragmentFacts;
 }
 
 export function createCardFragments(options: CardFragmentsOptions = {}): CardFragments {
@@ -167,26 +195,26 @@ export function createCardFragments(options: CardFragmentsOptions = {}): CardFra
     return extractStackCard(await res.text());
   });
 
-  function write(key: string, html: string) {
-    cache.set(key, html);
-    onChange?.(key);
+  function write(slot: string, html: string) {
+    cache.set(slot, withSlotUid(html, slot));
+    onChange?.(slot);
   }
 
   return {
     get: (key) => cache.get(key),
     has: (key) => cache.has(key),
     seed: write,
-    seedPlaceholder: (uid, title) => write(uid, buildPlaceholderHtml(uid, title)),
+    seedPlaceholder: (slot, title) => write(slot, buildPlaceholderHtml(slot, title)),
     load: (uid) => loader(uid),
-    async ensure(uid) {
-      if (cache.has(uid)) return true;
+    async ensure(slot, uid = slot) {
+      if (cache.has(slot)) return true;
       const html = await loader(uid);
       if (!html) return false;
-      write(uid, html);
+      write(slot, html);
       return true;
     },
-    replaceBody(uid, html, cardEl) {
-      write(uid, html);
+    replaceBody(slot, html, cardEl) {
+      write(slot, html);
       const inner = extractBodyInner(html);
       const existing = cardEl?.querySelector('.stack-card-body-inner');
       if (inner !== null && existing) existing.innerHTML = inner;

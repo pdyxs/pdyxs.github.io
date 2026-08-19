@@ -1,10 +1,9 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
+  import { lensFilterStore } from '../stores/lens-filter-store';
   import {
     clearDimension,
     emptyFilterState,
-    filterStateFromParams,
     filterStateToParams,
     hasAnySelection,
     stripFilterParams,
@@ -32,24 +31,26 @@
 
   const hasActiveFilters = $derived(hasAnySelection($lensFilterStore));
 
-  // A lens that can't accept filters must never show any as active, no
-  // matter how a stray filter.* query string got onto its URL (carried
-  // forward by a lens replacement, left over from closing back to home,
-  // a hand-edited/shared link, etc.) — this is the single enforcement
-  // point, so every path into a non-accepting lens is covered without
-  // having to patch each call site that can navigate here.
-  function syncFromUrl() {
-    if (!lens.acceptsFilters) {
-      lensFilterStore.set(emptyFilterState());
-      const current = window.location.search;
-      const strippedQuery = stripFilterParams(new URLSearchParams(current)).toString();
-      const strippedSearch = strippedQuery ? `?${strippedQuery}` : '';
-      if (strippedSearch !== current) {
-        history.replaceState(null, '', `${window.location.pathname}${strippedSearch}`);
-      }
-      return;
+  // The selection is NOT read from the URL here any more (issue #100). A lens
+  // location's identity *is* the lens plus its filter set, so the selection
+  // lives in the location's key and CardStack — the sole owner of stack state —
+  // mirrors the active location's filters into lensFilterStore. Reading the URL
+  // on mount is precisely what let an already-mounted lens and the stack's own
+  // params disagree: the shell mounted once, long before the filters changed.
+  //
+  // A lens that can't accept filters must still never show any as active, no
+  // matter how a stray filter.* query string got onto its URL (a hand-edited or
+  // shared link). This is the single enforcement point, so every path into a
+  // non-accepting lens is covered without patching each call site.
+  function enforceNoFilters() {
+    if (lens.acceptsFilters) return;
+    lensFilterStore.set(emptyFilterState());
+    const current = window.location.search;
+    const strippedQuery = stripFilterParams(new URLSearchParams(current)).toString();
+    const strippedSearch = strippedQuery ? `?${strippedQuery}` : '';
+    if (strippedSearch !== current) {
+      history.replaceState(null, '', `${window.location.pathname}${strippedSearch}`);
     }
-    lensFilterStore.set(filterStateFromParams(new URLSearchParams(window.location.search)));
   }
 
   // Report the full filter selection to CardStack (the sole owner of the stack
@@ -66,12 +67,11 @@
   }
 
   onMount(() => {
-    syncFromUrl();
-    // Signal the lens body that the URL selection is now in the store, so it can
-    // clear the anti-FOUC guard once its filtered view is committed to the DOM.
-    lensFiltersSynced.set(true);
-    window.addEventListener('popstate', syncFromUrl);
-    return () => window.removeEventListener('popstate', syncFromUrl);
+    enforceNoFilters();
+    // `lensFiltersSynced` (the anti-FOUC guard's release) is set by CardStack
+    // alongside the store it now seeds — one signal, one owner.
+    window.addEventListener('popstate', enforceNoFilters);
+    return () => window.removeEventListener('popstate', enforceNoFilters);
   });
 
   function commit(next: FilterState) {

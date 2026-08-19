@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { serialiseStack, deserialiseStack } from './stack-codec';
+import { filtersForKey } from './lens-key';
 import type { ParamPairs } from './stack-codec';
 import { cardEntry, lensEntry } from './stack-layout';
+import { isLensUid, lensNameForKey, splitLocationParams } from './lens-key';
 import type { StackState, LocationEntry } from './stack-layout';
 import { buildLookup } from './stack-manifest';
 
@@ -93,7 +95,7 @@ describe('deserialiseStack', () => {
   it('deserialiseStack_active_only: a bare card path with no query', () => {
     const result = deserialiseStack('/card/posts/about-me', '', manifest, tags);
     expect(result.state).toEqual({
-      entries: [{ key: 'posts/about-me', uid: 'posts/about-me' }],
+      entries: [cardEntry('posts/about-me')],
       activeKey: 'posts/about-me',
     });
     expect(result.paramsByKey.size).toBe(0);
@@ -108,10 +110,12 @@ describe('deserialiseStack', () => {
   it('deserialiseStack_inactive_filter_params: coded tokens resolve back to short filter pairs', () => {
     const result = deserialiseStack('/card/posts/about-me', '?from=4~f0~f1', manifest, tags);
     expect(result.state.entries.map(e => e.uid)).toEqual(['lens/newest', 'posts/about-me']);
-    expect(result.paramsByKey.get('lens/newest')).toEqual([
-      ['filter.what', 'projects'],
-      ['filter.what', 'puzzles'],
-    ]);
+    // A lens's filters are its identity, so they land in the KEY (issue #100),
+    // not in the side map. The uid stays the fetchable `lens/newest`.
+    expect(result.state.entries[0]).toEqual(
+      lensEntry('newest', [['filter.what', 'projects'], ['filter.what', 'puzzles']]),
+    );
+    expect(result.paramsByKey.size).toBe(0);
   });
 
   it('deserialiseStack_non_card_path_returns_empty_stack', () => {
@@ -131,29 +135,64 @@ describe('lens locations', () => {
   it('deserialiseStack_active_lens: a /lens/<name> path resolves to a lens/<name> uid', () => {
     const result = deserialiseStack('/lens/newest', '', manifest, tags);
     expect(result.state).toEqual({
-      entries: [{ key: 'lens/newest', uid: 'lens/newest' }],
+      entries: [lensEntry('newest')],
       activeKey: 'lens/newest',
     });
   });
 
   it('active lens + multi-value filter params are readable in the URL', () => {
-    const state: StackState = { entries: [lensEntry('newest')], activeKey: 'lens/newest' };
-    // Active params ride as plain, readable query pairs (short values).
-    const paramsByKey = new Map([
-      ['lens/newest', [['filter.what', 'projects'], ['filter.what', 'puzzles']] as ParamPairs],
-    ]);
-    const result = serialiseStack(state, paramsByKey, manifest, tags);
+    // The selection is part of the location now: it rides in the entry's key,
+    // and the path/query it serialises to is unchanged from before #100.
+    const filtered = lensEntry('newest', [['filter.what', 'projects'], ['filter.what', 'puzzles']]);
+    const state: StackState = { entries: [filtered], activeKey: filtered.key };
+    const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.path).toBe('/lens/newest');
 
     const parsed = new URLSearchParams(result.search);
     expect(parsed.getAll('filter.what')).toEqual(['projects', 'puzzles']);
 
     const decoded = deserialiseStack(result.path, result.search, manifest, tags);
-    expect(decoded.state.activeKey).toBe('lens/newest');
-    expect(decoded.paramsByKey.get('lens/newest')).toEqual([
+    expect(decoded.state).toEqual(state);
+    expect(decoded.paramsByKey.size).toBe(0);
+  });
+
+  it('two differently-filtered views of one lens coexist with distinct keys and handles', () => {
+    const puzzles = lensEntry('newest', [['filter.what', 'puzzles']]);
+    const projects = lensEntry('newest', [['filter.what', 'projects']], 'lens/newest#2');
+    const state: StackState = { entries: [puzzles, projects], activeKey: projects.key };
+
+    const result = serialiseStack(state, new Map(), manifest, tags);
+    expect(result.path).toBe('/lens/newest');
+    // The inactive one short-codes with its own filter token.
+    expect(result.search).toBe('?from=4~f1&filter.what=projects');
+
+    const decoded = deserialiseStack(result.path, result.search, manifest, tags);
+    expect(decoded.state.entries.map(e => e.key)).toEqual([puzzles.key, projects.key]);
+    // Distinct DOM/cache handles, so both fragments can mount side by side.
+    expect(new Set(decoded.state.entries.map(e => e.slot)).size).toBe(2);
+  });
+
+  it('a filter set is canonically ordered, so two orderings name one location', () => {
+    const a = lensEntry('newest', [['filter.what', 'puzzles'], ['filter.what', 'projects']]);
+    const b = lensEntry('newest', [['filter.what', 'projects'], ['filter.what', 'puzzles']]);
+    expect(a.key).toBe(b.key);
+  });
+
+  it('a pre-#100 shared link, whose filters rode the side map, still restores the same stack', () => {
+    // This is the exact URL the old codec emitted for "newest filtered to
+    // projects+puzzles, sitting behind an open card". Nothing about the wire
+    // format changed — only which side of the decode the filters land on.
+    const decoded = deserialiseStack('/card/posts/about-me', '?from=4~f0~f1', manifest, tags);
+    expect(decoded.state.entries.map(e => e.uid)).toEqual(['lens/newest', 'posts/about-me']);
+    expect(filtersForKey(decoded.state.entries[0].key)).toEqual([
       ['filter.what', 'projects'],
       ['filter.what', 'puzzles'],
     ]);
+    // And it re-serialises byte-identically, so the link is stable.
+    expect(serialiseStack(decoded.state, decoded.paramsByKey, manifest, tags)).toEqual({
+      path: '/card/posts/about-me',
+      search: '?from=4~f0~f1',
+    });
   });
 
   it('mixed card<->lens interleaved stacks round-trip, with inactive locations short-coded via the manifest', () => {
@@ -205,6 +244,7 @@ describe('round-trip property', () => {
   function randomStack(rand: () => number): { state: StackState; paramsByKey: Map<string, ParamPairs> } {
     const n = 1 + Math.floor(rand() * 5);
     const entries: LocationEntry[] = [];
+    const uids: string[] = [];
     const usedUids = new Set<string>();
     for (let i = 0; i < n; i++) {
       let uid = uidPool[Math.floor(rand() * uidPool.length)];
@@ -213,23 +253,30 @@ describe('round-trip property', () => {
         uid = `${uid}-${i}`;
       }
       usedUids.add(uid);
-      entries.push(cardEntry(uid));
+      uids.push(uid);
     }
-    const activeIdx = Math.floor(rand() * n);
-    const activeKey = entries[activeIdx].key;
 
     const paramsByKey = new Map<string, ParamPairs>();
-    for (const entry of entries) {
-      if (rand() < 0.5) continue;
-      const numParams = 1 + Math.floor(rand() * 3);
+    for (const uid of uids) {
       const pairs: ParamPairs = [];
-      for (let j = 0; j < numParams; j++) {
-        const k = paramKeyPool[Math.floor(rand() * paramKeyPool.length)];
-        const v = paramValuePool[Math.floor(rand() * paramValuePool.length)];
-        pairs.push([k, v]);
+      if (rand() >= 0.5) {
+        const numParams = 1 + Math.floor(rand() * 3);
+        for (let j = 0; j < numParams; j++) {
+          const k = paramKeyPool[Math.floor(rand() * paramKeyPool.length)];
+          const v = paramValuePool[Math.floor(rand() * paramValuePool.length)];
+          pairs.push([k, v]);
+        }
       }
-      paramsByKey.set(entry.key, pairs);
+      // A valid state puts a lens's filter params in its key and everything
+      // else in the side map — the same split deserialise performs.
+      const { identity, other } = splitLocationParams(uid, pairs);
+      const entry = isLensUid(uid) ? lensEntry(lensNameForKey(uid)!, identity) : cardEntry(uid);
+      entries.push(entry);
+      if (other.length) paramsByKey.set(entry.key, other);
     }
+
+    const activeIdx = Math.floor(rand() * n);
+    const activeKey = entries[activeIdx].key;
 
     return { state: { entries, activeKey }, paramsByKey };
   }
