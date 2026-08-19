@@ -113,7 +113,7 @@ export const TRAVEL_LOG: TravelEntry[] = [
   { location: 'europe/uk/edinburgh', from: '2019-08-11', to: '2019-08-13' },
   { location: 'europe/denmark/copenhagen', from: '2019-08-14', to: '2019-08-17' },
   { location: 'europe/sweden', from: '2019-08-18', to: '2019-09-11' },
-  { location: 'europe/switzerland/lauterbrunnen', from: '2019-09-12', to: '2019-09-17' },
+  { location: 'europe/switzerland', from: '2019-09-12', to: '2019-09-17' },
   { location: 'europe/germany/berlin', from: '2019-09-18', to: '2019-10-05' },
   { location: 'oceania/new-zealand/wellington', from: '2019-10-06', to: '2019-12-07' },
   { location: 'australia/sydney', from: '2019-12-08', to: '2020-03-11' },
