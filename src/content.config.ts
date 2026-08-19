@@ -228,6 +228,13 @@ const content = defineCollection({
         // reserved value "none" suppresses an inherited label. See
         // resolveDateline in src/lib/card-date.ts.
         dateLabel: z.string().optional(),
+        // Names a custom island to render *instead of* this card's header
+        // image — see HEADER_MEDIA_RENDERERS in src/lib/renderers.ts. Only the
+        // media at the top of the card is replaced; the masthead, body,
+        // gallery and card strips are unaffected. Frontmatter-only and
+        // deliberately non-cascading: a bespoke header belongs to one card.
+        // An unregistered name silently falls back to the plain `image:`.
+        headerMedia: z.string().optional(),
         // `false` suppresses this card's image gallery. Normally set per-folder
         // in _config.yaml, where it cascades nearest-wins like `renderer`.
         gallery: z.boolean().optional(),

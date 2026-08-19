@@ -1,5 +1,6 @@
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import SeriesNavRenderer from '../components/card-renderers/SeriesNavRenderer.astro';
+import LinoCanvas from '../components/header-media/LinoCanvas.astro';
 
 // Keyed by renderer *name* (the cascaded _config.yaml / frontmatter `renderer`
 // value), not collection name. Only renderers with a dedicated component are
@@ -25,6 +26,27 @@ export const COLLECTION_RENDERERS: Record<string, AstroComponentFactory> = {};
 export const NAV_RENDERERS: Record<string, AstroComponentFactory> = {
   series: SeriesNavRenderer,
 };
+
+// Keyed by header-media *name* — the card's `headerMedia` frontmatter value.
+// The registered component replaces the plain <img> at the top of
+// `.generic-bleed` and nothing else; every other part of GenericRenderer still
+// runs. It receives HeaderMediaProps (src/lib/header-media.ts). Unlike
+// `renderer`, this is frontmatter-only and does not cascade: a bespoke header
+// belongs to one card, not to a folder shape.
+//
+// Entries are *Astro* components even when the real work is a Svelte island,
+// and that is load-bearing: Astro attaches hydration metadata at the static
+// import site, so a Svelte component fetched from this map at runtime and
+// mounted `client:load` dies with NoMatchingImport. Each entry is a thin
+// wrapper that statically imports its own island — see LinoCanvas.astro.
+export const HEADER_MEDIA_RENDERERS: Record<string, AstroComponentFactory> = {
+  'lino-canvas': LinoCanvas,
+};
+
+/** The component for a card's `headerMedia` value, or undefined if unset/unregistered. */
+export function resolveHeaderMedia(name: string | undefined): AstroComponentFactory | undefined {
+  return name ? HEADER_MEDIA_RENDERERS[name] : undefined;
+}
 
 // Collection-view browsing pages (bare collection-name uids, e.g. "posts")
 // are retired (issue #26) — "browse a collection" is now the browse lens

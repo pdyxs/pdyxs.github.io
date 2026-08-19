@@ -54,6 +54,26 @@ export function localAssetFilenames(entryId: string): string[] {
 }
 
 /**
+ * Every colocated *image* in a card's own directory, filename-sorted, as
+ * astro:assets `ImageMetadata` (so intrinsic width/height are available before
+ * any `getImage` call). Videos and `_original/` sidecars are excluded, on the
+ * same rule as localAssetFilenames.
+ *
+ * This is the raw sweep, with none of resolveGalleryImages' editorial rules
+ * applied — no header-image promotion, no skipping of files the body already
+ * links. A custom header-media island (see HEADER_MEDIA_RENDERERS in
+ * renderers.ts) lays its own images out and needs the unfiltered set.
+ */
+export function cardLocalImages(entryId: string): { filename: string; image: ImageMetadata }[] {
+  const prefix = `/src/content/${entryId}/`;
+  return Object.keys(localImages)
+    .filter(path => path.startsWith(prefix))
+    .map(path => ({ filename: path.slice(prefix.length), image: localImages[path]!.default }))
+    .filter(({ filename }) => isCardOwnAsset(filename))
+    .sort((a, b) => a.filename.localeCompare(b.filename));
+}
+
+/**
  * Whether a path *below* a card's directory is one of the card's own assets.
  *
  * `startsWith(prefix)` alone also matches infrastructure the card carries but

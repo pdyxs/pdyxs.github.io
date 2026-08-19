@@ -1,7 +1,9 @@
 ---
 import type { RenderResult } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
-import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages } from '../../lib/images';
+import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages, cardLocalImages } from '../../lib/images';
+import { resolveHeaderMedia } from '../../lib/renderers';
+import type { HeaderMediaImage } from '../../lib/header-media';
 import { displayFor } from '../../lib/tag-display';
 import { computeCardTagDisplay } from '../../lib/card-tag-display';
 import type { TagDisplay } from '../../lib/tag-display';
@@ -30,6 +32,8 @@ interface Props {
     data: {
       description?: string;
       image?: string;
+      /** Names a custom header island — see HEADER_MEDIA_RENDERERS (renderers.ts). */
+      headerMedia?: string;
       medium?: string;
       puzzle_type?: string;
       difficulty?: string;
@@ -105,7 +109,25 @@ const tags = computeCardTagDisplay(
 
 const hasInlineImages = bodyHasInlineImage(entry?.body);
 
-const hasHeaderMedia = Boolean(remoteImageSrc || localImage || localVideo);
+// A registered `headerMedia:` component takes the header slot instead of the
+// plain <img>/<video>. Only that element is swapped — everything below runs
+// unchanged. Unregistered name → undefined, and the ordinary header renders.
+const HeaderMedia = resolveHeaderMedia(data?.headerMedia);
+const headerMediaImages: HeaderMediaImage[] = entry && HeaderMedia
+  ? await Promise.all(
+      cardLocalImages(entry.id).map(async ({ filename, image }) => {
+        const optimised = await getImage({ src: image, width: 1600 });
+        return {
+          filename,
+          src: optimised.src,
+          width: optimised.attributes.width as number,
+          height: optimised.attributes.height as number,
+        };
+      })
+    )
+  : [];
+
+const hasHeaderMedia = Boolean(HeaderMedia || remoteImageSrc || localImage || localVideo);
 const hasMasthead = tags.length > 0 || actions.length > 0;
 
 const gallerySources = entry && gallery
@@ -135,9 +157,15 @@ const galleryImages = await Promise.all(
         rather than each element redoing the margin maths. */}
     {(hasHeaderMedia || hasMasthead) && (
       <div class="generic-bleed">
-        {remoteImageSrc && <img src={remoteImageSrc} alt="" class="generic-image" />}
-        {localImage && <Image src={localImage} alt="" class="generic-image" />}
-        {localVideo && <video src={localVideo} class="generic-video" controls preload="metadata"></video>}
+        {HeaderMedia ? (
+          <HeaderMedia entryId={entry!.id} images={headerMediaImages} />
+        ) : (
+          <>
+            {remoteImageSrc && <img src={remoteImageSrc} alt="" class="generic-image" />}
+            {localImage && <Image src={localImage} alt="" class="generic-image" />}
+            {localVideo && <video src={localVideo} class="generic-video" controls preload="metadata"></video>}
+          </>
+        )}
 
         {hasMasthead && (
           <div class="generic-masthead">

@@ -1,0 +1,14 @@
+---
+// Thin wrapper: the registry entry, and nothing else.
+//
+// It exists because a `client:*` island must be imported STATICALLY by the
+// .astro file that mounts it — Astro attaches hydration metadata at the import
+// site, so a Svelte component pulled out of HEADER_MEDIA_RENDERERS at runtime
+// fails with NoMatchingImport. Registry entries are therefore Astro
+// components (as in COLLECTION_RENDERERS), each importing its own island.
+import type { HeaderMediaProps } from '../../lib/header-media';
+import LinoCanvas from './LinoCanvas.svelte';
+
+const { entryId, images } = Astro.props as HeaderMediaProps;
+---
+<LinoCanvas {entryId} {images} client:load />
