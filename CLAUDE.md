@@ -128,6 +128,33 @@ Global architecture principles (View→Logic one-way, events over direct calls, 
 
 Any code that pushes, collapses, expands, reorders, or hides cards goes through `src/components/CardStack.svelte`. `src/components/StackNav.astro` is a thin Astro shell that renders `<CardStack client:load />` — it has no `<script>` block. Renderers and other scripts must not reach into `#card-stack` directly. This keeps the VT lifecycle, state, and layout updates in one place.
 
+### Fragments are HTML; the stack is state (`src/lib/card-fragments.ts`)
+
+The other half of that invariant. A location is rendered server-side as one
+`.stack-card`, and everything the client knows about it — title, declared
+width, content hash — travels as markup. `createCardFragments` owns all of it:
+uid ↔ URL mapping, the cache, every read of a fact out of a fragment
+(`factsFor`), the placeholder a view transition starts against
+(`seedPlaceholder`) and the later swap of real content into it (`replaceBody`).
+`CardStack.svelte` contains no `createElement`/`innerHTML` parsing — guarded by
+`CardStack.fragments.test.ts` — and the module contains no stack state: it
+never imports the store and never decides what is active.
+
+**The network is an injected seam.** `createCardFragments({ load })` takes the
+fetch, so `card-fragments.test.ts` drives push, close, popstate and
+re-activate against a fake fragment source — which is as close to orchestration
+coverage as this component gets, since the island cannot be mounted in a test
+(see Testing). What the module can't cover is asserted against the component's
+source instead.
+
+**The cache is not reactive, and that is nobody's call site's problem.** A bare
+`Map` write triggers nothing (nor did the old `$state(new Map())` — Svelte does
+not deep-proxy Maps); rendering is driven by *store* changes re-reading `get()`.
+Anything that must react to a fragment landing subscribes to `onChange`, which
+is how the active location's `--max-width` is reapplied after the
+placeholder→real swap. Note `applyMaxWidth`'s `typeof document` guard: the
+island is server-rendered too, and the SSR seed is a write.
+
 ### Svelte store is the authoritative card-stack state
 
 The `writable<StackState>` store in `src/stores/card-stack-store.ts` is the single source of truth for which cards are in the stack and which is active. `CardStack.svelte` derives CSS classes (`stack-card--active`, `stack-card--collapsed`) and layout state from the store via `$derived` and applies them via `$effect`. The CSS classes are styling contracts only — never query them in JS to infer state.

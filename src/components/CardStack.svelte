@@ -12,7 +12,13 @@
   import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../dimensions';
   import { markRead, readToRecord } from '../lib/card-view-state';
-  import { extractLocationWidth } from '../lib/location-width';
+  import {
+    createCardFragments,
+    extractLocationWidth,
+    titleOfElement,
+    uidToFetchUrl,
+    urlToUid,
+  } from '../lib/card-fragments';
 
   interface Props {
     activeUid?: string;
@@ -21,8 +27,19 @@
 
   let { activeUid, activeHtml }: Props = $props();
 
+  // Every fragment the stack renders, and every fact read out of one, lives in
+  // this module (issue #97) — the component holds no HTML parsing of its own.
   // Keyed by LocationEntry.key (== uid for card locations, see stack-layout.ts).
-  let cardHtmlCache = $state(new Map<string, string>());
+  //
+  // `onChange` is why no call site has to know that the cache triggers no
+  // reactivity: a fragment landing for the *active* location (the placeholder→
+  // real-content swap is the case that happens after the store already moved)
+  // reapplies its declared width here, rather than pushCard remembering to.
+  const fragments = createCardFragments({
+    onChange: (key) => {
+      if (key === get(stackStore).activeKey) applyMaxWidth(key);
+    },
+  });
   // Per-location URL params, stored as ordered pairs so repeated keys (e.g. a
   // lens's multi-value `filter.what=a&filter.what=b` selections) survive the
   // round-trip through serialiseStack — a plain Record would collapse repeats.
@@ -39,7 +56,7 @@
   // Seed store from SSR prop once at mount — untrack to silence reactive-capture warning.
   untrack(() => {
     if (activeUid && activeHtml) {
-      cardHtmlCache.set(activeUid, activeHtml);
+      fragments.seed(activeUid, activeHtml);
       stackStore.set({ entries: [cardEntry(activeUid)], activeKey: activeUid });
     }
   });
@@ -65,14 +82,11 @@
   // stays the same width as the active card's — a descendant-only override
   // on #card-stack wouldn't reach that sibling.
   //
-  // Not folded into cardHtmlCache reactivity: cardHtmlCache is a plain
-  // `$state(new Map())`, which Svelte does not deep-proxy — a bare `.set()`
-  // doesn't retrigger effects that only read via `.get()`. That's fine for
-  // the common case (cache is populated before the store changes), but
-  // pushCard's placeholder→real-content swap populates the cache with real
-  // content *after* the store already changed, so that path calls this
-  // explicitly once the real fragment lands (mirrors why that swap already
-  // patches .stack-card-body-inner by hand rather than relying on reactivity).
+  // Called from two places, and neither is a call site's problem to remember:
+  // the layout $effect below (whenever the store changes) and the fragment
+  // store's `onChange` (whenever a fragment lands for the location that is
+  // already active — pushCard's placeholder→real-content swap). See
+  // card-fragments.ts for why the cache itself is not reactive.
   //
   // Written to BOTH <html> and #card-stack, and that is not redundant. The
   // server renders #card-stack with the *initial* location's width as an inline
@@ -83,7 +97,12 @@
   // wrote to <html>. Setting the element too replaces that stale SSR value
   // rather than leaving it to shadow every later navigation.
   function applyMaxWidth(activeKey: string | null) {
-    const width = activeKey ? extractLocationWidth(cardHtmlCache.get(activeKey)) : undefined;
+    // The island is server-rendered too, and the fragment store's onChange can
+    // fire there (the SSR seed above is a write). There is no document to apply
+    // anything to on that pass — the first paint gets its width from the
+    // `initialWidth` inline style instead.
+    if (typeof document === 'undefined') return;
+    const width = activeKey ? fragments.factsFor(activeKey).width : undefined;
     const stackEl = document.getElementById('card-stack');
     if (width) {
       document.documentElement.style.setProperty('--max-width', width);
@@ -133,19 +152,6 @@
 
   const HOME_UID = 'lens/home';
 
-  // Lens locations fetch their lean fragment; cards fetch their /card page.
-  // Both return a `.stack-card` element we splice into the stack.
-  function uidToFetchUrl(uid: string): string {
-    if (uid.startsWith('lens/')) return `/fragment/lens/${uid.slice('lens/'.length)}`;
-    return `/card/${uid}`;
-  }
-
-  function urlToUid(url: string): string {
-    if (url.startsWith('/fragment/lens/')) return `lens/${url.slice('/fragment/lens/'.length)}`;
-    if (url.startsWith('/lens/')) return `lens/${url.slice('/lens/'.length)}`;
-    return url.startsWith('/card/') ? url.slice('/card/'.length) : url;
-  }
-
   // Synchronously make the home lens the sole, active, page-mode entry — the
   // state `/` cold-loads into. Home must already be cached (see seedHomeActive).
   function applyHomeSeed() {
@@ -155,7 +161,7 @@
   // Seeds the home lens as the sole active entry, fetching it first if needed.
   // Used when a deep-linked card is closed down to empty, or on popstate to `/`.
   async function seedHomeActive(pushUrl = true) {
-    const ok = await fetchAndCacheCard(HOME_UID);
+    const ok = await fragments.ensure(HOME_UID);
     if (!ok) {
       window.location.href = '/';
       return;
@@ -165,18 +171,14 @@
   }
 
   function getCardTitle(key: string): string {
-    const html = cardHtmlCache.get(key);
-    if (!html) return key;
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    return tmp.querySelector('.card-header-title')?.textContent?.trim() ?? key;
+    return fragments.factsFor(key).title ?? key;
   }
 
   // Records the view-state transition to 'read' for a location we hold the HTML
   // for. `readToRecord` owns the decision (card locations with a rendered
   // data-content-hash, nothing else); this is the thin write.
   function markReadIfKnown(key: string) {
-    const record = readToRecord(key, cardHtmlCache.get(key));
+    const record = readToRecord(key, fragments.get(key));
     if (record) markRead(record.uid, record.hash);
   }
 
@@ -189,36 +191,6 @@
     markReadIfKnown(key);
     overflowOpen = false;
     updateUrl();
-  }
-
-  function escapeHtml(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  function buildPlaceholderHtml(uid: string, title: string): string {
-    return `<div class="stack-card" data-uid="${escapeHtml(uid)}">` +
-      `<div class="card-header">` +
-      `<span class="card-header-title"><b>${escapeHtml(title)}</b></span>` +
-      `<button class="stack-card-close" aria-label="Close">×</button>` +
-      `</div>` +
-      `<div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner"></div></div></div>` +
-      `</div>`;
-  }
-
-  async function fetchCardHtmlFromNetwork(uid: string): Promise<string | null> {
-    const res = await fetch(uidToFetchUrl(uid));
-    if (!res.ok) return null;
-    const tmp = document.createElement('div');
-    tmp.innerHTML = await res.text();
-    return tmp.querySelector('.stack-card')?.outerHTML ?? null;
-  }
-
-  async function fetchAndCacheCard(uid: string): Promise<boolean> {
-    if (cardHtmlCache.has(uid)) return true;
-    const html = await fetchCardHtmlFromNetwork(uid);
-    if (!html) return false;
-    cardHtmlCache.set(uid, html);
-    return true;
   }
 
   function updateUrl(method: 'push' | 'replace' = 'push') {
@@ -247,7 +219,7 @@
   // paramsAfterSlotReplace for what happens to the outgoing location's params.
   async function replaceSlot(url: string, extraParams?: string) {
     const uid = urlToUid(url);
-    const ok = await fetchAndCacheCard(uid);
+    const ok = await fragments.ensure(uid);
     if (!ok) return;
 
     const carried: ParamPairs = [];
@@ -281,24 +253,23 @@
       state.entries[0].key === HOME_UID &&
       state.activeKey === HOME_UID;
 
-    const alreadyCached = cardHtmlCache.has(uid);
+    const alreadyCached = fragments.has(uid);
 
     // Start network fetch immediately, before any VT
     const networkFetch: Promise<string | null> = alreadyCached
       ? Promise.resolve(null)
-      : fetchCardHtmlFromNetwork(uid);
+      : fragments.load(uid);
 
     // If we have a link to click and VT support, seed cache with a placeholder
     // so the VT can start immediately without waiting for the network
     const usePlaceholder = !alreadyCached && clickedLink != null && startVT != null;
     if (usePlaceholder) {
-      const title = (clickedLink as Element).querySelector('.card-header-title')?.textContent?.trim() ?? uid;
-      cardHtmlCache.set(uid, buildPlaceholderHtml(uid, title));
+      fragments.seedPlaceholder(uid, titleOfElement(clickedLink) ?? uid);
     } else if (!alreadyCached) {
       // No VT possible — wait for real content before showing anything
       const html = await networkFetch;
       if (!html) return;
-      cardHtmlCache.set(uid, html);
+      fragments.seed(uid, html);
     }
 
     const doUpdate = () => {
@@ -307,9 +278,7 @@
       const toSeed = pendingBrowseStack;
       pendingBrowseStack = [];
       for (const pendingUid of toSeed) {
-        if (!cardHtmlCache.has(pendingUid)) {
-          cardHtmlCache.set(pendingUid, buildPlaceholderHtml(pendingUid, pendingUid));
-        }
+        if (!fragments.has(pendingUid)) fragments.seedPlaceholder(pendingUid, pendingUid);
       }
 
       stackStore.update(s => {
@@ -377,21 +346,11 @@
         // then open with the body-wrapper CSS transition
         const html = await networkFetch;
         if (html) {
-          cardHtmlCache.set(uid, html); // update cache for future navigations
-          const card = document.querySelector<HTMLElement>(`[data-uid="${CSS.escape(uid)}"]`);
-          if (card) {
-            const tmp = document.createElement('div');
-            tmp.innerHTML = html;
-            const realBodyInner = tmp.querySelector('.stack-card-body-inner');
-            const existingBodyInner = card.querySelector('.stack-card-body-inner');
-            if (realBodyInner && existingBodyInner) {
-              existingBodyInner.innerHTML = realBodyInner.innerHTML;
-            }
-          }
-          // The layout $effect already ran against the placeholder (no
-          // data-width) when the store changed; the real fragment's width
-          // only lands in cardHtmlCache now, so reapply explicitly.
-          applyMaxWidth(uid);
+          // Caches the real fragment for future navigations and patches its
+          // body into the mounted placeholder. The width the layout $effect
+          // couldn't see (it ran against the placeholder, which declares none)
+          // is reapplied by the fragment store's onChange, not from here.
+          fragments.replaceBody(uid, html, document.querySelector(`[data-uid="${CSS.escape(uid)}"]`));
         }
         // One rAF so the browser paints the closed card before we start opening it
         await new Promise<void>(r => requestAnimationFrame(() => r()));
@@ -458,7 +417,7 @@
         });
       }
 
-      const ok = await fetchAndCacheCard(HOME_UID);
+      const ok = await fragments.ensure(HOME_UID);
       if (!ok) { window.location.href = '/'; return; }
 
       // URL first: home's re-inserted fragment mounts LensFilterShell, which
@@ -502,7 +461,7 @@
     const toLocations = parsed.entries.slice(activeIdxInParsed + 1);
 
     for (const location of fromLocations) {
-      const ok = await fetchAndCacheCard(location.uid);
+      const ok = await fragments.ensure(location.uid);
       if (ok) {
         const entryParams = paramsByKey.get(location.key);
         if (entryParams?.length) cardParams.set(location.key, entryParams);
@@ -516,7 +475,7 @@
       }
     }
     for (const location of toLocations) {
-      const ok = await fetchAndCacheCard(location.uid);
+      const ok = await fragments.ensure(location.uid);
       if (ok) {
         const entryParams = paramsByKey.get(location.key);
         if (entryParams?.length) cardParams.set(location.key, entryParams);
@@ -552,7 +511,7 @@
     const browseUids = stackFromParams(new URLSearchParams(window.location.search));
     if (browseUids.length > 0 && get(stackStore).entries.length === 0) {
       pendingBrowseStack = [...browseUids];
-      browseUids.forEach(uid => fetchAndCacheCard(uid));
+      browseUids.forEach(uid => fragments.ensure(uid));
     }
 
     const cardStackEl = document.getElementById('card-stack')!;
@@ -657,7 +616,7 @@
         const uid = path.startsWith('/lens/')
           ? `lens/${path.slice('/lens/'.length)}`
           : path.slice('/card/'.length);
-        const ok = await fetchAndCacheCard(uid);
+        const ok = await fragments.ensure(uid);
         if (ok) {
           const entry = uid.startsWith('lens/') ? lensEntry(uid.slice('lens/'.length)) : cardEntry(uid);
           stackStore.update(s => pushToStack(s, entry));
@@ -683,10 +642,10 @@
   {#each layout.renderItems as item (item.kind === 'card' ? 'card-' + item.key : item.kind === 'fan-corner' ? 'fc-' + item.forKey : 'overflow-' + item.side)}
     {#if item.kind === 'card' && item.side === 'active'}
       <div class="active-card-col">
-        {@html cardHtmlCache.get(item.key) ?? ''}
+        {@html fragments.get(item.key) ?? ''}
       </div>
     {:else if item.kind === 'card'}
-      {@html cardHtmlCache.get(item.key) ?? ''}
+      {@html fragments.get(item.key) ?? ''}
     {:else if item.kind === 'fan-corner'}
       <div class="fan-corner" style="--i:{item.i}; --n:{item.n}"></div>
     {:else if item.kind === 'overflow' && item.side === 'left'}
