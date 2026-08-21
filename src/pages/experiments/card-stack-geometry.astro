@@ -1,0 +1,13 @@
+---
+// PROTOTYPE (issue #98) — throwaway /experiments route.
+// One route carrying the whole D1 occlusion geometry with scrubable controls:
+// stack depth, active index, scroll position, card lengths, load state, plus one
+// knob per open visual parameter. Deliberately one route rather than three —
+// these questions are the same function at different inputs.
+import Base from '../../layouts/Base.astro';
+import CardStackGeometryProto from '../../components/experiments/CardStackGeometryProto.svelte';
+---
+
+<Base title="Card-stack geometry prototype (#98)">
+  <CardStackGeometryProto client:load />
+</Base>
