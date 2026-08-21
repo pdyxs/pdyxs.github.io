@@ -128,6 +128,36 @@ Global architecture principles (View→Logic one-way, events over direct calls, 
 
 Any code that pushes, collapses, expands, reorders, or hides cards goes through `src/components/CardStack.svelte`. `src/components/StackNav.astro` is a thin Astro shell that renders `<CardStack client:load />` — it has no `<script>` block. Renderers and other scripts must not reach into `#card-stack` directly. This keeps the VT lifecycle, state, and layout updates in one place.
 
+### `from` and `to` belong to the stack, never to a location
+
+The codec owns two query keys — `from` and `to` — and they describe the *shape
+of the stack*: which locations sit before and after the active one. Everything
+else in the query belongs to the active location, either as its identity (a
+lens's `filter.*`, which rides in its key) or as side state it carries (a card's
+`tab=bio`). `STACK_STRUCTURE_PARAM_KEYS` and `locationParamsFromSearch`
+(`src/lib/stack-codec.ts`) are that one distinction, and **every** path that
+turns a query string into a location's params goes through it — the codec's own
+`deserialiseStack`, `CardStack`'s mount seed, `onPopstate`, and
+`pushFilteredLens`.
+
+Drawn in only one of those places (issue #103), the two paths that rebuild from
+a URL adopted the stack's own context as the location's side params. That is not
+a cosmetic duplicate: `cardParams` is keyed by identity, so the stolen pair was
+re-emitted on **every** later `serialiseStack`, beside the structural pair
+computed from the live stack. The stale copy then wins wherever the live stack
+emits nothing — a `to` left over from a deeper visit resurrects entries the
+visitor has since closed — and rides inside the location's own `~`-token when
+it is inactive, compounding a level per navigation. Back/forward was where it
+showed, because those are the two navigations that rebuild rather than mutate.
+
+The second half of the same rule: **a popstate rebuilds the side map too.**
+`onPopstate` throws the entries away (`seedStackState(null)`) and `initFromUrl`
+reads them back, so `cardParams` is reset in the same breath. Every side param
+was serialised into the URL by the `updateUrl` that wrote that history entry, so
+the URL is the complete record; anything surviving in the map belongs to the
+stack the visitor just navigated *out of*, and would be re-attached the next
+time a same-keyed location appeared.
+
 ### Fragments are HTML; the stack is state (`src/lib/card-fragments.ts`)
 
 The other half of that invariant. A location is rendered server-side as one

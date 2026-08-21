@@ -37,6 +37,35 @@ const ENTRY_SEP = '.';
 const LENS_PREFIX = 'lens/';
 const LENS_BASE = '/lens';
 
+/**
+ * The query keys this codec owns. They describe the SHAPE OF THE STACK — which
+ * locations sit before and after the active one — and belong to no location in
+ * particular, so no location may ever adopt them as its own params (issue #103).
+ *
+ * Getting that wrong is not a cosmetic duplicate. `from`/`to` captured as a
+ * location's side params are stored against its key and re-emitted on every
+ * later `serialiseStack`, *beside* the structural pair the codec computes from
+ * the live stack. The stale copy then wins wherever the live stack emits
+ * nothing — a `to` left over from a deeper visit resurrects entries the
+ * visitor has since closed — and rides inside the location's own `~`-token
+ * when it is inactive, growing the URL a level per navigation.
+ */
+export const STACK_STRUCTURE_PARAM_KEYS: ReadonlySet<string> = new Set(['from', 'to']);
+
+/**
+ * The params a location owns, read out of a query string (`?` optional): every
+ * pair except the structural ones above, in order. This is the ONE place that
+ * distinction is drawn — `deserialiseStack` and every caller that turns
+ * `window.location.search` into a location's params go through it.
+ */
+export function locationParamsFromSearch(search: string): ParamPairs {
+  const pairs: ParamPairs = [];
+  new URLSearchParams(search).forEach((v, k) => {
+    if (!STACK_STRUCTURE_PARAM_KEYS.has(k)) pairs.push([k, v]);
+  });
+  return pairs;
+}
+
 /** Builds the readable path for a stack's active location — "/lens/<name>" for a
  * lens uid, "<basePath>/<uid>" for anything else (cards). */
 function pathForActive(activeUid: string, basePath: string): string {
@@ -201,10 +230,7 @@ export function deserialiseStack(
 
   // The active location's slot is allocated first, so it keeps the unsuffixed
   // handle: it is the one the SSR fragment on the page already carries.
-  const activeRawParams: ParamPairs = [];
-  usp.forEach((v, k) => {
-    if (k !== 'from' && k !== 'to') activeRawParams.push([k, v]);
-  });
+  const activeRawParams = locationParamsFromSearch(search);
   const taken: LocationEntry[] = [];
   const { entry: activeEntry, side: activeSide } = entryFrom(activeUid, activeRawParams, taken);
   taken.push(activeEntry);

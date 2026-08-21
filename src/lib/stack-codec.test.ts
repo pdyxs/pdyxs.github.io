@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { serialiseStack, deserialiseStack } from './stack-codec';
+import { serialiseStack, deserialiseStack, locationParamsFromSearch, STACK_STRUCTURE_PARAM_KEYS } from './stack-codec';
 import { filtersForKey } from './lens-key';
 import type { ParamPairs } from './stack-codec';
 import { cardEntry, lensEntry } from './stack-layout';
@@ -315,5 +315,42 @@ describe('round-trip property', () => {
     const decoded = deserialiseStack(path, search, manifest, tags);
     expect(decoded.paramsByKey.get('posts/hello')).toEqual([['x', '1'], ['x', '2'], ['tab', 'bio']]);
     expect(decoded.state).toEqual(state);
+  });
+});
+
+describe('locationParamsFromSearch (#103)', () => {
+  it('keeps a location its own params, in order', () => {
+    expect(locationParamsFromSearch('?tab=bio&filter.what=puzzles')).toEqual([
+      ['tab', 'bio'],
+      ['filter.what', 'puzzles'],
+    ]);
+    // The leading `?` is optional — pushFilteredLens hands it a bare query.
+    expect(locationParamsFromSearch('tab=bio')).toEqual([['tab', 'bio']]);
+    expect(locationParamsFromSearch('')).toEqual([]);
+  });
+
+  it('never hands back the structural keys, which belong to the stack', () => {
+    // `?from=…` says where this location sits, not what it is. Adopted as a
+    // location's own param it is re-emitted beside the structural pair for
+    // ever after (issue #103).
+    expect(locationParamsFromSearch('?from=1&to=2&tab=bio')).toEqual([['tab', 'bio']]);
+    expect(locationParamsFromSearch('?from=1.4~f0&to=2')).toEqual([]);
+    expect(STACK_STRUCTURE_PARAM_KEYS.has('from')).toBe(true);
+    expect(STACK_STRUCTURE_PARAM_KEYS.has('to')).toBe(true);
+  });
+
+  it('is the same reading deserialiseStack gives the active entry', () => {
+    // One decision, two consumers: the codec's own active-param split is this
+    // function, so a URL the codec wrote round-trips to the same side params
+    // whichever door you come in by.
+    const state: StackState = {
+      entries: [cardEntry('posts/hello'), cardEntry('posts/about-me')],
+      activeSlot: 'posts/about-me',
+    };
+    const paramsByKey = new Map<string, ParamPairs>([['posts/about-me', [['tab', 'bio']]]]);
+    const { path, search } = serialiseStack(state, paramsByKey, manifest, tags);
+    expect(search).toContain('from=');
+    const decoded = deserialiseStack(path, search, manifest, tags);
+    expect(decoded.paramsByKey.get('posts/about-me')).toEqual(locationParamsFromSearch(search));
   });
 });

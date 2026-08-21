@@ -7,7 +7,7 @@
   import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from '../lib/lens-key';
   import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
   import { filterStateFromParams } from '../dimensions';
-  import { serialiseStack, deserialiseStack } from '../lib/stack-codec';
+  import { serialiseStack, deserialiseStack, locationParamsFromSearch } from '../lib/stack-codec';
   import type { ParamPairs } from '../lib/stack-codec';
   import { paramsAfterSlotReplace } from '../lib/slot-params';
   import { manifestLookup } from '../lib/stack-manifest-client';
@@ -178,11 +178,15 @@
 
   const HOME_UID = 'lens/home';
 
-  /** Ordered pairs from a query string, `?` optional. */
+  /**
+   * The params a location owns, out of a query string. `from`/`to` are the
+   * codec's own structural keys — they say where the location sits in the
+   * stack, never what it is — so a location must never adopt them (issue #103).
+   * `locationParamsFromSearch` in stack-codec.ts is that one decision, next to
+   * the code that writes the keys; this is only its local name.
+   */
   function paramsFromSearch(search: string): ParamPairs {
-    const pairs: ParamPairs = [];
-    new URLSearchParams(search).forEach((v, k) => { pairs.push([k, v]); });
-    return pairs;
+    return locationParamsFromSearch(search);
   }
 
   /**
@@ -720,6 +724,16 @@
     document.addEventListener('cardparam', onCardParam);
 
     async function onPopstate() {
+      // A popstate rebuilds the WHOLE stack from the URL — `seedStackState(null)`
+      // throws the entries away and `initFromUrl` reads them back. The side
+      // params have to make the same round trip (issue #103): every one of them
+      // was serialised into this URL by the `updateUrl` that wrote the history
+      // entry, so the URL is the complete record, and anything left in the map
+      // is a param belonging to the stack the visitor just navigated *out of*.
+      // Kept, it would be re-attached the next time a same-keyed location
+      // appeared — a `tab=bio` from a branch you left reappearing on the card
+      // you came back to.
+      cardParams = new Map();
       stackStore.set(seedStackState(null));
       const path = window.location.pathname;
       if (path === '/' || path === '') {

@@ -397,3 +397,197 @@ describe('two identical locations coexist (#106)', () => {
     expect(decoded.state.activeSlot).toBe(decoded.state.entries[2].slot);
   });
 });
+
+describe('back/forward keeps a location its own params (#103)', () => {
+  // `from`/`to` are the codec's structural keys — they say where a location
+  // sits in the stack, never what it is. The stack used to read the whole
+  // query string as the location's own params on the two paths that rebuild
+  // from a URL (the mount seed and `onPopstate`), so returning to a location
+  // adopted its own stack context as side state. It was then re-emitted on
+  // every later serialisation, beside the structural pair computed from the
+  // live stack.
+  const CARD_C = 'what/puzzles/cityscrapers';
+
+  /** Every `?a=b` pair in the current URL, as an array so repeats are visible. */
+  function searchPairs(): [string, string][] {
+    const out: [string, string][] = [];
+    new URLSearchParams(window.location.search).forEach((v, k) => out.push([k, v]));
+    return out;
+  }
+
+  function pushFrom(hostSlot: string, uid: string) {
+    const link = document.createElement('a');
+    link.dataset.pushCard = uid;
+    document.querySelector(`[data-uid="${hostSlot}"] .stack-card-body-inner`)!.appendChild(link);
+    link.click();
+  }
+
+  it('returns to the exact URL the push wrote, and re-serialises it unchanged', async () => {
+    history.replaceState(null, '', `/card/${CARD_A}`);
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    pushFrom(CARD_A, CARD_B);
+    await settle();
+    const pushed = window.location.href;
+    expect(window.location.search).toMatch(/(^|[?&])from=/);
+
+    history.back();
+    await settle();
+    expect(window.location.pathname).toBe(`/card/${CARD_A}`);
+    expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_A]);
+
+    history.forward();
+    await settle();
+    expect(window.location.href).toBe(pushed);
+    expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_A, CARD_B]);
+    expect(get(stackStore).activeSlot).toBe(CARD_B);
+
+    // The re-serialisation is where the loss used to surface: activating the
+    // card behind used to emit `?to=<B>~<encoded from=…>`, B wearing the
+    // structural key it had picked up on the way back.
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .card-header`)!.click();
+    await settle();
+    expect(searchPairs()).toEqual([['to', manifestLookup.codeForUid(CARD_B) ?? CARD_B]]);
+  });
+
+  it('does not adopt the structural keys on a cold load either', async () => {
+    // The mount seed reads `window.location.search` the same way, so a
+    // deep-linked `/card/…?from=…` was corrupt before the visitor touched
+    // anything.
+    const fromCode = manifestLookup.codeForUid(CARD_A)!;
+    history.replaceState(null, '', `/card/${CARD_B}?from=${fromCode}`);
+    mountStack({ activeUid: CARD_B, activeHtml: fragment(CARD_B) });
+    await settle();
+    expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_A, CARD_B]);
+
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .card-header`)!.click();
+    await settle();
+    expect(searchPairs()).toEqual([['to', manifestLookup.codeForUid(CARD_B) ?? CARD_B]]);
+  });
+
+  it('carries a genuine side param back and forward, exactly once', async () => {
+    history.replaceState(null, '', `/card/${CARD_A}`);
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    pushFrom(CARD_A, CARD_B);
+    await settle();
+
+    // B reports side state of its own — the thing `from`/`to` must not be
+    // confused with.
+    document.dispatchEvent(new CustomEvent('cardparam', { detail: { uid: CARD_B, params: [['tab', 'bio']] } }));
+    await settle();
+    expect(searchPairs()).toContainEqual(['tab', 'bio']);
+
+    pushFrom(CARD_B, CARD_C);
+    await settle();
+    history.back();
+    await settle();
+
+    expect(get(stackStore).activeSlot).toBe(CARD_B);
+    // Present, and present once.
+    expect(searchPairs().filter(([k]) => k === 'tab')).toEqual([['tab', 'bio']]);
+    expect(searchPairs().filter(([k]) => k === 'from')).toHaveLength(1);
+  });
+
+  it('keeps a filtered lens filtered across back/forward without duplicating its context', async () => {
+    // The lens half of the ticket: its filters are its identity now (#100), so
+    // they ride in the path's query rather than the side map — but the `from`
+    // beside them is still the stack's, not the lens's.
+    history.replaceState(null, '', `/card/${CARD_A}`);
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const tag = document.createElement('a');
+    tag.setAttribute('href', 'tag:what:puzzles');
+    document.querySelector(`[data-uid="${CARD_A}"] .stack-card-body-inner`)!.appendChild(tag);
+    tag.click();
+    await settle();
+    const lensUrl = window.location.href;
+    const lensKey = get(stackStore).entries[1].key;
+    expect(lensKey).toContain('filter.what');
+
+    pushFrom('lens/interesting', CARD_B);
+    await settle();
+    history.back();
+    await settle();
+
+    expect(window.location.href).toBe(lensUrl);
+    expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_A, lensKey]);
+    // Its identity survived, and the stack context beside it appears once.
+    expect(searchPairs().filter(([k]) => k === 'filter.what')).toHaveLength(1);
+    expect(searchPairs().filter(([k]) => k === 'from')).toHaveLength(1);
+
+    // Re-activating the card behind it re-serialises the lens into `to=`; the
+    // token used to carry a copy of the whole `from=` chain with it.
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .card-header`)!.click();
+    await settle();
+    const to = new URLSearchParams(window.location.search).get('to')!;
+    expect(to).not.toContain('.');
+    const decoded = deserialiseStack(
+      window.location.pathname,
+      window.location.search,
+      manifestLookup,
+      tagManifestLookup,
+    );
+    expect(decoded.state.entries.map(e => e.key)).toEqual([CARD_A, lensKey]);
+    expect(decoded.paramsByKey.size).toBe(0);
+  });
+
+  it('leaves a departed branch\'s side params behind on the way back', async () => {
+    // The other half: a popstate throws the whole stack away and reads it back
+    // from the URL, so the side map has to make the same round trip. Held over,
+    // a param reported in a branch the visitor has left is re-attached the next
+    // time a location with that key turns up.
+    history.replaceState(null, '', `/card/${CARD_A}`);
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    pushFrom(CARD_A, CARD_B);
+    await settle();
+    document.dispatchEvent(new CustomEvent('cardparam', { detail: { uid: CARD_B, params: [['tab', 'bio']] } }));
+    await settle();
+    expect(window.location.search).toContain('tab=bio');
+
+    history.back();
+    await settle();
+    expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_A]);
+
+    // Open B again from a plain link, which says nothing about tabs.
+    pushFrom(CARD_A, CARD_B);
+    await settle();
+
+    expect(get(stackStore).activeSlot).toBe(CARD_B);
+    expect(window.location.search).not.toContain('tab');
+  });
+
+  it('does not resurrect a location the visitor closed', async () => {
+    // The sharpest consequence of the stale copy: a `to=` picked up as the
+    // active location's own param outlives the entries it names, and the codec
+    // emits nothing structural to overwrite it once they are gone.
+    history.replaceState(null, '', `/card/${CARD_A}`);
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    pushFrom(CARD_A, CARD_B);
+    await settle();
+    pushFrom(CARD_B, CARD_C);
+    await settle();
+
+    // Step back to A, so the URL now carries a `to=` naming B and C...
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .card-header`)!.click();
+    await settle();
+    expect(window.location.search).toContain('to=');
+
+    // ...go back onto that URL, then close everything ahead of A.
+    history.back();
+    await settle();
+    history.forward();
+    await settle();
+    expect(get(stackStore).activeSlot).toBe(CARD_A);
+
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_B}"] .stack-card-close`)!.click();
+    await settle();
+
+    expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_A]);
+    expect(window.location.search).toBe('');
+  });
+});
