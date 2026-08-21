@@ -23,7 +23,7 @@
   let bottomEdge = $state<BottomEdge>('staircase');
   let headerMode = $state<'rotated' | 'horizontal' | 'icon'>('rotated');
   let depth1Page = $state(true);
-  let revealMode = $state<'clip' | 'dissolve'>('clip');
+  let revealMode = $state<'clip' | 'dissolve' | 'none'>('clip');
   // Surfaced by the puzzle fixture: an opaque spine means every collapsed card
   // crops to an identical title strip, showing nothing of the card itself —
   // which sits awkwardly against #67's "a preview IS the card". The
@@ -35,6 +35,20 @@
   // mitigations: quantise the sweep so it rasterises N times instead of ~40,
   // and carry no mask at all at rest.
   let dissolveSteps = $state(8);
+  // THE TENSION, made scrubable. Every card carries a --dither-N: a stack of
+  // ~7 viewport-anchored `fixed` gradient layers. A fixed background cannot be
+  // translated by the compositor, so moving the element REPAINTS all of them —
+  // 7 cards x 7 layers, every frame, for the length of the slide. That is the
+  // lag, and CLAUDE.md already names the cost for scrolling.
+  //   offset    — left/top. Correct dither, repaint per frame.
+  //   transform — composited and cheap, but a transform re-anchors the fixed
+  //               grid to the card, so the dither shimmers WHILE MOVING. The
+  //               ban in #67 was never tested against motion this short; this
+  //               is how to judge whether it is actually visible.
+  //   none      — snap. Costs nothing, and a 1-bit aesthetic can carry it.
+  let motionMode = $state<'offset' | 'transform' | 'none'>('offset');
+  let motionMs = $state(320);
+  const moveMs = $derived(motionMode === 'none' ? 0 : motionMs);
   let activeWidth = $state(680);
   let panelOpen = $state(true);
 
@@ -92,7 +106,7 @@
   let shimmerMove = $state(false);
 </script>
 
-<div class="proto-viewport" style={`--cw:${collapsedWidth}px; --w:${activeWidth}px; --ctl-w:${panelOpen ? 320 : 0}px; --reveal-ms:${REVEAL_MS}ms; --reveal-ease:steps(${dissolveSteps});`}>
+<div class="proto-viewport" style={`--cw:${collapsedWidth}px; --w:${activeWidth}px; --ctl-w:${panelOpen ? 320 : 0}px; --reveal-ms:${REVEAL_MS}ms; --reveal-ease:steps(${dissolveSteps}); --move-ms:${moveMs}ms;`}>
   <div class="proto-rail">
     <div class="proto-stack" class:page={pageMode}>
       {#each geo.cards as c (c.index)}
@@ -104,7 +118,10 @@
           class:pc--active={active}
           class:pc--page={active && pageMode}
           style={`
-            left:${c.left}px; top:${c.top}px; z-index:${c.z};
+            ${motionMode === 'transform'
+              ? `left:0; top:0; transform:${c.left || c.top ? `translate(${c.left}px, ${c.top}px)` : 'none'};`
+              : `left:${c.left}px; top:${c.top}px;`}
+            z-index:${c.z};
             --left-col:${active ? 0 : collapsedWidth}px;
             --extra:${c.extraHeight}px;
             --spine-bg:${`var(--dither-${active ? Math.max(0, Math.min(16, ditherMid)) : c.dither})`};
@@ -152,7 +169,9 @@
       {#each geo.markers as m (m.side)}
         <div
           class="marker marker--{m.side}"
-          style={`left:${m.left}px; top:${m.top}px; z-index:${m.z}; background:var(--dither-${m.dither});`}
+          style={`${motionMode === 'transform'
+              ? `left:0; top:0; transform:translate(${m.left}px, ${m.top}px);`
+              : `left:${m.left}px; top:${m.top}px;`} z-index:${m.z}; background:var(--dither-${m.dither});`}
         >
           <span>{m.count}<br />{m.side === 'behind' ? 'back' : 'ahead'}</span>
         </div>
@@ -220,9 +239,17 @@
       <label>spine backing
         <select bind:value={spineBacking}><option>opaque</option><option>content</option></select>
       </label>
+      <label>motion
+        <select bind:value={motionMode}>
+          <option>offset</option><option>transform</option><option>none</option>
+        </select>
+      </label>
+      <label>motion ms <b>{motionMs}</b><input type="range" min="0" max="800" step="20" bind:value={motionMs} /></label>
       <label>dissolve steps <b>{dissolveSteps}</b><input type="range" min="2" max="24" bind:value={dissolveSteps} /></label>
       <label>reveal mode
-        <select bind:value={revealMode}><option>clip</option><option>dissolve</option></select>
+        <select bind:value={revealMode}>
+          <option>clip</option><option>dissolve</option><option>none</option>
+        </select>
       </label>
       <label><input type="checkbox" bind:checked={depth1Page} /> depth-1 is page-like</label>
 
@@ -256,8 +283,11 @@
     grid-template-columns: var(--left-col) 1fr;
     grid-template-rows: auto 1fr;
     overflow: clip;
-    transition: left 320ms ease-out, top 320ms ease-out,
-                grid-template-columns 320ms ease-out, background 320ms linear;
+    /* grid-template-columns is a LAYOUT animation — it re-runs grid layout on
+       the card every frame — so it shares the motion budget and stops with it. */
+    transition: left var(--move-ms) ease-out, top var(--move-ms) ease-out,
+                transform var(--move-ms) ease-out,
+                grid-template-columns var(--move-ms) ease-out;
   }
   .pc--active { position: relative; height: auto; }
 
@@ -370,7 +400,8 @@
     box-sizing: border-box;
     border: var(--border-width) solid var(--color-border);
     font-family: var(--font-ui); font-size: 0.75rem; text-align: center; line-height: 1.15;
-    transition: left 320ms ease-out, top 320ms ease-out;
+    transition: left var(--move-ms) ease-out, top var(--move-ms) ease-out,
+                transform var(--move-ms) ease-out;
     overflow: clip;
   }
   /* A marker is a collapsed spine too, so its label follows the viewport the
