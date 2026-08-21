@@ -24,6 +24,12 @@
   let headerMode = $state<'rotated' | 'horizontal' | 'icon'>('rotated');
   let depth1Page = $state(true);
   let revealMode = $state<'clip' | 'dissolve'>('clip');
+  // Surfaced by the puzzle fixture: an opaque spine means every collapsed card
+  // crops to an identical title strip, showing nothing of the card itself —
+  // which sits awkwardly against #67's "a preview IS the card". The
+  // alternative lets the card's own leftmost 48px show through. Legible vs
+  // truthful; the prototype should not pick for you.
+  let spineBacking = $state<'opaque' | 'content'>('opaque');
   let activeWidth = $state(680);
   let panelOpen = $state(true);
 
@@ -67,7 +73,7 @@
   let shimmerMove = $state(false);
 </script>
 
-<div class="proto-viewport" style={`--cw:${collapsedWidth}px; --w:${activeWidth}px;`}>
+<div class="proto-viewport" style={`--cw:${collapsedWidth}px; --w:${activeWidth}px; --ctl-w:${panelOpen ? 320 : 0}px;`}>
   <div class="proto-rail">
     <div class="proto-stack" class:page={pageMode}>
       {#each geo.cards as c (c.index)}
@@ -75,6 +81,7 @@
         {@const active = c.role === 'active'}
         <article
           class="pc"
+          class:pc--ahead={c.role === 'ahead'}
           class:pc--active={active}
           class:pc--page={active && pageMode}
           style={`
@@ -85,7 +92,7 @@
           `}
         >
           <!-- left spine header: shown for every non-active card, both sides -->
-          <div class="spine" aria-hidden={active}>
+          <div class="spine" class:bare={spineBacking === 'content'} aria-hidden={active}>
             <div class="spine-inner spine--{headerMode}">
               {#if headerMode === 'icon'}
                 <span class="spine-glyph">{TITLES[c.index % TITLES.length][0]}</span>
@@ -190,6 +197,9 @@
           <option>rotated</option><option>horizontal</option><option>icon</option>
         </select>
       </label>
+      <label>spine backing
+        <select bind:value={spineBacking}><option>opaque</option><option>content</option></select>
+      </label>
       <label>reveal mode
         <select bind:value={revealMode}><option>clip</option><option>dissolve</option></select>
       </label>
@@ -205,7 +215,13 @@
   /* No `transform` anywhere near a dithered surface — see proto-geometry.ts. */
   @property --thr { syntax: '<length>'; inherits: false; initial-value: 0px; }
 
-  .proto-viewport { overflow-x: clip; padding: var(--space-xl) 0 var(--space-xl); }
+  .proto-viewport {
+    overflow-x: clip;
+    padding: var(--space-xl) 0 var(--space-xl);
+    /* keeps the ahead-side slivers and markers clear of the fixed knobs panel */
+    padding-right: var(--ctl-w, 0px);
+    transition: padding-right 200ms ease-out;
+  }
   .proto-rail { max-width: var(--w); margin: 0 auto; }
   .proto-stack { position: relative; }
 
@@ -218,20 +234,36 @@
     display: grid;
     grid-template-columns: var(--left-col) 1fr;
     grid-template-rows: auto 1fr;
-    overflow: hidden;
+    overflow: clip;
     transition: left 320ms ease-out, top 320ms ease-out,
                 grid-template-columns 320ms ease-out, background 320ms linear;
   }
   .pc--active { position: relative; height: auto; }
+
+  /* THE ASYMMETRY. A behind-card is cropped for free by the card in front of
+     it — painting order does all the work. An ahead-card has nothing in front
+     of it, so on that side the crop has to be asked for: without this, the
+     last ahead-card's full width bleeds out to the right of the fan.
+     Still a full-size node (printing never moves) — this crops what is
+     PAINTED, which is the same thing "collapsed is a crop, not a reflow"
+     already says. clip-path, not width: no containing block for the fixed
+     dither, unlike a transform. */
+  .pc--ahead { clip-path: inset(0 calc(100% - var(--cw)) 0 0); }
   .pc--page { border: none; }
 
   /* The spine sits in column 1 spanning both rows, OVER the body — which also
      spans column 1 — so opening it crops the body rather than reflowing it. */
   .spine {
     grid-column: 1; grid-row: 1 / -1;
-    z-index: 2; overflow: hidden;
+    z-index: 2; overflow: clip;
+    /* Opaque, and the same dither as its card: the spine is what OCCLUDES the
+       body it overlays. Left transparent, the body reads straight through it
+       and there is no occlusion at all. */
+    background: inherit;
     border-right: var(--border-width) solid var(--color-border);
   }
+  /* the card's own content shows through the crop instead */
+  .spine.bare { background: transparent; }
   .pc--active .spine { border-right: none; }
   .spine-inner {
     position: sticky; top: 0;
@@ -265,8 +297,11 @@
   .pc-body {
     grid-column: 1 / -1; grid-row: 2;
     padding: var(--space-lg);
-    background: var(--color-bg);
+    background: transparent;
   }
+  .pc--active .pc-body { background: var(--color-bg); }
+  .pc:has(.spine.bare) .pc-body { background: var(--color-bg); }
+  .pc:not(.pc--active) .pc-header { background: transparent; }
   .pc-body p { margin: 0 0 var(--space-md); }
 
   /* reveal — geometric clip */
@@ -289,12 +324,17 @@
     width: var(--cw); height: 100%;
     box-sizing: border-box;
     border: var(--border-width) solid var(--color-border);
-    display: flex; align-items: flex-start; justify-content: center;
-    padding-top: var(--space-sm);
     font-family: var(--font-ui); font-size: 0.75rem; text-align: center; line-height: 1.15;
     transition: left 320ms ease-out, top 320ms ease-out;
+    overflow: clip;
   }
-  .marker span { -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill; }
+  /* A marker is a collapsed spine too, so its label follows the viewport the
+     same way — otherwise it scrolls away while every spine beside it stays. */
+  .marker span {
+    position: sticky; top: 0; display: block;
+    padding-top: var(--space-sm);
+    -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill;
+  }
 
   .puzzle-art {
     /* stands in for a full-bleed header image: what the collapsed crop gets */
