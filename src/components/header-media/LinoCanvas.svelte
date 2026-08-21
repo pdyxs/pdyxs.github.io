@@ -1,29 +1,13 @@
 <script lang="ts">
-  // ─────────────────────────────────────────────────────────────────────────
-  // YOUR SPACE. This island replaces the header <img> on the Lino Printing
-  // card and nothing else — masthead, credits, body, gallery and card strips
-  // all still come from GenericRenderer.
-  //
-  // Hooked up by `headerMedia: lino-canvas` in the card's frontmatter, via
-  // HEADER_MEDIA_RENDERERS in src/lib/renderers.ts. Mounted client:load, so
-  // the full Svelte 5 runes API is available ($state / $derived / $effect).
-  //
-  // Two house rules that bite here specifically:
-  //  - No hex literals. Colours come from the CSS custom properties in
-  //    global.css (--color-bg, --color-text, --dither-N, …). An `opacity` used
-  //    to soften a colour is a bug — the palette has no grey.
-  //  - Do NOT put `transform`, `filter`, `will-change: transform`, `contain:
-  //    paint` or `perspective` on an ancestor of anything dithered. It
-  //    re-anchors the fixed dither grid and makes it shimmer. Transforming
-  //    *inside* this component is fine as long as nothing dithered is under it
-  //    — an undithered pan/zoom canvas is exactly that case.
-  // ─────────────────────────────────────────────────────────────────────────
   import type { HeaderMediaProps } from '../../lib/header-media';
+  import { SvelteMap } from 'svelte/reactivity';
 
   // `images` is every colocated image in the card folder, filename-sorted,
   // already run through astro:assets — src is the optimised URL, width/height
   // are its intrinsic dimensions. `entryId` is the card uid.
   const { entryId, images }: HeaderMediaProps = $props();
+
+  type Position = [number, number];
 
   const exitLocations = [
     [-0.25, -0.5],
@@ -36,48 +20,62 @@
     [-0.5, -0.25]
   ];
 
-  const allImages = [
-    {
-      ...images[0],
-      exits: [1, 5, 6, 7]
-    },
-    {
-      ...images[1],
-      exits: [1, 3, 5]
-    },
-    {
-      ...images[2],
-      exits: [1, 3, 5, 7]
-    },
-    {
-      ...images[3],
-      exits: [0, 1, 2, 4, 5, 6]
-    },
-    {
-      ...images[4],
-      exits: [0, 1, 3, 4, 5, 6]
-    }
+  const EXITS: number[][] = [
+    [1, 5, 6, 7],
+    [1, 3, 5],
+    [1, 3, 5, 7],
+    [0, 1, 2, 4, 5, 6],
+    [0, 1, 3, 4, 5, 6]
   ];
 
   // Positions are in TILE UNITS, not pixels — [1, 0] is one tile to the east.
   // CSS turns a unit into a length via --lino-step, so the whole layout scales
   // with --lino-tile and nothing here needs to know the viewport size.
-  const placedImages = $state([{
-    ...allImages[0],
-    position: [0,0]
-  }]);
+  const placements = new SvelteMap<number, Position>();
+
+  const currentPlacement: {position: Position, exit: number} | undefined
+    = $state({position: [0,0], exit: -1});
 
   // Wiggle offset as a FRACTION of the container (-0.5 … 0.5). The amplitude
   // lives in CSS (--lino-wiggle) so it scales with the tile too.
-  let dM = $state({ x: 0, y: 0 })
+  let dM: Position = $state([0,0])
 
   let wiggleEl: HTMLDivElement;
 
   function handleMouseMove(event: MouseEvent) {
     const r = wiggleEl.getBoundingClientRect();
-    dM.x = -((event.clientX - r.left)/r.width - 0.5);
-    dM.y = -((event.clientY - r.top)/r.height - 0.5);
+    dM[0] = -((event.clientX - r.left)/r.width - 0.5);
+    dM[1] = -((event.clientY - r.top)/r.height - 0.5);
   }
+
+  const placedImages = $derived.by(() =>
+    [...placements].map(([index, position]) => ({
+      ...images[index],
+      position,
+      exits: EXITS[index]
+    })));
+
+  const unplacedIndexes = $derived(
+    images.map((_, i) => i).filter((i) => !placements.has(i))
+  );
+
+  const placeableImages = $derived.by(() =>
+  {
+    if (!currentPlacement) {
+      return [];
+    }
+    let possibleIndexes = [...unplacedIndexes];
+    if (currentPlacement.exit >= 0) {
+      possibleIndexes = possibleIndexes.filter(i => EXITS[i].includes(currentPlacement.exit))
+    }
+
+    return possibleIndexes.map(i => ({
+      ...images[i],
+      index: i
+    }));
+  });
+
+  const currentFocus: Position = $state([0,0]);
 
 </script>
 
@@ -86,8 +84,10 @@
     onmousemove={handleMouseMove}
     role="img">
     <div class="lino-wiggle"
-        style:--dx={dM.x}
-        style:--dy={dM.y}>
+        style:--dx={dM[0]}
+        style:--dy={dM[1]}
+        style:--focusx={currentFocus[0]}
+        style:--focusy={currentFocus[1]}>
         <div class="lino-canvas" data-entry={entryId}>
         {#each placedImages as image (image.filename)}
             <div class="image-container"
@@ -107,6 +107,9 @@
                         loading="lazy"
                         />
             </div>
+        {/each}
+        {#each placeableImages as image (image.filename)}
+            <img class="image-placeable" src={image.src} alt="" />
         {/each}
         </div>
     </div>
@@ -136,8 +139,8 @@
   .lino-wiggle {
       position: relative;
       transform: translate(
-          calc(var(--dx, 0) * var(--lino-wiggle)),
-          calc(var(--dy, 0) * var(--lino-wiggle))
+          calc(var(--dx, 0) * var(--lino-wiggle) + var(--focusx, 0) * var(--lino-step)),
+          calc(var(--dy, 0) * var(--lino-wiggle) + var(--focusy, 0) * var(--lino-step))
       );
   }
 
