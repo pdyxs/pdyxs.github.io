@@ -23,7 +23,9 @@ export interface GeoParams {
   collapsedWidth: number;
   /** Vertical step per depth, px. */
   stagger: number;
-  /** How far an ahead-card reaches back over the active card's inset, px. */
+  /** How far each ahead-card tucks under the one in front of it, px. Applies
+   *  at EVERY boundary in the fan, including the active card's — not just the
+   *  first, which left the rest of the fan reading as one flush strip. */
   forwardOverlap: number;
   /** Max behind-cards drawn individually before an overflow strip. */
   backwardStrip: number;
@@ -67,6 +69,14 @@ export interface Geometry {
 }
 
 const clampDither = (n: number) => Math.max(0, Math.min(16, Math.round(n)));
+
+/** Pitch of the ahead fan: the sliver less the overlap, floored so the fan
+ *  can never invert when forwardOverlap is scrubbed past collapsedWidth. */
+export const aheadPitch = (p: GeoParams) =>
+  Math.max(8, p.collapsedWidth - p.forwardOverlap);
+
+const aheadLeft = (d: number, p: GeoParams) =>
+  p.activeWidth - p.forwardOverlap + (d - 1) * aheadPitch(p);
 
 export function computeGeometry(
   stackLength: number,
@@ -112,7 +122,7 @@ export function computeGeometry(
   for (let d = 1; d <= aheadDrawn; d++) {
     cards.push({
       index: a + d, role: 'ahead', depth: d,
-      left: p.activeWidth - p.forwardOverlap + (d - 1) * p.collapsedWidth,
+      left: aheadLeft(d, p),
       top: d * p.stagger,
       z: a + d,
       dither: clampDither(p.ditherMid - (d - 1) * p.ditherStep),
@@ -123,7 +133,7 @@ export function computeGeometry(
     const d = aheadDrawn + 1;
     markers.push({
       side: 'ahead', count: aheadTotal - aheadDrawn,
-      left: p.activeWidth - p.forwardOverlap + (d - 1) * p.collapsedWidth,
+      left: aheadLeft(d, p),
       top: d * p.stagger,
       z: a + d,
       dither: clampDither(p.ditherMid - (d - 1) * p.ditherStep),

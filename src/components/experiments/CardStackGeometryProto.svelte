@@ -88,6 +88,7 @@
             left:${c.left}px; top:${c.top}px; z-index:${c.z};
             --left-col:${active ? 0 : collapsedWidth}px;
             --extra:${c.extraHeight}px;
+            --spine-bg:${`var(--dither-${active ? Math.max(0, Math.min(16, ditherMid)) : c.dither})`};
             background:${active ? 'var(--color-bg)' : `var(--dither-${c.dither})`};
           `}
         >
@@ -249,6 +250,17 @@
      already says. clip-path, not width: no containing block for the fixed
      dither, unlike a transform. */
   .pc--ahead { clip-path: inset(0 calc(100% - var(--cw)) 0 0); }
+  /* The clip cuts the card's own right border off with the rest of the card,
+     so the sliver was left open-ended. Drawn inside the clip region instead.
+     Sits above the spine so the tucked corner reads as a card edge. */
+  .pc--ahead::after {
+    content: '';
+    position: absolute; top: 0; bottom: 0;
+    left: calc(var(--cw) - var(--border-width));
+    width: var(--border-width);
+    background: var(--color-border);
+    z-index: 3;
+  }
   .pc--page { border: none; }
 
   /* The spine sits in column 1 spanning both rows, OVER the body — which also
@@ -259,19 +271,29 @@
     /* Opaque, and the same dither as its card: the spine is what OCCLUDES the
        body it overlays. Left transparent, the body reads straight through it
        and there is no occlusion at all. */
-    background: inherit;
-    border-right: var(--border-width) solid var(--color-border);
+    background: var(--spine-bg);
   }
   /* the card's own content shows through the crop instead */
   .spine.bare { background: transparent; }
-  .pc--active .spine { border-right: none; }
+
   .spine-inner {
+    /* NO height here. `height: 100vh` made this grid item's row 100vh tall,
+       which set a floor under every card in the stack — a short card rendered
+       as tall as the viewport and looked deliberate. The .spine grid item
+       already stretches to the card, which is what carries the dither; this
+       is only the label that follows the viewport. */
     position: sticky; top: 0;
-    width: var(--cw); height: 100vh;
+    width: var(--cw);
     box-sizing: border-box;
     padding: var(--space-sm) 4px;
     display: flex; align-items: flex-start; justify-content: center;
+    /* 5. the sticky label carries the card's top edge with it, so a scrolled
+       spine isn't left open at the top. The negative margin lands it exactly
+       on the card's own border at rest, so it doesn't read as double-weight. */
+    border-top: var(--border-width) solid var(--color-border);
+    margin-top: calc(var(--border-width) * -1);
   }
+  .pc--active .spine-inner { border-top: none; margin-top: 0; }
   .spine-text, .spine-glyph {
     font-family: var(--font-ui); font-size: 0.95rem; white-space: nowrap;
     -webkit-text-stroke: 3px var(--color-bg);
@@ -317,7 +339,7 @@
     -webkit-mask-size: 4px 4px;
     transition: --thr 700ms linear;
   }
-  .reveal-dissolve.on { --thr: 3.2px; }
+  .reveal-dissolve.on { --thr: 5px; }
 
   .marker {
     position: absolute;
@@ -333,6 +355,8 @@
   .marker span {
     position: sticky; top: 0; display: block;
     padding-top: var(--space-sm);
+    border-top: var(--border-width) solid var(--color-border);
+    margin-top: calc(var(--border-width) * -1);
     -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill;
   }
 
@@ -364,14 +388,14 @@
     position: relative;
   }
   .sh-masked {
-    --thr: 3.2px;
+    --thr: 5px;
     mask-image: radial-gradient(circle at 0.5px 0.5px, #000 var(--thr), #0000 calc(var(--thr) + 0.05px));
     mask-size: 4px 4px;
     -webkit-mask-image: radial-gradient(circle at 0.5px 0.5px, #000 var(--thr), #0000 calc(var(--thr) + 0.05px));
     -webkit-mask-size: 4px 4px;
   }
   .sh-masked.on { animation: thr 2.4s linear infinite alternate; }
-  @keyframes thr { from { --thr: 0.6px; } to { --thr: 3.2px; } }
+  @keyframes thr { from { --thr: 0.6px; } to { --thr: 5px; } }
   .shimmer-row.moving .sh-block { animation: slide 3s ease-in-out infinite alternate; }
   @keyframes slide { from { left: 0; } to { left: 37px; } }
 
