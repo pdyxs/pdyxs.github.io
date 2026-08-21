@@ -83,7 +83,7 @@ describe('the active location owns the filter selection', () => {
   it('CardStack mirrors the active key\'s filters into the shared store', () => {
     expect(cardStack).toMatch(/function syncLensFilters\(activeKey: string \| null\)/);
     expect(cardStack).toMatch(/filtersForKey\(activeKey\)/);
-    expect(cardStack).toMatch(/syncLensFilters\(\$stackStore\.activeKey\)/);
+    expect(cardStack).toMatch(/syncLensFilters\(activeEntry\(\$stackStore\)\?\.key \?\? null\)/);
   });
 
   it('LensFilterShell no longer seeds itself from the URL on mount', () => {

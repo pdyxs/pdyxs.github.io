@@ -18,28 +18,30 @@ export function seedStackState(entry: LocationEntry | null): StackState {
   // A fresh object every call, never a shared constant: `entries` is an array
   // and the stack mutates through it, so one shared empty state would let one
   // render's push land in the next render's "empty".
-  return entry ? { entries: [entry], activeKey: entry.key } : { entries: [], activeKey: null };
+  return entry ? { entries: [entry], activeSlot: entry.slot } : { entries: [], activeSlot: null };
 }
 
 export function pushToStack(state: StackState, entry: LocationEntry): StackState {
   return {
     entries: [...state.entries, entry],
-    activeKey: entry.key,
+    activeSlot: entry.slot,
   };
 }
 
-export function removeFromStack(state: StackState, key: string): StackState {
-  const index = state.entries.findIndex(e => e.key === key);
-  const newEntries = state.entries.filter(e => e.key !== key);
-  let newActiveKey = state.activeKey;
-  if (state.activeKey === key) {
-    newActiveKey = index > 0 ? state.entries[index - 1].key : (newEntries[0]?.key ?? null);
+/** Removes the entry occupying `slot`, activating the one before it. */
+export function removeFromStack(state: StackState, slot: string): StackState {
+  const index = state.entries.findIndex(e => e.slot === slot);
+  const newEntries = state.entries.filter(e => e.slot !== slot);
+  let newActiveSlot = state.activeSlot;
+  if (state.activeSlot === slot) {
+    newActiveSlot = index > 0 ? state.entries[index - 1].slot : (newEntries[0]?.slot ?? null);
   }
-  return { entries: newEntries, activeKey: newActiveKey };
+  return { entries: newEntries, activeSlot: newActiveSlot };
 }
 
-export function activateCard(state: StackState, key: string): StackState {
-  return { ...state, activeKey: key };
+/** Makes the entry occupying `slot` the active one. */
+export function activateCard(state: StackState, slot: string): StackState {
+  return { ...state, activeSlot: slot };
 }
 
 /**
@@ -54,31 +56,28 @@ export function activateCard(state: StackState, key: string): StackState {
  *
  * A re-key can land on an identity some OTHER entry already holds — clear the
  * filters on the second view of a lens and it becomes the unfiltered view
- * already sitting behind it. Keys must stay unique (every findIndex in the
- * layout, the codec and the store resolves by key, and would silently pick the
- * wrong one), so the collided-with entry is dropped. The one being edited is
- * the one kept: it is where the visitor is.
+ * already sitting behind it. **Both entries stay** (issue #106): a stack is
+ * the path you walked, a path that passes the same place twice is normal, and
+ * an entry silently disappearing from the breadcrumb is worse than two that
+ * look alike. Nothing here has to adjudicate the collision, because nothing
+ * downstream resolves an entry by key any more — every address is a slot, and
+ * slots are unique by construction.
  */
 export function rekeyEntry(state: StackState, slot: string, newKey: string): StackState {
   const idx = state.entries.findIndex(e => e.slot === slot);
   if (idx === -1) return state;
   const old = state.entries[idx];
   if (old.key === newKey) return state;
-  const rekeyed = { ...old, key: newKey };
-  const entries = state.entries
-    .map(e => (e.slot === slot ? rekeyed : e))
-    .filter(e => e.slot === slot || e.key !== newKey);
-  return {
-    entries,
-    activeKey: state.activeKey === old.key || state.activeKey === newKey ? newKey : state.activeKey,
-  };
+  const entries = state.entries.map(e => (e.slot === slot ? { ...e, key: newKey } : e));
+  return { entries, activeSlot: state.activeSlot };
 }
 
+/** Swaps the active entry for `newEntry`, which takes its position and becomes active. */
 export function replaceActiveSlot(state: StackState, newEntry: LocationEntry): StackState {
-  if (!state.activeKey) return state;
-  const idx = state.entries.findIndex(e => e.key === state.activeKey);
+  if (!state.activeSlot) return state;
+  const idx = state.entries.findIndex(e => e.slot === state.activeSlot);
   if (idx === -1) return state;
   const newEntries = [...state.entries];
   newEntries[idx] = newEntry;
-  return { entries: newEntries, activeKey: newEntry.key };
+  return { entries: newEntries, activeSlot: newEntry.slot };
 }

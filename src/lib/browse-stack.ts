@@ -37,7 +37,7 @@ export function stackFromParams(params: URLSearchParams): string[] {
 export function buildCardUrl(stack: string[], activeIndex: number): string {
   const state: StackState = {
     entries: stack.map(cardEntry),
-    activeKey: stack[activeIndex],
+    activeSlot: stack[activeIndex],
   };
   const { path, search } = serialiseStack(state, new Map(), manifestLookup, tagManifestLookup);
   return `${path}${search}`;

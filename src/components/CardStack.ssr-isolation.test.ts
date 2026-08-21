@@ -38,12 +38,12 @@ describe('prerendering one page does not leak into the next', () => {
 
   it('leaves the store empty after a render with no active location', () => {
     renderPage({ activeUid: CARD_UID, activeHtml: CARD_HTML });
-    expect(get(stackStore).activeKey).toBe(CARD_UID);
+    expect(get(stackStore).activeSlot).toBe(CARD_UID);
 
     // The home page: no active location, so it must state the empty stack
     // rather than inheriting the card page's.
     renderPage({});
-    expect(get(stackStore)).toEqual({ entries: [], activeKey: null });
+    expect(get(stackStore)).toEqual({ entries: [], activeSlot: null });
   });
 
   it('renders the home page identically whether or not a card page preceded it', () => {

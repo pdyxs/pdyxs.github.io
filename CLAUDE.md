@@ -159,6 +159,24 @@ island is server-rendered too, and the SSR seed is a write.
 
 The `writable<StackState>` store in `src/stores/card-stack-store.ts` is the single source of truth for which cards are in the stack and which is active. `CardStack.svelte` derives CSS classes (`stack-card--active`, `stack-card--collapsed`) and layout state from the store via `$derived` and applies them via `$effect`. The CSS classes are styling contracts only — never query them in JS to infer state.
 
+**An entry is addressed by `slot`, never by `key`** (issue #106). `StackState`
+holds `activeSlot`, and every `findIndex` in the store, the layout and the codec
+resolves on `slot`. `key` is what a location *is*, and it does exactly two
+things: it is serialised into the URL, and it is what `pushCard` compares to
+decide re-activate-vs-push. Keys are **not unique** — clear the filters on a
+second view of a lens and it becomes the unfiltered view already sitting behind
+it, and **both entries stay**: a stack is the path you walked, a path can pass
+the same place twice, and an entry vanishing from the breadcrumb is worse than
+two that look alike. Slots are unique by construction (`allocateSlot` /
+`withFreeSlot`, and `deserialiseStack` allocates fresh ones per decoded entry),
+so the ambiguity is unrepresentable rather than adjudicated — which is why
+`rekeyEntry` drops nothing.
+
+The corollary: **a slot is not a uid.** A suffixed handle (`lens/interesting#2`)
+addresses a DOM node and a fragment-cache entry, and nothing else. Read state is
+keyed by uid, so `markReadIfKnown` takes both — the uid for what was read, the
+slot for where its HTML is cached.
+
 **That invariant is about the client, and on the server it is silently false**
 (issue #102). The store is module-level and `astro build` prerenders every page
 in **one process**, so it is per-visitor state in the browser and
@@ -169,7 +187,7 @@ previous page's stack. What that renders is `#card-stack` **without** its
 `hidden` attribute, wrapping an empty `.active-card-col` around no card at all —
 the card's own markup does not come with it, since the fragment cache is
 per-instance. It also made an SSR crash reachable: a `document`-touching applier
-ran because `activeKey` was non-null on a page that has no active card.
+ran because the active location was non-null on a page that has no active card.
 
 Today every route that renders the island supplies both props (`LensPage.astro`
 seeds `lens/<name>`, so even `/` has an active location), so the leak is latent

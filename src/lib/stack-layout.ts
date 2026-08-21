@@ -13,15 +13,26 @@
 // inside its fragment (the filter panel's open/drill state, the browse
 // body's revealed rows) must not be destroyed by that.
 //
-// So: `key` is what `activeKey`, `findIndex` and the stack codec use; `slot`
-// is what `data-uid`, the fragment cache, `querySelector` and the `{#each}`
-// key use. Never conflate them at a call site.
+// So: `slot` is what ADDRESSES an entry — `activeSlot`, every `findIndex` in
+// the store and the layout, `data-uid`, the fragment cache, `querySelector`
+// and the `{#each}` key. `key` is what the entry *is*: it is serialised into
+// the URL, and it is what push-matching compares to decide re-activate vs
+// push. Never conflate them at a call site.
+//
+// Addressing by slot rather than by key is issue #106. A stack is the path you
+// walked, and a path can pass the same place twice: clear the filters on a
+// second view of a lens and it becomes the unfiltered view already sitting
+// behind it. Both entries stay — an entry vanishing from your breadcrumb is
+// worse than two that look alike — so keys are NOT unique, and anything that
+// resolves an entry by key is ambiguous. Slots are unique by construction
+// (`allocateSlot`), so addressing by slot makes the ambiguity unrepresentable
+// rather than adjudicated.
 import { lensKey, type KeyParamPairs } from './lens-key';
 
 export interface LocationEntry {
-  key: string;   // identity within the stack: activeKey / findIndex / serialisation
+  key: string;   // what the location IS: serialisation + push-matching. NOT unique.
   uid: string;   // fetchable identity ("collection/id" or "lens/<name>")
-  slot: string;  // stable DOM + fragment-cache handle; never changes once assigned
+  slot: string;  // the entry's ADDRESS: unique, stable DOM + fragment-cache handle
 }
 
 /** Builds a card location entry. For card locations, key === uid === slot. */
@@ -59,10 +70,27 @@ export function withFreeSlot(entries: readonly LocationEntry[], entry: LocationE
   return slot === entry.slot ? entry : { ...entry, slot };
 }
 
-/** The DOM/cache handle for an identity key, or null when it isn't stacked. */
+/**
+ * The DOM/cache handle of the FIRST entry holding an identity key, or null
+ * when it isn't stacked. Keys are not unique (see the note at the top), so
+ * this is only for looking up a location the caller knows is stacked once —
+ * the home lens. Never use it to resolve "where the visitor is": that is
+ * `state.activeSlot`, which is unambiguous.
+ */
 export function slotForKey(state: StackState, key: string | null): string | null {
   if (!key) return null;
   return state.entries.find(e => e.key === key)?.slot ?? null;
+}
+
+/** The entry occupying `slot`, or null. */
+export function entryForSlot(state: StackState, slot: string | null): LocationEntry | null {
+  if (!slot) return null;
+  return state.entries.find(e => e.slot === slot) ?? null;
+}
+
+/** The entry the visitor is on, or null when the stack is empty. */
+export function activeEntry(state: StackState): LocationEntry | null {
+  return entryForSlot(state, state.activeSlot);
 }
 
 /** The identity key of the entry occupying `slot`, or null. */
@@ -72,7 +100,8 @@ export function keyForSlot(state: StackState, slot: string): string | null {
 
 export interface StackState {
   entries: LocationEntry[];
-  activeKey: string | null;
+  /** The SLOT of the active entry — its address, never its identity key. */
+  activeSlot: string | null;
 }
 
 // ── Presentation mode ──────────────────────────────────────────────────
@@ -130,13 +159,13 @@ export interface LayoutResult {
 export const STAGGER_PX = 8;
 
 export function computeStackLayout(state: StackState): LayoutResult {
-  const { entries, activeKey } = state;
+  const { entries, activeSlot } = state;
 
   if (entries.length === 0) {
     return { visible: [], overflowKeys: [], needsOverflow: false, renderItems: [], numLeftCollapsed: 0, numRightCollapsed: 0 };
   }
 
-  let activeIdx = activeKey ? entries.findIndex(e => e.key === activeKey) : -1;
+  let activeIdx = activeSlot ? entries.findIndex(e => e.slot === activeSlot) : -1;
   if (activeIdx === -1) activeIdx = entries.length - 1;
 
   const leftEntries = entries.slice(0, activeIdx);

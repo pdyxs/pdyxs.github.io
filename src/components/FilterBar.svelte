@@ -8,6 +8,7 @@
   import { filterVisibleNodes, groupNodesIntoSections } from '../lib/browse-helpers';
   import { lensesForDimension, lensIdFromUid, activeLensIcon, isLensVisible } from '../lib/lens-registry';
   import { stackStore } from '../stores/card-stack-store';
+  import { activeEntry } from '../lib/stack-layout';
   import DimensionButton from './DimensionButton.svelte';
   import DimensionPanel from './DimensionPanel.svelte';
 
@@ -135,7 +136,7 @@
   // The globally active lens (if any) — sourced from the single source of
   // truth for stack state, so at most one dimension button ever shows an
   // icon, and it reflects the active lens wherever it sits in the stack.
-  const activeLensId = $derived(lensIdFromUid($stackStore.activeKey));
+  const activeLensId = $derived(lensIdFromUid(activeEntry($stackStore)?.uid ?? null));
 
   // Current filter selections, serialised so a lens replacement (below)
   // carries them into the new location — it reads window.location.search

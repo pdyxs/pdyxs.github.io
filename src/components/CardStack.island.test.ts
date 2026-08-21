@@ -24,6 +24,10 @@ import { mount, unmount, tick } from 'svelte';
 import { get } from 'svelte/store';
 import CardStack from './CardStack.svelte';
 import { stackStore, seedStackState } from '../stores/card-stack-store';
+import { activeEntry } from '../lib/stack-layout';
+import { deserialiseStack } from '../lib/stack-codec';
+import { manifestLookup } from '../lib/stack-manifest-client';
+import { tagManifestLookup } from '../lib/tag-manifest-client';
 import { clearViewState, hasBeenRead } from '../lib/card-view-state';
 
 const CARD_A = 'what/games/digital/numbeanies';
@@ -91,7 +95,7 @@ describe('mount', () => {
     await settle();
 
     expect(document.querySelector(`[data-uid="${CARD_A}"]`)).toBeTruthy();
-    expect(get(stackStore).activeKey).toBe(CARD_A);
+    expect(get(stackStore).activeSlot).toBe(CARD_A);
     expect(hasBeenRead(CARD_A)).toBe(true);
   });
 
@@ -101,7 +105,7 @@ describe('mount', () => {
     mountStack({ activeUid: 'lens/interesting', activeHtml: fragment('lens/interesting', { hash: null }) });
     await settle();
 
-    expect(get(stackStore).activeKey).toBe('lens/interesting');
+    expect(get(stackStore).activeSlot).toBe('lens/interesting');
     expect(hasBeenRead('lens/interesting')).toBe(false);
   });
 
@@ -142,7 +146,7 @@ describe('delegated click → push', () => {
 
     const state = get(stackStore);
     expect(state.entries.map(e => e.key)).toEqual([CARD_A, CARD_B]);
-    expect(state.activeKey).toBe(CARD_B);
+    expect(state.activeSlot).toBe(CARD_B);
     // The push is a stack navigation, not a page load: the URL moved, and the
     // browser never followed the href.
     expect(window.location.pathname).toContain(CARD_B);
@@ -169,7 +173,7 @@ describe('delegated click → push', () => {
 
     const state = get(stackStore);
     expect(state.entries.map(e => e.key)).toEqual([CARD_A, CARD_B]);
-    expect(state.activeKey).toBe(CARD_A);
+    expect(state.activeSlot).toBe(CARD_A);
   });
 
   it('pushes a card: protocol link from anywhere in the document', async () => {
@@ -182,7 +186,7 @@ describe('delegated click → push', () => {
     link.click();
     await settle();
 
-    expect(get(stackStore).activeKey).toBe(CARD_B);
+    expect(get(stackStore).activeSlot).toBe(CARD_B);
   });
 
   it('activates a collapsed card when it is clicked', async () => {
@@ -199,7 +203,7 @@ describe('delegated click → push', () => {
     collapsed.querySelector<HTMLElement>('.card-header')!.click();
     await settle();
 
-    expect(get(stackStore).activeKey).toBe(CARD_A);
+    expect(get(stackStore).activeSlot).toBe(CARD_A);
   });
 });
 
@@ -219,7 +223,7 @@ describe('close', () => {
 
     const state = get(stackStore);
     expect(state.entries.map(e => e.key)).toEqual([CARD_A]);
-    expect(state.activeKey).toBe(CARD_A);
+    expect(state.activeSlot).toBe(CARD_A);
   });
 });
 
@@ -293,11 +297,103 @@ describe('lens identity (#100)', () => {
     // The identity moved...
     expect(after.key).not.toBe(before.key);
     expect(after.key).toBe('lens/interesting?filter.what=what%3Apuzzles');
-    expect(get(stackStore).activeKey).toBe(after.key);
+    expect(activeEntry(get(stackStore))!.key).toBe(after.key);
     // ...but the handle did not, so the reporting island survives its own report.
     expect(after.slot).toBe(before.slot);
     expect(document.querySelectorAll('.stack-card')).toHaveLength(1);
     // And the selection reached the URL.
     expect(window.location.search).toContain('what%3Apuzzles');
+  });
+});
+
+describe('two identical locations coexist (#106)', () => {
+  // The exact route the ticket names, walked end to end:
+  //
+  //   1. you are on lens/interesting, unfiltered
+  //   2. you open a card from it — the unfiltered lens is now behind you
+  //   3. you follow a `tag:` link, which PUSHES lens/interesting?filter.what=…
+  //      (that push is #100's whole point; before it, this jumped backwards)
+  //   4. you clear the filter on that lens — its key re-keys to step 1's key
+  //
+  // The ruling is that both entries stay. A stack is the path you walked, and
+  // a path that passes the same place twice is normal.
+  const LENS = 'lens/interesting';
+
+  async function walkToTheCollision() {
+    mountStack({ activeUid: LENS, activeHtml: fragment(LENS, { hash: null }) });
+    await settle();
+
+    // 2. open a card from the lens
+    const card = document.createElement('a');
+    card.dataset.pushCard = CARD_A;
+    document.querySelector(`[data-uid="${LENS}"] .stack-card-body-inner`)!.appendChild(card);
+    card.click();
+    await settle();
+
+    // 3. follow a tag link — a second, filtered view of the same lens
+    const tag = document.createElement('a');
+    tag.setAttribute('href', 'tag:what:puzzles');
+    document.querySelector(`[data-uid="${CARD_A}"] .stack-card-body-inner`)!.appendChild(tag);
+    tag.click();
+    await settle();
+
+    const filtered = get(stackStore).entries[2];
+    expect(filtered.key).not.toBe(LENS);
+    expect(filtered.slot).toBe('lens/interesting#2');
+
+    // 4. clear the filter on it — the lens reports its (now empty) selection
+    document.dispatchEvent(new CustomEvent('cardparam', { detail: { uid: LENS, params: [] } }));
+    await settle();
+  }
+
+  it('keeps both lens entries when clearing a filter collides with the one behind', async () => {
+    await walkToTheCollision();
+
+    const state = get(stackStore);
+    expect(state.entries.map(e => e.key)).toEqual([LENS, CARD_A, LENS]);
+    // Same identity, two addresses — which is what lets them coexist.
+    expect(state.entries.map(e => e.slot)).toEqual([LENS, CARD_A, 'lens/interesting#2']);
+  });
+
+  it('leaves the visitor on the lens they were editing, not the one behind it', async () => {
+    await walkToTheCollision();
+
+    const state = get(stackStore);
+    expect(state.activeSlot).toBe('lens/interesting#2');
+    // Addressing by key would resolve this to entry 0 — two entries back,
+    // with the card in between visibly becoming a "forward" card.
+    expect(state.entries.indexOf(activeEntry(state)!)).toBe(2);
+  });
+
+  it('renders exactly one active card, and it is the second lens', async () => {
+    await walkToTheCollision();
+
+    const active = document.querySelectorAll('.stack-card--active');
+    expect(active).toHaveLength(1);
+    expect((active[0] as HTMLElement).dataset.uid).toBe('lens/interesting#2');
+    // Both lens fragments are still mounted; neither was destroyed by the
+    // collision, and the card between them is still collapsed in place.
+    expect(document.querySelectorAll('[data-uid^="lens/"]')).toHaveLength(2);
+    expect(document.querySelector(`[data-uid="${CARD_A}"]`)!.classList.contains('stack-card--collapsed')).toBe(true);
+  });
+
+  it('round-trips the repeated location through the URL', async () => {
+    await walkToTheCollision();
+
+    // The cleared filter left the address bar, and the two entries behind the
+    // active one are still both in it.
+    expect(window.location.pathname).toBe('/lens/interesting');
+    expect(window.location.search).not.toContain('filter.');
+
+    const decoded = deserialiseStack(
+      window.location.pathname,
+      window.location.search,
+      manifestLookup,
+      tagManifestLookup,
+    );
+    expect(decoded.state.entries.map(e => e.key)).toEqual([LENS, CARD_A, LENS]);
+    // Distinct handles on the way back in, so nothing deduplicates.
+    expect(new Set(decoded.state.entries.map(e => e.slot)).size).toBe(3);
+    expect(decoded.state.activeSlot).toBe(decoded.state.entries[2].slot);
   });
 });

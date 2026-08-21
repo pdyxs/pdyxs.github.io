@@ -23,7 +23,7 @@ const tags = buildLookup([
 
 describe('serialiseStack', () => {
   it('serialiseStack_single_active_card: active-only stack has a readable path and no query', () => {
-    const state: StackState = { entries: [cardEntry('posts/about-me')], activeKey: 'posts/about-me' };
+    const state: StackState = { entries: [cardEntry('posts/about-me')], activeSlot: 'posts/about-me' };
     const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.path).toBe('/card/posts/about-me');
     expect(result.search).toBe('');
@@ -32,7 +32,7 @@ describe('serialiseStack', () => {
   it('serialiseStack_from_and_to: inactive locations encode as short manifest codes', () => {
     const state: StackState = {
       entries: [cardEntry('posts/hello'), cardEntry('posts/about-me'), cardEntry('tag/travel')],
-      activeKey: 'posts/about-me',
+      activeSlot: 'posts/about-me',
     };
     const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.path).toBe('/card/posts/about-me');
@@ -40,7 +40,7 @@ describe('serialiseStack', () => {
   });
 
   it('serialiseStack_active_params_ride_the_path_as_plain_query', () => {
-    const state: StackState = { entries: [cardEntry('posts/about-me')], activeKey: 'posts/about-me' };
+    const state: StackState = { entries: [cardEntry('posts/about-me')], activeSlot: 'posts/about-me' };
     const paramsByKey = new Map([['posts/about-me', [['tab', 'bio']] as const]]);
     const result = serialiseStack(state, paramsByKey as any, manifest, tags);
     expect(result.search).toBe('?tab=bio');
@@ -49,7 +49,7 @@ describe('serialiseStack', () => {
   it('serialiseStack_inactive_params_ride_as_escape-free_codec_tokens_on_the_code', () => {
     const state: StackState = {
       entries: [cardEntry('posts/hello'), cardEntry('posts/about-me')],
-      activeKey: 'posts/about-me',
+      activeSlot: 'posts/about-me',
     };
     const paramsByKey = new Map([['posts/hello', [['tab', 'bio']] as const]]);
     const result = serialiseStack(state, paramsByKey as any, manifest, tags);
@@ -62,7 +62,7 @@ describe('serialiseStack', () => {
   it('serialiseStack_inactive_filter_params_encode_via_the_tag_manifest', () => {
     const state: StackState = {
       entries: [lensEntry('newest'), cardEntry('posts/about-me')],
-      activeKey: 'posts/about-me',
+      activeSlot: 'posts/about-me',
     };
     // Short filter values (dimension lives in the key); what:projects -> tag code 0.
     const paramsByKey = new Map<string, ParamPairs>([
@@ -77,14 +77,14 @@ describe('serialiseStack', () => {
   it('serialiseStack_unknown_uid_falls_back_to_raw_uid: no manifest entry still produces a usable (if longer) token', () => {
     const state: StackState = {
       entries: [cardEntry('posts/unmapped'), cardEntry('posts/about-me')],
-      activeKey: 'posts/about-me',
+      activeSlot: 'posts/about-me',
     };
     const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.search).toBe('?from=posts/unmapped');
   });
 
   it('serialiseStack_empty_stack_returns_homepage', () => {
-    const state: StackState = { entries: [], activeKey: null };
+    const state: StackState = { entries: [], activeSlot: null };
     const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.path).toBe('/');
     expect(result.search).toBe('');
@@ -96,7 +96,7 @@ describe('deserialiseStack', () => {
     const result = deserialiseStack('/card/posts/about-me', '', manifest, tags);
     expect(result.state).toEqual({
       entries: [cardEntry('posts/about-me')],
-      activeKey: 'posts/about-me',
+      activeSlot: 'posts/about-me',
     });
     expect(result.paramsByKey.size).toBe(0);
   });
@@ -104,7 +104,7 @@ describe('deserialiseStack', () => {
   it('deserialiseStack_from_and_to: short codes resolve back to uids via the manifest', () => {
     const result = deserialiseStack('/card/posts/about-me', '?from=1&to=2', manifest, tags);
     expect(result.state.entries.map(e => e.uid)).toEqual(['posts/hello', 'posts/about-me', 'tag/travel']);
-    expect(result.state.activeKey).toBe('posts/about-me');
+    expect(result.state.activeSlot).toBe('posts/about-me');
   });
 
   it('deserialiseStack_inactive_filter_params: coded tokens resolve back to short filter pairs', () => {
@@ -120,13 +120,13 @@ describe('deserialiseStack', () => {
 
   it('deserialiseStack_non_card_path_returns_empty_stack', () => {
     const result = deserialiseStack('/', '', manifest, tags);
-    expect(result.state).toEqual({ entries: [], activeKey: null });
+    expect(result.state).toEqual({ entries: [], activeSlot: null });
   });
 });
 
 describe('lens locations', () => {
   it('serialiseStack_active_lens: an active lens location paths to /lens/<name>, not /card', () => {
-    const state: StackState = { entries: [lensEntry('newest')], activeKey: 'lens/newest' };
+    const state: StackState = { entries: [lensEntry('newest')], activeSlot: 'lens/newest' };
     const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.path).toBe('/lens/newest');
     expect(result.search).toBe('');
@@ -136,7 +136,7 @@ describe('lens locations', () => {
     const result = deserialiseStack('/lens/newest', '', manifest, tags);
     expect(result.state).toEqual({
       entries: [lensEntry('newest')],
-      activeKey: 'lens/newest',
+      activeSlot: 'lens/newest',
     });
   });
 
@@ -144,7 +144,7 @@ describe('lens locations', () => {
     // The selection is part of the location now: it rides in the entry's key,
     // and the path/query it serialises to is unchanged from before #100.
     const filtered = lensEntry('newest', [['filter.what', 'projects'], ['filter.what', 'puzzles']]);
-    const state: StackState = { entries: [filtered], activeKey: filtered.key };
+    const state: StackState = { entries: [filtered], activeSlot: filtered.slot };
     const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.path).toBe('/lens/newest');
 
@@ -159,7 +159,7 @@ describe('lens locations', () => {
   it('two differently-filtered views of one lens coexist with distinct keys and handles', () => {
     const puzzles = lensEntry('newest', [['filter.what', 'puzzles']]);
     const projects = lensEntry('newest', [['filter.what', 'projects']], 'lens/newest#2');
-    const state: StackState = { entries: [puzzles, projects], activeKey: projects.key };
+    const state: StackState = { entries: [puzzles, projects], activeSlot: projects.slot };
 
     const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.path).toBe('/lens/newest');
@@ -198,7 +198,7 @@ describe('lens locations', () => {
   it('mixed card<->lens interleaved stacks round-trip, with inactive locations short-coded via the manifest', () => {
     const state: StackState = {
       entries: [cardEntry('posts/hello'), lensEntry('home'), cardEntry('posts/about-me'), lensEntry('newest')],
-      activeKey: 'posts/about-me',
+      activeSlot: 'posts/about-me',
     };
     const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.path).toBe('/card/posts/about-me');
@@ -212,7 +212,7 @@ describe('lens locations', () => {
   it('an inactive lens in the stack while a lens is active round-trips through /lens/<name>', () => {
     const state: StackState = {
       entries: [cardEntry('posts/hello'), lensEntry('newest')],
-      activeKey: 'lens/newest',
+      activeSlot: 'lens/newest',
     };
     const result = serialiseStack(state, new Map(), manifest, tags);
     expect(result.path).toBe('/lens/newest');
@@ -276,9 +276,9 @@ describe('round-trip property', () => {
     }
 
     const activeIdx = Math.floor(rand() * n);
-    const activeKey = entries[activeIdx].key;
+    const activeSlot = entries[activeIdx].slot;
 
-    return { state: { entries, activeKey }, paramsByKey };
+    return { state: { entries, activeSlot }, paramsByKey };
   }
 
   it('deserialise(serialise(stack)) round-trips across many random card-only stacks, including repeated escape-hatch param keys', () => {
@@ -306,7 +306,7 @@ describe('round-trip property', () => {
   it('round-trip preserves repeated param keys explicitly (escape hatch, single case)', () => {
     const state: StackState = {
       entries: [cardEntry('posts/hello'), cardEntry('posts/about-me')],
-      activeKey: 'posts/about-me',
+      activeSlot: 'posts/about-me',
     };
     const paramsByKey = new Map<string, ParamPairs>([
       ['posts/hello', [['x', '1'], ['x', '2'], ['tab', 'bio']]],

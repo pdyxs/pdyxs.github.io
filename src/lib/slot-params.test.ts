@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { paramsAfterSlotReplace } from './slot-params';
 import { serialiseStack } from './stack-codec';
 import type { ParamPairs } from './stack-codec';
-import { lensEntry } from './stack-layout';
+import { activeEntry, lensEntry } from './stack-layout';
 import type { StackState } from './stack-layout';
 import { buildLookup } from './stack-manifest';
 import { filterStateFromParams, filterStateToParams, toggleValue } from '../dimensions';
@@ -83,7 +83,7 @@ describe('lens swaps with an active filter', () => {
     search = '';
 
     constructor(lens: string) {
-      this.state = { entries: [lensEntry(lens)], activeKey: `lens/${lens}` };
+      this.state = { entries: [lensEntry(lens)], activeSlot: `lens/${lens}` };
     }
 
     /** CardStack.updateUrl */
@@ -101,7 +101,7 @@ describe('lens swaps with an active filter', () => {
       const next = toggleValue(this.filterState, dim, value);
       const pairs: ParamPairs = [];
       filterStateToParams(next).forEach((v, k) => { pairs.push([k, v]); });
-      const key = this.state.activeKey!;
+      const key = activeEntry(this.state)!.key;
       if (pairs.length) this.params.set(key, pairs); else this.params.delete(key);
       this.serialise();
     }
@@ -115,8 +115,8 @@ describe('lens swaps with an active filter', () => {
       if (acceptsFilters) filterStateToParams(this.filterState).forEach((v, k) => { carried.push([k, v]); });
 
       const uid = `lens/${lens}`;
-      this.params = paramsAfterSlotReplace(this.params, this.state.activeKey, uid, carried);
-      this.state = { entries: [lensEntry(lens)], activeKey: uid };
+      this.params = paramsAfterSlotReplace(this.params, activeEntry(this.state)?.key ?? null, uid, carried);
+      this.state = { entries: [lensEntry(lens)], activeSlot: uid };
       this.serialise();
 
       if (!acceptsFilters) this.search = '';

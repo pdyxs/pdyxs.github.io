@@ -4,15 +4,15 @@ import type { StackState, RenderItem } from './stack-layout';
 
 describe('computeStackLayout', () => {
   it('zero_cards: empty state returns empty result', () => {
-    const state: StackState = { entries: [], activeKey: null };
+    const state: StackState = { entries: [], activeSlot: null };
     const result = computeStackLayout(state);
     expect(result.visible).toEqual([]);
     expect(result.overflowKeys).toEqual([]);
     expect(result.needsOverflow).toBe(false);
   });
 
-  it('single_active_card: one card matching activeKey', () => {
-    const state: StackState = { entries: [cardEntry('about/me')], activeKey: 'about/me' };
+  it('single_active_card: one card matching the active slot', () => {
+    const state: StackState = { entries: [cardEntry('about/me')], activeSlot: 'about/me' };
     const result = computeStackLayout(state);
     expect(result.visible).toHaveLength(1);
     expect(result.visible[0]).toMatchObject({
@@ -28,7 +28,7 @@ describe('computeStackLayout', () => {
   it('multiple_cards_active_in_middle: active has isActive, others isCollapsed', () => {
     const state: StackState = {
       entries: [cardEntry('a'), cardEntry('b'), cardEntry('c')],
-      activeKey: 'b',
+      activeSlot: 'b',
     };
     const result = computeStackLayout(state);
     expect(result.visible).toHaveLength(3);
@@ -45,7 +45,7 @@ describe('computeStackLayout', () => {
 
   it('overflow_threshold: cards exceeding visible limit produce overflowKeys', () => {
     const entries = Array.from({ length: 10 }, (_, i) => cardEntry(`card-${i}`));
-    const state: StackState = { entries, activeKey: 'card-9' };
+    const state: StackState = { entries, activeSlot: 'card-9' };
     const result = computeStackLayout(state);
     expect(result.needsOverflow).toBe(true);
     expect(result.overflowKeys.length).toBeGreaterThan(0);
@@ -57,7 +57,7 @@ describe('computeStackLayout', () => {
   it('renderItems_no_overflow_active_last: 2 left-collapsed + active → fan-corner before each left slot', () => {
     const state: StackState = {
       entries: [cardEntry('a'), cardEntry('b'), cardEntry('c')],
-      activeKey: 'c',
+      activeSlot: 'c',
     };
     const result = computeStackLayout(state);
     expect(result.numLeftCollapsed).toBe(2);
@@ -72,7 +72,7 @@ describe('computeStackLayout', () => {
   it('renderItems_no_overflow_active_middle: 1 left + active + 1 right → fan-corner on left only', () => {
     const state: StackState = {
       entries: [cardEntry('a'), cardEntry('b'), cardEntry('c')],
-      activeKey: 'b',
+      activeSlot: 'b',
     };
     const result = computeStackLayout(state);
     expect(result.numLeftCollapsed).toBe(1);
@@ -86,7 +86,7 @@ describe('computeStackLayout', () => {
   it('renderItems_overflow_left_only: 5 left-collapsed + active → overflow-left between anchors', () => {
     // entries: [a, b, c, d, e, f], active=f → L=5, R=0
     const entries = ['a', 'b', 'c', 'd', 'e', 'f'].map(cardEntry);
-    const state: StackState = { entries, activeKey: 'f' };
+    const state: StackState = { entries, activeSlot: 'f' };
     const result = computeStackLayout(state);
     expect(result.numLeftCollapsed).toBe(3);
     expect(result.needsOverflow).toBe(true);
@@ -107,7 +107,7 @@ describe('computeStackLayout', () => {
   it('renderItems_overflow_right_only: active + 5 right-collapsed → overflow-right between anchors', () => {
     // entries: [a, b, c, d, e, f], active=a → L=0, R=5
     const entries = ['a', 'b', 'c', 'd', 'e', 'f'].map(cardEntry);
-    const state: StackState = { entries, activeKey: 'a' };
+    const state: StackState = { entries, activeSlot: 'a' };
     const result = computeStackLayout(state);
     expect(result.numLeftCollapsed).toBe(0);
     expect(result.needsOverflow).toBe(true);
@@ -125,7 +125,7 @@ describe('computeStackLayout', () => {
   it('renderItems_overflow_both_sides: 3 left + active + 3 right → overflow on both sides', () => {
     // entries: [a, b, c, active, d, e, f], active=act
     const entries = ['a', 'b', 'c', 'act', 'd', 'e', 'f'].map(cardEntry);
-    const state: StackState = { entries, activeKey: 'act' };
+    const state: StackState = { entries, activeSlot: 'act' };
     const result = computeStackLayout(state);
     expect(result.numLeftCollapsed).toBe(3);
     expect(result.needsOverflow).toBe(true);
@@ -150,7 +150,7 @@ describe('computeStackLayout', () => {
   it('fan_corner_i_n: i is sequential 0..n-1; n equals numLeftCollapsed', () => {
     // L=3 case: fan corners at i=0,1,2 with n=3
     const entries = ['a', 'b', 'c', 'd', 'e'].map(cardEntry);
-    const state: StackState = { entries, activeKey: 'e' }; // L=4 → overflow, 3 left slots
+    const state: StackState = { entries, activeSlot: 'e' }; // L=4 → overflow, 3 left slots
     const result = computeStackLayout(state);
     const fanCorners = result.renderItems.filter(r => r.kind === 'fan-corner') as Extract<RenderItem, { kind: 'fan-corner' }>[];
     expect(fanCorners).toHaveLength(3);
@@ -162,7 +162,7 @@ describe('computeStackLayout', () => {
 
   it('overflow_threshold_updated: 10-card stack active-last → numLeftCollapsed 3, visible+overflow=10', () => {
     const entries = Array.from({ length: 10 }, (_, i) => cardEntry(`card-${i}`));
-    const state: StackState = { entries, activeKey: 'card-9' };
+    const state: StackState = { entries, activeSlot: 'card-9' };
     const result = computeStackLayout(state);
     expect(result.needsOverflow).toBe(true);
     expect(result.numLeftCollapsed).toBe(3);
@@ -175,7 +175,7 @@ describe('computeStackLayout', () => {
     // entries: [a, b, active, c], active=act
     const state: StackState = {
       entries: [cardEntry('a'), cardEntry('b'), cardEntry('act'), cardEntry('c')],
-      activeKey: 'act',
+      activeSlot: 'act',
     };
     const result = computeStackLayout(state);
     expect(result.needsOverflow).toBe(false);
@@ -256,7 +256,7 @@ describe('allocateSlot', () => {
 describe('slotForKey / keyForSlot', () => {
   const a = lensEntry('newest', [['filter.what', 'puzzles']]);
   const b = { ...lensEntry('newest', [['filter.what', 'projects']]), slot: 'lens/newest#2' };
-  const state: StackState = { entries: [a, b], activeKey: b.key };
+  const state: StackState = { entries: [a, b], activeSlot: b.slot };
 
   it('maps identity to handle and back', () => {
     expect(slotForKey(state, a.key)).toBe('lens/newest');
@@ -275,7 +275,7 @@ describe('layout carries both identities', () => {
   it('gives every rendered card its own handle, so two filtered lenses can coexist', () => {
     const a = lensEntry('newest', [['filter.what', 'puzzles']]);
     const b = { ...lensEntry('newest', [['filter.what', 'projects']]), slot: 'lens/newest#2' };
-    const layout = computeStackLayout({ entries: [a, b], activeKey: b.key });
+    const layout = computeStackLayout({ entries: [a, b], activeSlot: b.slot });
     const cards = layout.renderItems.filter(i => i.kind === 'card');
     expect(cards.map((c: any) => c.slot)).toEqual(['lens/newest', 'lens/newest#2']);
     expect(new Set(cards.map((c: any) => c.key)).size).toBe(2);

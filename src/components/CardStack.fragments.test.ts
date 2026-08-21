@@ -66,7 +66,7 @@ describe('the cache is no longer the caller\'s problem', () => {
   });
 
   it('the layout effect is still the other applier', () => {
-    expect(source).toMatch(/applyMaxWidth\(slotForKey\(\$stackStore, \$stackStore\.activeKey\)\)/);
+    expect(source).toMatch(/applyMaxWidth\(\$stackStore\.activeSlot\)/);
   });
 });
 
@@ -109,9 +109,10 @@ describe('every flow goes through the fragment store', () => {
     expect(alreadyStacked).toMatch(/entries\.find\(e => e\.key === target\.key\)/);
     expect(alreadyStacked).not.toMatch(/fragments\.(ensure|load)\(/);
     // The overflow panel's titles and read tracking are cache reads, keyed by
-    // the DOM/cache handle rather than by identity.
+    // the DOM/cache handle rather than by identity. Read state itself is keyed
+    // by uid, though — a suffixed handle (`lens/x#2`) must never reach it.
     expect(source).toMatch(/fragments\.factsFor\(slot\)\.title/);
-    expect(source).toMatch(/readToRecord\(slot, fragments\.get\(slot\)\)/);
+    expect(source).toMatch(/readToRecord\(uid, fragments\.get\(slot\)\)/);
   });
 
   it('restoring a short-coded stack ensures each location', () => {

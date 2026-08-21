@@ -2,7 +2,7 @@
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
   import { stackStore, seedStackState, pushToStack, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '../stores/card-stack-store';
-  import { computeStackLayout, cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, keyForSlot } from '../lib/stack-layout';
+  import { computeStackLayout, cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry } from '../lib/stack-layout';
   import type { LocationEntry } from '../lib/stack-layout';
   import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from '../lib/lens-key';
   import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
@@ -42,7 +42,7 @@
   const fragments = createCardFragments({
     onChange: (slot) => {
       const state = get(stackStore);
-      if (slot === slotForKey(state, state.activeKey)) applyMaxWidth(slot);
+      if (slot === state.activeSlot) applyMaxWidth(slot);
     },
   });
   // Per-location *side* params, keyed by identity key and stored as ordered
@@ -141,9 +141,9 @@
     const stackEl = document.getElementById('card-stack');
     stackEl?.style.setProperty('--num-left-collapsed', String(layout.numLeftCollapsed));
     stackEl?.style.setProperty('--num-right-collapsed', String(layout.numRightCollapsed));
-    applyMaxWidth(slotForKey($stackStore, $stackStore.activeKey));
+    applyMaxWidth($stackStore.activeSlot);
 
-    syncLensFilters($stackStore.activeKey);
+    syncLensFilters(activeEntry($stackStore)?.key ?? null);
 
     const depth = $stackStore.entries.length;
     for (const card of layout.visible) {
@@ -247,8 +247,11 @@
   // Records the view-state transition to 'read' for a location we hold the HTML
   // for. `readToRecord` owns the decision (card locations with a rendered
   // data-content-hash, nothing else); this is the thin write.
-  function markReadIfKnown(slot: string) {
-    const record = readToRecord(slot, fragments.get(slot));
+  // `uid` names what was read; `slot` is only where its HTML is cached. They
+  // differ whenever a location holds a suffixed handle (`lens/x#2`), and read
+  // state must never be keyed on one of those.
+  function markReadIfKnown(uid: string, slot: string = uid) {
+    const record = readToRecord(uid, fragments.get(slot));
     if (record) markRead(record.uid, record.hash);
   }
 
@@ -257,8 +260,10 @@
   }
 
   function activateHidden(ref: { key: string; slot: string }) {
-    stackStore.update(s => activateCardFn(s, ref.key));
-    markReadIfKnown(ref.slot);
+    const entry = entryForSlot(get(stackStore), ref.slot);
+    if (!entry) return;
+    stackStore.update(s => activateCardFn(s, entry.slot));
+    markReadIfKnown(entry.uid, entry.slot);
     overflowOpen = false;
     updateUrl();
   }
@@ -304,7 +309,7 @@
 
     // A carried filter selection is part of the incoming lens's identity now,
     // so only genuine side params still route through paramsAfterSlotReplace.
-    cardParams = paramsAfterSlotReplace(cardParams, state.activeKey, incoming.key, other);
+    cardParams = paramsAfterSlotReplace(cardParams, activeEntry(state)?.key ?? null, incoming.key, other);
 
     // Fetch by uid, cache under the handle the DOM node will carry.
     const ok = await fragments.ensure(incoming.slot, uid);
@@ -323,8 +328,8 @@
     // an identically-filtered link re-activates (issue #100).
     const existing = state.entries.find(e => e.key === target.key);
     if (existing) {
-      stackStore.update(s => activateCardFn(s, existing.key));
-      markReadIfKnown(existing.slot);
+      stackStore.update(s => activateCardFn(s, existing.slot));
+      markReadIfKnown(existing.uid, existing.slot);
       updateUrl();
       await tick();
       elFor(existing.slot)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -341,7 +346,7 @@
     const wasHomePageMode =
       state.entries.length === 1 &&
       state.entries[0].key === HOME_UID &&
-      state.activeKey === HOME_UID;
+      state.activeSlot === state.entries[0].slot;
 
     const alreadyCached = fragments.has(slot);
 
@@ -376,8 +381,8 @@
         for (const pendingUid of toSeed) {
           state = pushToStack(state, cardEntry(pendingUid));
         }
-        const activeIdx = state.activeKey
-          ? state.entries.findIndex(e => e.key === state.activeKey)
+        const activeIdx = state.activeSlot
+          ? state.entries.findIndex(e => e.slot === state.activeSlot)
           : state.entries.length - 1;
         const base = activeIdx >= 0 ? { ...state, entries: state.entries.slice(0, activeIdx + 1) } : state;
         return pushToStack(base, entry);
@@ -454,7 +459,7 @@
       await tick();
     }
 
-    markReadIfKnown(slot);
+    markReadIfKnown(uid, slot);
     updateUrl();
     elFor(slot)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -520,7 +525,7 @@
     } else {
       // Trim stack to entries before the closed card, activate the new last one
       const newActive = newEntries[newEntries.length - 1];
-      stackStore.update(s => ({ ...s, entries: newEntries, activeKey: newActive.key }));
+      stackStore.update(s => ({ ...s, entries: newEntries, activeSlot: newActive.slot }));
       updateUrl();
       await tick();
       elFor(newActive.slot)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -534,14 +539,15 @@
     // entry — otherwise the first card push serialises without them. A lens's
     // filters are no longer among these: they are already in `parsed`'s key,
     // and the store was seeded from the same URL at mount (issue #100).
-    if (parsed.activeKey) {
-      const activeParams = paramsByKey.get(parsed.activeKey);
-      if (activeParams?.length) cardParams.set(parsed.activeKey, activeParams);
+    const parsedActive = activeEntry(parsed);
+    if (parsedActive) {
+      const activeParams = paramsByKey.get(parsedActive.key);
+      if (activeParams?.length) cardParams.set(parsedActive.key, activeParams);
     }
 
     if (parsed.entries.length <= 1) return;
 
-    const activeIdxInParsed = parsed.entries.findIndex(e => e.key === parsed.activeKey);
+    const activeIdxInParsed = parsed.entries.findIndex(e => e.slot === parsed.activeSlot);
     const fromLocations = parsed.entries.slice(0, activeIdxInParsed);
     const toLocations = parsed.entries.slice(activeIdxInParsed + 1);
 
@@ -551,7 +557,7 @@
         const entryParams = paramsByKey.get(location.key);
         if (entryParams?.length) cardParams.set(location.key, entryParams);
         stackStore.update(s => {
-          const activeIdx = s.entries.findIndex(e => e.key === s.activeKey);
+          const activeIdx = s.entries.findIndex(e => e.slot === s.activeSlot);
           const newEntries = activeIdx >= 0
             ? [...s.entries.slice(0, activeIdx), location, ...s.entries.slice(activeIdx)]
             : [location, ...s.entries];
@@ -632,10 +638,10 @@
       const collapsedCard = target.closest<HTMLElement>('.stack-card--collapsed');
       if (collapsedCard?.dataset.uid) {
         const slot = collapsedCard.dataset.uid;
-        const key = keyForSlot(get(stackStore), slot);
-        if (!key) return;
-        stackStore.update(s => activateCardFn(s, key));
-        markReadIfKnown(slot);
+        const entry = entryForSlot(get(stackStore), slot);
+        if (!entry) return;
+        stackStore.update(s => activateCardFn(s, entry.slot));
+        markReadIfKnown(entry.uid, entry.slot);
         collapsedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         updateUrl();
       }
@@ -691,7 +697,7 @@
     function onCardParam(e: Event) {
       const { uid, params } = (e as CustomEvent<{ uid: string; params: ParamPairs }>).detail;
       const state = get(stackStore);
-      const active = state.entries.find(en => en.key === state.activeKey);
+      const active = activeEntry(state);
 
       if (active && active.uid === uid && isLensUid(uid)) {
         const { identity, other } = splitLocationParams(uid, params);
@@ -730,7 +736,7 @@
         const ok = await fragments.ensure(entry.slot, entry.uid);
         if (ok) {
           stackStore.update(s => pushToStack(s, entry));
-          markReadIfKnown(entry.slot);
+          markReadIfKnown(entry.uid, entry.slot);
           await initFromUrl();
         }
       }

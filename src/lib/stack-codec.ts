@@ -14,7 +14,7 @@
 // The active entry's own params ride as plain, readable query pairs instead
 // (e.g. ?filter.what=projects), keeping the address bar legible.
 import type { LocationEntry, StackState } from './stack-layout';
-import { allocateSlot, cardEntry, lensEntry } from './stack-layout';
+import { allocateSlot, cardEntry, lensEntry, withFreeSlot } from './stack-layout';
 import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from './lens-key';
 import type { ManifestLookup } from './stack-manifest';
 import { encodeParam, decodeParam } from './param-codecs';
@@ -88,7 +88,7 @@ function decodeEntryToken(token: string, manifest: ManifestLookup, ctx: CodecCon
  */
 function entryFrom(uid: string, params: ParamPairs, taken: LocationEntry[]): { entry: LocationEntry; side: ParamPairs } {
   const { identity, other } = splitLocationParams(uid, params);
-  if (!isLensUid(uid)) return { entry: cardEntry(uid), side: other };
+  if (!isLensUid(uid)) return { entry: withFreeSlot(taken, cardEntry(uid)), side: other };
   const name = lensNameForKey(uid)!;
   const slot = allocateSlot(taken, uid);
   return { entry: lensEntry(name, identity, slot), side: other };
@@ -114,9 +114,16 @@ function decodeSide(
 }
 
 /**
- * Serialises a stack (entries + activeKey) plus a per-key params map to a
+ * Serialises a stack (entries + activeSlot) plus a per-key params map to a
  * URL path + search string. The active location is human-readable in the
  * path; inactive locations (from/to) are short-coded via the manifest.
+ *
+ * The active entry is found by SLOT (issue #106) — two entries can legitimately
+ * hold the same key (an unfiltered lens you passed through, plus the same lens
+ * after you cleared its filters), and a key lookup would resolve to whichever
+ * came first and serialise the wrong location into the path. `paramsByKey`
+ * stays keyed by key on purpose: two entries with one key are the same
+ * location, so they carry the same side params by definition.
  */
 export function serialiseStack(
   state: StackState,
@@ -131,8 +138,8 @@ export function serialiseStack(
 
   const ctx: CodecContext = { tags: tagManifest };
 
-  const activeKey = state.activeKey ?? state.entries[state.entries.length - 1].key;
-  let activeIdx = state.entries.findIndex(e => e.key === activeKey);
+  const activeSlot = state.activeSlot ?? state.entries[state.entries.length - 1].slot;
+  let activeIdx = state.entries.findIndex(e => e.slot === activeSlot);
   if (activeIdx === -1) activeIdx = state.entries.length - 1;
   const active = state.entries[activeIdx];
 
@@ -162,8 +169,12 @@ export function serialiseStack(
 }
 
 /**
- * Reconstructs a stack (entries + activeKey) plus a per-key params map from
+ * Reconstructs a stack (entries + activeSlot) plus a per-key params map from
  * a URL path + search string produced by serialiseStack.
+ *
+ * Repeated keys round-trip: `entryFrom` allocates a fresh slot per decoded
+ * entry against the ones already taken, so a URL holding one lens twice comes
+ * back as two entries, never deduplicated (issue #106).
  */
 export function deserialiseStack(
   pathname: string,
@@ -181,7 +192,7 @@ export function deserialiseStack(
   } else if (pathname.startsWith(cardPrefix)) {
     activeUid = pathname.slice(cardPrefix.length);
   } else {
-    return { state: { entries: [], activeKey: null }, paramsByKey: new Map() };
+    return { state: { entries: [], activeSlot: null }, paramsByKey: new Map() };
   }
 
   const ctx: CodecContext = { tags: tagManifest };
@@ -204,5 +215,5 @@ export function deserialiseStack(
 
   const entries: LocationEntry[] = [...fromEntries, activeEntry, ...toEntries];
 
-  return { state: { entries, activeKey: activeEntry.key }, paramsByKey };
+  return { state: { entries, activeSlot: activeEntry.slot }, paramsByKey };
 }

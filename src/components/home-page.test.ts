@@ -17,11 +17,11 @@ async function makeContainer() {
 // "Seed store from SSR prop once at mount" comment. A real page load always
 // starts from a fresh module instance, so every render below resets it first
 // to reproduce that baseline; without this, two renderToString() calls in
-// the same test process leak one render's committed activeKey into the
+// the same test process leak one render's committed active slot into the
 // next render's nested FilterBar output (rendered, via Astro.slots.render,
 // before CardStack's own seeding runs).
 function resetStackStore() {
-  stackStore.set({ entries: [], activeKey: null });
+  stackStore.set({ entries: [], activeSlot: null });
 }
 
 function dom(html: string) {
