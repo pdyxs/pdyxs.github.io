@@ -125,7 +125,8 @@
             --left-col:${active ? 0 : collapsedWidth}px;
             --extra:${c.extraHeight}px;
             --spine-bg:${`var(--dither-${active ? Math.max(0, Math.min(16, ditherMid)) : c.dither})`};
-            background:${active ? 'var(--color-bg)' : `var(--dither-${c.dither})`};
+            --header-bg:${active ? 'var(--dither-2)' : `var(--dither-${c.dither})`};
+            background:var(--color-bg);
           `}
         >
           <!-- left spine header: shown for every non-active card, both sides -->
@@ -363,7 +364,7 @@
     gap: var(--space-sm);
     padding: var(--space-md) var(--space-lg);
     border-bottom: var(--border-width) solid var(--color-border);
-    background: var(--dither-2);
+    background: var(--header-bg);
     font-family: var(--font-ui); font-size: 1.1rem;
   }
   .pc-title { -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill; }
@@ -383,8 +384,8 @@
   }
   /* The header is the top staircase band — the sliver of a behind-card that
      shows above the card in front — so it carries the ramp rather than its own
-     resting L2. Dither-to-dither, so nothing flashes when a card is pushed. */
-  .pc:not(.pc--active) .pc-header { background: transparent; }
+     resting L2 (--header-bg, set per card). Dither-to-dither, so nothing
+     flashes when a card is pushed. */
   .pc-body p { margin: 0 0 var(--space-md); }
 
   /* reveal — geometric clip */
