@@ -30,6 +30,11 @@
   // alternative lets the card's own leftmost 48px show through. Legible vs
   // truthful; the prototype should not pick for you.
   let spineBacking = $state<'opaque' | 'content'>('opaque');
+  // Animating a length inside mask-image regenerates the mask every frame, over
+  // the whole card, on top of dithered surfaces that repaint with it. Two
+  // mitigations: quantise the sweep so it rasterises N times instead of ~40,
+  // and carry no mask at all at rest.
+  let dissolveSteps = $state(8);
   let activeWidth = $state(680);
   let panelOpen = $state(true);
 
@@ -61,10 +66,24 @@
   const pageMode = $derived(depth === 1 && depth1Page);
 
   // Reveal replays on demand so the dissolve/clip can be judged repeatedly.
+  const REVEAL_MS = 700;
   let revealed = $state(true);
+  // Only true for the length of the sweep. The mask is the expensive part, so
+  // it must not outlive the animation: left applied at rest it re-composites
+  // on every later scroll and repaint, for a fully-opaque result that looks
+  // identical to no mask at all.
+  let dissolving = $state(false);
+  let revealTimer: ReturnType<typeof setTimeout> | undefined;
   function replayReveal() {
+    clearTimeout(revealTimer);
     revealed = false;
-    requestAnimationFrame(() => requestAnimationFrame(() => (revealed = true)));
+    if (revealMode === 'dissolve') dissolving = true;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      revealed = true;
+      if (revealMode === 'dissolve') {
+        revealTimer = setTimeout(() => (dissolving = false), REVEAL_MS + 80);
+      }
+    }));
   }
   $effect(() => { activeIndex; depth; loadState; replayReveal(); });
 
@@ -73,7 +92,7 @@
   let shimmerMove = $state(false);
 </script>
 
-<div class="proto-viewport" style={`--cw:${collapsedWidth}px; --w:${activeWidth}px; --ctl-w:${panelOpen ? 320 : 0}px;`}>
+<div class="proto-viewport" style={`--cw:${collapsedWidth}px; --w:${activeWidth}px; --ctl-w:${panelOpen ? 320 : 0}px; --reveal-ms:${REVEAL_MS}ms; --reveal-ease:steps(${dissolveSteps});`}>
   <div class="proto-rail">
     <div class="proto-stack" class:page={pageMode}>
       {#each geo.cards as c (c.index)}
@@ -111,7 +130,7 @@
           <div
             class="pc-body"
             class:reveal-clip={active && revealMode === 'clip'}
-            class:reveal-dissolve={active && revealMode === 'dissolve'}
+            class:reveal-dissolve={active && revealMode === 'dissolve' && dissolving}
             class:on={revealed}
           >
             {#if loadState === 'placeholder' && active}
@@ -201,6 +220,7 @@
       <label>spine backing
         <select bind:value={spineBacking}><option>opaque</option><option>content</option></select>
       </label>
+      <label>dissolve steps <b>{dissolveSteps}</b><input type="range" min="2" max="24" bind:value={dissolveSteps} /></label>
       <label>reveal mode
         <select bind:value={revealMode}><option>clip</option><option>dissolve</option></select>
       </label>
@@ -252,11 +272,14 @@
   .pc--ahead { clip-path: inset(0 calc(100% - var(--cw)) 0 0); }
   /* The clip cuts the card's own right border off with the rest of the card,
      so the sliver was left open-ended. Drawn inside the clip region instead.
-     Sits above the spine so the tucked corner reads as a card edge. */
+     Sits above the spine so the tucked corner reads as a card edge.
+     The `* 2` is load-bearing: an absolutely positioned child is offset from
+     the PADDING box, while clip-path measures from the BORDER box. One
+     border-width out and this lands just past the clip and vanishes. */
   .pc--ahead::after {
     content: '';
     position: absolute; top: 0; bottom: 0;
-    left: calc(var(--cw) - var(--border-width));
+    left: calc(var(--cw) - var(--border-width) * 2);
     width: var(--border-width);
     background: var(--color-border);
     z-index: 3;
@@ -337,7 +360,7 @@
     mask-size: 4px 4px;
     -webkit-mask-image: radial-gradient(circle at 0.5px 0.5px, #000 var(--thr), #0000 calc(var(--thr) + 0.05px));
     -webkit-mask-size: 4px 4px;
-    transition: --thr 700ms linear;
+    transition: --thr var(--reveal-ms) var(--reveal-ease);
   }
   .reveal-dissolve.on { --thr: 5px; }
 
