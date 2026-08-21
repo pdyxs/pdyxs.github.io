@@ -372,10 +372,18 @@
   .pc-body {
     grid-column: 1 / -1; grid-row: 2;
     padding: var(--space-lg);
-    background: transparent;
+    /* Paper on EVERY card, active or not. A card that has just been pushed
+       behind is still full-size on screen while its spine animates shut, so a
+       body that flips to the depth ramp the instant it loses `active` flashes
+       the whole card dark for the length of the slide — and it cannot be
+       transitioned out of, since a gradient does not interpolate to a colour.
+       The ramp is carried by the two surfaces that stay visible once the card
+       IS collapsed: the spine and the header. */
+    background: var(--color-bg);
   }
-  .pc--active .pc-body { background: var(--color-bg); }
-  .pc:has(.spine.bare) .pc-body { background: var(--color-bg); }
+  /* The header is the top staircase band — the sliver of a behind-card that
+     shows above the card in front — so it carries the ramp rather than its own
+     resting L2. Dither-to-dither, so nothing flashes when a card is pushed. */
   .pc:not(.pc--active) .pc-header { background: transparent; }
   .pc-body p { margin: 0 0 var(--space-md); }
 
