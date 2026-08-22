@@ -425,8 +425,15 @@
      text-overflow fire. */
   .band-text {
     writing-mode: vertical-rl; white-space: nowrap; font-size: 0.75rem;
+    box-sizing: border-box;
     max-height: 100%;
-    padding-block: var(--space-xs);
+    /* Logical, and easy to get backwards: in vertical-rl the INLINE axis is
+       vertical and the BLOCK axis is horizontal. So inline padding is what
+       insets the title from the divider it starts under, and block padding is
+       what holds it off the spine's edges. `padding-block` alone — which is
+       what this had — moved it sideways and left it butted against the rule. */
+    padding-inline: var(--space-sm) var(--space-xs);
+    padding-block: 4px;
     overflow: hidden; text-overflow: ellipsis;
     -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill;
   }
