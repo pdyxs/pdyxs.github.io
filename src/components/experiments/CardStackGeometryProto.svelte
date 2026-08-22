@@ -124,6 +124,20 @@
   }
   $effect(() => { activeIndex; depth; loadState; replayReveal(); });
 
+  // The split divides the SHORTER of the viewport and the strip's own height.
+  // `max-height: 100%` cannot express that: a percentage does not resolve
+  // against a stretched grid item, so on a card shorter than the viewport the
+  // split stayed 100vh and overflowed the strip it was meant to divide.
+  // Measured instead, which is a thin effect over one number.
+  let stackH = $state(0);
+  let stackEl: HTMLElement | undefined = $state();
+  $effect(() => {
+    if (!stackEl) return;
+    const ro = new ResizeObserver(([e]) => (stackH = e.contentRect.height));
+    ro.observe(stackEl);
+    return () => ro.disconnect();
+  });
+
   let sentinel: HTMLElement | undefined = $state();
   $effect(() => {
     if (!sentinel) return;
@@ -140,9 +154,9 @@
   let shimmerMove = $state(false);
 </script>
 
-<div class="proto-viewport" style={`--cw:${collapsedWidth}px; --w:${activeWidth}px; --ctl-w:${panelOpen ? 320 : 0}px; --reveal-ms:${REVEAL_MS}ms; --reveal-ease:steps(${dissolveSteps}); --move-ms:${moveMs}ms;`}>
+<div class="proto-viewport" style={`--cw:${collapsedWidth}px; --w:${activeWidth}px; --ctl-w:${panelOpen ? 320 : 0}px; --stack-h:${stackH}px; --reveal-ms:${REVEAL_MS}ms; --reveal-ease:steps(${dissolveSteps}); --move-ms:${moveMs}ms;`}>
   <div class="proto-rail">
-    <div class="proto-stack" class:page={pageMode}>
+    <div class="proto-stack" class:page={pageMode} bind:this={stackEl}>
       {#each geo.cards as c (c.index)}
         {@const kind = kindFor(c.index)}
         {@const active = c.role === 'active'}
@@ -385,15 +399,17 @@
   .marker-split {
     position: sticky; top: 0;
     width: var(--cw);
-    height: 100vh; max-height: 100%;
+    height: min(100vh, var(--stack-h, 100vh));
     display: flex; flex-direction: column;
     border-top: var(--border-width) solid var(--color-border);
     margin-top: calc(var(--border-width) * -1);
   }
   .marker-band {
     flex: 1; min-height: 0;
-    display: flex; align-items: center; justify-content: center;
-    padding: 0; margin: 0; overflow: clip; cursor: pointer;
+    /* "Left-aligned" in a vertical writing mode means starting at the TOP,
+       since the text runs downward. */
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 0; margin: 0; overflow: hidden; cursor: pointer;
     background: transparent; color: var(--color-text);
     border: none;
     border-bottom: 1px solid var(--color-border);
@@ -404,8 +420,14 @@
     background: var(--color-selected-bg);
     color: var(--color-selected-fg);
   }
+  /* In vertical-rl the INLINE axis is vertical, so height is what constrains
+     the line — which is why capping height (not width) is what makes
+     text-overflow fire. */
   .band-text {
     writing-mode: vertical-rl; white-space: nowrap; font-size: 0.75rem;
+    max-height: 100%;
+    padding-block: var(--space-xs);
+    overflow: hidden; text-overflow: ellipsis;
     -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill;
   }
   /* An inverted surface needs the MIRROR of the stroke rule, not just swapped
@@ -449,6 +471,11 @@
     margin-top: calc(var(--border-width) * -1);
   }
   .pc--active .spine-inner { border-top: none; margin-top: 0; }
+  .spine-inner { max-height: min(100vh, var(--stack-h, 100vh)); }
+  .spine--rotated .spine-text {
+    max-height: 100%;
+    overflow: hidden; text-overflow: ellipsis;
+  }
   .spine-text, .spine-glyph {
     font-family: var(--font-ui); font-size: 0.95rem; white-space: nowrap;
     -webkit-text-stroke: 3px var(--color-bg);
