@@ -2,7 +2,7 @@
      D1 occlusion geometry at once. Not production code: no tests, no a11y pass,
      no store. Geometry lives in ./proto-geometry.ts so #99 can lift it. -->
 <script lang="ts">
-  import { computeGeometry, type GeoParams, type BottomEdge } from './proto-geometry';
+  import { computeGeometry, markerSections, type GeoParams, type BottomEdge, type Marker } from './proto-geometry';
 
   type Kind = 'lens' | 'short' | 'long' | 'puzzle';
 
@@ -35,6 +35,24 @@
   // mitigations: quantise the sweep so it rasterises N times instead of ~40,
   // and carry no mask at all at rest.
   let dissolveSteps = $state(8);
+  // Hovering a marker splits its slot into one band per card it hides, so any
+  // of them is one click away instead of several hops back through the stack.
+  let hoveredMarker = $state<'behind' | 'ahead' | null>(null);
+  let markerMaxBands = $state(12);
+  // Bands run in the same direction the pile's stagger already does: a behind
+  // pile staggers UP as it deepens, so its deepest card is the top band; an
+  // ahead pile staggers down, so its deepest is the bottom band.
+  // Past the midpoint of the 0-16 ramp the spine is an INVERTED surface, so
+  // its label needs the mirror of the flat-surface rule and not just a swap:
+  // ink glyphs held together by a paper stroke stop reading around L9, and a
+  // paper stroke behind paper glyphs would fatten them instead of clearing
+  // dots. Both halves flip together (CLAUDE.md, --color-selected-* section).
+  const onInk = (level: number) => level >= 9;
+
+  const bandsFor = (m: Marker) => {
+    const secs = markerSections(m.indices, markerMaxBands);
+    return m.side === 'behind' ? secs.slice().reverse() : secs;
+  };
   // THE TENSION, made scrubable. Every card carries a --dither-N: a stack of
   // ~7 viewport-anchored `fixed` gradient layers. A fixed background cannot be
   // translated by the compositor, so moving the element REPAINTS all of them —
@@ -146,7 +164,7 @@
           `}
         >
           <!-- left spine header: shown for every non-active card, both sides -->
-          <div class="spine" class:bare={spineBacking === 'content'} aria-hidden={active}>
+          <div class="spine" class:bare={spineBacking === 'content'} class:ink={!active && onInk(c.dither)} aria-hidden={active}>
             <div class="spine-inner spine--{headerMode}">
               {#if headerMode === 'icon'}
                 <span class="spine-glyph">{TITLES[c.index % TITLES.length][0]}</span>
@@ -196,6 +214,11 @@
           <article
             class="pc pc--marker"
             class:pc--ahead={m.side === 'ahead'}
+            onmouseenter={() => (hoveredMarker = m.side)}
+            onmouseleave={(e) => {
+              const to = e.relatedTarget as HTMLElement | null;
+              if (!to?.closest?.('.pc--marker')) hoveredMarker = null;
+            }}
             onclick={() => (activeIndex = m.nearestIndex)}
             style={`
               ${motionMode === 'transform'
@@ -208,12 +231,27 @@
               background:var(--color-bg);
             `}
           >
-            <div class="spine">
-              <div class="spine-inner spine--{headerMode}">
-                {#if L.label}
-                  <span class="spine-text marker-label">{m.count} more</span>
-                {/if}
-              </div>
+            <div class="spine" class:ink={onInk(L.dither)}>
+              {#if L.label && hoveredMarker === m.side}
+                <div class="marker-split">
+                  {#each bandsFor(m) as sec (sec.index)}
+                    <button
+                      class="marker-band"
+                      onclick={(e) => { e.stopPropagation(); activeIndex = sec.index; }}
+                    >
+                      <span class="band-text">
+                        {sec.count > 1 ? `${sec.count} more` : TITLES[sec.index % TITLES.length]}
+                      </span>
+                    </button>
+                  {/each}
+                </div>
+              {:else}
+                <div class="spine-inner spine--{headerMode}">
+                  {#if L.label}
+                    <span class="spine-text marker-label">{m.count} more</span>
+                  {/if}
+                </div>
+              {/if}
             </div>
             <header class="pc-header"></header>
             <div class="pc-body"></div>
@@ -291,6 +329,7 @@
       </label>
       <label><input type="checkbox" bind:checked={stickyHeader} /> sticky active header</label>
       <label>motion ms <b>{motionMs}</b><input type="range" min="0" max="800" step="20" bind:value={motionMs} /></label>
+      <label>marker max bands <b>{markerMaxBands}</b><input type="range" min="2" max="24" bind:value={markerMaxBands} /></label>
       <label>dissolve steps <b>{dissolveSteps}</b><input type="range" min="2" max="24" bind:value={dissolveSteps} /></label>
       <label>reveal mode
         <select bind:value={revealMode}>
@@ -364,6 +403,40 @@
   .pc:not(.pc--active) { cursor: pointer; }
   .marker-label { font-size: 0.8rem; }
 
+  /* Follows the viewport like every other spine label, and is capped to the
+     card so a short stack doesn't get a 100vh child forcing its height —
+     the bug that made every card viewport-tall earlier. */
+  .marker-split {
+    position: sticky; top: 0;
+    width: var(--cw);
+    height: 100vh; max-height: 100%;
+    display: flex; flex-direction: column;
+    border-top: var(--border-width) solid var(--color-border);
+    margin-top: calc(var(--border-width) * -1);
+  }
+  .marker-band {
+    flex: 1; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0; margin: 0; overflow: clip; cursor: pointer;
+    background: transparent; color: var(--color-text);
+    border: none;
+    border-bottom: 1px solid var(--color-border);
+    font-family: var(--font-ui);
+  }
+  .marker-band:last-child { border-bottom: none; }
+  .marker-band:hover {
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+  }
+  .band-text {
+    writing-mode: vertical-rl; white-space: nowrap; font-size: 0.75rem;
+    -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill;
+  }
+  /* An inverted surface needs the MIRROR of the stroke rule, not just swapped
+     colours: a paper stroke behind paper glyphs fattens them instead of
+     clearing dots (CLAUDE.md, --color-selected-* section). */
+  .marker-band:hover .band-text { -webkit-text-stroke-color: var(--color-selected-bg); }
+
   /* The spine sits in column 1 spanning both rows, OVER the body — which also
      spans column 1 — so opening it crops the body rather than reflowing it. */
   .spine {
@@ -376,6 +449,11 @@
   }
   /* the card's own content shows through the crop instead */
   .spine.bare { background: transparent; }
+  /* Inverted surface: flip the glyph and its stroke together. */
+  .spine.ink :is(.spine-text, .spine-glyph, .band-text) {
+    color: var(--color-bg);
+    -webkit-text-stroke-color: var(--color-text);
+  }
 
   .spine-inner {
     /* NO height here. `height: 100vh` made this grid item's row 100vh tall,

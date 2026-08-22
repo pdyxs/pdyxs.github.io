@@ -72,9 +72,38 @@ export interface Marker {
   side: 'behind' | 'ahead';
   /** Cards represented. ALWAYS >= 2 — see the counting rule. */
   count: number;
-  /** The nearest card the marker stands for: where a click resolves to. */
+  /** The nearest card the marker stands for: where a bare click resolves to. */
   nearestIndex: number;
+  /** Every card it stands for, ordered nearest -> deepest. */
+  indices: number[];
   layers: MarkerLayer[];
+}
+
+/** One band of a hovered marker: a card you can click straight to. `count` is
+ *  1 for a band standing for a single card, and >1 for the last band when the
+ *  pile is deeper than `max` bands. */
+export interface MarkerSection {
+  index: number;
+  count: number;
+}
+
+/**
+ * Splitting a marker into one band per card it hides, so any of them is one
+ * click away rather than several hops back through the stack.
+ *
+ * Capped, and capped by the SAME rule as the fan itself (see `drawnCount`):
+ * the last band is a slot, so it absorbs the remainder rather than being an
+ * extra. A band therefore never stands for exactly one card it isn't showing.
+ */
+export function markerSections(
+  indices: readonly number[],
+  max: number,
+): MarkerSection[] {
+  const m = Math.max(1, max);
+  if (indices.length <= m) return indices.map(index => ({ index, count: 1 }));
+  const head = indices.slice(0, m - 1).map(index => ({ index, count: 1 }));
+  const tail = indices.slice(m - 1);
+  return [...head, { index: tail[0], count: tail.length }];
 }
 
 /** Card-shaped edges drawn per marker. A marker for 40 cards is still a small
@@ -150,7 +179,10 @@ export function computeGeometry(
         label: k === 0,          // nearest layer is painted last on this side
       });
     }
-    markers.push({ side: 'behind', count, nearestIndex: a - d, layers });
+    markers.push({
+      side: 'behind', count, nearestIndex: a - d, layers,
+      indices: Array.from({ length: count }, (_, k) => a - d - k),
+    });
   }
 
   // ── ahead ──
@@ -181,7 +213,10 @@ export function computeGeometry(
         label: k === n - 1,
       });
     }
-    markers.push({ side: 'ahead', count, nearestIndex: a + d, layers });
+    markers.push({
+      side: 'ahead', count, nearestIndex: a + d, layers,
+      indices: Array.from({ length: count }, (_, k) => a + d + k),
+    });
   }
 
   cards.sort((x, y) => x.z - y.z);
