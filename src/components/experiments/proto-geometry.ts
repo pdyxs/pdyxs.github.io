@@ -27,9 +27,10 @@ export interface GeoParams {
    *  at EVERY boundary in the fan, including the active card's — not just the
    *  first, which left the rest of the fan reading as one flush strip. */
   forwardOverlap: number;
-  /** Max behind-cards drawn individually before an overflow strip. */
+  /** TOTAL slots in the behind fan, marker included — not the number drawn
+   *  individually before a marker is added. See the counting rule below. */
   backwardStrip: number;
-  /** Max ahead-cards drawn individually before an "N ahead" marker. */
+  /** TOTAL slots in the ahead fan, marker included. */
   forwardFan: number;
   /** Dither level of the card one step behind (0 = paper, 16 = ink). */
   ditherMid: number;
@@ -54,13 +55,44 @@ export interface PlacedCard {
   extraHeight: number;
 }
 
-export interface Marker {
-  side: 'behind' | 'ahead';
-  count: number;
+/** One card-shaped node in a marker's little pile. A marker stands for two or
+ *  more cards lying on top of each other in a single slot, so it is drawn as
+ *  that many cards — same size, same ramp, offset only by the stagger, since
+ *  they share one slot and so share its x. */
+export interface MarkerLayer {
   left: number;
   top: number;
   z: number;
   dither: number;
+  /** The layer painted last, which is the one that carries the label. */
+  label: boolean;
+}
+
+export interface Marker {
+  side: 'behind' | 'ahead';
+  /** Cards represented. ALWAYS >= 2 — see the counting rule. */
+  count: number;
+  /** The nearest card the marker stands for: where a click resolves to. */
+  nearestIndex: number;
+  layers: MarkerLayer[];
+}
+
+/** Card-shaped edges drawn per marker. A marker for 40 cards is still a small
+ *  pile — past about three the pile stops adding information. */
+const MAX_MARKER_LAYERS = 3;
+
+/**
+ * How many of `total` cards are drawn individually, given `slots` total slots
+ * with the marker occupying one of them.
+ *
+ * The marker is a SLOT, not an extra. With four slots and five cards you get
+ * three cards and a marker for two — four things on screen, never five. And
+ * the marker therefore never reads "1 more": one hidden card would simply be
+ * shown, since it would fit in the slot the marker is occupying.
+ */
+export function drawnCount(total: number, slots: number): number {
+  const s = Math.max(1, slots);
+  return total <= s ? total : s - 1;
 }
 
 export interface Geometry {
@@ -94,7 +126,7 @@ export function computeGeometry(
 
   // ── behind ──
   const behindTotal = a;
-  const behindDrawn = Math.min(behindTotal, p.backwardStrip);
+  const behindDrawn = drawnCount(behindTotal, p.backwardStrip);
   for (let d = 1; d <= behindDrawn; d++) {
     cards.push({
       index: a - d, role: 'behind', depth: d,
@@ -106,19 +138,24 @@ export function computeGeometry(
     });
   }
   if (behindTotal > behindDrawn) {
-    const d = behindDrawn + 1;
-    markers.push({
-      side: 'behind', count: behindTotal - behindDrawn,
-      left: -d * p.collapsedWidth,
-      top: -d * p.stagger,
-      z: a - d,
-      dither: clampDither(p.ditherMid + (d - 1) * p.ditherStep),
-    });
+    const d = behindDrawn + 1;              // the marker's own slot
+    const count = behindTotal - behindDrawn; // >= 2 by drawnCount
+    const layers: MarkerLayer[] = [];
+    for (let k = 0; k < Math.min(count, MAX_MARKER_LAYERS); k++) {
+      layers.push({
+        left: -d * p.collapsedWidth,
+        top: -(d + k) * p.stagger,
+        z: a - d - k,
+        dither: clampDither(p.ditherMid + (d - 1 + k) * p.ditherStep),
+        label: k === 0,          // nearest layer is painted last on this side
+      });
+    }
+    markers.push({ side: 'behind', count, nearestIndex: a - d, layers });
   }
 
   // ── ahead ──
   const aheadTotal = stackLength - 1 - a;
-  const aheadDrawn = Math.min(aheadTotal, p.forwardFan);
+  const aheadDrawn = drawnCount(aheadTotal, p.forwardFan);
   for (let d = 1; d <= aheadDrawn; d++) {
     cards.push({
       index: a + d, role: 'ahead', depth: d,
@@ -131,13 +168,20 @@ export function computeGeometry(
   }
   if (aheadTotal > aheadDrawn) {
     const d = aheadDrawn + 1;
-    markers.push({
-      side: 'ahead', count: aheadTotal - aheadDrawn,
-      left: aheadLeft(d, p),
-      top: d * p.stagger,
-      z: a + d,
-      dither: clampDither(p.ditherMid - (d - 1) * p.ditherStep),
-    });
+    const count = aheadTotal - aheadDrawn;
+    const n = Math.min(count, MAX_MARKER_LAYERS);
+    const layers: MarkerLayer[] = [];
+    for (let k = 0; k < n; k++) {
+      layers.push({
+        left: aheadLeft(d, p),
+        top: (d + k) * p.stagger,
+        z: a + d + k,
+        dither: clampDither(p.ditherMid - (d - 1 + k) * p.ditherStep),
+        // ahead cards paint OVER, so the furthest layer is painted last here
+        label: k === n - 1,
+      });
+    }
+    markers.push({ side: 'ahead', count, nearestIndex: a + d, layers });
   }
 
   cards.sort((x, y) => x.z - y.z);

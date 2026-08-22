@@ -46,6 +46,10 @@
   //               ban in #67 was never tested against motion this short; this
   //               is how to judge whether it is actually visible.
   //   none      — snap. Costs nothing, and a 1-bit aesthetic can carry it.
+  // The active card's header follows the viewport like the spines do, and
+  // shrinks once it is carrying the page rather than sitting on the card.
+  let stickyHeader = $state(true);
+  let headerStuck = $state(false);
   let motionMode = $state<'offset' | 'transform' | 'none'>('offset');
   let motionMs = $state(320);
   const moveMs = $derived(motionMode === 'none' ? 0 : motionMs);
@@ -101,6 +105,17 @@
   }
   $effect(() => { activeIndex; depth; loadState; replayReveal(); });
 
+  let sentinel: HTMLElement | undefined = $state();
+  $effect(() => {
+    if (!sentinel) return;
+    const io = new IntersectionObserver(
+      ([e]) => (headerStuck = !e.isIntersecting),
+      { threshold: 0 },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  });
+
   // ── shimmer test ────────────────────────────────────────────────────
   let shimmerOn = $state(false);
   let shimmerMove = $state(false);
@@ -114,6 +129,7 @@
         {@const active = c.role === 'active'}
         <article
           class="pc"
+          onclick={() => { if (!active) activeIndex = c.index; }}
           class:pc--ahead={c.role === 'ahead'}
           class:pc--active={active}
           class:pc--page={active && pageMode}
@@ -140,7 +156,12 @@
             </div>
           </div>
 
-          <header class="pc-header">
+          {#if active}<div class="header-sentinel" bind:this={sentinel}></div>{/if}
+          <header
+            class="pc-header"
+            class:sticky={active && stickyHeader}
+            class:stuck={active && stickyHeader && headerStuck}
+          >
             <span class="pc-title">{TITLES[c.index % TITLES.length]}</span>
             {#if active && !pageMode}<span class="pc-close">×</span>{/if}
           </header>
@@ -167,15 +188,37 @@
         </article>
       {/each}
 
+      <!-- A marker is not a strip: it is the cards themselves, lying in one
+           slot. Same node, same size, same ramp, same clip — only the stagger
+           separates them, since sharing a slot means sharing an x. -->
       {#each geo.markers as m (m.side)}
-        <div
-          class="marker marker--{m.side}"
-          style={`${motionMode === 'transform'
-              ? `left:0; top:0; transform:translate(${m.left}px, ${m.top}px);`
-              : `left:${m.left}px; top:${m.top}px;`} z-index:${m.z}; background:var(--dither-${m.dither});`}
-        >
-          <span>{m.count}<br />{m.side === 'behind' ? 'back' : 'ahead'}</span>
-        </div>
+        {#each m.layers as L, k (k)}
+          <article
+            class="pc pc--marker"
+            class:pc--ahead={m.side === 'ahead'}
+            onclick={() => (activeIndex = m.nearestIndex)}
+            style={`
+              ${motionMode === 'transform'
+                ? `left:0; top:0; transform:translate(${L.left}px, ${L.top}px);`
+                : `left:${L.left}px; top:${L.top}px;`}
+              z-index:${L.z};
+              --left-col:${collapsedWidth}px;
+              --spine-bg:var(--dither-${L.dither});
+              --header-bg:var(--dither-${L.dither});
+              background:var(--color-bg);
+            `}
+          >
+            <div class="spine">
+              <div class="spine-inner spine--{headerMode}">
+                {#if L.label}
+                  <span class="spine-text marker-label">{m.count} more</span>
+                {/if}
+              </div>
+            </div>
+            <header class="pc-header"></header>
+            <div class="pc-body"></div>
+          </article>
+        {/each}
       {/each}
     </div>
   </div>
@@ -240,11 +283,13 @@
       <label>spine backing
         <select bind:value={spineBacking}><option>opaque</option><option>content</option></select>
       </label>
+      <label><input type="checkbox" bind:checked={stickyHeader} /> sticky active header</label>
       <label>motion
         <select bind:value={motionMode}>
           <option>offset</option><option>transform</option><option>none</option>
         </select>
       </label>
+      <label><input type="checkbox" bind:checked={stickyHeader} /> sticky active header</label>
       <label>motion ms <b>{motionMs}</b><input type="range" min="0" max="800" step="20" bind:value={motionMs} /></label>
       <label>dissolve steps <b>{dissolveSteps}</b><input type="range" min="2" max="24" bind:value={dissolveSteps} /></label>
       <label>reveal mode
@@ -316,6 +361,8 @@
     z-index: 3;
   }
   .pc--page { border: none; }
+  .pc:not(.pc--active) { cursor: pointer; }
+  .marker-label { font-size: 0.8rem; }
 
   /* The spine sits in column 1 spanning both rows, OVER the body — which also
      spans column 1 — so opening it crops the body rather than reflowing it. */
@@ -367,6 +414,33 @@
     background: var(--header-bg);
     font-family: var(--font-ui); font-size: 1.1rem;
   }
+  /* Sticky resolves against the viewport, not the card: .pc uses `overflow:
+     clip`, which clips without creating a scroll container (`hidden` would,
+     and would pin this to a box that never scrolls). Below the spine's z so
+     the two sit side by side rather than fighting. */
+  .pc-header.sticky {
+    position: sticky; top: 0; z-index: 1;
+    /* Same treatment as .spine-inner: carry the card's top edge, landing on
+       the card's own border at rest so it isn't double-weight. Without it a
+       stuck header bleeds into the viewport edge while the spines beside it
+       are properly closed. */
+    border-top: var(--border-width) solid var(--color-border);
+    margin-top: calc(var(--border-width) * -1);
+  }
+  .pc-header.stuck {
+    padding-top: var(--space-xs);
+    padding-bottom: var(--space-xs);
+    font-size: 0.85rem;
+  }
+  .pc-header { transition: padding 180ms ease-out, font-size 180ms ease-out; }
+  /* 1px marker at the card's top edge; once it leaves the viewport the header
+     is carrying the page rather than sitting on the card. */
+  .header-sentinel {
+    grid-column: 2; grid-row: 1;
+    height: 1px; width: 100%;
+    align-self: start;
+    pointer-events: none;
+  }
   .pc-title { -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill; }
   .pc-close { font-size: 1.5rem; font-weight: 300; }
 
@@ -403,25 +477,6 @@
   }
   .reveal-dissolve.on { --thr: 5px; }
 
-  .marker {
-    position: absolute;
-    width: var(--cw); height: 100%;
-    box-sizing: border-box;
-    border: var(--border-width) solid var(--color-border);
-    font-family: var(--font-ui); font-size: 0.75rem; text-align: center; line-height: 1.15;
-    transition: left var(--move-ms) ease-out, top var(--move-ms) ease-out,
-                transform var(--move-ms) ease-out;
-    overflow: clip;
-  }
-  /* A marker is a collapsed spine too, so its label follows the viewport the
-     same way — otherwise it scrolls away while every spine beside it stays. */
-  .marker span {
-    position: sticky; top: 0; display: block;
-    padding-top: var(--space-sm);
-    border-top: var(--border-width) solid var(--color-border);
-    margin-top: calc(var(--border-width) * -1);
-    -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill;
-  }
 
   .puzzle-art {
     /* stands in for a full-bleed header image: what the collapsed crop gets */
