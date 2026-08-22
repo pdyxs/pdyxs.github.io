@@ -46,11 +46,13 @@ describe('CardStack holds no HTML parsing of its own', () => {
   });
 
   it('renders every card from the fragment store', () => {
-    const htmlBlocks = source.match(/\{@html [^}]+\}/g) ?? [];
-    expect(htmlBlocks.length).toBeGreaterThan(0);
-    for (const block of htmlBlocks) {
-      expect(block).toMatch(/fragments\.get\(/);
-    }
+    // Via StackFragment, which captures the HTML once: `{@html}` re-renders
+    // when its expression changes, and the cache's value for a slot changes
+    // the moment a placeholder is replaced — destroying the node (issue #109).
+    expect(source).not.toMatch(/\{@html /);
+    const mounts = source.match(/<StackFragment [^>]*\/>/g) ?? [];
+    expect(mounts.length).toBeGreaterThan(0);
+    for (const mount of mounts) expect(mount).toMatch(/html=\{fragments\.get\(/);
   });
 });
 
@@ -108,10 +110,10 @@ describe('every flow goes through the fragment store', () => {
     // (issue #100) — it is a different location and has to push.
     expect(alreadyStacked).toMatch(/entries\.find\(e => e\.key === target\.key\)/);
     expect(alreadyStacked).not.toMatch(/fragments\.(ensure|load)\(/);
-    // The overflow panel's titles and read tracking are cache reads, keyed by
-    // the DOM/cache handle rather than by identity. Read state itself is keyed
-    // by uid, though — a suffixed handle (`lens/x#2`) must never reach it.
-    expect(source).toMatch(/fragments\.factsFor\(slot\)\.title/);
+    // The declared width and read tracking are cache reads, keyed by the
+    // DOM/cache handle rather than by identity. Read state itself is keyed by
+    // uid, though — a suffixed handle (`lens/x#2`) must never reach it.
+    expect(source).toMatch(/fragments\.factsFor\(activeSlot\)\.width/);
     expect(source).toMatch(/readToRecord\(uid, fragments\.get\(slot\)\)/);
   });
 

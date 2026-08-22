@@ -129,6 +129,19 @@ export interface Pile {
 export interface Geometry {
   cards: PlacedCard[];
   piles: Pile[];
+  /** Slots the behind fan occupies — see `slotsUsed`. */
+  behindSlots: number;
+  /** Slots the ahead fan occupies — see `slotsUsed`. */
+  aheadSlots: number;
+  /** The behind fan's vertical extent, in `stagger` steps: the largest `rank`
+   *  any behind card reaches. NOT `behindSlots` — a piled card adds up to
+   *  `MAX_PILE_LAYERS - 1` extra steps on top of the pile's slot, so the fan
+   *  climbs higher than it reaches left. Reserving the horizontal count on the
+   *  vertical axis leaves the deepest pile edges laid out above the container
+   *  and clipped by whatever sits above it. */
+  behindRows: number;
+  /** The ahead fan's vertical extent, in `stagger` steps. Mirror of the above. */
+  aheadRows: number;
 }
 
 /** One band of a hovered pile: a card you can click straight to. `count` is 1
@@ -158,6 +171,19 @@ const clampDither = (n: number) => Math.max(0, Math.min(16, Math.round(n)));
 export function drawnCount(total: number, slots: number): number {
   const s = Math.max(1, slots);
   return total <= s ? total : s - 1;
+}
+
+/**
+ * How many SLOTS a side's fan occupies — the individually-drawn cards plus the
+ * pile's own slot when there is one, which is just `min(total, slots)`.
+ *
+ * It exists because the active card's width is measured off it: the fan eats
+ * `(behind + ahead) * collapsedWidth` of the viewport, so the two counts are
+ * what `--stack-card-width` subtracts. Derived here rather than re-counted from
+ * `cards` so there is one statement of "the pile is a slot, not an extra".
+ */
+export function slotsUsed(total: number, slots: number): number {
+  return Math.min(total, Math.max(1, slots));
 }
 
 /**
@@ -215,11 +241,13 @@ export function computeGeometry(
   // deepest. One rule, both sides.
   const behindLabelIndex = a - behindPileSlot;
 
+  let behindRows = 0;
   for (let d = 1; d <= behindTotal; d++) {
     const piled = d > behindDrawn;
     const slotD = piled ? behindPileSlot : d;
     const layer = piled ? Math.min(d - behindPileSlot, MAX_PILE_LAYERS - 1) : 0;
     const rank = slotD + layer;
+    behindRows = Math.max(behindRows, rank);
     cards.push({
       index: a - d, role: 'behind', depth: d,
       left: -slotD * p.collapsedWidth,
@@ -247,11 +275,13 @@ export function computeGeometry(
   const aheadPileSlot = aheadDrawn + 1;
   const aheadLabelIndex = stackLength - 1;
 
+  let aheadRows = 0;
   for (let d = 1; d <= aheadTotal; d++) {
     const piled = d > aheadDrawn;
     const slotD = piled ? aheadPileSlot : d;
     const layer = piled ? Math.min(d - aheadPileSlot, MAX_PILE_LAYERS - 1) : 0;
     const rank = slotD + layer;
+    aheadRows = Math.max(aheadRows, rank);
     cards.push({
       index: a + d, role: 'ahead', depth: d,
       left: aheadLeft(slotD, p),
@@ -274,7 +304,14 @@ export function computeGeometry(
   }
 
   cards.sort((x, y) => x.z - y.z);
-  return { cards, piles };
+  return {
+    cards,
+    piles,
+    behindSlots: slotsUsed(behindTotal, p.backwardStrip),
+    aheadSlots: slotsUsed(aheadTotal, p.forwardFan),
+    behindRows,
+    aheadRows,
+  };
 }
 
 /** A placement with the entry it belongs to attached by its ADDRESS. */
@@ -285,9 +322,8 @@ export interface PlacedSlot extends PlacedCard {
   slot: string;
 }
 
-export interface SlottedGeometry {
+export interface SlottedGeometry extends Omit<Geometry, 'cards'> {
   cards: PlacedSlot[];
-  piles: Pile[];
 }
 
 /**
@@ -308,15 +344,17 @@ export function geometryFor(
   params: GeoParams,
 ): SlottedGeometry {
   const { entries, activeSlot } = state;
-  if (entries.length === 0) return { cards: [], piles: [] };
+  if (entries.length === 0) {
+    return { cards: [], piles: [], behindSlots: 0, aheadSlots: 0, behindRows: 0, aheadRows: 0 };
+  }
 
   let activeIdx = activeSlot ? entries.findIndex(e => e.slot === activeSlot) : -1;
   if (activeIdx === -1) activeIdx = entries.length - 1;
 
-  const { cards, piles } = computeGeometry(entries.length, activeIdx, params);
+  const geo = computeGeometry(entries.length, activeIdx, params);
   return {
-    cards: cards.map(c => ({ ...c, slot: entries[c.index].slot })),
-    piles,
+    ...geo,
+    cards: geo.cards.map(c => ({ ...c, slot: entries[c.index].slot })),
   };
 }
 

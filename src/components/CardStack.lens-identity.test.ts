@@ -62,13 +62,17 @@ describe('the DOM handle survives an identity change', () => {
     // Keying on the identity key would destroy and re-create the fragment from
     // its server markup on every filter toggle, resetting the filter panel's
     // own open/drill state.
-    expect(cardStack).toMatch(/\{#each layout\.renderItems as item \(item\.kind === 'card' \? 'card-' \+ item\.slot/);
+    expect(cardStack).toMatch(/\{#each \$stackStore\.entries as entry \(entry\.slot\)\}/);
   });
 
   it('every fragment read in the template is by slot', () => {
-    const htmlBlocks = cardStack.match(/\{@html [^}]+\}/g) ?? [];
-    expect(htmlBlocks.length).toBeGreaterThan(0);
-    for (const block of htmlBlocks) expect(block).toMatch(/fragments\.get\(item\.slot\)/);
+    // The read is a prop on StackFragment rather than a bare `{@html}`: the
+    // cache's value for a slot changes when a placeholder is replaced, and
+    // `{@html}` re-renders — destroying the node — when its expression does.
+    expect(cardStack).not.toMatch(/\{@html /);
+    const reads = cardStack.match(/fragments\.get\([^)]*\)/g) ?? [];
+    expect(reads.length).toBeGreaterThan(0);
+    for (const read of reads) expect(read).toMatch(/fragments\.get\((entry\.slot|slot)\)/);
   });
 
   it('DOM lookups go through one slot-keyed helper', () => {

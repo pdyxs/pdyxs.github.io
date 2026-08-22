@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { seedStackState, pushToStack, removeFromStack, activateCard, replaceActiveSlot, rekeyEntry } from './card-stack-store';
-import { activeEntry, cardEntry, computeStackLayout, lensEntry } from '../lib/stack-layout';
+import { activeEntry, cardEntry, lensEntry } from '../lib/stack-layout';
+import { geometryFor, STACK_GEOMETRY } from '../lib/stack-geometry';
 import type { StackState } from '../lib/stack-layout';
 
 const emptyState: StackState = { entries: [], activeSlot: null };
@@ -160,10 +161,10 @@ describe('rekeyEntry collisions (#106)', () => {
     expect(next.entries.indexOf(activeEntry(next)!)).toBe(1);
   });
 
-  it('the layout still resolves exactly one active card, and it is the right one', () => {
+  it('the geometry still places exactly one active card, and it is the right one', () => {
     const next = rekeyEntry(collided, 'lens/interesting#2', 'lens/interesting');
-    const layout = computeStackLayout(next);
-    const active = layout.visible.filter(c => c.isActive);
+    const { cards } = geometryFor(next, { ...STACK_GEOMETRY, activeWidth: 680 });
+    const active = cards.filter(c => c.role === 'active');
     expect(active).toHaveLength(1);
     expect(active[0].slot).toBe('lens/interesting#2');
   });

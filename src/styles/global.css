@@ -87,6 +87,13 @@
   --space-xl:     3.5rem;
 
   --max-width:    680px;
+  /* The card-stack occlusion geometry's two lengths. Both are RESTATED from
+     STACK_GEOMETRY (src/lib/stack-geometry.ts), which is the source of truth —
+     the applier writes them onto #card-stack from that const on every layout
+     pass. These are the pre-hydration values, so the first paint of a
+     server-rendered stack is not laid out against zero. */
+  --spine-width:   40px;
+  --stack-stagger:  8px;
   /* Ceiling for an image the body renders inline. Landscape diagrams are
      unaffected (they hit the 100% width cap first); it exists for tall portrait
      images — a worked example photographed in portrait would otherwise run
@@ -441,6 +448,23 @@ pre > code:not([class]) {
   user-select: none;
 }
 
+/* The card's own level on the depth ramp, resolved to a token reference by the
+   geometry applier (`--card-surface`). It is the header, not the body, that
+   carries the ramp: on desktop the staircase leaves a sliver of each
+   behind-card's header showing above the card in front of it, and on mobile the
+   collapsed header is the whole of what a card is reduced to.
+
+   `>` is load-bearing. `--card-surface` is an inline style on `.stack-card`, so
+   it INHERITS — and `.card-header` is not exclusive to the stack: the front
+   page's slots (FilterSlot, PinnedSlot) render one inside the home lens's body.
+   As a descendant rule this painted every slot header at whatever level the
+   home lens currently sits on, and inverted their own hover (L5 at rest
+   stepping "up" to a lighter L4). The L2 fallback above is what those keep, and
+   is also the pre-hydration value here. */
+.stack-card > .card-header {
+  background: var(--card-surface, var(--dither-2));
+}
+
 /* Reusable: any text sitting over a dithered surface gets a paper-coloured
    outline (stroke behind the fill) so it stays legible without a knockout
    patch — invisible over a flat background, only clears dots where dither
@@ -466,8 +490,6 @@ pre > code:not([class]) {
 .browse-dim-item-btn,
 .browse-dim-drill,
 .fp-reveal-more,
-.stack-overflow,
-.stack-overflow-item,
 /* Code sits on an L2 dither at rest, not just on hover — without the stroke the
    dots read through the mono glyphs and the block turns to noise. */
 pre,
@@ -486,8 +508,6 @@ pre,
 .browse-dim-lens-item,
 .browse-dim-item-btn,
 .browse-dim-drill,
-.stack-overflow,
-.stack-overflow-item,
 pre,
 :not(pre) > code,
 .theme-toggle button {
@@ -534,16 +554,17 @@ pre,
   padding-left: 0;
 }
 
-.stack-card--collapsed .card-header {
+/* `>` for the same reason as the rule above: a slot header nested in a
+   collapsed lens's body is not itself collapsed. */
+.stack-card--collapsed > .card-header {
   font-size: 0.75em;
   /* Tighter vertically than an open header, but the same inline inset off the
      card border — a collapsed title must line up with the open one it becomes. */
   padding: var(--space-xs) var(--space-sm);
-  background: var(--dither-2);
 }
 
-.stack-card--collapsed .card-header-title,
-.stack-card--collapsed .card-header > * {
+.stack-card--collapsed > .card-header .card-header-title,
+.stack-card--collapsed > .card-header > * {
   background: none;
   padding: 0;
 }
@@ -721,6 +742,15 @@ pre,
   grid-template-columns: var(--left-col, 0px) 1fr;
   grid-template-rows: auto 1fr;
   overflow: clip;
+  /* OPAQUE, on every card. On desktop the cards lie on top of each other and
+     painting order is what crops them; a card whose body let the card behind
+     it read through would occlude nothing. Paper on all of them, active or not
+     — a card just pushed behind is still full-size on screen while its spine
+     closes, so flipping its body to the depth ramp would flash the whole card
+     dark for the length of the move, and a gradient cannot be transitioned to
+     a colour. The ramp is carried by the two surfaces that survive the crop:
+     the spine and the header. */
+  background: var(--color-bg);
 }
 
 /* Everything a card renders is content, and content lives in column 2. Stated
@@ -756,9 +786,8 @@ pre,
    header has stopped sitting on its card and started carrying the page. It
    shares the header's grid cell rather than claiming a row of its own, and
    `align-self: start` pins it to the top of that cell — so it disturbs no
-   layout in the grid. The negative margin is for the two places a card is a
-   FLEX column instead (a desktop collapsed card, see [data-side] below),
-   where it would otherwise steal a pixel from the header's `flex: 1`. */
+   layout in the grid. The negative margin keeps it from claiming a pixel of
+   its own anywhere the card is laid out as something other than this grid. */
 .card-header-sentinel {
   align-self: start;
   width: 100%;
@@ -796,6 +825,12 @@ pre,
    broken. The top border rides on a negative margin so that at rest it sits
    exactly under the card's own border (clipped away, no double weight) and
    only appears once the sticky inner has travelled down off it. */
+/* `--stack-height` is deliberately UNSET for now, so the `min()` resolves to
+   100vh. It is the cap that keeps a sticky label from being taller than the
+   stack it divides — which only bites once the pile's hover-band split exists
+   to be divided (issue #111), and until then `contain: size` plus the spine's
+   own `overflow: clip` already hold the label inside the card. Whoever lands
+   that slice writes it; it is not a missing applier write today. */
 .stack-card-spine-inner {
   position: sticky;
   top: 0;
@@ -827,13 +862,12 @@ pre,
   color: var(--color-text);
 }
 
-.stack-card ~ .stack-card,
-.stack-card ~ .stack-overflow,
-.stack-overflow ~ .stack-card,
-.stack-card ~ .active-card-col .stack-card,
-.stack-overflow ~ .active-card-col .stack-card,
-.active-card-col ~ .stack-card,
-.active-card-col ~ .stack-overflow {
+/* MOBILE rule. The stack is a single column there, so adjacent cards share one
+   border between them. Desktop restores the top border below: cards overlap
+   rather than abut, so every one of them needs all four sides.
+   (`.active-card-col` and `.stack-overflow` used to sit between these siblings
+   and needed spelling out; both are gone with the three-layout-system swap.) */
+.stack-card ~ .stack-card {
   border-top: none;
 }
 
@@ -904,15 +938,32 @@ pre,
   padding: var(--space-lg) var(--body-inset-inline);
 }
 
-.stack-card--collapsed .stack-card-body { display: none; }
+/* MOBILE collapse is a reflow, so `.open` — which the island now sets on EVERY
+   card (see the layout effect in CardStack.svelte) — has to be taken back
+   here, and the desktop block restores it. That inversion is what the whole
+   arrangement costs, and it is cheaper than the alternative: telling the two
+   breakpoints apart in JS, which the CSS-first-responsive rule forbids.
+
+   There used to be a `.stack-card--collapsed .stack-card-body { display: none }`
+   here instead. It removed the very box `.body-wrapper`'s `0fr -> 1fr`
+   transition animates, so mobile collapse SNAPPED — the 300ms transition below
+   had been dead since it was written. Deleting it is the whole of "mobile
+   animates smoothly" (issue #109). */
+.stack-card--collapsed .body-wrapper.open {
+  grid-template-rows: 0fr;
+}
+
 .stack-card--collapsed .stack-card-close { display: none; }
 
-.stack-card--collapsed .card-header {
-  border-bottom: none;
+.stack-card--collapsed {
   cursor: pointer;
 }
 
-.stack-card--collapsed .card-header::after {
+.stack-card--collapsed > .card-header {
+  border-bottom: none;
+}
+
+.stack-card--collapsed > .card-header::after {
   content: '+';
   font-size: 1.5rem;
   font-weight: 300;
@@ -920,73 +971,24 @@ pre,
   line-height: 1;
 }
 
-/* Card headers are already L2 at rest, so they step up to the strong hover. */
-.stack-card--collapsed:hover .card-header { background: var(--color-bg-hover-strong); }
-
-/* Overflow strip — slim indicator for hidden cards */
-.stack-overflow {
-  position: relative;
-  border: var(--border-width) solid var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  background: var(--color-surface);
-  padding: var(--space-xs);
+/* Hover steps the card's OWN resting level up two, the same delta the flat
+   surfaces use (L0 -> L2, L2 -> L4). A fixed hover level cannot work here: the
+   ramp puts different cards at different rest levels, so half the stack would
+   jump the wrong way. `--card-surface-hover` is written beside `--card-surface`
+   by the applier, clamped at 16. Both the mobile header and the desktop spine
+   are the hovered surface, and both are named because they are the same act. */
+.stack-card--collapsed:hover > .card-header,
+.stack-card--collapsed:hover > .stack-card-spine {
+  background: var(--card-surface-hover, var(--color-bg-hover-strong));
 }
 
-.stack-overflow-label {
-  font-size: 1.2rem;
-  line-height: 1;
-}
-
-.stack-overflow:hover {
-  background: var(--color-bg-hover);
-}
-
-.stack-overflow-panel {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  z-index: 100;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.stack-overflow-item {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: var(--space-sm) var(--space-md);
-  border: none;
-  border-bottom: 1px solid var(--color-border-light);
-  background: var(--color-surface);
-  color: var(--color-text);
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-}
-
-.stack-overflow-item:last-child {
-  border-bottom: none;
-}
-
-.stack-overflow-item:hover {
-  background: var(--color-bg-hover);
-}
-
-/* Mobile: inner wrapper is transparent to layout */
+/* MOBILE: the wrapper is transparent to layout, so the cards are direct flex
+   children of #card-stack and the stack is one plain column — collapsed
+   headers above the active card and below it, every one of them shown. That
+   falls out of the geometry rather than being built: it places every card,
+   and piling changes only left/top/z, which mobile does not consume. */
 .card-stack-inner {
   display: contents;
-}
-
-/* Fan corner — desktop-only; hidden at mobile */
-.fan-corner {
-  display: none;
 }
 
 /* ── Desktop card stack (≥681px) ─────────────────────────────────── */
@@ -1001,7 +1003,7 @@ pre,
   }
 
   .card-header,
-  .stack-card--collapsed .card-header {
+  .stack-card--collapsed > .card-header {
     padding-inline: var(--space-lg);
   }
 
@@ -1013,146 +1015,157 @@ pre,
     --body-inset-inline: var(--space-md);
   }
 
+  /* ── The occlusion geometry ────────────────────────────────────
+     ONE in-flow node — the active card, which gives the container its height —
+     and N absolutely-positioned siblings placed by `computeGeometry`
+     (src/lib/stack-geometry.ts). Painting order does the occlusion: a behind
+     card is cropped for free by the card in front of it, so nothing here has
+     to crop it. Every card is the same size, and that size is the active
+     card's.
+
+     Nothing below uses `transform`, at rest or in motion. A transform on an
+     ancestor of a dithered surface re-anchors its `background-attachment:
+     fixed` grid and the shimmer comes back (CLAUDE.md § dither). `clip-path`
+     is safe where a transform is not — it creates no containing block. */
+
   #card-stack {
     position: relative;
     flex-direction: row;
     justify-content: center;
+    align-items: flex-start;
     max-width: none;
     margin: 0;
     padding: 0 0 var(--space-lg);
+    /* The fans run off both edges on a narrow viewport. `clip`, not `hidden`:
+       `hidden` would make this a scroll container and silently re-parent every
+       `position: sticky` descendant (the spines, the lens filter bar) to a box
+       that never scrolls. */
     overflow-x: clip;
+    /* Every card wears the ACTIVE card's width — which is the declared
+       --max-width, capped by what the viewport has left once both fans have
+       taken their slots. `--behind-slots` / `--ahead-slots` are unitless counts
+       written by the applier from the same geometry that placed the cards, so
+       the reservation can never disagree with what is drawn.
+
+       The consequence to know: re-activating a 960px lens from behind a 520px
+       puzzle card animates EVERY card's width, because they all read this. */
+    --stack-card-width: min(
+      var(--max-width),
+      calc(100vw - (var(--behind-slots, 0) + var(--ahead-slots, 0)) * var(--spine-width))
+    );
   }
 
+  /* The positioning context, and the only thing #card-stack centres. The
+     margins are what centre the whole ASSEMBLY rather than just the active
+     card: flex centres margin boxes, so reserving each fan's width as a margin
+     puts the active card off-centre by exactly the amount the fans occupy.
+
+     margin-top is load-bearing for a different reason. Behind cards sit at a
+     NEGATIVE `--geo-top` (the staircase runs upward), and an absolutely
+     positioned child measures from this element's padding box — so without the
+     offset the topmost behind card would be laid out above #card-stack
+     entirely and clipped by the site header. Padding cannot do this job:
+     padding moves the padding-box edge with the content, so the negative tops
+     would follow it.
+
+     The vertical axis uses `--behind-rows` / `--ahead-rows`, NOT the slot
+     counts the horizontal axis uses. A piled card shares its slot's `left` but
+     keeps climbing in `top` (up to MAX_PILE_LAYERS - 1 further), so each fan
+     reaches further up and down than it does sideways — reserve the slot count
+     here and the deepest pile edges land outside the container. */
   .card-stack-inner {
-    display: flex;
-    flex-direction: row;
+    display: block;
     position: relative;
-    padding-top: calc(var(--num-left-collapsed, 0) * 8px);
-    padding-left: calc(var(--num-left-collapsed, 0) * 48px);
+    width: var(--stack-card-width);
+    margin-top: calc(var(--behind-rows, 0) * var(--stack-stagger));
+    margin-bottom: calc(var(--ahead-rows, 0) * var(--stack-stagger));
+    margin-left: calc(var(--behind-slots, 0) * var(--spine-width));
+    margin-right: calc(var(--ahead-slots, 0) * var(--spine-width));
   }
 
-  /* Restore top border removed by mobile .stack-card + .stack-card rule */
+  /* Restore the top border the mobile sibling rule removes: on desktop the
+     cards overlap rather than abut, so each needs all four sides. */
   #card-stack .stack-card {
     border-top: var(--border-width) solid var(--color-border);
   }
 
-  /* Left collapsed: absolutely positioned, staggered above active card */
-  #card-stack .stack-card[data-side="left"] {
+  /* The spine column opens on every card except the active one. Decided in
+     CSS, not by the applier: `--left-col` must be 0px at mobile, and an inline
+     style written by JS could only be overridden with `!important`. It is also
+     the one geometry value that is a pure function of role, so nothing is lost
+     by leaving it here. */
+  #card-stack .stack-card {
+    --left-col: var(--spine-width);
+  }
+  #card-stack .stack-card--active {
+    --left-col: 0px;
+  }
+
+  /* `height: 100%` + a positioned parent whose height comes from the active
+     card is what makes every card the same size without measuring anything.
+     `--geo-extra-height` is 0 at the settled `bottomEdge: staircase`; it exists
+     so a flush bottom edge stays a parameter rather than a rewrite. */
+  #card-stack .stack-card {
     position: absolute;
-    width: 48px;
-    top: calc(var(--stack-index, 0) * 8px);
-    bottom: 0;
-    left: calc(var(--stack-index, 0) * 48px);
-    z-index: calc(var(--stack-index, 0) + 1);
-    display: flex;
-    flex-direction: column;
+    left: var(--geo-left, 0px);
+    top: var(--geo-top, 0px);
+    z-index: var(--geo-z, 0);
+    width: 100%;
+    height: calc(100% + var(--geo-extra-height, 0px));
   }
 
-  /* Wrapper for active card — width is viewport-derived up to max-width */
-  .active-card-col {
-    width: min(
-      var(--max-width),
-      calc(100vw - var(--num-left-collapsed, 0) * 48px - var(--num-right-collapsed, 0) * 48px)
-    );
-    flex-shrink: 0;
-    min-width: 0;
-  }
-
-  /* Active card fills its wrapper column */
-  #card-stack .stack-card[data-side="active"] {
-    min-width: 0;
+  /* The one in-flow node. Its `--geo-left`/`--geo-top` are both 0 by
+     construction, so `position: relative` leaves it exactly where flow put it
+     while still establishing a stacking context for its z-index. */
+  #card-stack .stack-card--active {
     position: relative;
-    z-index: calc(var(--num-left-collapsed, 0) + 1);
+    height: auto;
+    min-width: 0;
   }
 
-  /* Right collapsed: in-flow flex children, fixed width */
-  #card-stack .stack-card[data-side="right"] {
-    width: 48px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
+  /* THE ASYMMETRY, and the one thing painting order cannot do for us. A behind
+     card is cropped by the card in front of it; an AHEAD card has nothing in
+     front of it, so its crop has to be asked for — without this, the last
+     ahead card's full width bleeds out to the right of the fan. It is still a
+     full-size node with its content laid out at full width (printing never
+     moves); this crops what is PAINTED. */
+  #card-stack .stack-card[data-role="ahead"] {
+    clip-path: inset(0 calc(100% - var(--spine-width)) 0 0);
   }
 
-  /* Collapsed headers: vertical text over a dithered surface (title carries the
-     .dither-text outline for legibility). */
-  #card-stack .stack-card--collapsed > .card-header {
-    writing-mode: vertical-rl;
-    flex: 1;
-    justify-content: flex-start;
-    align-items: center;
-    padding: var(--space-md) var(--space-xs);
-    background: var(--dither-2);
-    overflow: hidden;
-  }
+  /* The clip takes the card's own right border off with the rest of it, so the
+     sliver would be left open-ended. Drawn inside the clip region instead,
+     above the spine so the tucked corner reads as a card edge.
 
-  /* Hide mobile '+' expand indicator */
-  #card-stack .stack-card--collapsed .card-header::after {
-    display: none;
-  }
-
-  /* Vertical title reads over the dither via its .card-header-title stroke —
-     no knockout patch. */
-  #card-stack .stack-card--collapsed .card-header-title {
-    background: none;
-    padding: 0 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Restore border-top for overflow strips (overrides ~ combinator) */
-  #card-stack .stack-overflow {
-    border-top: var(--border-width) solid var(--color-border);
-  }
-
-  .stack-overflow.stack-overflow--left {
+     The `* 2` is load-bearing: an absolutely positioned child is offset from
+     the PADDING box while `clip-path` measures from the BORDER box. One
+     border-width out and this lands just past the clip and vanishes — a
+     failure that looks like "the rule didn't apply". */
+  #card-stack .stack-card[data-role="ahead"]::after {
+    content: '';
     position: absolute;
-    width: 48px;
-    top: calc(var(--stack-index, 0) * 8px);
+    top: 0;
     bottom: 0;
-    left: calc(var(--stack-index, 0) * 48px);
-    z-index: calc(var(--stack-index, 0) + 1);
+    left: calc(var(--spine-width) - var(--border-width) * 2);
+    width: var(--border-width);
+    background: var(--color-border);
+    z-index: 3;
   }
 
-  .stack-overflow.stack-overflow--left.stack-overflow--expanded {
-    z-index: 100;
+  /* DESKTOP collapse is a crop, not a reflow: a covered card's body stays
+     open and is simply occluded by the spine in front of it. This takes back
+     the mobile rule that closes it — see the note there for why the island
+     cannot make this decision itself. */
+  #card-stack .stack-card--collapsed .body-wrapper.open {
+    grid-template-rows: 1fr;
   }
 
-  .stack-overflow.stack-overflow--right {
-    width: 48px;
-    flex-shrink: 0;
-  }
-
-  .stack-overflow--left .stack-overflow-panel {
-    top: 0;
-    left: calc(100% - var(--border-width));
-    right: auto;
-    min-width: 200px;
-  }
-
-  .stack-overflow--right .stack-overflow-panel {
-    top: 0;
-    right: calc(100% - var(--border-width));
-    left: auto;
-    min-width: 200px;
-  }
-
-  /* Fan corner: L-shaped connector between adjacent strip tops */
-  .fan-corner {
-    display: block;
-    position: absolute;
-    left: calc((var(--i) + 1) * 48px - var(--border-width));
-    top: calc(var(--i) * 8px);
-    width: calc(
-      (var(--n) - var(--i) - 1) * 48px
-      + min(var(--max-width), 100vw - var(--n) * 48px - var(--num-right-collapsed, 0) * 48px)
-      - (var(--n) - var(--i)) * 8px
-      + var(--border-width)
-    );
-    height: 8px;
-    border-top: var(--border-width) solid var(--color-border);
-    border-right: var(--border-width) solid var(--color-border);
-    z-index: calc(var(--i) + 1);
+  /* The collapsed card's own header is behind the spine and cropped away with
+     the rest of column 2 — except for the staircase sliver above the card in
+     front, which is why it still carries `--card-surface`. Its mobile '+'
+     affordance has no room and no meaning here. */
+  #card-stack .stack-card--collapsed > .card-header::after {
+    display: none;
   }
 }
 

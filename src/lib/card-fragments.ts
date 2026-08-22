@@ -110,12 +110,24 @@ export function escapeHtml(s: string): string {
 
 /**
  * A fragment-shaped stand-in for a location whose real HTML has not arrived:
- * the header (so the view transition has something to morph into) and an empty
- * body (so `replaceBody` has somewhere to write). Structurally identical to a
- * real fragment as far as the stable selector contract is concerned.
+ * the spine, the header (so the view transition has something to morph into)
+ * and an empty body (so `replaceBody` has somewhere to write). Structurally
+ * identical to a real fragment as far as the stable selector contract is
+ * concerned.
+ *
+ * The spine is not optional, and this is the one fragment easy to build
+ * without it. `replaceBody` swaps only the BODY — the shell a placeholder
+ * mounts with is the shell that location keeps for the rest of the session —
+ * and the spine is what occludes the card behind it once this one is collapsed
+ * (issue #109). Left out, every card pushed through a view transition would be
+ * a permanently transparent hole in the stack.
  */
 export function buildPlaceholderHtml(slot: string, title: string): string {
   return `<div class="stack-card" data-uid="${escapeHtml(slot)}">` +
+    `<div class="stack-card-spine"><div class="stack-card-spine-inner">` +
+    `<span class="stack-card-spine-title">${escapeHtml(title)}</span>` +
+    `</div></div>` +
+    `<div class="card-header-sentinel"></div>` +
     `<div class="card-header">` +
     `<span class="card-header-title"><b>${escapeHtml(title)}</b></span>` +
     `<button class="stack-card-close" aria-label="Close">×</button>` +

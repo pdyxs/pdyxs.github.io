@@ -68,7 +68,25 @@ Card bodies use a CSS grid trick for animated expand/collapse. The structure is:
 - `.stack-card-body`: `overflow: hidden; min-height: 0; padding: 0` — padding on the grid child prevents `0fr` from collapsing to zero
 - `.stack-card-body-inner`: carries `padding: var(--space-lg)`
 
-This pattern is mandatory for any card renderer that needs animated expand/collapse. The `open` class is managed by `expandCard`/`collapseCard` in StackNav, except during View Transitions (where the body opens after `vt.finished`).
+This pattern is mandatory for any card renderer that needs animated expand/collapse.
+
+**`open` goes on EVERY card, unconditionally** (issue #109), set by the layout
+`$effect` in `CardStack.svelte` — the one exception being a card mid-push
+through a View Transition, whose body opens after `vt.finished`. That inverts
+what it looks like it should be, and the reason is that the two breakpoints
+collapse differently:
+
+- **desktop collapse is a CROP.** A covered card's body stays open and is
+  occluded by the spine of the card in front of it. Nothing closes.
+- **mobile collapse is a REFLOW**, the original grid trick.
+
+The island cannot tell those apart without `matchMedia`, which the
+CSS-first-responsive rule forbids — so it opens everything and the *mobile*
+base CSS carries `.stack-card--collapsed .body-wrapper.open { grid-template-rows: 0fr }`,
+which the desktop block takes back. There used to be a
+`.stack-card--collapsed .stack-card-body { display: none }` beside it; that
+removed the very box this transition animates, so mobile collapse snapped for
+as long as the rule existed.
 
 ### View Transition names
 
@@ -89,6 +107,15 @@ Interactive components use Svelte 5 (runes syntax) with `client:load`. Key conve
 - Svelte store files live in `src/stores/` — not `src/lib/`. The `src/lib/` directory is framework-agnostic pure TypeScript.
 - `CardStack.svelte` is the only Svelte island currently. New islands follow the same shape: `$state` for local reactive state, `$derived` for computed values, `$effect` for thin DOM side effects that can't be done with template bindings.
 - `{@html}` silently drops `<script>` tags in injected HTML strings. Future card renderers must not rely on inline scripts — renderer interactivity must be a Svelte component or a global delegated listener, not an inline `<script>` in the rendered HTML fragment.
+- **`{@html}` re-renders when its expression changes**, which is why the stack
+  mounts each fragment through `StackFragment.svelte` — a component that reads
+  its `html` prop once and never again. The fragment cache's value for a slot
+  legitimately changes underneath the template (a card pushed through a View
+  Transition mounts from a placeholder, and `replaceBody` then caches the real
+  HTML), so a bare `{@html fragments.get(slot)}` destroyed and rebuilt that
+  card's node on the next store change. Invisible at rest — same content, same
+  position, same `getBoundingClientRect` — and it costs everything the geometry
+  is built on, plus every island mounted inside the fragment.
 
 ### Arriving at a card is reading it
 
@@ -242,11 +269,17 @@ server renderer work.
 
 These class names are a CSS/layout contract — renaming any of them is a CardStack.svelte + CSS refactor, not a local change:
 
-- `#card-stack`
-- `.stack-card`, `.stack-card--active`, `.stack-card--collapsed`
-- `.card-header`
+- `#card-stack`, `.card-stack-inner`
+- `.stack-card`, `.stack-card--active`, `.stack-card--collapsed`, `.stack-card--page`
+- `.stack-card-spine`, `.stack-card-spine-inner`, `.stack-card-spine-title`
+- `.card-header`, `.card-header-sentinel`
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`
+- `data-role="behind|active|ahead"` and `data-piled` (written by the applier)
+
+Deleted with the geometry swap (issue #109), and not to be reintroduced:
+`.fan-corner`, `.active-card-col`, `.stack-overflow*`, `data-side`,
+`--stack-index`, `--num-left-collapsed`, `--num-right-collapsed`, `--i`, `--n`.
 
 ### Card resolution happens once, in `resolveCard()`
 
@@ -290,7 +323,66 @@ It's the round-trip key between DOM and `/card/...` fetches. Don't improvise the
 
 ### Layout is reactive, not imperatively called
 
-`CardStack.svelte` derives layout via `$derived(computeStackLayout($stackStore))`. Any store mutation automatically triggers a re-derivation and `$effect` re-run — no explicit layout update call is needed or allowed. Don't add explicit `computeStackLayout()` calls to event handlers; update the store and let reactivity handle the rest.
+`CardStack.svelte` derives layout via `$derived(geometryFor($stackStore, …))`. Any store mutation automatically triggers a re-derivation and `$effect` re-run — no explicit layout update call is needed or allowed. Don't add explicit `geometryFor()` calls to event handlers; update the store and let reactivity handle the rest.
+
+### One in-flow card, N absolutely-positioned siblings
+
+The desktop stack used to be **three layout systems glued together** —
+absolutely-positioned left strips, an in-flow flex `.active-card-col`, in-flow
+right strips, plus `.fan-corner` L-connectors and `.stack-overflow` panels
+standing in for the hidden cards. All three are gone (issue #109), replaced by
+one pure function.
+
+Every entry renders one `.stack-card`, all of them siblings inside
+`.card-stack-inner`, in `entries` order and keyed by `slot`. The **active card
+is the only in-flow node** — it gives the container its height — and every other
+card is `position: absolute`, placed by `computeGeometry`
+(`src/lib/stack-geometry.ts`). **Painting order does the occlusion**: a behind
+card is cropped for free by the card in front of it, so nothing has to crop it.
+
+The applier writes five properties per card — `--geo-left`, `--geo-top`,
+`--geo-z`, `--geo-extra-height`, `--card-surface` (plus `--card-surface-hover`,
+the same level stepped up two) — and `data-role` / `data-piled`. It toggles
+`--active` / `--collapsed` / `--page` exactly as before; **page mode is
+untouched**, look and mechanism both (#98 ruling 2).
+
+**There is no `matchMedia` and there must never be.** The applier writes all of
+it at both breakpoints and the CSS decides what to consume: desktop reads
+everything, mobile reads only `--card-surface` and stays in flow. So "mobile
+shows every collapsed header" is what *falls out* — the geometry places every
+card, and piling changes only `left`/`top`/`z`, which mobile ignores.
+
+Four things that bite:
+
+- **Every card wears the ACTIVE card's width.** `--stack-card-width` is
+  `min(var(--max-width), 100vw - (behind + ahead slots) * var(--spine-width))`,
+  and `--behind-slots` / `--ahead-slots` come from the same geometry that placed
+  the cards (`slotsUsed`) so the reservation can never disagree with what is
+  drawn. The consequence: re-activating a 960px lens from behind a 520px puzzle
+  card animates every card's width.
+- **`activeWidth` is measured, not re-derived.** The ahead fan is placed off the
+  active card's width, and that width is a CSS `min()` — so a ResizeObserver on
+  `.card-stack-inner` reads it back rather than JS owning a second copy of the
+  formula. No feedback loop: the slot counts the width is computed from depend
+  only on stack length and active index.
+- **The ahead side is not a mirror.** A behind card is cropped for free; an
+  ahead card has nothing in front of it, so its crop must be asked for —
+  `clip-path: inset(0 calc(100% - var(--spine-width)) 0 0)`, plus an `::after`
+  right border at `calc(var(--spine-width) - var(--border-width) * 2)`. The
+  `* 2` is load-bearing: an absolutely positioned child is offset from the
+  **padding** box while `clip-path` measures from the **border** box, so one
+  border-width out lands it past the clip and it vanishes. `clip-path` is safe
+  where `transform` is not — it creates no containing block for the fixed
+  dither.
+- **The geometry places EVERY card, piled ones included.** A card left out is a
+  DOM node that gets destroyed and rebuilt, so it mounts at its destination
+  instead of travelling there and nothing animates. Same failure mode as the
+  `{@html}` trap above. Both are invisible at rest and invisible to
+  `getBoundingClientRect` — which is why this is verified **in motion and by
+  identity**, never from a screenshot (four separate times in #98 a still image
+  was correct while the behaviour was broken). The automated half is
+  `CardStack.island.test.ts` asserting the same element references survive an
+  active-index change.
 
 ## Conventions
 

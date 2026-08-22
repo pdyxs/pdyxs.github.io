@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   computeGeometry,
   drawnCount,
+  slotsUsed,
   pileSections,
   aheadPitch,
   geometryFor,
@@ -248,12 +249,65 @@ describe('computeGeometry piles', () => {
   });
 });
 
+describe('slotsUsed', () => {
+  // The counts `--stack-card-width` subtracts from the viewport. The pile is a
+  // slot, so an overflowing side never occupies more than its cap.
+  it('is the whole side while it fits in the cap', () => {
+    expect(slotsUsed(0, 3)).toBe(0);
+    expect(slotsUsed(2, 3)).toBe(2);
+    expect(slotsUsed(3, 3)).toBe(3);
+  });
+
+  it('saturates at the cap once the side overflows, pile included', () => {
+    expect(slotsUsed(4, 3)).toBe(3);
+    expect(slotsUsed(40, 3)).toBe(3);
+  });
+
+  it('reserves the fan\'s full vertical reach, which a pile makes larger', () => {
+    // The bug this guards: a piled card shares its slot's `left` but keeps
+    // climbing in `top`, so reserving the SLOT count on the vertical axis
+    // leaves the deepest pile edges laid out outside the container.
+    const p = params();
+    // Six behind, three slots: the pile holds four cards, the deepest of them
+    // MAX_PILE_LAYERS - 1 steps past the pile's own slot.
+    const geo = computeGeometry(7, 6, p);
+    expect(geo.behindSlots).toBe(3);
+    expect(geo.behindRows).toBe(3 + MAX_PILE_LAYERS - 1);
+
+    for (let length = 1; length <= 12; length++) {
+      for (let active = 0; active < length; active++) {
+        const g = computeGeometry(length, active, p);
+        const reach = (side: 'behind' | 'ahead') =>
+          Math.max(0, ...g.cards.filter(c => c.role === side).map(c => Math.abs(c.top)));
+        expect(g.behindRows * p.stagger).toBe(reach('behind'));
+        expect(g.aheadRows * p.stagger).toBe(reach('ahead'));
+      }
+    }
+  });
+
+  it('agrees with the placements the geometry actually emits', () => {
+    // The counts are what CSS reserves room for, so they must equal the number
+    // of DISTINCT left offsets each side draws — a count that over-reserved
+    // would narrow the active card for a slot nothing occupies.
+    for (let length = 1; length <= 12; length++) {
+      for (let active = 0; active < length; active++) {
+        const geo = computeGeometry(length, active, params());
+        for (const [side, count] of [['behind', geo.behindSlots], ['ahead', geo.aheadSlots]] as const) {
+          const lefts = new Set(geo.cards.filter(c => c.role === side).map(c => c.left));
+          expect(lefts.size).toBe(count);
+        }
+      }
+    }
+  });
+});
+
 describe('geometryFor', () => {
   const state = (entries: StackState['entries'], activeSlot: string | null): StackState =>
     ({ entries, activeSlot });
 
   it('returns nothing for an empty stack', () => {
-    expect(geometryFor(state([], null), params())).toEqual({ cards: [], piles: [] });
+    expect(geometryFor(state([], null), params()))
+      .toEqual({ cards: [], piles: [], behindSlots: 0, aheadSlots: 0, behindRows: 0, aheadRows: 0 });
   });
 
   it('hands each placement the slot of the entry it places', () => {

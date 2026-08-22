@@ -2,8 +2,9 @@
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
   import { stackStore, seedStackState, pushToStack, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '../stores/card-stack-store';
-  import { computeStackLayout, cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry } from '../lib/stack-layout';
+  import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry } from '../lib/stack-layout';
   import type { LocationEntry } from '../lib/stack-layout';
+  import { geometryFor, STACK_GEOMETRY } from '../lib/stack-geometry';
   import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from '../lib/lens-key';
   import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
   import { filterStateFromParams } from '../dimensions';
@@ -16,6 +17,7 @@
   import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../dimensions';
   import { markRead, readToRecord } from '../lib/card-view-state';
+  import StackFragment from './StackFragment.svelte';
   import {
     createCardFragments,
     extractLocationWidth,
@@ -56,9 +58,16 @@
   let cardParams = new Map<string, ParamPairs>();
   // Keys to skip body-open in $effect during VT push (body opens after vt.finished)
   let skipBodyOpen = new Set<string>();
-  let overflowElLeft = $state<HTMLElement | null>(null);
-  let overflowElRight = $state<HTMLElement | null>(null);
-  let overflowOpen = $state<'left' | 'right' | false>(false);
+  // The one measured input to the geometry. Every card is the width of the
+  // active one, and the ahead fan is placed off that width — but the width is
+  // a CSS decision (`--stack-card-width`: the declared --max-width, capped by
+  // what the viewport has left after both fans), so JS reads it rather than
+  // re-deriving the formula and owning a second copy of it.
+  //
+  // No feedback loop: the slot counts the width is computed FROM depend only on
+  // stack length and active index, never on the width itself.
+  let innerEl = $state<HTMLElement | null>(null);
+  let activeWidth = $state(0);
   let startVT: ((cb: () => void) => { finished: Promise<void> }) | undefined;
   // UIDs from the browse-page `stack` URL param, consumed on the first card push
   let pendingBrowseStack: string[] = [];
@@ -89,12 +98,25 @@
   // captured once from the SSR-active location's rendered fragment. Rendered
   // as a static inline style below so the correct --max-width is present in
   // the very first paint, before hydration — the $effect further down keeps
-  // it in sync as the stack changes thereafter (mirrors --num-left-collapsed
-  // / --num-right-collapsed, which is also effect-owned post-mount).
+  // it in sync as the stack changes thereafter (mirrors --behind-slots /
+  // --ahead-slots, which are also effect-owned post-mount).
   const initialWidth = untrack(() => activeUid ? extractLocationWidth(activeHtml ?? undefined) : undefined);
 
-  const layout = $derived(computeStackLayout($stackStore));
+  const geometry = $derived(geometryFor($stackStore, { ...STACK_GEOMETRY, activeWidth }));
   const hasCards = $derived($stackStore.entries.length > 0);
+
+  // `--stack-card-width` is a CSS `min()` of the declared width and what the
+  // viewport has left; this is the only way back out of CSS into the numbers
+  // the ahead fan is measured off. A ResizeObserver rather than a read in the
+  // layout effect: the width also changes on a plain window resize, which the
+  // store knows nothing about.
+  $effect(() => {
+    const el = innerEl;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([e]) => { activeWidth = e.contentRect.width; });
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
 
   // The active location's declared width overrides --max-width for the whole
   // stack column (card mode's border-box and page mode's content + divider
@@ -137,41 +159,71 @@
     }
   }
 
+  // The whole of the layout: one pure placement (`geometryFor`) written onto
+  // persistent nodes as custom properties, and nothing else. There is no
+  // `matchMedia` here and there must never be — the applier writes all five
+  // geometry properties at both breakpoints and the CSS decides what to
+  // consume. Desktop reads all of them; mobile reads only `--card-surface` and
+  // stays in flow, which is why "mobile shows every collapsed header" is what
+  // falls out rather than something to build (issue #109).
   $effect(() => {
     const stackEl = document.getElementById('card-stack');
-    stackEl?.style.setProperty('--num-left-collapsed', String(layout.numLeftCollapsed));
-    stackEl?.style.setProperty('--num-right-collapsed', String(layout.numRightCollapsed));
+    // The fans' widths, so CSS can subtract them from the viewport. Unitless
+    // counts, not lengths: `--spine-width` is the length, declared once.
+    stackEl?.style.setProperty('--behind-slots', String(geometry.behindSlots));
+    stackEl?.style.setProperty('--ahead-slots', String(geometry.aheadSlots));
+    // The VERTICAL reservation, and deliberately not the same numbers. A piled
+    // card shares its slot's `left` but keeps climbing in `top`, so each fan
+    // reaches further up/down than it does sideways.
+    stackEl?.style.setProperty('--behind-rows', String(geometry.behindRows));
+    stackEl?.style.setProperty('--ahead-rows', String(geometry.aheadRows));
+    // The two settled lengths CSS needs, sourced from the same const the
+    // placement was computed with rather than restated in the stylesheet.
+    stackEl?.style.setProperty('--spine-width', `${STACK_GEOMETRY.collapsedWidth}px`);
+    stackEl?.style.setProperty('--stack-stagger', `${STACK_GEOMETRY.stagger}px`);
     applyMaxWidth($stackStore.activeSlot);
 
     syncLensFilters(activeEntry($stackStore)?.key ?? null);
 
     const depth = $stackStore.entries.length;
-    for (const card of layout.visible) {
+    for (const card of geometry.cards) {
       const el = elFor(card.slot);
       if (!el) continue;
-      el.classList.toggle('stack-card--active', card.isActive);
-      el.classList.toggle('stack-card--collapsed', card.isCollapsed);
+      const isActive = card.role === 'active';
+      el.classList.toggle('stack-card--active', isActive);
+      el.classList.toggle('stack-card--collapsed', !isActive);
       // Chrome is a pure function of stack position: a lens that is the sole
       // entry renders page-mode chrome, everything else card-mode.
       el.classList.toggle('stack-card--page', presentationMode(locationKind(card.slot), depth) === 'page');
-      el.style.setProperty('--stack-index', String(card.stackIndex));
-      el.dataset.side = card.side;
+      el.style.setProperty('--geo-left', `${card.left}px`);
+      el.style.setProperty('--geo-top', `${card.top}px`);
+      el.style.setProperty('--geo-z', String(card.z));
+      el.style.setProperty('--geo-extra-height', `${card.extraHeight}px`);
+      // CSS cannot index a token by number, so the level is resolved to the
+      // token reference here. The +2 hover step is the flat-surface convention
+      // (L0 → L2, L2 → L4) carried onto a ramp whose resting level varies per
+      // card — a fixed hover level would read as a jump on half the stack.
+      el.style.setProperty('--card-surface', `var(--dither-${card.dither})`);
+      el.style.setProperty('--card-surface-hover', `var(--dither-${Math.min(16, card.dither + 2)})`);
+      el.dataset.role = card.role;
+      if (card.piled) el.dataset.piled = ''; else delete el.dataset.piled;
       const bw = el.querySelector<HTMLElement>('.body-wrapper');
-      // During VT push, suppress body-open until vt.finished
-      if (bw) bw.classList.toggle('open', card.isActive && !skipBodyOpen.has(card.slot));
+      // A collapsed body is hidden but still LAID OUT — cropped by the spine on
+      // desktop, `0fr` inside `overflow: hidden` on mobile — and neither takes
+      // it out of the tab order or the accessibility tree the way the deleted
+      // `display: none` did. Without this, tabbing off the active card walks
+      // into every browse-card button and filter chip of the lens behind it.
+      // On the wrapper, not the card: the header and spine must stay clickable,
+      // since clicking them is how a collapsed card is re-activated.
+      if (bw) bw.inert = !isActive;
+      // EVERY card, unconditionally. Desktop collapse is a crop — a covered
+      // card's body stays open and is occluded by the spine in front of it —
+      // while mobile collapses by reflow. The island cannot tell the two apart
+      // without the banned breakpoint detection, so the mobile block carries
+      // `.stack-card--collapsed .body-wrapper.open { grid-template-rows: 0fr }`
+      // instead. During a VT push the open is deferred until vt.finished.
+      if (bw) bw.classList.toggle('open', !skipBodyOpen.has(card.slot));
     }
-  });
-
-  $effect(() => {
-    if (!overflowOpen) return;
-    function dismissHandler(e: MouseEvent) {
-      const path = e.composedPath();
-      if (overflowElLeft && path.includes(overflowElLeft)) return;
-      if (overflowElRight && path.includes(overflowElRight)) return;
-      overflowOpen = false;
-    }
-    document.addEventListener('click', dismissHandler, { capture: true });
-    return () => document.removeEventListener('click', dismissHandler, { capture: true });
   });
 
   // --- Helpers ---
@@ -244,10 +296,6 @@
     if (pushUrl) history.pushState(null, '', '/');
   }
 
-  function getCardTitle(slot: string): string {
-    return fragments.factsFor(slot).title ?? slot;
-  }
-
   // Records the view-state transition to 'read' for a location we hold the HTML
   // for. `readToRecord` owns the decision (card locations with a rendered
   // data-content-hash, nothing else); this is the thin write.
@@ -257,19 +305,6 @@
   function markReadIfKnown(uid: string, slot: string = uid) {
     const record = readToRecord(uid, fragments.get(slot));
     if (record) markRead(record.uid, record.hash);
-  }
-
-  function toggleOverflow(side: 'left' | 'right') {
-    overflowOpen = overflowOpen === side ? false : side;
-  }
-
-  function activateHidden(ref: { key: string; slot: string }) {
-    const entry = entryForSlot(get(stackStore), ref.slot);
-    if (!entry) return;
-    stackStore.update(s => activateCardFn(s, entry.slot));
-    markReadIfKnown(entry.uid, entry.slot);
-    overflowOpen = false;
-    updateUrl();
   }
 
   function updateUrl(method: 'push' | 'replace' = 'push') {
@@ -768,65 +803,21 @@
 </script>
 
 <div id="card-stack" hidden={!hasCards} style={initialWidth ? `--max-width: ${initialWidth};` : undefined}>
-  <div class="card-stack-inner">
-  <!-- Keyed by SLOT, not by identity key: a lens re-keys when its filters are
+  <!-- ONE node per entry, in entries order, and every one of them a
+       `.stack-card` — there is no second kind of thing in the stack any more.
+       The active card is the only in-flow node (it gives the container its
+       height); the rest are absolutely positioned siblings placed by
+       `computeGeometry`, and painting order does the occlusion.
+
+       Keyed by SLOT, not by identity key: a lens re-keys when its filters are
        edited, and keying the block on identity would destroy and re-create the
        fragment from its server markup on every toggle, resetting the filter
-       panel's own open/drill state (issue #100). -->
-  {#each layout.renderItems as item (item.kind === 'card' ? 'card-' + item.slot : item.kind === 'fan-corner' ? 'fc-' + item.forKey : 'overflow-' + item.side)}
-    {#if item.kind === 'card' && item.side === 'active'}
-      <div class="active-card-col">
-        {@html fragments.get(item.slot) ?? ''}
-      </div>
-    {:else if item.kind === 'card'}
-      {@html fragments.get(item.slot) ?? ''}
-    {:else if item.kind === 'fan-corner'}
-      <div class="fan-corner" style="--i:{item.i}; --n:{item.n}"></div>
-    {:else if item.kind === 'overflow' && item.side === 'left'}
-      <div
-        class="stack-overflow stack-overflow--left"
-        class:stack-overflow--expanded={overflowOpen === 'left'}
-        style="--stack-index:{item.stackIndex}; --i:{item.stackIndex}; --n:{layout.numLeftCollapsed}"
-        bind:this={overflowElLeft}
-        role="button"
-        tabindex="0"
-        onclick={() => toggleOverflow('left')}
-        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOverflow('left'); } }}
-      >
-        <span class="stack-overflow-label">⋯</span>
-        {#if overflowOpen === 'left'}
-          <div class="stack-overflow-panel">
-            {#each item.hidden as ref (ref.slot)}
-              <button class="stack-overflow-item" onclick={(e) => { e.stopPropagation(); activateHidden(ref); }}>
-                {getCardTitle(ref.slot)}
-              </button>
-            {/each}
-          </div>
-        {/if}
-      </div>
-    {:else if item.kind === 'overflow' && item.side === 'right'}
-      <div
-        class="stack-overflow stack-overflow--right"
-        class:stack-overflow--expanded={overflowOpen === 'right'}
-        style="--stack-index:{item.stackIndex}"
-        bind:this={overflowElRight}
-        role="button"
-        tabindex="0"
-        onclick={() => toggleOverflow('right')}
-        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOverflow('right'); } }}
-      >
-        <span class="stack-overflow-label">⋯</span>
-        {#if overflowOpen === 'right'}
-          <div class="stack-overflow-panel">
-            {#each item.hidden as ref (ref.slot)}
-              <button class="stack-overflow-item" onclick={(e) => { e.stopPropagation(); activateHidden(ref); }}>
-                {getCardTitle(ref.slot)}
-              </button>
-            {/each}
-          </div>
-        {/if}
-      </div>
-    {/if}
-  {/each}
+       panel's own open/drill state (issue #100). It would also break the whole
+       premise of the geometry — a destroyed node mounts at its destination
+       instead of travelling there, so nothing animates (issue #99). -->
+  <div class="card-stack-inner" bind:this={innerEl}>
+    {#each $stackStore.entries as entry (entry.slot)}
+      <StackFragment html={fragments.get(entry.slot) ?? ''} />
+    {/each}
   </div>
 </div>

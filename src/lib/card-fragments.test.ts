@@ -96,6 +96,11 @@ describe('the placeholder fragment', () => {
     // expand/collapse CSS both depend on.
     expect(card.querySelector('.body-wrapper .stack-card-body .stack-card-body-inner')).not.toBeNull();
     expect(extractBodyInner(html)).toBe('');
+    // The spine too: `replaceBody` swaps only the body, so whatever shell a
+    // placeholder mounts with is the shell that location keeps — and without a
+    // spine a collapsed card occludes nothing (issue #109).
+    expect(card.querySelector('.stack-card-spine .stack-card-spine-inner .stack-card-spine-title')?.textContent)
+      .toBe('A Title');
   });
 
   it('escapes a title so a quote or bracket cannot break out of the markup', () => {

@@ -228,7 +228,8 @@ describe('close', () => {
 });
 
 describe('the layout effect applies the store to the DOM', () => {
-  it('marks exactly one card active and the rest collapsed', async () => {
+  /** Push CARD_B on top of CARD_A and return both nodes. */
+  async function pushSecondCard() {
     mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
     await settle();
     const link = document.createElement('a');
@@ -236,14 +237,76 @@ describe('the layout effect applies the store to the DOM', () => {
     document.querySelector('.stack-card-body-inner')!.appendChild(link);
     link.click();
     await settle();
+  }
+
+  const el = (uid: string) => document.querySelector<HTMLElement>(`[data-uid="${uid}"]`)!;
+
+  it('marks exactly one card active and the rest collapsed', async () => {
+    await pushSecondCard();
 
     const active = document.querySelectorAll('.stack-card--active');
     expect(active).toHaveLength(1);
     expect((active[0] as HTMLElement).dataset.uid).toBe(CARD_B);
-    expect(document.querySelector(`[data-uid="${CARD_A}"]`)!.classList.contains('stack-card--collapsed')).toBe(true);
-    // The body-wrapper `open` class is effect-owned, not markup-owned.
-    expect(document.querySelector(`[data-uid="${CARD_B}"] .body-wrapper`)!.classList.contains('open')).toBe(true);
-    expect(document.querySelector(`[data-uid="${CARD_A}"] .body-wrapper`)!.classList.contains('open')).toBe(false);
+    expect(el(CARD_A).classList.contains('stack-card--collapsed')).toBe(true);
+  });
+
+  it('opens the body of EVERY card, not just the active one', async () => {
+    // Trap 1 of #109, and the inversion it forced. Desktop collapse is a crop —
+    // a covered card's body stays open and is occluded by the spine in front of
+    // it — while mobile collapses by reflow. The island cannot tell those apart
+    // without the banned breakpoint detection, so it opens unconditionally and
+    // the MOBILE media block takes it back.
+    await pushSecondCard();
+
+    for (const uid of [CARD_A, CARD_B]) {
+      expect(el(uid).querySelector('.body-wrapper')!.classList.contains('open')).toBe(true);
+    }
+  });
+
+  it('writes the geometry onto each card as custom properties', async () => {
+    await pushSecondCard();
+
+    const behind = el(CARD_A);
+    const active = el(CARD_B);
+    expect(active.dataset.role).toBe('active');
+    expect(behind.dataset.role).toBe('behind');
+    // One step behind, at the settled collapsedWidth 40 / stagger 8.
+    expect(behind.style.getPropertyValue('--geo-left')).toBe('-40px');
+    expect(behind.style.getPropertyValue('--geo-top')).toBe('-8px');
+    expect(active.style.getPropertyValue('--geo-left')).toBe('0px');
+    // Painting order is the occlusion, so z follows stack order.
+    expect(Number(active.style.getPropertyValue('--geo-z')))
+      .toBeGreaterThan(Number(behind.style.getPropertyValue('--geo-z')));
+    // The ramp, resolved to a token reference because CSS cannot index by
+    // number: the active card is the anchor (ditherMid 5), behind steps -2.
+    expect(active.style.getPropertyValue('--card-surface')).toBe('var(--dither-5)');
+    expect(behind.style.getPropertyValue('--card-surface')).toBe('var(--dither-3)');
+    // The fans' widths, so CSS can subtract them from the viewport.
+    const stack = document.getElementById('card-stack')!;
+    expect(stack.style.getPropertyValue('--behind-slots')).toBe('1');
+    expect(stack.style.getPropertyValue('--ahead-slots')).toBe('0');
+  });
+
+  it('keeps the same DOM nodes when the active card changes', async () => {
+    // The one automated guard against trap 4 of #109. A card left out of the
+    // geometry — or an `{#each}` re-keyed on identity — is a DOM node that gets
+    // destroyed and rebuilt, so it MOUNTS at its destination instead of
+    // travelling there and nothing animates. That failure is invisible at rest
+    // and invisible to getBoundingClientRect, which is exactly how it survived
+    // four rounds of screenshot verification in #98.
+    await pushSecondCard();
+    const before = [el(CARD_A), el(CARD_B)];
+
+    // Re-activate the card underneath: the active index moves, both cards stay.
+    before[0].querySelector<HTMLElement>('.card-header')!.click();
+    await settle();
+
+    expect(get(stackStore).activeSlot).toBe(CARD_A);
+    expect(el(CARD_A)).toBe(before[0]);
+    expect(el(CARD_B)).toBe(before[1]);
+    // ...and the roles swapped on those same nodes.
+    expect(before[0].dataset.role).toBe('active');
+    expect(before[1].dataset.role).toBe('ahead');
   });
 });
 
