@@ -142,6 +142,65 @@ describe("CardStackCard", () => {
         );
     });
 
+    // ── Spine + sentinel (issue #108) ──────────────────────────────────────
+    //
+    // The spine is server-rendered markup, not something the island creates:
+    // "Fragments are HTML; the stack is state" (CLAUDE.md), and
+    // CardStack.fragments.test.ts guards CardStack.svelte against building
+    // nodes. Both branches of this shell must carry it — the nav-renderer one
+    // owns only the header/body pair, so the spine lives outside the branch
+    // while the sentinel is rendered by whoever renders the header.
+
+    it("renders the spine as the first child of the plain card shell", async () => {
+        const container = await makeContainer();
+        const html = await container.renderToString(CardStackCard, {
+            props: { card: card({ title: "Sentinel Title", navRenderer: undefined }) },
+        });
+        const stack = dom(html).querySelector(".stack-card")!;
+
+        expect(stack.firstElementChild?.classList.contains("stack-card-spine")).toBe(true);
+        expect(stack.querySelector(".stack-card-spine > .stack-card-spine-inner")).not.toBeNull();
+        expect(
+            stack.querySelector(".stack-card-spine-inner > .stack-card-spine-title")?.textContent,
+        ).toBe("Sentinel Title");
+    });
+
+    it("renders the header sentinel immediately before the card header", async () => {
+        const container = await makeContainer();
+        const html = await container.renderToString(CardStackCard, {
+            props: { card: card({ navRenderer: undefined }) },
+        });
+        const stack = dom(html).querySelector(".stack-card")!;
+        const sentinel = stack.querySelector(".card-header-sentinel");
+
+        expect(sentinel).not.toBeNull();
+        expect(sentinel!.nextElementSibling?.classList.contains("card-header")).toBe(true);
+    });
+
+    it("renders the spine and sentinel in the nav-renderer branch too", async () => {
+        const container = await makeContainer();
+        const html = await container.renderToString(CardStackCard, {
+            props: {
+                card: card({
+                    uid: "what/posts/stories/arctic/09-polar-bear-tracks",
+                    title: "Sentinel Title",
+                    navRenderer: "series",
+                }),
+            },
+        });
+        const stack = dom(html).querySelector(".stack-card")!;
+
+        // The nav renderer really did take over the shell.
+        expect(stack.querySelector(".series-position")).not.toBeNull();
+
+        expect(stack.firstElementChild?.classList.contains("stack-card-spine")).toBe(true);
+        expect(stack.querySelector(".stack-card-spine-title")?.textContent).toBe("Sentinel Title");
+
+        const sentinel = stack.querySelector(".card-header-sentinel");
+        expect(sentinel).not.toBeNull();
+        expect(sentinel!.nextElementSibling?.classList.contains("card-header")).toBe(true);
+    });
+
     it("renders no status badge for a published card", async () => {
         const container = await makeContainer();
         const html = await container.renderToString(CardStackCard, {

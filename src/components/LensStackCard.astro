@@ -129,6 +129,15 @@ if (lens) {
     data-uid={uid}
     data-width={lens.width}
   >
+    {/* One spine serves both chrome modes: page and card mode are the same
+        DOM with a class toggled, so the spine (like the borders) belongs to
+        the `.stack-card` element rather than to either header. Its column is
+        0px until slice #109 sets --left-col. */}
+    <div class="stack-card-spine">
+      <div class="stack-card-spine-inner">
+        <span class="stack-card-spine-title">{chrome.cardTitle}</span>
+      </div>
+    </div>
     <header class="page-header">
       <h1 class="page-title"><a href="/" class="page-title-link">{chrome.pageTitle}</a></h1>
       <p class="page-subtitle">
@@ -136,6 +145,8 @@ if (lens) {
         {chrome.note && <small class="lens-note">{chrome.note}</small>}
       </p>
     </header>
+    {/* 1px IntersectionObserver target for the sticky active header (slice #110). */}
+    <div class="card-header-sentinel"></div>
     <div class="card-header">
       {/* The footnote is a SIBLING of .card-header-title, not part of it —
           CardStack reads that element's textContent as the card's name when it

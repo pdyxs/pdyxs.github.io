@@ -36,6 +36,12 @@ const siblings = entry
   : null;
 ---
 
+{/* 1px IntersectionObserver target for the sticky active header (slice #110).
+    A nav renderer owns the card's header, so it owns the sentinel that sits
+    immediately before it. The spine itself is rendered once by CardStackCard,
+    which owns the `.stack-card` element this pair is dropped into. */}
+<div class="card-header-sentinel"></div>
+
 <CardHeader {title} {titleSuffix} {status} {date}>
   {siblings && (
     <span class="series-position">{siblings.current}/{siblings.total}</span>

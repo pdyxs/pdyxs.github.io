@@ -70,6 +70,17 @@ const seriesCards = entry?.data?.series
   data-content-hash={card.contentHash}
   data-width={card.width}
 >
+  {/* The spine sits outside the nav-renderer branch deliberately: a nav
+      renderer owns the *header and body* of the card, not the `.stack-card`
+      element itself (its output is a sibling pair inside this div), so one
+      spine here covers both branches. It is the first child so it precedes
+      everything it will overlay once slice #109 gives its column a width;
+      until then `--left-col` is unset and the column is 0px. */}
+  <div class="stack-card-spine">
+    <div class="stack-card-spine-inner">
+      <span class="stack-card-spine-title">{card.title}</span>
+    </div>
+  </div>
   {NavComponent ? (
     <NavComponent
       title={card.title}
@@ -84,6 +95,10 @@ const seriesCards = entry?.data?.series
     </NavComponent>
   ) : (
     <>
+      {/* 1px IntersectionObserver target for the sticky active header (slice
+          #110). The nav-renderer branch has its own, in SeriesNavRenderer —
+          a nav renderer renders the header, so it renders the sentinel. */}
+      <div class="card-header-sentinel"></div>
       <CardHeader
         title={card.title}
         titleSuffix={card.titleSuffix}

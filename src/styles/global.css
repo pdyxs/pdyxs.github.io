@@ -449,6 +449,9 @@ pre > code:not([class]) {
    including a JS string in CardStack.svelte), so it can't rely on a class. */
 .dither-text,
 .card-header-title,
+/* The spine title reads over whatever --card-surface dither the card behind it
+   was given, and over the card content it overlays. */
+.stack-card-spine-title,
 /* The lens footnote shares the header's dithered surface (see .lens-note). */
 .lens-note,
 /* Surfaces whose background becomes a dither on hover (--color-bg-hover).
@@ -475,6 +478,7 @@ pre,
 }
 
 /* Smaller UI text needs a lighter stroke than the 1.1rem header titles. */
+.stack-card-spine-title,
 .card-listing-item,
 .browse-card-item,
 .browse-stack-entry,
@@ -673,8 +677,119 @@ pre,
   gap: 0;
 }
 
+/* Every card is a two-column grid: a left SPINE column and the card's own
+   content. The spine is the sliver of an occluded card that stays on screen
+   (issue #99) — the vertical title rail an overlapped card is reduced to.
+   `--left-col` is written per card by the geometry applier (slice #109); until
+   then it is unset, the column falls back to 0px, and the spine is a
+   zero-width, fully clipped no-op.
+
+   `overflow: clip`, never `hidden`: `hidden` makes the card a scroll
+   container, which silently re-parents every `position: sticky` descendant to
+   a box that never scrolls — including the spine's own sticky inner and the
+   lens filter bar. No error, no visible cause; it just stops sticking. */
 .stack-card {
   border: var(--border-width) solid var(--color-border);
+  display: grid;
+  grid-template-columns: var(--left-col, 0px) 1fr;
+  grid-template-rows: auto 1fr;
+  overflow: clip;
+}
+
+/* Everything a card renders is content, and content lives in column 2. Stated
+   as a catch-all so a child nobody placed explicitly (a nav renderer's extra
+   element, the not-found paragraph) can never auto-place itself into the
+   spine's column and vanish at 0px. The spine's own rule below outranks it. */
+.stack-card > * {
+  grid-column: 2;
+}
+
+/* The two headers share row 1 because they are two renderings of the same
+   thing — page-mode chrome and card-mode chrome — and exactly one is
+   displayed at a time (see .page-header / .stack-card--page above). */
+.stack-card > .page-header,
+.stack-card > .card-header,
+.stack-card > .card-header-sentinel {
+  grid-row: 1;
+}
+
+.stack-card > .body-wrapper {
+  grid-row: 2;
+}
+
+/* The 1px IntersectionObserver target that tells slice #110 when the active
+   header has stopped sitting on its card and started carrying the page. It
+   shares the header's grid cell rather than claiming a row of its own, and
+   `align-self: start` pins it to the top of that cell — so it disturbs no
+   layout in the grid. The negative margin is for the two places a card is a
+   FLEX column instead (a desktop collapsed card, see [data-side] below),
+   where it would otherwise steal a pixel from the header's `flex: 1`. */
+.card-header-sentinel {
+  align-self: start;
+  width: 100%;
+  height: 1px;
+  margin-bottom: -1px;
+  pointer-events: none;
+}
+
+/* ── Card spine ─────────────────────────────────────────────────
+   Column 1, spanning both rows, painted OVER the content it overlays — the
+   spine is what occludes the card behind it, so its background must be
+   opaque. `--card-surface` is written per card by the geometry applier
+   (slice #109); the transparent fallback is what keeps this slice inert.
+
+   `contain: size` is load-bearing, not an optimisation: the spine's title is
+   a vertical run of text, and without it that run's length would feed the
+   `1fr` row's flex sizing and set a FLOOR under the card — a collapsed card
+   with a long title would render as tall as its own title. Sized purely by
+   its grid area, the spine can never make a card taller than its content.
+   (`size` alone: `layout`/`paint` containment would create a containing block
+   for `background-attachment: fixed` and re-anchor every dither inside the
+   card — see CLAUDE.md § dither.) */
+.stack-card > .stack-card-spine {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  z-index: 2;
+  min-width: 0;
+  overflow: clip;
+  contain: size;
+  background: var(--card-surface, transparent);
+}
+
+/* No height: a height here is a floor under every card in the stack, and a
+   short card rendered as tall as the viewport looks deliberate rather than
+   broken. The top border rides on a negative margin so that at rest it sits
+   exactly under the card's own border (clipped away, no double weight) and
+   only appears once the sticky inner has travelled down off it. */
+.stack-card-spine-inner {
+  position: sticky;
+  top: 0;
+  max-height: min(100vh, var(--stack-height, 100vh));
+  margin-top: calc(var(--border-width) * -1);
+  border-top: var(--border-width) solid var(--color-border);
+  overflow: clip;
+}
+
+/* THE ROTATED AXIS. In `vertical-rl` the INLINE axis runs down the page and
+   the BLOCK axis runs across it, so:
+     padding-inline → the gap above the title, off the header divider
+     padding-block  → the gap either side of it, off the spine's edges
+   Written the other way round nothing errors; it just looks wrong. Same trap
+   for the ellipsis: it is `max-height` — the inline size in this writing mode
+   — that makes `text-overflow` fire, not `max-width`. */
+.stack-card-spine-title {
+  writing-mode: vertical-rl;
+  display: block;
+  max-height: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-inline: var(--space-md) 0;
+  padding-block: var(--space-xs);
+  font-family: var(--font-heading);
+  font-size: 0.75em;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
 }
 
 .stack-card ~ .stack-card,

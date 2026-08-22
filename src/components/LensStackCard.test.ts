@@ -145,6 +145,43 @@ describe('LensStackCard', () => {
     expect(div.querySelector('.front-page-slots')).not.toBeNull();
   });
 
+  // ── Spine + sentinel (issue #108) ────────────────────────────────────────
+  //
+  // Page mode and card mode are one DOM with a class toggled, so one spine
+  // serves both — but each shape is asserted, since the spine is placed before
+  // the page header and the sentinel before the card header.
+
+  for (const presentation of ['page', 'card'] as const) {
+    it(`renders the spine as the first child in ${presentation} mode`, async () => {
+      const container = await makeContainer();
+      const html = await container.renderToString(LensStackCard, {
+        props: { name: 'newest', presentation },
+      });
+      const stack = dom(html).querySelector('.stack-card')!;
+
+      expect(stack.firstElementChild?.classList.contains('stack-card-spine')).toBe(true);
+      expect(stack.querySelector('.stack-card-spine > .stack-card-spine-inner')).not.toBeNull();
+
+      const title = stack.querySelector('.stack-card-spine-inner > .stack-card-spine-title');
+      expect(title?.textContent).toBe(
+        stack.querySelector('.card-header-title')?.textContent ?? '',
+      );
+      expect(title?.textContent).toContain('Newest');
+    });
+
+    it(`renders the header sentinel immediately before the card header in ${presentation} mode`, async () => {
+      const container = await makeContainer();
+      const html = await container.renderToString(LensStackCard, {
+        props: { name: 'newest', presentation },
+      });
+      const stack = dom(html).querySelector('.stack-card')!;
+      const sentinel = stack.querySelector('.card-header-sentinel');
+
+      expect(sentinel).not.toBeNull();
+      expect(sentinel!.nextElementSibling?.classList.contains('card-header')).toBe(true);
+    });
+  }
+
   it("home's filter-toggle fallthrough trigger targets the default browse lens", async () => {
     const container = await makeContainer();
     const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });
