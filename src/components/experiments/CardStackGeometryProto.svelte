@@ -150,6 +150,88 @@
     return () => io.disconnect();
   });
 
+  // ── settings round-trip ─────────────────────────────────────────────
+  // So a chosen configuration can be handed over as one string instead of
+  // read off nineteen sliders. The URL carries it too, which means a pasted
+  // link reopens the exact thing that was being looked at.
+  const SETTINGS = {
+    get: () => ({
+      collapsedWidth, stagger, forwardOverlap, backwardStrip, forwardFan,
+      ditherMid, ditherStepBack, ditherStepAhead, activeWidth,
+      bottomEdge, headerMode, spineBacking, depth1Page,
+      revealMode, dissolveSteps, markerMaxBands,
+      motionMode, motionMs, stickyHeader,
+      // scenario, not settings — recorded so the view can be reproduced
+      depth, activeIndex, lengths, loadState,
+    }),
+    set: (v: Record<string, string>) => {
+      const num = (k: string, d: number) => (v[k] !== undefined && v[k] !== '' && !Number.isNaN(+v[k]) ? +v[k] : d);
+      const bool = (k: string, d: boolean) => (v[k] === undefined ? d : v[k] === 'true');
+      collapsedWidth = num('collapsedWidth', collapsedWidth);
+      stagger = num('stagger', stagger);
+      forwardOverlap = num('forwardOverlap', forwardOverlap);
+      backwardStrip = num('backwardStrip', backwardStrip);
+      forwardFan = num('forwardFan', forwardFan);
+      ditherMid = num('ditherMid', ditherMid);
+      ditherStepBack = num('ditherStepBack', ditherStepBack);
+      ditherStepAhead = num('ditherStepAhead', ditherStepAhead);
+      activeWidth = num('activeWidth', activeWidth);
+      dissolveSteps = num('dissolveSteps', dissolveSteps);
+      markerMaxBands = num('markerMaxBands', markerMaxBands);
+      motionMs = num('motionMs', motionMs);
+      depth = num('depth', depth);
+      activeIndex = num('activeIndex', activeIndex);
+      depth1Page = bool('depth1Page', depth1Page);
+      stickyHeader = bool('stickyHeader', stickyHeader);
+      if (v.bottomEdge) bottomEdge = v.bottomEdge as typeof bottomEdge;
+      if (v.headerMode) headerMode = v.headerMode as typeof headerMode;
+      if (v.spineBacking) spineBacking = v.spineBacking as typeof spineBacking;
+      if (v.revealMode) revealMode = v.revealMode as typeof revealMode;
+      if (v.motionMode) motionMode = v.motionMode as typeof motionMode;
+      if (v.lengths) lengths = v.lengths as typeof lengths;
+      if (v.loadState) loadState = v.loadState as typeof loadState;
+    },
+  };
+
+  const settingsQuery = $derived(
+    new URLSearchParams(
+      Object.entries(SETTINGS.get()).map(([k, v]) => [k, String(v)]),
+    ).toString(),
+  );
+  const settingsText = $derived(
+    Object.entries(SETTINGS.get())
+      .map(([k, v]) => `${k}: ${v}`)
+      .join('\n'),
+  );
+
+  let restored = false;
+  $effect(() => {
+    // Read the query FIRST, unconditionally. Reading it only on the later
+    // branch means the first run registers no reactive dependency (the early
+    // return happens before the read), so the effect never runs again and the
+    // URL silently stops tracking the knobs.
+    const q = settingsQuery;
+    if (!restored) {
+      restored = true;
+      const h = location.hash.slice(1);
+      if (h) SETTINGS.set(Object.fromEntries(new URLSearchParams(h)));
+      return;
+    }
+    // replaceState, not a hash assignment: a knob nudge must not fill history
+    history.replaceState(null, '', `#${q}`);
+  });
+
+  let copied = $state(false);
+  async function copySettings() {
+    try {
+      await navigator.clipboard.writeText(`${settingsText}\n\nurl: ${location.href}`);
+      copied = true;
+      setTimeout(() => (copied = false), 1500);
+    } catch {
+      copied = false;
+    }
+  }
+
   // ── shimmer test ────────────────────────────────────────────────────
   let shimmerOn = $state(false);
   let shimmerMove = $state(false);
@@ -330,6 +412,11 @@
         </select>
       </label>
       <label><input type="checkbox" bind:checked={depth1Page} /> depth-1 is page-like</label>
+
+      <h3>settings</h3>
+      <button onclick={copySettings}>{copied ? 'copied ✓' : 'copy settings'}</button>
+      <textarea class="settings-out" readonly rows="6">{settingsText}</textarea>
+      <p class="hint">The URL carries these too — paste it to reopen this exact view.</p>
 
       <h3>state</h3>
       <pre>{JSON.stringify({ depth, activeIndex, cards: geo.cards.map(c => [c.index, c.role, c.left, c.top, `L${c.dither}`, c.piled ? 'piled' : '']), piles: geo.piles }, null, 1)}</pre>
@@ -633,4 +720,11 @@
   .ctl-body input[type=range] { width: 100%; }
   .ctl-body b { float: right; font-weight: 600; }
   .ctl-body pre { font-size: 0.65rem; white-space: pre-wrap; background: var(--dither-2); padding: 6px; }
+  .settings-out {
+    width: 100%; margin-top: 6px; font-family: var(--font-ui);
+    font-size: 0.65rem; padding: 6px; resize: vertical;
+    border: 1px solid var(--color-border); background: var(--color-bg);
+    color: var(--color-text);
+  }
+  .hint { font-size: 0.65rem; margin: 4px 0 0; }
 </style>
