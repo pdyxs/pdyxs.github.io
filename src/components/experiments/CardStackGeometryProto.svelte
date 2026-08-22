@@ -2,7 +2,7 @@
      D1 occlusion geometry at once. Not production code: no tests, no a11y pass,
      no store. Geometry lives in ./proto-geometry.ts so #99 can lift it. -->
 <script lang="ts">
-  import { computeGeometry, markerSections, type GeoParams, type BottomEdge, type Marker } from './proto-geometry';
+  import { computeGeometry, pileSections, type GeoParams, type BottomEdge, type Pile } from './proto-geometry';
 
   type Kind = 'lens' | 'short' | 'long' | 'puzzle';
 
@@ -49,10 +49,11 @@
   // dots. Both halves flip together (CLAUDE.md, --color-selected-* section).
   const onInk = (level: number) => level >= 9;
 
-  const bandsFor = (m: Marker) => {
-    const secs = markerSections(m.indices, markerMaxBands);
-    return m.side === 'behind' ? secs.slice().reverse() : secs;
+  const bandsFor = (pile: Pile) => {
+    const secs = pileSections(pile.indices, markerMaxBands);
+    return pile.side === 'behind' ? secs.slice().reverse() : secs;
   };
+  const pileFor = (index: number) => geo.piles.find(pl => pl.labelIndex === index);
   // THE TENSION, made scrubable. Every card carries a --dither-N: a stack of
   // ~7 viewport-anchored `fixed` gradient layers. A fixed background cannot be
   // translated by the compositor, so moving the element REPAINTS all of them —
@@ -145,9 +146,17 @@
       {#each geo.cards as c (c.index)}
         {@const kind = kindFor(c.index)}
         {@const active = c.role === 'active'}
+        {@const pile = c.pileLabel ? pileFor(c.index) : undefined}
+        {@const splitOpen = !!pile && hoveredMarker === pile.side}
         <article
           class="pc"
+          class:pc--piled={c.piled}
           onclick={() => { if (!active) activeIndex = c.index; }}
+          onmouseenter={() => { if (c.piled) hoveredMarker = c.role === 'behind' ? 'behind' : 'ahead'; }}
+          onmouseleave={(e) => {
+            const to = e.relatedTarget as HTMLElement | null;
+            if (!to?.closest?.('.pc--piled')) hoveredMarker = null;
+          }}
           class:pc--ahead={c.role === 'ahead'}
           class:pc--active={active}
           class:pc--page={active && pageMode}
@@ -165,13 +174,32 @@
         >
           <!-- left spine header: shown for every non-active card, both sides -->
           <div class="spine" class:bare={spineBacking === 'content'} class:ink={!active && onInk(c.dither)} aria-hidden={active}>
-            <div class="spine-inner spine--{headerMode}">
-              {#if headerMode === 'icon'}
-                <span class="spine-glyph">{TITLES[c.index % TITLES.length][0]}</span>
-              {:else}
-                <span class="spine-text">{TITLES[c.index % TITLES.length]}</span>
-              {/if}
-            </div>
+            {#if splitOpen && pile}
+              <div class="marker-split">
+                {#each bandsFor(pile) as sec (sec.index)}
+                  <button
+                    class="marker-band"
+                    onclick={(e) => { e.stopPropagation(); activeIndex = sec.index; }}
+                  >
+                    <span class="band-text">
+                      {sec.count > 1 ? `${sec.count} more` : TITLES[sec.index % TITLES.length]}
+                    </span>
+                  </button>
+                {/each}
+              </div>
+            {:else}
+              <div class="spine-inner spine--{headerMode}">
+                {#if pile}
+                  <span class="spine-text marker-label">{pile.count} more</span>
+                {:else if c.piled}
+                  <!-- buried in the pile: its edge is the only part that shows -->
+                {:else if headerMode === 'icon'}
+                  <span class="spine-glyph">{TITLES[c.index % TITLES.length][0]}</span>
+                {:else}
+                  <span class="spine-text">{TITLES[c.index % TITLES.length]}</span>
+                {/if}
+              </div>
+            {/if}
           </div>
 
           {#if active}<div class="header-sentinel" bind:this={sentinel}></div>{/if}
@@ -206,58 +234,6 @@
         </article>
       {/each}
 
-      <!-- A marker is not a strip: it is the cards themselves, lying in one
-           slot. Same node, same size, same ramp, same clip — only the stagger
-           separates them, since sharing a slot means sharing an x. -->
-      {#each geo.markers as m (m.side)}
-        {#each m.layers as L, k (k)}
-          <article
-            class="pc pc--marker"
-            class:pc--ahead={m.side === 'ahead'}
-            onmouseenter={() => (hoveredMarker = m.side)}
-            onmouseleave={(e) => {
-              const to = e.relatedTarget as HTMLElement | null;
-              if (!to?.closest?.('.pc--marker')) hoveredMarker = null;
-            }}
-            onclick={() => (activeIndex = m.nearestIndex)}
-            style={`
-              ${motionMode === 'transform'
-                ? `left:0; top:0; transform:translate(${L.left}px, ${L.top}px);`
-                : `left:${L.left}px; top:${L.top}px;`}
-              z-index:${L.z};
-              --left-col:${collapsedWidth}px;
-              --spine-bg:var(--dither-${L.dither});
-              --header-bg:var(--dither-${L.dither});
-              background:var(--color-bg);
-            `}
-          >
-            <div class="spine" class:ink={onInk(L.dither)}>
-              {#if L.label && hoveredMarker === m.side}
-                <div class="marker-split">
-                  {#each bandsFor(m) as sec (sec.index)}
-                    <button
-                      class="marker-band"
-                      onclick={(e) => { e.stopPropagation(); activeIndex = sec.index; }}
-                    >
-                      <span class="band-text">
-                        {sec.count > 1 ? `${sec.count} more` : TITLES[sec.index % TITLES.length]}
-                      </span>
-                    </button>
-                  {/each}
-                </div>
-              {:else}
-                <div class="spine-inner spine--{headerMode}">
-                  {#if L.label}
-                    <span class="spine-text marker-label">{m.count} more</span>
-                  {/if}
-                </div>
-              {/if}
-            </div>
-            <header class="pc-header"></header>
-            <div class="pc-body"></div>
-          </article>
-        {/each}
-      {/each}
     </div>
   </div>
 </div>
@@ -339,7 +315,7 @@
       <label><input type="checkbox" bind:checked={depth1Page} /> depth-1 is page-like</label>
 
       <h3>state</h3>
-      <pre>{JSON.stringify({ depth, activeIndex, cards: geo.cards.map(c => [c.index, c.role, c.left, c.top, `L${c.dither}`]), markers: geo.markers }, null, 1)}</pre>
+      <pre>{JSON.stringify({ depth, activeIndex, cards: geo.cards.map(c => [c.index, c.role, c.left, c.top, `L${c.dither}`, c.piled ? 'piled' : '']), piles: geo.piles }, null, 1)}</pre>
     </div>
   {/if}
 </aside>
