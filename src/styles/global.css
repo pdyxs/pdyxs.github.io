@@ -677,6 +677,33 @@ pre,
   gap: 0;
 }
 
+/* `--left-col` is REGISTERED, and not for the reason it looks like.
+   Measured in Chrome 152 (2026-08-22): a `var()` inside
+   `grid-template-columns` interpolates identically whether or not the
+   property is registered — both animate 0 -> 40px over 320ms through the same
+   intermediate track sizes — because the substitution happens at
+   computed-value time and it is `grid-template-columns` itself that
+   transitions. Registration buys nothing for the animation.
+
+   What it buys is FAILURE CONTAINMENT. Set an *unregistered* `--left-col` to
+   a unitless `40` — the mistake an applier makes as
+   `setProperty('--left-col', geo.left)` instead of `${geo.left}px` — and the
+   whole declaration is invalid at computed-value time, so
+   `grid-template-columns` falls back to `none`. The spine column does not
+   merely mis-size: BOTH children auto-place into one implicit full-width
+   column and the card's grid disintegrates, silently, on every card at once.
+   Typed here, a bad value is ignored and `initial-value` is used instead.
+
+   The `var(--left-col, 0px)` fallback below does NOT cover that case — a
+   fallback answers "unset", not "set to nonsense". It stays anyway, because
+   in a browser with no `@property` support an unset unregistered property
+   with no fallback is the same invalid-at-computed-value-time collapse. */
+@property --left-col {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
 /* Every card is a two-column grid: a left SPINE column and the card's own
    content. The spine is the sliver of an occluded card that stays on screen
    (issue #99) — the vertical title rail an overlapped card is reduced to.
@@ -713,7 +740,15 @@ pre,
   grid-row: 1;
 }
 
+/* The body spans BOTH columns and the spine is painted over it (z-index 2) —
+   it does NOT sit beside the spine in column 2. That is what "printing never
+   moves" means: opening the spine CROPS the body's first `--left-col` pixels
+   instead of narrowing the text and reflowing it. Placed in column 2 (which
+   the catch-all above would otherwise do) a lens card measured 4137px tall
+   with the spine shut and 6029px with it open — the whole body relaid out,
+   which is the reflow the occlusion model exists to avoid. */
 .stack-card > .body-wrapper {
+  grid-column: 1 / -1;
   grid-row: 2;
 }
 
