@@ -6,6 +6,10 @@
 
   type Kind = 'lens' | 'short' | 'long' | 'puzzle';
 
+  // Defaults are the SETTLED values (#98 resolution, 2026-08-22), so the
+  // branch opens in the chosen configuration rather than in whatever the
+  // scrubbing started from. The knobs remain because the record of what was
+  // rejected is half of what this prototype is for.
   // ── scrubable inputs ────────────────────────────────────────────────
   let depth = $state(6);
   let activeIndex = $state(3);
@@ -13,14 +17,14 @@
   let loadState = $state<'ready' | 'placeholder'>('ready');
 
   // ── parameter knobs, one per open question ──────────────────────────
-  let collapsedWidth = $state(48);
+  let collapsedWidth = $state(40);
   let stagger = $state(8);
-  let forwardOverlap = $state(16);
+  let forwardOverlap = $state(4);
   let backwardStrip = $state(3);
-  let forwardFan = $state(2);
-  let ditherMid = $state(2);
-  let ditherStepBack = $state(2);
-  let ditherStepAhead = $state(-1);
+  let forwardFan = $state(3);
+  let ditherMid = $state(5);
+  let ditherStepBack = $state(-2);
+  let ditherStepAhead = $state(-2);
   let bottomEdge = $state<BottomEdge>('staircase');
   let headerMode = $state<'rotated' | 'horizontal' | 'icon'>('rotated');
   let depth1Page = $state(true);
