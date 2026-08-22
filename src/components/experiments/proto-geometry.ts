@@ -45,10 +45,18 @@ export interface GeoParams {
   backwardStrip: number;
   /** TOTAL slots in the ahead fan, pile included. */
   forwardFan: number;
-  /** Dither level of the card one step behind (0 = paper, 16 = ink). */
+  /** Level of the ACTIVE card's own header (0 = paper, 16 = ink). Both ramps
+   *  start one step off it, so this is the anchor rather than a member of
+   *  either ramp. */
   ditherMid: number;
-  /** Signed ramp per depth: behind ramps toward ink, ahead toward paper. */
-  ditherStep: number;
+  /** Signed step per depth going back. Positive ramps toward ink, negative
+   *  toward paper — the sign is the direction, so each side can be aimed
+   *  independently. Levels clamp to 0..16. */
+  ditherStepBack: number;
+  /** Signed step per depth going forward. Independent of the back step: the
+   *  two sides are different claims (what you came from vs what you closed)
+   *  and need not agree on which way is deeper. */
+  ditherStepAhead: number;
   bottomEdge: BottomEdge;
   /** The active card's width, px — the ahead side is measured off it. */
   activeWidth: number;
@@ -156,7 +164,11 @@ export function computeGeometry(
 
   cards.push({
     index: a, role: 'active', depth: 0,
-    left: 0, top: 0, z: a, dither: 0, extraHeight: 0,
+    left: 0, top: 0, z: a,
+    // The anchor of both ramps, so every card — active included — carries its
+    // level in one field and callers never special-case the active one.
+    dither: clampDither(p.ditherMid),
+    extraHeight: 0,
     piled: false, pileLabel: false,
   });
 
@@ -179,7 +191,7 @@ export function computeGeometry(
       left: -slotD * p.collapsedWidth,
       top: -rank * p.stagger,
       z: a - d,
-      dither: clampDither(p.ditherMid + (rank - 1) * p.ditherStep),
+      dither: clampDither(p.ditherMid + rank * p.ditherStepBack),
       extraHeight: p.bottomEdge === 'flush' ? rank * p.stagger : 0,
       piled,
       pileLabel: piled && a - d === behindLabelIndex,
@@ -211,7 +223,7 @@ export function computeGeometry(
       left: aheadLeft(slotD, p),
       top: rank * p.stagger,
       z: a + d,
-      dither: clampDither(p.ditherMid - (rank - 1) * p.ditherStep),
+      dither: clampDither(p.ditherMid + rank * p.ditherStepAhead),
       extraHeight: p.bottomEdge === 'flush' ? -rank * p.stagger : 0,
       piled,
       pileLabel: piled && a + d === aheadLabelIndex,

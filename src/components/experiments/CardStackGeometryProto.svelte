@@ -18,8 +18,9 @@
   let forwardOverlap = $state(16);
   let backwardStrip = $state(3);
   let forwardFan = $state(2);
-  let ditherMid = $state(3);
-  let ditherStep = $state(2);
+  let ditherMid = $state(2);
+  let ditherStepBack = $state(2);
+  let ditherStepAhead = $state(-1);
   let bottomEdge = $state<BottomEdge>('staircase');
   let headerMode = $state<'rotated' | 'horizontal' | 'icon'>('rotated');
   let depth1Page = $state(true);
@@ -97,7 +98,7 @@
 
   const params = $derived<GeoParams>({
     collapsedWidth, stagger, forwardOverlap, backwardStrip, forwardFan,
-    ditherMid, ditherStep, bottomEdge, activeWidth,
+    ditherMid, ditherStepBack, ditherStepAhead, bottomEdge, activeWidth,
   });
   const geo = $derived(computeGeometry(depth, activeIndex, params));
   const pageMode = $derived(depth === 1 && depth1Page);
@@ -181,13 +182,13 @@
             z-index:${c.z};
             --left-col:${active ? 0 : collapsedWidth}px;
             --extra:${c.extraHeight}px;
-            --spine-bg:${`var(--dither-${active ? Math.max(0, Math.min(16, ditherMid)) : c.dither})`};
-            --header-bg:${active ? 'var(--dither-2)' : `var(--dither-${c.dither})`};
+            --spine-bg:var(--dither-${c.dither});
+            --header-bg:var(--dither-${c.dither});
             background:var(--color-bg);
           `}
         >
           <!-- left spine header: shown for every non-active card, both sides -->
-          <div class="spine" class:bare={spineBacking === 'content'} class:ink={!active && onInk(c.dither)} aria-hidden={active}>
+          <div class="spine" class:bare={spineBacking === 'content'} class:ink={onInk(c.dither)} aria-hidden={active}>
             {#if splitOpen && pile}
               <div class="marker-split">
                 {#each bandsFor(pile) as sec (sec.index)}
@@ -219,6 +220,7 @@
           {#if active}<div class="header-sentinel" bind:this={sentinel}></div>{/if}
           <header
             class="pc-header"
+            class:ink={onInk(c.dither)}
             class:sticky={active && stickyHeader}
             class:stuck={active && stickyHeader && headerStuck}
           >
@@ -297,8 +299,9 @@
       <label>forwardOverlap <b>{forwardOverlap}px</b><input type="range" min="0" max="120" bind:value={forwardOverlap} /></label>
       <label>backward strip count <b>{backwardStrip}</b><input type="range" min="0" max="8" bind:value={backwardStrip} /></label>
       <label>forward fan count <b>{forwardFan}</b><input type="range" min="0" max="8" bind:value={forwardFan} /></label>
-      <label>dither mid <b>{ditherMid}</b><input type="range" min="0" max="16" bind:value={ditherMid} /></label>
-      <label>dither step <b>{ditherStep}</b><input type="range" min="0" max="6" bind:value={ditherStep} /></label>
+      <label>dither mid (active header) <b>{ditherMid}</b><input type="range" min="0" max="16" bind:value={ditherMid} /></label>
+      <label>dither step back <b>{ditherStepBack}</b><input type="range" min="-6" max="6" bind:value={ditherStepBack} /></label>
+      <label>dither step ahead <b>{ditherStepAhead}</b><input type="range" min="-6" max="6" bind:value={ditherStepAhead} /></label>
       <label>active width <b>{activeWidth}px</b><input type="range" min="400" max="1100" step="20" bind:value={activeWidth} /></label>
       <label>bottom edge
         <select bind:value={bottomEdge}><option>staircase</option><option>flush</option></select>
@@ -530,6 +533,10 @@
     pointer-events: none;
   }
   .pc-title { -webkit-text-stroke: 3px var(--color-bg); paint-order: stroke fill; }
+  /* `dither mid` is scrubable to ink now, so the active header is an inverted
+     surface at the top of the range and needs the same mirror the spines do. */
+  .pc-header.ink { color: var(--color-bg); }
+  .pc-header.ink .pc-title { -webkit-text-stroke-color: var(--color-text); }
   .pc-close { font-size: 1.5rem; font-weight: 300; }
 
   .pc-body {
