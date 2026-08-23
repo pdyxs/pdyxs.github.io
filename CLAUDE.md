@@ -736,9 +736,9 @@ one section and renders as a flat list, which is every other level on the site.
 
 The applier is `applyMaxWidth` in `CardStack.svelte`, and it writes `--max-width` to **both** `<html>` and `#card-stack`. That is not redundant: the server renders `#card-stack` with the initial location's width inline so the first paint is right before hydration, and an inline style on `#card-stack` beats an inherited value from `<html>` for everything inside it. Writing only to `<html>` left a card pushed on top of a wide lens (browse is 960px) wearing the lens's width forever.
 
-### `priority` is additive — and it is the only cascading key that is
+### `priority` is additive — and it is the only cascading *scalar* that is
 
-Every other cascading key (`renderer`, `navRenderer`, `status`, `width`,
+Every other cascading scalar (`renderer`, `navRenderer`, `status`, `width`,
 `gallery`, `dateLabel`, `sort`) is **nearest-wins**: the deepest declaration
 replaces the ones above it. `priority` is the exception — a card's priority is
 the **SUM** of every declaration that applies to it:
@@ -746,6 +746,11 @@ the **SUM** of every declaration that applies to it:
 - its own frontmatter `priority`
 - **every** ancestor folder's `_config.yaml` `priority` (not just the nearest)
 - the `priority` on every `<value>.tag.yaml` for a tag it carries
+
+(The two list-valued keys, `tags` and `excludeTags`, accumulate down the
+cascade as well — but that is the ordinary behaviour for a list, not an
+exception like this one. A folder's tags apply to its descendants *in addition
+to* their own, and the same reasoning makes an exclusion accumulate.)
 
 Negatives push a card down. Nothing about the word "priority" signals any of
 this, which is why it is stated here, at the top of `src/lib/priority.ts`, and
@@ -1267,11 +1272,22 @@ A string it can't read (`Fiendish`) falls back to its authored text and
 generates no tag: better a card that says what was written than one that
 invents a rating.
 
-The generator is the first to read a *field* rather than a date, which it does
-by declaring `difficulty` as an override key — the existing frontmatter ??
-cascade plumbing then hands it over, and no new channel is needed. Its values
+The generator is the only one that reads a *field* rather than a date, which it
+does by declaring `difficulty` in `frontmatterKeys` — the existing frontmatter
+?? cascade plumbing then hands it over, and no new channel is needed. Its values
 are rooted at `what:puzzles` so they drill in under Puzzles beside the series;
 only puzzles carry a `difficulty:`, which is what keeps that rooting honest.
+
+**`difficulty:` is not an override, and that is why it survived issue #116.**
+`location:` and `era:` were retired there because they existed only to redirect
+a derivation — a job `tags` + `excludeTags` now does. `difficulty:` is authored
+content with four consumers, one of which happens to be a generator; it merely
+*looked* like an override because the generator borrowed that plumbing to read
+it. The two roles are now separate fields on `FilterGenerator` —
+`derivations` (the `generated/*` namespace) and `frontmatterKeys` (fields
+read) — so the coincidence cannot re-form. Suppressing `generated/difficulty`
+drops the **tag** and leaves the stars, the panel label and the folder sort
+alone.
 
 Puzzle listings therefore *don't* repeat the rating in their description —
 `cardDescriptionParts` is `puzzle_type` alone, because the star chip is already
@@ -1391,26 +1407,41 @@ folder that must never hold one.
 Two of its five values are generated (`whyAffordanceGenerator`, decisions in
 `src/lib/why-tags.ts`):
 
-| value | predicate | override |
+| value | predicate | suppress with |
 |---|---|---|
-| `why:playable` | any resolved action with `kind: play` | `playable: always \| never` |
-| `why:buyable` | any resolved action with `kind: buy` | `buyable: always \| never` |
+| `why:playable` | any resolved action with `kind: play` | `excludeTags: [generated/playable]` |
+| `why:buyable` | any resolved action with `kind: buy` | `excludeTags: [generated/buyable]` |
 
-Three override keys exist rather than one `why:`-shaped field: the affordances
-are independent facts and a card is routinely two of them, so a single field
-would have to carry a list through override plumbing that is string-only by
-design. An unrecognised override value falls through to the derivation — a
-typo should leave a card where it was, not silently drop it out of a filter.
+(And `tags: [generated/playable]` takes a folder's suppression back — see the
+`excludeTags` section.)
+
+**There is no "force it on" knob, because authoring the tag *is* one.**
+`whyAffordanceGenerator` dedupes against the tags it is handed, so
+`tags: [why/playable]` reaches the card before any generator runs and the
+derivation simply agrees with it. That is what let issue #116 delete the
+`always`/`never` trio outright.
+
+The generator declares **two** derivation names rather than one `why`-shaped
+one: the affordances are independent facts and a card is routinely playable but
+not buyable, so `generated/playable` must leave `generated/buyable` alone —
+which a generator-keyed `generated/why` could not express. This is exactly why
+`FilterGenerator.derivations` is a list. See the `excludeTags` section below.
 
 **`why:viewable` is not derived at all (issue #96).** It used to be a header
 `image` plus a markdown-stripped body under a length threshold — "does this
 have a picture", which is a different question from "is this worth looking
 at", and the two questions disagreed on most of the Instagram-era archive: the
 mechanical version caught 133 cards, dominated by micro-posts, while missing
-nothing about which ones were actually striking. `viewable: always` is now the
-*only* way a card becomes `why:viewable` — pure curation, the same shape as
-the two `learn/*` topics below. `viewable: never` still parses but is a no-op,
-kept only so the three override keys stay a uniform shape.
+nothing about which ones were actually striking.
+
+It then spent a while as a bespoke `viewable: always` frontmatter key, which
+**issue #116 retired in turn**: an authored assertion that a card belongs in a
+filter value is exactly what a tag is, and the two `learn/*` siblings were
+already written that way. `tags: [why/viewable]` is now the only way in — pure
+curation, uniform with the rest of the dimension. The consequence worth
+knowing: `generated/viewable` is **not** a legal exclusion, and that falls out
+of the key set rather than being special-cased. Nothing generates it, so there
+is nothing to suppress.
 
 The two `why:learn/*` values, `why:learn/game-development` and
 `why:learn/travel`, are **authored** the same way, and `why/learn/_config.yaml`
@@ -1418,6 +1449,116 @@ is load-bearing for exactly the reason the affiliation containers are:
 `filterVisibleNodes` drops an undeclared node *and recurses into its
 children*, so an undeclared container takes both perfectly-declared topics out
 of the panel with no error anywhere.
+
+### `excludeTags` is the one way to say "not this tag"
+
+**Derivation control is expressed entirely through `tags` and `excludeTags`.**
+There are no per-generator knobs left: issue #116 folded five ad-hoc
+suppression sentinels into this one field (`location: none`, `era: none`, and
+`playable`/`viewable`/`buyable: never`), then retired the two *value* overrides
+(`location:`, `era:`) that remained.
+
+One field, two forms (`src/lib/exclude-tags.ts`).
+
+**Retiring `location:`/`era:` came with a semantic shift worth stating.** Those
+keys **replaced** a derivation; an authored tag **adds** to it. So a card that
+belongs somewhere its date does not say now needs both halves:
+
+```yaml
+tags:
+  - where/europe/norway/svalbard
+excludeTags:
+  - generated/location
+```
+
+Saying only the first leaves the card in two places at once — which for a post
+written up a month after the trip is often exactly right, and is why the
+addition is the default and the replacement is the thing you ask for. The two
+story folders (`what/posts/stories/arctic`, `.../galapagos`) are the live
+example, stating both at folder level.
+
+```yaml
+excludeTags:
+  - why/playable          # this value, whoever proposed it
+  - generated/location    # whatever the location derivation proposed
+```
+
+**The generator form is the robust one.** `generated/<derivation>` —
+`location`, `era`, `difficulty`, `playable`, `buyable` — says "no location"
+without needing to know what the travel log *currently* derives, so shifting a
+date range can never silently un-suppress a card. It is keyed on the derivation
+name rather than on the generator because `generated/why` would kill `playable`
+and `buyable` together, and those are exactly the two facts a card is routinely
+one of but not both. `generatorDerivations()` is the legal set, so a mistyped
+entry is a **build error** — a suppression knob that fails open is invisible,
+and the card simply keeps a tag nobody can see it was told to drop.
+
+**The value form is the general one.** Anything else is a tag value,
+prefix-matching on segment boundaries, so `where/europe` drops any European
+derivation. It goes through `normaliseAuthoredTag` like any authored tag (the
+fourth call site on that boundary — see below).
+
+**The same namespace runs the other way in `tags`.** A folder excludes a
+derivation for everything under it; one card takes that back:
+
+```yaml
+tags:
+  - generated/location    # re-enable what the folder excluded
+```
+
+**Re-enable beats exclude, wherever each was declared** — the only rule that
+makes the escape hatch work, since exclusions accumulate down the cascade and a
+nearer-wins rule would leave a card unable to escape an inherited one. It is
+resolved once, in `applyReEnables`, *before* any generator runs, so a re-enabled
+derivation is simply not in `suppressed` and no generator has a second check to
+sequence wrongly. A `generated/*` entry in `tags` is **stripped** once read
+(`partitionGeneratedTags`): it is a directive, not a tag, and left in it would
+reach the filter panel, the short-code manifest and the card's own rendered
+chips as a value with no `.tag.yaml` behind it. `scripts/generate-stack-manifest.mjs`
+reads raw frontmatter and so skips it itself.
+
+Four things that bite:
+
+- **A veto applies to the GENERATED DELTA, never to the tag list itself.**
+  `generateTagsForCard` diffs what the generators added against what it was
+  handed, and only the added tags are vetoable. So an authored tag — or a
+  path-derived or cascade one — is unvetoable **by construction**: you write
+  the tag or you write the veto, and the two can never contradict each other.
+  This is also what preserves the older ruling that suppressing a derived
+  `where:*` leaves an authored `where:work/*` in place; a generator declines
+  its own derivation and never reaches the list it was given.
+- **It ACCUMULATES down the cascade**, like `cascadeTags` and unlike the
+  nearest-wins scalars beside it. That follows the list-valued precedent rather
+  than breaking the nearest-wins rule: an exclusion is a statement about one
+  tag, so a card naming its own has not thereby withdrawn its folder's.
+  `what/puzzles/_config.yaml` excludes `generated/location` for all 20 puzzles,
+  and a single puzzle adding an exclusion must not silently take that back.
+  (`priority` is still the only additive *scalar*.)
+- **There is no "force it on" counterpart, on purpose.** Authoring the tag is
+  that: every generator dedupes against the tags it is handed, so
+  `tags: [why/playable]` reaches the card first and the derivation agrees with
+  it. This is why `viewable: always` became `tags: [why/viewable]` rather than
+  a new positive field.
+- **The value form can go stale silently**, which the generator form cannot —
+  shift a travel-log range and `where/europe/norway` quietly catches nothing.
+  `generateTagsForCard` already knows what was proposed, so an entry that
+  removed nothing surfaces as the **`inert-derivation-control`** audit finding
+  (same shape as `orphaned-old-url`). A re-enable with no exclusion to undo is
+  reported by the same finding, for the same reason. That safety net is what
+  makes the flexible form safe to offer. Note an entry matching only an
+  *authored* tag counts as inert — it is: it removed nothing.
+
+  **Only what a card's OWN frontmatter declares is reported.** A folder-level
+  entry is routinely a no-op for some of its cards while being load-bearing for
+  the rest, and the author cannot fix the one without breaking the other.
+  `what/posts/stories/arctic` is the live case: it excludes `generated/location`
+  and pins Svalbard, and for the 9 posts dated *inside* the Svalbard range the
+  derivation would have produced that very tag — so the exclusion removes
+  nothing there, while being the only thing keeping the 13 posts written up in
+  August out of Quito and Peru. Judged per-card, that folder alone produced 9
+  worklist entries with no available action. Whether a folder's entry is inert
+  for *every* card under it is a different, pool-level question this per-card
+  audit is not shaped to ask.
 
 ### Canonical tag slugs in content; aliases only in tag YAML
 
@@ -1444,12 +1585,19 @@ when the first `/`-segment is a known dimension and something follows it, so
 dimensionless tags (`interactive`, and even the bare tag `why`) pass through
 untouched, and the function is idempotent.
 
-Three call sites, and they are the whole boundary:
+Four call sites, and they are the whole boundary:
 
 - the `tags` field transform in `src/content.config.ts`
 - the `_config.yaml` cascade in `resolveFolderCascade` (`src/lib/folder-config.ts`)
 - `scripts/generate-stack-manifest.mjs`, which reads frontmatter through
   gray-matter and so never sees the schema transform
+- `parseExcludeTags` (`src/lib/exclude-tags.ts`), for the value form of
+  `excludeTags` — and it is the one call site that must **intercept before
+  normalising**. `generated/location` is not a dimensioned tag, so
+  `normaliseAuthoredTag` would pass it straight through as an ordinary
+  dimensionless tag and the entry would silently become a veto of a tag value
+  nothing has. `generated` is therefore a **reserved first segment**; the
+  generator form is split off first, and only what remains is normalised.
 
 **Anything else that reads raw frontmatter tags must normalise them itself** —
 that includes tests that scan markdown directly (see

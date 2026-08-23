@@ -2,10 +2,10 @@
 inspected: false
 title: "Just got this lovely little case and screen for my raspberry pi."
 date: '2020-07-21 03:54:00 +1000'
-tags: []
+tags:
+  - why/viewable
 image: "17849125112200713.jpg"
 source: instagram
-viewable: always
 ---
 
 Just got this lovely little case and screen for my raspberry pi. Next stop is to make it work...

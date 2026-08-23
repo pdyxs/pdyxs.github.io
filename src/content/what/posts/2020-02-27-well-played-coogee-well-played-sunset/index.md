@@ -7,9 +7,9 @@ tags:
   - "cloudsaregreat"
   - "nomad"
   - "sunset"
+  - why/viewable
 image: "17917744393387813.jpg"
 source: instagram
-viewable: always
 ---
 
 Well played, Coogee. Well played.,.

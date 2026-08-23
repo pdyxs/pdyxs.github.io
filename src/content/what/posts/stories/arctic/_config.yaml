@@ -1,7 +1,10 @@
 name: The Arctic Circle
 description: >
   Dispatches from a trip to Svalbard, in the Arctic Circle.
-# These were mostly posted after returning; force the where:* tag to the trip
-# location rather than deriving it from each post's (later) date.
-location: europe/norway/svalbard
+# Mostly posted after returning, so each post's own date would derive
+# wherever I was by then. Pin the trip location and drop the derivation.
+tags:
+  - where/europe/norway/svalbard
+excludeTags:
+  - generated/location
 collapse: true

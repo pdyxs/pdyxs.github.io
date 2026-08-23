@@ -6,9 +6,9 @@ tags:
   - "barcelona"
   - "imightneedaswim"
   - "practicalmonuments"
+  - why/viewable
 image: "17856497314041904.jpg"
 source: instagram
-viewable: always
 ---
 
 They call this a fountain, but it looks more like a super fancy underutilised lap pool to me... with a moat #practicalmonuments #barcelona #imightneedaswim

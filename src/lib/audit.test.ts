@@ -46,6 +46,7 @@ describe('auditCards — shape', () => {
       'unresolved-local-image',
       'legacy-markup',
       'orphaned-old-url',
+      'inert-derivation-control',
       'missing-title',
       'missing-date',
       'no-description',

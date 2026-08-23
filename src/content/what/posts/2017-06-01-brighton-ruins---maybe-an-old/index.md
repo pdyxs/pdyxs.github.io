@@ -2,10 +2,10 @@
 inspected: false
 title: "Brighton ruins - maybe an old pier?"
 date: '2017-06-01 02:42:00 +1000'
-tags: []
+tags:
+  - why/viewable
 image: "17882645434028275.jpg"
 source: instagram
-viewable: always
 ---
 
 Brighton ruins - maybe an old pier?

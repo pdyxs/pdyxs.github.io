@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { load as parseYaml } from 'js-yaml';
-import { resolveCardTitle, resolveCardDescription, resolveCard, computeContentHash } from './cards';
+import { resolveCardTitle, resolveCardDescription, resolveCard, computeContentHash, inertDerivationControls } from './cards';
 import type { CardEntry, ResolveContext } from './cards';
 import type { FolderCascade } from './folder-config';
 import { COLLECTION_RENDERERS } from './renderers';
@@ -109,12 +109,13 @@ describe('resolveCardDescription', () => {
 
 const EMPTY_CASCADE: FolderCascade = {
   cascadeTags: [],
+  excludeTags: [],
   overrides: {},
   tagIdentity: {},
 };
 
 const CTX: ResolveContext = {
-  overrideKeys: [],
+  frontmatterKeys: [],
   isDev: false,
   now: new Date('2026-01-01T00:00:00Z'),
 };
@@ -240,6 +241,139 @@ describe('resolveCard', () => {
 
     it('treats absent frontmatter tags as none (unvalidated entries have no zod default)', () => {
       expect(() => resolveFixture({ id: 'what/posts/hello', data: {} })).not.toThrow();
+    });
+
+    // ── derivation control, issue #116 ──────────────────────────────────────
+    // The composition these two mechanisms have to get right is a folder-level
+    // exclusion with a card-level escape from it, which is what the two story
+    // folders now depend on.
+
+    const DATED = { date: new Date('2017-09-15T00:00:00.000Z') }; // → Taghazout
+
+    it('a folder-level exclusion suppresses the derivation for its cards', () => {
+      const card = resolveFixture(
+        // Canonical form: resolveCard is fed pre-transform data here, so the
+        // fixture states what the zod `tags` transform would have produced.
+        { id: 'what/posts/stories/x/01', data: { ...DATED, tags: ['where:europe/norway/svalbard'] } },
+        { excludeTags: ['generated/location'] },
+      );
+      expect(card.tags).toContain('where:europe/norway/svalbard');
+      expect(card.tags).not.toContain('where:africa/morocco/taghazout');
+    });
+
+    it('a card re-enables what its folder excluded', () => {
+      const card = resolveFixture(
+        { id: 'what/posts/stories/x/01', data: { ...DATED, tags: ['generated/location'] } },
+        { excludeTags: ['generated/location'] },
+      );
+      expect(card.tags).toContain('where:africa/morocco/taghazout');
+    });
+
+    it('STRIPS the re-enable directive from the resolved tag list', () => {
+      // It names no filter value; left in, it reaches the panel and the chips.
+      const card = resolveFixture(
+        { id: 'what/posts/x', data: { ...DATED, tags: ['generated/location'] } },
+        { excludeTags: ['generated/location'] },
+      );
+      expect(card.tags.some(t => t.startsWith('generated'))).toBe(false);
+    });
+
+    it('a cascade-level re-enable works the same way', () => {
+      const card = resolveFixture(
+        { id: 'what/posts/x', data: DATED },
+        { excludeTags: ['generated/location'], cascadeTags: ['generated/location'] },
+      );
+      expect(card.tags).toContain('where:africa/morocco/taghazout');
+      expect(card.tags.some(t => t.startsWith('generated'))).toBe(false);
+    });
+
+    it('throws on a generated/* tag naming no derivation', () => {
+      expect(() => resolveFixture({ id: 'what/posts/x', data: { tags: ['generated/nope'] } }))
+        .toThrow(/names no generated derivation/);
+    });
+
+    it('throws on a generated/* excludeTags entry naming no derivation', () => {
+      expect(() => resolveFixture({ id: 'what/posts/x', data: { excludeTags: ['generated/nope'] } }))
+        .toThrow(/names no generated derivation/);
+    });
+  });
+
+  describe('inertDerivationControls', () => {
+    const DATED = { date: new Date('2017-09-15T00:00:00.000Z') };
+
+    it('reports an exclusion that removed nothing', () => {
+      expect(
+        inertDerivationControls('what/posts/x', { excludeTags: ['where/europe'] }, EMPTY_CASCADE, []),
+      ).toEqual(['where:europe']);
+    });
+
+    it('reports a re-enable with no exclusion to undo', () => {
+      // My call (the coordinator left it open): a re-enable that re-enables
+      // nothing is the same class of mistake as an exclusion that excludes
+      // nothing — the author believes it is doing something.
+      expect(
+        inertDerivationControls('what/posts/x', { ...DATED, tags: ['generated/location'] }, EMPTY_CASCADE, []),
+      ).toEqual(['generated/location']);
+    });
+
+    it('reports nothing when the re-enable actually undoes an exclusion', () => {
+      expect(
+        inertDerivationControls(
+          'what/posts/x',
+          { ...DATED, tags: ['generated/location'] },
+          { ...EMPTY_CASCADE, excludeTags: ['generated/location'] },
+          [],
+        ),
+      ).toEqual([]);
+    });
+
+    it('reports nothing for a card that controls nothing', () => {
+      expect(inertDerivationControls('what/posts/x', DATED, EMPTY_CASCADE, [])).toEqual([]);
+    });
+
+    it('does NOT report an INHERITED entry that is inert for this card', () => {
+      // The live case: `what/posts/stories/arctic` excludes generated/location
+      // and pins Svalbard. For the 9 posts dated inside the Svalbard range the
+      // derivation would have produced that same tag, so the exclusion removes
+      // nothing *there* — while still being the only thing keeping the 13
+      // posts written up in August out of Quito. Reported per-card that is 9
+      // worklist entries with no available action.
+      expect(
+        inertDerivationControls(
+          'what/posts/stories/arctic/05-reindeer',
+          { date: new Date('2018-06-10T00:00:00.000Z') },
+          {
+            ...EMPTY_CASCADE,
+            cascadeTags: ['where:europe/norway/svalbard'],
+            excludeTags: ['generated/location'],
+          },
+          [],
+        ),
+      ).toEqual([]);
+    });
+
+    it('still reports the SAME entry when the card declares it itself', () => {
+      // Provenance is the whole distinction — the author can act on their own
+      // file.
+      expect(
+        inertDerivationControls(
+          'what/posts/x',
+          { date: new Date('2018-06-10T00:00:00.000Z'), excludeTags: ['where/antarctica'] },
+          EMPTY_CASCADE,
+          [],
+        ),
+      ).toEqual(['where:antarctica']);
+    });
+
+    it('does not report an inherited re-enable either', () => {
+      expect(
+        inertDerivationControls(
+          'what/posts/x',
+          DATED,
+          { ...EMPTY_CASCADE, cascadeTags: ['generated/location'] },
+          [],
+        ),
+      ).toEqual([]);
     });
   });
 

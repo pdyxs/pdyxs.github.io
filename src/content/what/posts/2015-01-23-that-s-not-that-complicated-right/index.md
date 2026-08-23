@@ -7,9 +7,9 @@ tags:
   - "ggjsyd"
   - "houstonproblems"
   - what/games/analog/houston-we-have-a
+  - why/viewable
 image: "17843021794027766.jpg"
 source: instagram
-viewable: always
 ---
 
 That's not that complicated, right? #GGJSyd #ggj15 #houstonproblems

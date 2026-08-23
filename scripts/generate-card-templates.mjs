@@ -40,6 +40,7 @@ import {
   renderCardTemplate,
   templateFileName,
 } from '../src/lib/templater-scaffold.ts';
+import { generatorFrontmatterKeys } from '../src/lib/filter-generators.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -48,8 +49,12 @@ const OUT_DIR = path.join(CONTENT_DIR, '_templates');
 const SCHEMA_PATH = path.join(REPO_ROOT, 'src/content.config.ts');
 const GENERATOR_PATH = 'scripts/generate-card-templates.mjs';
 
-/** Keys resolveFolderCascade should surface as `overrides` (see the schema's generated-tag overrides). */
-const OVERRIDE_KEYS = ['location', 'era'];
+/**
+ * Frontmatter fields resolveFolderCascade should surface as `overrides`.
+ * Imported rather than listed, so retiring or adding a generator-read field
+ * (issue #116 retired `location` and `era`) does not need a second edit here.
+ */
+const FRONTMATTER_KEYS = generatorFrontmatterKeys();
 
 /** Files in `_templates` the generator does not own. */
 const PRESERVED = new Set(['README.md']);
@@ -85,7 +90,7 @@ async function main() {
     // Pass a pseudo-card uid inside the folder so the folder's own
     // `_config.yaml` counts as an ancestor — resolveFolderCascade never applies
     // a config to the file sitting beside it.
-    const cascade = await resolveFolderCascade(`${dir}/card`, reader, OVERRIDE_KEYS);
+    const cascade = await resolveFolderCascade(`${dir}/card`, reader, FRONTMATTER_KEYS);
     const name = cascade.tagIdentity.name;
     if (!name) continue; // panel-only dimension config, not a card container
     folders.push({ path: dir, name, cascade });

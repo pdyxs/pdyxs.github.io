@@ -1,7 +1,10 @@
 name: The Galapagos Islands
 description: >
   Reflections on a trip to the Galápagos Islands.
-# Posted in 2019, a year after the 2018 trip; pin the where:* tag to the trip
-# location rather than deriving it from each post's (later) date.
-location: south-america/ecuador/galapagos
+# Posted in 2019, a year after the 2018 trip, so each post's own date would
+# derive wherever I was by then. Pin the trip location and drop the derivation.
+tags:
+  - where/south-america/ecuador/galapagos
+excludeTags:
+  - generated/location
 collapse: true

@@ -5,9 +5,9 @@ date: '2019-01-17 05:16:00 +1000'
 tags:
   - "bubbles"
   - "didimentiontheyhavebubbles"
+  - why/viewable
 image: "17996461120188112.jpg"
 source: instagram
-viewable: always
 ---
 
 Bubbles! At Quito's museum of water. Photo by @federicabruniera 

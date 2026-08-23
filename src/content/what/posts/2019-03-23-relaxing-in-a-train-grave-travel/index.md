@@ -6,9 +6,9 @@ tags:
   - "bolivia"
   - "traingrave"
   - "travel"
+  - why/viewable
 image: "18018265963180011.jpg"
 source: instagram
-viewable: always
 ---
 
 Relaxing in a train grave #travel #bolivia #traingrave

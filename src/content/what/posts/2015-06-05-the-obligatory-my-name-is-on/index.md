@@ -7,9 +7,9 @@ tags:
   - "lazers"
   - "vivid"
   - what/art/laser-harp
+  - why/viewable
 image: "17841565060027766.jpg"
 source: instagram
-viewable: always
 ---
 
 The obligatory 'my name is on a plinth' picture #canicallitanobelix? #vivid #lazers

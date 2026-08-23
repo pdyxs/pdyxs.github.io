@@ -7,9 +7,9 @@ tags:
   - "nausea"
   - "noreallywhy"
   - "why"
+  - why/viewable
 image: "17881649230011084.jpg"
 source: instagram
-viewable: always
 ---
 
 Now this... This is what virtual reality was made for #why #noreallywhy #alsoitviolatesgoodvrdesign #nausea

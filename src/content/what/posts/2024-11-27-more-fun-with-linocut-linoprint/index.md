@@ -6,6 +6,7 @@ tags:
   - "linocut"
   - "linoprint"
   - what/art/lino-printing
+  - why/viewable
 image: "18143938591361010.jpg"
 images:
   - "18067310560681016.jpg"
@@ -13,7 +14,6 @@ images:
   - "18040902788515305.jpg"
   - "18046978436034735.jpg"
 source: instagram
-viewable: always
 ---
 
 More fun with #linocut #linoprint

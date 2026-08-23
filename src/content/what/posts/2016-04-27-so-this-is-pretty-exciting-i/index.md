@@ -8,9 +8,9 @@ tags:
   - "science"
   - "waterhouse"
   - what/art/the-neighbourhood
+  - why/viewable
 image: "17856050521035082.jpg"
 source: instagram
-viewable: always
 ---
 
 So this is pretty exciting... I'm gonna have an artwork in a freaking museum! #itbelongsinamuseum #art #waterhouse #science

@@ -24,6 +24,7 @@ export type AuditFindingType =
   | 'no-authored-tags'
   | 'unresolved-local-image'
   | 'orphaned-old-url'
+  | 'inert-derivation-control'
   | 'not-inspected';
 
 /**
@@ -79,6 +80,15 @@ export interface AuditCard {
    * it, since it depends on the retired Jekyll site's URL inventory.
    */
   orphanedOldUrls?: readonly string[];
+  /**
+   * Derivation-control entries on this card that did nothing — an
+   * `excludeTags` entry that removed no generated tag, or a `generated/*` tag
+   * that re-enabled no exclusion (see exclude-tags.ts). Computed by the
+   * caller, because deciding it means running the generators — which is
+   * exactly the point: the finding and the real tag list come from one call,
+   * so they cannot disagree.
+   */
+  inertDerivationControls?: readonly string[];
 }
 
 /** One card caught by one finding, with the offending values that caught it. */
@@ -256,6 +266,15 @@ const FINDING_SPECS: readonly FindingSpec[] = [
     detect: card => {
       const urls = card.orphanedOldUrls ?? [];
       return urls.length > 0 ? [...urls] : undefined;
+    },
+  },
+  {
+    type: 'inert-derivation-control',
+    label: 'Derivation control that does nothing',
+    hint: 'An excludeTags entry that removed no generated tag, or a generated/* tag re-enabling a derivation nothing excluded. Either the derivation it was written against has moved (a travel-log range shifted, a card lost its actions), or the entry was never needed. A generated/* NAME is validated at build; a value-form exclusion, and a re-enable with nothing to undo, can only be caught here.',
+    detect: card => {
+      const inert = card.inertDerivationControls ?? [];
+      return inert.length > 0 ? [...inert] : undefined;
     },
   },
   {

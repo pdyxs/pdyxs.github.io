@@ -19,6 +19,7 @@ import matter from 'gray-matter';
 import { assignCodes, withTitles } from '../src/lib/stack-manifest.ts';
 import { uidFromContentPath, uidFromTagPath } from '../src/lib/content-uid.ts';
 import { normaliseAuthoredTag } from '../src/lib/five-w.ts';
+import { isGeneratorEntry } from '../src/lib/exclude-tags.ts';
 import { isVaultInfrastructurePath } from '../src/lib/content-glob.ts';
 import { derivePathTags } from '../src/lib/tag-inheritance.ts';
 import { allLensUids, getLensDefinition, lensIdFromUid } from '../src/lib/lens-registry.ts';
@@ -162,6 +163,11 @@ async function collectTags() {
     if (Array.isArray(data?.tags)) {
       for (const rawAuthored of data.tags) {
         if (typeof rawAuthored !== 'string' || !rawAuthored) continue;
+        // `generated/<name>` is a directive re-enabling a derivation, not a
+        // filter value (see exclude-tags.ts). resolveCard strips it; this
+        // script reads frontmatter directly, so it must skip it itself or the
+        // manifest assigns a short code to a tag that can never exist.
+        if (isGeneratorEntry(rawAuthored)) continue;
         // gray-matter hands us the *authored* form (`where/work/seethrough`) —
         // this script reads frontmatter directly rather than through the
         // content collection, so it doesn't get content.config.ts's transform.

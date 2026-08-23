@@ -9,9 +9,9 @@ tags:
   - "signs"
   - "signsaboutsigns"
   - "travel"
+  - why/viewable
 image: "17994759586194570.jpg"
 source: instagram
-viewable: always
 ---
 
 We must respect the signs... #peru #pisac #travel #signs #signsaboutsigns #meta

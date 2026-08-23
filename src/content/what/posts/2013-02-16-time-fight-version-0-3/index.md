@@ -4,9 +4,9 @@ title: "Time fight version 0.3"
 date: '2013-02-16 21:41:00 +1000'
 tags:
   - what/games/analog/time-fight
+  - why/viewable
 image: "17842312690027766.jpg"
 source: instagram
-viewable: always
 ---
 
 Time fight version 0.3

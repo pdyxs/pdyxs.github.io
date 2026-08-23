@@ -5,6 +5,7 @@ description: A reflection on globalised life
 tags:
   - when/released
   - game-jam
+  - why/viewable
 date: 2019-01-26
 images:
   - wheretheheartis.jpg
@@ -25,7 +26,6 @@ meta:
   - label: Role
     values:
       - Creator
-viewable: always
 ---
 *Where The Heart Is* is an interactive piece that explores the feelings associated with travel and having a distributed home.
 
