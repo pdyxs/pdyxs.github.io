@@ -2,8 +2,6 @@
 inspected: false
 title: 'The Half-Cinderella: Why Gameplay never leaves the Ball'
 date: '2011-08-05 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110805/89949/The_HalfCinderella_Why_Gameplay_never_leaves_the_Ball.php
 source: gamasutra
 tags: []
 ---

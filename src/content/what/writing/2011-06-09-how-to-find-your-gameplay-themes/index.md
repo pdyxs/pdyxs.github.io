@@ -2,8 +2,6 @@
 inspected: false
 title: How to Find your Gameplay Themes
 date: '2011-06-09 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110609/89605/How_to_Find_your_Gameplay_Themes.php
 source: gamasutra
 tags:
   - what/games/digital/particulars
@@ -27,5 +25,5 @@ Have any games you've played used mirroring effectively? Or is there a game whic
 Further Reading
 ---------------
 
--   A long, long time ago on a blog that's also on the internet, I wrote an article on [Achron](http://www.fabula-ex-machina.org/2010/06/achron-real-time-just-got-complicated/ "Achron: Real Time just got Complicated"), an RTS with real-time time-travel, and the gameplay themes that this (simply amazing) gameplay might allow.
--   "Ludonarrative dissonance" is a term that has caused a lot of stir in the game criticism community, with every angle from "oh god this is the problem with current games" to "well it's only a problem if you use it wrong" and "this is complete bullcr*p" being touted. The whole thing started with [this post](http://clicknothing.typepad.com/click_nothing/2007/10/ludonarrative-d.html "Ludonarrative Dissonance in Bioshock") by Clint Hocking (I personally agree that Bioshock is ludonarratively dissonant but thought it *enhanced* the game) -- it's pretty interesting stuff, whichever way you look at it.
+-   A long, long time ago on a blog that's also on the internet, I wrote an article on Achron, an RTS with real-time time-travel, and the gameplay themes that this (simply amazing) gameplay might allow.
+-   "Ludonarrative dissonance" is a term that has caused a lot of stir in the game criticism community, with every angle from "oh god this is the problem with current games" to "well it's only a problem if you use it wrong" and "this is complete bullcr*p" being touted. The whole thing started with this post by Clint Hocking (I personally agree that Bioshock is ludonarratively dissonant but thought it *enhanced* the game) -- it's pretty interesting stuff, whichever way you look at it.

@@ -14,6 +14,6 @@ source: instagram
 
 The Neba... The Nebadcha... The Nebudka... The Matrix Ship made it through its second game of Gotta Get Outta This Space! Alistair and Jess have successfully joined me on the bridge of The Neba... The Nebadcha... The Nebudka... The Matrix Ship.
 
-To make your own ship, go to https://gottagetouttathis.space
+To make your own ship, go to [Gotta Get Outta This Space](card:what/games/analog/gotta-get-outta-this-space)
 
 #gottagetouttathisspace #boardgame #printandplay #thematrixship

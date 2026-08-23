@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: Designing a Budget
 date: 2019-03-21 13:00:00 -0500
 tags:
@@ -11,7 +11,7 @@ source: medium
 ---
 ## **Designing a Budget**
 
-*This post describes the design of *[*Budget Haver*](http://budgethaver.app/)*, a minimalistic budgeting app that's focusing on controlling spending that *[*you can totally sign up to the beta for, right here*](http://budgethaver.app/)*. To best understand why this app exists (because clearly, what the world really needs is yet another budgeting app), you should read "*[*Having a Budget*](https://medium.com/@pdyxs/having-a-budget-7659059e52fa?source=friends_link&sk=e16b77d3f9f91f013633bb3c0c84fd53)*" first.*
+*This post describes the design of *[*Budget Haver*](card:what/software/budget-haver)*, a minimalistic budgeting app that's focusing on controlling spending that *[*you can totally sign up to the beta for, right here*](card:what/software/budget-haver)*. To best understand why this app exists (because clearly, what the world really needs is yet another budgeting app), you should read "*[*Having a Budget*](card:what/writing/2019-03-11-having-a-budget)*" first.*
 
 So at some point, I decided to make a budgeting app. I was designing it for myself, so it didn't have to be pretty (those of you who are in web design will notice that I've [bootstrapped](https://getbootstrap.com/) and [fontawesomed](https://fontawesome.com/) the hell out of this --- I'll be working on the look and feel in the coming weeks), but it did need to be well designed. Because this is, at a basic level, a habit-forming app, and habit-forming is something I've always struggled with.
 
@@ -95,4 +95,4 @@ That's about it for now. There's a lot of other small interface details I've not
 
 Next time, I'll be talking about everyone's favourite topic: monetisation. A large part of why I'm taking the time to prepare this app for wide release (and compete in the absolutely insane productivity app space... why am I doing this again?) is to test out some thoughts I've been having about monetisation for a while (oh right, that's why), so it's probably time to talk about those thoughts.
 
-In the meantime, sign up to the [beta for Budget Haver here](http://budgethaver.app/), and let me know what you think!
+In the meantime, sign up to the [beta for Budget Haver here](card:what/software/budget-haver), and let me know what you think!

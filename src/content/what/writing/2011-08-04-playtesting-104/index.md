@@ -2,8 +2,6 @@
 inspected: false
 title: 'Playtesting 104: How to Measure Quantitatively'
 date: '2011-08-04 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110804/89941/Playtesting_104_How_to_Measure_Quantitatively.php
 source: gamasutra
 tags: []
 ---
@@ -15,7 +13,7 @@ Today, we tackle this question for quantitative data.
 
 So I'm not going to mince words here: you need to record data in your game. It's a thing you just have to do. You *can* sit next to the person playing and count things like number of deaths, but there's usually a bunch of other things you want to watch in that case.
 
-You've got 2 main choices: use an existing logging system or roll your own. On the side of the existing logging systems, there's [Playtomic](http://playtomic.com/ "Playtomic"): a great tool for recording data for Flash, HTML5, Unity and iOS.
+You've got 2 main choices: use an existing logging system or roll your own. On the side of the existing logging systems, there's Playtomic: a great tool for recording data for Flash, HTML5, Unity and iOS.
 
 If you're in one of these categories, you should really use it: it gives you both raw data and analysis tools such as graphing and heat maps for free!
 

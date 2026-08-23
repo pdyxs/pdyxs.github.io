@@ -54,7 +54,7 @@ because it’s not *bigger* or *better* than last time. On the other, it makes y
 question and throw out anything that might have any scale to it, unless you’ve
 got all the hypothetical, drunk and invisible ducks in a row.
 
-So you swap and change and thrash and change [your website](http://pdyxs.org/) a
+So you swap and change and thrash and change [your website](/) a
 few dozen times and keep feeling like you’ve brought yourself back to square 1.
 And then, if you’re lucky, one of the projects you’ve been working on, the
 experiments*, hits something deep inside you. It might not be exactly what you
@@ -67,7 +67,7 @@ of my ability to do that seems to be slipping away, and also it’s time for som
 goddamned catharsis!”. So you write a blog post.
 
 \* *For those wondering what this magical direction is, it’s working on [artistic
-representations of science](http://pdyxs.org/artworks/). Which is super broad
+representations of science](collection:what:art). Which is super broad
 (and includes games/‘interactive stuff’), but it nicely unifies the works I’ve
 had the most passion for (and broad is kinda the point). I’ll post more specific
 stuff about the directions I’m going further down the line.*

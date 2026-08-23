@@ -26,6 +26,6 @@ Gotta Get Outta This Space is officially launched!
 
 This is a print, play and post game. When you play the game, you'll change it in unique ways, and afterwards you'll send your copy to a friend to continue the journey.
 
-Play the game at https://gottagetouttathis.space
+Play the game at [Gotta Get Outta This Space](card:what/games/analog/gotta-get-outta-this-space)
 
 #printandplay #gamedev #gamedesign #gottagetouttathisspace #gamelaunch #printandplay #boardgames #space #ifitsthelastthingweeverdo

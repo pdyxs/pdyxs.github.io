@@ -2,8 +2,6 @@
 inspected: false
 title: 'Meta-me-this: Are the best games about games?'
 date: '2011-06-14 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110614/89629/Metamethis_Are_the_best_games_about_games.php
 source: gamasutra
 tags: []
 ---

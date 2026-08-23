@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: QByte Devlog - Taking the Measure
 date: 2017-09-19 17:00:00 +0100
 tags:
@@ -12,7 +12,7 @@ image: 1--erHcYtTXrYO-Ohor5hFxg-2x.jpg
 source: medium
 ---
 
-*You can find the latest build for QByte [here](https://developer.cloud.unity3d.com/share/ZJTngRQaoM/). Feedback is always appreciated!*
+*Feedback is always appreciated!*
 
 So this is the first devlog I’ve made, which means it’s missing a lot of context… but writing all of that context would take forever, so we’re just going to go with what we’ve got.
 

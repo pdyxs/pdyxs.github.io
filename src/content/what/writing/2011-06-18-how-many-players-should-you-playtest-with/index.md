@@ -2,8 +2,6 @@
 inspected: false
 title: How many players should you playtest with?
 date: '2011-06-18 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110618/89660/How_many_players_should_you_playtest_with.php
 source: gamasutra
 tags:
   - what/games/digital/particulars
@@ -12,7 +10,7 @@ So, you've started developing your game, and you've got your basic gameplay done
 
 \*If you've got something you *can* playtest with, you should be playtesting. As soon as possible. As I'll explain in a bit, it's really important to plan your playtesting (and we'll be exploring this more in the coming weeks), but you really want to get to it pronto.
 
-Jakob Nielsen, usability king, says that [you only need 5 users to test each iteration of a design](http://www.useit.com/alertbox/20000319.html "Why You Only Need to Test with 5 Users"), and in many ways, this philosophy applies directly to playtesting. Yet this only truly applies to early phases of playtesting: in the latter stages, we'll be taking a different approach.
+Jakob Nielsen, usability king, says that [you only need 5 users to test each iteration of a design](https://www.nngroup.com/articles/why-you-only-need-to-test-with-5-users/), and in many ways, this philosophy applies directly to playtesting. Yet this only truly applies to early phases of playtesting: in the latter stages, we'll be taking a different approach.
 
 Nielsen's basic argument is that testing is about improving a design rather than finding every single problem. Once you get past 3-5 users, each new user you add to your test tells you less and less about how to improve your design, simply because problems get hidden behind other problems. The answer is to save your time and fresh playtesters (both of which are limited resources) to run more iterations of playtesting: in each iteration, 3-5 is enough.
 

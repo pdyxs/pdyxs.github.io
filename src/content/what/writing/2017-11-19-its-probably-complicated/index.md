@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: "It’s probably complicated: Visualising the states of a quantum computer"
 date: 2017-11-17 17:00:00 +0100
 tags:
@@ -13,8 +13,6 @@ source: medium
 ---
 
 *This is a devlog for the project QByte, but rather than a straight devlog, I’m taking a topic I’ve encountered and delving into it. At the end, I’ll do a brief run-down of my last couple of weeks.*
-
-*You can find this week’s build for QByte [here](https://developer.cloud.unity3d.com/share/WJpZpfR0CM/).*
 
 Normal, classical, digital states are quite simple: a bit can either be 1 or 0, which means that 2 bits can have 4 values (00, 01, 10, 11), 3 bits can have 8 and so on.
 
@@ -200,4 +198,4 @@ Over the last couple of weeks, I’ve done a lot of refactoring of the quantum s
 
 I’ll probably be working on finishing up these state representations for the next week or two. After that, I’ll be working on some UI fixes, before coming back to the explanation engine.
 
-*That’s it for this week’s QByte devlog. Check out past posts and subscribe for updates [here](https://medium.com/seethrough-studios). If there’s anything you want to know about the project and how I’m making it, let me know in the comments or on [twitter](http://twitter.com/pdyxs).*
+*That’s it for this week’s QByte devlog. Check out past posts and subscribe for updates [here](card:what/games/digital/quantum-byte). If there’s anything you want to know about the project and how I’m making it, let me know in the comments or on [twitter](http://twitter.com/pdyxs).*

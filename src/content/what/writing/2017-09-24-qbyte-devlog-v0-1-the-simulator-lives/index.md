@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: "QByte Devlog - v0.1: The Simulator Lives!"
 date: 2017-09-23 17:00:00 +0100
 tags:
@@ -12,7 +12,7 @@ image: 1-nHg1vN01bgrmHaa3YghUbQ-2x.png
 source: medium
 ---
 
-*You can find the latest build of [QByte (v0.1) here](https://developer.cloud.unity3d.com/share/WJDRbh7rhz/). Feedback is always appreciated. Specifically, if you are someone or know someone who’s in the quantum computing field, I’d love to hear from you. I think what I’ve built is a decent tool for those who already know the science, but I’d like to confirm that that’s the case.*
+*Feedback is always appreciated. Specifically, if you are someone or know someone who’s in the quantum computing field, I’d love to hear from you. I think what I’ve built is a decent tool for those who already know the science, but I’d like to confirm that that’s the case.*
 
 This week I hit a milestone: QByte has hit v0.1, which means that it’s a fully functional quantum computing simulator, which allows users to build circuits.
 

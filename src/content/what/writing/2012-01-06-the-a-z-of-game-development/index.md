@@ -1,10 +1,9 @@
 ---
-inspected: true
+inspected: false
 title: The A-Z of Game Development
 date: 2012-01-06 17:00:00 +1000
 tags:
   - game-engine-podcast
-canonical_url: https://www.kotaku.com.au/2012/01/the-a-z-of-game-development/
 image: classroom.jpg
 source: kotaku
 ---
@@ -140,4 +139,4 @@ As a part of this business aspect, it's important to realise that self-funding y
 
 Finally, a reminder that these are tips, or guidelines, and not hard-and-fast rules. It's just as important to understand them thoroughly so that you know where, why and how to break them as it is to follow them.
 
-So ends our alphabetical journey through game development tips. Be sure to check out the [podcast episode](http://www.gameenginepodcast.com/2011/12/09/ep-20-game-development-bingo/) that inspired this article and other episodes of [The Game Engine Podcast](http://www.gameenginepodcast.com/), and good luck with all of your game development endeavours!
+So ends our alphabetical journey through game development tips. Be sure to check out the podcast episode that inspired this article and other episodes of The Game Engine Podcast, and good luck with all of your game development endeavours!

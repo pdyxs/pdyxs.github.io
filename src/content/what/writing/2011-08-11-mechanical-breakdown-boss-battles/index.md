@@ -2,8 +2,6 @@
 inspected: false
 title: 'Mechanical Breakdown: Boss Battles and other Climactic Events'
 date: '2011-08-11 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110811/89988/Mechanical_Breakdown_Boss_Battles_and_other_Climactic_Events.php
 source: gamasutra
 tags: []
 ---
@@ -61,7 +59,7 @@ While both of these can work, I prefer the latter approach, and I'll use my own 
 
 > I do believe the "boss" for Fable 2 is a noted example of suckatude. You walk up to a guy with a mcguffin and either blast him in the chest with a pistol or wait for Stephen Fry to do it.
 >
->*[Booze Zombie](http://www.escapistmagazine.com/profiles/view/Booze+Zombie), [Escapist Forums](http://www.escapistmagazine.com/forums/read/9.127082-Worst-Boss-fight-in-a-game-ever#2689188)*
+>*Booze Zombie, Escapist Forums*
 
 So what's wrong with this boss? In order to make the choice-making an integral part of the boss fight, the game ignores the fight: that other integral part of the game. While I'd argue that the choice given after the death of Lucien paid off the choice-making quite splendidly, the game robs itself of paying off the build-up to a confrontation with Lucien.
 
@@ -85,21 +83,21 @@ Difficulty is often a problem in bosses: not only in whether they're actually di
 
 > The boss itself is not hard, it's just that you have to fight the boss in an area filled with poisonous air that slowly kills you. It takes to damn long to kill the boss so you can die easily.
 >
->*[Internet Kraken](http://www.escapistmagazine.com/profiles/view/Internet+Kraken), [Escapist Forums](http://www.escapistmagazine.com/forums/jump/9.127082.2689201)*
+>*Internet Kraken, Escapist Forums*
 
 In this case, the designer has made the boss harder using two simple factors: a time limit (albeit a creative one), and a super-dose of health. I'd argue that unless time limits or dispatching specifically tough enemies has been a staple of the game so far, that these are a symptom of lazy design trying to make the climax of the game *bigger* by making it artificially *harder*, instead of following the gameplay thus far to a logical conclusion.
 
 Which begs us the question: does a boss actually have to be hard?
 
-> [Galaxy](http://www.1up.com/do/gameOverview?cId=3150586 "Super Mario Galaxy") pits the mustachioed hero against a fairly normal Bowser, but the game's gravity bending physics are what set this battle above every other Mario-Bowser face-off -- it really puts this Bowser battle in a league of its own. It's not the most difficult confrontation, but that very fact that also makes it so satisfying.
+> Galaxy pits the mustachioed hero against a fairly normal Bowser, but the game's gravity bending physics are what set this battle above every other Mario-Bowser face-off -- it really puts this Bowser battle in a league of its own. It's not the most difficult confrontation, but that very fact that also makes it so satisfying.
 >
->*1UP.com, [25 of the Most Badass Boss Fights of all time](http://www.1up.com/features/25-badass-boss-fights-time_2)*
+>*1UP.com, 25 of the Most Badass Boss Fights of all time*
 
 This implies that no, it doesn't. Galaxy's boss isn't about punishing the player in the hardest thing ever, but about combining the set-up of the gravity-bending game with the set-up of every other Bowser fight ever to create a stupendous, fun (and big) experience. The climax is almost a *celebration* of the wonders of the game thus far.
 
 > Personally, I try and make the boss fight on par or slightly easier than the final level in that chapter. I don't want to defeat the player just as they are about to unlock a new set of levels.
 >
->[Edmund McMillen](http://edmundm.com/ "Edmund McMillen") via [Andrew Webster](http://www.escapistmagazine.com/profiles/articles/Andrew%20Webster), [Who's the Boss](http://www.escapistmagazine.com/articles/view/issues/issue_255/7592-Whos-The-Boss)
+>[Edmund McMillen](https://edmundmcmillen.tumblr.com/) via Andrew Webster, Who's the Boss
 
 *Super Meat Boy*'s Edmund McMillen puts it stupendously here. By ensuring that the boss is tough, but not so tough that you can't defeat them if you finished previous levels, you can ensure that the boss battle is a great experience.
 

@@ -2,8 +2,6 @@
 inspected: false
 title: 'Playtesting 102: Who and where'
 date: '2011-07-19 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110719/89849/Playtesting_102_Who_and_where.php
 source: gamasutra
 tags: []
 ---

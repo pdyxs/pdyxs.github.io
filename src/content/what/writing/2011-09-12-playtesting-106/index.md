@@ -2,8 +2,6 @@
 inspected: false
 title: 'Playtesting 106: On the Day'
 date: '2011-09-12 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110912/90193/Playtesting_106_On_the_Day.php
 source: gamasutra
 tags: []
 ---

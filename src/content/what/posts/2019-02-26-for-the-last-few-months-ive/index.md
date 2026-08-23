@@ -12,5 +12,5 @@ source: instagram
 
 For the last few months, I’ve been using a super simple app that I made to help me to manage my finances (specifically, to control my day-to-day spending). It’s worked much better than I anticipated, and so I’ve decided to make it available as a ‘pay what you want’ app. I’ve just reached the beta stage, and could really use some beta testers.
 
-If you’d like to help test this/you just want to know when it’s released, please sign up to do so over at https://budgethaver.app
+If you’d like to help test this/you just want to know when it’s released, please sign up to do so over at [Budget Haver](card:what/software/budget-haver)
 #app #finance

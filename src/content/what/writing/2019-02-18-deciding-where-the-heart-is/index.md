@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: "Deciding Where the Heart Is: A Global Game Jam 2019 'game' postmortem"
 date: 2019-02-18 13:00:00 -0500
 tags:
@@ -45,7 +45,7 @@ What came out of this is “Where the Heart is”. It’s not really a game, but
 definitely an interactive thing.
 
 If you haven’t tried “Where the Heart is”, maybe do that now. You can find it
-over at [https://wheretheheartis.surge.sh](https://wheretheheartis.surge.sh)
+over at [Where the Heart is](card:what/games/digital/where-the-heart-is)
 
 ![](./1-3bSWZFycxSNjlN---YfbAg.png)
 <span class="figcaption_hack">The final product of “Where the Heart Is”</span>
@@ -92,7 +92,7 @@ the work for you. A combination of this and some [really nicely-formatted
 data](https://geojson-maps.ash.ms/) made this pretty quick to put together.
 
 It also helped that I’ve done this before, doing the prototype for [Plan A’s
-homepage](https://plana.earth). The big sticking point for both projects was the
+homepage](card:where/work/plan-a). The big sticking point for both projects was the
 drag to rotate interaction: it turns out that mapping x and y co-ordinates of
 mouse drags to 3D rotations isn’t trivial (or at least if you make it trivial,
 it’s not quite as smooth as you’d want it to be). With a ticking clock, I just
@@ -283,8 +283,8 @@ is ‘who do I know here?’. And if I did that, I’d probably have it look ver
 similar to “Where the Heart is”, but with real data. Hell, I might even give it
 the same name.
 
-If that’s something you’d be interested in, [sign up
-here](https://goo.gl/forms/djaVtW0JOecbMqx62) and I’ll make sure you get access
+If that’s something you’d be interested in, sign up
+here and I’ll make sure you get access
 to alphas/betas etc. No promises on timing though, first I have to finish
 building a budgeting app (more on that later…).
 

@@ -5,8 +5,6 @@ date: '2013-03-24 17:00:00 +1000'
 tags:
   - what/games/digital/particulars
   - where/work/seethrough
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20130324/189171/The_15_Steps_of_Particulars_Preproduction.php
 image: Screen-Shot-2013-02-12-at-10.46.35-AM.png
 source: gamasutra
 ---

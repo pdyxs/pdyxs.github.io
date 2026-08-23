@@ -5,8 +5,6 @@ date: '2013-04-29 17:00:00 +1000'
 tags:
   - what/games/digital/particulars
   - where/work/seethrough
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20130429/191393/7_things_that_have_to_work_together_in_a_game_story.php
 image: Panel-6-7_final.jpg
 source: gamasutra
 ---

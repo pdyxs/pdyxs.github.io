@@ -2,8 +2,6 @@
 inspected: false
 title: 'Playtesting 101: Finding the Purpose'
 date: '2011-07-14 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110714/89813/Playtesting_101_Finding_the_Purpose.php
 source: gamasutra
 tags: []
 ---

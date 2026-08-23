@@ -4,8 +4,6 @@ title: 'Making it together: Parallel Implementation'
 date: '2011-11-27 17:00:00 +1000'
 tags:
   - what/games/digital/particulars
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20111127/90690/Making_it_together_Parallel_Implementation.php
 source: gamasutra
 ---
 This is going to be a pretty quick post, but it's something I've been pondering on lately. It concerns the actual development (programming) of a game project.

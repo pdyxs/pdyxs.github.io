@@ -2,8 +2,6 @@
 inspected: false
 title: 'Playtesting 105: How to Measure Qualitatively'
 date: '2011-08-06 17:00:00 +1000'
-canonical_url: >-
-  https://www.gamasutra.com/blogs/PaulSztajer/20110806/89958/Playtesting_105_How_to_measure_Qualitatively.php
 source: gamasutra
 tags: []
 ---

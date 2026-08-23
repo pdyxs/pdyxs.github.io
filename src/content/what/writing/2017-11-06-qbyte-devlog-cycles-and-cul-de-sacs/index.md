@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: QByte Devlog - Cycles and Cul-de-sacs
 date: 2017-11-06 17:00:00 +0100
 tags:
@@ -10,8 +10,6 @@ canonical_url: https://medium.com/seethrough-studios/qbyte-devlog-cycles-and-cul
 image: 1-0oGIuQ6un8Cyur9c7wbULg-2x.jpg
 source: medium
 ---
-
-*You can find the current build of QByte [here](https://developer.cloud.unity3d.com/share/-1a8nk7OAz/). It’s really an in-between build, so expect some broken-ness.*
 
 It’s been about 6 weeks since I last did a devlog for QByte, and while I’ve definitely made progress, that progress has felt slight, to say the least. It’s the reason I’ve not really written about the project in that time (which, well, is a bit backwards – I’ve realised that to a point, writing about progress each week helps drive that progress).
 
