@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Having a Budget
 date: 2019-03-11 13:00:00 -0500
 tags:
@@ -39,8 +39,8 @@ If I could fix this, just this, I figured the rest could follow. I don't need to
 
 To make this happen, I need something visible. Which means... (drumroll please...) an app! Damn, even writing that feels boring. Of course it's an app. Ugh.
 
-So, for the last few months, I've been using a super simple app I made called *Budget Haver*, and it's worked really well! I feel much more on top of my finances, and more importantly, I've got a more instinctive feel for what I want to spend money on, and whether a purchase is a good idea. Since there's no other apps like this* and I think it could help some people, I'd like to make it available more widely. Right now, I'm running a beta, and [you can sign up for that here](card:what/software/budget-haver).
+So, for the last few months, I've been using a super simple app I made called *Budget Haver*, and it's worked really well! I feel much more on top of my finances, and more importantly, I've got a more instinctive feel for what I want to spend money on, and whether a purchase is a good idea. Since there's no other apps like this* and I think it could help some people, I'd like to make it available more widely. Right now, I'm running a beta, and you can sign up for that here.
 
-Over the next few weeks, I'm going to post a few more blog posts going into the design intent and philosophy of *Budget Haver*. Until then, I could really use feedback on the beta. [Please sign up for it](card:what/software/budget-haver)!
+Over the next few weeks, I'm going to post a few more blog posts going into the design intent and philosophy of *Budget Haver*. Until then, I could really use feedback on the beta. Please sign up for it!
 
 *For those of you who are on top of these things, you'll probably notice that this ends up having a fair few similarities to the [*Daily Budget*](https://www.dailybudget.de/) app. Which is an awesome app that I didn't really know anything about when I made this. Having made my own version, I prefer the design philosophy that I've taken (shock horror --- more on this later), and Daily Budget is missing a vital feature for me (because, well, travel), but it's worth checking that out as well.
