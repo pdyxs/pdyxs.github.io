@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Unstoppabot
 description: A hybrid of an infinitely running bot and a puzzle game, complemented with sarcastic wit
 images:
@@ -9,7 +9,6 @@ image: Unstoppabot1.jpg
 tags:
   - when/released
   - where/work/seethrough
-  - why/viewable
 date: 2013-03-01
 medium: Video Game
 actions: []

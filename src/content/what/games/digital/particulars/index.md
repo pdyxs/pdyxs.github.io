@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Particulars
 description: A minimalist meditation on the chaos of life, the universe and sub-atomic particle physics
 image: 5-1b.jpg
@@ -7,7 +7,6 @@ tags:
   - science
   - when/released
   - where/work/seethrough
-  - why/viewable
 date: 2014-09-01
 actions:
   - text: Download on Steam
