@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: QByte Devlog - Cycles and Cul-de-sacs
 date: 2017-11-06 17:00:00 +0100
 tags:

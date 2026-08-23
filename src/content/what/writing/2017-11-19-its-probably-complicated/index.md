@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: "It’s probably complicated: Visualising the states of a quantum computer"
 date: 2017-11-17 17:00:00 +0100
 tags:
@@ -198,4 +198,4 @@ Over the last couple of weeks, I’ve done a lot of refactoring of the quantum s
 
 I’ll probably be working on finishing up these state representations for the next week or two. After that, I’ll be working on some UI fixes, before coming back to the explanation engine.
 
-*That’s it for this week’s QByte devlog. Check out past posts and subscribe for updates [here](card:what/games/digital/quantum-byte). If there’s anything you want to know about the project and how I’m making it, let me know in the comments or on [twitter](http://twitter.com/pdyxs).*
+*That’s it for this week’s QByte devlog. Check out past posts and subscribe for updates here. If there’s anything you want to know about the project and how I’m making it, let me know in the comments or on [twitter](http://twitter.com/pdyxs).*

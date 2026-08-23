@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: "Deciding Where the Heart Is: A Global Game Jam 2019 'game' postmortem"
 date: 2019-02-18 13:00:00 -0500
 tags:
