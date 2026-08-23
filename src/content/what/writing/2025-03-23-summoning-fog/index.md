@@ -4,6 +4,7 @@ title: Summoning Fog
 date: 2025-03-23 00:33:39 +0000
 tags:
   - what/puzzles/experimental-fog/sunny-with-a-chance-of-fog
+  - why/learn/gamedev
 description: How I made the puzzle "Sunny, with a Chance of Fog"
 canonical_url: https://pdyxs.substack.com/p/summoning-fog
 image: image-1.png

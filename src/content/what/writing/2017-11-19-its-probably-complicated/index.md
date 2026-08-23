@@ -1,12 +1,13 @@
 ---
-inspected: false
-title: 'It’s probably complicated: Visualising the states of a quantum computer'
-date: '2017-11-06 17:00:00 +0100'
+inspected: true
+title: "It’s probably complicated: Visualising the states of a quantum computer"
+date: 2017-11-17 17:00:00 +0100
 tags:
   - what/games/digital/quantum-byte
+  - science
+  - why/learn/gamedev
 description: A deep dive into how I've chosen how to visualise quantum states
-canonical_url: >-
-  https://medium.com/seethrough-studios/its-probably-complicated-visualising-the-states-of-a-quantum-computer-9fe38a12df72
+canonical_url: https://medium.com/seethrough-studios/its-probably-complicated-visualising-the-states-of-a-quantum-computer-9fe38a12df72
 image: 1-WbLTltM__ycs1ob6nJtVAg.png
 source: medium
 ---
