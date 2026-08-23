@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Some Things Fogn
 date: 2025-02-08
 series: experimental-fog

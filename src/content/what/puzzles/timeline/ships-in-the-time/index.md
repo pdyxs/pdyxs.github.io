@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Ships in the Time
 date: 2025-03-30
 series: timeline

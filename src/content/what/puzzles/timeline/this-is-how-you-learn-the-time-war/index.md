@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: This is how you learn the Time War
 date: 2025-02-26
 series: timeline

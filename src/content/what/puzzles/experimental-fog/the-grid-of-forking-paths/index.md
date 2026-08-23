@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: The Grid of Forking Paths
 date: 2025-01-02
 series: experimental-fog

@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Recounting the Rooms
 date: 2025-02-14
 series: experimental-fog
