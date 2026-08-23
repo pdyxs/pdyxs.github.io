@@ -1,9 +1,8 @@
 ---
-inspected: false
+inspected: true
 title: The Odysseys
 description: A game where one player is Fate, and they hold all the cards.
 tags:
-  - interactive
   - when/shelved
 excludeTags:
   - generated/location
@@ -15,4 +14,4 @@ quotes: []
 images: []
 status: draft
 ---
-The Odysseys is a game about fate. 
+The Odysseys is a game about fate, and choosing to accept or fight it.

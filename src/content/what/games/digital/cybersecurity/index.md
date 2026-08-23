@@ -1,12 +1,12 @@
 ---
-inspected: false
+inspected: true
 title: Cybersecurity Ethics
 description: A game designed to teach the moral dimensions of cybersecurity quandries
 image: cyber-2.jpg
 tags:
-  - education
   - when/released
   - where/work/chaostheory
+  - education
 date: 2021-09-01
 actions:
   - text: Read the case study

@@ -1,12 +1,12 @@
 ---
-inspected: false
+inspected: true
 title: Ditto's Keep Safe Adventure
 description: An interactive game designed to keep kids safe
 image: bravehearts-1.jpg
 tags:
-  - education
   - when/released
   - where/work/chaostheory
+  - education
 date: 2023-10-01
 actions:
   - text: Read the case study

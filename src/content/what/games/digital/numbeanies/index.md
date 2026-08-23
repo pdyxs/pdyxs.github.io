@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: "Numbeanies: Number Forest"
 description: An augmented reality app to help children learn numeracy using physical cards and adorable numbeanies
 image: cover.jpg
@@ -11,13 +11,6 @@ tags:
 excludeTags:
   - generated/location
 date: 2018-04-01
-actions:
-  - text: Get on the iOS App Store
-    url: https://itunes.apple.com/au/app/numbeanies-number-forest/id1327676583?mt=8
-    kind: play
-  - text: Numeracy for Early Learners website
-    url: http://au.mathletics.com/early-learners
-    kind: site
 quotes: []
 meta:
   - label: Topic
