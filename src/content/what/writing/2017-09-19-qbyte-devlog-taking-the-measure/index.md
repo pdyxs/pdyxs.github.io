@@ -1,12 +1,13 @@
 ---
-inspected: false
+inspected: true
 title: QByte Devlog - Taking the Measure
-date: '2017-09-19 17:00:00 +0100'
+date: 2017-09-19 17:00:00 +0100
 tags:
   - what/games/digital/quantum-byte
+  - science
+  - why/learn/gamedev
 description: Making quantum measurements work in the QByte engine
-canonical_url: >-
-  https://medium.com/seethrough-studios/qbyte-devlog-taking-the-measure-fb06de96d368
+canonical_url: https://medium.com/seethrough-studios/qbyte-devlog-taking-the-measure-fb06de96d368
 image: 1--erHcYtTXrYO-Ohor5hFxg-2x.jpg
 source: medium
 ---

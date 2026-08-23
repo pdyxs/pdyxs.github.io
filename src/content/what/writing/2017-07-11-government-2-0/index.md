@@ -1,11 +1,9 @@
 ---
-inspected: false
+inspected: true
 title: Government 2.0
-date: '2017-07-11 17:00:00 +1000'
-description: >-
-  A thought experiment about how existing political systems might be able to
-  make deliberate fundamental changes.
-canonical_url: 'https://medium.com/@pdyxs/government-2-0-f083a5f778b5'
+date: 2017-07-11 17:00:00 +1000
+description: A thought experiment about how existing political systems might be able to make deliberate fundamental changes.
+canonical_url: https://medium.com/@pdyxs/government-2-0-f083a5f778b5
 source: medium
 tags: []
 ---
