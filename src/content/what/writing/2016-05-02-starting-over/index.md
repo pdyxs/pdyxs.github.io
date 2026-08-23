@@ -39,11 +39,11 @@ design](card:what/games/analog/time-fight), while close to my heart, is yet anot
 crowded market where differentiation is difficult, but with the added bonuses of
 a steep learning curve to manufacture and publish the simplest of games. I
 worked out a solid business case for [Houston, we have a
-#?^%](http://globalgamejam.org/2015/games/houston-we-have), with a clear target
+#?^%](card:what/games/analog/houston-we-have-a), with a clear target
 market and value proposition (something
 *[Particulars](card:what/games/digital/particulars)* lacked). I even briefly toyed
 with the idea of running large-scale [real-world
-games](http://pdyxs.org/art-heist/) in a more professional capacity.
+games](card:what/art/art-heist/) in a more professional capacity.
 
 In many of these cases, that voice asking ‘Why is this better? How are you
 learning from your mistakes?’ was a real boon. But at some point, you have to
