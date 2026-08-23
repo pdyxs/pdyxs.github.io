@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cardEntry, lensEntry, allocateSlot, withFreeSlot, slotForKey, keyForSlot, locationKind, presentationMode } from './stack-layout';
+import { cardEntry, lensEntry, allocateSlot, withFreeSlot, slotForKey, keyForSlot, locationKind, presentationMode, planPush } from './stack-layout';
 import type { StackState } from './stack-layout';
 
 describe('locationKind', () => {
@@ -83,5 +83,61 @@ describe('slotForKey / keyForSlot', () => {
     expect(slotForKey(state, 'lens/newest?filter.what=nope')).toBeNull();
     expect(slotForKey(state, null)).toBeNull();
     expect(keyForSlot(state, 'lens/nope')).toBeNull();
+  });
+});
+
+describe('planPush', () => {
+  const stack = (entries: ReturnType<typeof cardEntry>[], activeSlot: string | null = null): StackState =>
+    ({ entries, activeSlot: activeSlot ?? entries.at(-1)?.slot ?? null });
+
+  it('pushes a location the stack has never held', () => {
+    const plan = planPush(stack([cardEntry('a/one')]), [], cardEntry('b/two'));
+    expect(plan).toEqual({ kind: 'push', entry: cardEntry('b/two') });
+  });
+
+  it('activates a location already stacked, by its slot', () => {
+    const there = cardEntry('b/two');
+    expect(planPush(stack([cardEntry('a/one'), there]), [], cardEntry('b/two')))
+      .toEqual({ kind: 'activate', slot: 'b/two' });
+  });
+
+  it('ignores a location a push is already in flight for (#112)', () => {
+    // The double-click. One intent delivered twice is still one navigation, and
+    // the in-flight push ends by activating the location and writing the URL.
+    const inFlight = cardEntry('b/two');
+    expect(planPush(stack([cardEntry('a/one')]), [inFlight], cardEntry('b/two')))
+      .toEqual({ kind: 'ignore' });
+  });
+
+  it('never hands out a slot an in-flight push has reserved (#112)', () => {
+    // Two DIFFERENT locations that both want the handle `lens/interesting`:
+    // clicking two differently-filtered links in quick succession. The second
+    // must not be given the slot the first is about to occupy.
+    const first = lensEntry('interesting', [['filter.what', 'what:puzzles']]);
+    const second = lensEntry('interesting', [['filter.where', 'where:norway']]);
+    expect(first.slot).toBe(second.slot);
+
+    const plan = planPush(stack([cardEntry('a/one')]), [first], second);
+    expect(plan.kind).toBe('push');
+    expect((plan as { entry: { slot: string } }).entry.slot).toBe('lens/interesting#2');
+  });
+
+  it('prefers ignore over activate while a key is briefly in both', () => {
+    // The window between a push landing in the store and its reservation being
+    // released. Activating is harmless there (it is already active) but doing
+    // nothing is the answer that cannot be wrong.
+    const landed = cardEntry('b/two');
+    expect(planPush(stack([landed]), [landed], cardEntry('b/two')))
+      .toEqual({ kind: 'ignore' });
+  });
+
+  it('leaves a repeated location pushable once nothing is in flight (#106)', () => {
+    // Keys are not unique — a path can pass the same place twice — so an empty
+    // `pending` must not make `planPush` refuse a second, differently-handled
+    // view. That case reaches the stack through rekeying, not through push, so
+    // what this asserts is that the guard is scoped to in-flight pushes only.
+    const first = lensEntry('interesting');
+    expect(planPush(stack([first]), [], lensEntry('interesting')))
+      .toEqual({ kind: 'activate', slot: 'lens/interesting' });
   });
 });

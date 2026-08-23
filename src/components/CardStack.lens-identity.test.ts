@@ -21,8 +21,13 @@ describe('a differently-filtered lens link pushes rather than re-activating', ()
     // The bug: `entries.some(e => e.key === uid)` matched the bare lens uid, so
     // opening /lens/interesting?filter.what=puzzles while the unfiltered lens
     // sat anywhere in the stack jumped the user backwards to it.
-    expect(cardStack).toMatch(/entries\.find\(e => e\.key === target\.key\)/);
+    //
+    // The rule now lives in `planPush` (stack-layout.ts), where it is tested as
+    // behaviour rather than as source text — so what is guarded HERE is that
+    // the component delegates rather than keeping a second copy of the test.
+    expect(cardStack).toMatch(/planPush\(state, pendingPushes, target\)/);
     expect(cardStack).not.toMatch(/entries\.some\(e => e\.key === uid\)/);
+    expect(cardStack).not.toMatch(/entries\.find\(e => e\.key === target\.key\)/);
   });
 
   it('the pushed entry is built from the url AND its params', () => {
@@ -30,7 +35,11 @@ describe('a differently-filtered lens link pushes rather than re-activating', ()
   });
 
   it('a pushed location gets a free handle, so a second filtered view can mount', () => {
-    expect(cardStack).toMatch(/withFreeSlot\(state\.entries, target\)/);
+    // Allocated inside `planPush`, against the live entries AND the pushes
+    // still in flight — the store alone was not the whole truth about which
+    // slots are taken, which is issue #112.
+    expect(cardStack).toMatch(/const entry = plan\.entry/);
+    expect(cardStack).not.toMatch(/withFreeSlot\(state\.entries, target\)/);
   });
 });
 

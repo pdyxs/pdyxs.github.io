@@ -32,6 +32,7 @@ import { clearViewState, hasBeenRead } from '../lib/card-view-state';
 
 const CARD_A = 'what/games/digital/numbeanies';
 const CARD_B = 'what/puzzles/fog';
+const CARD_C = 'what/art/lino-printing';
 
 function fragment(uid: string, { hash = `hash-${uid}`, title = uid }: { hash?: string | null; title?: string } = {}) {
   return `<div class="stack-card" data-uid="${uid}"${hash ? ` data-content-hash="${hash}"` : ''}>` +
@@ -151,6 +152,55 @@ describe('delegated click → push', () => {
     // browser never followed the href.
     expect(window.location.pathname).toContain(CARD_B);
     expect(hasBeenRead(CARD_B)).toBe(true);
+  });
+
+  it('stacks a double-clicked link ONCE, not twice (#112)', async () => {
+    // `pushCard` awaits (a fetch, a view transition, a tick) before it mutates
+    // the store, so a second click during that window used to run against the
+    // same snapshot: neither invocation could see the other's push, and both
+    // handed `withFreeSlot` identical entries — so both allocated the SAME
+    // slot, which slots exist to make unrepresentable (#106).
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector('.stack-card-body-inner')!.appendChild(link);
+    // No await between them: this is the impatient double-click.
+    link.click();
+    link.click();
+    await settle();
+
+    const state = get(stackStore);
+    expect(state.entries.map(e => e.key)).toEqual([CARD_A, CARD_B]);
+    // The invariant the bug broke, stated directly.
+    const slots = state.entries.map(e => e.slot);
+    expect(new Set(slots).size).toBe(slots.length);
+    expect(state.activeSlot).toBe(CARD_B);
+    // And exactly one node, so the keyed each block has nothing to collide on.
+    expect(document.querySelectorAll(`[data-uid="${CARD_B}"]`)).toHaveLength(1);
+  });
+
+  it('a second push of a DIFFERENT location still lands (#112)', async () => {
+    // The guard is per-location, not a global lock: two quick clicks on two
+    // different links are two navigations and both must arrive.
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const body = document.querySelector('.stack-card-body-inner')!;
+    const first = document.createElement('a');
+    first.dataset.pushCard = CARD_B;
+    const second = document.createElement('a');
+    second.dataset.pushCard = CARD_C;
+    body.append(first, second);
+
+    first.click();
+    second.click();
+    await settle();
+
+    const state = get(stackStore);
+    expect(state.entries.map(e => e.key)).toEqual([CARD_A, CARD_B, CARD_C]);
+    expect(state.activeSlot).toBe(CARD_C);
   });
 
   it('re-activates an entry already in the stack instead of pushing a duplicate', async () => {

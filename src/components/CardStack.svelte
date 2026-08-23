@@ -2,8 +2,8 @@
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import { get } from 'svelte/store';
   import { stackStore, seedStackState, pushToStack, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '../stores/card-stack-store';
-  import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry } from '../lib/stack-layout';
-  import type { LocationEntry } from '../lib/stack-layout';
+  import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry, planPush } from '../lib/stack-layout';
+  import type { LocationEntry, StackState } from '../lib/stack-layout';
   import { geometryFor, STACK_GEOMETRY } from '../lib/stack-geometry';
   import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from '../lib/lens-key';
   import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
@@ -59,6 +59,12 @@
   let cardParams = new Map<string, ParamPairs>();
   // Keys to skip body-open in $effect during VT push (body opens after vt.finished)
   let skipBodyOpen = new Set<string>();
+  // Pushes that have allocated a slot but not yet appended it (issue #112).
+  // `pushCard` awaits before it mutates the store, so for that window the store
+  // is not the whole truth about which slots are taken — these are the rest.
+  // `planPush` reads both; this is only the bookkeeping, held here because the
+  // component owns every stack mutation and therefore owns their lifetimes too.
+  let pendingPushes: LocationEntry[] = [];
   // The one measured input to the geometry. Every card is the width of the
   // active one, and the ahead fan is placed off that width — but the width is
   // a CSS decision (`--stack-card-width`: the declared --max-width, capped by
@@ -369,11 +375,12 @@
     const state = get(stackStore);
     const target = locationEntryFor(urlToUid(url), params);
 
-    // Already in stack → just activate. Identity, not uid: a lens filtered to
-    // puzzles and the same lens filtered to Norway are two locations, so only
-    // an identically-filtered link re-activates (issue #100).
-    const existing = state.entries.find(e => e.key === target.key);
-    if (existing) {
+    // Re-activate, do nothing, or push — one decision, in stack-layout.ts,
+    // taken against the live stack AND the pushes already in flight (#112).
+    const plan = planPush(state, pendingPushes, target);
+    if (plan.kind === 'ignore') return;
+    if (plan.kind === 'activate') {
+      const existing = entryForSlot(state, plan.slot)!;
       stackStore.update(s => activateCardFn(s, existing.slot));
       markReadIfKnown(existing.uid, existing.slot);
       updateUrl();
@@ -382,7 +389,21 @@
       return;
     }
 
-    const entry = withFreeSlot(state.entries, target);
+    const entry = plan.entry;
+    // Reserved from here until the push settles. The release is in a `finally`
+    // below rather than at each exit, because a push has several — a failed
+    // fetch returns early, and a view transition can reject — and a reservation
+    // that outlives its push would silently make the location unpushable.
+    pendingPushes = [...pendingPushes, entry];
+    try {
+      await performPush(entry, clickedLink, state);
+    } finally {
+      pendingPushes = pendingPushes.filter(e => e !== entry);
+    }
+  }
+
+  /** The push itself, once `planPush` has settled that there is one to do. */
+  async function performPush(entry: LocationEntry, clickedLink: Element | null | undefined, state: StackState) {
     const uid = entry.uid;
     const slot = entry.slot;
 

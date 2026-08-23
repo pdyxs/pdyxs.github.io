@@ -70,6 +70,59 @@ export function withFreeSlot(entries: readonly LocationEntry[], entry: LocationE
   return slot === entry.slot ? entry : { ...entry, slot };
 }
 
+/** What a push of some location should actually do. See `planPush`. */
+export type PushPlan =
+  /** Already stacked — move the visitor to the entry occupying `slot`. */
+  | { kind: 'activate'; slot: string }
+  /** An in-flight push is already delivering this exact location. Do nothing. */
+  | { kind: 'ignore' }
+  /** Not stacked and not on its way — stack `entry`, whose slot is free. */
+  | { kind: 'push'; entry: LocationEntry };
+
+/**
+ * The whole decision behind a push: given the live stack, the pushes already in
+ * flight, and where the visitor asked to go, what happens?
+ *
+ * `pending` is what makes this more than a rename of `withFreeSlot`, and it is
+ * the hole issue #112 fell through. "Slots are unique by construction" (see the
+ * note at the top of this file) held only for slots that had already reached
+ * the store: `pushCard` allocates a slot and then AWAITS — a fetch, a view
+ * transition, a tick — before it appends. A second push starting inside that
+ * window saw a stack the first one had not landed in yet, so it neither matched
+ * the first push's key nor avoided its slot, and `allocateSlot` handed out the
+ * same handle twice. Not `#2`, the SAME string: two entries addressing one DOM
+ * node, one fragment-cache entry, and one key in the `{#each}`.
+ *
+ * So an in-flight push RESERVES its slot. `pending` holds what the callers have
+ * promised to append but have not appended yet, and both halves of the decision
+ * read it: the ignore check, and the allocation.
+ *
+ * Order matters, and pending is checked FIRST. An in-flight push for this exact
+ * location ends by activating it and writing the URL, so a repeat of it is
+ * already satisfied — that is the honest reading of a double-click, which is
+ * one intent delivered twice rather than a request for two cards. Ignoring is
+ * also the only answer that is safe in the window between a push landing in the
+ * store and its reservation being released, where a key is briefly in both.
+ *
+ * `ignore` is deliberately not `activate`: the location has no slot to activate
+ * yet. Nothing to address is exactly why the plan says do nothing.
+ */
+export function planPush(
+  state: StackState,
+  pending: readonly LocationEntry[],
+  target: LocationEntry,
+): PushPlan {
+  if (pending.some(e => e.key === target.key)) return { kind: 'ignore' };
+
+  // Identity, not uid: a lens filtered to puzzles and the same lens filtered to
+  // Norway are two locations, so only an identically-filtered link
+  // re-activates (issue #100).
+  const existing = state.entries.find(e => e.key === target.key);
+  if (existing) return { kind: 'activate', slot: existing.slot };
+
+  return { kind: 'push', entry: withFreeSlot([...state.entries, ...pending], target) };
+}
+
 /**
  * The DOM/cache handle of the FIRST entry holding an identity key, or null
  * when it isn't stacked. Keys are not unique (see the note at the top), so

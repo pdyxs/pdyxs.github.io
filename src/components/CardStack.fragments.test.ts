@@ -65,6 +65,7 @@ describe('the cache is no longer the caller\'s problem', () => {
 
   it('pushCard does not reach for applyMaxWidth', () => {
     expect(functionBody('pushCard')).not.toMatch(/applyMaxWidth/);
+    expect(functionBody('performPush')).not.toMatch(/applyMaxWidth/);
   });
 
   it('the layout effect is still the other applier', () => {
@@ -74,7 +75,10 @@ describe('the cache is no longer the caller\'s problem', () => {
 
 describe('every flow goes through the fragment store', () => {
   it('push ensures or loads the fragment before stacking it', () => {
-    const body = functionBody('pushCard');
+    // The fetch/placeholder half of a push lives in `performPush`; `pushCard`
+    // above it is now only the decision (`planPush`) and the reservation that
+    // keeps two concurrent pushes off one slot (#112).
+    const body = functionBody('performPush');
     expect(body).toMatch(/fragments\.has\(slot\)/);
     expect(body).toMatch(/fragments\.load\(uid\)/);
     expect(body).toMatch(/fragments\.seedPlaceholder\(/);
@@ -84,7 +88,7 @@ describe('every flow goes through the fragment store', () => {
   it('the placeholder swap patches the mounted card, not the whole stack', () => {
     // Replacing the card wholesale would pull the header out from under the
     // running view transition.
-    expect(functionBody('pushCard')).toMatch(/fragments\.replaceBody\(slot, html, elFor\(slot\)\)/);
+    expect(functionBody('performPush')).toMatch(/fragments\.replaceBody\(slot, html, elFor\(slot\)\)/);
   });
 
   it('close-to-empty ensures home before seeding it', () => {
@@ -104,12 +108,15 @@ describe('every flow goes through the fragment store', () => {
   });
 
   it('re-activating a stacked location reads the cache and fetches nothing', () => {
+    // The whole of `pushCard` is now the re-activate/ignore/push decision plus
+    // the reservation — the fetching moved down into `performPush` — so the
+    // "touches no network" claim is asserted over the function entire.
     const body = functionBody('pushCard');
-    const alreadyStacked = body.slice(0, body.indexOf('const wasHomePageMode'));
     // Identity, not uid: a differently-filtered lens link must NOT match here
-    // (issue #100) — it is a different location and has to push.
-    expect(alreadyStacked).toMatch(/entries\.find\(e => e\.key === target\.key\)/);
-    expect(alreadyStacked).not.toMatch(/fragments\.(ensure|load)\(/);
+    // (issue #100) — it is a different location and has to push. The rule is
+    // `planPush`'s now, and tested as behaviour in stack-layout.test.ts.
+    expect(body).toMatch(/planPush\(state, pendingPushes, target\)/);
+    expect(body).not.toMatch(/fragments\.(ensure|load)\(/);
     // The declared width and read tracking are cache reads, keyed by the
     // DOM/cache handle rather than by identity. Read state itself is keyed by
     // uid, though — a suffixed handle (`lens/x#2`) must never reach it.
