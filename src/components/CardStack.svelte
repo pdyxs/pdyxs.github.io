@@ -17,6 +17,7 @@
   import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../dimensions';
   import { markRead, readToRecord } from '../lib/card-view-state';
+  import { waitForTransition } from '../lib/transition-wait';
   import StackFragment from './StackFragment.svelte';
   import {
     createCardFragments,
@@ -229,6 +230,12 @@
   // --- Helpers ---
 
   const HOME_UID = 'lens/home';
+
+  /** Safety net for the closing card's collapse, which `global.css` declares at
+   *  300ms on `.body-wrapper`. Slack, not a duration: `waitForTransition`
+   *  resolves on the event and clears this, so it only ever fires when no
+   *  `transitionend` arrives at all. */
+  const BODY_COLLAPSE_FALLBACK_MS = 400;
 
   /**
    * The params a location owns, out of a query string. `from`/`to` are the
@@ -534,16 +541,7 @@
       const bw = el?.querySelector<HTMLElement>('.body-wrapper');
       if (bw) {
         bw.classList.remove('open');
-        await new Promise<void>(resolve => {
-          const onEnd = (e: Event) => {
-            if ((e as TransitionEvent).propertyName === 'grid-template-rows') {
-              bw.removeEventListener('transitionend', onEnd);
-              resolve();
-            }
-          };
-          bw.addEventListener('transitionend', onEnd);
-          setTimeout(resolve, 400);
-        });
+        await waitForTransition(bw, 'grid-template-rows', BODY_COLLAPSE_FALLBACK_MS);
       }
 
       const ok = await fragments.ensure(HOME_UID);

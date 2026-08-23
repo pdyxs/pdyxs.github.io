@@ -225,6 +225,37 @@ describe('close', () => {
     expect(state.entries.map(e => e.key)).toEqual([CARD_A]);
     expect(state.activeSlot).toBe(CARD_A);
   });
+
+  it('closing the last card animates it shut, then lands on the home lens', async () => {
+    // The close-to-EMPTY path — a deep-linked card closed with nothing behind
+    // it — which nothing covered before #104 touched the wait inside it.
+    //
+    // happy-dom runs no CSS, so `transitionend` never fires on its own: the
+    // synthetic event below is what stands in for the collapse finishing, and
+    // dispatching it is also the assertion that the listener is wired at all.
+    // Without it this would fall through to the 400ms fallback instead.
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    expect(get(stackStore).entries).toHaveLength(1);
+
+    const bodyWrapper = document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .body-wrapper`)!;
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .stack-card-close`)!.click();
+    await tick();
+
+    // The card is animating shut, and the stack has not moved yet.
+    expect(bodyWrapper.classList.contains('open')).toBe(false);
+    expect(get(stackStore).activeSlot).toBe(CARD_A);
+
+    const ended = new Event('transitionend');
+    Object.defineProperty(ended, 'propertyName', { value: 'grid-template-rows' });
+    bodyWrapper.dispatchEvent(ended);
+    await settle();
+
+    const state = get(stackStore);
+    expect(state.entries.map(e => e.key)).toEqual(['lens/home']);
+    expect(state.activeSlot).toBe('lens/home');
+    expect(window.location.pathname).toBe('/');
+  });
 });
 
 describe('the layout effect applies the store to the DOM', () => {
