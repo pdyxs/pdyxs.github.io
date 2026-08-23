@@ -8,9 +8,9 @@ tags:
   - "interactiveart"
   - "wip"
   - what/art/the-neighbourhood
+  - why/viewable
 image: "17988358507240608.mp4"
 source: instagram
-viewable: always
 ---
 
 Playing with stars and tilting phones #dataart #interactiveart #astronomy #wip

@@ -101,43 +101,57 @@ const content = defineCollection({
         // src/lib/priority-frontmatter.test.ts fails the build instead.
         priority: z.number().optional(),
         // ── generated-tag overrides ──
-        // Bare travel-log location path (e.g. "europe/norway/svalbard") that
-        // overrides the date-derived where:* tag for this card (see the travel
-        // generator in src/lib/filter-generators.ts). Also settable per-folder
-        // via _config.yaml, where it cascades nearest-wins. Use for content
-        // posted long after the trip it's about. The reserved value "none"
-        // suppresses the derived where:* tag entirely (for cards whose date
-        // carries no meaningful location); a nearer real path overrides it back.
-        location: z.string().optional(),
-        // Bare `when` path (e.g. "seethrough/2013/06") that overrides the
-        // date-derived when:<era>/<year>/<month> tag for this card (see the
-        // date/era generator in src/lib/filter-generators.ts). Also settable
-        // per-folder via _config.yaml, where it cascades nearest-wins. The
-        // reserved value "none" suppresses the derived when:* tag entirely.
-        // Named `era` (not `when`) so it never reads as a raw dimension tag —
-        // it is the override knob, mirroring how `location` feeds `where`.
-        era: z.string().optional(),
-        // The three `why:*` affordances, each `always` or `never`, overriding
-        // what the affordance generator derives for this card (see
-        // src/lib/why-tags.ts). Also settable per-folder via _config.yaml,
-        // where they cascade nearest-wins.
+        // Derivation control. `location:`/`era:` used to live here as "derive
+        // this instead" knobs; issue #116 retired both, so redirecting a
+        // derivation is now authoring the tag you want plus excluding the one
+        // you don't. The asymmetry is deliberate — an authored tag ADDS where
+        // those keys REPLACED, and a card sitting in two places at once is
+        // often right for a post written up long after the fact.
         //
-        // `playable`/`buyable` are the escape hatch for the two ways their
-        // derivation can be wrong: `always` when the signal missed something
-        // real, `never` for a play link that leads somewhere no longer
-        // playable. Each key names its value, so a card that is two of the
-        // three says so twice — there is no combined field.
+        //   tags:
+        //     - where/europe/norway/svalbard   # the one you want
+        //     - generated/location             # re-enable, if a folder excluded it
+        //   excludeTags:
+        //     - generated/location             # drop the date-derived one
         //
-        // `viewable` is different: it is NOT derived at all (issue #96 —
-        // image-plus-short-body answered "does this have a picture", not "is
-        // this worth looking at", and caught the whole Instagram-era archive
-        // along with anything actually striking). `always` is the only way a
-        // card becomes `why:viewable` — curate deliberately, the same as
-        // `why:learn/*`. `never` on a `viewable` card is therefore a no-op,
-        // kept only so the three keys stay a uniform shape.
-        playable: z.enum(['always', 'never']).optional(),
-        viewable: z.enum(['always', 'never']).optional(),
-        buyable: z.enum(['always', 'never']).optional(),
+        // A `generated/<name>` entry in `tags:` re-enables a derivation an
+        // ancestor `_config.yaml` excluded, and is stripped before the tag
+        // list goes anywhere — it names no filter value. Re-enable beats
+        // exclude wherever each was declared, because exclusions accumulate
+        // down the cascade and a nearer-wins rule would make the escape hatch
+        // unable to escape. A `generated/*` name no generator declares is a
+        // BUILD ERROR in either field.
+        //
+        // Tags this card should NOT carry, in two forms (see
+        // src/lib/exclude-tags.ts). Also settable per-folder via _config.yaml,
+        // where — unlike `location`/`era` above — it ACCUMULATES rather than
+        // nearest-wins: an exclusion is a statement about one tag, so a card
+        // naming its own has not withdrawn its folder's.
+        //
+        //   excludeTags:
+        //     - why/playable          # this value, whoever proposed it
+        //     - generated/location    # whatever the location derivation proposed
+        //
+        // `generated/<name>` names a derivation (`location`, `era`,
+        // `difficulty`, `playable`, `buyable`) and is the robust form: it says
+        // "no location" without needing to know what the travel log currently
+        // derives, so shifting a date range cannot silently un-suppress the
+        // card. A `generated/*` entry naming no real key is a BUILD ERROR — a
+        // suppression knob that fails open would be invisible.
+        //
+        // Anything else is a tag value, prefix-matching on segment boundaries
+        // (`where/europe` drops any European derivation). It can only remove a
+        // GENERATED tag: authored tags are unvetoable by construction, so you
+        // write the tag or the veto and the two can never contradict. An entry
+        // that removes nothing is surfaced as the `inert-derivation-control` audit
+        // finding — the value form is the half that can go stale silently.
+        //
+        // Issue #116 folded five ad-hoc knobs into this one field: `location:
+        // none`, `era: none`, and `playable`/`viewable`/`buyable: never`. There
+        // is deliberately no "force it on" counterpart: authoring the tag IS
+        // that, which is why `viewable: always` became `tags: [why/viewable]`
+        // and why `location:`/`era:` could be retired outright.
+        excludeTags: z.array(z.string()).optional(),
         // Manual "a human has read this card end to end" flag. Obsidian's
         // Properties view only renders a checkbox for a key that actually
         // exists in the file — scripts/backfill-inspected.mjs stamps it onto

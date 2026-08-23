@@ -21,7 +21,7 @@ const fixtureFields: SchemaField[] = [
   { name: 'description', section: 'common', hint: 'string' },
   { name: 'tags', section: 'common', hint: 'list of strings' },
   { name: 'date', section: 'common', hint: 'date (YYYY-MM-DD)' },
-  { name: 'location', section: 'generated-tag overrides', hint: 'string' },
+  { name: 'navRenderer', section: 'generated-tag overrides', hint: 'string' },
   { name: 'renderer', section: 'generated-tag overrides', hint: 'string' },
   { name: 'status', section: 'generated-tag overrides', hint: 'draft | published' },
   { name: 'image', section: 'generated-tag overrides', hint: 'string' },
@@ -168,7 +168,7 @@ describe('selectTemplateFields', () => {
       { path: 'what/posts/stories', cascade: {} },
       fixtureFields
     ).map((f) => f.name);
-    for (const excluded of ['title', 'tags', 'date', 'status', 'renderer', 'location']) {
+    for (const excluded of ['title', 'tags', 'date', 'status', 'renderer', 'navRenderer']) {
       expect(names).not.toContain(excluded);
     }
   });
@@ -183,17 +183,18 @@ describe('templateFileName', () => {
 
 describe('inheritedNotes', () => {
   it('lists the cascaded values a card must not repeat', () => {
-    expect(
-      inheritedNotes({
-        renderer: 'story',
-        navRenderer: 'series',
-        overrides: { location: 'europe/norway/svalbard' },
-      })
-    ).toEqual([
+    expect(inheritedNotes({ renderer: 'story', navRenderer: 'series' })).toEqual([
       'renderer: story',
       'navRenderer: series',
-      'location: europe/norway/svalbard',
     ]);
+  });
+
+  it('does NOT list a generator-read field — those are per-card', () => {
+    // `difficulty` is the only thing left in `overrides` since issue #116
+    // retired `location`/`era`, and every puzzle declares its own.
+    expect(
+      inheritedNotes({ renderer: 'card', overrides: { difficulty: 'Level 3 (Medium)' } })
+    ).toEqual(['renderer: card']);
   });
 
   it('is empty for a folder that cascades nothing', () => {

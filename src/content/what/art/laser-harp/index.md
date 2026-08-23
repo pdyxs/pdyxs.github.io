@@ -12,6 +12,7 @@ tags:
   - science
   - when/released
   - installation
+  - why/viewable
 date: 2015-06-01
 medium: Installation artwork
 actions: []
@@ -41,7 +42,6 @@ meta:
   - label: Exhibited at
     values:
       - Vivid Sydney, 2015
-viewable: always
 ---
 The Laser Harp is a musical instrument which combines light, sound and interactive art.
 

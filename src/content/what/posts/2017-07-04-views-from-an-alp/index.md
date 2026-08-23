@@ -2,10 +2,10 @@
 inspected: false
 title: "Views from an Alp"
 date: '2017-07-04 23:26:00 +1000'
-tags: []
+tags:
+  - why/viewable
 image: "17863166809144180.jpg"
 source: instagram
-viewable: always
 ---
 
 Views from an Alp

@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { generatedTagsForCard, generatorOverrideKeys, allGeneratedFilterValues, declaredGeneratedFilterValues, generatedDisplayName, generatedSortOrder, generatedGroup } from './filter-generators';
+import { generatedTagsForCard, generatorDerivations, generatorFrontmatterKeys, allGeneratedFilterValues, declaredGeneratedFilterValues, generatedDisplayName, generatedSortOrder, generatedGroup } from './filter-generators';
+import { parseExcludeTags } from './exclude-tags';
 import { TRAVEL_LOG } from '../data/travel-log';
+
+/** Parse an authored excludeTags list against the real generator key set. */
+const EXCLUDE = (entries: string[]) => parseExcludeTags(entries, generatorDerivations());
 
 describe('generatedTagsForCard', () => {
   it('injects the travel-log where:* tag for a card whose date falls in a range', () => {
@@ -15,39 +19,41 @@ describe('generatedTagsForCard', () => {
     expect(generatedTagsForCard(base, {})).toEqual(base);
   });
 
-  it('a location override replaces the date-derived value', () => {
-    // 2018-07-15 falls in the Berlin range, but the override wins.
-    const tags = generatedTagsForCard(['what:writing'], {
-      date: new Date('2018-07-15T00:00:00.000Z'),
-      overrides: { location: 'europe/norway/svalbard' },
+  it('an authored where tag ADDS to the derived one, rather than replacing it', () => {
+    // The semantic shift when `location:` was retired (issue #116): a card
+    // sitting in two places at once is often right for a post written up long
+    // after the trip. Replacing is now said explicitly, with an exclusion.
+    const tags = generatedTagsForCard(['where:europe/norway/svalbard'], {
+      date: new Date('2017-09-15T00:00:00.000Z'),
     });
     expect(tags).toContain('where:europe/norway/svalbard');
+    expect(tags).toContain('where:africa/morocco/taghazout');
+  });
+
+  it('…and the exclusion is what makes it a replacement', () => {
+    const tags = generatedTagsForCard(['where:europe/norway/svalbard'], {
+      date: new Date('2017-09-15T00:00:00.000Z'),
+      exclude: EXCLUDE(['generated/location']),
+    });
     expect(tags.filter(t => t.startsWith('where:'))).toEqual(['where:europe/norway/svalbard']);
   });
 
-  it('an override coexists with an authored where:work tag', () => {
-    const tags = generatedTagsForCard(['where:work/dot'], {
-      date: new Date('2018-07-15T00:00:00.000Z'),
-      overrides: { location: 'europe/norway/svalbard' },
-    });
-    expect(tags).toContain('where:work/dot');
-    expect(tags).toContain('where:europe/norway/svalbard');
-  });
-
-  it('location: none suppresses the date-derived tag', () => {
-    // 2017-09-15 is the Taghazout range, but `none` opts out of derivation.
+  it('generated/location suppresses the date-derived tag', () => {
+    // 2017-09-15 is the Taghazout range, but the exclusion opts out of derivation.
     const tags = generatedTagsForCard(['what:writing'], {
       date: new Date('2017-09-15T00:00:00.000Z'),
-      overrides: { location: 'none' },
+      exclude: EXCLUDE(['generated/location']),
     });
     expect(tags.filter(t => t.startsWith('where:'))).toEqual([]);
     expect(tags).toContain('what:writing');
   });
 
-  it('location: none leaves an authored where:work tag in place', () => {
+  it('generated/location leaves an authored where:work tag in place', () => {
+    // Structural, not incidental: a generator declines its own derivation and
+    // never touches the list it was handed.
     const tags = generatedTagsForCard(['where:work/dot'], {
       date: new Date('2017-09-15T00:00:00.000Z'),
-      overrides: { location: 'none' },
+      exclude: EXCLUDE(['generated/location']),
     });
     // location suppressed → no derived where:* geo tag; authored work tag stays.
     expect(tags.filter(t => t.startsWith('where:'))).toEqual(['where:work/dot']);
@@ -82,28 +88,27 @@ describe('generatedTagsForCard', () => {
     expect(tags).toContain('when:nomad/2017/09');
   });
 
-  it('an era override replaces the date-derived when tag', () => {
-    const tags = generatedTagsForCard(['what:writing'], {
+  it('an authored when tag plus an exclusion replaces the date-derived one', () => {
+    const tags = generatedTagsForCard(['when:current/2024/01'], {
       date: new Date('2013-06-09T00:00:00.000Z'),
-      overrides: { era: 'current/2024/01' },
+      exclude: EXCLUDE(['generated/era']),
     });
-    expect(tags).toContain('when:current/2024/01');
     expect(tags.filter(t => t.startsWith('when:'))).toEqual(['when:current/2024/01']);
   });
 
-  it('era: none suppresses the date-derived when tag', () => {
+  it('generated/era suppresses the date-derived when tag', () => {
     const tags = generatedTagsForCard(['what:writing'], {
       date: new Date('2013-06-09T00:00:00.000Z'),
-      overrides: { era: 'none' },
+      exclude: EXCLUDE(['generated/era']),
     });
     expect(tags.filter(t => t.startsWith('when:'))).toEqual([]);
     expect(tags).toContain('what:writing');
   });
 
-  it('the era and location overrides are independent', () => {
+  it('the era and location exclusions are independent', () => {
     const tags = generatedTagsForCard([], {
       date: new Date('2017-09-15T00:00:00.000Z'),
-      overrides: { location: 'none' },
+      exclude: EXCLUDE(['generated/location']),
     });
     // location suppressed, but the date/era tag still derives.
     expect(tags.filter(t => t.startsWith('where:'))).toEqual([]);
@@ -111,18 +116,33 @@ describe('generatedTagsForCard', () => {
   });
 });
 
-describe('generatorOverrideKeys', () => {
-  it('includes the travel generator\'s location key', () => {
-    expect(generatorOverrideKeys()).toContain('location');
+describe('generatorDerivations', () => {
+  it("includes the travel generator's location derivation", () => {
+    expect(generatorDerivations()).toContain('location');
   });
 
-  it('includes the date/era generator\'s era key', () => {
-    expect(generatorOverrideKeys()).toContain('era');
+  it("includes the date/era generator's era derivation", () => {
+    expect(generatorDerivations()).toContain('era');
   });
 
   it('is deduplicated', () => {
-    const keys = generatorOverrideKeys();
+    const keys = generatorDerivations();
     expect(keys).toEqual([...new Set(keys)]);
+  });
+
+  it('is the whole legal `generated/*` namespace', () => {
+    expect([...generatorDerivations()].sort()).toEqual(
+      ['buyable', 'difficulty', 'era', 'location', 'playable'],
+    );
+  });
+});
+
+describe('generatorFrontmatterKeys', () => {
+  it('is just `difficulty` — the two real overrides were retired (issue #116)', () => {
+    // `difficulty` is not an override: it is authored content with four
+    // consumers, one of which is this generator. `location`/`era` existed only
+    // to redirect a derivation, which `tags` + `excludeTags` now says.
+    expect(generatorFrontmatterKeys()).toEqual(['difficulty']);
   });
 });
 
@@ -263,8 +283,8 @@ describe('puzzle difficulty generator', () => {
     expect(generatedTagsForCard(tags, { overrides: { difficulty: 'Level 2 (Easy)' } })).toEqual(tags);
   });
 
-  it('declares `difficulty` as an override key so the cascade plumbing supplies it', () => {
-    expect(generatorOverrideKeys()).toContain('difficulty');
+  it('declares `difficulty` as a read field so the cascade plumbing supplies it', () => {
+    expect(generatorFrontmatterKeys()).toContain('difficulty');
   });
 
   it('labels a level with its stars and sorts it by rating', () => {

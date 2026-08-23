@@ -2,10 +2,10 @@
 inspected: false
 title: "Abandoned temple near Siem reap"
 date: '2017-12-18 21:54:00 +1000'
-tags: []
+tags:
+  - why/viewable
 image: "17900827531104013.jpg"
 source: instagram
-viewable: always
 ---
 
 Abandoned temple near Siem reap

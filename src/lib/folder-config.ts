@@ -41,10 +41,24 @@ export type FolderCascade = {
   /** Cascade tags accumulated across every ancestor `_config.yaml` (union, order-preserving, dedup). */
   cascadeTags: string[];
   /**
+   * `excludeTags` accumulated across every ancestor `_config.yaml` (union,
+   * order-preserving, dedup) — see exclude-tags.ts.
+   *
+   * ACCUMULATES, like `cascadeTags` and unlike the nearest-wins scalars around
+   * it. That follows the list-valued precedent rather than breaking the
+   * nearest-wins rule: an exclusion is a statement about one tag, so a card
+   * naming its own has not thereby withdrawn its folder's. `what/puzzles`
+   * excludes `generated/location` for all 20 puzzles; a single puzzle adding
+   * an exclusion of its own must not silently take every puzzle's location
+   * derivation back.
+   */
+  excludeTags: string[];
+  /**
    * Nearest-ancestor value for each requested override key (see the
-   * `overrideKeys` param) — e.g. a generator's `location` override. Only keys
-   * that appear in some ancestor `_config.yaml` are present. Nearest-wins, like
-   * `renderer`.
+   * `frontmatterKeys` param) — just `difficulty` now, since the two keys that
+   * were true overrides (`location`, `era`) were retired in issue #116. Only
+   * keys that appear in some ancestor `_config.yaml` are present. Nearest-wins,
+   * like `renderer`.
    */
   overrides: Record<string, string>;
   /**
@@ -110,6 +124,7 @@ type ConfigFile = {
   gallery?: boolean;
   priority?: number;
   sort?: string;
+  excludeTags?: string[];
   [key: string]: unknown;
 };
 
@@ -130,7 +145,7 @@ type ConfigFile = {
 export async function resolveFolderCascade(
   uid: string,
   reader: (path: string) => Promise<string | null>,
-  overrideKeys: string[] = []
+  frontmatterKeys: string[] = []
 ): Promise<FolderCascade> {
   const parts = uid.split('/');
   const dirs = parts.slice(0, -1);
@@ -148,6 +163,8 @@ export async function resolveFolderCascade(
   let sort: FolderSort | undefined;
   const cascadeTags: string[] = [];
   const seenTags = new Set<string>();
+  const excludeTags: string[] = [];
+  const seenExcludes = new Set<string>();
   const overrides: Record<string, string> = {};
   let tagIdentity: { name?: string; description?: string } = {};
 
@@ -185,10 +202,23 @@ export async function resolveFolderCascade(
       }
     }
 
-    // Override keys cascade nearest-wins, like `renderer`: a deeper candidate
-    // overwrites a shallower one. Kept generic — this module owns no knowledge
-    // of any specific generator's key.
-    for (const key of overrideKeys) {
+    if (Array.isArray(parsed.excludeTags)) {
+      // Union, not replace — see the FolderCascade field comment. Left in the
+      // AUTHORED form: parseExcludeTags owns the `generated/` interception and
+      // the authored → canonical normalisation, and doing half of it here
+      // would put a second copy of that boundary in this module.
+      for (const entry of parsed.excludeTags) {
+        if (typeof entry !== 'string') continue;
+        if (seenExcludes.has(entry)) continue;
+        seenExcludes.add(entry);
+        excludeTags.push(entry);
+      }
+    }
+
+    // Generator-read fields cascade nearest-wins, like `renderer`: a deeper
+    // candidate overwrites a shallower one. Kept generic — this module owns no
+    // knowledge of any specific generator's field.
+    for (const key of frontmatterKeys) {
       const value = parsed[key];
       if (typeof value === 'string') overrides[key] = value;
     }
@@ -200,5 +230,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, width, gallery, priority, sort, cascadeTags, overrides, tagIdentity };
+  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, width, gallery, priority, sort, cascadeTags, excludeTags, overrides, tagIdentity };
 }

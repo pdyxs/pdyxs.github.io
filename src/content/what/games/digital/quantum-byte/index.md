@@ -6,6 +6,8 @@ tags:
   - when/shelved
   - science
   - interactive
+excludeTags:
+  - generated/location
 date: 2019-01-01
 image: dating.jpg
 actions:
@@ -33,7 +35,6 @@ meta:
   - label: Developed with assistance from
     values:
       - Daniel Keogh
-location: none
 ---
 Completely Accurate Thought Simulator is an attempt to help people understand what a quantum computer is and how it differs from a regular computer.
 

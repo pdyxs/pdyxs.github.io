@@ -5,8 +5,8 @@ description: Make a plan. Steal a painting. Don't get caught.
 tags:
   - when/released
   - installation
+  - why/viewable
 date: 2017-05-01
-location: australia/sydney
 images:
   - trailer.mp4
   - outside.jpg
@@ -36,7 +36,6 @@ meta:
   - label: Season
     values:
       - May-August 2017, Dulwich Hill, Sydney
-viewable: always
 ---
 An immersive escape room, run in Sydney in 2017.
 

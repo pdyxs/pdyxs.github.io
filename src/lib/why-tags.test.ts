@@ -8,7 +8,7 @@ import {
   isPlayable,
 } from './why-tags';
 import { resolveActions } from './card-actions';
-import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
+import { generatedTagsForCard, generatorDerivations } from './filter-generators';
 import { discoverTagSources, makeContentTreeReader } from './tag-registry';
 
 describe('isPlayable', () => {
@@ -57,60 +57,45 @@ describe('deriveWhyTags', () => {
         { text: 'Play it', url: 'https://x', kind: 'play' },
         { text: 'Buy a nice copy', url: 'https://y', kind: 'buy' },
       ],
-    }, { viewable: 'always' });
-    expect(tags).toEqual([WHY_PLAYABLE, WHY_VIEWABLE, WHY_BUYABLE]);
+    });
+    expect(tags).toEqual([WHY_PLAYABLE, WHY_BUYABLE]);
   });
 
   it('emits nothing for a card that qualifies for nothing', () => {
     expect(deriveWhyTags({})).toEqual([]);
   });
 
-  it('`viewable` is never derived — only `always` ever adds it', () => {
-    // Issue #96: viewable used to derive from image + short body. It no
-    // longer derives from anything; curation is the only way in.
-    expect(deriveWhyTags({})).toEqual([]);
-    expect(deriveWhyTags({}, { viewable: 'always' })).toEqual([WHY_VIEWABLE]);
+  it('never derives `viewable`, whatever the card carries', () => {
+    // Issue #96 retired the image + short-body derivation; issue #116 retired
+    // the `viewable: always` key that replaced it. The value is now reached
+    // only by authoring the tag, so this function has no opinion on it at all.
+    const source = {
+      actions: [
+        { text: 'Play it', url: 'https://x', kind: 'play' as const },
+        { text: 'Buy a nice copy', url: 'https://y', kind: 'buy' as const },
+      ],
+    };
+    expect(deriveWhyTags(source)).not.toContain(WHY_VIEWABLE);
+    expect(deriveWhyTags({})).not.toContain(WHY_VIEWABLE);
   });
 
-  it('`viewable: never` is a no-op, since nothing would have derived it anyway', () => {
-    expect(deriveWhyTags({}, { viewable: 'never' })).toEqual([]);
-  });
-
-  it('`never` suppresses an affordance the derivation would have given', () => {
+  it('a suppression key drops an affordance the derivation would have given', () => {
     const source = { actions: [{ text: 'Play it', url: 'https://x', kind: 'play' as const }] };
     expect(deriveWhyTags(source)).toEqual([WHY_PLAYABLE]);
-    expect(deriveWhyTags(source, { playable: 'never' })).toEqual([]);
+    expect(deriveWhyTags(source, new Set(['playable']))).toEqual([]);
   });
 
-  it('overrides are per-value: one does not touch the others', () => {
-    const source = { actions: [{ text: 'Play it', url: 'https://x', kind: 'play' as const }] };
-    expect(deriveWhyTags(source, { playable: 'never', viewable: 'always' })).toEqual([WHY_VIEWABLE]);
-  });
-
-  it('an unrecognised override value falls through to the derivation', () => {
-    // A typo should leave the card as it was, not silently drop it from a filter.
-    const source = { actions: [{ text: 'Play it', url: 'https://x', kind: 'play' as const }] };
-    expect(deriveWhyTags(source, { playable: 'yes' })).toEqual([WHY_PLAYABLE]);
-  });
-});
-
-describe('the affordance filter generator', () => {
-  it('declares its three override keys, so the cascade plumbing carries them', () => {
-    expect(generatorOverrideKeys()).toEqual(expect.arrayContaining(['playable', 'viewable', 'buyable']));
-  });
-
-  it('merges its tags into the card tag list without disturbing existing ones', () => {
-    const tags = generatedTagsForCard(['what:games/analog'], {
-      actions: [{ text: 'Play it', url: 'https://x', kind: 'play' }],
-    });
-    expect(tags).toEqual(expect.arrayContaining(['what:games/analog', WHY_PLAYABLE]));
-  });
-
-  it('does not duplicate a why tag a card already carries', () => {
-    const tags = generatedTagsForCard([WHY_PLAYABLE], {
-      actions: [{ text: 'Play it', url: 'https://x', kind: 'play' }],
-    });
-    expect(tags.filter(t => t === WHY_PLAYABLE)).toHaveLength(1);
+  it('suppression is per-affordance: one does not touch the others', () => {
+    // The whole reason the generator form is keyed on the override key rather
+    // than on the generator — `generated/why` could not express this.
+    const source = {
+      actions: [
+        { text: 'Play it', url: 'https://x', kind: 'play' as const },
+        { text: 'Buy a nice copy', url: 'https://y', kind: 'buy' as const },
+      ],
+    };
+    expect(deriveWhyTags(source, new Set(['playable']))).toEqual([WHY_BUYABLE]);
+    expect(deriveWhyTags(source, new Set(['buyable']))).toEqual([WHY_PLAYABLE]);
   });
 });
 

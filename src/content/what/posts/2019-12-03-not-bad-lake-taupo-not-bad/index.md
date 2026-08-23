@@ -6,9 +6,9 @@ tags:
   - "lakes"
   - "lakeswithsunsets"
   - "sunset"
+  - why/viewable
 image: "17923599451352358.jpg"
 source: instagram
-viewable: always
 ---
 
 Not bad, lake Taupo. Not bad at all

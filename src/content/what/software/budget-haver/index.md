@@ -5,6 +5,9 @@ description: A minimalistic budgeting app, focusing on helping you to control yo
 tags:
   - when/shelved
   - development
+  - why/viewable
+excludeTags:
+  - generated/location
 images:
   - icon.jpg
 image: icon.jpg
@@ -21,7 +24,5 @@ meta:
     values:
       - Designer, Developer
 status: unlisted
-location: none
-viewable: always
 ---
 Budget Haver is a budgeting app that I built for myself in late 2018, as I found myself wanting to have better control over my own spending, and didn't see an existing solution that fit my needs.

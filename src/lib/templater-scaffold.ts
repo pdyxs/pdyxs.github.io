@@ -60,8 +60,12 @@ export type ContainerFolder = {
  * about. They cascade from `_config.yaml`, so repeating them per card is a
  * mistake, not a convenience — the template names the inherited values in a
  * trailing comment instead.
+ *
+ * `location` and `era` used to be here; issue #116 retired both fields, so
+ * there is nothing left to filter out. `excludeTags` is deliberately NOT
+ * added: unlike these two it is legitimately per-card as well as cascading.
  */
-const CASCADE_ONLY_FIELDS = new Set(['renderer', 'navRenderer', 'location', 'era']);
+const CASCADE_ONLY_FIELDS = new Set(['renderer', 'navRenderer']);
 
 /** Fields the template prefills itself, so they must not also be offered as suggestions. */
 const PREFILLED_FIELDS = new Set(['title', 'status', 'date', 'tags']);
@@ -196,14 +200,19 @@ export function templateFileName(folderPath: string): string {
   return `${folderPath.replace(/\//g, '-')}.md`;
 }
 
-/** The cascaded values a card in this folder inherits, as `key: value` strings. */
+/**
+ * The cascaded values a card in this folder inherits, as `key: value` strings.
+ *
+ * Only the two cascade-only fields. It used to also walk `cascade.overrides`
+ * for anything in CASCADE_ONLY_FIELDS, which covered `location`/`era` — both
+ * retired in issue #116. What is left in `overrides` is `difficulty`, which is
+ * inherently per-card (every puzzle has its own) and so is never something a
+ * card "must not repeat"; the loop could only ever have matched nothing.
+ */
 export function inheritedNotes(cascade: ScaffoldCascade): string[] {
   const notes: string[] = [];
   if (cascade.renderer) notes.push(`renderer: ${cascade.renderer}`);
   if (cascade.navRenderer) notes.push(`navRenderer: ${cascade.navRenderer}`);
-  for (const key of Object.keys(cascade.overrides ?? {}).sort()) {
-    if (CASCADE_ONLY_FIELDS.has(key)) notes.push(`${key}: ${cascade.overrides![key]}`);
-  }
   return notes;
 }
 

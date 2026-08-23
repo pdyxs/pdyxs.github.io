@@ -8,9 +8,9 @@ tags:
   - "gamedev"
   - "timefight"
   - what/games/analog/time-fight
+  - why/viewable
 image: "18105674827111057.jpg"
 source: instagram
-viewable: always
 ---
 
 It returns... #timefight #boardgames #gamedev #gamedesign

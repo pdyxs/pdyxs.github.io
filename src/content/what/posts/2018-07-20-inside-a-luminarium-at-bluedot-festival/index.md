@@ -6,9 +6,9 @@ tags:
   - "bluedot"
   - "nodigitalfiltersanyway"
   - "nofilter"
+  - why/viewable
 image: "17961682354060989.jpg"
 source: instagram
-viewable: always
 ---
 
 Inside a Luminarium at #bluedot festival. All the light inside is sunlight filtered through material #nofilter #nodigitalfiltersanyway

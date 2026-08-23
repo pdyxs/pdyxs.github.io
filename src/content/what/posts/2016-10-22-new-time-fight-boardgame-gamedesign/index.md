@@ -6,9 +6,9 @@ tags:
   - "boardgame"
   - "gamedesign"
   - what/games/analog/time-fight
+  - why/viewable
 image: "17844189316134549.jpg"
 source: instagram
-viewable: always
 ---
 
 New time fight #boardgame #gamedesign

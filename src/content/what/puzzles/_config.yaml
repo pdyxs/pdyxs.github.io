@@ -29,6 +29,8 @@ sort: difficulty asc
 gallery: false
 # No derived `where:` tag. The travel generator would stamp each puzzle with
 # wherever I happened to be on its publication date, which says nothing about a
-# puzzle — they're made anywhere, over months. `none` is the generator's
-# suppress sentinel (see travelWhereGenerator in src/lib/filter-generators.ts).
-location: none
+# puzzle — they're made anywhere, over months. `generated/location` suppresses
+# whatever that derivation would have produced, without this file having to know
+# what the travel log currently says (see src/lib/exclude-tags.ts).
+excludeTags:
+  - generated/location

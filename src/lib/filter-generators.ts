@@ -31,7 +31,14 @@ import {
   parseDifficultyLevel,
 } from './difficulty.ts';
 import type { Action } from './card-actions.ts';
-import { WHY_AFFORDANCES, WHY_OVERRIDE_KEYS, deriveWhyTags } from './why-tags.ts';
+import { WHY_AFFORDANCES, WHY_SUPPRESSION_KEYS, deriveWhyTags } from './why-tags.ts';
+import {
+  EMPTY_EXCLUDE_PLAN,
+  isEmptyExcludePlan,
+  isVetoed,
+  matchesVeto,
+  type ExcludePlan,
+} from './exclude-tags.ts';
 
 /** The card fields a generator may read. Kept minimal and view-free. */
 export type FilterGeneratorCard = {
@@ -44,56 +51,92 @@ export type FilterGeneratorCard = {
    */
   actions?: Action[];
   /**
-   * Explicit override attributes, keyed by the frontmatter/`_config.yaml`
-   * attribute name a generator declares in `overrideKeys`. Populated by
+   * Content fields this generator reads, keyed by the frontmatter/
+   * `_config.yaml` name it declares in `frontmatterKeys`. Populated by
    * getAllCards() (src/lib/cards.ts) as `frontmatter[key] ?? cascade[key]`.
+   *
+   * Exactly one generator uses this now: the difficulty generator reads a
+   * puzzle's `difficulty:`. It is NOT an override of anything — that field
+   * feeds four consumers (the ★★★☆☆ meta row, this tag, the panel label, and
+   * `what/puzzles`' `sort: difficulty asc`) and the generator is one of them.
+   * The two keys that WERE overrides (`location`, `era`) are retired: saying
+   * "derive this instead" is now saying it in `tags`.
    */
   overrides?: Record<string, string | undefined>;
+  /**
+   * The card's parsed `excludeTags` (see exclude-tags.ts). A generator reads
+   * only `suppressed`, and only for its own derivation names — it declines its
+   * own derivation and can never reach an authored tag. The `vetoes` half is
+   * applied once, over the whole generated delta, in generateTagsForCard().
+   *
+   * Re-enables (`tags: [generated/<name>]`) are already resolved out of
+   * `suppressed` before any generator runs, so a re-enabled derivation is
+   * simply not suppressed here. There is deliberately no second check inside a
+   * generator for one to be sequenced wrongly against.
+   */
+  exclude?: ExcludePlan;
 };
 
 export type FilterGenerator = {
   /**
-   * Frontmatter/`_config.yaml` attribute names this generator consumes as
-   * explicit overrides. Each generator owns its own keys so two generators
-   * that both touch the same dimension never collide. See generatorOverrideKeys().
+   * The names this generator's derived tags are attributable to — the
+   * `generated/<name>` namespace that `excludeTags` suppresses and a
+   * `tags: [generated/<name>]` entry re-enables.
+   *
+   * A generator may declare SEVERAL. The affordance generator declares
+   * `playable` and `buyable` separately, which is what keeps them
+   * independently suppressible: a card is routinely one and not the other, so
+   * a single `generated/why` would be too blunt to be the thing on offer.
+   *
+   * This is deliberately its own field rather than the `frontmatterKeys`
+   * below. The two used to be one list, which worked only for as long as
+   * every derivation happened to have a frontmatter key behind it — retiring
+   * `location:` and `era:` (issue #116) broke that coincidence, and the
+   * namespace has nothing to do with which fields get read.
    */
-  overrideKeys?: string[];
+  derivations: string[];
+  /**
+   * Frontmatter/`_config.yaml` field names this generator READS. Only the
+   * difficulty generator has one; see the `overrides` note on
+   * FilterGeneratorCard for why that is a content field and not an override.
+   */
+  frontmatterKeys?: string[];
   /** Returns `tags` with this generator's derived tags merged in. */
   apply(tags: string[], card: FilterGeneratorCard): string[];
   /** Every filter value this generator can emit, for the short-code manifest. */
   allValues(): string[];
 };
 
-/** The attribute the travel generator reads to override its date-derived value. */
-const LOCATION_OVERRIDE_KEY = 'location';
+/** This generator's name in the `generated/*` namespace. */
+const LOCATION_DERIVATION = 'location';
 
 /**
- * Sentinel `location:` value that suppresses date-derivation entirely: the card
- * gets no geographic `where:*` tag even if its date falls in a travel-log range.
- * Reserved — no real travel-log location path is `none`. Only the *derived* tag
- * is suppressed; authored `where:*` tags (e.g. `where:work/*`) are left in place.
- */
-const LOCATION_NONE = 'none';
-
-/**
- * `where:*` location tags derived from the travel log (src/data/travel-log.ts).
- * A card's date is matched against the log's date ranges. A card (or a folder,
- * via `_config.yaml`) can override this by setting `location:` to a bare
- * location path — the override replaces the date lookup entirely — or to `none`
- * to suppress the derived tag altogether. Either way, authored `where:*` tags
- * (e.g. `where:work/*`) are left untouched.
+ * `where:*` location tags derived from the travel log (src/data/travel-log.ts),
+ * by matching a card's date against the log's date ranges.
+ *
+ * There is no "derive this instead" knob. A card that belongs somewhere its
+ * date does not say authors the tag and drops the derivation:
+ *
+ *     tags:
+ *       - where/europe/norway/svalbard
+ *     excludeTags:
+ *       - generated/location
+ *
+ * Both halves are needed, and the asymmetry is the point: an authored tag ADDS
+ * where the retired `location:` key REPLACED. Saying only the first leaves the
+ * card in two places at once, which for a post written up a month after the
+ * trip is often exactly right. (`location:` was retired in issue #116 along
+ * with the `location: none` sentinel that preceded `excludeTags`.)
+ *
+ * Authored `where:*` tags — including `where:work/*` — are never touched: this
+ * generator only ever declines its own derivation, and never reaches the tag
+ * list it was handed.
  */
 const travelWhereGenerator: FilterGenerator = {
-  overrideKeys: [LOCATION_OVERRIDE_KEY],
-  apply(tags, { date, overrides }) {
-    const override = overrides?.[LOCATION_OVERRIDE_KEY];
-    const derived = override === LOCATION_NONE
-      ? null
-      : override
-        ? `where:${override}`
-        : date
-          ? lookupLocationForDate(date, TRAVEL_LOG)
-          : null;
+  derivations: [LOCATION_DERIVATION],
+  apply(tags, { date, exclude }) {
+    if (exclude?.suppressed.has(LOCATION_DERIVATION)) return tags;
+    const derived = date ? lookupLocationForDate(date, TRAVEL_LOG) : null;
     return injectWhereTags(tags, derived);
   },
   allValues() {
@@ -101,35 +144,22 @@ const travelWhereGenerator: FilterGenerator = {
   },
 };
 
-/** The attribute the date/era generator reads to override its date-derived value. */
-const ERA_OVERRIDE_KEY = 'era';
-
-/**
- * Sentinel `era:` value that suppresses date-derivation entirely: the card gets
- * no `when:*` tag even if its date falls in an era range. Mirrors the travel
- * generator's `location: none`.
- */
-const ERA_NONE = 'none';
+/** This generator's name in the `generated/*` namespace. */
+const ERA_DERIVATION = 'era';
 
 /**
  * `when:<era>/<year>/<month>` tags derived from a card's date via the era
  * timeline (src/data/when-eras.ts). The date/era analogue of the travel
- * generator: a card (or a folder, via `_config.yaml`) can override this by
- * setting `era:` to a bare `when` path — the override replaces the date lookup
- * entirely — or to `none` to suppress the derived tag altogether. A card with
- * no `date` simply gets no derived `when:*` tag.
+ * generator, and it lost its `era:` override key for the same reason: a card
+ * that belongs to an era its date does not say authors `tags: [when/...]` and
+ * drops this derivation with `excludeTags: [generated/era]`. A card with no
+ * `date` simply gets no derived `when:*` tag.
  */
 const dateEraGenerator: FilterGenerator = {
-  overrideKeys: [ERA_OVERRIDE_KEY],
-  apply(tags, { date, overrides }) {
-    const override = overrides?.[ERA_OVERRIDE_KEY];
-    const derived = override === ERA_NONE
-      ? null
-      : override
-        ? `when:${override}`
-        : date
-          ? deriveWhenTag(date, WHEN_ERAS)
-          : null;
+  derivations: [ERA_DERIVATION],
+  apply(tags, { date, exclude }) {
+    if (exclude?.suppressed.has(ERA_DERIVATION)) return tags;
+    const derived = date ? deriveWhenTag(date, WHEN_ERAS) : null;
     if (derived === null || tags.includes(derived)) return tags;
     return [...tags, derived];
   },
@@ -138,8 +168,19 @@ const dateEraGenerator: FilterGenerator = {
   },
 };
 
-/** The attribute the difficulty generator reads — a puzzle's `difficulty:` frontmatter. */
-const DIFFICULTY_OVERRIDE_KEY = 'difficulty';
+/**
+ * A puzzle's `difficulty:` frontmatter — read as a CONTENT FIELD, not as an
+ * override. It doubles as this generator's `generated/*` name, which is a
+ * convenience, not a coupling: the two are separate fields on FilterGenerator.
+ *
+ * `difficulty:` survived the retirement of `location:`/`era:` because it was
+ * never the same kind of thing. Those two existed only to redirect a
+ * derivation; this one is authored content with four consumers (the ★★★☆☆ meta
+ * row via resolveMetaRows, this filter tag, generatedDisplayName's panel
+ * label, and `what/puzzles`' `sort: difficulty asc`). It merely looked like an
+ * override because the generator borrowed that plumbing to read it.
+ */
+const DIFFICULTY_FIELD = 'difficulty';
 
 /** Panel section the difficulty values form, below the (ungrouped) puzzle series. */
 const DIFFICULTY_GROUP = 'Difficulty';
@@ -158,9 +199,13 @@ const DIFFICULTY_GROUP = 'Difficulty';
  * the field stays puzzle-only (see the `difficulty` note in card-meta.ts).
  */
 const puzzleDifficultyGenerator: FilterGenerator = {
-  overrideKeys: [DIFFICULTY_OVERRIDE_KEY],
-  apply(tags, { overrides }) {
-    const level = parseDifficultyLevel(overrides?.[DIFFICULTY_OVERRIDE_KEY]);
+  derivations: [DIFFICULTY_FIELD],
+  frontmatterKeys: [DIFFICULTY_FIELD],
+  apply(tags, { overrides, exclude }) {
+    // Suppressing the TAG leaves the field alone: the stars, the panel label
+    // and the folder sort all still read `difficulty:`.
+    if (exclude?.suppressed.has(DIFFICULTY_FIELD)) return tags;
+    const level = parseDifficultyLevel(overrides?.[DIFFICULTY_FIELD]);
     if (level === undefined) return tags;
     const derived = difficultyTagValue(level);
     return tags.includes(derived) ? tags : [...tags, derived];
@@ -171,20 +216,25 @@ const puzzleDifficultyGenerator: FilterGenerator = {
 };
 
 /**
- * `why:playable` / `why:viewable` / `why:buyable` — what a card offers a
- * visitor, derived from its actions, header image and body length. The whole
- * decision lives in why-tags.ts; this is the shell that hands it the card.
+ * `why:playable` / `why:buyable` — what a card offers a visitor, derived from
+ * its resolved actions. The whole decision lives in why-tags.ts; this is the
+ * shell that hands it the card.
  *
- * Three override keys rather than one: the affordances are independent facts
- * (a card is routinely playable *and* viewable), so each gets its own
- * `always`/`never` knob instead of a single field that would have to carry a
- * list. The other two `why` values (`why:learn/*`) are authored curation and
- * are not generated at all — see why-tags.ts.
+ * Two suppression keys rather than one: the affordances are independent facts
+ * (a card is routinely playable but not buyable), so `excludeTags` addresses
+ * them separately — `generated/playable` leaves `generated/buyable` alone,
+ * where a hypothetical `generated/why` could not.
+ *
+ * The other three `why` values — `why:viewable` and the two `why:learn/*`
+ * topics — are authored curation and are not generated at all. Note the
+ * `!tags.includes` dedupe below: that is what lets an authored
+ * `tags: [why/playable]` stand as the "force it on" knob, so no `always`
+ * override needs to exist (issue #116).
  */
 const whyAffordanceGenerator: FilterGenerator = {
-  overrideKeys: [...WHY_OVERRIDE_KEYS],
-  apply(tags, { actions, overrides }) {
-    const derived = deriveWhyTags({ actions }, overrides ?? {});
+  derivations: [...WHY_SUPPRESSION_KEYS],
+  apply(tags, { actions, exclude }) {
+    const derived = deriveWhyTags({ actions }, exclude?.suppressed);
     const missing = derived.filter(tag => !tags.includes(tag));
     return missing.length === 0 ? tags : [...tags, ...missing];
   },
@@ -269,14 +319,106 @@ export function generatedGroup(value: string): string | undefined {
   return difficultyLevelFromTag(value) !== undefined ? DIFFICULTY_GROUP : undefined;
 }
 
-/** Runs every generator over a card's tags, returning the augmented list. */
-export function generatedTagsForCard(tags: string[], card: FilterGeneratorCard): string[] {
-  return FILTER_GENERATORS.reduce((acc, gen) => gen.apply(acc, card), tags);
+/** What generation produced, plus what it could not act on. */
+export type GeneratedTags = {
+  /** The card's tag list with every generator's tags merged in and vetoes applied. */
+  tags: string[];
+  /**
+   * `excludeTags` entries that removed nothing — the `inert-derivation-control` audit
+   * finding. The value form is the half that can stop matching silently (shift
+   * a travel-log range and `where/europe/norway` quietly vetoes nothing), and
+   * the generator form can go inert too when the derivation it suppresses had
+   * nothing to say. Reported in the authored form, so it can be found in the
+   * file it was written in.
+   */
+  inert: string[];
+};
+
+/**
+ * Runs every generator over a card's tags, applies its `excludeTags`, and
+ * reports any exclusion that turned out to be inert.
+ *
+ * The value-form veto is applied to the generated DELTA — the tags the
+ * generators added — never to `tags` itself. So an authored tag is unvetoable
+ * by construction: you write the tag or you write the veto, and the two can
+ * never contradict each other. The generator form is already handled inside
+ * each generator, at the point it decides.
+ */
+export function generateTagsForCard(
+  tags: string[],
+  card: FilterGeneratorCard,
+): GeneratedTags {
+  const plan = card.exclude ?? EMPTY_EXCLUDE_PLAN;
+  const proposed = FILTER_GENERATORS.reduce((acc, gen) => gen.apply(acc, card), tags);
+
+  if (isEmptyExcludePlan(plan)) return { tags: proposed, inert: [] };
+
+  const base = new Set(tags);
+  // Order-preserving: a base tag is always kept, a generated one only if no
+  // veto catches it.
+  const kept = proposed.filter(tag => base.has(tag) || !isVetoed(tag, plan));
+
+  return { tags: kept, inert: inertExclusions(tags, card, plan, proposed) };
 }
 
-/** The union of every override attribute key any generator declares (for the cascade + card plumbing). */
-export function generatorOverrideKeys(): string[] {
-  return [...new Set(FILTER_GENERATORS.flatMap(gen => gen.overrideKeys ?? []))];
+/**
+ * Which of this card's exclusions removed nothing.
+ *
+ * The value form is a straight question — did any veto catch a generated tag?
+ * The generator form has to be asked backwards: a suppressed generator emits
+ * nothing, so "did it matter?" means re-running that one generator unsuppressed
+ * and seeing whether it would have added anything. That costs one extra pass
+ * per generator-form entry, on the handful of cards that carry one.
+ */
+function inertExclusions(
+  tags: string[],
+  card: FilterGeneratorCard,
+  plan: ExcludePlan,
+  proposed: string[],
+): string[] {
+  const inert: string[] = [];
+
+  for (const key of plan.suppressed) {
+    const without: ExcludePlan = {
+      suppressed: new Set([...plan.suppressed].filter(k => k !== key)),
+      vetoes: plan.vetoes,
+    };
+    const unsuppressed = FILTER_GENERATORS.reduce(
+      (acc, gen) => gen.apply(acc, { ...card, exclude: without }),
+      tags,
+    );
+    if (unsuppressed.length === proposed.length) inert.push(`generated/${key}`);
+  }
+
+  for (const veto of plan.vetoes) {
+    const base = new Set(tags);
+    const caught = proposed.some(tag => !base.has(tag) && matchesVeto(tag, veto));
+    if (!caught) inert.push(veto);
+  }
+
+  return inert;
+}
+
+/** Runs every generator over a card's tags, returning the augmented list. */
+export function generatedTagsForCard(tags: string[], card: FilterGeneratorCard): string[] {
+  return generateTagsForCard(tags, card).tags;
+}
+
+/**
+ * Every legal name in the `generated/*` namespace — what `excludeTags` may
+ * suppress and what `tags: [generated/<name>]` may re-enable. The closed set
+ * that makes a typo in either a build error.
+ */
+export function generatorDerivations(): string[] {
+  return [...new Set(FILTER_GENERATORS.flatMap(gen => gen.derivations))];
+}
+
+/**
+ * The union of every frontmatter/`_config.yaml` field any generator READS (for
+ * the cascade + card plumbing). Just `difficulty` now — see DIFFICULTY_FIELD.
+ */
+export function generatorFrontmatterKeys(): string[] {
+  return [...new Set(FILTER_GENERATORS.flatMap(gen => gen.frontmatterKeys ?? []))];
 }
 
 /** Sorted, deduped union of every value any generator can emit (for the manifest). */

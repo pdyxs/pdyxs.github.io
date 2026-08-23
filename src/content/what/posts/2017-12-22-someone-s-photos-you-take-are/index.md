@@ -6,9 +6,9 @@ tags:
   - "nofilter"
   - "somanyshadows"
   - "theresanamazingbuddhastatuebehindmebutthelightingisterrible"
+  - why/viewable
 image: "17914978453014563.jpg"
 source: instagram
-viewable: always
 ---
 
 Someone's, photos you take are just really pretty #nofilter #somanyshadows #theresanamazingbuddhastatuebehindmebutthelightingisterrible

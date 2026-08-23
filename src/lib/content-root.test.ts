@@ -41,7 +41,9 @@ describe('content root resolution', () => {
     expect(cascade.width).toBe('520px');
     expect(cascade.dateLabel).toBe('Published');
     expect(cascade.gallery).toBe(false);
-    expect(cascade.overrides.location).toBe('none');
+    // `location: none` was folded into excludeTags by issue #116 — the puzzles
+    // config now states its suppression there, and it must survive the walk.
+    expect(cascade.excludeTags).toContain('generated/location');
   });
 
   it('the real tree reader discovers the container identities and tag declarations', async () => {

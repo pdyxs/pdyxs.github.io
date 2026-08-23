@@ -15,7 +15,13 @@
 // audit reads the raw collection instead, so its counts cover everything.
 import { getCollection } from 'astro:content';
 import { makeFileReader, resolveFolderCascade } from '../../lib/folder-config';
-import { getAllCards, resolveCardDescription, resolveCardTitle } from '../../lib/cards';
+import {
+  getAllCards,
+  inertDerivationControls,
+  resolveCardDescription,
+  resolveCardTitle,
+} from '../../lib/cards';
+import { generatorFrontmatterKeys } from '../../lib/filter-generators';
 import { localAssetFilenames } from '../../lib/images';
 import { serialiseBrowseCards } from '../../lib/browse-card';
 import { auditCards, auditedCardCount, type AuditCard } from '../../lib/audit';
@@ -34,6 +40,7 @@ const { tagDisplay = {} } = Astro.props as Props;
 
 const entries = await getCollection('content');
 const reader = makeFileReader();
+const frontmatterKeys = generatorFrontmatterKeys();
 
 // uid → the old Jekyll URLs it orphaned. One card can own several (a project
 // had both a /what/projects/ and a collection permalink), so this is a
@@ -47,7 +54,7 @@ for (const { uid, from } of ORPHANED_OLD_URLS) {
 
 const auditInput: AuditCard[] = await Promise.all(
   entries.map(async e => {
-    const cascade = await resolveFolderCascade(e.id, reader);
+    const cascade = await resolveFolderCascade(e.id, reader, frontmatterKeys);
     return {
       uid: e.id,
       title: resolveCardTitle(e.data),
@@ -65,6 +72,9 @@ const auditInput: AuditCard[] = await Promise.all(
       inspected: e.data.inspected,
       localAssets: localAssetFilenames(e.id),
       orphanedOldUrls: orphanedByUid.get(e.id),
+      // Needs the same cascade + generator run resolveCard() does, which is why
+      // the cascade above is resolved WITH the generator-read field names.
+      inertDerivationControls: inertDerivationControls(e.id, e.data, cascade, frontmatterKeys),
     } satisfies AuditCard;
   }),
 );

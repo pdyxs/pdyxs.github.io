@@ -2,10 +2,10 @@
 inspected: false
 title: "Sometimes you just find cool things in the office..."
 date: '2014-03-07 20:03:00 +1000'
-tags: []
+tags:
+  - why/viewable
 image: "17842890424027766.jpg"
 source: instagram
-viewable: always
 ---
 
 Sometimes you just find cool things in the office...

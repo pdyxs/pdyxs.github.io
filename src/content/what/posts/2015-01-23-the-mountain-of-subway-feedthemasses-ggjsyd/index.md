@@ -8,9 +8,9 @@ tags:
   - "ggj15"
   - "ggjsyd"
   - what/games/analog/houston-we-have-a
+  - why/viewable
 image: "17843021818027766.jpg"
 source: instagram
-viewable: always
 ---
 
 The mountain of Subway #feedthemasses #GGJSyd #ggj15 #eatfresh

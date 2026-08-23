@@ -2,10 +2,10 @@
 inspected: false
 title: "Farewell to Akureyi, a fantastic town with love in its traffic lights"
 date: '2017-07-21 12:05:00 +1000'
-tags: []
+tags:
+  - why/viewable
 image: "17883660091069403.jpg"
 source: instagram
-viewable: always
 ---
 
 Farewell to Akureyi, a fantastic town with love in its traffic lights

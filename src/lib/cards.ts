@@ -4,7 +4,12 @@ export { resolveCardTitle };
 import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
 import type { FolderCascade } from './folder-config';
-import { generatedTagsForCard, generatorOverrideKeys } from './filter-generators';
+import {
+  generateTagsForCard,
+  generatorDerivations,
+  generatorFrontmatterKeys,
+} from './filter-generators';
+import { applyReEnables, parseExcludeTags, partitionGeneratedTags } from './exclude-tags';
 import { resolveActions, type ActionSource } from './card-actions';
 import { computeAffiliationTags } from './affiliations';
 import { discoverAffiliations, discoverTagPriorities } from './tag-registry';
@@ -42,6 +47,8 @@ export type CardFrontmatter = {
   description?: string;
   date?: Date;
   tags?: string[];
+  /** Authored `excludeTags` — see exclude-tags.ts for the two forms. */
+  excludeTags?: string[];
   renderer?: string;
   navRenderer?: string;
   status?: unknown;
@@ -68,12 +75,116 @@ export type CardEntry = {
 };
 
 /**
+ * The tag-generation half of resolution, shared by resolveCard() and the audit
+ * lens.
+ *
+ * Extracted only because the audit deliberately reads raw entries rather than
+ * resolved cards (see AuditLensBody.astro) and still needs to ask which of a
+ * card's `excludeTags` came to nothing. Keeping one copy means the finding can
+ * never disagree with what actually happened to the tags.
+ */
+function generationInputs(
+  uid: string,
+  data: CardFrontmatter,
+  cascade: FolderCascade,
+  frontmatterKeys: string[],
+) {
+  const derivations = generatorDerivations();
+
+  // `generated/<name>` entries ride in on `tags` and are pulled straight back
+  // out: they are directives, not tags. Validated here, so a typo is a build
+  // error rather than a card silently keeping whatever a folder excluded.
+  const { tags: baseTags, reEnabled } = partitionGeneratedTags(
+    effectiveTags(uid, data.tags ?? [], cascade.cascadeTags),
+    derivations,
+    uid,
+  );
+
+  const overrides: Record<string, string | undefined> = {};
+  for (const key of frontmatterKeys) {
+    overrides[key] = (data[key] as string | undefined) ?? cascade.overrides[key];
+  }
+
+  // Card frontmatter and every ancestor `_config.yaml`, unioned — see the
+  // excludeTags field on FolderCascade for why this list accumulates. Then the
+  // re-enables are subtracted, once, before any generator runs: a re-enabled
+  // derivation is simply not suppressed, so there is no ordering for a
+  // generator to get wrong.
+  const declared = parseExcludeTags(
+    [...cascade.excludeTags, ...(data.excludeTags ?? [])],
+    derivations,
+    uid,
+  );
+  const exclude = applyReEnables(declared, reEnabled);
+
+  // What THIS FILE declares, for the inert finding below. An inherited entry is
+  // judged against the folder, not against each card under it.
+  const own = parseExcludeTags(data.excludeTags ?? [], derivations);
+  const ownReEnabled = partitionGeneratedTags(data.tags ?? [], derivations).reEnabled;
+
+  // The affordance generator reads *resolved* actions, not `data.actions`, so
+  // the puzzle fields resolveActions folds into a play link count exactly as
+  // an authored `kind: play` row does — one fold, decided in one place.
+  const generated = generateTagsForCard(baseTags, {
+    date: data.date,
+    overrides,
+    exclude,
+    actions: resolveActions(data as ActionSource),
+  });
+
+  // A re-enable that undid no exclusion did nothing, and the author should be
+  // told — the same reasoning as an inert exclusion, and the same finding.
+  const inertReEnables = [...ownReEnabled]
+    .filter(key => !declared.suppressed.has(key))
+    .map(key => `generated/${key}`);
+
+  // ONLY what this card's own frontmatter declares is reported.
+  //
+  // A folder-level exclusion is routinely a no-op for *some* of its cards while
+  // being load-bearing for the rest, and the author can do nothing about that
+  // without breaking the rest. `what/posts/stories/arctic` is the live case: it
+  // excludes `generated/location` and pins Svalbard, and for the 9 posts dated
+  // inside the Svalbard travel-log range the derivation would have produced
+  // that very tag — so the exclusion removes nothing *there*, while still being
+  // the only thing keeping the 13 posts written up in August out of Quito and
+  // Peru. Reported per-card, that is 9 worklist entries with no available
+  // action. Whether a folder's entry is inert for EVERY card under it is a
+  // different question, and a pool-level one this per-card audit is not shaped
+  // to ask.
+  const ownEntries = new Set([
+    ...own.vetoes,
+    ...[...own.suppressed].map(key => `generated/${key}`),
+  ]);
+
+  return {
+    ...generated,
+    inert: [...generated.inert.filter(entry => ownEntries.has(entry)), ...inertReEnables],
+  };
+}
+
+/**
+ * Which of this card's derivation-control entries did nothing — the
+ * `inert-derivation-control` audit finding. Covers both an `excludeTags` entry
+ * that removed nothing and a `generated/*` tag that re-enabled nothing.
+ * Returned in the authored form, so the entry can be found in the file it was
+ * written in.
+ */
+export function inertDerivationControls(
+  uid: string,
+  data: CardFrontmatter,
+  cascade: FolderCascade,
+  frontmatterKeys: string[] = generatorFrontmatterKeys(),
+): string[] {
+  return generationInputs(uid, data, cascade, frontmatterKeys).inert;
+}
+
+/**
  * The impure inputs of resolution, lifted out so resolveCard() stays pure and
  * testable at a fixed clock (which `scheduled` status will need).
  */
 export type ResolveContext = {
-  /** Generator override keys to cascade — see generatorOverrideKeys(). */
-  overrideKeys: string[];
+  /** Generator-read frontmatter fields to cascade — see generatorFrontmatterKeys(). */
+  frontmatterKeys: string[];
   isDev: boolean;
   now: Date;
   /** Declared `.tag.yaml` priorities, by filter value — see priority.ts. */
@@ -220,19 +331,7 @@ export function resolveCard(
     body
   );
 
-  const baseTags = effectiveTags(uid, data.tags ?? [], cascade.cascadeTags);
-  const overrides: Record<string, string | undefined> = {};
-  for (const key of ctx.overrideKeys) {
-    overrides[key] = (data[key] as string | undefined) ?? cascade.overrides[key];
-  }
-  // The affordance generator reads *resolved* actions, not `data.actions`, so
-  // the puzzle fields resolveActions folds into a play link count exactly as
-  // an authored `kind: play` row does — one fold, decided in one place.
-  const tags = generatedTagsForCard(baseTags, {
-    date: data.date,
-    overrides,
-    actions: resolveActions(data as ActionSource),
-  });
+  const { tags } = generationInputs(uid, data, cascade, ctx.frontmatterKeys);
   // Dev-only, and deliberately not a FilterGenerator — see
   // uninspected-facet.ts for why it can't go through the same allValues()/
   // manifest path as the others.
@@ -289,7 +388,7 @@ export async function getAllCards(): Promise<ResolvedCard[]> {
 
   const reader = makeFileReader();
   const ctx: ResolveContext = {
-    overrideKeys: generatorOverrideKeys(),
+    frontmatterKeys: generatorFrontmatterKeys(),
     isDev: import.meta.env.DEV,
     now: new Date(),
     tagPriorities: await discoverTagPriorities(),
@@ -297,7 +396,7 @@ export async function getAllCards(): Promise<ResolvedCard[]> {
 
   const cards = await Promise.all(
     allContent.map(async e =>
-      resolveCard(e, await resolveFolderCascade(e.id, reader, ctx.overrideKeys), ctx)
+      resolveCard(e, await resolveFolderCascade(e.id, reader, ctx.frontmatterKeys), ctx)
     )
   );
 

@@ -14,9 +14,7 @@ tags: []
 # Optional fields for this folder — uncomment the ones you need.
 # description:    # string
 # priority:       # number
-# playable:       # always | never
-# viewable:       # always | never
-# buyable:        # always | never
+# excludeTags:    # list of strings
 # inspected:      # true | false
 # image:          # string
 # canonical_url:  # url
@@ -32,7 +30,6 @@ tags: []
 # Inherited from the _config.yaml cascade — don't repeat these here:
 #   renderer: story
 #   navRenderer: series
-#   location: europe/norway/svalbard
 ---
 
 <% tp.file.cursor() %>

@@ -11,9 +11,9 @@ tags:
   - "space"
   - "spacegame"
   - what/games/analog/gotta-get-outta-this-space
+  - why/viewable
 image: "17845229186333140.jpg"
 source: instagram
-viewable: always
 ---
 
 A lovely hand drawn copy of #gottagetouttathisspace - this is the BH-OROBOROS, which is charting it's way away from the robot apocalypse

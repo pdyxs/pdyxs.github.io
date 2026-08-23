@@ -4,12 +4,18 @@
 //
 // Two of the five `why` values are derived here (`playable`, `buyable`); the
 // other three — `viewable` and the two `why:learn/*` topics — are curation
-// and are authored by hand. `viewable` used to be derived (image + short
-// body); issue #96 retired that in favour of `viewable: always` alone, for
-// the same reason `why:learn/travel` was never a generator over the ~154
-// travel cards: a mechanical check answers "does this have a picture", not
-// "is this worth looking at", and the two questions have different answers
-// on most of the Instagram-era archive.
+// and are authored by hand, as ordinary `tags:` entries. `viewable` used to be
+// derived (image + short body); issue #96 retired that, for the same reason
+// `why:learn/travel` was never a generator over the ~154 travel cards: a
+// mechanical check answers "does this have a picture", not "is this worth
+// looking at", and the two questions have different answers on most of the
+// Instagram-era archive.
+//
+// It then briefly had a bespoke `viewable: always` frontmatter key, which
+// issue #116 retired in turn: an authored assertion that a card belongs in a
+// filter value is exactly what a tag is, and the two curated siblings were
+// already written that way. Suppressing a *derived* affordance is now
+// `excludeTags: [generated/playable]` — see exclude-tags.ts.
 //
 // Pure: every function takes plain card data and returns plain data. The
 // generator shell that feeds it lives in filter-generators.ts.
@@ -23,7 +29,13 @@ export const WHY_PLAYABLE = 'why:playable';
 export const WHY_VIEWABLE = 'why:viewable';
 export const WHY_BUYABLE = 'why:buyable';
 
-/** Every affordance value the generator can emit, in panel order. */
+/**
+ * Every affordance value, in panel order.
+ *
+ * Wider than what the generator emits: `why:viewable` is authored-only (see the
+ * module comment), and is kept here so the short-code manifest covers it from
+ * the generator side as well as from its own `.tag.yaml` declaration.
+ */
 export const WHY_AFFORDANCES = [WHY_PLAYABLE, WHY_VIEWABLE, WHY_BUYABLE] as const;
 
 /** The card data the affordance decisions read. */
@@ -62,48 +74,37 @@ export function isBuyable(source: WhySource): boolean {
   return hasActionKind(source, 'buy');
 }
 
-/** The frontmatter/`_config.yaml` key that overrides each affordance. */
-export const WHY_OVERRIDE_KEYS = ['playable', 'viewable', 'buyable'] as const;
-
-/** Forces the affordance on; the derivation is not consulted. */
-export const WHY_ALWAYS = 'always';
-/** Forces the affordance off, whatever the card's actions or body say. */
-export const WHY_NEVER = 'never';
-
-/** `why:viewable` is never derived — see the module comment. Its slot in
- * the uniform decision loop below always declines, so only `viewable: always`
- * ever adds the tag. */
-function neverDerived(_source: WhySource): boolean {
-  return false;
-}
-
 /**
- * Every affordance tag this card carries, in panel order.
+ * Every affordance tag this card derives, in panel order.
  *
- * Each value's own override key wins outright over its derivation — the same
- * hybrid `era`/`location` use, split three ways because the three affordances
- * are independent facts and a card is routinely two of them. An unrecognised
- * override value falls through to the derivation rather than suppressing it:
- * a typo should leave the card as it was, not silently drop it out of a filter.
- * For `playable`/`buyable` that derivation is a real check; for `viewable`
- * it's `neverDerived`, so the override IS the mechanism, not an escape hatch
- * from one.
+ * Both values are derived from resolved actions and nothing else — there is no
+ * "force it on" knob, because authoring the tag IS that knob: an authored
+ * `tags: [why/playable]` reaches the card's tag list before any generator
+ * runs, and whyAffordanceGenerator dedupes against it. `why:viewable` is
+ * absent from this loop entirely for the same reason — nothing derives it, so
+ * it is authored or it is not there.
+ *
+ * `suppressed` carries the `excludeTags: [generated/<key>]` decisions (see
+ * exclude-tags.ts), keyed per affordance rather than per generator: a card is
+ * routinely playable but not buyable, so `generated/why` would be too blunt a
+ * instrument to be the one on offer.
  */
 export function deriveWhyTags(
   source: WhySource,
-  overrides: Record<string, string | undefined> = {},
+  suppressed: ReadonlySet<string> = new Set(),
 ): string[] {
   const decided: Array<[string, string, (s: WhySource) => boolean]> = [
     [WHY_PLAYABLE, 'playable', isPlayable],
-    [WHY_VIEWABLE, 'viewable', neverDerived],
     [WHY_BUYABLE, 'buyable', isBuyable],
   ];
 
   const out: string[] = [];
   for (const [value, key, derive] of decided) {
-    const override = overrides[key];
-    if (override === WHY_NEVER) continue;
-    if (override === WHY_ALWAYS || derive(source)) out.push(value);
+    if (suppressed.has(key)) continue;
+    if (derive(source)) out.push(value);
   }
   return out;
 }
+
+/** The override keys the affordance generator answers to in `excludeTags`. */
+export const WHY_SUPPRESSION_KEYS = ['playable', 'buyable'] as const;

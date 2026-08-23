@@ -7,6 +7,9 @@ tags:
   - education
   - when/released
   - where/work/3p
+  - where/australia/sydney
+excludeTags:
+  - generated/location
 date: 2018-04-01
 actions:
   - text: Get on the iOS App Store
@@ -35,7 +38,6 @@ meta:
   - label: Roles
     values:
       - Designer, Developer
-location: australia/sydney
 ---
 Numbeanies: Number Forest is an app that uses physical cards and augmented reality to help children learn basic numeracy skills. It was developed by 3P Learning as a part of the Mathletics product.
 

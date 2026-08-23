@@ -6,9 +6,9 @@ tags:
   - "colombia"
   - "landscape"
   - "nomadholidays"
+  - why/viewable
 image: "18008917429066307.jpg"
 source: instagram
-viewable: always
 ---
 
 The view from El Penol (aka the big rock) near Guatape, Colombia. Not a bad place to spend Xmas #nomadholidays #landscape #colombia

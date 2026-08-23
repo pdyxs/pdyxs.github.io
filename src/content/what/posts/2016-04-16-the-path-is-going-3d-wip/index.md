@@ -9,9 +9,9 @@ tags:
   - "visualisation"
   - "wip"
   - what/art/the-path
+  - why/viewable
 image: "17855697118025518.mp4"
 source: instagram
-viewable: always
 ---
 
 "The Path" is going 3D... #wip #art #science #visualisation #treeoflife

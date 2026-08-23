@@ -2,10 +2,10 @@
 inspected: false
 title: "An icy tomb"
 date: '2017-07-24 04:26:00 +1000'
-tags: []
+tags:
+  - why/viewable
 image: "17878423015110331.jpg"
 source: instagram
-viewable: always
 ---
 
 An icy tomb

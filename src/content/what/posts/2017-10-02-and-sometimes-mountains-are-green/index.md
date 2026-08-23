@@ -2,10 +2,10 @@
 inspected: false
 title: "and sometimes, mountains are green..."
 date: '2017-10-02 05:55:00 +1000'
-tags: []
+tags:
+  - why/viewable
 image: "17875179205154647.jpg"
 source: instagram
-viewable: always
 ---
 
 and sometimes, mountains are green...

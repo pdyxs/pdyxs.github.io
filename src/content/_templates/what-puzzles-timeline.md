@@ -14,9 +14,7 @@ tags: []
 # Optional fields for this folder — uncomment the ones you need.
 # description:    # string
 # priority:       # number
-# playable:       # always | never
-# viewable:       # always | never
-# buyable:        # always | never
+# excludeTags:    # list of strings
 # inspected:      # true | false
 # image:          # string
 # url:            # url
@@ -27,7 +25,6 @@ tags: []
 # Inherited from the _config.yaml cascade — don't repeat these here:
 #   renderer: card
 #   navRenderer: series
-#   location: none
 ---
 
 <% tp.file.cursor() %>

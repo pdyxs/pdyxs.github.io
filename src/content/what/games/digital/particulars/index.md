@@ -7,6 +7,7 @@ tags:
   - science
   - when/released
   - where/work/seethrough
+  - why/viewable
 date: 2014-09-01
 actions:
   - text: Download on Steam
@@ -74,7 +75,6 @@ meta:
       - Winner, Best Audio Design, Freeplay Awards 2013
       - Winner, Sydney Indie Showcase, iFest 2013
       - Finalist, Best Audio Design, Australian Game Development Awards, 2013
-viewable: always
 ---
 Particulars is a game based on the science of sub-atomic particle Physics. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
 

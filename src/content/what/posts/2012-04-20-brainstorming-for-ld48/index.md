@@ -5,9 +5,9 @@ date: '2012-04-20 19:25:00 +1000'
 tags:
   - "ld48"
   - what/games/digital/tiny-world-the-musical-the-game
+  - why/viewable
 image: "17842275751027766.jpg"
 source: instagram
-viewable: always
 ---
 
 Brainstorming for #ld48
