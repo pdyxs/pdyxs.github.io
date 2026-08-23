@@ -134,7 +134,17 @@
   $effect(() => {
     const el = innerEl;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(([e]) => { activeWidth = e.contentRect.width; });
+    const ro = new ResizeObserver(([e]) => {
+      activeWidth = e.contentRect.width;
+      // `--stack-height` caps the sticky pile label so a stack shorter than the
+      // viewport doesn't get a 100vh child forcing its own height. Guarded on
+      // a real measurement: at mobile `.card-stack-inner` is `display:
+      // contents` and measures 0, and a 0px cap would collapse the label.
+      if (e.contentRect.height > 0) {
+        document.getElementById('card-stack')
+          ?.style.setProperty('--stack-height', `${e.contentRect.height}px`);
+      }
+    });
     ro.observe(el);
     return () => ro.disconnect();
   });
@@ -470,6 +480,37 @@
   // `uid` names what was read; `slot` is only where its HTML is cached. They
   // differ whenever a location holds a suffixed handle (`lens/x#2`), and read
   // state must never be keyed on one of those.
+  /**
+   * A band's label: the card's own title, or "N more" for the band that
+   * absorbs everything past the cap. `count` is never 1 for a band that isn't
+   * showing its own card (see `pileSections`), so this can't produce "1 more".
+   *
+   * Titles are read from the fragment cache, which is not reactive — but a
+   * piled card is by definition one the visitor has already been on, so its
+   * fragment landed long before it reached the pile.
+   */
+  function bandLabel(band: { slot: string; count: number }): string {
+    if (band.count > 1) return `${band.count} more`;
+    return fragments.factsFor(band.slot).title ?? band.slot;
+  }
+
+  /**
+   * Jump straight to a card buried in a pile. The whole point of the split:
+   * without it a hidden card is several hops back through the stack, and the
+   * hops are not even navigable — the cards between it and the visitor are the
+   * ones the pile is hiding.
+   *
+   * Same three steps every activation takes (store, read state, URL), because
+   * arriving here is arriving anywhere: `CardStack.svelte` owns the mutation.
+   */
+  function activateBand(slot: string) {
+    const entry = entryForSlot(get(stackStore), slot);
+    if (!entry) return;
+    stackStore.update(s => activateCardFn(s, entry.slot));
+    markReadIfKnown(entry.uid, entry.slot);
+    updateUrl();
+  }
+
   function markReadIfKnown(uid: string, slot: string = uid) {
     const record = readToRecord(uid, fragments.get(slot));
     if (record) markRead(record.uid, record.hash);
@@ -1019,6 +1060,44 @@
   <div class="card-stack-inner" bind:this={innerEl}>
     {#each $stackStore.entries as entry (entry.slot)}
       <StackFragment html={fragments.get(entry.slot) ?? ''} />
+    {/each}
+
+    <!-- The overflow representation (issue #111). Island-owned, NOT fragment
+         markup: a fragment is a location rendered on its own and knows nothing
+         about where it sits in the stack, and "how many cards are hidden behind
+         me" is the most stack-positional fact there is.
+
+         Keyed by SIDE, not by label slot. There is at most one pile per side,
+         and its label card changes as the stack grows — keyed by slot the
+         overlay would be destroyed and rebuilt on every push, mounting at its
+         destination instead of travelling there, which is the same identity
+         trap the cards themselves have (#99 trap 4).
+
+         The label and the bands are BOTH always rendered and both in the tab
+         order; hover and focus-within only swap which one is painted. Bands
+         hidden with `display: none` could not be focused, and focus is how a
+         keyboard reaches a hidden card at all. -->
+    {#each geometry.piles as pile (pile.side)}
+      <div
+        class="stack-pile"
+        data-side={pile.side}
+        style="--geo-left: {pile.left}px; --geo-top: {pile.top}px; --geo-z: {pile.z}; --card-surface: var(--dither-{pile.dither});"
+      >
+        <div class="stack-pile-inner">
+          <span class="stack-pile-label" aria-hidden="true">{pile.count} more</span>
+          <div class="stack-pile-bands">
+            {#each pile.bands as band (band.slot)}
+              <button
+                class="stack-pile-band"
+                type="button"
+                onclick={() => activateBand(band.slot)}
+              >
+                <span class="stack-pile-band-text">{bandLabel(band)}</span>
+              </button>
+            {/each}
+          </div>
+        </div>
+      </div>
     {/each}
   </div>
 </div>

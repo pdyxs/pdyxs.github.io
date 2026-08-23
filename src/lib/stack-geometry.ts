@@ -35,7 +35,7 @@
 // This module is all decision and no effect: plain numbers in, plain numbers
 // out, no DOM, no store, no IO. `geometryFor` is the one function that knows
 // what a `LocationEntry` is, and all it does is zip slots onto placements.
-import type { StackState } from './stack-layout';
+import type { LocationEntry, StackState } from './stack-layout';
 
 export type Role = 'behind' | 'active' | 'ahead';
 export type BottomEdge = 'staircase' | 'flush';
@@ -156,6 +156,12 @@ export interface PileSection {
  *  about three the stacked edges stop adding information, so deeper cards
  *  share the third one's position. */
 export const MAX_PILE_LAYERS = 3;
+
+/** Bands a hovered pile splits into. Distinct from MAX_PILE_LAYERS, and larger:
+ *  layers are what a pile DRAWS at rest (where a fourth edge adds nothing),
+ *  bands are what it OFFERS on hover (where each one is a card you can click).
+ *  Past this the last band absorbs the remainder and is itself splittable. */
+export const MAX_PILE_BANDS = 12;
 
 const clampDither = (n: number) => Math.max(0, Math.min(16, Math.round(n)));
 
@@ -322,8 +328,44 @@ export interface PlacedSlot extends PlacedCard {
   slot: string;
 }
 
-export interface SlottedGeometry extends Omit<Geometry, 'cards'> {
+/** One band of a hovered pile, addressed the only way an entry ever is. */
+export interface PileBand {
+  slot: string;
+  /** Cards this band stands for. 1 when the band IS its own card; greater than
+   *  1 only for the band that absorbs the remainder past `MAX_PILE_BANDS`.
+   *  Never 1 for a band standing in for a card it isn't showing — that is
+   *  `pileSections`' cap rule, and it is why a band can't read "1 more". */
+  count: number;
+}
+
+/** A pile with somewhere to be drawn and something to be clicked. */
+export interface PlacedPile {
+  side: 'behind' | 'ahead';
+  /** Cards hidden in the pile. ALWAYS >= 2 — see `drawnCount`. */
+  count: number;
+  /** The slot of the card carrying the label, which is also the pile's own
+   *  address: at most one pile per side, so `side` keys the overlay and this
+   *  says which card's edge it is drawn over. */
+  labelSlot: string;
+  /** The label card's own placement — the overlay sits exactly on its spine. */
+  left: number;
+  top: number;
+  z: number;
+  /** The label card's level on the depth ramp. The overlay is OPAQUE and
+   *  carries it: at rest the pile replaces that card's spine title with its
+   *  own count, and a transparent overlay would show both at once. */
+  dither: number;
+  /** In VISUAL top-to-bottom order, which is not the geometry's order and
+   *  differs per side. A behind pile staggers upward as it deepens, so its
+   *  deepest card is the TOP band ("the way back is up and left"); an ahead
+   *  pile staggers downward, so its deepest is the bottom one. `pile.indices`
+   *  runs nearest -> deepest for both, so only behind is reversed. */
+  bands: PileBand[];
+}
+
+export interface SlottedGeometry extends Omit<Geometry, 'cards' | 'piles'> {
   cards: PlacedSlot[];
+  piles: PlacedPile[];
 }
 
 /**
@@ -342,6 +384,7 @@ export interface SlottedGeometry extends Omit<Geometry, 'cards'> {
 export function geometryFor(
   state: StackState,
   params: GeoParams,
+  maxBands: number = MAX_PILE_BANDS,
 ): SlottedGeometry {
   const { entries, activeSlot } = state;
   if (entries.length === 0) {
@@ -352,9 +395,42 @@ export function geometryFor(
   if (activeIdx === -1) activeIdx = entries.length - 1;
 
   const geo = computeGeometry(entries.length, activeIdx, params);
+  const cards = geo.cards.map(c => ({ ...c, slot: entries[c.index].slot }));
   return {
     ...geo,
-    cards: geo.cards.map(c => ({ ...c, slot: entries[c.index].slot })),
+    cards,
+    piles: geo.piles.map(pile => placePile(pile, cards, entries, maxBands)),
+  };
+}
+
+/**
+ * The same index -> slot zip, for a pile.
+ *
+ * Piles come out of `computeGeometry` in index space, which is useless to a
+ * caller: entries are addressed by slot and never by index (issue #106), so
+ * leaving half of this function's output in index space would invite a call
+ * site to write `entries[pile.labelIndex]` by hand. The placement is taken
+ * from the label card rather than recomputed, so the overlay can never land
+ * anywhere but exactly on the edge it labels.
+ */
+function placePile(
+  pile: Pile,
+  cards: readonly PlacedSlot[],
+  entries: readonly LocationEntry[],
+  maxBands: number,
+): PlacedPile {
+  const label = cards.find(c => c.pileLabel && c.role === pile.side);
+  const sections = pileSections(pile.indices, maxBands);
+  const bands = sections.map(({ index, count }) => ({ slot: entries[index].slot, count }));
+  return {
+    side: pile.side,
+    count: pile.count,
+    labelSlot: entries[pile.labelIndex].slot,
+    left: label?.left ?? 0,
+    top: label?.top ?? 0,
+    z: label?.z ?? 0,
+    dither: label?.dither ?? 0,
+    bands: pile.side === 'behind' ? bands.reverse() : bands,
   };
 }
 

@@ -1078,6 +1078,15 @@ pre,
   background: var(--card-surface-hover, var(--color-bg-hover-strong));
 }
 
+/* MOBILE has no pile, and this is not a feature that was skipped. The geometry
+   places EVERY card and piling changes only left/top/z — the three properties
+   mobile does not consume — so nothing is hidden there and there is nothing for
+   a pile to stand in for. Every collapsed header is already on screen (see
+   amendment 2 on #99, which retracts an earlier plan to build one). */
+.stack-pile {
+  display: none;
+}
+
 /* MOBILE: the wrapper is transparent to layout, so the cards are direct flex
    children of #card-stack and the stack is one plain column — collapsed
    headers above the active card and below it, every one of them shown. That
@@ -1278,6 +1287,184 @@ pre,
     width: var(--border-width);
     background: var(--color-border);
     z-index: 3;
+  }
+
+  /* ── The overflow pile (issue #111) ────────────────────────────
+     A pile IS the cards, lying in one slot — the geometry already drew them
+     there, staggered and capped at MAX_PILE_LAYERS edges. This overlay adds
+     the only two things the cards cannot say for themselves: how many of them
+     are hidden, and a way to reach any one of them.
+
+     It is drawn on the LABEL card's placement (the piled card painted last),
+     which the geometry hands over rather than the applier recomputing — so the
+     overlay can never drift off the edge it is labelling.
+
+     OPAQUE, and carrying that card's own level: at rest the pile replaces its
+     spine title with the count, and a transparent overlay would show both at
+     once. `--card-surface` is written per pile in the template, because it is
+     a sibling of the cards and inherits nothing from the one it covers. */
+  .stack-pile {
+    display: block;
+    position: absolute;
+    /* INSET by one border, so the overlay covers exactly the label card's spine
+       TRACK and not its frame. Three things fall out of that: the card's own
+       border still draws the pile's edges, the label lines up dot-for-dot with
+       the spine titles either side of it, and the box stops exactly where the
+       next card begins — a full `--spine-width` would reach 2px under its
+       neighbour and fight it for the same z. */
+    left: calc(var(--geo-left, 0px) + var(--border-width));
+    top: calc(var(--geo-top, 0px) + var(--border-width));
+    width: calc(var(--spine-width) - var(--border-width));
+    height: calc(100% - var(--border-width) * 2);
+    /* One above the card it labels, so it replaces that card's spine title
+       rather than sitting under it. */
+    z-index: calc(var(--geo-z, 0) + 1);
+    background: var(--card-surface, var(--color-bg));
+    overflow: clip;
+  }
+
+  /* THE SAME ASYMMETRY THE CARDS HAVE. A behind pile's right edge is drawn for
+     free by the card in front of it. An ahead pile has nothing in front, and
+     it is painted OVER the `::after` its own card uses to close that edge — so
+     it has to redraw it. Landing on the same two pixels, which is what keeps
+     the tucked corner reading as one card edge rather than two. */
+  .stack-pile[data-side="ahead"] {
+    border-right: var(--border-width) solid var(--color-border);
+  }
+
+  /* Travels with the cards. Same properties, same duration, same gate — a pile
+     that snapped to its new slot while the fan slid would read as a separate
+     mechanism, which is exactly what this design removed. */
+  #card-stack.stack-motion .stack-pile {
+    transition:
+      left var(--stack-motion-ms) ease-out,
+      top var(--stack-motion-ms) ease-out;
+  }
+
+  /* Follows the viewport like every other spine label. `--stack-height` (the
+     measured stack box, written by the island) caps it so a stack shorter than
+     the viewport doesn't get a 100vh child forcing its own height — the bug
+     that made every card viewport-tall in the prototype. */
+  .stack-pile-inner {
+    position: sticky;
+    top: 0;
+    display: block;
+    height: min(100vh, var(--stack-height, 100vh));
+  }
+
+  /* Label at rest, bands on hover. BOTH are always rendered and both stay in
+     the tab order — only which one is painted changes. Bands behind
+     `display: none` could not be focused, and focus is the only way a keyboard
+     reaches a card buried in a pile. `:focus-within` is therefore not a
+     nicety: it is what makes the tab stop visible when it arrives. */
+  .stack-pile-label,
+  .stack-pile-bands {
+    position: absolute;
+    inset: 0;
+    transition: opacity 120ms ease-out;
+  }
+
+  .stack-pile-label {
+    /* The count reads across the spine like a title does. Same rotated axis as
+       .stack-card-spine-title, so it lines up with the titles either side of
+       it: in vertical-rl the INLINE axis runs down the page. */
+    writing-mode: vertical-rl;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-inline: var(--space-md) 0;
+    padding-block: var(--space-xs);
+    font-family: var(--font-heading);
+    font-size: 0.75em;
+    letter-spacing: 0.04em;
+    color: var(--color-text);
+    /* Never a click target: a click during the crossfade must fall through to
+       the band underneath rather than landing on a decoration. */
+    pointer-events: none;
+  }
+
+  .stack-pile-bands {
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+  }
+
+  .stack-pile:hover .stack-pile-label,
+  .stack-pile:focus-within .stack-pile-label {
+    opacity: 0;
+  }
+
+  .stack-pile:hover .stack-pile-bands,
+  .stack-pile:focus-within .stack-pile-bands {
+    opacity: 1;
+  }
+
+  /* One band per hidden card, subdividing the slot they already share. That is
+     what lets the split exist without inventing a new kind of surface — a
+     dropdown menu would have broken the system's claim that everything is a
+     card. */
+  .stack-pile-band {
+    flex: 1;
+    min-height: 0;
+    /* "Left-aligned" in a vertical writing mode means starting at the TOP,
+       since the text runs downward. */
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    cursor: pointer;
+    background: transparent;
+    color: var(--color-text);
+    border: none;
+    border-bottom: 1px solid var(--color-border);
+    font-family: var(--font-ui);
+  }
+
+  .stack-pile-band:last-child {
+    border-bottom: none;
+  }
+
+  /* An INVERTED surface, deliberately — the hovered band is the page turned
+     inside out, the same act as a selected control. It therefore needs the
+     MIRROR of every flat-surface rule and not just swapped colours; the stroke
+     below is the half that is easy to miss. */
+  .stack-pile-band:hover,
+  .stack-pile-band:focus-visible {
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    outline: none;
+  }
+
+  /* In vertical-rl the INLINE axis is vertical, so it is capping HEIGHT — not
+     width — that makes `text-overflow` fire. Same trap as the spine title. */
+  .stack-pile-band-text {
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    box-sizing: border-box;
+    max-height: 100%;
+    /* Logical, and easy to get backwards: inline padding insets the title from
+       the divider it starts under, block padding holds it off the spine's
+       edges. */
+    padding-inline: var(--space-sm) var(--space-xs);
+    padding-block: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-text-stroke: 3px var(--color-bg);
+    paint-order: stroke fill;
+  }
+
+  /* THE MIRROR. The stroke is always the SURFACE's own colour, which is what
+     keeps it invisible until a dither shows through. Left paper on an inverted
+     band it would fatten the paper glyphs instead of clearing dots behind them
+     — see the --color-selected-* section of CLAUDE.md. Both halves flip
+     together or neither should. */
+  .stack-pile-band:hover .stack-pile-band-text,
+  .stack-pile-band:focus-visible .stack-pile-band-text {
+    -webkit-text-stroke-color: var(--color-selected-bg);
   }
 
   /* DESKTOP collapse is a crop, not a reflow: a covered card's body stays

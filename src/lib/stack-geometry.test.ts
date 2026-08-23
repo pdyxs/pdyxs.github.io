@@ -8,6 +8,7 @@ import {
   geometryFor,
   scrollTargetFor,
   MAX_PILE_LAYERS,
+  MAX_PILE_BANDS,
   STACK_GEOMETRY,
   type GeoParams,
 } from './stack-geometry';
@@ -344,8 +345,84 @@ describe('geometryFor', () => {
     const entries = [cardEntry('a/one'), cardEntry('b/two')];
     const zipped = geometryFor(state(entries, 'a/one'), params());
     const plain = computeGeometry(2, 0, params());
-    expect(zipped.piles).toEqual(plain.piles);
     expect(zipped.cards.map(({ slot, ...rest }) => rest)).toEqual(plain.cards);
+  });
+});
+
+describe('geometryFor places the piles', () => {
+  const cards = (n: number) => Array.from({ length: n }, (_, i) => cardEntry(`c/${i}`));
+  const at = (n: number, activeIdx: number, maxBands = MAX_PILE_BANDS) =>
+    geometryFor({ entries: cards(n), activeSlot: `c/${activeIdx}` }, params(), maxBands);
+
+  it('draws the overlay on the label card, never on a recomputed position', () => {
+    // Seven entries, last active: six behind, three slots, so the pile holds
+    // four and its label is the nearest of them.
+    const [pile] = at(7, 6).piles;
+    expect(pile.side).toBe('behind');
+    expect(pile.count).toBe(4);
+    expect(pile.labelSlot).toBe('c/3');
+
+    const { cards: placed } = at(7, 6);
+    const label = placed.find(c => c.slot === 'c/3')!;
+    expect([pile.left, pile.top, pile.z]).toEqual([label.left, label.top, label.z]);
+  });
+
+  it('addresses every band by slot', () => {
+    const [pile] = at(7, 6).piles;
+    expect(pile.bands.every(b => typeof b.slot === 'string')).toBe(true);
+    expect(pile.bands.map(b => b.slot).every(sl => sl.startsWith('c/'))).toBe(true);
+  });
+
+  it('runs a behind pile deepest-first, so the way back is up', () => {
+    // Piled behind cards are c/3 (nearest) down to c/0 (oldest in the stack).
+    // Top to bottom the bands must read oldest -> nearest.
+    const [pile] = at(7, 6).piles;
+    expect(pile.bands.map(b => b.slot)).toEqual(['c/0', 'c/1', 'c/2', 'c/3']);
+  });
+
+  it('mirrors that ahead: nearest first, deepest at the bottom', () => {
+    const [pile] = at(7, 0).piles;
+    expect(pile.side).toBe('ahead');
+    expect(pile.bands.map(b => b.slot)).toEqual(['c/3', 'c/4', 'c/5', 'c/6']);
+  });
+
+  it('never emits a band standing for exactly one card it is not showing', () => {
+    // The cap rule, at every depth and every band limit: a band's count is 1
+    // (it IS that card) or >= 2 (it absorbs a remainder). A band reading
+    // "1 more" is unrepresentable, not merely avoided.
+    for (let maxBands = 2; maxBands <= 14; maxBands++) {
+      for (let length = 1; length <= 30; length++) {
+        for (let active = 0; active < length; active++) {
+          for (const pile of at(length, active, maxBands).piles) {
+            // A pile of 1 would read "1 more" for a card that would have fit
+            // in the slot the label is sitting in.
+            expect(pile.count).toBeGreaterThanOrEqual(2);
+            // A band reads its card's title at 1 and "N more" above it, so a
+            // count of 0 or a fractional one has no rendering at all.
+            for (const band of pile.bands) {
+              expect(Number.isInteger(band.count)).toBe(true);
+              expect(band.count).toBeGreaterThanOrEqual(1);
+            }
+            // Every hidden card is reachable through exactly one band, so the
+            // split never loses one or offers it twice.
+            expect(pile.bands.reduce((n, b) => n + b.count, 0)).toBe(pile.count);
+            expect(pile.bands.length).toBeLessThanOrEqual(maxBands);
+            expect(new Set(pile.bands.map(b => b.slot)).size).toBe(pile.bands.length);
+          }
+        }
+      }
+    }
+  });
+
+  it('splits a pile deeper than the cap into cap-many bands, remainder last', () => {
+    // 20 behind, 3 slots -> a pile of 18, capped to 4 bands. In geometry order
+    // that is three single cards then a band of 15; reversed for behind, the
+    // remainder is the TOP band, which is the oldest end of the stack.
+    const [pile] = at(21, 20, 4).piles;
+    expect(pile.count).toBe(18);
+    expect(pile.bands).toHaveLength(4);
+    expect(pile.bands[0].count).toBe(15);
+    expect(pile.bands.slice(1).map(b => b.count)).toEqual([1, 1, 1]);
   });
 });
 

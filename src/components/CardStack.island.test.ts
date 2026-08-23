@@ -856,3 +856,95 @@ describe('back/forward keeps a location its own params (#103)', () => {
     expect(window.location.search).toBe('');
   });
 });
+
+describe('the overflow pile (#111)', () => {
+  /** Push `n` cards on top of the SSR-seeded one, so the stack runs deep
+   *  enough for the behind fan to overflow its three slots. */
+  async function stackOf(n: number) {
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A, { title: 'Numbeanies' }) });
+    await settle();
+    for (let i = 0; i < n; i++) {
+      const link = document.createElement('a');
+      link.dataset.pushCard = `what/deep/card-${i}`;
+      document.querySelector('.stack-card--active .stack-card-body-inner')!.appendChild(link);
+      link.click();
+      await settle();
+    }
+  }
+
+  const pile = () => document.querySelector<HTMLElement>('.stack-pile');
+  const bandText = () =>
+    [...document.querySelectorAll('.stack-pile-band-text')].map(b => b.textContent);
+
+  it('renders nothing while every card still holds a slot of its own', async () => {
+    // Three behind, three slots: nothing is hidden, so there is nothing to
+    // stand in for. A pile appearing here would be a marker, not a pile.
+    await stackOf(3);
+    expect(document.querySelectorAll('.stack-card')).toHaveLength(4);
+    expect(pile()).toBeNull();
+  });
+
+  it('appears once the fan overflows, counting what it hides', async () => {
+    // Six behind, three slots: two drawn, four in the pile.
+    await stackOf(6);
+    expect(pile()).not.toBeNull();
+    expect(pile()!.dataset.side).toBe('behind');
+    expect(pile()!.querySelector('.stack-pile-label')!.textContent).toBe('4 more');
+    expect(bandText()).toHaveLength(4);
+  });
+
+  it('is drawn on the label card, never at a position of its own', async () => {
+    await stackOf(6);
+    // The geometry hands the overlay the label card's placement, so the two
+    // must agree exactly — a pile drifting off the edge it labels is the whole
+    // failure this avoids.
+    // The label is the piled card painted LAST — the geometry's own rule, and
+    // the reason the overlay lands where it does. Every piled card shares the
+    // slot's `left`, so only `top` distinguishes them.
+    const labelCard = [...document.querySelectorAll<HTMLElement>('.stack-card[data-piled]')]
+      .reduce((a, b) =>
+        Number(a.style.getPropertyValue('--geo-z')) > Number(b.style.getPropertyValue('--geo-z')) ? a : b);
+    expect(pile()!.style.getPropertyValue('--geo-left'))
+      .toBe(labelCard.style.getPropertyValue('--geo-left'));
+    expect(pile()!.style.getPropertyValue('--geo-top'))
+      .toBe(labelCard.style.getPropertyValue('--geo-top'));
+  });
+
+  it('runs its bands deepest-first, so the way back is up', async () => {
+    await stackOf(6);
+    // Behind, the pile hides the four oldest entries: the SSR card and the
+    // first three pushes. Top to bottom they must read oldest -> nearest.
+    expect(bandText()).toEqual([
+      'Numbeanies',
+      'what/deep/card-0',
+      'what/deep/card-1',
+      'what/deep/card-2',
+    ]);
+  });
+
+  it('reaches a buried card in one click', async () => {
+    await stackOf(6);
+    // The top band is the oldest entry — six hops back, and the hops are not
+    // even navigable, since the cards between it and the visitor are the ones
+    // the pile is hiding.
+    document.querySelectorAll<HTMLElement>('.stack-pile-band')[0].click();
+    await settle();
+
+    expect(get(stackStore).activeSlot).toBe(CARD_A);
+    // Nothing was closed on the way: a jump is a re-activation, not a trim.
+    expect(get(stackStore).entries).toHaveLength(7);
+  });
+
+  it('keeps one overlay per side across an active change', async () => {
+    await stackOf(6);
+    const before = pile()!;
+    // Re-activating a drawn behind card keeps the pile on the behind side, so
+    // the SAME node must travel rather than be rebuilt — keying the overlay on
+    // its label slot instead of its side would remount it on every push, which
+    // is the identity trap the cards themselves have (#99 trap 4).
+    document.querySelector<HTMLElement>('.stack-card[data-role="behind"]:not([data-piled]) .card-header')!.click();
+    await settle();
+    expect(pile()).toBe(before);
+    expect(document.querySelectorAll('.stack-pile')).toHaveLength(1);
+  });
+});

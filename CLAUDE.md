@@ -360,10 +360,77 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`
 - `data-role="behind|active|ahead"` and `data-piled` (written by the applier)
+- `.stack-pile`, `.stack-pile-inner`, `.stack-pile-label`, `.stack-pile-bands`,
+  `.stack-pile-band`, `.stack-pile-band-text` (island-rendered, desktop only)
 
 Deleted with the geometry swap (issue #109), and not to be reintroduced:
 `.fan-corner`, `.active-card-col`, `.stack-overflow*`, `data-side`,
 `--stack-index`, `--num-left-collapsed`, `--num-right-collapsed`, `--i`, `--n`.
+
+### A pile is the cards, and hovering it splits the slot they share
+
+The overflow representation (issue #111), replacing the deleted `.stack-overflow`
+`⋯` strip and its dropdown. **Desktop only** — mobile shows every collapsed
+header, so nothing is hidden there and there is nothing to stand in for.
+
+At rest a pile is already drawn: `computeGeometry` places every piled card in
+one slot, staggered, capped at `MAX_PILE_LAYERS` (3) drawn edges because past
+three a pile stops adding information and a pile of 40 is still a small pile.
+The `.stack-pile` overlay adds only what the cards cannot say for themselves —
+how many are hidden, and a way to reach any one of them.
+
+**It is island-rendered, not fragment markup.** A fragment is a location
+rendered on its own; "how many cards are hidden behind me" is the most
+stack-positional fact there is, and putting it in the shell would make fragments
+know where they sit.
+
+**The overlay is drawn on the LABEL card's placement**, which `geometryFor`
+hands over (`PlacedPile.left/top/z/dither`) rather than the applier recomputing
+— so it can never drift off the edge it labels. It is inset by one border so it
+covers exactly that card's spine *track*: the card's own frame still draws the
+pile's edges, the label lines up with the spine titles either side of it, and
+the box stops exactly where the next card begins. **The ahead side redraws its
+own right border**, for the same reason ahead cards need `clip-path` at all —
+nothing in front closes that edge, and the overlay paints over the `::after`
+the card was using.
+
+**Two caps, and they are different numbers.** `MAX_PILE_LAYERS` (3) is what a
+pile *draws* at rest; `MAX_PILE_BANDS` (12) is what it *offers* on hover. Both
+obey the same rule — the last one absorbs the remainder — so **a band never
+stands for exactly one card it isn't showing**, and "1 more" is unrepresentable
+rather than avoided.
+
+**Bands run the way the stagger does.** A behind pile staggers upward as it
+deepens, so its deepest card is the TOP band ("the way back is up and left");
+ahead mirrors it. `pile.indices` is nearest→deepest for both sides, so
+`geometryFor` reverses only behind and returns `bands` in visual top-to-bottom
+order.
+
+Three things that bite:
+
+- **The label and the bands are BOTH always rendered**, and both stay in the tab
+  order; hover and `:focus-within` only swap which is painted. Bands behind
+  `display: none` could not be focused, and focus is the only way a keyboard
+  reaches a card buried in a pile.
+- **A hovered band is an INVERTED surface** and needs the mirror of every
+  flat-surface rule, not just swapped colours. The `-webkit-text-stroke` is
+  always the *surface's own* colour — paper stroke on paper, ink on ink — which
+  is what keeps it invisible until a dither shows through. Left paper on an
+  inverted band it fattens the glyphs instead of clearing dots behind them. See
+  the `--color-selected-*` section.
+- **The overlay is keyed by SIDE, not by label slot.** There is at most one pile
+  per side and its label card changes on every push; keyed by slot the overlay
+  would be destroyed and rebuilt each time, mounting at its destination instead
+  of travelling there — the same identity trap the cards have. Its own `left`
+  turns out to be stable while it exists (`behindPileSlot` is always
+  `backwardStrip` when there is a pile at all), so what you normally see change
+  is the count, not the position.
+
+`--stack-height` — the measured `.card-stack-inner` box, written by the same
+ResizeObserver that measures `activeWidth` — caps the sticky label so a stack
+shorter than the viewport doesn't get a 100vh child forcing its own height. It
+is guarded on a real measurement: at mobile `.card-stack-inner` is
+`display: contents` and measures zero.
 
 ### Card resolution happens once, in `resolveCard()`
 
