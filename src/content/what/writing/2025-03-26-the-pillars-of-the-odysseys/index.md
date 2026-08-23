@@ -1,11 +1,11 @@
 ---
-inspected: false
+inspected: true
 title: The Pillars of The Odysseys
-date: '2025-03-26 02:02:27 +0000'
+date: 2025-03-26 02:02:27 +0000
 tags:
   - what/games/analog/fatecardgame
 description: Why a board game about fate, is really about privilege
-canonical_url: 'https://pdyxs.substack.com/p/the-pillars-of-the-odysseys'
+canonical_url: https://pdyxs.substack.com/p/the-pillars-of-the-odysseys
 image: image-1.png
 source: substack
 ---

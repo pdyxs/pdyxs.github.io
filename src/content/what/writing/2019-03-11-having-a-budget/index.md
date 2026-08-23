@@ -1,12 +1,11 @@
 ---
-inspected: false
+inspected: true
 title: Having a Budget
-date: '2019-03-11 13:00:00 -0500'
+date: 2019-03-11 13:00:00 -0500
 tags:
   - what/software/budget-haver
 description: An exploration of what this 'budgeting' thing is
-canonical_url: >-
-  https://medium.com/@pdyxs/having-a-budget-7659059e52fa?source=friends_link&sk=e16b77d3f9f91f013633bb3c0c84fd53
+canonical_url: https://medium.com/@pdyxs/having-a-budget-7659059e52fa?source=friends_link&sk=e16b77d3f9f91f013633bb3c0c84fd53
 image: 1-RfdPubqINSVZlNwcGlkS8w.png
 source: medium
 ---
