@@ -1,11 +1,10 @@
 ---
-inspected: false
+inspected: true
 title: Art Heist
 description: Make a plan. Steal a painting. Don't get caught.
 tags:
   - when/released
   - installation
-  - why/viewable
 date: 2017-05-01
 images:
   - trailer.mp4

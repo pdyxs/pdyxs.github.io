@@ -9,7 +9,7 @@
 # authored assertion that a card belongs in a filter value is exactly what a
 # tag is, and the sibling curated values (`why/learn/*`) were already written
 # that way.
-name: Look
+name: Look at something
 order: 1
 description: >
   Photos, prints and art where the picture is the point.

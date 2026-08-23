@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Gotta Get Outta This Space
 date: 2020-07-01
 description: A print, play and post game that has you and your friends travelling the stars to escape a robot apocalypse.

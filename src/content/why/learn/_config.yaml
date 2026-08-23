@@ -9,7 +9,7 @@
 # generator *could* fill `learn/travel` from the `where:` hierarchy for free,
 # and that is precisely the reason not to — it would tag all ~154 travel
 # cards, and the value is in the handful worth reading.
-name: Learn
+name: Learn something
 order: 3
 description: >
   Things I've written to be useful to someone else.

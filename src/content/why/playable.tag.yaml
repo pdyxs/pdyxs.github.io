@@ -2,7 +2,7 @@
 # `kind: play` — which includes every puzzle, since resolveActions folds
 # `sudokupad_url` into exactly that. Override per card with
 # `playable: always` / `playable: never`. See src/lib/why-tags.ts.
-name: Play
+name: Play something
 order: 0
 description: >
   Games, puzzles and prototypes you can go and play right now.

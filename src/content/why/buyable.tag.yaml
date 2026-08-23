@@ -2,7 +2,7 @@
 # a store link to software is `kind: play` (the store is how you get to play
 # it), so this is only the shop selling a physical thing. One card today, with
 # a second project coming. Override with `buyable: always` / `buyable: never`.
-name: I want to buy something
+name: Buy something
 order: 2
 description: >
   Things you can own a copy of.
