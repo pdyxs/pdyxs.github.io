@@ -18,6 +18,7 @@
   import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../dimensions';
   import { markRead, readToRecord } from '../lib/card-view-state';
+  import { placeholderTitle } from '../lib/card-title';
   import { waitForTransition } from '../lib/transition-wait';
   import StackFragment from './StackFragment.svelte';
   import {
@@ -620,7 +621,7 @@
     // so the VT can start immediately without waiting for the network
     const usePlaceholder = !alreadyCached && clickedLink != null && startVT != null;
     if (usePlaceholder) {
-      fragments.seedPlaceholder(slot, titleOfElement(clickedLink) ?? uid);
+      fragments.seedPlaceholder(slot, placeholderTitle(manifestLookup.titleForUid(uid), titleOfElement(clickedLink)));
     } else if (!alreadyCached) {
       // No VT possible — wait for real content before showing anything
       const html = await networkFetch;
@@ -634,7 +635,9 @@
       const toSeed = pendingBrowseStack;
       pendingBrowseStack = [];
       for (const pendingUid of toSeed) {
-        if (!fragments.has(pendingUid)) fragments.seedPlaceholder(pendingUid, pendingUid);
+        if (!fragments.has(pendingUid)) {
+          fragments.seedPlaceholder(pendingUid, placeholderTitle(manifestLookup.titleForUid(pendingUid)));
+        }
       }
 
       stackStore.update(s => {
@@ -833,9 +836,9 @@
       const entryParams = paramsByKey.get(location.key);
       if (entryParams?.length) cardParams.set(location.key, entryParams);
       if (fragments.has(location.slot)) continue;
-      // No title in the manifest → no title in the header, deliberately: a
-      // visible uid reads as a bug where an empty header reads as loading.
-      fragments.seedPlaceholder(location.slot, manifestLookup.titleForUid(location.uid) ?? '');
+      // `placeholderTitle` is the one decision (issue #105); a restored entry
+      // has no clicked link to offer, so the manifest is all there is.
+      fragments.seedPlaceholder(location.slot, placeholderTitle(manifestLookup.titleForUid(location.uid)));
       pending.add(location.slot);
     }
 

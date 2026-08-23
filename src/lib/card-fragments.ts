@@ -160,6 +160,43 @@ export function withSlotUid(html: string, slot: string): string {
   return card.outerHTML;
 }
 
+/**
+ * Copies the real fragment's titles onto a card mounted from a placeholder —
+ * the header's and the spine's — so the placeholder is genuinely transient.
+ *
+ * Needed because `replaceBody` swaps only the BODY. Everything else a
+ * placeholder mounts with is what that location keeps for the session, so
+ * without this the header and spine keep whatever `placeholderTitle` guessed:
+ * right in the ordinary case (the manifest agrees with what lands), stale for
+ * a card retitled since the last manifest generation, and merely the clicked
+ * link's label wherever the manifest knew nothing. A pile band names its card
+ * from the same cached markup (issue #111), so it inherits whichever it is.
+ *
+ * Text is copied INTO the existing nodes rather than the nodes being replaced.
+ * The sticky-header observer (issue #110) captures `.card-header` by reference
+ * and toggles `card-header--stuck` on it; swap that node out and the observer
+ * spends the rest of the session toggling a class on a detached element, and
+ * the header un-compacts mid-scroll.
+ *
+ * The header title is copied as HTML because it is not plain text: it renders
+ * `<b>{title}</b>{titleSuffix}` (see CardHeader.astro), and the suffix is part
+ * of what the card is called. The source is our own server-rendered fragment,
+ * already in the cache.
+ */
+export function syncTitles(html: string, cardEl: Element | null | undefined): void {
+  if (!cardEl || typeof document === 'undefined') return;
+  const incoming = parseStackCard(html);
+  if (!incoming) return;
+
+  const from = incoming.querySelector('.card-header-title');
+  const to = cardEl.querySelector('.card-header-title');
+  if (from && to) to.innerHTML = from.innerHTML;
+
+  const spineFrom = incoming.querySelector('.stack-card-spine-title');
+  const spineTo = cardEl.querySelector('.stack-card-spine-title');
+  if (spineFrom && spineTo) spineTo.textContent = spineFrom.textContent;
+}
+
 /** The title a link (or any element) offers for the card it points at. */
 export function titleOfElement(el: Element | null | undefined): string | null {
   return el?.querySelector('.card-header-title')?.textContent?.trim() ?? null;
@@ -190,8 +227,9 @@ export interface CardFragments {
   load(uid: string): Promise<string | null>;
   /**
    * Adopt a real fragment for a location currently rendered from a placeholder:
-   * caches it, and writes its body into the live card so the already-mounted
-   * header — and with it the running view transition — is kept.
+   * caches it, writes its body into the live card so the already-mounted
+   * header — and with it the running view transition — is kept, and copies the
+   * real titles onto that kept header and its spine (see `syncTitles`).
    */
   replaceBody(slot: string, html: string, cardEl: Element | null): void;
   /** Every fact the stack reads out of a location's fragment. */
@@ -230,6 +268,7 @@ export function createCardFragments(options: CardFragmentsOptions = {}): CardFra
       const inner = extractBodyInner(html);
       const existing = cardEl?.querySelector('.stack-card-body-inner');
       if (inner !== null && existing) existing.innerHTML = inner;
+      syncTitles(html, cardEl);
     },
     factsFor(key) {
       const html = cache.get(key);

@@ -263,6 +263,130 @@ describe('delegated click → push', () => {
   });
 });
 
+describe('placeholder titles (#105)', () => {
+  // `what/art/lino-printing` is titled "Lino Printing" in the manifest;
+  // CARD_B (`what/puzzles/fog`) is deliberately absent from it, which is what
+  // makes it the fallback case. CARD_A is numbeanies and is already mounted,
+  // so it is no use as a push target here.
+  const LINO = 'what/art/lino-printing';
+
+  /**
+   * The placeholder path needs a view transition, and happy-dom has none — so
+   * every other test in this file takes the instant-fallback branch and never
+   * seeds a placeholder at all. This stub is the smallest thing `performPush`
+   * needs: run the callback, then settle.
+   */
+  function stubViewTransitions() {
+    (document as any).startViewTransition = (cb: () => void) => {
+      cb();
+      return { finished: Promise.resolve() };
+    };
+  }
+
+  /** A fetch that hands back a promise the test resolves by hand. */
+  function deferredFetch() {
+    let release!: () => void;
+    const gate = new Promise<void>(r => { release = r; });
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      await gate;
+      return { ok: true, text: async () => page(url) };
+    }));
+    return release;
+  }
+
+  /**
+   * A push link shaped like the real ones. `.card-link` matters: the delegated
+   * handler passes `pushItem.closest('.card-link')` as the clicked link, and a
+   * push with no clicked link skips the placeholder entirely.
+   */
+  function pushLink(uid: string, label?: string) {
+    const link = document.createElement('a');
+    link.className = 'card-link';
+    link.dataset.pushCard = uid;
+    if (label) link.innerHTML = `<span class="card-header-title">${label}</span>`;
+    document.querySelector(`[data-uid="${CARD_A}"] .stack-card-body-inner`)!.appendChild(link);
+    return link;
+  }
+
+  const titleOf = (uid: string, sel = '.card-header-title') =>
+    document.querySelector(`[data-uid="${uid}"] ${sel}`)?.textContent?.trim();
+
+  afterEach(() => { delete (document as any).startViewTransition; });
+
+  it('titles an in-flight placeholder from the manifest, never the uid', async () => {
+    stubViewTransitions();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const release = deferredFetch();
+    // No `.card-header-title` inside the link — a browse tile, which is
+    // exactly the case the ticket describes.
+    pushLink(LINO).click();
+    await settle();
+
+    // Still in flight: this is the placeholder, and it is what the visitor sees.
+    expect(titleOf(LINO)).toBe('Lino Printing');
+    // The spine carries it too — and through the spine, #111's pile bands.
+    expect(titleOf(LINO, '.stack-card-spine-title')).toBe('Lino Printing');
+    expect(document.querySelector(`[data-uid="${LINO}"]`)!.textContent).not.toContain(LINO);
+
+    release();
+    await settle();
+  });
+
+  it('prefers the manifest to the clicked link, which may be contextual', async () => {
+    stubViewTransitions();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const release = deferredFetch();
+    pushLink(LINO, 'A print I made').click();
+    await settle();
+
+    expect(titleOf(LINO)).toBe('Lino Printing');
+
+    release();
+    await settle();
+  });
+
+  it('falls back to the clicked link when the manifest knows nothing', async () => {
+    stubViewTransitions();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const release = deferredFetch();
+    pushLink(CARD_B, 'Clicked Label').click();
+    await settle();
+
+    expect(titleOf(CARD_B)).toBe('Clicked Label');
+
+    release();
+    await settle();
+  });
+
+  it('replaces a guessed title with the real one once the fragment lands', async () => {
+    // The placeholder's shell is permanent — only the body is swapped — so the
+    // correction has to be `replaceBody` copying titles across, not a re-render.
+    stubViewTransitions();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const release = deferredFetch();
+    pushLink(CARD_B, 'Stale Guess').click();
+    await settle();
+    expect(titleOf(CARD_B)).toBe('Stale Guess');
+
+    release();
+    await settle();
+
+    // `page()` renders CARD_B titled with its uid, which stands in for whatever
+    // the server sends — the point is that the DOM now says what the FRAGMENT
+    // says, in the header and in the spine.
+    expect(titleOf(CARD_B)).toBe(CARD_B);
+    expect(titleOf(CARD_B, '.stack-card-spine-title')).toBe(CARD_B);
+  });
+});
+
 describe('close', () => {
   it('trims the stack back to the entries before the closed card', async () => {
     mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });

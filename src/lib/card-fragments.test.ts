@@ -28,8 +28,13 @@ import {
 function fragment(uid: string, opts: { title?: string; body?: string; width?: string; hash?: string } = {}) {
   const width = opts.width ? ` data-width="${opts.width}"` : '';
   const hash = opts.hash ? ` data-content-hash="${opts.hash}"` : '';
+  const title = opts.title ?? uid;
+  // Spine included, because all three real shells render one (issue #109) and
+  // `replaceBody` now copies its title across.
   return `<div class="stack-card" data-uid="${uid}"${width}${hash}>` +
-    `<div class="card-header"><span class="card-header-title">${opts.title ?? uid}</span></div>` +
+    `<div class="stack-card-spine"><div class="stack-card-spine-inner">` +
+    `<span class="stack-card-spine-title">${title}</span></div></div>` +
+    `<div class="card-header"><span class="card-header-title">${title}</span></div>` +
     `<div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner">` +
     `${opts.body ?? '<p>body</p>'}` +
     `</div></div></div></div>`;
@@ -203,6 +208,51 @@ describe('replaceBody (the placeholder → real content swap)', () => {
     // The header element is the one the view transition is morphing into —
     // replacing the whole card would pull it out from under the animation.
     expect(card.querySelector('.card-header-title')?.textContent?.trim()).toBe('Fog');
+  });
+
+  it('copies the real titles onto the kept header and spine (#105)', () => {
+    // The placeholder's shell is permanent — only the body is swapped — so a
+    // title guessed at seed time is the title that location shows for the rest
+    // of the session unless this copies over it. That reaches the header, the
+    // spine, and any pile band that later names the card from this markup.
+    const fragments = createCardFragments();
+    fragments.seedPlaceholder('what/a', 'Guessed');
+    const card = mountedPlaceholder('what/a', 'Guessed');
+
+    fragments.replaceBody('what/a', fragment('what/a', { title: 'Fog' }), card);
+
+    expect(card.querySelector('.card-header-title')?.textContent?.trim()).toBe('Fog');
+    expect(card.querySelector('.stack-card-spine-title')?.textContent?.trim()).toBe('Fog');
+  });
+
+  it('keeps the header ELEMENT while replacing its text', () => {
+    // Not a detail: the sticky-header observer (#110) captures `.card-header`
+    // by reference and toggles `card-header--stuck` on it. Swap the node and
+    // the observer spends the session toggling a detached element.
+    const fragments = createCardFragments();
+    fragments.seedPlaceholder('what/a', 'Guessed');
+    const card = mountedPlaceholder('what/a', 'Guessed');
+    const header = card.querySelector('.card-header');
+    const spine = card.querySelector('.stack-card-spine-title');
+
+    fragments.replaceBody('what/a', fragment('what/a', { title: 'Fog' }), card);
+
+    expect(card.querySelector('.card-header')).toBe(header);
+    expect(card.querySelector('.stack-card-spine-title')).toBe(spine);
+  });
+
+  it('survives a card that has no spine to copy into', () => {
+    // `replaceBody` is also reachable for a location seeded from real markup,
+    // and a fragment shape is not something this should assume.
+    const fragments = createCardFragments();
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="stack-card" data-uid="what/a">' +
+      '<div class="body-wrapper"><div class="stack-card-body">' +
+      '<div class="stack-card-body-inner"></div></div></div></div>';
+    const card = host.querySelector<HTMLElement>('.stack-card')!;
+
+    expect(() => fragments.replaceBody('what/a', fragment('what/a', { title: 'Fog' }), card)).not.toThrow();
+    expect(card.querySelector('.stack-card-body-inner')?.innerHTML).toBe('<p>body</p>');
   });
 
   it('caches the real fragment, so the next navigation skips the network', async () => {

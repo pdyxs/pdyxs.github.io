@@ -246,6 +246,25 @@ uid ↔ URL mapping, the cache, every read of a fact out of a fragment
 `CardStack.fragments.test.ts` — and the module contains no stack state: it
 never imports the store and never decides what is active.
 
+**A placeholder's shell is permanent; only its body is transient.**
+`replaceBody` swaps the body and nothing else, because the header is what a
+view transition is morphing into and the sticky-header observer (#110) holds
+`.card-header` by reference — replace either node and the animation or the
+`card-header--stuck` toggle is left pointing at a detached element. So the
+titles are copied *into* the kept nodes instead (`syncTitles`), header and
+spine both, and through the spine into any pile band that later names the card.
+
+That is why the title a placeholder is *seeded* with matters: get it wrong and
+it is wrong for the session, not for a frame. `placeholderTitle`
+(`src/lib/card-title.ts`) is the single decision — **manifest, else the clicked
+link, and never the uid** (issue #105). The manifest wins because it carries
+`resolveCardTitle`'s output, the same function the real fragment renders
+through, so it is the one copy guaranteed to agree with what lands; a listing's
+link label may be contextual or truncated. A visible
+`what/games/digital/numbeanies` reads as a bug to a visitor where an empty
+header reads as loading. All three seed sites go through it — the view-transition
+push, the browse-stack pre-seed, and `initFromUrl`'s cold-load restore.
+
 **The network is an injected seam.** `createCardFragments({ load })` takes the
 fetch, so `card-fragments.test.ts` drives push, close, popstate and
 re-activate against a fake fragment source — which is as close to orchestration

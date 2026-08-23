@@ -24,3 +24,33 @@
 export function resolveCardTitle(data: { title?: string }): string {
   return data.title ?? '';
 }
+
+/**
+ * The title a PLACEHOLDER card carries: the manifest's, else the clicked
+ * link's, else nothing. Never the uid (issue #105).
+ *
+ * The manifest wins, and the reason is that a placeholder's title is not
+ * transient. `replaceBody` swaps only the body, so the shell a location mounts
+ * with is the shell it keeps — a wrong title here is wrong for the rest of the
+ * session, in the header, in the spine, and in any pile band that later names
+ * this card (issue #111). The manifest carries the card's own resolved title,
+ * produced by `resolveCardTitle` above — the same function the real fragment
+ * renders through — so it is the one source guaranteed to agree with what
+ * lands. A clicked link carries whatever label its listing chose to show,
+ * which is usually the same string and occasionally a contextual or truncated
+ * one.
+ *
+ * The link stays as a fallback rather than being dropped: the manifest is
+ * regenerated at build, so a location it does not know about is a location
+ * whose real title we have no other copy of, and a label the visitor just
+ * clicked beats nothing.
+ *
+ * The uid is never a candidate. A visible `what/games/digital/numbeanies`
+ * reads as a bug to a visitor, where an empty header reads as loading.
+ */
+export function placeholderTitle(
+  manifestTitle: string | undefined,
+  linkTitle?: string | null,
+): string {
+  return manifestTitle || linkTitle || '';
+}
