@@ -43,7 +43,7 @@ worked out a solid business case for [Houston, we have a
 market and value proposition (something
 *[Particulars](card:what/games/digital/particulars)* lacked). I even briefly toyed
 with the idea of running large-scale [real-world
-games](card:what/art/art-heist/) in a more professional capacity.
+games](card:what/art/art-heist) in a more professional capacity.
 
 In many of these cases, that voice asking ‘Why is this better? How are you
 learning from your mistakes?’ was a real boon. But at some point, you have to

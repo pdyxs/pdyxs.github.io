@@ -1,5 +1,5 @@
 # Declares the container so the panel keeps it. filterVisibleNodes drops any
-# undeclared node *and its children*, so `why:learn/game-development` and
+# undeclared node *and its children*, so `why:learn/gamedev` and
 # `why:learn/travel` are invisible without this file, however well-declared
 # they are themselves — silently, with no error and no missing-filter warning.
 # Same trap the affiliation containers hit; see CLAUDE.md.

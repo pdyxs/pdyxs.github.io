@@ -113,7 +113,7 @@ describe('the why scaffold on disk', () => {
     expect(declared).toContain(WHY_BUYABLE);
 
     // The two authored topics (issue #87 tags the cards; the values exist now).
-    expect(declared).toContain('why:learn/game-development');
+    expect(declared).toContain('why:learn/gamedev');
     expect(declared).toContain('why:learn/travel');
 
     // THE ONE WITH NO SYMPTOM: filterVisibleNodes drops an undeclared node and

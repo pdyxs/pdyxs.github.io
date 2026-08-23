@@ -1443,7 +1443,7 @@ knowing: `generated/viewable` is **not** a legal exclusion, and that falls out
 of the key set rather than being special-cased. Nothing generates it, so there
 is nothing to suppress.
 
-The two `why:learn/*` values, `why:learn/game-development` and
+The two `why:learn/*` values, `why:learn/gamedev` and
 `why:learn/travel`, are **authored** the same way, and `why/learn/_config.yaml`
 is load-bearing for exactly the reason the affiliation containers are:
 `filterVisibleNodes` drops an undeclared node *and recurses into its

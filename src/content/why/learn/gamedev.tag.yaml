@@ -1,7 +1,7 @@
-# Authored — tag a card with `why/learn/game-development` in its frontmatter.
-# No card carries it yet; the curation pass is issue #87. The value is declared
-# now so the scaffold is complete and the panel node exists the moment the
-# first card is tagged.
+# Authored — tag a card with `why/learn/gamedev` in its frontmatter.
+# Curated in issue #87; 8 cards carry it. (It was `why/learn/game-development`
+# until the value was renamed — the declaration, the cards and the test all
+# moved together, since filterVisibleNodes keys on the declared name.)
 name: Game development
 description: >
   Write-ups with something transferable in them about making games.

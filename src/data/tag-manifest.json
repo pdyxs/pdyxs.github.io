@@ -2794,5 +2794,13 @@
   {
     "uid": "why:learn/travel",
     "code": "bg"
+  },
+  {
+    "uid": "why:learn/game-dev",
+    "code": "bh"
+  },
+  {
+    "uid": "why:learn/gamedev",
+    "code": "bi"
   }
 ]
