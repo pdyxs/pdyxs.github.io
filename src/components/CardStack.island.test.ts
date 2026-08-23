@@ -571,6 +571,96 @@ describe('lens identity (#100)', () => {
   });
 });
 
+describe('cold-load stack skeleton (#101)', () => {
+  // `CARD_A` and `CARD_B` are real uids, so the shipped manifest has codes AND
+  // titles for both — which is the whole premise: the browser knows every
+  // entry's title before it knows anything else about it.
+  const codeFor = (uid: string) => manifestLookup.codeForUid(uid)!;
+
+  /** Hold every fragment fetch open, so the pre-arrival state can be observed. */
+  function deferFetches() {
+    const release: Array<() => void> = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      await new Promise<void>(r => release.push(r));
+      return { ok: true, text: async () => page(url) };
+    }));
+    return () => { for (const r of release.splice(0)) r(); };
+  }
+
+  it('paints the whole stack shape before any fragment arrives', async () => {
+    // The bug: the restore used to await each fetch and splice its entry in
+    // when the HTML landed, so a deep link painted the active card alone and
+    // then grew a fan one card at a time — moving the card you came to read on
+    // every step.
+    const releaseAll = deferFetches();
+    history.replaceState(null, '', `/card/${CARD_B}?from=${codeFor(CARD_A)}`);
+    mountStack({ activeUid: CARD_B, activeHtml: fragment(CARD_B) });
+    await settle();
+
+    // Nothing has been fetched yet, and the stack is already the right shape.
+    const state = get(stackStore);
+    expect(state.entries.map(e => e.key)).toEqual([CARD_A, CARD_B]);
+    expect(state.activeSlot).toBe(CARD_B);
+    expect(document.querySelectorAll('.stack-card')).toHaveLength(2);
+
+    releaseAll();
+    await settle();
+  });
+
+  it('titles the placeholder from the manifest, not from its uid', async () => {
+    const releaseAll = deferFetches();
+    history.replaceState(null, '', `/card/${CARD_B}?from=${codeFor(CARD_A)}`);
+    mountStack({ activeUid: CARD_B, activeHtml: fragment(CARD_B) });
+    await settle();
+
+    const spine = document.querySelector(`[data-uid="${CARD_A}"] .stack-card-spine-title`);
+    const expected = manifestLookup.titleForUid(CARD_A);
+    expect(expected).toBeTruthy();
+    expect(spine?.textContent).toBe(expected);
+    // A collapsed card IS its spine title, so the skeleton is a legible
+    // breadcrumb rather than a blank box — and a uid would read as a bug.
+    expect(spine?.textContent).not.toBe(CARD_A);
+
+    releaseAll();
+    await settle();
+  });
+
+  it('keeps the same DOM node when the real fragment lands', async () => {
+    // The trap this guards: `StackFragment` reads its html prop once, so the
+    // fill-in has to go through `replaceBody` and patch the mounted node. A
+    // bare cache write would either do nothing visible or (before #109's
+    // freeze) destroy and rebuild the node.
+    const releaseAll = deferFetches();
+    history.replaceState(null, '', `/card/${CARD_B}?from=${codeFor(CARD_A)}`);
+    mountStack({ activeUid: CARD_B, activeHtml: fragment(CARD_B) });
+    await settle();
+
+    const before = document.querySelector(`[data-uid="${CARD_A}"]`);
+    expect(before).toBeTruthy();
+
+    releaseAll();
+    await settle();
+
+    expect(document.querySelector(`[data-uid="${CARD_A}"]`)).toBe(before);
+    // ...and the real content actually arrived in it.
+    expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_A, CARD_B]);
+  });
+
+  it('drops an entry whose fragment never arrives', async () => {
+    // The shape is optimistic, so a 404 has to be taken back — otherwise the
+    // stack keeps a skeleton that will never fill.
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => (
+      url.includes(CARD_A) ? { ok: false, text: async () => '' } : { ok: true, text: async () => page(url) }
+    )));
+    history.replaceState(null, '', `/card/${CARD_B}?from=${codeFor(CARD_A)}`);
+    mountStack({ activeUid: CARD_B, activeHtml: fragment(CARD_B) });
+    await settle();
+
+    expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_B]);
+    expect(document.querySelector(`[data-uid="${CARD_A}"]`)).toBeNull();
+  });
+});
+
 describe('two identical locations coexist (#106)', () => {
   // The exact route the ticket names, walked end to end:
   //

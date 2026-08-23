@@ -809,29 +809,77 @@
     const activeIdxInParsed = parsed.entries.findIndex(e => e.slot === parsed.activeSlot);
     const fromLocations = parsed.entries.slice(0, activeIdxInParsed);
     const toLocations = parsed.entries.slice(activeIdxInParsed + 1);
+    const restored = [...fromLocations, ...toLocations];
 
-    for (const location of fromLocations) {
-      const ok = await fragments.ensure(location.slot, location.uid);
-      if (ok) {
-        const entryParams = paramsByKey.get(location.key);
-        if (entryParams?.length) cardParams.set(location.key, entryParams);
-        stackStore.update(s => {
-          const activeIdx = s.entries.findIndex(e => e.slot === s.activeSlot);
-          const newEntries = activeIdx >= 0
-            ? [...s.entries.slice(0, activeIdx), location, ...s.entries.slice(activeIdx)]
-            : [location, ...s.entries];
-          return { ...s, entries: newEntries };
-        });
-      }
+    // ── The stack's SHAPE lands first, its contents afterwards (issue #101).
+    //
+    // This used to await each fragment and splice its entry in when the HTML
+    // arrived, so a cold-loaded deep link painted the active card alone and
+    // then grew a fan one card at a time, moving the card you came to read on
+    // every step. Nothing about that wait was necessary: `deserialiseStack`
+    // already knows every entry, and the manifest already ships to the client
+    // for short-code decoding — so the browser knows each location's uid, and
+    // now its title, before it knows anything else about it.
+    //
+    // A placeholder is not a different kind of thing. It is a card whose
+    // content has not arrived: same fragment shape, same geometry, same spine.
+    // For a `from`/`to` entry that is very nearly the whole card, because they
+    // all arrive COLLAPSED — what shows is the spine title, which the manifest
+    // supplies exactly (`resolveCardTitle`, the same function the real
+    // fragment renders through), so the fill-in is invisible rather than a
+    // second flash of change.
+    const pending = new Set<string>();
+    for (const location of restored) {
+      const entryParams = paramsByKey.get(location.key);
+      if (entryParams?.length) cardParams.set(location.key, entryParams);
+      if (fragments.has(location.slot)) continue;
+      // No title in the manifest → no title in the header, deliberately: a
+      // visible uid reads as a bug where an empty header reads as loading.
+      fragments.seedPlaceholder(location.slot, manifestLookup.titleForUid(location.uid) ?? '');
+      pending.add(location.slot);
     }
-    for (const location of toLocations) {
-      const ok = await fragments.ensure(location.slot, location.uid);
-      if (ok) {
-        const entryParams = paramsByKey.get(location.key);
-        if (entryParams?.length) cardParams.set(location.key, entryParams);
-        stackStore.update(s => ({ ...s, entries: [...s.entries, location] }));
+
+    // ONE store write, so the fan is complete from the first hydrated frame —
+    // and so the scroll effect sees a single shape change rather than one per
+    // entry (its signature is activeSlot@depth).
+    stackStore.update(s => {
+      const activeIdx = s.entries.findIndex(e => e.slot === s.activeSlot);
+      if (activeIdx < 0) return { ...s, entries: [...fromLocations, ...s.entries, ...toLocations] };
+      return {
+        ...s,
+        entries: [
+          ...s.entries.slice(0, activeIdx),
+          ...fromLocations,
+          s.entries[activeIdx],
+          ...toLocations,
+          ...s.entries.slice(activeIdx + 1),
+        ],
+      };
+    });
+    // The nodes have to exist before `replaceBody` can write into them.
+    await tick();
+
+    // Fetches run in PARALLEL now. They were sequential only because each one
+    // gated the next entry's appearance; nothing gates anything any more, and a
+    // six-deep stack was six round trips end to end.
+    await Promise.all(restored.map(async location => {
+      if (!pending.has(location.slot)) return;
+      const html = await fragments.load(location.uid);
+      if (!html) {
+        // Drop it rather than leaving a placeholder that will never fill. The
+        // shape was optimistic; a location whose fragment 404s is not in the
+        // stack, which is exactly what the sequential version expressed by
+        // never splicing it in.
+        stackStore.update(s => ({ ...s, entries: s.entries.filter(e => e.slot !== location.slot) }));
+        return;
       }
-    }
+      // MUST be replaceBody, never a bare cache write: `StackFragment` reads
+      // its html prop once, so once a location is mounted the cache no longer
+      // reaches its DOM (see CLAUDE.md § Svelte islands). A `seed` here would
+      // cache the real fragment and leave the card showing its skeleton for
+      // the rest of the session.
+      fragments.replaceBody(location.slot, html, elFor(location.slot));
+    }));
   }
 
   onMount(() => {

@@ -124,9 +124,16 @@ describe('every flow goes through the fragment store', () => {
     expect(source).toMatch(/readToRecord\(uid, fragments\.get\(slot\)\)/);
   });
 
-  it('restoring a short-coded stack ensures each location', () => {
+  it('restoring a short-coded stack fills placeholders through replaceBody', () => {
+    // The one thing that cannot be observed as behaviour: an ASSERTION OF
+    // ABSENCE. `StackFragment` reads its html prop once, so a bare `seed` here
+    // would cache the real fragment while leaving the mounted card showing its
+    // skeleton forever — and the test would still see the right HTML in the
+    // cache. Only the source can say which call was made.
     const start = source.indexOf('async function initFromUrl()');
     const body = source.slice(start, source.indexOf('\n  onMount(', start));
-    expect(body.match(/await fragments\.ensure\(location\.slot, location\.uid\)/g)?.length).toBe(2);
+    expect(body).toMatch(/fragments\.seedPlaceholder\(location\.slot/);
+    expect(body).toMatch(/fragments\.replaceBody\(location\.slot, html, elFor\(location\.slot\)\)/);
+    expect(body).not.toMatch(/fragments\.seed\(/);
   });
 });

@@ -1,6 +1,9 @@
 ---
 import '../styles/global.css';
 import ThemeToggle from '../components/ThemeToggle.astro';
+import { STACK_GEOMETRY } from '../lib/stack-geometry';
+import { fanReservationTable } from '../lib/stack-reservation';
+import { ENTRY_SEP } from '../lib/stack-codec';
 import {
   buildArticleJsonLd,
   buildSiteJsonLd,
@@ -29,6 +32,13 @@ const pageTitle = title === SITE_NAME ? title : `${title} — ${SITE_NAME}`;
 // Astro.site is configured in astro.config.mjs, so SITE_URL is only a
 // type-narrowing fallback — but it must be the same one /sitemap.xml uses, or a
 // page's canonical and its sitemap <loc> could disagree.
+// The fan reservation the pre-hydration script below applies (issue #101),
+// computed HERE, at build time, by the real geometry — see stack-reservation.ts
+// for why the script is handed a table instead of the rules. `activeWidth` is
+// irrelevant to slot/row counts (it only places the ahead fan horizontally), so
+// any value does; the type requires one.
+const stackReservation = fanReservationTable({ ...STACK_GEOMETRY, activeWidth: 0 });
+
 const site = Astro.site?.href ?? SITE_URL;
 const seoPage = {
   title,
@@ -134,6 +144,51 @@ const jsonLd = [
         setTimeout(function () {
           document.documentElement.removeAttribute('data-filters-pending');
         }, 3000);
+      })();
+    </script>
+    {/* Pre-paint fan reservation for a cold-loaded stack (issue #101).
+
+        A deep link renders only its ACTIVE location server-side; the from/to
+        entries are restored client-side, so until the island hydrates
+        `.card-stack-inner` carries no margin for a fan that is about to exist.
+        The card the visitor came to read then jumps — measured at 60px right
+        and 40px down for a three-slot fan at 1400px.
+
+        The script below computes NO geometry. `stackReservation` is a table
+        built at build time by calling `computeGeometry` itself (see
+        src/lib/stack-reservation.ts), so the slots-vs-rows rule — the one
+        already got wrong once, because a piled card shares its slot's `left`
+        but keeps climbing in `top` — has exactly one implementation. All the
+        script does is count entries and read a row out of the table.
+
+        It writes to <html>, not #card-stack, which does not exist yet in
+        <head>. Custom properties inherit, so the CSS resolves them until the
+        island writes its own onto #card-stack, where an element style wins.
+
+        No breakpoint check: only the desktop media block reads these four, so
+        setting them at mobile is inert — the same reason the applier writes
+        them unconditionally.
+
+        This rationale lives in an Astro comment rather than inside the script
+        because `is:inline` script bodies are emitted VERBATIM, comments and
+        all, on every one of the site's ~590 pages. */}
+    <script is:inline define:vars={{ stackReservation, ENTRY_SEP }}>
+      (function () {
+        var usp = new URLSearchParams(window.location.search);
+        var from = usp.get('from');
+        var to = usp.get('to');
+        if (!from && !to) return;
+        var count = function (v) { return v ? v.split(ENTRY_SEP).filter(Boolean).length : 0; };
+        var row = function (side, n) {
+          return side && side.length ? side[Math.min(Math.max(0, n), side.length - 1)] : { slots: 0, rows: 0 };
+        };
+        var b = row(stackReservation.behind, count(from));
+        var a = row(stackReservation.ahead, count(to));
+        var st = document.documentElement.style;
+        st.setProperty('--behind-slots', String(b.slots));
+        st.setProperty('--behind-rows', String(b.rows));
+        st.setProperty('--ahead-slots', String(a.slots));
+        st.setProperty('--ahead-rows', String(a.rows));
       })();
     </script>
   </head>

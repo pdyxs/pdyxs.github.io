@@ -1,4 +1,6 @@
 import { getCollection } from 'astro:content';
+import { resolveCardTitle } from './card-title';
+export { resolveCardTitle };
 import { derivePathTags, mergeEffectiveTags } from './tag-inheritance';
 import { resolveFolderCascade, makeFileReader } from './folder-config';
 import type { FolderCascade } from './folder-config';
@@ -151,19 +153,6 @@ export type ResolvedCard = CardMeta & {
   gallery?: boolean;
 };
 
-/**
- * Resolves a card's display title. There is no fallback: a card with no
- * frontmatter `title` renders as ''.
- *
- * (A stories-fallback-to-series rule lived here until #77. It had been dead
- * since stories moved from `what/stories/` to `what/posts/stories/`, and it
- * would have produced the lowercase slug — "arctic", not "Arctic" — if
- * revived. Untitled story chapters get a frontmatter title like their
- * siblings.)
- */
-export function resolveCardTitle(data: { title?: string }): string {
-  return data.title ?? '';
-}
 
 /**
  * Resolves a card's description: the frontmatter `description` if present,

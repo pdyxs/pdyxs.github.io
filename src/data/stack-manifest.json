@@ -1,855 +1,1068 @@
 [
   {
     "uid": "lens/home",
-    "code": "0"
+    "code": "0",
+    "title": "A bit of everything"
   },
   {
     "uid": "lens/newest",
-    "code": "1"
+    "code": "1",
+    "title": "Newest"
   },
   {
     "uid": "what/art/art-heist",
-    "code": "2"
+    "code": "2",
+    "title": "Art Heist"
   },
   {
     "uid": "what/art/genetic-sequences",
-    "code": "3"
+    "code": "3",
+    "title": "Genetic Sequences"
   },
   {
     "uid": "what/art/laser-harp",
-    "code": "4"
+    "code": "4",
+    "title": "The Laser Harp"
   },
   {
     "uid": "what/art/lino-printing",
-    "code": "5"
+    "code": "5",
+    "title": "Lino Printing"
   },
   {
     "uid": "what/art/qistigram",
-    "code": "6"
+    "code": "6",
+    "title": "Qistigram"
   },
   {
     "uid": "what/art/the-neighbourhood",
-    "code": "7"
+    "code": "7",
+    "title": "The Neighbourhood"
   },
   {
     "uid": "what/art/the-path",
-    "code": "8"
+    "code": "8",
+    "title": "The Path"
   },
   {
     "uid": "what/games/analog/fatecardgame",
-    "code": "9"
+    "code": "9",
+    "title": "The Odysseys"
   },
   {
     "uid": "what/games/analog/gotta-get-outta-this-space",
-    "code": "a"
+    "code": "a",
+    "title": "Gotta Get Outta This Space"
   },
   {
     "uid": "what/games/analog/houston-we-have-a",
-    "code": "b"
+    "code": "b",
+    "title": "Houston, we have a #$!?"
   },
   {
     "uid": "what/games/analog/time-fight",
-    "code": "c"
+    "code": "c",
+    "title": "Time Fight"
   },
   {
     "uid": "what/games/digital/bravehearts",
-    "code": "d"
+    "code": "d",
+    "title": "Ditto's Keep Safe Adventure"
   },
   {
     "uid": "what/games/digital/cybersecurity",
-    "code": "e"
+    "code": "e",
+    "title": "Cybersecurity Ethics"
   },
   {
     "uid": "what/games/digital/dot-hunt",
-    "code": "f"
+    "code": "f",
+    "title": "dot-hunt"
   },
   {
     "uid": "what/games/digital/flatland-fallen-angle",
-    "code": "g"
+    "code": "g",
+    "title": "Flatland: Fallen Angle"
   },
   {
     "uid": "what/games/digital/numbeanies",
-    "code": "h"
+    "code": "h",
+    "title": "Numbeanies: Number Forest"
   },
   {
     "uid": "what/games/digital/particulars",
-    "code": "i"
+    "code": "i",
+    "title": "Particulars"
   },
   {
     "uid": "what/games/digital/played",
-    "code": "j"
+    "code": "j",
+    "title": "PlayEd"
   },
   {
     "uid": "what/games/digital/quantum-byte",
-    "code": "k"
+    "code": "k",
+    "title": "Completely Accurate Human Thought Simulator"
   },
   {
     "uid": "what/games/digital/tiny-world-the-musical-the-game",
-    "code": "l"
+    "code": "l",
+    "title": "Tiny World, the Musical, the Game"
   },
   {
     "uid": "what/games/digital/unstoppabot",
-    "code": "m"
+    "code": "m",
+    "title": "Unstoppabot"
   },
   {
     "uid": "what/games/digital/virtual-farm",
-    "code": "n"
+    "code": "n",
+    "title": "Virtual Farm"
   },
   {
     "uid": "what/games/digital/where-the-heart-is",
-    "code": "o"
+    "code": "o",
+    "title": "Where the Heart Is"
   },
   {
     "uid": "what/posts/2012-04-20-brainstorming-for-ld48",
-    "code": "p"
+    "code": "p",
+    "title": "Brainstorming for #ld48"
   },
   {
     "uid": "what/posts/2012-04-20-pre-programming-engine-diagram-ie-it",
-    "code": "q"
+    "code": "q",
+    "title": "Pre programming engine diagram (ie it's most certainly wrong so…"
   },
   {
     "uid": "what/posts/2012-04-29-instagram",
-    "code": "r"
+    "code": "r",
+    "title": "Instagram, April 2012"
   },
   {
     "uid": "what/posts/2012-05-18-part-1-of-an-experiment-in",
-    "code": "s"
+    "code": "s",
+    "title": "Part 1 of an experiment in interactive fiction design"
   },
   {
     "uid": "what/posts/2012-05-21-a-flatland-poster-as-envisioned-by",
-    "code": "t"
+    "code": "t",
+    "title": "A flatland poster, as envisioned by Louise"
   },
   {
     "uid": "what/posts/2012-05-24-table-drawings-during-this-weeks-game",
-    "code": "u"
+    "code": "u",
+    "title": "Table drawings during this weeks game engine podcast."
   },
   {
     "uid": "what/posts/2013-02-09-instagram",
-    "code": "v"
+    "code": "v",
+    "title": "Instagram, February 2013"
   },
   {
     "uid": "what/posts/2013-02-09-loch-ard-gorge",
-    "code": "w"
+    "code": "w",
+    "title": "Loch Ard Gorge"
   },
   {
     "uid": "what/posts/2013-02-09-now-thats-a-wall",
-    "code": "x"
+    "code": "x",
+    "title": "Now THATs a wall..."
   },
   {
     "uid": "what/posts/2013-02-16-time-fight-version-0-3",
-    "code": "y"
+    "code": "y",
+    "title": "Time fight version 0.3"
   },
   {
     "uid": "what/posts/2013-02-23-what-happens-when-you-play-time",
-    "code": "z"
+    "code": "z",
+    "title": "What happens when you play time fight with time going in different…"
   },
   {
     "uid": "what/posts/2013-03-02-double-rainbow",
-    "code": "A"
+    "code": "A",
+    "title": "Double rainbow!"
   },
   {
     "uid": "what/posts/2013-04-29-found-an-old-notebook-i-m",
-    "code": "B"
+    "code": "B",
+    "title": "Found an old notebook."
   },
   {
     "uid": "what/posts/2013-11-15-seethrustudios-move-part-1-the-new",
-    "code": "C"
+    "code": "C",
+    "title": "@SeeThruStudios move part 1 (the new office!)"
   },
   {
     "uid": "what/posts/2013-11-15-seethrustudios-move-part-2---the",
-    "code": "D"
+    "code": "D",
+    "title": "@SeeThruStudios move part 2 - the tech"
   },
   {
     "uid": "what/posts/2013-11-16-moving-complete-setup-somewhat-done-tomorrow",
-    "code": "E"
+    "code": "E",
+    "title": "Moving complete!"
   },
   {
     "uid": "what/posts/2013-11-17-the-beginnings-of-the-walk-of",
-    "code": "F"
+    "code": "F",
+    "title": "The beginnings of the walk of art"
   },
   {
     "uid": "what/posts/2014-03-07-sometimes-you-just-find-cool-things",
-    "code": "G"
+    "code": "G",
+    "title": "Sometimes you just find cool things in the office..."
   },
   {
     "uid": "what/posts/2014-05-31-tripppppppppeeeeeee-vividsydney",
-    "code": "H"
+    "code": "H",
+    "title": "Tripppppppppeeeeeee #vividsydney"
   },
   {
     "uid": "what/posts/2014-06-04-so-this-is-getting-a-bit",
-    "code": "I"
+    "code": "I",
+    "title": "So this is getting a bit ridiculous..."
   },
   {
     "uid": "what/posts/2015-01-23-that-s-not-that-complicated-right",
-    "code": "J"
+    "code": "J",
+    "title": "That's not that complicated, right?"
   },
   {
     "uid": "what/posts/2015-01-23-the-mountain-of-subway-feedthemasses-ggjsyd",
-    "code": "K"
+    "code": "K",
+    "title": "The mountain of Subway #feedthemasses #GGJSyd #ggj15 #eatfresh"
   },
   {
     "uid": "what/posts/2015-01-24-setting-the-scene-ggjsyd-ggj15",
-    "code": "L"
+    "code": "L",
+    "title": "Setting the scene..."
   },
   {
     "uid": "what/posts/2015-02-10-i-was-the-runner-up-at",
-    "code": "M"
+    "code": "M",
+    "title": "I was the runner up at game jam this year!"
   },
   {
     "uid": "what/posts/2015-03-08-this-is-not-a-pipe-boston",
-    "code": "N"
+    "code": "N",
+    "title": "This is not a pipe, Boston edition #art"
   },
   {
     "uid": "what/posts/2015-06-05-the-obligatory-my-name-is-on",
-    "code": "O"
+    "code": "O",
+    "title": "The obligatory 'my name is on a plinth' picture #canicallitanobelix?"
   },
   {
     "uid": "what/posts/2015-10-29-this-game-is-slightly-large",
-    "code": "P"
+    "code": "P",
+    "title": "This game is slightly large..."
   },
   {
     "uid": "what/posts/2015-10-31-bullet-hell-shmup-the-board-game",
-    "code": "Q"
+    "code": "Q",
+    "title": "Bullet hell shmup: the board game"
   },
   {
     "uid": "what/posts/2015-11-17-i-may-have-gotten-a-little",
-    "code": "R"
+    "code": "R",
+    "title": "I may have gotten a little distracted..."
   },
   {
     "uid": "what/posts/2016-02-22-a-3d-print-of-a-representation",
-    "code": "S"
+    "code": "S",
+    "title": "A 3d print of a representation of stars within 10 parsecs of the sun…"
   },
   {
     "uid": "what/posts/2016-04-16-the-path-is-going-3d-wip",
-    "code": "T"
+    "code": "T",
+    "title": "\"The Path\" is going 3D..."
   },
   {
     "uid": "what/posts/2016-04-27-so-this-is-pretty-exciting-i",
-    "code": "U"
+    "code": "U",
+    "title": "So this is pretty exciting..."
   },
   {
     "uid": "what/posts/2016-05-16-views-of-barcelona-from-today",
-    "code": "V"
+    "code": "V",
+    "title": "Views of Barcelona from today"
   },
   {
     "uid": "what/posts/2016-05-17-they-call-this-a-fountain-but",
-    "code": "W"
+    "code": "W",
+    "title": "They call this a fountain, but it looks more like a super fancy…"
   },
   {
     "uid": "what/posts/2016-06-09-my-artwork-in-a-museum-waterhouse",
-    "code": "X"
+    "code": "X",
+    "title": "My artwork, in a museum!"
   },
   {
     "uid": "what/posts/2016-08-20-don-t-mind-me-i-ve",
-    "code": "Y"
+    "code": "Y",
+    "title": "Don't mind me, I've just got Jurassic park theme song going around in…"
   },
   {
     "uid": "what/posts/2016-10-04-lunchtime-view",
-    "code": "Z"
+    "code": "Z",
+    "title": "Lunchtime view"
   },
   {
     "uid": "what/posts/2016-10-22-new-time-fight-boardgame-gamedesign",
-    "code": "10"
+    "code": "10",
+    "title": "New time fight #boardgame #gamedesign"
   },
   {
     "uid": "what/posts/2017-05-25-now-this-this-is-what-virtual",
-    "code": "11"
+    "code": "11",
+    "title": "Now this..."
   },
   {
     "uid": "what/posts/2017-06-01-brighton-ruins---maybe-an-old",
-    "code": "12"
+    "code": "12",
+    "title": "Brighton ruins - maybe an old pier?"
   },
   {
     "uid": "what/posts/2017-06-08-view-from-my-window-palermo",
-    "code": "13"
+    "code": "13",
+    "title": "View from my window #Palermo"
   },
   {
     "uid": "what/posts/2017-06-17-a-peacock-and-her-chicks-welcome",
-    "code": "14"
+    "code": "14",
+    "title": "A peacock and her chicks welcome us to Ustica"
   },
   {
     "uid": "what/posts/2017-06-19-ustica-at-sunset-nofilter",
-    "code": "15"
+    "code": "15",
+    "title": "Ustica at sunset #nofilter"
   },
   {
     "uid": "what/posts/2017-06-27-apertivo-or-pre-dinner-snack-for",
-    "code": "16"
+    "code": "16",
+    "title": "Apertivo, or 'pre dinner snack', for 6 people in Sicily..."
   },
   {
     "uid": "what/posts/2017-07-04-views-from-an-alp",
-    "code": "17"
+    "code": "17",
+    "title": "Views from an Alp"
   },
   {
     "uid": "what/posts/2017-07-06-german-industrial-lake-at-sunset",
-    "code": "18"
+    "code": "18",
+    "title": "German industrial lake at sunset"
   },
   {
     "uid": "what/posts/2017-07-16-just-a-casual-11pm-view-in",
-    "code": "19"
+    "code": "19",
+    "title": "Just a casual 11pm view in Iceland..."
   },
   {
     "uid": "what/posts/2017-07-17-instagram",
-    "code": "1a"
+    "code": "1a",
+    "title": "Instagram, July 2017"
   },
   {
     "uid": "what/posts/2017-07-18-a-closterfoss",
-    "code": "1b"
+    "code": "1b",
+    "title": "A closterfoss"
   },
   {
     "uid": "what/posts/2017-07-21-farewell-to-akureyi-a-fantastic-town",
-    "code": "1c"
+    "code": "1c",
+    "title": "Farewell to Akureyi, a fantastic town with love in its traffic lights"
   },
   {
     "uid": "what/posts/2017-07-22-puffin-landing",
-    "code": "1d"
+    "code": "1d",
+    "title": "Puffin landing"
   },
   {
     "uid": "what/posts/2017-07-24-an-icy-tomb",
-    "code": "1e"
+    "code": "1e",
+    "title": "An icy tomb"
   },
   {
     "uid": "what/posts/2017-09-01-agadir-beach-on-the-morning-of",
-    "code": "1f"
+    "code": "1f",
+    "title": "Agadir beach on the morning of Eid al-Adha"
   },
   {
     "uid": "what/posts/2017-09-03-in-taghazout-every-cafe-is-a",
-    "code": "1g"
+    "code": "1g",
+    "title": "In Taghazout, every cafe is a cat cafe..."
   },
   {
     "uid": "what/posts/2017-09-03-just-some-casual-camels-on-the",
-    "code": "1h"
+    "code": "1h",
+    "title": "Just some casual camels on the beach"
   },
   {
     "uid": "what/posts/2017-09-03-the-mists-of-taghazout",
-    "code": "1i"
+    "code": "1i",
+    "title": "The mists of Taghazout"
   },
   {
     "uid": "what/posts/2017-09-06-taghazout-in-profile",
-    "code": "1j"
+    "code": "1j",
+    "title": "Taghazout, in profile"
   },
   {
     "uid": "what/posts/2017-09-11-design",
-    "code": "1k"
+    "code": "1k",
+    "title": "#design"
   },
   {
     "uid": "what/posts/2017-10-02-and-sometimes-mountains-are-green",
-    "code": "1l"
+    "code": "1l",
+    "title": "and sometimes, mountains are green..."
   },
   {
     "uid": "what/posts/2017-10-02-when-i-headed-into-the-desert",
-    "code": "1m"
+    "code": "1m",
+    "title": "When I headed into the desert proper, I was struck by (apart from how…"
   },
   {
     "uid": "what/posts/2017-10-27-i-think-the-thing-that-s",
-    "code": "1n"
+    "code": "1n",
+    "title": "I think the thing that's struck me the most during #MIGW17 is how…"
   },
   {
     "uid": "what/posts/2017-11-25-the-tonle-sap-river-phnom-penh",
-    "code": "1o"
+    "code": "1o",
+    "title": "The Tonle Sap river, Phnom Penh"
   },
   {
     "uid": "what/posts/2017-11-26-cambodian-cafes-don-t-really-do",
-    "code": "1p"
+    "code": "1p",
+    "title": "Cambodian cafes don't really do milk without lactose, so I'm…"
   },
   {
     "uid": "what/posts/2017-11-28-one-of-these-bans-is-more",
-    "code": "1q"
+    "code": "1q",
+    "title": "One of these bans is more worrying than the others..."
   },
   {
     "uid": "what/posts/2017-12-01-grasshopper-on-a-coconut",
-    "code": "1r"
+    "code": "1r",
+    "title": "Grasshopper on a coconut"
   },
   {
     "uid": "what/posts/2017-12-12-today-s-work-station",
-    "code": "1s"
+    "code": "1s",
+    "title": "Today's work station"
   },
   {
     "uid": "what/posts/2017-12-16-firewatch-cambodian-style-waterwatch",
-    "code": "1t"
+    "code": "1t",
+    "title": "#firewatch, Cambodian style..."
   },
   {
     "uid": "what/posts/2017-12-18-abandoned-temple-near-siem-reap",
-    "code": "1u"
+    "code": "1u",
+    "title": "Abandoned temple near Siem reap"
   },
   {
     "uid": "what/posts/2017-12-18-i-think-these-are-my-favourite",
-    "code": "1v"
+    "code": "1v",
+    "title": "I think these are my favourite rubbish bins ever."
   },
   {
     "uid": "what/posts/2017-12-22-someone-s-photos-you-take-are",
-    "code": "1w"
+    "code": "1w",
+    "title": "Someone's, photos you take are just really pretty #nofilter…"
   },
   {
     "uid": "what/posts/2017-12-23-i-m-australia-the-unyielding-sound",
-    "code": "1x"
+    "code": "1x",
+    "title": "I'm Australia, the unyielding sound of cicadas is one of the symbols…"
   },
   {
     "uid": "what/posts/2018-01-09-home-for-the-next-few-days",
-    "code": "1y"
+    "code": "1y",
+    "title": "Home for the next few days..."
   },
   {
     "uid": "what/posts/2018-01-09-today-i-climbed-this-stalactite-it",
-    "code": "1z"
+    "code": "1z",
+    "title": "Today I climbed this stalactite."
   },
   {
     "uid": "what/posts/2018-01-16-instagram",
-    "code": "1A"
+    "code": "1A",
+    "title": "Instagram, January 2018"
   },
   {
     "uid": "what/posts/2018-02-09-today-i-mocked-up-an-app",
-    "code": "1B"
+    "code": "1B",
+    "title": "Today I mocked up an app that would let me own a generic set of…"
   },
   {
     "uid": "what/posts/2018-03-02-view-from-the-new-digs-bali",
-    "code": "1C"
+    "code": "1C",
+    "title": "View from the new digs #bali #ubud #digitalnomad"
   },
   {
     "uid": "what/posts/2018-03-04-this-is-green-school---its",
-    "code": "1D"
+    "code": "1D",
+    "title": "This is Green School - it’s a school here in Bali which was founded…"
   },
   {
     "uid": "what/posts/2018-03-07-ive-seen-street-signs-like-this",
-    "code": "1E"
+    "code": "1E",
+    "title": "I’ve seen street signs like this in quite a few countries - this…"
   },
   {
     "uid": "what/posts/2018-03-10-traditionally-the-rice-fields-in-bali",
-    "code": "1F"
+    "code": "1F",
+    "title": "Traditionally, the rice fields in Bali are owned and run by…"
   },
   {
     "uid": "what/posts/2018-03-13-a-couple-of-days-ago-i",
-    "code": "1G"
+    "code": "1G",
+    "title": "A couple of days ago, I was thinking about how I schedule my life as…"
   },
   {
     "uid": "what/posts/2018-03-15-tomorrow-is-nyepi-or-the-silent",
-    "code": "1H"
+    "code": "1H",
+    "title": "Tomorrow is Nyepi, or ‘the Silent Day’ here on Bali."
   },
   {
     "uid": "what/posts/2018-03-17-i-recently-found-out-that-the",
-    "code": "1I"
+    "code": "1I",
+    "title": "I recently found out that the classification of birds has changed:…"
   },
   {
     "uid": "what/posts/2018-03-20-after-months-of-work-the-first",
-    "code": "1J"
+    "code": "1J",
+    "title": "After months of work, the first version of Numbeanies: Number Forest…"
   },
   {
     "uid": "what/posts/2018-03-22-for-the-last-week-or-so",
-    "code": "1K"
+    "code": "1K",
+    "title": "For the last week or so, I’ve been experimenting with leaving my…"
   },
   {
     "uid": "what/posts/2018-03-26-yesterday-i-started-playing-around-with",
-    "code": "1L"
+    "code": "1L",
+    "title": "Yesterday, I started playing around with genetic sequences, to see if…"
   },
   {
     "uid": "what/posts/2018-05-06-attempt-4-of-my-visualising-genetic",
-    "code": "1M"
+    "code": "1M",
+    "title": "⠀"
   },
   {
     "uid": "what/posts/2018-07-15-its-been-a-few-weeks-since",
-    "code": "1N"
+    "code": "1N",
+    "title": "It’s been a few weeks since I was in Svalbard, and I really don’t…"
   },
   {
     "uid": "what/posts/2018-07-20-inside-a-luminarium-at-bluedot-festival",
-    "code": "1O"
+    "code": "1O",
+    "title": "Inside a Luminarium at #bluedot festival."
   },
   {
     "uid": "what/posts/2018-07-22-bluedot-has-been-an-inspirational-mix",
-    "code": "1P"
+    "code": "1P",
+    "title": "Bluedot has been an inspirational mix of science and art, from…"
   },
   {
     "uid": "what/posts/2018-07-26-quito",
-    "code": "1Q"
+    "code": "1Q",
+    "title": "Quito!"
   },
   {
     "uid": "what/posts/2018-09-01-my-newest-project-is-a-san",
-    "code": "1R"
+    "code": "1R",
+    "title": "My newest project is a San Francisco-based scavenger hunt-esque game."
   },
   {
     "uid": "what/posts/2018-09-03-todays-ux-better-life-admin-experiment",
-    "code": "1S"
+    "code": "1S",
+    "title": "Today’s UX/better life admin experiment: better transaction sorting."
   },
   {
     "uid": "what/posts/2018-12-05-sunset-in-santa-marta-colombia-runningtosummer",
-    "code": "1T"
+    "code": "1T",
+    "title": "Sunset in Santa Marta #colombia #runningtosummer #nofilter #nuffsaid"
   },
   {
     "uid": "what/posts/2018-12-14-cartagena-s-christmas-decorations-includes-a",
-    "code": "1U"
+    "code": "1U",
+    "title": "Cartagena's Christmas decorations includes a boatload of lights"
   },
   {
     "uid": "what/posts/2018-12-16-the-public-buses-from-cartagena-to",
-    "code": "1V"
+    "code": "1V",
+    "title": "The public buses from Cartagena to Casa Paballo and back are awesome…"
   },
   {
     "uid": "what/posts/2018-12-18-hanging-out-at-tayrona-national-park",
-    "code": "1W"
+    "code": "1W",
+    "title": "Hanging out at Tayrona National Park."
   },
   {
     "uid": "what/posts/2018-12-24-the-view-from-el-penol-aka",
-    "code": "1X"
+    "code": "1X",
+    "title": "The view from El Penol (aka the big rock) near Guatape, Colombia."
   },
   {
     "uid": "what/posts/2019-01-17-bubbles-at-quito-s-museum-of",
-    "code": "1Y"
+    "code": "1Y",
+    "title": "Bubbles!"
   },
   {
     "uid": "what/posts/2019-02-07-quilotoa-adding-to-my-beautiful-places",
-    "code": "1Z"
+    "code": "1Z",
+    "title": "Quilotoa!"
   },
   {
     "uid": "what/posts/2019-02-07-views-from-the-devil-s-noise",
-    "code": "20"
+    "code": "20",
+    "title": "Views from \"The Devil's Noise\", the most \"Oh God why would you try to…"
   },
   {
     "uid": "what/posts/2019-02-08-just-a-bit-of-water-falling",
-    "code": "21"
+    "code": "21",
+    "title": "Just a bit of water falling"
   },
   {
     "uid": "what/posts/2019-02-09-a-slightly-muddy-walk-through-the",
-    "code": "22"
+    "code": "22",
+    "title": "A slightly muddy walk through the national Park"
   },
   {
     "uid": "what/posts/2019-02-23-pretty-peruvian-lagoon-is-pretty",
-    "code": "23"
+    "code": "23",
+    "title": "Pretty Peruvian Lagoon is pretty"
   },
   {
     "uid": "what/posts/2019-02-26-for-the-last-few-months-ive",
-    "code": "24"
+    "code": "24",
+    "title": "For the last few months, I’ve been using a super simple app that I…"
   },
   {
     "uid": "what/posts/2019-03-02-we-must-respect-the-signs-peru",
-    "code": "25"
+    "code": "25",
+    "title": "We must respect the signs..."
   },
   {
     "uid": "what/posts/2019-03-20-the-salt-flats-in-bolivia-were",
-    "code": "26"
+    "code": "26",
+    "title": "The salt flats in Bolivia were breathtaking, going on forever in a…"
   },
   {
     "uid": "what/posts/2019-03-23-relaxing-in-a-train-grave-travel",
-    "code": "27"
+    "code": "27",
+    "title": "Relaxing in a train grave #travel #bolivia #traingrave"
   },
   {
     "uid": "what/posts/2019-04-03-amazing-climbs-over-in-the-blue",
-    "code": "28"
+    "code": "28",
+    "title": "Amazing climbs over in the Blue mountains, it's great to be climbing…"
   },
   {
     "uid": "what/posts/2019-04-10-going-through-airport-security-tonight-is",
-    "code": "29"
+    "code": "29",
+    "title": "Going through airport security tonight is gonna be fun..."
   },
   {
     "uid": "what/posts/2019-05-04-sunset-in-freemantle-travel-perth-raysofsun",
-    "code": "2a"
+    "code": "2a",
+    "title": "Sunset in freemantle #travel #perth #raysofsun #sunset"
   },
   {
     "uid": "what/posts/2019-05-13-playing-with-stars-and-tilting-phones",
-    "code": "2b"
+    "code": "2b",
+    "title": "Playing with stars and tilting phones #dataart #interactiveart…"
   },
   {
     "uid": "what/posts/2019-06-03-a-quick-wip-update-on-the",
-    "code": "2c"
+    "code": "2c",
+    "title": "A quick wip update on ‘The Neighbourhood’ project (watch the second…"
   },
   {
     "uid": "what/posts/2019-06-18-i-ve-always-found-it-strange",
-    "code": "2d"
+    "code": "2d",
+    "title": "I've always found it strange that personality traits in games almost…"
   },
   {
     "uid": "what/posts/2019-08-14-the-highlight-of-the-edinburghfringe-was",
-    "code": "2e"
+    "code": "2e",
+    "title": "The highlight of the #edinburghfringe was probably the game of…"
   },
   {
     "uid": "what/posts/2019-09-11-just-landed-in-switzerland-for-quality",
-    "code": "2f"
+    "code": "2f",
+    "title": "Just landed in Switzerland for quality camp - a quantum computing…"
   },
   {
     "uid": "what/posts/2019-09-13-leaving-from-the-actual-bond-villain",
-    "code": "2g"
+    "code": "2g",
+    "title": "Leaving from the actual bond villain lair where the ridiculous…"
   },
   {
     "uid": "what/posts/2019-09-15-the-swiss-are-quite-adamant-about",
-    "code": "2h"
+    "code": "2h",
+    "title": "The Swiss are quite adamant about what does and does not constitute a…"
   },
   {
     "uid": "what/posts/2019-09-30-a-couple-of-weeks-back-i",
-    "code": "2i"
+    "code": "2i",
+    "title": "A couple of weeks back, I went to Switzerland to take part in…"
   },
   {
     "uid": "what/posts/2019-10-05-my-morning-commute-here-in-wellington",
-    "code": "2j"
+    "code": "2j",
+    "title": "My morning commute here in Wellington"
   },
   {
     "uid": "what/posts/2019-10-18-finally-got-around-to-printing-clearer",
-    "code": "2k"
+    "code": "2k",
+    "title": "Finally got around to printing clearer island cards for #fatecardgame"
   },
   {
     "uid": "what/posts/2019-12-03-not-bad-lake-taupo-not-bad",
-    "code": "2l"
+    "code": "2l",
+    "title": "Not bad, lake Taupo."
   },
   {
     "uid": "what/posts/2019-12-18-the-apocalypse-returneth",
-    "code": "2m"
+    "code": "2m",
+    "title": "The apocalypse returneth"
   },
   {
     "uid": "what/posts/2020-02-05-it-returns-timefight-boardgames-gamedev-gamedesign",
-    "code": "2n"
+    "code": "2n",
+    "title": "It returns..."
   },
   {
     "uid": "what/posts/2020-02-27-well-played-coogee-well-played-sunset",
-    "code": "2o"
+    "code": "2o",
+    "title": "Well played, Coogee."
   },
   {
     "uid": "what/posts/2020-04-18-early-level-design-for-ludum-dare",
-    "code": "2p"
+    "code": "2p",
+    "title": "Early level design for ludum dare (a 48 hour game making competition)."
   },
   {
     "uid": "what/posts/2020-05-07-last-week-i-wrote-a-blog",
-    "code": "2q"
+    "code": "2q",
+    "title": "Last week, I wrote a blog post about how shelving can be a mentally…"
   },
   {
     "uid": "what/posts/2020-05-09-progress-on-gotta-get-outta-this",
-    "code": "2r"
+    "code": "2r",
+    "title": "Progress on 'Gotta Get Outta This Space' - prototype complete!"
   },
   {
     "uid": "what/posts/2020-05-18-just-sent-out-an-order-for",
-    "code": "2s"
+    "code": "2s",
+    "title": "Just sent out an order for a proof of the cards for \"Gotta Get Outta…"
   },
   {
     "uid": "what/posts/2020-05-26-just-got-the-proofs-in-for",
-    "code": "2t"
+    "code": "2t",
+    "title": "Just got the proofs in for Gotta Get Outta This Space - they've all…"
   },
   {
     "uid": "what/posts/2020-05-28-one-of-the-big-changes-ive",
-    "code": "2u"
+    "code": "2u",
+    "title": "One of the big changes I’ve had to make to ‘Gotta Get Outta This…"
   },
   {
     "uid": "what/posts/2020-06-09-gotta-get-outta-this-space-is",
-    "code": "2v"
+    "code": "2v",
+    "title": "Gotta Get Outta This Space is launching this Sunday!"
   },
   {
     "uid": "what/posts/2020-06-10-stars-are-the-exit-points-of",
-    "code": "2w"
+    "code": "2w",
+    "title": "Stars are the exit points of Gotta Get Outta This Space - you can use…"
   },
   {
     "uid": "what/posts/2020-06-11-gotta-get-outta-this-space-launches",
-    "code": "2x"
+    "code": "2x",
+    "title": "Gotta Get Outta This Space launches in 2 days!"
   },
   {
     "uid": "what/posts/2020-06-12-gotta-get-outta-this-space-launches",
-    "code": "2y"
+    "code": "2y",
+    "title": "Gotta Get Outta This Space launches tomorrow!"
   },
   {
     "uid": "what/posts/2020-06-13-gotta-get-outta-this-space-is",
-    "code": "2z"
+    "code": "2z",
+    "title": "Gotta Get Outta This Space is officially launched!"
   },
   {
     "uid": "what/posts/2020-06-17-just-picked-up-the-cover-sheets",
-    "code": "2A"
+    "code": "2A",
+    "title": "Just picked up the cover sheets for the #gottagetouttathisspace…"
   },
   {
     "uid": "what/posts/2020-07-21-just-got-this-lovely-little-case",
-    "code": "2B"
+    "code": "2B",
+    "title": "Just got this lovely little case and screen for my raspberry pi."
   },
   {
     "uid": "what/posts/2020-07-23-finally-getting-a-bit-of-traction",
-    "code": "2C"
+    "code": "2C",
+    "title": "Finally getting a bit of traction with the Particulars education…"
   },
   {
     "uid": "what/posts/2020-07-24-a-lovely-view-after-a-lovely",
-    "code": "2D"
+    "code": "2D",
+    "title": "A lovely view after a lovely walk"
   },
   {
     "uid": "what/posts/2020-07-25-this-is-the-journey-so-far",
-    "code": "2E"
+    "code": "2E",
+    "title": "This is the journey so far for the rules, art and layout for one of…"
   },
   {
     "uid": "what/posts/2020-07-28-ahead-of-tomorrows-playtest-ive-been",
-    "code": "2F"
+    "code": "2F",
+    "title": "Ahead of tomorrow’s playtest, I’ve been working on making the Island…"
   },
   {
     "uid": "what/posts/2020-07-29-the-neba-the-nebadcha-the-nebudka",
-    "code": "2G"
+    "code": "2G",
+    "title": "The Neba..."
   },
   {
     "uid": "what/posts/2020-07-31-holy-crap-that-s-beautiful-the",
-    "code": "2H"
+    "code": "2H",
+    "title": "Holy crap that's beautiful."
   },
   {
     "uid": "what/posts/2020-08-20-a-lovely-hand-drawn-copy-of",
-    "code": "2I"
+    "code": "2I",
+    "title": "A lovely hand drawn copy of #gottagetouttathisspace - this is the…"
   },
   {
     "uid": "what/posts/2020-09-27-a-river-of-sunset-river-sunset",
-    "code": "2J"
+    "code": "2J",
+    "title": "A river of sunset"
   },
   {
     "uid": "what/posts/2020-10-10-instagram",
-    "code": "2K"
+    "code": "2K",
+    "title": "Instagram, October 2020"
   },
   {
     "uid": "what/posts/2021-03-10-instagram",
-    "code": "2L"
+    "code": "2L",
+    "title": "Instagram, March 2021"
   },
   {
     "uid": "what/posts/2021-11-05-instagram",
-    "code": "2M"
+    "code": "2M",
+    "title": "Instagram, November 2021"
   },
   {
     "uid": "what/posts/2022-09-18-loch-ness-ducks-spotted-4-monsters",
-    "code": "2N"
+    "code": "2N",
+    "title": "Loch Ness."
   },
   {
     "uid": "what/posts/2022-09-22-sheep-in-the-skye",
-    "code": "2O"
+    "code": "2O",
+    "title": "Sheep in the Skye"
   },
   {
     "uid": "what/posts/2022-09-24-see-if-you-can-find-the",
-    "code": "2P"
+    "code": "2P",
+    "title": "See if you can find the Old Man in this Storr"
   },
   {
     "uid": "what/posts/2024-10-08-last-year-i-started-playing-with",
-    "code": "2Q"
+    "code": "2Q",
+    "title": "Last year I started playing with lino printing.This is the first…"
   },
   {
     "uid": "what/posts/2024-11-27-more-fun-with-linocut-linoprint",
-    "code": "2R"
+    "code": "2R",
+    "title": "More fun with #linocut #linoprint"
   },
   {
     "uid": "what/posts/2024-12-17-adding-another-tile-to-my-linocut",
-    "code": "2S"
+    "code": "2S",
+    "title": "Adding another tile to my #linocut project"
   },
   {
     "uid": "what/posts/stories/arctic/00-introduction",
-    "code": "2T"
+    "code": "2T",
+    "title": "The Arctic Circle"
   },
   {
     "uid": "what/posts/stories/arctic/01-map",
-    "code": "2U"
+    "code": "2U",
+    "title": "Map"
   },
   {
     "uid": "what/posts/stories/arctic/02-glacier",
-    "code": "2V"
+    "code": "2V",
+    "title": "Glaciers"
   },
   {
     "uid": "what/posts/stories/arctic/03-surge-glacier",
-    "code": "2W"
+    "code": "2W",
+    "title": "Surge Glaciers"
   },
   {
     "uid": "what/posts/stories/arctic/04-flowers",
-    "code": "2X"
+    "code": "2X",
+    "title": "Flowers"
   },
   {
     "uid": "what/posts/stories/arctic/05-reindeer",
-    "code": "2Y"
+    "code": "2Y",
+    "title": "Reindeer"
   },
   {
     "uid": "what/posts/stories/arctic/06-morraine-and-tundra",
-    "code": "2Z"
+    "code": "2Z",
+    "title": "Moraine and Tundra"
   },
   {
     "uid": "what/posts/stories/arctic/07-fractals-in-mud",
-    "code": "30"
+    "code": "30",
+    "title": "Fractals in the Mud"
   },
   {
     "uid": "what/posts/stories/arctic/08-cultural-heritage",
-    "code": "31"
+    "code": "31",
+    "title": "Cultural Heritage"
   },
   {
     "uid": "what/posts/stories/arctic/09-polar-bear-tracks",
-    "code": "32"
+    "code": "32",
+    "title": "Polar Bear Tracks"
   },
   {
     "uid": "what/posts/stories/arctic/10-polar-bear-encounter",
-    "code": "33"
+    "code": "33",
+    "title": "Polar Bear Encounter"
   },
   {
     "uid": "what/posts/stories/arctic/11-midnight-sun",
-    "code": "34"
+    "code": "34",
+    "title": "The Midnight Sun"
   },
   {
     "uid": "what/posts/stories/arctic/12-patterns-from-water",
-    "code": "35"
+    "code": "35",
+    "title": "Trees in the Ground"
   },
   {
     "uid": "what/posts/stories/arctic/13-melting-rocks",
-    "code": "36"
+    "code": "36",
+    "title": "Melting Rocks"
   },
   {
     "uid": "what/posts/stories/arctic/14-glacier-sound",
-    "code": "37"
+    "code": "37",
+    "title": "The sound of glaciers"
   },
   {
     "uid": "what/posts/stories/arctic/15-the-northernmost-rock",
-    "code": "38"
+    "code": "38",
+    "title": "The Northernmost Rock"
   },
   {
     "uid": "what/posts/stories/arctic/16-rock-jenga",
-    "code": "39"
+    "code": "39",
+    "title": "Rock Jenga"
   },
   {
     "uid": "what/posts/stories/arctic/17-climbing-the-mast",
-    "code": "3a"
+    "code": "3a",
+    "title": "Climbing the Mast"
   },
   {
     "uid": "what/posts/stories/arctic/18-walruses",
-    "code": "3b"
+    "code": "3b",
+    "title": "Walruses"
   },
   {
     "uid": "what/posts/stories/arctic/19-plastic",
-    "code": "3c"
+    "code": "3c",
+    "title": "Plastic"
   },
   {
     "uid": "what/posts/stories/arctic/20-the-worlds-northernmost-atm",
-    "code": "3d"
+    "code": "3d",
+    "title": "The World's Northernmost ATM"
   },
   {
     "uid": "what/posts/stories/arctic/21-conclusion",
-    "code": "3e"
+    "code": "3e",
+    "title": "Conclusion"
   },
   {
     "uid": "what/posts/stories/fatecardgame/00-introduction",
-    "code": "3f"
+    "code": "3f",
+    "title": "In Fate's Hands"
   },
   {
     "uid": "what/posts/stories/fatecardgame/01-history",
-    "code": "3g"
+    "code": "3g",
+    "title": "Where it’s from"
   },
   {
     "uid": "what/posts/stories/fatecardgame/02-themes",
-    "code": "3h"
+    "code": "3h",
+    "title": "Themes"
   },
   {
     "uid": "what/posts/stories/fatecardgame/03-art",
-    "code": "3i"
+    "code": "3i",
+    "title": "Art"
   },
   {
     "uid": "what/posts/stories/fatecardgame/04-fates-hand",
-    "code": "3j"
+    "code": "3j",
+    "title": "Fate's Hand"
   },
   {
     "uid": "what/posts/stories/fatecardgame/05-fates-roles",
-    "code": "3k"
+    "code": "3k",
+    "title": "Fate's Role"
   },
   {
     "uid": "what/posts/stories/galapagos/00-introduction",
-    "code": "3l"
+    "code": "3l",
+    "title": "The Galapagos Islands"
   },
   {
     "uid": "what/posts/stories/galapagos/01-tourism",
-    "code": "3m"
+    "code": "3m",
+    "title": "Tourism in the Galapagos"
   },
   {
     "uid": "what/posts/stories/galapagos/02-sea-wolves",
-    "code": "3n"
+    "code": "3n",
+    "title": "Sea Wolves"
   },
   {
     "uid": "what/posts/stories/galapagos/03-stay-away",
-    "code": "3o"
+    "code": "3o",
+    "title": "Stay Away from the Wildlife"
   },
   {
     "uid": "what/posts/stories/galapagos/04-semi-arid",
-    "code": "3p"
+    "code": "3p",
+    "title": "Semi-Arid Desert"
   },
   {
     "uid": "what/posts/stories/galapagos/05-sideways-leaves",
-    "code": "3q"
+    "code": "3q",
+    "title": "Leaves on their sides"
   },
   {
     "uid": "what/puzzles/a-murder-most-fogged",
@@ -881,7 +1094,8 @@
   },
   {
     "uid": "what/puzzles/plans-of-a-medic",
-    "code": "3y"
+    "code": "3y",
+    "title": "Plans of a Medic"
   },
   {
     "uid": "what/puzzles/recounting-the-counting",
@@ -901,7 +1115,8 @@
   },
   {
     "uid": "what/puzzles/something-this-puzzle-might-give-you",
-    "code": "3D"
+    "code": "3D",
+    "title": "Something this Puzzle might give you"
   },
   {
     "uid": "what/puzzles/sunny-with-a-chance-of-fog",
@@ -929,259 +1144,323 @@
   },
   {
     "uid": "what/software/budget-haver",
-    "code": "3K"
+    "code": "3K",
+    "title": "Budget Haver"
   },
   {
     "uid": "what/writing/2008-07-27-why-portal",
-    "code": "3L"
+    "code": "3L",
+    "title": "Why Portal?"
   },
   {
     "uid": "what/writing/2010-06-20-mechanical-breakdown-the-rts",
-    "code": "3M"
+    "code": "3M",
+    "title": "Mechanical Breakdown: The RTS"
   },
   {
     "uid": "what/writing/2010-06-23-achron-real-time-just-got-complicated",
-    "code": "3N"
+    "code": "3N",
+    "title": "Achron: Real-Time Just Got Complicated"
   },
   {
     "uid": "what/writing/2010-06-27-finding-the-story",
-    "code": "3O"
+    "code": "3O",
+    "title": "Finding The Story: Blurring The Line Between Content Use And Creation"
   },
   {
     "uid": "what/writing/2010-06-27-mechanical-breakdown-the-inventory",
-    "code": "3P"
+    "code": "3P",
+    "title": "Mechanical Breakdown: The Inventory (Part 1)"
   },
   {
     "uid": "what/writing/2010-07-04-is-affect-the-new-mise-en-scene",
-    "code": "3Q"
+    "code": "3Q",
+    "title": "Is Affect The New Mise-En-Scene?"
   },
   {
     "uid": "what/writing/2010-07-10-a-matter-of-perspective",
-    "code": "3R"
+    "code": "3R",
+    "title": "A Matter Of Perspective"
   },
   {
     "uid": "what/writing/2010-08-02-inception-the-game",
-    "code": "3S"
+    "code": "3S",
+    "title": "Inception: The Game?"
   },
   {
     "uid": "what/writing/2010-08-13-mechanical-breakdown-the-inventory-part-two",
-    "code": "3T"
+    "code": "3T",
+    "title": "Mechanical Breakdown: The Inventory (Part 2)"
   },
   {
     "uid": "what/writing/2010-08-26-postmortem-the-enemy-of-my-enemy-is-my-heat-seeking-missile",
-    "code": "3U"
+    "code": "3U",
+    "title": "Postmortem: “The Enemy Of My Enemy Is My Heat-Seeking Missile”"
   },
   {
     "uid": "what/writing/2010-10-17-the-problem-with-portals",
-    "code": "3V"
+    "code": "3V",
+    "title": "The Problem With Portals"
   },
   {
     "uid": "what/writing/2010-12-21-wrecking-the-curve",
-    "code": "3W"
+    "code": "3W",
+    "title": "Wrecking The Curve: An Analysis Of The Teach/Tell Connundrum"
   },
   {
     "uid": "what/writing/2011-02-18-blood-and-stakes",
-    "code": "3X"
+    "code": "3X",
+    "title": "Blood and Stakes"
   },
   {
     "uid": "what/writing/2011-06-09-controlling-the-rapids",
-    "code": "3Y"
+    "code": "3Y",
+    "title": "Controlling the Rapids: Comparisons Between Real-World and On-Screen Fun"
   },
   {
     "uid": "what/writing/2011-06-09-how-to-find-your-gameplay-themes",
-    "code": "3Z"
+    "code": "3Z",
+    "title": "How to Find your Gameplay Themes"
   },
   {
     "uid": "what/writing/2011-06-14-meta-me-this",
-    "code": "40"
+    "code": "40",
+    "title": "Meta-me-this: Are the best games about games?"
   },
   {
     "uid": "what/writing/2011-06-18-how-many-players-should-you-playtest-with",
-    "code": "41"
+    "code": "41",
+    "title": "How many players should you playtest with?"
   },
   {
     "uid": "what/writing/2011-07-14-playtesting-101",
-    "code": "42"
+    "code": "42",
+    "title": "Playtesting 101: Finding the Purpose"
   },
   {
     "uid": "what/writing/2011-07-19-playtesting-102",
-    "code": "43"
+    "code": "43",
+    "title": "Playtesting 102: Who and where"
   },
   {
     "uid": "what/writing/2011-08-02-playtesting-103",
-    "code": "44"
+    "code": "44",
+    "title": "Playtesting 103: What to Measure"
   },
   {
     "uid": "what/writing/2011-08-04-playtesting-104",
-    "code": "45"
+    "code": "45",
+    "title": "Playtesting 104: How to Measure Quantitatively"
   },
   {
     "uid": "what/writing/2011-08-05-the-half-cinderella",
-    "code": "46"
+    "code": "46",
+    "title": "The Half-Cinderella: Why Gameplay never leaves the Ball"
   },
   {
     "uid": "what/writing/2011-08-06-playtesting-105",
-    "code": "47"
+    "code": "47",
+    "title": "Playtesting 105: How to Measure Qualitatively"
   },
   {
     "uid": "what/writing/2011-08-11-mechanical-breakdown-boss-battles",
-    "code": "48"
+    "code": "48",
+    "title": "Mechanical Breakdown: Boss Battles and other Climactic Events"
   },
   {
     "uid": "what/writing/2011-09-09-of-shapes-and-flies",
-    "code": "49"
+    "code": "49",
+    "title": "Of Shapes and Flies: A Ludum Dare Double Bill Postmortem"
   },
   {
     "uid": "what/writing/2011-09-12-playtesting-106",
-    "code": "4a"
+    "code": "4a",
+    "title": "Playtesting 106: On the Day"
   },
   {
     "uid": "what/writing/2011-11-27-making-it-together",
-    "code": "4b"
+    "code": "4b",
+    "title": "Making it together: Parallel Implementation"
   },
   {
     "uid": "what/writing/2012-01-06-the-a-z-of-game-development",
-    "code": "4c"
+    "code": "4c",
+    "title": "The A-Z of Game Development"
   },
   {
     "uid": "what/writing/2012-02-17-the-seethrough-diaries",
-    "code": "4d"
+    "code": "4d",
+    "title": "The SeeThrough Diaries: The Hour Of Pain"
   },
   {
     "uid": "what/writing/2012-07-09-holding-things-up-in-two-dimensions",
-    "code": "4e"
+    "code": "4e",
+    "title": "Holding things up in two dimensions: The Pillars of Flatland"
   },
   {
     "uid": "what/writing/2013-03-14-launching-the-bot",
-    "code": "4f"
+    "code": "4f",
+    "title": "Launching the Bot"
   },
   {
     "uid": "what/writing/2013-03-24-the-15-steps-of-particulars-preproduction",
-    "code": "4g"
+    "code": "4g",
+    "title": "The 15 Steps of (Particulars) Pre-production"
   },
   {
     "uid": "what/writing/2013-04-29-7-things-that-have-to-work-together-in-a-game-story",
-    "code": "4h"
+    "code": "4h",
+    "title": "7 things that have to work together in a game story"
   },
   {
     "uid": "what/writing/2013-05-08-ensuring-your-project-has-depth",
-    "code": "4i"
+    "code": "4i",
+    "title": "Ensuring your project has depth: the Triple Threat test"
   },
   {
     "uid": "what/writing/2013-06-21-a-particular-vision",
-    "code": "4j"
+    "code": "4j",
+    "title": "A Particular Vision: What I want Particulars (and all our games) to do"
   },
   {
     "uid": "what/writing/2013-07-20-innovations-in-games",
-    "code": "4k"
+    "code": "4k",
+    "title": "Innovations in Games: My Thoughts"
   },
   {
     "uid": "what/writing/2013-08-05-getting-social",
-    "code": "4l"
+    "code": "4l",
+    "title": "Getting Social, Part 1: Fear of the Internet"
   },
   {
     "uid": "what/writing/2014-05-08-inspiration-and-emulation",
-    "code": "4m"
+    "code": "4m",
+    "title": "Inspiration and emulation – the drive to create"
   },
   {
     "uid": "what/writing/2016-05-02-starting-over",
-    "code": "4n"
+    "code": "4n",
+    "title": "Starting Over"
   },
   {
     "uid": "what/writing/2016-05-24-on-truth-in-science",
-    "code": "4o"
+    "code": "4o",
+    "title": "On Truth in Science"
   },
   {
     "uid": "what/writing/2016-11-19-data-that-listens",
-    "code": "4p"
+    "code": "4p",
+    "title": "Data that listens"
   },
   {
     "uid": "what/writing/2016-12-07-finding-the-right-problems-for-citizen-science",
-    "code": "4q"
+    "code": "4q",
+    "title": "Finding the right problems for Citizen Science"
   },
   {
     "uid": "what/writing/2016-12-15-art-or-heist-designing-multipurpose-spaces",
-    "code": "4r"
+    "code": "4r",
+    "title": "Art or Heist? Designing Multi-Purpose spaces"
   },
   {
     "uid": "what/writing/2017-07-11-government-2-0",
-    "code": "4s"
+    "code": "4s",
+    "title": "Government 2.0"
   },
   {
     "uid": "what/writing/2017-08-12-edinburgh-reactions-whist",
-    "code": "4t"
+    "code": "4t",
+    "title": "Edinburgh Reactions: Whist"
   },
   {
     "uid": "what/writing/2017-09-19-qbyte-devlog-taking-the-measure",
-    "code": "4u"
+    "code": "4u",
+    "title": "QByte Devlog - Taking the Measure"
   },
   {
     "uid": "what/writing/2017-09-24-qbyte-devlog-v0-1-the-simulator-lives",
-    "code": "4v"
+    "code": "4v",
+    "title": "QByte Devlog - v0.1: The Simulator Lives!"
   },
   {
     "uid": "what/writing/2017-11-06-qbyte-devlog-cycles-and-cul-de-sacs",
-    "code": "4w"
+    "code": "4w",
+    "title": "QByte Devlog - Cycles and Cul-de-sacs"
   },
   {
     "uid": "what/writing/2017-11-19-its-probably-complicated",
-    "code": "4x"
+    "code": "4x",
+    "title": "It’s probably complicated: Visualising the states of a quantum computer"
   },
   {
     "uid": "what/writing/2019-02-18-deciding-where-the-heart-is",
-    "code": "4y"
+    "code": "4y",
+    "title": "Deciding Where the Heart Is: A Global Game Jam 2019 'game' postmortem"
   },
   {
     "uid": "what/writing/2019-03-11-having-a-budget",
-    "code": "4z"
+    "code": "4z",
+    "title": "Having a Budget"
   },
   {
     "uid": "what/writing/2019-03-21-designing-a-budget",
-    "code": "4A"
+    "code": "4A",
+    "title": "Designing a Budget"
   },
   {
     "uid": "where/work/3p",
-    "code": "4B"
+    "code": "4B",
+    "title": "3P Learning"
   },
   {
     "uid": "where/work/chaostheory",
-    "code": "4C"
+    "code": "4C",
+    "title": "Chaos Theory Games"
   },
   {
     "uid": "where/work/dot",
-    "code": "4D"
+    "code": "4D",
+    "title": "Dot"
   },
   {
     "uid": "where/work/equalreality",
-    "code": "4E"
+    "code": "4E",
+    "title": "Equal Reality"
   },
   {
     "uid": "where/work/plan-a",
-    "code": "4F"
+    "code": "4F",
+    "title": "Plan A"
   },
   {
     "uid": "where/work/seethrough",
-    "code": "4G"
+    "code": "4G",
+    "title": "SeeThrough Studios"
   },
   {
     "uid": "who/about-me",
-    "code": "4H"
+    "code": "4H",
+    "title": "Who I am"
   },
   {
     "uid": "what/writing/2025-03-23-summoning-fog",
-    "code": "4I"
+    "code": "4I",
+    "title": "Summoning Fog"
   },
   {
     "uid": "what/writing/2025-03-26-the-pillars-of-the-odysseys",
-    "code": "4J"
+    "code": "4J",
+    "title": "The Pillars of The Odysseys"
   },
   {
     "uid": "where/contact/send-me",
-    "code": "4K"
+    "code": "4K",
+    "title": "Send me something"
   },
   {
     "uid": "lens/oldest",
-    "code": "4L"
+    "code": "4L",
+    "title": "Oldest"
   },
   {
     "uid": "what/software/pdyxs.wtf/Untitled",
@@ -1201,79 +1480,98 @@
   },
   {
     "uid": "what/software/pdyxs-wtf",
-    "code": "4Q"
+    "code": "4Q",
+    "title": "pdyxs.wtf"
   },
   {
     "uid": "what/puzzles/convergent-clues/cityscrapers",
-    "code": "4R"
+    "code": "4R",
+    "title": "Cityscrapers"
   },
   {
     "uid": "what/puzzles/convergent-clues/little-fillers",
-    "code": "4S"
+    "code": "4S",
+    "title": "Little Fillers"
   },
   {
     "uid": "what/puzzles/convergent-clues/little-fillers-2",
-    "code": "4T"
+    "code": "4T",
+    "title": "Little Fillers 2"
   },
   {
     "uid": "what/puzzles/experimental-fog/a-murder-most-fogged",
-    "code": "4U"
+    "code": "4U",
+    "title": "A Murder Most Fogged"
   },
   {
     "uid": "what/puzzles/experimental-fog/cartography",
-    "code": "4V"
+    "code": "4V",
+    "title": "Cartography"
   },
   {
     "uid": "what/puzzles/experimental-fog/friends-in-the-fog",
-    "code": "4W"
+    "code": "4W",
+    "title": "Friends in the Fog"
   },
   {
     "uid": "what/puzzles/experimental-fog/recounting-the-counting",
-    "code": "4X"
+    "code": "4X",
+    "title": "Recounting the Counting"
   },
   {
     "uid": "what/puzzles/experimental-fog/recounting-the-rooms",
-    "code": "4Y"
+    "code": "4Y",
+    "title": "Recounting the Rooms"
   },
   {
     "uid": "what/puzzles/experimental-fog/some-things-fogn",
-    "code": "4Z"
+    "code": "4Z",
+    "title": "Some Things Fogn"
   },
   {
     "uid": "what/puzzles/experimental-fog/sunny-with-a-chance-of-fog",
-    "code": "50"
+    "code": "50",
+    "title": "Sunny, with a Chance of Fog"
   },
   {
     "uid": "what/puzzles/experimental-fog/the-grid-of-forking-paths",
-    "code": "51"
+    "code": "51",
+    "title": "The Grid of Forking Paths"
   },
   {
     "uid": "what/puzzles/experimental-fog/whispers-in-the-mist",
-    "code": "52"
+    "code": "52",
+    "title": "Whispers in the Mist"
   },
   {
     "uid": "what/puzzles/timeline/ships-in-the-time",
-    "code": "53"
+    "code": "53",
+    "title": "Ships in the Time"
   },
   {
     "uid": "what/puzzles/timeline/this-is-how-you-learn-the-time-war",
-    "code": "54"
+    "code": "54",
+    "title": "This is how you learn the Time War"
   },
   {
     "uid": "what/puzzles/timeline/this-is-how-you-live-the-time-war",
-    "code": "55"
+    "code": "55",
+    "title": "This is how you live the Time War"
   },
   {
     "uid": "what/puzzles/timeline/times-apart",
-    "code": "56"
+    "code": "56",
+    "title": "Times Apart"
   },
   {
     "uid": "what/puzzles/convergent-clues/commonality",
-    "code": "57"
+    "code": "57",
+    "title": "Commonality"
   },
   {
     "uid": "what/puzzles/convergent-clues/the-clone-gunmen",
-    "code": "58"
+    "code": "58",
+    "title": "The Clone Gunmen"
   },
   {
     "uid": "who/collaborators/Untitled",
@@ -1285,14 +1583,17 @@
   },
   {
     "uid": "lens/seen",
-    "code": "5b"
+    "code": "5b",
+    "title": "Seen"
   },
   {
     "uid": "lens/unseen",
-    "code": "5c"
+    "code": "5c",
+    "title": "Unseen"
   },
   {
     "uid": "lens/interesting",
-    "code": "5d"
+    "code": "5d",
+    "title": "Most* Interesting"
   }
 ]

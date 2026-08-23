@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { assignCodes, buildLookup } from './stack-manifest';
+import { assignCodes, buildLookup, withTitles } from './stack-manifest';
 
 describe('assignCodes', () => {
   it('assignCodes_first_entry: a single new uid gets the shortest code ("0")', () => {
@@ -81,5 +81,45 @@ describe('buildLookup', () => {
     const lookup = buildLookup([]);
     expect(lookup.codeForUid('nope')).toBeUndefined();
     expect(lookup.uidForCode('0')).toBeUndefined();
+  });
+});
+
+describe('withTitles', () => {
+  const manifest = [
+    { uid: 'posts/a', code: '0' },
+    { uid: 'posts/b', code: '1', title: 'Old B' },
+    { uid: 'posts/c', code: '2', title: 'Kept C' },
+  ];
+
+  it('refreshes wholesale — a retitled card says its new title', () => {
+    // The opposite rule to assignCodes, which is why they are separate
+    // functions: codes are append-only, titles are replaced every run.
+    const result = withTitles(manifest, new Map([['posts/b', 'New B'], ['posts/c', 'Kept C']]));
+    expect(result[1]).toEqual({ uid: 'posts/b', code: '1', title: 'New B' });
+    expect(result[2]).toEqual({ uid: 'posts/c', code: '2', title: 'Kept C' });
+  });
+
+  it('drops the field for a location that no longer has a title', () => {
+    // Absent, not empty: `resolveCardTitle` returns '' for an untitled card,
+    // and '' is worth neither the bytes nor a header rendering nothing.
+    const result = withTitles(manifest, new Map());
+    expect(result.every(e => !('title' in e))).toBe(true);
+  });
+
+  it('never touches a code, and never reorders', () => {
+    const result = withTitles(manifest, new Map([['posts/a', 'A']]));
+    expect(result.map(e => [e.uid, e.code])).toEqual(manifest.map(e => [e.uid, e.code]));
+  });
+});
+
+describe('buildLookup titles', () => {
+  it('resolves a title by uid, and undefined for an entry that declares none', () => {
+    const lookup = buildLookup([
+      { uid: 'posts/a', code: '0', title: 'About me' },
+      { uid: 'posts/b', code: '1' },
+    ]);
+    expect(lookup.titleForUid('posts/a')).toBe('About me');
+    expect(lookup.titleForUid('posts/b')).toBeUndefined();
+    expect(lookup.titleForUid('posts/nope')).toBeUndefined();
   });
 });

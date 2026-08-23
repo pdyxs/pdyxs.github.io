@@ -33,7 +33,10 @@ export interface DeserialisedStack {
 }
 
 const PARAM_SEP = '~';
-const ENTRY_SEP = '.';
+/** Separates entries within a `from`/`to` value. Exported because the
+ *  pre-hydration reservation script counts entries with it (issue #101) and
+ *  must not carry its own copy of the character. */
+export const ENTRY_SEP = '.';
 const LENS_PREFIX = 'lens/';
 const LENS_BASE = '/lens';
 

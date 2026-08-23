@@ -185,6 +185,55 @@ the URL is the complete record; anything surviving in the map belongs to the
 stack the visitor just navigated *out of*, and would be re-attached the next
 time a same-keyed location appeared.
 
+### A cold-loaded stack states its shape before it knows its contents
+
+A deep link renders only its **active** location server-side; the `from`/`to`
+entries are client-side. `initFromUrl` used to await each fragment and splice
+its entry in when the HTML landed, so a shared link painted the active card
+alone and then grew a fan one card at a time — moving the card you came to read
+on every step. Three things fixed that (issue #101), and they are independent:
+
+1. **The shape lands first.** `deserialiseStack` already knows every entry, so
+   every one of them gets a `seedPlaceholder` and the store takes them all in
+   **one write**. Fetches then run in parallel and fill each card in place.
+2. **The titles are real.** `stack-manifest.json` carries a `title` per entry
+   now, so a collapsed `from`/`to` card — which *is* its spine title — is
+   legible before any fragment arrives. Codes are append-only (`assignCodes`);
+   titles are refreshed wholesale every run (`withTitles`). Two rules, two
+   functions, deliberately: folding them together invites the wrong one.
+3. **The geometry is reserved pre-paint.** An inline script in `Base.astro`
+   sets `--behind-slots` / `--behind-rows` / `--ahead-slots` / `--ahead-rows` on
+   `<html>` before first paint. Without it the active card jumps 60px right and
+   40px down (measured, three-slot fan at 1400px) when the island hydrates.
+
+Four things that bite:
+
+- **The fill-in MUST go through `replaceBody`.** `StackFragment` reads its
+  `html` prop once, so a bare `seed` would cache the real fragment and leave
+  the card showing its skeleton for the rest of the session. This is asserted
+  as an absence in `CardStack.fragments.test.ts`, because a behavioural test
+  would see the right HTML in the cache either way.
+- **The inline script computes no geometry.** `fanReservationTable`
+  (`src/lib/stack-reservation.ts`) builds a lookup table by calling
+  `computeGeometry` itself, and `Base.astro` bakes it in at build time via
+  `define:vars`; the script counts `from`/`to` entries and reads a row. The
+  slots-vs-rows distinction — a piled card shares its slot's `left` but keeps
+  climbing in `top` — therefore has exactly one implementation. It has already
+  been got wrong once; a second copy in an un-importable inline script is how
+  it would be got wrong again, silently, as a layout shift.
+- **The table saturates, and its last row is the first saturated one.** Past
+  the fan's cap a side's slots stop growing and its rows stop one pile-depth
+  later, so six rows per side covers every stack that can exist and
+  `reservationFor` clamps. One row shorter and the clamp starts lying.
+- **`is:inline` script bodies are emitted verbatim, comments and all**, on
+  every one of ~590 pages. The rationale for that script lives in an Astro
+  `{/* */}` comment above it, which is stripped at build. Leaving it inside
+  cost 910 bytes gzipped per page instead of 339.
+
+The shape is **optimistic**, so a location whose fragment 404s is removed from
+the store again — which is what the sequential version expressed by never
+splicing it in.
+
 ### Fragments are HTML; the stack is state (`src/lib/card-fragments.ts`)
 
 The other half of that invariant. A location is rendered server-side as one

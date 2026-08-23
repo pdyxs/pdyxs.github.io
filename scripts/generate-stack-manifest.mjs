@@ -16,15 +16,16 @@ import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
-import { assignCodes } from '../src/lib/stack-manifest.ts';
+import { assignCodes, withTitles } from '../src/lib/stack-manifest.ts';
 import { uidFromContentPath, uidFromTagPath } from '../src/lib/content-uid.ts';
 import { normaliseAuthoredTag } from '../src/lib/five-w.ts';
 import { isVaultInfrastructurePath } from '../src/lib/content-glob.ts';
 import { derivePathTags } from '../src/lib/tag-inheritance.ts';
-import { allLensUids } from '../src/lib/lens-registry.ts';
+import { allLensUids, getLensDefinition, lensIdFromUid } from '../src/lib/lens-registry.ts';
 import { allGeneratedFilterValues } from '../src/lib/filter-generators.ts';
 import { resolveFolderCascade, makeFileReader } from '../src/lib/folder-config.ts';
 import { computeStatusVisibility, resolveStatus } from '../src/lib/status-visibility.ts';
+import { resolveCardTitle } from '../src/lib/card-title.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(__dirname, '../src/content');
@@ -202,6 +203,49 @@ async function collectTags() {
   return [...tags].sort();
 }
 
+/**
+ * uid -> display title, for the cold-load stack skeleton (issue #101).
+ *
+ * Read from the same two sources the runtime reads: `resolveCardTitle` for a
+ * card's frontmatter (the one place that decision lives — a card with no
+ * `title` resolves to '' and is simply omitted here), and the lens registry's
+ * `label` for a lens. Deliberately NOT re-derived from the slug: the skeleton
+ * has to say what the card will say when it lands, or the title visibly
+ * changes as fragments arrive, which is the shift this exists to remove.
+ *
+ * Unlike `collectTags`, this is not status-filtered — for the same reason
+ * `collectUids` isn't. A title identifies a URL, not a listing, and an
+ * `unlisted` card reached by a shared deep link still needs its breadcrumb.
+ */
+async function collectTitles() {
+  const allFiles = await walk(CONTENT_DIR);
+  const titles = new Map();
+
+  for (const file of allFiles) {
+    const relToContent = path.relative(CONTENT_DIR, file).split(path.sep).join('/');
+    if (isVaultInfrastructurePath(relToContent)) continue;
+    if (relToContent.startsWith('tag/')) continue;
+    if (!/\.(md|mdx)$/i.test(relToContent)) continue;
+
+    let data = {};
+    try {
+      ({ data } = matter(await readFile(file, 'utf-8')));
+    } catch {
+      continue; // unparseable frontmatter — no title to read
+    }
+    const title = resolveCardTitle(data);
+    if (title) titles.set(uidFromContentPath(relToContent), title);
+  }
+
+  for (const uid of allLensUids()) {
+    const id = lensIdFromUid(uid);
+    const label = id ? getLensDefinition(id)?.label : undefined;
+    if (label) titles.set(uid, label);
+  }
+
+  return titles;
+}
+
 async function loadExistingManifest(manifestPath) {
   try {
     const text = await readFile(manifestPath, 'utf-8');
@@ -211,16 +255,25 @@ async function loadExistingManifest(manifestPath) {
   }
 }
 
-async function writeManifest(label, manifestPath, uids) {
+async function writeManifest(label, manifestPath, uids, titles) {
   const existing = await loadExistingManifest(manifestPath);
-  const manifest = assignCodes(existing, uids);
+  let manifest = assignCodes(existing, uids);
+  // Codes are append-only; titles are refreshed wholesale every run. The two
+  // rules live in separate functions so neither can be applied to the other.
+  if (titles) manifest = withTitles(manifest, titles);
   await mkdir(path.dirname(manifestPath), { recursive: true });
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf-8');
-  console.log(`${label}: ${manifest.length} entries (${manifest.length - existing.length} new)`);
+  const titled = manifest.filter(e => e.title).length;
+  console.log(
+    `${label}: ${manifest.length} entries (${manifest.length - existing.length} new)` +
+    (titles ? `, ${titled} titled` : ''),
+  );
 }
 
 async function main() {
-  await writeManifest('stack-manifest', MANIFEST_PATH, await collectUids());
+  // Only the stack manifest carries titles: it is the one the cold-load
+  // skeleton reads, and the tag manifest's values are filters, not locations.
+  await writeManifest('stack-manifest', MANIFEST_PATH, await collectUids(), await collectTitles());
   await writeManifest('tag-manifest', TAG_MANIFEST_PATH, await collectTags());
 }
 
