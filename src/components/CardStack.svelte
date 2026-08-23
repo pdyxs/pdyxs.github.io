@@ -4,7 +4,8 @@
   import { stackStore, seedStackState, pushToStack, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '../stores/card-stack-store';
   import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry, planPush } from '../lib/stack-layout';
   import type { LocationEntry, StackState } from '../lib/stack-layout';
-  import { geometryFor, STACK_GEOMETRY } from '../lib/stack-geometry';
+  import { geometryFor, scrollTargetFor, STACK_GEOMETRY } from '../lib/stack-geometry';
+  import { scrollBehaviourFor, transitionWillFire } from '../lib/stack-motion';
   import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from '../lib/lens-key';
   import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
   import { filterStateFromParams } from '../dimensions';
@@ -76,6 +77,19 @@
   let innerEl = $state<HTMLElement | null>(null);
   let activeWidth = $state(0);
   let startVT: ((cb: () => void) => { finished: Promise<void> }) | undefined;
+  // True while the stack is being RECONSTRUCTED rather than navigated — a cold
+  // load or a popstate. Both splice entries in one fetch at a time, and every
+  // splice ahead of the active card moves it down the page, so each one wants
+  // a correcting scroll that must not be animated. See scrollBehaviourFor.
+  let rebuilding = true;
+  // The last stack shape we scrolled for. A store change is not by itself a
+  // navigation: re-keying a lens when its filters change leaves the visitor
+  // exactly where they were standing, and yanking the viewport for a filter
+  // toggle is worse than not scrolling at all. Active slot plus depth is what
+  // actually moves the active card — depth because an entry spliced in AHEAD
+  // of it (initFromUrl's `from` restore) pushes it down without changing which
+  // location is active.
+  let lastScrollSignature: string | null = null;
   // UIDs from the browse-page `stack` URL param, consumed on the first card push
   let pendingBrowseStack: string[] = [];
 
@@ -233,6 +247,147 @@
     }
   });
 
+  // Arms the geometry transitions one frame after the first layout pass.
+  //
+  // The applier writes `--geo-left`/`--geo-top` in an effect, so until it has
+  // run once every card's placement is the CSS fallback of `0px`. With the
+  // transition live from the start, a stack restored from a URL fans out from
+  // the container's top-left corner on arrival — every card travelling from a
+  // position it was never in. Two rAFs because one only guarantees the style
+  // has been *set*, not that a layout has been performed against it; arming in
+  // the same frame as the write still animates from the fallback.
+  $effect(() => {
+    const stackEl = document.getElementById('card-stack');
+    if (!stackEl || stackEl.classList.contains('stack-motion')) return;
+    const raf = requestAnimationFrame(() =>
+      requestAnimationFrame(() => stackEl.classList.add('stack-motion')),
+    );
+    return () => cancelAnimationFrame(raf);
+  });
+
+  // ── Scroll ownership (issue #110) ─────────────────────────────────
+  //
+  // ONE owner. Four `scrollIntoView({ block: 'nearest' })` call sites used to
+  // share this job, and `nearest` is precisely the wrong primitive for a stack:
+  // it does nothing when the target is already partly visible, which is the
+  // normal case here — every card is on screen, the question is only which one
+  // you are standing in front of.
+  //
+  // The rule: the active card's header sits at the top of the viewport, less a
+  // peek. The arithmetic is `scrollTargetFor` (src/lib/stack-geometry.ts,
+  // landed with the geometry in #107); this is the one-line applier around it.
+
+  /**
+   * The peek, in px, read back out of CSS.
+   *
+   * It differs by breakpoint — the stack above a desktop active card is an 8px
+   * staircase, while on mobile it is a full collapsed header — and a JS
+   * constant would need `matchMedia` to vary, which the CSS-first-responsive
+   * rule forbids. Declared in `:root`, overridden in the desktop media block,
+   * resolved to a number here. This is the sanctioned shape for a
+   * breakpoint-varying value the applier needs, and the only one in the island.
+   */
+  function scrollPeek(): number {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--stack-scroll-peek');
+    const px = parseFloat(raw);
+    return Number.isFinite(px) ? px : 0;
+  }
+
+  /**
+   * Whether the visitor has asked for less motion.
+   *
+   * `matchMedia` here is the documented exception, not a breach of the
+   * no-JS-breakpoint rule: this is a user preference, not a layout breakpoint,
+   * and `window.scrollTo`'s `behavior` has no CSS-side equivalent to defer to
+   * (a `scroll-behavior` declaration is overridden by an explicit `behavior`,
+   * not consulted by it). Nothing about layout is decided from it.
+   */
+  function prefersReducedMotion(): boolean {
+    return typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  /** Puts the active card's header at the top of the viewport, less the peek. */
+  function scrollActiveIntoView(behavior: ScrollBehavior) {
+    const el = elFor(get(stackStore).activeSlot);
+    if (!el) return;
+    const top = scrollTargetFor(el.getBoundingClientRect().top, window.scrollY, scrollPeek());
+    window.scrollTo({ top, behavior });
+  }
+
+  // The only caller. Reactive rather than called from the navigation handlers,
+  // for the same reason the layout is (see the CLAUDE.md invariant): the store
+  // is what moved, and every handler that mutates it would otherwise have to
+  // remember to scroll afterwards — which is exactly how there came to be four
+  // of them.
+  $effect(() => {
+    const state = $stackStore;
+    if (!state.activeSlot) return;
+    const signature = `${state.activeSlot}@${state.entries.length}`;
+    if (signature === lastScrollSignature) return;
+    lastScrollSignature = signature;
+    scrollActiveIntoView(scrollBehaviourFor(rebuilding, prefersReducedMotion()));
+  });
+
+  // ── Sticky active header (issue #110) ─────────────────────────────
+  //
+  // An IntersectionObserver on the 1px `.card-header-sentinel` at the card's
+  // top edge (markup landed with the fragments in #108), NOT a scroll listener:
+  // an observer fires once per threshold crossing where a listener writes
+  // styles on every frame, and repaint is the scarce resource in a design whose
+  // surfaces are all `background-attachment: fixed` dither.
+  //
+  // Only the active card is observed. A collapsed card's header is cropped away
+  // behind the spine on desktop and closed on mobile, so there is nothing there
+  // that could stick.
+  $effect(() => {
+    const slot = $stackStore.activeSlot;
+    if (!slot || typeof IntersectionObserver === 'undefined') return;
+    const card = elFor(slot);
+    const sentinel = card?.querySelector<HTMLElement>('.card-header-sentinel');
+    const header = card?.querySelector<HTMLElement>('.card-header');
+    if (!sentinel || !header) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => header.classList.toggle('card-header--stuck', !entry.isIntersecting),
+      { threshold: 0 },
+    );
+    io.observe(sentinel);
+    return () => {
+      io.disconnect();
+      // A card that stops being active must not keep the compact state: it
+      // would be wearing a scrolled appearance the next time it is opened.
+      header.classList.remove('card-header--stuck');
+    };
+  });
+
+  /**
+   * The clip reveal for a card whose body has just arrived (#98: geometric clip
+   * is the whole animation vocabulary — the dither dissolve shimmers and is
+   * out).
+   *
+   * A CSS animation rather than a transition, so that nothing is clipped at
+   * rest. `inset(0 0 100% 0)` does not interpolate to `none`, so a transition
+   * would need the resting state to carry a permanent no-op `clip-path` on
+   * every card body in the stack; a keyframed animation leaves the element with
+   * no clip at all once it ends.
+   *
+   * Under reduced motion the animation is `none`, so `animationend` never
+   * fires and the class simply stays — which is correct rather than leaky: with
+   * no animation there is no clip to remove.
+   */
+  function revealBody(slot: string) {
+    const card = elFor(slot);
+    if (!card) return;
+    card.classList.add('stack-card--revealing');
+    card.addEventListener(
+      'animationend',
+      () => card.classList.remove('stack-card--revealing'),
+      { once: true },
+    );
+  }
+
   // --- Helpers ---
 
   const HOME_UID = 'lens/home';
@@ -384,8 +539,6 @@
       stackStore.update(s => activateCardFn(s, existing.slot));
       markReadIfKnown(existing.uid, existing.slot);
       updateUrl();
-      await tick();
-      elFor(existing.slot)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
 
@@ -528,7 +681,7 @@
 
     markReadIfKnown(uid, slot);
     updateUrl();
-    elFor(slot)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    revealBody(slot);
   }
 
   // Pushes a browse-lens URL carrying a `filter.<dim>=...` query (built by
@@ -562,7 +715,16 @@
       const bw = el?.querySelector<HTMLElement>('.body-wrapper');
       if (bw) {
         bw.classList.remove('open');
-        await waitForTransition(bw, 'grid-template-rows', BODY_COLLAPSE_FALLBACK_MS);
+        // Only await a transition that can actually fire. Under reduced motion
+        // the collapse is zero-duration, which starts nothing and dispatches no
+        // `transitionend` — so awaiting it would sit through the whole fallback
+        // and turn "instant" into a 400ms stall before the return to home. The
+        // hazard is documented in transition-wait.ts; `transitionWillFire` is
+        // the decision, and it reads the computed style rather than the
+        // preference so it cannot drift from what the CSS actually resolves to.
+        if (transitionWillFire(getComputedStyle(bw).transitionDuration)) {
+          await waitForTransition(bw, 'grid-template-rows', BODY_COLLAPSE_FALLBACK_MS);
+        }
       }
 
       const ok = await fragments.ensure(HOME_UID);
@@ -585,8 +747,6 @@
       const newActive = newEntries[newEntries.length - 1];
       stackStore.update(s => ({ ...s, entries: newEntries, activeSlot: newActive.slot }));
       updateUrl();
-      await tick();
-      elFor(newActive.slot)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
 
@@ -652,8 +812,19 @@
     // "shown but not opened" state the front page's slots are in.
     if (activeUid) markReadIfKnown(activeUid);
 
-    // Restore from/to context cards in URL
-    initFromUrl();
+    // The stack owns the scroll position, so the browser must stop restoring
+    // its own. A popstate rebuilds the whole stack asynchronously — entries are
+    // re-fetched and spliced back in — so the offset the browser saved belongs
+    // to a layout that does not exist yet when it applies it, and it lands
+    // after our own scroll rather than before it. Verified in a browser rather
+    // than assumed (the ticket's ask): without this, going back from a pushed
+    // card leaves the viewport wherever the old entry had been.
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+    // Restore from/to context cards in URL. `rebuilding` stays true until the
+    // splicing settles, so each correcting scroll is instant — see
+    // scrollBehaviourFor.
+    initFromUrl().finally(() => { rebuilding = false; });
 
     // If on the filter page with a browse stack, prefetch those cards so they're
     // ready to seed the store the moment the user opens their first card.
@@ -700,7 +871,6 @@
         if (!entry) return;
         stackStore.update(s => activateCardFn(s, entry.slot));
         markReadIfKnown(entry.uid, entry.slot);
-        collapsedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         updateUrl();
       }
     }
@@ -788,12 +958,23 @@
       // appeared — a `tab=bio` from a branch you left reappearing on the card
       // you came back to.
       cardParams = new Map();
+      // A popstate is a REBUILD, not a navigation: the entries come back one
+      // fetch at a time and each splice ahead of the active card moves it, so
+      // the correcting scrolls must not animate. Reset for the duration.
+      rebuilding = true;
+      // ...and it must scroll even when it lands on a shape we have already
+      // scrolled for. Going back can return the stack to exactly the depth and
+      // active slot it held a moment ago while the viewport is somewhere else
+      // entirely — the signature guard exists to ignore re-keys, not to ignore
+      // history. Clearing it makes every popstate re-place the viewport.
+      lastScrollSignature = null;
       stackStore.set(seedStackState(null));
       const path = window.location.pathname;
       if (path === '/' || path === '') {
         // `/` is the home lens as the sole page-mode entry.
         await seedHomeActive(false);
         await initFromUrl();
+        rebuilding = false;
         return;
       }
       if (path.startsWith('/lens/') || path.startsWith('/card/')) {
@@ -808,6 +989,7 @@
           await initFromUrl();
         }
       }
+      rebuilding = false;
     }
     window.addEventListener('popstate', onPopstate);
 

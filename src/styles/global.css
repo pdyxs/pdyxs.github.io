@@ -94,6 +94,29 @@
      server-rendered stack is not laid out against zero. */
   --spine-width:   40px;
   --stack-stagger:  8px;
+  /* How much of the stack ABOVE the active card stays on screen when a
+     navigation scrolls to it (issue #110). Read back by the island through
+     getComputedStyle — it is the one breakpoint-varying value the applier
+     needs, and declaring it here keeps the breakpoint in CSS where the
+     CSS-first-responsive rule requires it.
+
+     It is not decoration. It is the scroll affordance (a header flush to the
+     viewport top makes the stack above it invisible, so nothing says it is
+     there), and it is what keeps the sticky header UNSTUCK on arrival — flush,
+     the 1px `.card-header-sentinel` is already off-screen and the header lands
+     pre-compacted, which reads as a scrolled state you never scrolled to.
+
+     MOBILE value. What sits above the active card here is a full collapsed
+     header, so the peek has to be a visible slice of one rather than a hairline;
+     the desktop block cuts it down to the staircase's own scale. */
+  --stack-scroll-peek: 28px;
+  /* One card sliding to a new slot. Zeroed under reduced motion below. */
+  --stack-motion-ms: 320ms;
+  /* The clip reveal of a body whose content has just arrived. */
+  --stack-reveal-ms: 320ms;
+  /* The compact/full swap of the sticky active header. Short on purpose: it is
+     a response to scrolling, and anything slower trails the scroll it answers. */
+  --stack-stuck-ms: 180ms;
   /* Ceiling for an image the body renders inline. Landscape diagrams are
      unaffected (they hit the 100% width cap first); it exists for tall portrait
      images — a worked example photographed in portrait would otherwise run
@@ -463,6 +486,79 @@ pre > code:not([class]) {
    is also the pre-hydration value here. */
 .stack-card > .card-header {
   background: var(--card-surface, var(--dither-2));
+}
+
+/* ── Sticky active header (issue #110) ─────────────────────────────
+   The active card's header follows the viewport the same way the collapsed
+   spines beside it do, so the thing telling you where you are is never the
+   thing that scrolls away first.
+
+   Sticky resolves against the VIEWPORT, not the card, because `.stack-card`
+   uses `overflow: clip` — which clips without creating a scroll container.
+   `hidden` would create one and silently pin this to a box that never scrolls.
+   That is the same reason the spine's own sticky inner works, and it is why
+   the choice of `clip` is written down in two places.
+
+   Only the ACTIVE card: a collapsed card's header is cropped away behind the
+   spine on desktop and closed on mobile, so there is nothing there to stick.
+
+   The negative top margin carries the card's own top edge up with the header,
+   so at rest the border sits exactly on the card's border (no double weight)
+   and only reads as a separate edge once the header has travelled down off it
+   — identical treatment to `.stack-card-spine-inner` above, for the same
+   reason: a stuck header bleeding into the viewport edge while the spines
+   beside it are properly closed looks like a mistake. */
+.stack-card--active > .card-header {
+  position: sticky;
+  top: 0;
+  /* Above the lens filter bar's own sticky bar (z-index 10, FilterBar.svelte),
+     which shares this viewport edge and would otherwise slide over the title.
+     Below the spine's z-index 2 is not a concern for the active card: its
+     `--left-col` is 0px, so its spine has no width to overlap with. */
+  z-index: 11;
+  border-top: var(--border-width) solid var(--color-border);
+  margin-top: calc(var(--border-width) * -1);
+}
+
+/* The compact state, applied by the IntersectionObserver in CardStack.svelte
+   once `.card-header-sentinel` leaves the viewport — i.e. once the header has
+   stopped sitting on its card and started carrying the page.
+
+   `padding-block` only: the inline inset is the card's frame and must not move,
+   or the title slides sideways as you scroll. */
+.card-header {
+  transition:
+    padding-block var(--stack-stuck-ms) ease-out,
+    font-size var(--stack-stuck-ms) ease-out;
+}
+
+.stack-card--active > .card-header--stuck {
+  padding-block: var(--space-xs);
+  font-size: 0.85rem;
+}
+
+/* ── The clip reveal (issue #110) ──────────────────────────────────
+   #98's ruling: geometric clip is the whole animation vocabulary. The dither
+   dissolve that was scrubbed against it animates a length inside a mask-image,
+   which regenerates the mask every frame over surfaces that are themselves
+   ~7 fixed gradient layers — it shimmered, and it is out.
+
+   An ANIMATION, not a transition, and that is the load-bearing part: nothing
+   is clipped at rest. `inset(0 0 100% 0)` does not interpolate to `none`, so a
+   transition would need every card body in the stack to carry a permanent
+   no-op `clip-path` just to have something to animate from. A keyframed
+   animation leaves the element with no clip at all the moment it ends.
+
+   `clip-path` is safe where `transform` is not: it creates no containing block,
+   so the `background-attachment: fixed` dither inside the body stays anchored
+   to the viewport and does not shimmer (CLAUDE.md § dither). */
+@keyframes stack-card-reveal {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+.stack-card--revealing .stack-card-body {
+  animation: stack-card-reveal var(--stack-reveal-ms) ease-out;
 }
 
 /* Reusable: any text sitting over a dithered surface gets a paper-coloured
@@ -994,6 +1090,14 @@ pre,
 /* ── Desktop card stack (≥681px) ─────────────────────────────────── */
 
 @media (min-width: 681px) {
+  :root {
+    /* What sits above a desktop active card is the 8px staircase of the behind
+       fan, not a full header — so the peek is measured in those steps. Three
+       bands is enough to read as "the stack continues up and to the left"
+       while still leaving the sentinel on screen. */
+    --stack-scroll-peek: 24px;
+  }
+
   .site-main {
     padding-inline: 0;
   }
@@ -1114,6 +1218,30 @@ pre,
     height: calc(100% + var(--geo-extra-height, 0px));
   }
 
+  /* MOTION. `left`/`top` and never `transform`: a transform on an ancestor of a
+     dithered surface re-anchors its `background-attachment: fixed` grid, and
+     #98 confirmed on a real display that the shimmer this causes is visible
+     over a 320ms slide, not just at rest. Offsets repaint the dither instead of
+     compositing it, which is the cost this design accepts.
+
+     `grid-template-columns` is in the list because the spine opening and
+     closing IS the collapse — `--left-col` is registered (@property, see the
+     block above #card-stack) so the track interpolates rather than snapping.
+     It is a layout animation and shares the same budget, which is why it stops
+     when the others do.
+
+     Gated on `.stack-motion`, added by the island one frame after its first
+     layout pass. Without the gate every card animates in from `0,0` on a cold
+     load, because the geometry custom properties are unset until the applier
+     writes them — a stack restored from a URL would fan out from the top-left
+     corner on arrival, which reads as a bug rather than an entrance. */
+  #card-stack.stack-motion .stack-card {
+    transition:
+      left var(--stack-motion-ms) ease-out,
+      top var(--stack-motion-ms) ease-out,
+      grid-template-columns var(--stack-motion-ms) ease-out;
+  }
+
   /* The one in-flow node. Its `--geo-left`/`--geo-top` are both 0 by
      construction, so `position: relative` leaves it exactly where flow put it
      while still establishing a stacking context for its z-index. */
@@ -1166,6 +1294,34 @@ pre,
      affordance has no room and no meaning here. */
   #card-stack .stack-card--collapsed > .card-header::after {
     display: none;
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────
+   Nothing in the stack travels. The scroll half of this is decided in JS
+   (`scrollBehaviourFor`), because `window.scrollTo`'s `behavior` overrides any
+   CSS `scroll-behavior` rather than consulting it — that is the one place the
+   preference is read with `matchMedia`, and it decides no layout.
+
+   Zeroing `.body-wrapper` here is what made `transitionWillFire` necessary: a
+   zero-duration transition starts nothing and fires no `transitionend`, so
+   `closeCard`'s wait for the collapse would sit through its entire 400ms
+   fallback and turn "instant" into a stall. See src/lib/stack-motion.ts. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --stack-motion-ms: 0ms;
+    --stack-reveal-ms: 0ms;
+    --stack-stuck-ms: 0ms;
+  }
+
+  .body-wrapper {
+    transition-duration: 0s;
+  }
+
+  /* `none`, not a zero duration: an animation still runs its final frame at
+     0s, and the reveal's is a full-height clip that would flash. */
+  .stack-card--revealing .stack-card-body {
+    animation: none;
   }
 }
 

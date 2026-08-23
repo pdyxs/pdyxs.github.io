@@ -36,6 +36,12 @@ const CARD_C = 'what/art/lino-printing';
 
 function fragment(uid: string, { hash = `hash-${uid}`, title = uid }: { hash?: string | null; title?: string } = {}) {
   return `<div class="stack-card" data-uid="${uid}"${hash ? ` data-content-hash="${hash}"` : ''}>` +
+    // The sentinel and spine are in every real shell (CardStackCard.astro,
+    // LensStackCard.astro and buildPlaceholderHtml), and the sticky-header
+    // observer looks for the sentinel — so the fixture carries them too.
+    `<div class="stack-card-spine"><div class="stack-card-spine-inner">` +
+    `<span class="stack-card-spine-title">${title}</span></div></div>` +
+    `<div class="card-header-sentinel"></div>` +
     `<div class="card-header"><span class="card-header-title">${title}</span>` +
     `<button class="stack-card-close" aria-label="Close">x</button></div>` +
     `<div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner"></div></div></div>` +
@@ -388,6 +394,121 @@ describe('the layout effect applies the store to the DOM', () => {
     // ...and the roles swapped on those same nodes.
     expect(before[0].dataset.role).toBe('active');
     expect(before[1].dataset.role).toBe('ahead');
+  });
+});
+
+describe('one scroll owner (#110)', () => {
+  /** The four `scrollIntoView({ block: "nearest" })` sites are gone; every
+   *  navigation now goes through one `window.scrollTo`. */
+  function captureScrolls() {
+    const calls: ScrollToOptions[] = [];
+    vi.stubGlobal('scrollTo', vi.fn((opts: ScrollToOptions) => { calls.push(opts); }));
+    return calls;
+  }
+
+  /** Puts a card's top edge at a known viewport offset, so the target the
+   *  applier computes is checkable rather than the happy-dom default of 0. */
+  function placeCard(uid: string, top: number) {
+    const el = document.querySelector<HTMLElement>(`[data-uid="${uid}"]`)!;
+    el.getBoundingClientRect = () => ({ top, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+    return el;
+  }
+
+  it('scrolls to the newly active card, not into view of it', async () => {
+    const calls = captureScrolls();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    calls.length = 0;
+
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector('.stack-card-body-inner')!.appendChild(link);
+    placeCard(CARD_A, 0);
+    link.click();
+    await settle();
+
+    expect(calls.length).toBeGreaterThan(0);
+    // No peek resolves in happy-dom (no stylesheet), so the target is the
+    // card's own document offset — which is the arithmetic, less nothing.
+    expect(calls.at(-1)!.top).toBe(0);
+    // Nothing calls the old primitive any more.
+    expect(document.querySelector(`[data-uid="${CARD_B}"]`)).toBeTruthy();
+  });
+
+  it('does NOT scroll when a lens re-keys, because the visitor has not moved', async () => {
+    // A filter toggle changes the active entry's identity but leaves the
+    // visitor standing in front of the same card. Yanking the viewport for that
+    // is worse than not scrolling at all, so the effect is keyed on the stack's
+    // SHAPE (active slot + depth) rather than on any store change.
+    const calls = captureScrolls();
+    mountStack({ activeUid: 'lens/interesting', activeHtml: fragment('lens/interesting', { hash: null }) });
+    await settle();
+    calls.length = 0;
+
+    document.dispatchEvent(new CustomEvent('cardparam', {
+      detail: { uid: 'lens/interesting', params: [['filter.what', 'what:puzzles']] },
+    }));
+    await settle();
+
+    expect(get(stackStore).entries[0].key).toContain('filter.what');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('scrolls again when an entry is spliced in AHEAD of the active card', async () => {
+    // initFromUrl restores `from` locations by inserting them before the active
+    // one, which pushes it down the page without changing which location is
+    // active. Depth is in the signature precisely so this still corrects.
+    const calls = captureScrolls();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    calls.length = 0;
+
+    stackStore.update(s => ({ ...s, entries: [{ key: CARD_B, uid: CARD_B, slot: CARD_B }, ...s.entries] }));
+    await settle();
+
+    expect(calls.length).toBeGreaterThan(0);
+  });
+});
+
+describe('the sticky active header (#110)', () => {
+  it('compacts only the ACTIVE card, and releases the class when it stops being active', async () => {
+    // Driven by an IntersectionObserver on the 1px sentinel, so the test drives
+    // the observer's callback rather than a scroll — which is the whole reason
+    // it is an observer and not a scroll listener.
+    const observers: Array<{ el: Element; cb: IntersectionObserverCallback }> = [];
+    vi.stubGlobal('IntersectionObserver', class {
+      cb: IntersectionObserverCallback;
+      constructor(cb: IntersectionObserverCallback) { this.cb = cb; }
+      observe(el: Element) { observers.push({ el, cb: this.cb }); }
+      disconnect() {}
+      unobserve() {}
+    });
+
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const header = document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .card-header`)!;
+    const watching = observers.at(-1)!;
+    expect(watching.el.classList.contains('card-header-sentinel')).toBe(true);
+
+    // Sentinel leaves the viewport → the header is carrying the page.
+    watching.cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as IntersectionObserver);
+    expect(header.classList.contains('card-header--stuck')).toBe(true);
+
+    // ...and back.
+    watching.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
+    expect(header.classList.contains('card-header--stuck')).toBe(false);
+
+    // Stuck, then pushed behind: it must not keep a scrolled appearance for
+    // the next time it is opened.
+    watching.cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as IntersectionObserver);
+    expect(header.classList.contains('card-header--stuck')).toBe(true);
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector('.stack-card-body-inner')!.appendChild(link);
+    link.click();
+    await settle();
+    expect(header.classList.contains('card-header--stuck')).toBe(false);
   });
 });
 

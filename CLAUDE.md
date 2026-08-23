@@ -265,6 +265,89 @@ CardStack path a test can exercise directly: `mount()` is unavailable here, but
 the same project-wide "ssr" vite environment that forbids it is what makes the
 server renderer work.
 
+### One scroll owner, and the peek is doing two jobs
+
+`scrollActiveIntoView(behavior)` in `CardStack.svelte` is the only thing that
+scrolls the stack, called from a `$effect` — reactive for the same reason the
+layout is: the store is what moved, and a handler that has to *remember* to
+scroll is how there came to be four of them. It replaced four
+`scrollIntoView({ block: 'nearest' })` sites, and `nearest` was precisely the
+wrong primitive: it does nothing when the target is already partly visible,
+which in a stack is always.
+
+The rule is `scrollTargetFor(activeCardTop, scrollY, peek)`
+(`src/lib/stack-geometry.ts`): the active card's header at the top of the
+viewport, **less a peek**. The peek is not cosmetic —
+
+1. it is the **scroll affordance** (flush to the top, the stack above is
+   invisible and nothing says it is there), and
+2. it keeps the sticky header **unstuck on arrival**. Flush, the 1px
+   `.card-header-sentinel` is already off-screen and the header lands
+   pre-compacted — a compact header reads as a scrolled state, so arriving in
+   one is a lie.
+
+`--stack-scroll-peek` is 28px at mobile (a readable slice of the collapsed
+header above) and 24px on desktop (three 8px staircase bands, which is
+`backwardStrip * stagger` — the un-piled fan's own reach).
+
+Three things that bite:
+
+- **The effect is keyed on the stack's SHAPE, not on the store.** Active slot
+  plus depth. Re-keying a lens when its filters change leaves the visitor
+  standing exactly where they were, and yanking the viewport for a filter
+  toggle is worse than not scrolling; depth is in the key because
+  `initFromUrl` splices `from` entries in *ahead* of the active card, moving it
+  down without changing which location is active.
+- **A popstate clears that key.** Going back can return the stack to a shape it
+  held moments ago while the viewport is somewhere else entirely — the guard
+  exists to ignore re-keys, not to ignore history.
+- **`history.scrollRestoration = 'manual'` is REQUIRED, and this was measured,
+  not assumed.** With `auto`, going back from a pushed card lands at the
+  browser's saved offset — 791px *into* the card, header off-screen above —
+  because the browser restores at popstate dispatch while the stack is still
+  being re-fetched. The stack owns the scroll position; the browser must not
+  also own it.
+
+**Cold load and popstate are instant; a navigation is smooth**
+(`scrollBehaviourFor`, `src/lib/stack-motion.ts`). A rebuild splices entries in
+one fetch at a time and each one needs a correcting scroll — smoothing those is
+the page fighting itself, and on first paint it races the browser and loses
+visibly.
+
+### Reduced motion reads the computed style, not the preference
+
+`--stack-motion-ms` / `--stack-reveal-ms` / `--stack-stuck-ms` are zeroed in a
+`prefers-reduced-motion` block, and `.body-wrapper`'s collapse with them.
+
+That is what makes `transitionWillFire` (`src/lib/stack-motion.ts`) necessary.
+**A zero-duration transition starts nothing and fires no `transitionend`**, so
+`closeCard`'s wait for the closing card's collapse would sit through its entire
+400ms fallback — turning "instant" into a stall, which is the opposite of what
+the preference asked for. The guard reads
+`getComputedStyle(bw).transitionDuration` rather than asking `matchMedia`,
+because the caller's real question is "will an event arrive?", and a duration
+can reach zero for reasons that have nothing to do with the preference. Measured
+at 143ms under emulated reduced motion, against the ≥400ms it would otherwise be.
+
+The mirror trap: the clip reveal is disabled with `animation: none`, **not** a
+zero duration — an animation still paints its final frame at `0s`, and the
+reveal's first frame is a full-height clip that would flash.
+
+### Motion is armed one frame late, on purpose
+
+`#card-stack.stack-motion` gates the `left` / `top` / `grid-template-columns`
+transitions, and is added by the island two `requestAnimationFrame`s after its
+first layout pass. The geometry custom properties are unset until the applier
+writes them, so with transitions live from the start every card animates in
+from the container's top-left corner on a cold load — a restored stack fanning
+out from `0,0` on arrival, which reads as a bug rather than an entrance. Two
+frames because one only guarantees the style was *set*, not that a layout ran
+against it.
+
+`grid-template-columns` is in the transition list because the spine opening and
+closing **is** the collapse; `--left-col` is registered via `@property` so the
+track interpolates instead of snapping.
+
 ### Stable selector contract
 
 These class names are a CSS/layout contract — renaming any of them is a CardStack.svelte + CSS refactor, not a local change:
@@ -272,7 +355,8 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `#card-stack`, `.card-stack-inner`
 - `.stack-card`, `.stack-card--active`, `.stack-card--collapsed`, `.stack-card--page`
 - `.stack-card-spine`, `.stack-card-spine-inner`, `.stack-card-spine-title`
-- `.card-header`, `.card-header-sentinel`
+- `.card-header`, `.card-header-sentinel`, `.card-header--stuck`
+- `.stack-card--revealing`, `#card-stack.stack-motion`
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`
 - `data-role="behind|active|ahead"` and `data-piled` (written by the applier)
@@ -1225,6 +1309,20 @@ cards; publishing one restores its old URL and drops it off the list.
 ### CSS-first responsive, no JS breakpoint detection
 
 Layout responds to viewport via media queries. `matchMedia` in JS is reserved for cases where *interaction state itself* differs by breakpoint (e.g. a desktop-only peek state), not for layout switching. Document the exception narrowly when it applies.
+
+Two sanctioned escapes exist, and they are the only ones:
+
+- **A breakpoint-varying value the applier needs** is declared in `:root`,
+  overridden in the desktop media block, and read back through
+  `getComputedStyle`. `--stack-scroll-peek` is the one instance. The breakpoint
+  stays in CSS; JS only resolves a number.
+- **`prefers-reduced-motion`** is read with `matchMedia` in `CardStack.svelte`,
+  because `window.scrollTo`'s `behavior` *overrides* a CSS `scroll-behavior`
+  rather than consulting it, so there is nothing CSS-side to defer to. It is a
+  user preference, not a layout breakpoint, and no layout is decided from it.
+
+Everything else the reduced-motion preference touches is decided in CSS, and
+read back as CSS — see `transitionWillFire` below.
 
 ## Testing
 
