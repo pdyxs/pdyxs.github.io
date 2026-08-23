@@ -61,3 +61,91 @@ export function transitionWillFire(computedDuration: string | null | undefined):
       return value > 0;
     });
 }
+
+/**
+ * How long to keep waiting for the layout to stop moving before aiming anyway.
+ *
+ * Generous against the 300ms body collapse it exists for, because the cost of
+ * the two errors is not symmetric: aiming a frame late is invisible, while
+ * aiming early lands the visitor inside the card with its header off-screen —
+ * which is the whole bug. Bounded at all only because a page whose height never
+ * settles (a slow image above the fold) must not leave the scroll unaimed.
+ */
+export const SCROLL_SETTLE_TIMEOUT_MS = 600;
+
+/**
+ * Frames to watch before "nothing moved" is allowed to mean "nothing is going
+ * to move".
+ *
+ * Counted in FRAMES, not milliseconds, because what is being waited for is
+ * frame-driven: a class toggle needs a style flush and a frame before the
+ * transition it starts exists to be observed. Measured on the real page, the
+ * card's node appears, its offset reads identical on the next two frames, and
+ * only on the third does the collapse begin — so two samples of "stable" is
+ * exactly the wrong number to trust. Four frames is ~64ms at 60Hz, which is
+ * three times the gap and imperceptible against a scroll that takes 300ms.
+ */
+export const SCROLL_SETTLE_MIN_FRAMES = 4;
+
+/** What the settle loop should do with the measurement it just took. */
+export type ScrollSettleAction = 'wait' | 'aim';
+
+export interface ScrollSettleInput {
+  /** Document offset measured on the previous frame; null on the first. */
+  previousOffset: number | null;
+  /** Document offset measured now. */
+  currentOffset: number;
+  /** Whether a layout-affecting transition is running inside the stack. */
+  animating: boolean;
+  /** Frames measured so far, including this one. */
+  framesSeen: number;
+  elapsedMs: number;
+  minFrames?: number;
+  timeoutMs?: number;
+}
+
+/**
+ * Whether the layout that determines the scroll target has stopped moving.
+ *
+ * This is the mobile half of the crop-vs-reflow asymmetry, arriving in the
+ * scroll owner (issue #110 follow-up). On DESKTOP a collapse is a crop: no
+ * height changes, so the target measured the instant the store moves is already
+ * final. On MOBILE it is a reflow: the outgoing card's body animates `1fr` to
+ * `0fr` over 300ms, and everything below it — including the card being
+ * navigated to — travels up by the whole of that body. Aimed at the first
+ * measurement, a push out of a long lens aimed at a 12089px document and landed
+ * in a 2314px one, with the header ~800px above the viewport.
+ *
+ * Three tests, and each covers a hole in the others:
+ *
+ * - **`animating`** carries the whole collapse. It is the honest question —
+ *   "is the layout still moving?" — and it is breakpoint-free without asking
+ *   about breakpoints: desktop never changes `grid-template-rows`, so no
+ *   transition is created there and nothing is waited for.
+ * - **`minFrames`** covers the gap BEFORE that transition exists. This is the
+ *   trap: the offset reads identical on the two frames after the card mounts,
+ *   so a stability test alone reports "settled" at the one moment everything is
+ *   about to move.
+ * - **offset stability** catches what neither sees — a late image, a fragment
+ *   landing above the active card — none of which is a transition at all.
+ *
+ * Document offset, not `getBoundingClientRect().top`: the browser clamps
+ * `scrollY` as the page shrinks and a smooth scroll is animating it, so a
+ * viewport-relative reading changes for reasons that are not the layout
+ * settling and never comes to rest.
+ */
+export function scrollSettleAction({
+  previousOffset,
+  currentOffset,
+  animating,
+  framesSeen,
+  elapsedMs,
+  minFrames = SCROLL_SETTLE_MIN_FRAMES,
+  timeoutMs = SCROLL_SETTLE_TIMEOUT_MS,
+}: ScrollSettleInput): ScrollSettleAction {
+  if (elapsedMs >= timeoutMs) return 'aim';
+  if (animating) return 'wait';
+  if (framesSeen < minFrames) return 'wait';
+  if (previousOffset === null) return 'wait';
+  return previousOffset === currentOffset ? 'aim' : 'wait';
+}

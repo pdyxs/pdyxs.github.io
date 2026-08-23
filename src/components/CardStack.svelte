@@ -5,7 +5,7 @@
   import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry, planPush } from '../lib/stack-layout';
   import type { LocationEntry, StackState } from '../lib/stack-layout';
   import { geometryFor, scrollTargetFor, STACK_GEOMETRY } from '../lib/stack-geometry';
-  import { scrollBehaviourFor, transitionWillFire } from '../lib/stack-motion';
+  import { scrollBehaviourFor, scrollSettleAction, transitionWillFire, SCROLL_SETTLE_TIMEOUT_MS } from '../lib/stack-motion';
   import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from '../lib/lens-key';
   import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
   import { filterStateFromParams } from '../dimensions';
@@ -319,12 +319,83 @@
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
-  /** Puts the active card's header at the top of the viewport, less the peek. */
+  /**
+   * Puts the active card's header at the top of the viewport, less the peek —
+   * once the layout that decides where that is has stopped moving.
+   *
+   * The wait is the mobile half of the crop-vs-reflow asymmetry. Desktop
+   * collapse is a crop, so the target is final the instant the store moves;
+   * mobile collapse is a reflow, and the outgoing card's body animates to
+   * nothing over 300ms, carrying the card being navigated to up the page with
+   * it. Aimed at the start, a push out of a long lens landed 254px past its own
+   * header. `scrollSettleAction` is the decision; this is the rAF loop around
+   * it, and it costs desktop one frame because nothing is moving there to wait
+   * for.
+   *
+   * `settleToken` cancels a loop still running when the next navigation starts:
+   * two loops aiming at different cards would fight, and the older one would
+   * win last.
+   */
+  let settleToken = 0;
+
+  /**
+   * Whether a transition that can move the active card is running in the stack.
+   *
+   * `grid-template-rows` only: that is the body collapse, and it is the one
+   * transition that changes the DOCUMENT's height rather than a card's painted
+   * position. `left`/`top` run on every desktop navigation and move nothing the
+   * scroll target depends on, so waiting for them would be pure delay.
+   *
+   * Guarded because `getAnimations` does not exist in happy-dom, where the
+   * island tests run — there it reports "nothing animating", which is the
+   * correct answer for a document with no CSS.
+   */
+  function stackIsAnimating(): boolean {
+    const stackEl = document.getElementById('card-stack');
+    if (!stackEl || typeof stackEl.getAnimations !== 'function') return false;
+    return stackEl.getAnimations({ subtree: true }).some(a =>
+      (a as CSSTransition).transitionProperty === 'grid-template-rows'
+      && a.playState === 'running');
+  }
+
   function scrollActiveIntoView(behavior: ScrollBehavior) {
-    const el = elFor(get(stackStore).activeSlot);
-    if (!el) return;
-    const top = scrollTargetFor(el.getBoundingClientRect().top, window.scrollY, scrollPeek());
-    window.scrollTo({ top, behavior });
+    const token = ++settleToken;
+    const started = performance.now();
+    let previousOffset: number | null = null;
+    let framesSeen = 0;
+
+    const step = () => {
+      if (token !== settleToken) return;
+      const elapsedMs = performance.now() - started;
+      const el = elFor(get(stackStore).activeSlot);
+
+      // The node may not be rendered yet — the store moves before Svelte
+      // commits the `{#each}`. Keep waiting rather than giving up: bailing here
+      // is silent, and what the visitor gets is wherever the browser's own
+      // clamp left them as the page reflowed under the collapse.
+      if (!el) {
+        if (elapsedMs < SCROLL_SETTLE_TIMEOUT_MS) requestAnimationFrame(step);
+        return;
+      }
+
+      framesSeen += 1;
+      const currentOffset = el.getBoundingClientRect().top + window.scrollY;
+      const action = scrollSettleAction({
+        previousOffset,
+        currentOffset,
+        animating: stackIsAnimating(),
+        framesSeen,
+        elapsedMs,
+      });
+      if (action === 'wait') {
+        previousOffset = currentOffset;
+        requestAnimationFrame(step);
+        return;
+      }
+      window.scrollTo({ top: scrollTargetFor(el.getBoundingClientRect().top, window.scrollY, scrollPeek()), behavior });
+    };
+
+    requestAnimationFrame(step);
   }
 
   // The only caller. Reactive rather than called from the navigation handlers,

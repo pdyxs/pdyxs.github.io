@@ -382,6 +382,48 @@ one fetch at a time and each one needs a correcting scroll — smoothing those i
 the page fighting itself, and on first paint it races the browser and loses
 visibly.
 
+**The scroll aims only once the layout has stopped moving** (`scrollSettleAction`,
+`src/lib/stack-motion.ts`), and this is the crop-vs-reflow asymmetry reaching a
+third place — after `.body-wrapper.open` and the geometry applier. On desktop a
+collapse is a crop, so the target measured the instant the store moves is
+already final. On MOBILE it is a reflow: the outgoing card's body animates to
+nothing over 300ms and carries the card being navigated to up the page with it.
+Measured once at the start, a push out of a long lens aimed at a 12089px
+document and landed in a 2314px one, ~800px past its own header.
+
+So the applier polls in a `requestAnimationFrame` loop and asks three questions,
+each covering a hole in the others:
+
+- **Is a `grid-template-rows` transition running in the stack?** The honest
+  question, and breakpoint-free without asking about breakpoints — desktop never
+  changes that property, so no transition exists there and nothing is waited
+  for. Only that property: `left`/`top` run on every desktop navigation and move
+  nothing the target depends on.
+- **Have at least `SCROLL_SETTLE_MIN_FRAMES` (4) frames been seen?** THE TRAP.
+  A class toggle needs a style flush and a frame before the transition it starts
+  exists to be observed, so the offset reads *identical on the two frames after
+  the card mounts* — a stability test alone reports "settled" at the one moment
+  everything is about to move. This was measured, and it is why the first
+  attempt at this fix failed.
+- **Has the offset stopped changing?** Catches what neither of the others sees:
+  a late image, a fragment landing above the active card.
+
+Bounded by `SCROLL_SETTLE_TIMEOUT_MS` (600), because a page whose height never
+settles must not leave the scroll unaimed. Two further details:
+
+- **Document offset, never `getBoundingClientRect().top`.** The browser clamps
+  `scrollY` as the page shrinks and a smooth scroll is animating it, so a
+  viewport-relative reading changes for reasons that are not the layout settling
+  and never comes to rest.
+- **A missing node waits rather than returning.** The store moves before Svelte
+  commits the `{#each}`, so the first frames find nothing. Bailing there is
+  silent, and what the visitor gets is wherever the browser's own clamp left
+  them.
+
+`settleToken` cancels a loop still running when the next navigation starts —
+two loops aiming at different cards would both fire, and the older would land
+last.
+
 ### Reduced motion reads the computed style, not the preference
 
 `--stack-motion-ms` / `--stack-reveal-ms` / `--stack-stuck-ms` are zeroed in a

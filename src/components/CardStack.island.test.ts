@@ -531,17 +531,35 @@ describe('one scroll owner (#110)', () => {
   }
 
   /** Puts a card's top edge at a known viewport offset, so the target the
-   *  applier computes is checkable rather than the happy-dom default of 0. */
-  function placeCard(uid: string, top: number) {
+   *  applier computes is checkable rather than the happy-dom default of 0.
+   *  Pass a function to make the offset MOVE between frames, which is what a
+   *  mobile collapse does to everything below it. */
+  function placeCard(uid: string, top: number | (() => number)) {
     const el = document.querySelector<HTMLElement>(`[data-uid="${uid}"]`)!;
-    el.getBoundingClientRect = () => ({ top, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+    const at = typeof top === 'function' ? top : () => top;
+    el.getBoundingClientRect = () => {
+      const y = at();
+      return ({ top: y, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y, toJSON: () => ({}) }) as DOMRect;
+    };
     return el;
+  }
+
+  /** The applier waits for the layout to stop moving before it aims, so a test
+   *  that only awaits microtasks never sees the scroll. Drains the rAF loop. */
+  async function settleFrames(n = 8) {
+    for (let i = 0; i < n; i++) {
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    }
+    await tick();
   }
 
   it('scrolls to the newly active card, not into view of it', async () => {
     const calls = captureScrolls();
     mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
     await settle();
+    // The mount aims too, and its settle loop outlives `settle()` — drain it
+    // before clearing, or the cold-load scroll is counted as the push's.
+    await settleFrames();
     calls.length = 0;
 
     const link = document.createElement('a');
@@ -550,6 +568,7 @@ describe('one scroll owner (#110)', () => {
     placeCard(CARD_A, 0);
     link.click();
     await settle();
+    await settleFrames();
 
     expect(calls.length).toBeGreaterThan(0);
     // No peek resolves in happy-dom (no stylesheet), so the target is the
@@ -567,12 +586,14 @@ describe('one scroll owner (#110)', () => {
     const calls = captureScrolls();
     mountStack({ activeUid: 'lens/interesting', activeHtml: fragment('lens/interesting', { hash: null }) });
     await settle();
+    await settleFrames();
     calls.length = 0;
 
     document.dispatchEvent(new CustomEvent('cardparam', {
       detail: { uid: 'lens/interesting', params: [['filter.what', 'what:puzzles']] },
     }));
     await settle();
+    await settleFrames();
 
     expect(get(stackStore).entries[0].key).toContain('filter.what');
     expect(calls).toHaveLength(0);
@@ -585,12 +606,78 @@ describe('one scroll owner (#110)', () => {
     const calls = captureScrolls();
     mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
     await settle();
+    await settleFrames();
     calls.length = 0;
 
     stackStore.update(s => ({ ...s, entries: [{ key: CARD_B, uid: CARD_B, slot: CARD_B }, ...s.entries] }));
     await settle();
+    await settleFrames();
 
     expect(calls.length).toBeGreaterThan(0);
+  });
+
+  it('waits for a moving layout before aiming, and aims at where the card ENDS', async () => {
+    // The mobile bug. A collapse there is a reflow, not a crop: the outgoing
+    // card's body animates to nothing and carries the card being navigated to
+    // up the page with it. Aimed at the first measurement, a push out of a long
+    // lens aimed at a 12000px document and landed in a 1175px one, 254px past
+    // its own header.
+    const calls = captureScrolls();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    await settleFrames();
+    calls.length = 0;
+
+    // CARD_B travels from 9000 to 0 as the card above it collapses, then rests.
+    let top = 9000;
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector('.stack-card-body-inner')!.appendChild(link);
+    link.click();
+    await settle();
+    placeCard(CARD_B, () => top);
+
+    // While it is still moving, nothing is aimed at all.
+    for (const step of [6000, 3000, 900]) {
+      top = step;
+      await settleFrames(1);
+      expect(calls).toHaveLength(0);
+    }
+
+    top = 0;
+    await settleFrames();
+
+    // One scroll, and it used the RESTING offset — never one of the four
+    // positions the card held on the way there.
+    expect(calls).toHaveLength(1);
+    expect(calls[0].top).toBe(0);
+  });
+
+  it('abandons a settle still running when the next navigation starts', async () => {
+    // Two loops aiming at different cards would both fire, and the older one
+    // would land last — leaving the visitor in front of the card they just
+    // navigated away from.
+    const calls = captureScrolls();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector('.stack-card-body-inner')!.appendChild(link);
+    link.click();
+    await settle();
+    calls.length = 0;
+
+    // Re-activate CARD_A before the push's settle has come to rest.
+    placeCard(CARD_A, 400);
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .card-header`)!.click();
+    await settle();
+    await settleFrames();
+
+    expect(get(stackStore).activeSlot).toBe(CARD_A);
+    // Only the surviving loop aimed, and it aimed at the card now active.
+    expect(calls).toHaveLength(1);
+    expect(calls[0].top).toBe(400);
   });
 });
 
