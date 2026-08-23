@@ -20,6 +20,13 @@
     [-0.5, -0.25]
   ];
 
+  function exitImagePosition(imagePosition, exit): Position {
+    return [
+      imagePosition[0] + exitLocations[exit][0] * 2,
+      imagePosition[1] + exitLocations[exit][1] * 2
+    ]
+  }
+
   const EXITS: number[][] = [
     [1, 5, 6, 7],
     [1, 3, 5],
@@ -33,7 +40,7 @@
   // with --lino-tile and nothing here needs to know the viewport size.
   const placements = new SvelteMap<number, Position>();
 
-  const currentPlacement: {position: Position, exit: number} | undefined
+  let currentPlacement: {position: Position, exit: number} | undefined
     = $state({position: [0,0], exit: -1});
 
   // Wiggle offset as a FRACTION of the container (-0.5 … 0.5). The amplitude
@@ -59,15 +66,17 @@
     images.map((_, i) => i).filter((i) => !placements.has(i))
   );
 
+  function availableImagesForExit(exit) {
+    if (exit < 0) return [...unplacedIndexes];
+    return unplacedIndexes.filter(i => EXITS[i].includes((exit + 4) % 8));
+  }
+
   const placeableImages = $derived.by(() =>
   {
     if (!currentPlacement) {
       return [];
     }
-    let possibleIndexes = [...unplacedIndexes];
-    if (currentPlacement.exit >= 0) {
-      possibleIndexes = possibleIndexes.filter(i => EXITS[i].includes(currentPlacement.exit))
-    }
+    let possibleIndexes = availableImagesForExit(currentPlacement? currentPlacement.exit : -1);
 
     return possibleIndexes.map(i => ({
       ...images[i],
@@ -75,7 +84,23 @@
     }));
   });
 
-  const currentFocus: Position = $state([0,0]);
+  let currentFocus: Position = $state([0,0]);
+
+  function place(index: i) {
+    placements.set(index, currentPlacement.position);
+    currentFocus = currentPlacement.position;
+    currentPlacement = undefined;
+  }
+
+  function startPlacement(imagePosition: Position, exit: number) {
+    currentPlacement = {position: exitImagePosition(imagePosition, exit), exit};
+    currentFocus = exitImagePosition(imagePosition, exit);
+  }
+
+  function refocus(position: Position) {
+    currentPlacement = undefined;
+    currentFocus = position;
+  }
 
 </script>
 
@@ -93,24 +118,34 @@
             <div class="image-container"
                 style:--col={image.position[0]}
                 style:--row={image.position[1]}>
-                    {#each image.exits as exit}
-                        <div class="exit"
-                            style:--exit-x={exitLocations[exit][0]}
-                            style:--exit-y={exitLocations[exit][1]}
-                        ></div>
-                    {/each}
+                    {#if !currentPlacement}
+                      {#each image.exits as exit}
+                          {#if availableImagesForExit(exit).length > 0}
+                            <div class="exit"
+                                style:--exit-x={exitLocations[exit][0]}
+                                style:--exit-y={exitLocations[exit][1]}
+                                onclick={() => startPlacement(image.position, exit)}
+                            ></div>
+                          {/if}
+                      {/each}
+                    {/if}
                     <img
                         src={image.src}
                         width={image.width}
                         height={image.height}
                         alt=""
                         loading="lazy"
+                        onclick={() => refocus(image.position)}
                         />
             </div>
         {/each}
-        {#each placeableImages as image (image.filename)}
-            <img class="image-placeable" src={image.src} alt="" />
-        {/each}
+        {#if placeableImages.length > 0}
+            <div class="placeable-container">
+            {#each placeableImages as image (image.filename)}
+                <img class="image-placeable" src={image.src} alt="" onclick={() => place(image.index)} />
+            {/each}
+            </div>
+        {/if}
         </div>
     </div>
 </div>
@@ -133,15 +168,44 @@
       --lino-exit-ring: calc(var(--lino-exit-size) / 5); /* each stripe */
       --lino-shadow: calc(var(--lino-tile) / 100);      /* tile lift */
 
+      --placeable-tile: calc(var(--lino-tile) * 0.25);
+      --placeable-gap: 20px;
+
       overflow: hidden;
+  }
+
+  .placeable-container {
+      display: flex;
+      position: absolute;
+      gap: var(--placeable-gap);
+      width: calc(var(--placeable-tile) * 3 + var(--placeable-gap) * 2);
+      left: calc(var(--focusx) * var(--lino-tile) + var(--placeable-tile) * -1.5 + var(--placeable-gap));
+      top: calc(var(--focusy) * var(--lino-tile) + var(--placeable-tile) * -1 - var(--placeable-gap) / 2);
+      flex-wrap: wrap;
+  }
+
+  .image-placeable {
+      width: var(--placeable-tile);
+      height: var(--placeable-tile);
+      max-width: var(--placeable-tile);
+      max-height: var(--placeable-tile);
+
+      &:hover {
+          transform: scale(1.2);
+      }
   }
 
   .lino-wiggle {
       position: relative;
       transform: translate(
-          calc(var(--dx, 0) * var(--lino-wiggle) + var(--focusx, 0) * var(--lino-step)),
-          calc(var(--dy, 0) * var(--lino-wiggle) + var(--focusy, 0) * var(--lino-step))
+          calc(var(--focusx, 0) * var(--lino-step) * -1),
+          calc(var(--focusy, 0) * var(--lino-step) * -1)
       );
+      top: calc(var(--dy, 0) * var(--lino-wiggle));
+      left: calc(var(--dx, 0) * var(--lino-wiggle));
+
+      transition-property: transform;
+      transition-duration: 0.5s;
   }
 
   .lino-canvas {
@@ -160,6 +224,8 @@
   .image-container img {
       width: var(--lino-tile);
       height: var(--lino-tile);
+      max-width: var(--lino-tile);
+      max-height: var(--lino-tile);
   }
 
   /* --exit-x/--exit-y are fractions of the tile (-0.5 … 0.5) from its centre,
@@ -171,9 +237,9 @@
       left: calc(var(--exit-x) * var(--lino-tile) + var(--lino-tile) / 2 - var(--lino-exit-size) / 2);
       top: calc(var(--exit-y) * var(--lino-tile) + var(--lino-tile) / 2 - var(--lino-exit-size) / 2);
       background: var(--color-text);
-      border-radius: 50%;
       z-index: -1;
 
+      border-radius: 50%;
       /* Striped: ink dot, paper ring, ink ring. Two spread-only box-shadows
          rather than border + outline — a border would eat into the dot's own
          box, and both stripes need to follow the border-radius and the hover
