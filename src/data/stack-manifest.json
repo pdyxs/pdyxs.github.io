@@ -1595,5 +1595,18 @@
     "uid": "lens/interesting",
     "code": "5d",
     "title": "Most* Interesting"
+  },
+  {
+    "uid": "what/games/analog/teppanyaki",
+    "code": "5e",
+    "title": "Teppanyaki"
+  },
+  {
+    "uid": "what/writing/2014-05-08-inspiration-and-emulation/2016-05-02-starting-over",
+    "code": "5f"
+  },
+  {
+    "uid": "what/writing/2011-07-19-playtesting-102/2011-08-02-playtesting-103",
+    "code": "5g"
   }
 ]
