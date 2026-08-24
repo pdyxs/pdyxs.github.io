@@ -1,9 +1,10 @@
 ---
-inspected: false
+inspected: true
 title: Chaos Theory Games
 image: chaostheory.png
-when: November 2019 - April 2023
-roles: 'Lead Producer, Creative Technologist'
+when: November 2020 - April 2023
+roles: Lead Producer, Creative Technologist
+date: 2020-11-01
 ---
 
 Chaos Theory Games is an independent games studio, working primarily in the games for change space.

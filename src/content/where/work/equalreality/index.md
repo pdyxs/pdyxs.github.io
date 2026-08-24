@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Equal Reality
 image: mixedreality.png
 when: October 2018 - August 2020
@@ -8,6 +8,9 @@ meta:
   - label: Technology
     values:
       - Unity, C#, git
+date: 2018-10-01
+excludeTags:
+  - generated/location
 ---
 
 Equal Reality is a social enterprise which creates diversity and inclusion training in virtual reality, allowing its users to experience bias firsthand.

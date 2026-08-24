@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: 3P Learning
 image: intoscience.png
 when: February 2015-May 2018
