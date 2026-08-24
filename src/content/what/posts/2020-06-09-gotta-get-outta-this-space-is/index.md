@@ -1,18 +1,13 @@
 ---
-inspected: false
-title: "Gotta Get Outta This Space is launching this Sunday!"
-date: '2020-06-09 15:23:00 +1000'
+inspected: true
+title: Gotta Get Outta This Space is launching this Sunday!
+date: 2020-06-09 15:23:00 +1000
 tags:
-  - "boardgames"
-  - "comingsoon"
-  - "gamedesign"
-  - "gamedev"
-  - "printandplay"
-  - "robots"
   - what/games/analog/gotta-get-outta-this-space
-image: "17951691322330379.jpg"
+  - why/learn/gamedev
+image: 17951691322330379.jpg
 images:
-  - "18101664067155682.jpg"
+  - 18101664067155682.jpg
 source: instagram
 ---
 

@@ -1,16 +1,11 @@
 ---
-inspected: false
-title: "One of the big changes I’ve had to make to ‘Gotta Get Outta This…"
-date: '2020-05-28 00:09:00 +1000'
+inspected: true
+title: One of the big changes I’ve had to make to ‘Gotta Get Outta This…
+date: 2020-05-28 00:09:00 +1000
 tags:
-  - "boardgames"
-  - "gamedesign"
-  - "gamedev"
-  - "gottagetouttathisspace"
-  - "printandplay"
-  - "robotuprising"
   - what/games/analog/gotta-get-outta-this-space
-image: "17848582868116795.jpg"
+  - why/learn/gamedev
+image: 17848582868116795.jpg
 source: instagram
 ---
 

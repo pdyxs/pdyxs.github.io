@@ -1,17 +1,13 @@
 ---
-inspected: false
-title: "Just got the proofs in for Gotta Get Outta This Space - they've all…"
-date: '2020-05-26 22:56:00 +1000'
+inspected: true
+title: Just got the proofs in for Gotta Get Outta This Space - they've all…
+date: 2020-05-26 22:56:00 +1000
 tags:
-  - "cardgame"
-  - "gamedesign"
-  - "gamedev"
-  - "gottagetouttathisspace"
   - what/games/analog/gotta-get-outta-this-space
-image: "18035776453258495.jpg"
+image: 18035776453258495.jpg
 images:
-  - "17950701538338791.jpg"
-  - "17924286526401189.jpg"
+  - 17950701538338791.jpg
+  - 17924286526401189.jpg
 source: instagram
 ---
 
