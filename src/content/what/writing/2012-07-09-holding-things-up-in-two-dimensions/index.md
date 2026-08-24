@@ -1,10 +1,11 @@
 ---
-inspected: false
-title: 'Holding things up in two dimensions: The Pillars of Flatland'
-date: '2012-07-09 17:00:00 +1000'
+inspected: true
+title: "Holding things up in two dimensions: The Pillars of Flatland"
+date: 2012-07-09 17:00:00 +1000
 tags:
   - what/games/digital/flatland-fallen-angle
   - where/work/seethrough
+  - why/learn/gamedev
 image: Screen-Shot-2012-07-09-at-10.34.56-PM.png
 source: gamasutra
 ---

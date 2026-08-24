@@ -1,9 +1,10 @@
 ---
-inspected: false
+inspected: true
 title: The A-Z of Game Development
 date: 2012-01-06 17:00:00 +1000
 tags:
   - game-engine-podcast
+  - why/learn/gamedev
 image: classroom.jpg
 source: kotaku
 ---

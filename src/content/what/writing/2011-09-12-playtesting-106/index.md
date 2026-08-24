@@ -5,7 +5,7 @@ date: '2011-09-12 17:00:00 +1000'
 source: gamasutra
 tags: []
 ---
-*This is part 6 in a series on how to playtest games (click through to parts [1](/why/2011/07/14/playtesting-101.html) [2](/why/2011/07/19/playtesting-102.html) [3](/why/2011/08/02/playtesting-103.html)
+*This is part 6 in a series on how to playtest games (click through to parts [1](card:why/2011/07/14/playtesting-101) [2](/why/2011/07/19/playtesting-102.html) [3](/why/2011/08/02/playtesting-103.html)
 [4](/why/2011/08/04/playtesting-104.html) [5](/why/2011/08/06/playtesting-105.html)).*
 
 So it's been a while since I've posted one of these, as we've recently taken on quite a few more people at Throw the Looking Glass and I've been doing a lot of work working out how to structure our studio going forward (more on this soon!). So sorry about the delay - I probably won't be posting these quite as fast as I used to going forward, but I'll aim for one a week.

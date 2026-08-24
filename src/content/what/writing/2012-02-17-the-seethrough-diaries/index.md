@@ -1,10 +1,11 @@
 ---
-inspected: false
+inspected: true
 title: "The SeeThrough Diaries: The Hour Of Pain"
 date: 2012-02-17 17:00:00 +1000
 tags:
   - what/games/digital/flatland-fallen-angle
   - where/work/seethrough
+  - why/learn/gamedev
 source: kotaku
 ---
 ***Note: The images and links for this post are long gone (hosted on kotaku au, which is no more).***
