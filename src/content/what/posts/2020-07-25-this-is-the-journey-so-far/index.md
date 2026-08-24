@@ -1,20 +1,16 @@
 ---
-inspected: false
-title: "This is the journey so far for the rules, art and layout for one of…"
-date: '2020-07-25 22:34:00 +1000'
+inspected: true
+title: This is the journey so far for the rules, art and layout for one of…
+date: 2020-07-25 22:34:00 +1000
 tags:
-  - "boardgames"
-  - "cardgame"
-  - "gamedev"
-  - "theodyssey"
-  - "theodysseysgame"
   - what/games/analog/fatecardgame
-image: "17891048215593409.jpg"
+  - why/learn/gamedev
+image: 17891048215593409.jpg
 images:
-  - "17849166371224666.jpg"
-  - "18079211536204927.jpg"
-  - "17876877946758561.jpg"
-  - "17851311704190071.jpg"
+  - 17849166371224666.jpg
+  - 18079211536204927.jpg
+  - 17876877946758561.jpg
+  - 17851311704190071.jpg
 source: instagram
 ---
 

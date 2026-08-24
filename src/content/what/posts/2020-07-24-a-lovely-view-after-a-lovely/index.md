@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "A lovely view after a lovely walk"
-date: '2020-07-24 20:59:00 +1000'
+inspected: true
+title: A lovely view after a lovely walk
+date: 2020-07-24 20:59:00 +1000
 tags:
-  - why/viewable
-image: "17875231090757858.jpg"
+image: 17875231090757858.jpg
 source: instagram
 ---
 
