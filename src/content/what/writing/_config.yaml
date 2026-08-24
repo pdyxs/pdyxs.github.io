@@ -5,3 +5,4 @@ description: >
 # Cards here are dated things: the date is a publication date, so it shows in
 # the card header worded as such. See resolveDateline in src/lib/card-date.ts.
 dateLabel: Published
+width: 900px

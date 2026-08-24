@@ -1,11 +1,12 @@
 ---
-inspected: false
-title: 'Playtesting 101: Finding the Purpose'
+inspected: true
+title: "Playtesting 101: Finding the Purpose"
 series: playtesting
 order: 1
-date: '2011-07-14 17:00:00 +1000'
+date: 2011-07-14 17:00:00 +1000
 source: gamasutra
-tags: []
+tags:
+  - why/learn/gamedev
 ---
 *This is part 1 in a series on how to playtest games (click through to parts [2](card:what/writing/2011-07-19-playtesting-102) [3](card:what/writing/2011-08-02-playtesting-103)
 [4](card:what/writing/2011-08-04-playtesting-104) [5](card:what/writing/2011-08-06-playtesting-105)  [6](card:what/writing/2011-09-12-playtesting-106)).*

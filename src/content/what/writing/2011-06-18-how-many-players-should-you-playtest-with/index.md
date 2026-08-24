@@ -1,10 +1,11 @@
 ---
-inspected: false
+inspected: true
 title: How many players should you playtest with?
-date: '2011-06-18 17:00:00 +1000'
+date: 2011-06-18 17:00:00 +1000
 source: gamasutra
 tags:
   - what/games/digital/particulars
+  - why/learn/gamedev
 ---
 So, you've started developing your game, and you've got your basic gameplay done. It's time to start playtesting*. The question occurs to you: how many people should be playtesting my game?
 

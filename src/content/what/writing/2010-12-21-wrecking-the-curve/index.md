@@ -1,8 +1,9 @@
 ---
-inspected: false
-title: 'Wrecking The Curve: An Analysis Of The Teach/Tell Connundrum'
-date: '2010-12-21 17:00:00 +1000'
-tags: []
+inspected: true
+title: "Wrecking The Curve: An Analysis Of The Teach/Tell Connundrum"
+date: 2010-12-21 17:00:00 +1000
+tags:
+  - why/learn/gamedev
 ---
 In my last post on [Portal](card:what/writing/2010-10-17-the-problem-with-portals), I explored the idea that Portal, in matching its gameplay story and narrative story so well, has given us a great idea of what is required for a truly amazing game without giving us any real ideas on how to do it without either feeling derivative or constraining ourselves to a limited narrative pool.
 

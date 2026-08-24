@@ -1,8 +1,9 @@
 ---
-inspected: false
+inspected: true
 title: The Problem With Portals
-date: '2010-10-17 17:00:00 +1000'
-tags: []
+date: 2010-10-17 17:00:00 +1000
+tags:
+  - why/learn/gamedev
 ---
 So its been quite a while since I've posted on this blog, mainly because I've dived into development of a flash game (in fact, a polished version of my Ludum Dare entry). Hopefully I'll be able to get back into posting regularly over the next few weeks (after which I'm going travelling, so things might be a bit more transient).
 

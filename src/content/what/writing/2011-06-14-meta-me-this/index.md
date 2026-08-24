@@ -1,9 +1,10 @@
 ---
-inspected: false
-title: 'Meta-me-this: Are the best games about games?'
-date: '2011-06-14 17:00:00 +1000'
+inspected: true
+title: "Meta-me-this: Are the best games about games?"
+date: 2011-06-14 17:00:00 +1000
 source: gamasutra
-tags: []
+tags:
+  - why/learn/gamedev
 ---
 Is it just me, or do a disproportionately large number of games with deep messages entwine said messages with a bucketful of meta? By this, I mean games will more likely make comment on the medium of gaming, how we play or how culture perceives the medium than on (any one of the many) other aspects in our world.
 
