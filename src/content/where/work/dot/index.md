@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 tags:
 title: Dot
 image: dot.png
@@ -11,6 +11,8 @@ meta:
       - React, phonegap, firebase
 status: unlisted
 date: 2018-07-01
+excludeTags:
+  - generated/location
 ---
 
 Dot was a startup that aimed to use cryptocurrency and non-fungible tokens to make ownership of digital assets more real. They contracted me to prototype a location-based game for the launch of their platform.
