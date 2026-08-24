@@ -5,8 +5,8 @@ date: '2011-07-14 17:00:00 +1000'
 source: gamasutra
 tags: []
 ---
-*This is part 1 in a series on how to playtest games (click through to parts [2](/why/2011/07/19/playtesting-102.html) [3](/why/2011/08/02/playtesting-103.html)
-[4](/why/2011/08/04/playtesting-104.html) [5](/why/2011/08/06/playtesting-105.html)  [6](/why/2011/09/12/playtesting-106.html)).*
+*This is part 1 in a series on how to playtest games (click through to parts [2](card:what/writing/2011-07-19-playtesting-102) [3](card:what/writing/2011-08-02-playtesting-103)
+[4](card:what/writing/2011-08-04-playtesting-104) [5](card:what/writing/2011-08-06-playtesting-105)  [6](card:what/writing/2011-09-12-playtesting-106)).*
 
 It may sound ridiculously simple, but the first step of playtesting your game is to figure out why you're testing your game. It's surprisingly important to work out the nuances of the 'why', which will affect who, when and how you structure the rest of the process.
 

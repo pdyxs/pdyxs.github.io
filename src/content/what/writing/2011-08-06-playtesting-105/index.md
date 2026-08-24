@@ -5,8 +5,8 @@ date: '2011-08-06 17:00:00 +1000'
 source: gamasutra
 tags: []
 ---
-*This is part 5 in a series on how to playtest games (click through to parts [1](/why/2011/07/14/playtesting-101.html) [2](/why/2011/07/19/playtesting-102.html) [3](/why/2011/08/02/playtesting-103.html)
-[4](/why/2011/08/04/playtesting-104.html)  [6](/why/2011/09/12/playtesting-106.html)).*
+*This is part 5 in a series on how to playtest games (click through to parts [1](card:what/writing/2011-07-14-playtesting-101) [2](card:what/writing/2011-07-19-playtesting-102) [3](card:what/writing/2011-08-02-playtesting-103)
+[4](card:what/writing/2011-08-04-playtesting-104)  [6](card:what/writing/2011-09-12-playtesting-106)).*
 
 This time, we'll be looking at how to measure those things that can't easily be put into numbers: from player reactions and sticking points to interface feedback.
 

@@ -8,7 +8,7 @@ tags: []
 ---
 ![](./18j38dsj7ymsbjpg.jpg)
 
-It's now been a few weeks since I wrote my [initial thoughts about the inventory](/why/2010/06/27/mechanical-breakdown-the-inventory.html), and I've made a few new conclusions from the comments and other articles I've researched (thanks to the Critical Distance Game Writing search engine).
+It's now been a few weeks since I wrote my [initial thoughts about the inventory](card:what/writing/2010-06-27-mechanical-breakdown-the-inventory), and I've made a few new conclusions from the comments and other articles I've researched (thanks to the Critical Distance Game Writing search engine).
 
 What follows may rehash some of what I wrote last time, while also exploring the Inventory's properties in greater detail than before. I fully expect this, as with all the Mechanical Breakdowns, to evolve over time, and I'm looking to make some changes to the website to reflect this (as well as come up with some way to write this on some sort of regular basis). I'd be interested to know your thoughts on the changing format.
 

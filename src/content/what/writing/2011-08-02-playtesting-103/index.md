@@ -5,8 +5,8 @@ date: '2011-08-02 17:00:00 +1000'
 source: gamasutra
 tags: []
 ---
-*This is part 3 in a series on how to playtest games (click through to parts [1](/why/2011/07/14/playtesting-101.html) [2](/why/2011/07/19/playtesting-102.html)
-[4](/why/2011/08/04/playtesting-104.html) [5](/why/2011/08/06/playtesting-105.html)  [6](/why/2011/09/12/playtesting-106.html)).*
+*This is part 3 in a series on how to playtest games (click through to parts [1](card:what/writing/2011-07-14-playtesting-101) [2](card:what/writing/2011-07-19-playtesting-102)
+[4](card:what/writing/2011-08-04-playtesting-104) [5](card:what/writing/2011-08-06-playtesting-105)  [6](card:what/writing/2011-09-12-playtesting-106)).*
 
 The next step in our playtesting journey is deciding what you should measure. Measurement comes in many forms, and so today we'll mostly be looking at what you'll be measuring. We'll look at *how* to collect that data next time.
 

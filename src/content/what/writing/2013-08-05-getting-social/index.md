@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: "Getting Social, Part 1: Fear of the Internet"
 date: 2013-08-05 17:00:00 +1000
 source: seethroughstudios
@@ -9,7 +9,7 @@ I'm just going to put it out there: I'm scared of the internet.
 
 When I say that, I'm not saying that I'm scared to put my data or our designs online or anything like that -- I'm generally more lax when it comes to internet privacy than most. What I am scared of is the angry few -- the people who can (and often will) take the greatest offence to the slightest mistake in wording, and yell abuse as loudly as they can. The people who will effectively say why you're wrong in seven words, but can only be refuted in two hundred, because life is more subtle and complex than twitter's character limit.
 
-And because of that, I don't really *do* social media. I shy away from twitter. If I post something in a forum or on Facebook, I usually don't reply in a timely manner. I often end up procrastinating over my replies, waiting sometimes until a few days have passed (there's currently [a really well constructed comment on my innovation in games' post](/why/2013/07/20/innovations-in-games.html) sitting on the site that I've so far failed to answer).
+And because of that, I don't really *do* social media. I shy away from twitter. If I post something in a forum or on Facebook, I usually don't reply in a timely manner. I often end up procrastinating over my replies, waiting sometimes until a few days have passed (there's currently [a really well constructed comment on my innovation in games' post](card:what/writing/2013-07-20-innovations-in-games) sitting on the site that I've so far failed to answer).
 
 At the end of the day, this fear isn't constructive. It means that I often censor my opinions and fail to express myself. It's bad for the publicity of our studio, which often hinges on us being able to show our personalities publicly, and on our online interactions. And it's exhausting and time consuming to be constantly refreshing a post in the fear that someone's going to make a hateful comment.
 

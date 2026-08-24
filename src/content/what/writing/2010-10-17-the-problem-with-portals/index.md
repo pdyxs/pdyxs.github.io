@@ -8,7 +8,7 @@ So its been quite a while since I've posted on this blog, mainly because I've di
 
 As I do more development, I'm starting to make some observations about the process of game development, in relation to the story-based ideas that I've blogged upon in the past. So what you'll probably start to see are some posts that have a similar theme as before, but which are somewhat bent towards the development side.
 
-Today, I'm wanting to talk about Portal and a potential pitfall in using this game as a guide to develop others. The game Portal remains brilliant: I stand by what I said in my [analysis of the game's success](/why/2010/08/26/postmortem-the-enemy-of-my-enemy-is-my-heat-seeking-missile.html) (if you haven't read this, it's probably a good idea to do so before continuing, as I'll refer to some of the ideas mentioned within).
+Today, I'm wanting to talk about Portal and a potential pitfall in using this game as a guide to develop others. The game Portal remains brilliant: I stand by what I said in my [analysis of the game's success](card:what/writing/2010-08-26-postmortem-the-enemy-of-my-enemy-is-my-heat-seeking-missile) (if you haven't read this, it's probably a good idea to do so before continuing, as I'll refer to some of the ideas mentioned within).
 
 As I mentioned in that article, much of the sheer awesome that Portal resonates occurs because of the strong link between its gameplay story, and its story-story (or as Kim Swift and Eric Wolpaw put it, in its low 'delta' between these two stories). This 'why' is not the problem. The 'how' is.
 

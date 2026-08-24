@@ -5,8 +5,8 @@ date: '2011-07-19 17:00:00 +1000'
 source: gamasutra
 tags: []
 ---
-*This is part 2 in a series on how to playtest games (click through to parts [1](/why/2011/07/14/playtesting-101.html) [3](/why/2011/08/02/playtesting-103.html)
-[4](/why/2011/08/04/playtesting-104.html) [5](/why/2011/08/06/playtesting-105.html)  [6](/why/2011/09/12/playtesting-106.html)).*
+*This is part 2 in a series on how to playtest games (click through to parts [1](card:what/writing/2011-07-14-playtesting-101) [3](card:what/writing/2011-08-02-playtesting-103)
+[4](card:what/writing/2011-08-04-playtesting-104) [5](card:what/writing/2011-08-06-playtesting-105)  [6](card:what/writing/2011-09-12-playtesting-106)).*
 
 Now you know why you're playtesting, it's time to use that knowledge to figure out some of the details of the tests you'll be performing.
 
@@ -16,9 +16,9 @@ The first thing you should probably decide is whether you're testing online or o
 
 Online testing gives you larger exposure and allows you to test more people with no added time taken in testing itself. However, you need to do a lot more in-game setup to get data, and working through all the data can be a pain. Offline testing allows you to see specific player reactions to your game and can make pinpointing specific problems very easy. Yet it requires you to get participants into the same room as you (and probably at least one other person), and really limits how many players you can use, based on how much time you have.
 
-Ideally you will be using a combination of both of these, particularly later in development, where you want a lot of eyeballs looking at your game, but also want to maintain that high level of scrutiny that offline testing provides. For early testing, however, you can easily *just* do offline tests (see my post on [how many playtesters you need](/why/2011/06/18/how-many-players-should-you-playtest-with.html) to get a better idea of why this is).
+Ideally you will be using a combination of both of these, particularly later in development, where you want a lot of eyeballs looking at your game, but also want to maintain that high level of scrutiny that offline testing provides. For early testing, however, you can easily *just* do offline tests (see my post on [how many playtesters you need](card:what/writing/2011-06-18-how-many-players-should-you-playtest-with) to get a better idea of why this is).
 
-In fact, you should read [that post](/why/2011/06/18/how-many-players-should-you-playtest-with.html) now anyway, as the next step is to work out who should be playtesting your game.
+In fact, you should read [that post](card:what/writing/2011-06-18-how-many-players-should-you-playtest-with) now anyway, as the next step is to work out who should be playtesting your game.
 
 As well as sheer numbers, however, you need to decide on a demographic to test with. This specifically relates to the testing purpose you previously decided upon.
 

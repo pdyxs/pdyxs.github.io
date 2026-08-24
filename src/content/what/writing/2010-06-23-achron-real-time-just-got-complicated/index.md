@@ -8,7 +8,7 @@ I've been meaning to talk about Achron for a while, and kept putting it off bec
 
 Well I'm still not completely sure, but I've run out of levels to play with (and playing against the AI doesn't seem to give me a huge amount of insight into how the game will eventually play as it's still being worked on), so until i get a decent chance to play some multiplayer I can only go so far.
 
-And that may just be enough, as what I want to talk about isn't just the gameplay ramifications, but the narrative ones as well. Having just done a [mechanical breakdown on the RTS](/why/2010/06/20/mechanical-breakdown-the-rts.html), this should be an interesting case study.
+And that may just be enough, as what I want to talk about isn't just the gameplay ramifications, but the narrative ones as well. Having just done a [mechanical breakdown on the RTS](card:what/writing/2010-06-20-mechanical-breakdown-the-rts), this should be an interesting case study.
 
 So what does it mean to screw with time in a genre where time is the key? See how this changes the timeline after the jump...
 

@@ -7,7 +7,7 @@ tags: []
 ---
 In a Mechanical Breakdown, I look at a particular mechanic utilised in games and examine when it works and when it doesn't, from both the gameplay and the narrative perspective*. The goal is to use existing opinions from around the internet and my own experience to find new ways of looking at existing mechanics.
 
-\* *Some previous Mechanical Breakdowns can be found [here](/why/2010/08/13/mechanical-breakdown-the-inventory-part-two.html) and [here](/why/2010/06/20/mechanical-breakdown-the-rts.html).*
+\* *Some previous Mechanical Breakdowns can be found [here](card:what/writing/2010-08-13-mechanical-breakdown-the-inventory-part-two) and [here](card:what/writing/2010-06-20-mechanical-breakdown-the-rts).*
 
 This time, the boss fight.
 
