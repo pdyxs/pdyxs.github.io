@@ -1,20 +1,12 @@
 ---
 inspected: false
-title: "Stars are the exit points of Gotta Get Outta This Space - you can use…"
-date: '2020-06-10 14:20:00 +1000'
+title: Stars are the exit points of Gotta Get Outta This Space - you can use…
+date: 2020-06-10 14:20:00 +1000
 tags:
-  - "astronomy"
-  - "boardgames"
-  - "gamedesign"
-  - "gamedev"
-  - "printandplay"
-  - "space"
-  - "spacegame"
   - what/games/analog/gotta-get-outta-this-space
-  - why/viewable
-image: "18057884620240008.jpg"
+image: 18057884620240008.jpg
 images:
-  - "17849196650135719.jpg"
+  - 17849196650135719.jpg
 source: instagram
 ---
 

@@ -1,16 +1,11 @@
 ---
-inspected: false
-title: "Finally getting a bit of traction with the Particulars education…"
-date: '2020-07-23 22:49:00 +1000'
+inspected: true
+title: Finally getting a bit of traction with the Particulars education…
+date: 2020-07-23 22:49:00 +1000
 tags:
-  - "edtech"
-  - "education"
-  - "gamedev"
-  - "indiegames"
-  - "particlephysics"
+  - education
   - what/games/digital/particulars
-  - why/viewable
-image: "17849018243230515.mp4"
+image: 17849018243230515.mp4
 source: instagram
 ---
 
