@@ -51,7 +51,7 @@ const quote = z.object({
 // links back out at render time.
 const metaRow = z.object({
     label: z.string(),
-    values: z.array(z.string()).default([]),
+    values: z.array(z.string()).nullable().default([]).transform((v) => v ?? []),
 });
 
 // ─── Unified content collection ───────────────────────────────────────────────
@@ -76,10 +76,15 @@ const content = defineCollection({
         // transform is one of the two boundaries between the two forms (the
         // other is the `_config.yaml` cascade in resolveFolderCascade). See
         // normaliseAuthoredTag in src/lib/five-w.ts for why.
+        // Obsidian's Properties panel writes a bare `tags:` (YAML null) when
+        // every item is cleared from a List property, rather than `tags: []`
+        // or removing the key — `.nullable()` absorbs that; `.default([])`
+        // alone only covers a missing key, not an explicit null.
         tags: z
             .array(z.string())
+            .nullable()
             .default([])
-            .transform(normaliseAuthoredTags),
+            .transform((v) => normaliseAuthoredTags(v ?? [])),
         date: z.coerce.date().optional(),
         // How far up the "Most* Interesting" ranking this card is pushed
         // (issue #80). Negative pushes it down; absent is neutral.
@@ -151,7 +156,7 @@ const content = defineCollection({
         // is deliberately no "force it on" counterpart: authoring the tag IS
         // that, which is why `viewable: always` became `tags: [why/viewable]`
         // and why `location:`/`era:` could be retired outright.
-        excludeTags: z.array(z.string()).optional(),
+        excludeTags: z.array(z.string()).nullable().optional().transform((v) => v ?? undefined),
         // Manual "a human has read this card end to end" flag. Obsidian's
         // Properties view only renders a checkbox for a key that actually
         // exists in the file — scripts/backfill-inspected.mjs stamps it onto
@@ -198,10 +203,10 @@ const content = defineCollection({
         // Legacy shorthands for what are now `meta` rows — resolveMetaRows folds
         // them in at the front, so a card must not carry both.
         medium: z.string().optional(),
-        meta: z.array(metaRow).default([]),
-        actions: z.array(action).default([]),
-        quotes: z.array(quote).default([]),
-        images: z.array(z.string()).default([]),
+        meta: z.array(metaRow).nullable().default([]).transform((v) => v ?? []),
+        actions: z.array(action).nullable().default([]).transform((v) => v ?? []),
+        quotes: z.array(quote).nullable().default([]).transform((v) => v ?? []),
+        images: z.array(z.string()).nullable().default([]).transform((v) => v ?? []),
         portfolio: z.string().optional(),
         // ── stories ──
         series: z.string().optional(),
