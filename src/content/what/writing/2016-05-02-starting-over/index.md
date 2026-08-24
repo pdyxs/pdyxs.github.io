@@ -1,9 +1,9 @@
 ---
-inspected: false
+inspected: true
 title: Starting Over
-date: '2016-05-02 17:00:00 +1000'
+date: 2016-05-02 17:00:00 +1000
 description: Musings about starting again after a long break
-canonical_url: 'https://medium.com/@pdyxs/starting-over-6dcd12b2d1f3'
+canonical_url: https://medium.com/@pdyxs/starting-over-6dcd12b2d1f3
 source: medium
 tags:
   - where/work/seethrough

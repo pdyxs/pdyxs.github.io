@@ -1,14 +1,14 @@
 ---
-inspected: false
-title: 'Innovations in Games: My Thoughts'
-date: '2013-07-20 17:00:00 +1000'
+inspected: true
+title: "Innovations in Games: My Thoughts"
+date: 2013-07-20 17:00:00 +1000
 source: seethroughstudios
 tags:
   - where/work/seethrough
 ---
 Yesterday, I was in a panel at PAX Australia on the topic: "Games Can Be Anything -- Are We Seeing Enough Innovation or Not, and Why?". In preparation for the panel, the moderator (the amazing Epona Schweer) asked me to write up some of my thoughts. I ended up writing something of a mini-essay, which I've edited into readable form below.
 
-*As we're launching, showing and everything else-ing Particulars at PAX (have you been to [our Greenlight page](card:what/games/digital/particulars) yet? You totally should!), I won't have had a chance to get my thoughts down on the actual panel discussion yet. That'll be another blog post, sometime in the next week. For now, here's my thoughts on innovation in games.*
+*As we're launching, showing and everything else-ing [Particulars](card:what/games/digital/particulars) at PAX (have you been to our Greenlight page yet? You totally should!), I won't have had a chance to get my thoughts down on the actual panel discussion yet. That'll be another blog post, sometime in the next week. For now, here's my thoughts on innovation in games.*
 
 First things first: there is definitely a lot of innovation in the games industry. I think that when we say that games aren't innovative enough, we're short-changing the huge amount of massively creative work that does happen, even if a lot of it just happens to not end up anywhere that's all that interesting to us personally.
 
