@@ -1,20 +1,15 @@
 ---
-inspected: false
-title: "Ahead of tomorrow’s playtest, I’ve been working on making the Island…"
-date: '2020-07-28 01:03:00 +1000'
+inspected: true
+title: Ahead of tomorrow’s playtest, I’ve been working on making the Island…
+date: 2020-07-28 01:03:00 +1000
 tags:
-  - "boardgames"
-  - "cards"
-  - "design"
-  - "gamedev"
-  - "indiegames"
-  - "theodyssey"
   - what/games/analog/fatecardgame
-image: "17906566810484607.jpg"
+  - why/learn/gamedev
+image: 17906566810484607.jpg
 images:
-  - "17877095134763674.jpg"
-  - "17885133853642422.jpg"
-  - "18120989278124024.jpg"
+  - 17877095134763674.jpg
+  - 17885133853642422.jpg
+  - 18120989278124024.jpg
 source: instagram
 ---
 

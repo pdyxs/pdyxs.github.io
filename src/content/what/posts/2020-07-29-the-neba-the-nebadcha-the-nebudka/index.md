@@ -1,14 +1,10 @@
 ---
-inspected: false
-title: "The Neba..."
-date: '2020-07-29 17:49:00 +1000'
+inspected: true
+title: The Neba...
+date: 2020-07-29 17:49:00 +1000
 tags:
-  - "boardgame"
-  - "gottagetouttathisspace"
-  - "printandplay"
-  - "thematrixship"
   - what/games/analog/gotta-get-outta-this-space
-image: "17844109397308784.jpg"
+image: 17844109397308784.jpg
 source: instagram
 ---
 

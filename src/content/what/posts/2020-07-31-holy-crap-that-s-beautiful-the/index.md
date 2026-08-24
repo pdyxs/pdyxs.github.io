@@ -1,17 +1,13 @@
 ---
-inspected: false
-title: "Holy crap that's beautiful."
-date: '2020-07-31 17:34:00 +1000'
+inspected: true
+title: Holy crap that's beautiful.
+date: 2020-07-31 17:34:00 +1000
 tags:
-  - "cardgame"
-  - "gamedev"
-  - "theodyssey"
-  - "theodysseysgame"
   - what/games/analog/fatecardgame
   - why/viewable
-image: "18160346695034338.jpg"
+image: 18160346695034338.jpg
 images:
-  - "17936230786386059.jpg"
+  - 17936230786386059.jpg
 source: instagram
 ---
 

@@ -1,18 +1,10 @@
 ---
-inspected: false
+inspected: true
 title: "A lovely hand drawn copy of #gottagetouttathisspace - this is the…"
-date: '2020-08-20 15:49:00 +1000'
+date: 2020-08-20 15:49:00 +1000
 tags:
-  - "boardgame"
-  - "gamedev"
-  - "gottagetouttathisspace"
-  - "indiegames"
-  - "printandplay"
-  - "space"
-  - "spacegame"
   - what/games/analog/gotta-get-outta-this-space
-  - why/viewable
-image: "17845229186333140.jpg"
+image: 17845229186333140.jpg
 source: instagram
 ---
 
