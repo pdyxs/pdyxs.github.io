@@ -45,6 +45,11 @@ export type ReloadPlan = {
 
 const CONTENT_PREFIX = 'src/content/';
 const LENS_ICON_PREFIX = 'src/icons/lenses/';
+// Hand-edited, not generated — but where-tags.ts derives where:* values from
+// it, and generate-stack-manifest.mjs enumerates those values for short
+// codes, so a new location needs the same manifest-then-refresh treatment as
+// a `.tag.yaml` edit.
+const TRAVEL_LOG_PATH = 'src/data/travel-log.ts';
 
 function dirOf(relPath: string): string {
   const idx = relPath.lastIndexOf('/');
@@ -60,6 +65,10 @@ function dirOf(relPath: string): string {
 export function planDevReload(relPath: string, event: WatchEvent): ReloadPlan | null {
   if (relPath.startsWith(LENS_ICON_PREFIX) && relPath.endsWith('.svg')) {
     return { generators: ['lens-icons'], refreshRoutes: true };
+  }
+
+  if (relPath === TRAVEL_LOG_PATH) {
+    return { generators: ['manifest'], refreshRoutes: true };
   }
 
   if (!relPath.startsWith(CONTENT_PREFIX)) return null;

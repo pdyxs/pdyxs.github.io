@@ -47,6 +47,13 @@ describe('planDevReload', () => {
     });
   });
 
+  it('regenerates the manifest for a travel-log.ts edit', () => {
+    expect(planDevReload('src/data/travel-log.ts', 'change')).toEqual({
+      generators: ['manifest'],
+      refreshRoutes: true,
+    });
+  });
+
   it('ignores everything else', () => {
     expect(planDevReload('src/lib/cards.ts', 'change')).toBeNull();
     expect(planDevReload('src/content/what/art/art-heist/photo.png', 'add')).toBeNull();

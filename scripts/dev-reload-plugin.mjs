@@ -1,5 +1,6 @@
 /**
- * Dev-only Vite plugin: makes content YAML hot-reload.
+ * Dev-only Vite plugin: makes content YAML (and a couple of src/data/*.ts
+ * inputs like travel-log.ts) hot-reload.
  *
  * The decision (which generator, whether to drop the route cache) lives in
  * src/lib/dev-reload.ts and is unit-tested there; this file is the thin effect —
@@ -15,6 +16,13 @@
  * own content plugin sends on a collection change, and its dev app entrypoint
  * responds by calling `pipeline.routeCache.clearAll()`. That is the lever a
  * markdown edit pulls, and the reason markdown already hot-reloads.
+ *
+ * travel-log.ts is a plain module (in the Vite module graph, unlike the YAML
+ * above) so Vite already invalidates it on save — but that invalidation alone
+ * doesn't touch the route cache either, and it also feeds
+ * generate-stack-manifest.mjs's short-code enumeration, so it needs the same
+ * regenerate-then-signal treatment as a `.tag.yaml` edit, not just a bare
+ * `astro:content-changed`.
  *
  * Mirrors `invalidateDataStore` in
  * astro/dist/content/vite-plugin-content-virtual-mod.js — if a future Astro
