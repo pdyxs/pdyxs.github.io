@@ -1,10 +1,11 @@
 ---
-inspected: false
+inspected: true
 title: Launching the Bot
-date: '2013-03-14 17:00:00 +1000'
+date: 2013-03-14 17:00:00 +1000
 tags:
   - what/games/digital/unstoppabot
   - where/work/seethrough
+  - why/learn/gamedev
 image: Unstoppabot1.jpg
 source: seethroughstudios
 ---

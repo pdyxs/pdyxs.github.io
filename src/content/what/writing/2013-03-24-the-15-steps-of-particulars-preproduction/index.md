@@ -1,10 +1,11 @@
 ---
-inspected: false
+inspected: true
 title: The 15 Steps of (Particulars) Pre-production
-date: '2013-03-24 17:00:00 +1000'
+date: 2013-03-24 17:00:00 +1000
 tags:
   - what/games/digital/particulars
   - where/work/seethrough
+  - why/learn/gamedev
 image: Screen-Shot-2013-02-12-at-10.46.35-AM.png
 source: gamasutra
 ---
