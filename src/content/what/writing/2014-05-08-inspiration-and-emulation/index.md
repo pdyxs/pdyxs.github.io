@@ -1,10 +1,11 @@
 ---
-inspected: false
+inspected: true
 title: Inspiration and emulation – the drive to create
-date: '2014-05-08 17:00:00 +1000'
+date: 2014-05-08 17:00:00 +1000
 tags:
   - what/games/digital/particulars
   - where/work/seethrough
+  - why/learn/gamedev
 source: seethroughstudios
 ---
 I've been doing a fair bit of reflection about Particulars lately. We've been planning the final stages of the game's development, forcing me to really think about what's important in the game, and why we've made it this way.
