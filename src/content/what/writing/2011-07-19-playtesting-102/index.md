@@ -1,6 +1,8 @@
 ---
 inspected: false
 title: 'Playtesting 102: Who and where'
+series: playtesting
+order: 2
 date: '2011-07-19 17:00:00 +1000'
 source: gamasutra
 tags: []

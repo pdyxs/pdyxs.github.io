@@ -1,6 +1,8 @@
 ---
 inspected: false
 title: 'Playtesting 103: What to Measure'
+series: playtesting
+order: 3
 date: '2011-08-02 17:00:00 +1000'
 source: gamasutra
 tags: []

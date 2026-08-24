@@ -1,6 +1,8 @@
 ---
 inspected: false
 title: 'Playtesting 104: How to Measure Quantitatively'
+series: playtesting
+order: 4
 date: '2011-08-04 17:00:00 +1000'
 source: gamasutra
 tags: []

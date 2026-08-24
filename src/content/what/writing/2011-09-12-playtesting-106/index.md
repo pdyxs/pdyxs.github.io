@@ -1,6 +1,8 @@
 ---
 inspected: false
 title: 'Playtesting 106: On the Day'
+series: playtesting
+order: 6
 date: '2011-09-12 17:00:00 +1000'
 source: gamasutra
 tags: []

@@ -1,6 +1,8 @@
 ---
 inspected: false
 title: 'Playtesting 101: Finding the Purpose'
+series: playtesting
+order: 1
 date: '2011-07-14 17:00:00 +1000'
 source: gamasutra
 tags: []
