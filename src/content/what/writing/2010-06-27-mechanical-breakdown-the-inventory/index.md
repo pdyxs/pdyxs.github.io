@@ -1,8 +1,9 @@
 ---
-inspected: false
+inspected: true
 title: "Mechanical Breakdown: The Inventory (Part 1)"
 date: 2010-06-27 17:00:00 +1000
-tags: []
+tags:
+  - why/learn/gamedev
 series: mechanical-breakdown
 order: 1
 ---
