@@ -1,13 +1,12 @@
 ---
-inspected: false
-title: "Amazing climbs over in the Blue mountains, it's great to be climbing…"
-date: '2019-04-03 02:07:00 +1000'
+inspected: true
+title: Amazing climbs over in the Blue mountains, it's great to be climbing…
+date: 2019-04-03 02:07:00 +1000
 tags:
-  - why/viewable
-image: "18043791832077335.jpg"
+image: 18043791832077335.jpg
 images:
-  - "18043781215074933.jpg"
-  - "17985754540215819.jpg"
+  - 18043781215074933.jpg
+  - 17985754540215819.jpg
 source: instagram
 ---
 
