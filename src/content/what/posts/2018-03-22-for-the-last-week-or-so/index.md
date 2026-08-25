@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: For the last week or so, I’ve been experimenting with leaving my…
 date: 2018-03-22 22:20:00 +1000
 tags: []
