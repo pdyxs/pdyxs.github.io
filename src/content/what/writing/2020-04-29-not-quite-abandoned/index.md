@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Not Quite Abandoned
 date: 2020-04-29 01:48:32 +0000
 tags:

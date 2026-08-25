@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: On Creative Anxiety, and residency retrospectives
 date: 2019-07-18 22:01:05 +0000
 tags:

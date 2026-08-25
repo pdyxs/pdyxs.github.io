@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Gotta Get Outta This Project Timeline
 date: 2020-06-02 05:57:46 +0000
 tags:
