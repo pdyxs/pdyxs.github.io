@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: A couple of days ago, I was thinking about how I schedule my life as…
 date: 2018-03-13 18:35:00 +1000
 tags: []

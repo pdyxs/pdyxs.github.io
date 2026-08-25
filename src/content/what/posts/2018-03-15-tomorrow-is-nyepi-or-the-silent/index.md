@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Tomorrow is Nyepi, or ‘the Silent Day’ here on Bali.
 date: 2018-03-15 18:42:00 +1000
 tags:

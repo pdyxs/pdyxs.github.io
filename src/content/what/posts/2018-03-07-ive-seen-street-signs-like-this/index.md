@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: I’ve seen street signs like this in quite a few countries - this…
 date: 2018-03-07 20:08:00 +1000
 tags:

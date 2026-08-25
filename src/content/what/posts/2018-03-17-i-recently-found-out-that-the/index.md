@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: I recently found out that the classification of birds has changed:…
 date: 2018-03-17 18:37:00 +1000
 tags: []

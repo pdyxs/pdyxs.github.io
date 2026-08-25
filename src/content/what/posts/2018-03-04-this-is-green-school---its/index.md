@@ -1,9 +1,10 @@
 ---
-inspected: false
-title: "This is Green School - it’s a school here in Bali which was founded…"
-date: '2018-03-04 18:33:00 +1000'
-tags: []
-image: "17927434522008283.jpg"
+inspected: true
+title: This is Green School - it’s a school here in Bali which was founded…
+date: 2018-03-04 18:33:00 +1000
+tags:
+  - why/learn/travel
+image: 17927434522008283.jpg
 source: instagram
 ---
 
