@@ -1,9 +1,10 @@
 ---
-inspected: false
-title: "Traditionally, the rice fields in Bali are owned and run by…"
-date: '2018-03-10 00:26:00 +1000'
-tags: []
-image: "17902129111146152.jpg"
+inspected: true
+title: Traditionally, the rice fields in Bali are owned and run by…
+date: 2018-03-10 00:26:00 +1000
+tags:
+  - why/learn/travel
+image: 17902129111146152.jpg
 source: instagram
 ---
 

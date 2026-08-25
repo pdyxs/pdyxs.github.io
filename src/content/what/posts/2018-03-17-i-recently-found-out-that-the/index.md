@@ -1,9 +1,9 @@
 ---
-inspected: false
-title: "I recently found out that the classification of birds has changed:…"
-date: '2018-03-17 18:37:00 +1000'
+inspected: true
+title: I recently found out that the classification of birds has changed:…
+date: 2018-03-17 18:37:00 +1000
 tags: []
-image: "17913157672082788.jpg"
+image: 17913157672082788.jpg
 source: instagram
 ---
 
