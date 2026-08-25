@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "Hanging out at Tayrona National Park."
-date: '2018-12-18 07:42:00 +1000'
+inspected: true
+title: Hanging out at Tayrona National Park.
+date: 2018-12-18 07:42:00 +1000
 tags:
-  - why/viewable
-image: "17982179113182810.jpg"
+image: 17982179113182810.jpg
 source: instagram
 ---
 
