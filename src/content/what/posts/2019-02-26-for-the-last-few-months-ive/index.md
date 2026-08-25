@@ -1,12 +1,10 @@
 ---
-inspected: false
-title: "For the last few months, I’ve been using a super simple app that I…"
-date: '2019-02-26 13:39:00 +1000'
+inspected: true
+title: For the last few months, I’ve been using a super simple app that I…
+date: 2019-02-26 13:39:00 +1000
 tags:
-  - "app"
-  - "finance"
   - what/software/budget-haver
-image: "17961201709240609.jpg"
+image: 17961201709240609.jpg
 source: instagram
 ---
 

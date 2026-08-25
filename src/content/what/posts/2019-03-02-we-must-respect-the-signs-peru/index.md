@@ -1,16 +1,9 @@
 ---
-inspected: false
-title: "We must respect the signs..."
-date: '2019-03-02 17:00:00 +1000'
+inspected: true
+title: We must respect the signs...
+date: 2019-03-02 17:00:00 +1000
 tags:
-  - "meta"
-  - "peru"
-  - "pisac"
-  - "signs"
-  - "signsaboutsigns"
-  - "travel"
-  - why/viewable
-image: "17994759586194570.jpg"
+image: 17994759586194570.jpg
 source: instagram
 ---
 

@@ -1,18 +1,14 @@
 ---
-inspected: false
-title: "The salt flats in Bolivia were breathtaking, going on forever in a…"
-date: '2019-03-20 13:01:00 +1000'
+inspected: true
+title: The salt flats in Bolivia were breathtaking, going on forever in a…
+date: 2019-03-20 13:01:00 +1000
 tags:
-  - "bolivia"
-  - "nomad"
-  - "salt"
-  - "somuchsalt"
-  - "travel"
   - why/viewable
-image: "18049358944038930.jpg"
+  - why/learn/travel
+image: 18049358944038930.jpg
 images:
-  - "18046376806053409.jpg"
-  - "18046233871049502.jpg"
+  - 18046376806053409.jpg
+  - 18046233871049502.jpg
 source: instagram
 ---
 
