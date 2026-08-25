@@ -1,16 +1,12 @@
 ---
-inspected: false
-title: "Progress on 'Gotta Get Outta This Space' - prototype complete!"
-date: '2020-05-09 17:36:00 +1000'
+inspected: true
+title: Progress on 'Gotta Get Outta This Space' - prototype complete!
+date: 2020-05-09 17:36:00 +1000
 tags:
-  - "gamedev"
-  - "printandplay"
-  - "screenshotsaturday"
-  - "tabletopgames"
   - what/games/analog/gotta-get-outta-this-space
-image: "17886410233551052.jpg"
+image: 17886410233551052.jpg
 images:
-  - "17870082757730183.jpg"
+  - 17870082757730183.jpg
 source: instagram
 ---
 
