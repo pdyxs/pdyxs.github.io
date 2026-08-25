@@ -1,15 +1,14 @@
 ---
-inspected: false
+inspected: true
 title: "After months of work, the first version of Numbeanies: Number Forest…"
-date: '2018-03-20 20:37:00 +1000'
+date: 2018-03-20 20:37:00 +1000
 tags:
   - what/games/digital/numbeanies
   - where/work/3p
-image: "17871885130211012.jpg"
+image: 17871885130211012.jpg
 source: instagram
 ---
 
-After months of work, the first version of Numbeanies: Number Forest is live! This is the game I’ve been working on for 3P Learning - it’s a game that teaches kids numeracy in the classroom using physical cards, augmented reality and bouncy beanie bud things.⠀
-⠀
-Unfortunately, the game is only available to Mathletics teachers (you can download it but will get locked behind a login screen), hopefully it becomes available to a wider audience at some point. ⠀
-(Possibly useless) App Store link: [Numbeanies](card:what/games/digital/numbeanies)
+After months of work, the first version of Numbeanies: Number Forest is live! This is the game I’ve been working on for 3P Learning - it’s a game that teaches kids numeracy in the classroom using physical cards, augmented reality and bouncy beanie bud things.
+
+Unfortunately, the game is only available to Mathletics teachers (you can download it but will get locked behind a login screen), hopefully it becomes available to a wider audience at some point.

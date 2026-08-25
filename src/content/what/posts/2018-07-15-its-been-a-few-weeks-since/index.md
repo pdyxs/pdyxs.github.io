@@ -1,12 +1,13 @@
 ---
-inspected: false
-title: "It’s been a few weeks since I was in Svalbard, and I really don’t…"
-date: '2018-07-15 22:41:00 +1000'
+inspected: true
+title: It’s been a few weeks since I was in Svalbard, and I really don’t…
+date: 2018-07-15 22:41:00 +1000
 tags:
   - where/europe/norway/svalbard
+  - why/viewable
 excludeTags:
   - generated/location
-image: "17934728845130800.jpg"
+image: 17934728845130800.jpg
 source: instagram
 ---
 

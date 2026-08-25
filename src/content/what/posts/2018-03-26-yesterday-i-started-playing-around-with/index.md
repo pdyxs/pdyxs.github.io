@@ -1,16 +1,14 @@
 ---
-inspected: false
-title: "Yesterday, I started playing around with genetic sequences, to see if…"
-date: '2018-03-26 21:44:00 +1000'
+inspected: true
+title: Yesterday, I started playing around with genetic sequences, to see if…
+date: 2018-03-26 21:44:00 +1000
 tags:
-  - "dataart"
-  - "digitalart"
-  - "genetics"
   - what/art/genetic-sequences
-image: "17892497266198650.jpg"
+  - science
+image: 17892497266198650.jpg
 images:
-  - "17903564347163875.jpg"
-  - "17933061694020732.jpg"
+  - 17903564347163875.jpg
+  - 17933061694020732.jpg
 source: instagram
 ---
 

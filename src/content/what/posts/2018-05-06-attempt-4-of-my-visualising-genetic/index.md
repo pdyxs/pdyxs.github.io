@@ -1,15 +1,11 @@
 ---
-inspected: false
-title: "⠀"
-date: '2018-05-06 23:10:00 +1000'
+inspected: true
+title: ⠀
+date: 2018-05-06 23:10:00 +1000
 tags:
-  - "4"
-  - "dataart"
-  - "genetics"
-  - "science"
-  - "scienceart"
   - what/art/genetic-sequences
-image: "17870839507238223.jpg"
+  - science
+image: 17870839507238223.jpg
 source: instagram
 ---
 
