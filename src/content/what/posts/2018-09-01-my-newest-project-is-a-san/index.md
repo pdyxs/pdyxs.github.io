@@ -1,13 +1,11 @@
 ---
-inspected: false
-title: "My newest project is a San Francisco-based scavenger hunt-esque game."
-date: '2018-09-01 06:34:00 +1000'
+inspected: true
+title: My newest project is a San Francisco-based scavenger hunt-esque game.
+date: 2018-09-01 06:34:00 +1000
 tags:
-  - "gamedev"
-  - "screenshotsaturday"
   - what/games/digital/dot-hunt
   - where/work/dot
-image: "17876829469263729.jpg"
+image: 17876829469263729.jpg
 source: instagram
 ---
 

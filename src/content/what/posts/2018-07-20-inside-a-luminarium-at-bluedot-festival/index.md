@@ -1,13 +1,9 @@
 ---
-inspected: false
+inspected: true
 title: "Inside a Luminarium at #bluedot festival."
-date: '2018-07-20 23:34:00 +1000'
+date: 2018-07-20 23:34:00 +1000
 tags:
-  - "bluedot"
-  - "nodigitalfiltersanyway"
-  - "nofilter"
-  - why/viewable
-image: "17961682354060989.jpg"
+image: 17961682354060989.jpg
 source: instagram
 ---
 
