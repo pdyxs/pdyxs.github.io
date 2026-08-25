@@ -1,15 +1,11 @@
 ---
-inspected: false
-title: "I've always found it strange that personality traits in games almost…"
-date: '2019-06-18 13:45:00 +1000'
+inspected: true
+title: I've always found it strange that personality traits in games almost…
+date: 2019-06-18 13:45:00 +1000
 tags:
-  - "boardgames"
-  - "cardgames"
-  - "cards"
-  - "gamedesign"
-  - "gamedev"
   - what/games/analog/fatecardgame
-image: "17844827962490375.jpg"
+  - why/learn/gamedev
+image: 17844827962490375.jpg
 source: instagram
 ---
 

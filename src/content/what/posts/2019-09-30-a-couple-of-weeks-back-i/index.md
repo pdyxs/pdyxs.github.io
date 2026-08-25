@@ -1,32 +1,23 @@
 ---
-inspected: false
-title: "A couple of weeks back, I went to Switzerland to take part in…"
-date: '2019-09-30 13:27:00 +1000'
+inspected: true
+title: A couple of weeks back, I went to Switzerland to take part in…
+date: 2019-09-30 13:27:00 +1000
 tags:
-  - "dataart"
-  - "datavis"
-  - "hackathon"
-  - "instagram"
-  - "interactiveart"
-  - "metasocial"
-  - "qiskit"
-  - "qiskitcamp"
-  - "quantumart"
-  - "quantumcomputing"
-  - "socialmedia"
-  - "unity3d"
   - what/art/qistigram
-image: "17881627366438848.jpg"
+  - where/europe/switzerland
+image: 17881627366438848.jpg
 images:
-  - "17886727771418337.jpg"
-  - "17912266390357906.jpg"
-  - "18070279672192790.jpg"
-  - "17857938196552348.mp4"
-  - "17853177169593203.jpg"
-  - "17867270839494221.mp4"
-  - "17849470645619165.mp4"
-  - "18072784219081785.jpg"
+  - 17886727771418337.jpg
+  - 17912266390357906.jpg
+  - 18070279672192790.jpg
+  - 17857938196552348.mp4
+  - 17853177169593203.jpg
+  - 17867270839494221.mp4
+  - 17849470645619165.mp4
+  - 18072784219081785.jpg
 source: instagram
+excludeTags:
+  - generated/location
 ---
 
 A couple of weeks back, I went to Switzerland to take part in #qiskitcamp Europe - a quantum computing hackathon. There, I worked with a fantastic group of scientists and artists to create Qistagram - a concept for quantum-powered instagram stories.

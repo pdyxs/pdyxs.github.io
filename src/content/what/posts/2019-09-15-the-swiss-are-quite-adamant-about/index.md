@@ -1,17 +1,10 @@
 ---
-inspected: false
-title: "The Swiss are quite adamant about what does and does not constitute a…"
-date: '2019-09-15 01:41:00 +1000'
+inspected: true
+title: The Swiss are quite adamant about what does and does not constitute a…
+date: 2019-09-15 01:41:00 +1000
 tags:
-  - "nomad"
-  - "nopicnic"
-  - "picnic"
-  - "qiskitcamp"
-  - "swiss"
-  - "travel"
   - what/art/qistigram
-  - why/viewable
-image: "17844507145649302.jpg"
+image: 17844507145649302.jpg
 source: instagram
 ---
 
