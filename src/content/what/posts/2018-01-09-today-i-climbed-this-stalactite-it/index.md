@@ -1,12 +1,10 @@
 ---
-inspected: false
-title: "Today I climbed this stalactite."
-date: '2018-01-09 06:33:00 +1000'
+inspected: true
+title: Today I climbed this stalactite.
+date: 2018-01-09 06:33:00 +1000
 tags:
-  - "nodroppedphones"
-  - "rockclimbing"
   - why/viewable
-image: "17900388643087496.jpg"
+image: 17900388643087496.jpg
 source: instagram
 ---
 
