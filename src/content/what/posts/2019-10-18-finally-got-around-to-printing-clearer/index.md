@@ -1,12 +1,10 @@
 ---
-inspected: false
+inspected: true
 title: "Finally got around to printing clearer island cards for #fatecardgame"
-date: '2019-10-18 20:37:00 +1000'
+date: 2019-10-18 20:37:00 +1000
 tags:
-  - "fatecardgame"
   - what/games/analog/fatecardgame
-  - why/viewable
-image: "17847738214690440.jpg"
+image: 17847738214690440.jpg
 source: instagram
 ---
 

@@ -1,13 +1,10 @@
 ---
-inspected: false
-title: "Early level design for ludum dare (a 48 hour game making competition)."
-date: '2020-04-18 03:32:00 +1000'
+inspected: true
+title: Early level design for ludum dare (a 48 hour game making competition).
+date: 2020-04-18 03:32:00 +1000
 tags:
-  - "gamedesign"
-  - "ld46"
   - what/games/analog/gotta-get-outta-this-space
-  - why/viewable
-image: "18050664001225795.jpg"
+image: 18050664001225795.jpg
 source: instagram
 ---
 

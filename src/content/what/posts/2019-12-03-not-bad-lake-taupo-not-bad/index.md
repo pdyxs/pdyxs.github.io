@@ -1,13 +1,10 @@
 ---
-inspected: false
-title: "Not bad, lake Taupo."
-date: '2019-12-03 13:40:00 +1000'
+inspected: true
+title: Not bad, lake Taupo.
+date: 2019-12-03 13:40:00 +1000
 tags:
-  - "lakes"
-  - "lakeswithsunsets"
-  - "sunset"
   - why/viewable
-image: "17923599451352358.jpg"
+image: 17923599451352358.jpg
 source: instagram
 ---
 

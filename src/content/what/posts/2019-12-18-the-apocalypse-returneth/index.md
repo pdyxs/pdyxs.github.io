@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "The apocalypse returneth"
-date: '2019-12-18 23:21:00 +1000'
+inspected: true
+title: The apocalypse returneth
+date: 2019-12-18 23:21:00 +1000
 tags:
-  - why/viewable
-image: "17853637897729249.jpg"
+image: 17853637897729249.jpg
 source: instagram
 ---
 
