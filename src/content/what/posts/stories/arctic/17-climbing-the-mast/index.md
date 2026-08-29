@@ -3,6 +3,7 @@ inspected: false
 image: image.png
 title: Climbing the Mast
 date: '2018-08-19 15:00:00 +1000'
+storyDate: 2018-06-21
 series: arctic
 order: 17
 ---

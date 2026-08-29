@@ -6,6 +6,7 @@ icon: info-circle
 series: arctic
 order: 0
 date: 2018-06-18T00:00:00.000Z
+storyDate: 2018-06-18
 ---
 It’s been a few weeks since I was in Svalbard, and I really don’t feel any more equipped to talk about my experience there than I did before. In the same way that a photograph lacks context: the sounds and smells; the people and peripheral vision - so too does any attempt to summarise what happened lack the essence of the experience.
 

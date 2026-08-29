@@ -3,6 +3,7 @@ inspected: false
 image: image.png
 title: The World's Northernmost ATM
 date: '2018-08-24 04:00:00 +1000'
+storyDate: 2018-06-25
 series: arctic
 order: 20
 ---

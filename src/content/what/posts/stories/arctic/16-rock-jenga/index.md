@@ -3,6 +3,7 @@ inspected: false
 image: image.png
 title: Rock Jenga
 date: '2018-08-17 04:00:00 +1000'
+storyDate: 2018-06-22
 series: arctic
 order: 16
 ---

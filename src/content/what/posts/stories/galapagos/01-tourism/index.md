@@ -3,6 +3,7 @@ inspected: false
 image: social.png
 title: Tourism in the Galapagos
 date: '2019-07-11 04:00:00 +1000'
+storyDate: 2018-08-12
 series: galapagos
 order: 1
 ---

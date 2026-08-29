@@ -3,6 +3,7 @@ inspected: false
 image: social.png
 title: Sea Wolves
 date: '2019-07-18 04:00:00 +1000'
+storyDate: 2018-08-07
 series: galapagos
 order: 2
 ---

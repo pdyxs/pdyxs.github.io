@@ -5,6 +5,7 @@ title: Surge Glaciers
 series: arctic
 order: 3
 date: 2018-06-12T00:00:00.000Z
+storyDate: 2018-06-12
 ---
 This is the very first glacier that we explored, and it's a surge glacier. These are white-water glaciers, moving at up to 10m per day and creating wild peaks across their surface. Glaciers like this will surge for years to decades before settling down again.
 

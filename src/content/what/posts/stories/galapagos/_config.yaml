@@ -8,3 +8,5 @@ tags:
 excludeTags:
   - generated/location
 collapse: true
+dateBar: true
+seriesPreview: dots
