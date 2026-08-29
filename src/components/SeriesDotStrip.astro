@@ -1,0 +1,140 @@
+---
+// A compact "where am I in this series" strip — the stripped-down alternative
+// to the full-thumbnail "In this series" CardStrip (see `seriesPreview` on
+// ResolvedCard). One small square per sibling, no numbers/thumbnails, so a
+// 20+ chapter run (Svalbard) still reads as one line instead of a wrapped
+// grid — plus `‹`/`›` arrows at the ends, so stepping through doesn't require
+// aiming at a specific square.
+//
+// Static markup, no island: unlike CardStrip (a scrolling row that needs to
+// measure overflow and drag a custom scrollbar), the squares just shrink to
+// fit via flexbox — there is nothing here that needs measuring. Uses
+// `data-replace-slot` (not `data-push-card`): browsing a series steps through
+// it in place, the same way the strip lens's "See all N →" terminal tile
+// swaps the active lens rather than stacking on top of it — CardStack.svelte's
+// delegated click handler is what actually navigates.
+import type { BrowseCardData } from '../lib/browse-helpers';
+
+interface Props {
+  cards: BrowseCardData[];
+  /** uid of the card already open — renders as a marked, non-navigating square, same rule as CardStrip/BrowseCard's `current`. */
+  currentUid: string;
+}
+
+const { cards, currentUid } = Astro.props;
+const currentIndex = cards.findIndex(c => c.uid === currentUid);
+const prev = currentIndex > 0 ? cards[currentIndex - 1] : undefined;
+const next = currentIndex >= 0 && currentIndex < cards.length - 1 ? cards[currentIndex + 1] : undefined;
+---
+
+<nav class="series-dot-strip" aria-label="Position in series">
+  {prev ? (
+    <a class="series-dot-arrow card-link" href={`/card/${prev.uid}`} data-replace-slot={prev.uid} aria-label="Previous chapter">‹</a>
+  ) : (
+    <span class="series-dot-arrow series-dot-arrow--disabled" aria-hidden="true">‹</span>
+  )}
+
+  <ol class="series-dot-track">
+    {cards.map((card, i) => {
+      const current = i === currentIndex;
+      return (
+        <li class="series-dot-item" class:list={{ 'series-dot-item--current': current }}>
+          {current ? (
+            <span class="series-dot" aria-current="true" title={card.title}></span>
+          ) : (
+            <a class="series-dot card-link" href={`/card/${card.uid}`} data-replace-slot={card.uid} aria-label={card.title} title={card.title}></a>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+
+  {next ? (
+    <a class="series-dot-arrow card-link" href={`/card/${next.uid}`} data-replace-slot={next.uid} aria-label="Next chapter">›</a>
+  ) : (
+    <span class="series-dot-arrow series-dot-arrow--disabled" aria-hidden="true">›</span>
+  )}
+</nav>
+
+<style>
+  .series-dot-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    margin: 0 0 var(--space-md);
+  }
+
+  .series-dot-track {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    /* Allows the row to shrink below its natural width instead of wrapping —
+       the whole point for a 22-chapter series (see file header). */
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+
+  .series-dot-item {
+    display: contents;
+  }
+
+  .series-dot {
+    display: block;
+    /* Basis, not a fixed size: shrinks on a narrow/long series, never grows
+       past it on a short one — a wrapper that stretched to fill the card
+       would make Fate's Hand's 6 squares comically large. */
+    flex: 0 1 12px;
+    width: 12px;
+    height: 12px;
+    min-width: 4px;
+    min-height: 4px;
+    border: var(--border-width) solid var(--color-border);
+    padding: 0;
+  }
+
+  a.series-dot:hover {
+    background: var(--color-bg-hover);
+  }
+
+  /* "You are here" — the mirror of every flat-surface rule, same tokens as
+     BrowseCard's --current tile (see the --color-selected-* table in
+     CLAUDE.md). No text/stroke to restate here — an empty square carries no
+     glyph. */
+  .series-dot-item--current .series-dot {
+    background: var(--color-selected-bg);
+    border-color: var(--color-selected-bg);
+    cursor: default;
+  }
+
+  .series-dot:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 1px;
+  }
+
+  .series-dot-arrow {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--color-text);
+    text-decoration: none;
+    line-height: 1;
+  }
+
+  a.series-dot-arrow:hover {
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    -webkit-text-stroke-color: var(--color-selected-bg);
+  }
+
+  .series-dot-arrow--disabled {
+    color: var(--color-text-muted);
+  }
+</style>

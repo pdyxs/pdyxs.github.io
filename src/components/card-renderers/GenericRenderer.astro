@@ -12,11 +12,14 @@ import { resolveMetaRows } from '../../lib/card-meta';
 import { resolveActions } from '../../lib/card-actions';
 import { bodyHasInlineImage } from '../../lib/inline-images';
 import { resolveDateline } from '../../lib/card-date';
+import type { SeriesDateBar as SeriesDateBarModel } from '../../lib/series';
 import type { RawMetaRow } from '../../lib/card-meta';
 import type { Action } from '../../lib/card-actions';
 import ImageGallery from '../ImageGallery.svelte';
 import InlineImageViewer from '../InlineImageViewer.svelte';
 import CardStrip from '../CardStrip.svelte';
+import SeriesDateBar from '../SeriesDateBar.astro';
+import SeriesDotStrip from '../SeriesDotStrip.astro';
 
 interface Quote {
   quote: string;
@@ -55,8 +58,12 @@ interface Props {
   relatedCards?: BrowseCardData[];
   /** Cards this one points at via its own card-backed tags (computeSubjectCardsIndex) — the "This is about" section. Same tags as the masthead chips, re-listed as previews. */
   subjectCards?: BrowseCardData[];
-  /** The whole series this card belongs to, in order (resolveSeriesCards) — the "In this series" section. Empty for the cards with no `series:`, which is most of them. */
+  /** The whole series this card belongs to, in order (resolveSeriesCards) — the "In this series" section, or the compact dot strip (see `seriesPreview`). Empty for the cards with no `series:`, which is most of them. */
   seriesCards?: BrowseCardData[];
+  /** `ResolvedCard.dateBar`-gated calendar bar (computeSeriesDateBar), or null. Takes the dateline's place when present. */
+  seriesDateBar?: SeriesDateBarModel | null;
+  /** `ResolvedCard.seriesPreview` — 'strip' (default, the full-thumbnail section below the body), 'dots' (compact position strip above the body), or 'none'. */
+  seriesPreview?: 'strip' | 'dots' | 'none';
   /** The card's RESOLVED tags (folder-derived + cascade + frontmatter + generated), from `ResolvedCard.tags`. Not `entry.data.tags`, which is frontmatter only and omits the card's own folder category. */
   cardTags?: string[];
   /** `ResolvedCard.date` — the card's date, if it has one (most do). */
@@ -70,13 +77,16 @@ interface Props {
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], seriesCards = [], cardTags = [], date, dateLabel, gallery = true } = Astro.props as Props;
+const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], seriesCards = [], seriesDateBar = null, seriesPreview, cardTags = [], date, dateLabel, gallery = true } = Astro.props as Props;
 const data = entry?.data;
 
 // Whether this card is a dated thing, and how its date is worded — decided by
 // resolveDateline (card-date.ts) from the cascaded `dateLabel`, since nearly
 // every card carries a `date` and presence alone would show it everywhere.
-const dateline = resolveDateline(dateLabel, date);
+// A series date bar takes the dateline's place when present — both answer
+// "when is this", and showing both would be redundant (the bar is strictly
+// more informative for a series chapter).
+const dateline = seriesDateBar ? null : resolveDateline(dateLabel, date);
 
 const localImage = entry ? resolveLocalImage(entry.id, data?.image) : undefined;
 // A header `image:` that points to a colocated video renders as <video>.
@@ -155,8 +165,9 @@ const galleryImages = await Promise.all(
     {/* Full-bleed masthead: the header image and the tags/actions band are the
         top edge of the card, so one wrapper cancels the body's inset for both
         rather than each element redoing the margin maths. */}
-    {(hasHeaderMedia || hasMasthead) && (
+    {(hasHeaderMedia || hasMasthead || seriesDateBar) && (
       <div class="generic-bleed">
+        {seriesDateBar && <SeriesDateBar bar={seriesDateBar} />}
         {HeaderMedia ? (
           <HeaderMedia entryId={entry!.id} images={headerMediaImages} />
         ) : (
@@ -201,6 +212,14 @@ const galleryImages = await Promise.all(
       <p class="generic-dateline">
         {dateline.label}{' '}<time datetime={dateline.iso}>{dateline.text}</time>
       </p>
+    )}
+
+    {/* The compact style sits above the body, first thing a reader sees — the
+        point of choosing it over the full-thumbnail strip below. The 'strip'
+        style (default) keeps its existing position among the other card
+        strips near the bottom; see the gate down there. */}
+    {seriesPreview === 'dots' && seriesCards.length > 1 && entry && (
+      <SeriesDotStrip cards={seriesCards} currentUid={entry.id} />
     )}
 
     {/* Credits lead the body: the labels are self-describing, so the list needs
@@ -273,7 +292,7 @@ const galleryImages = await Promise.all(
         of, then the two directions of a card-backed tag — named so the arrow is
         obvious: this card's own tags point out, other cards' tags point in.
         A one-card "series" is just this card, so it needs no strip. */}
-    {seriesCards.length > 1 && (
+    {seriesPreview !== 'dots' && seriesCards.length > 1 && (
       <section class="generic-section">
         <h3 class="generic-section-heading">In this series</h3>
         <CardStrip

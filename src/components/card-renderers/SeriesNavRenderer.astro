@@ -1,19 +1,28 @@
 ---
 // Nav shell for a card that belongs to an ordered series: the position in the
-// header.
+// header, and quick prev/next navigation. This is the whole of what a series
+// nav renderer owns — genuine header-shell chrome. Everything about *how the
+// run previews* (the full-thumbnail "In this series" strip, the compact dots
+// alternative, the calendar date bar) is content, not chrome, and lives in
+// GenericRenderer instead, driven by its own `seriesPreview`/`dateBar`
+// _config.yaml keys — deliberately independent of whether a card even has a
+// dedicated nav renderer. See CLAUDE.md's nav-renderer section.
 //
-// The run itself is a card strip, but it is NOT rendered here. A nav renderer
-// wraps the content renderer as a slot, so anything it appends lands *below*
-// the content renderer's own "This is about" / "Cards about this" strips —
-// which read as the same class of thing and belong together. CardStackCard
-// therefore resolves the series previews (resolveSeriesCards) and passes them
-// to the content renderer, which places "In this series" first among the three.
+// Quick-nav is unconditional here, not its own config flag: it's what this
+// nav renderer does, the same way CardHeader always renders a close button.
+// Two links: a header pair (both breakpoints, reachable via the sticky
+// header while scrolling) and a floating pair pinned to the viewport edges,
+// CSS-hidden at desktop (no matchMedia — this is a plain breakpoint layout
+// choice, not interaction state that differs by breakpoint).
 //
-// The strip replaced prev/next buttons. Two buttons could only ever say what
-// is immediately adjacent, which is the least interesting thing about a series
-// — a reader wants to see the run, where they are in it, and jump anywhere in
-// it. It's the same CardStrip the "Cards about this" section uses, so a series
-// sibling previews identically to any other card reference on the site.
+// Both use `data-replace-slot`, not `data-push-card`: stepping to the next
+// chapter replaces the active card in place, the way the strip lens's
+// "See all N →" tile swaps the active lens rather than stacking on top of
+// it — a series is one thing you're paging through, not a fresh drill-down
+// each time. `data-push-card`/`.card-link` is the convention for content
+// that genuinely nests (a card-backed tag, a related-card preview); the
+// `card:` protocol is for markdown prose links only. Both are intercepted
+// by CardStack.svelte's delegated click handler.
 import CardHeader from '../CardHeader.astro';
 import { getSeriesSiblings } from '../../lib/series';
 import type { StoryEntry } from '../../lib/series';
@@ -44,7 +53,19 @@ const siblings = entry
 
 <CardHeader {title} {titleSuffix} {status} {date}>
   {siblings && (
-    <span class="series-position">{siblings.current}/{siblings.total}</span>
+    <nav class="series-quicknav dither-text" aria-label="Series position">
+      {siblings.prev ? (
+        <a class="series-quicknav-btn card-link" href={`/card/${siblings.prev.id}`} data-replace-slot={siblings.prev.id} aria-label="Previous chapter">‹</a>
+      ) : (
+        <span class="series-quicknav-btn series-quicknav-btn--disabled" aria-hidden="true">‹</span>
+      )}
+      <span class="series-position">{siblings.current}/{siblings.total}</span>
+      {siblings.next ? (
+        <a class="series-quicknav-btn card-link" href={`/card/${siblings.next.id}`} data-replace-slot={siblings.next.id} aria-label="Next chapter">›</a>
+      ) : (
+        <span class="series-quicknav-btn series-quicknav-btn--disabled" aria-hidden="true">›</span>
+      )}
+    </nav>
   )}
   <button class="stack-card-close" aria-label="Close">×</button>
 </CardHeader>
@@ -57,10 +78,70 @@ const siblings = entry
   </div>
 </div>
 
+{/* Mobile-only edge arrows: the same prev/next links as the header pair,
+    pinned to the viewport for one-thumb reach while reading a long chapter.
+    Rendered unconditionally; hidden at desktop by the media query below. */}
+{siblings && (siblings.prev || siblings.next) && (
+  <div class="series-floating-nav" aria-hidden="true">
+    {siblings.prev && (
+      <a class="series-floating-btn series-floating-btn--prev card-link" href={`/card/${siblings.prev.id}`} data-replace-slot={siblings.prev.id} aria-label="Previous chapter">‹</a>
+    )}
+    {siblings.next && (
+      <a class="series-floating-btn series-floating-btn--next card-link" href={`/card/${siblings.next.id}`} data-replace-slot={siblings.next.id} aria-label="Next chapter">›</a>
+    )}
+  </div>
+)}
+
 <style>
+  .series-quicknav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    /* Auto margin absorbs the header's justify-content: space-between gap on
+       this side only, so the title hugs the left edge and this + the close
+       button hug the right, together — "a slot just before the ×" rather
+       than floating wherever space-between happens to land a 3rd flex item. */
+    margin-left: auto;
+    /* The shared 4px --dither-text-stroke default (global.css) is sized for
+       1.1rem header titles; at this nav's small glyph size it reads as a
+       solid blob rather than a chevron. */
+    --dither-text-stroke: 3px;
+  }
+
   .series-position {
     font-size: 0.85em;
-    opacity: 0.7;
+    color: var(--color-text-muted);
     font-variant-numeric: tabular-nums;
   }
+
+  .series-quicknav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--color-text);
+    text-decoration: none;
+    line-height: 1;
+  }
+
+  a.series-quicknav-btn:hover {
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    -webkit-text-stroke-color: var(--color-selected-bg);
+  }
+
+  .series-quicknav-btn--disabled {
+    color: var(--color-text-muted);
+  }
+
+  /* .series-floating-nav / .series-floating-btn are styled in global.css, not
+     here: every entry in the stack renders its own SeriesNavRenderer output
+     (see "Every entry renders one .stack-card" in CLAUDE.md) — a scoped rule
+     here can't say "only when I'm the active card". `position: fixed` also
+     ignores its DOM ancestor's own layout entirely, so an un-gated floating
+     nav would render once per series card sitting in the stack (piled ones
+     included), stacking duplicate arrow pairs on screen. Visibility is
+     therefore keyed off the existing `.stack-card--active` contract, the
+     same way `.card-header--stuck` styling is (global.css). */
 </style>

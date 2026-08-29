@@ -211,6 +211,13 @@ const content = defineCollection({
         // ── stories ──
         series: z.string().optional(),
         order: z.number().optional(),
+        // The in-world/trip date this chapter depicts — deliberately separate
+        // from `date` (the publish date, which feeds when:*/sort/RSS/the
+        // dateLabel dateline). Auto-migrated story chapters often carry a
+        // `date` that is an artificial weekly publish cadence with no relation
+        // to when the trip actually happened; `storyDate` is what a series'
+        // date bar (see computeSeriesDateBar in src/lib/series.ts) reads.
+        storyDate: z.coerce.date().optional(),
         icon: z.string().optional(),
         map: z.string().optional(),
         latitude: z.number().optional(),
@@ -262,6 +269,19 @@ const content = defineCollection({
         // this card in both card mode and page mode. Undeclared → falls back
         // to the site default.
         width: z.string().optional(),
+        // Whether a series card shows the calendar-style date bar (see
+        // SeriesDateBar.astro / computeSeriesDateBar). Normally set per-folder
+        // in _config.yaml, where it cascades nearest-wins like `renderer`.
+        // Requires `storyDate` on the series' chapters — without it the bar
+        // has nothing to plot and renders nothing.
+        dateBar: z.boolean().optional(),
+        // How a series' sibling run previews on this card: 'strip' (default —
+        // the full-thumbnail "In this series" CardStrip, unchanged), 'dots' (a
+        // compact position strip shown above the content instead), or 'none'.
+        // Normally set per-folder in _config.yaml, where it cascades
+        // nearest-wins like `renderer`. Independent of `navRenderer` — see
+        // CLAUDE.md's nav-renderer section.
+        seriesPreview: z.enum(['strip', 'dots', 'none']).optional(),
     }),
 });
 

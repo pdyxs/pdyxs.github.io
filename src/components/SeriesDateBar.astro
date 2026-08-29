@@ -1,0 +1,118 @@
+---
+// The calendar-style date bar from the old site's trip-story pages (a
+// Bootstrap carousel with a day-of-month row above it, the active day
+// highlighted) — ported as a static CSS grid instead of a <table>, matching
+// the site's dither/`--color-selected-*` tokens rather than reproducing
+// Bootstrap's own styling. See computeSeriesDateBar (src/lib/series.ts) for
+// the data this renders — one column per day the trip spanned, gaps included.
+import type { SeriesDateBar as SeriesDateBarModel } from '../lib/series';
+
+interface Props {
+  bar: SeriesDateBarModel;
+}
+
+const { bar } = Astro.props;
+---
+
+<div class="series-date-bar" style={`--series-date-bar-cols: ${bar.cells.length}`}>
+  <div class="series-date-bar-months" role="presentation">
+    {bar.months.map(m => (
+      <span class="series-date-bar-month" style={`grid-column: span ${m.span}`}>{m.label}</span>
+    ))}
+  </div>
+  <ol class="series-date-bar-days" aria-label="Trip date">
+    {bar.cells.map(cell => (
+      <li class="series-date-bar-cell" class:list={{ 'series-date-bar-cell--active': cell.active }}>
+        {cell.uid ? (
+          <a class="series-date-bar-day card-link" href={`/card/${cell.uid}`} data-replace-slot={cell.uid}>{cell.day}</a>
+        ) : (
+          <span class="series-date-bar-day" aria-current={cell.active ? 'true' : undefined}>{cell.day}</span>
+        )}
+      </li>
+    ))}
+  </ol>
+</div>
+
+<style>
+  .series-date-bar {
+    margin: 0;
+    font-size: 0.8rem;
+    /* Own scroll region: a long trip (arctic runs 18 days) can outgrow a
+       narrow card, and this is calendar data — squeezing columns to fit
+       would make the days unreadable rather than just requiring a scroll. */
+    overflow-x: auto;
+  }
+
+  /* Cancels .stack-card-body-inner's top padding, the same trick
+     .generic-bleed:first-child uses to sit its image flush under the header
+     — this is the FIRST thing in the body when a series has a date bar (see
+     GenericRenderer.astro), so it inherits that same responsibility. Scoped
+     to :first-child for the same reason: a card without a date bar never
+     renders this element at all, so the scoping here is only ever
+     theoretical, but stating the real rule (not "always cancel") keeps it
+     honest if a future layout ever puts something before it. */
+  .series-date-bar:first-child {
+    margin-top: calc(-1 * var(--space-lg));
+  }
+
+  .series-date-bar-months,
+  .series-date-bar-days {
+    display: grid;
+    grid-template-columns: repeat(var(--series-date-bar-cols), minmax(1rem, 1fr));
+  }
+
+  .series-date-bar-month {
+    color: var(--color-text-muted);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .series-date-bar-days {
+    font-size: 0.6rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .series-date-bar-cell {
+    display: contents;
+  }
+
+  .series-date-bar-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.75rem;
+    border: var(--border-width) solid var(--color-border);
+    border-right: none;
+    color: var(--color-text);
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .series-date-bar-cell:first-child .series-date-bar-day {
+    border-left: none;
+  }
+
+  a.series-date-bar-day:hover {
+    background: var(--color-bg-hover);
+  }
+
+  /* The active day — mirror of every flat-surface rule, same tokens as
+     BrowseCard's --current tile (see the --color-selected-* table in
+     CLAUDE.md). Restated stroke: it's inherited and paper-coloured, which
+     fattens glyphs on an inverted surface instead of clearing dots behind
+     them. */
+  .series-date-bar-cell--active .series-date-bar-day {
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    border-color: var(--color-selected-bg);
+    -webkit-text-stroke-color: var(--color-selected-bg);
+    font-weight: 700;
+  }
+
+  .series-date-bar-day:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: -2px;
+  }
+</style>

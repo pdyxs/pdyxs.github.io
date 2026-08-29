@@ -64,6 +64,8 @@ export type CardFrontmatter = {
   width?: string;
   dateLabel?: string;
   gallery?: boolean;
+  dateBar?: boolean;
+  seriesPreview?: 'strip' | 'dots' | 'none';
   [key: string]: unknown;
 };
 
@@ -262,6 +264,19 @@ export type ResolvedCard = CardMeta & {
    * gallery to suppress.
    */
   gallery?: boolean;
+  /**
+   * Whether this series card shows the calendar-style date bar (frontmatter,
+   * else the nearest `_config.yaml`). Undefined/false → no bar, whether or
+   * not `storyDate` data exists. Kept off CardMeta — a browse listing has
+   * nowhere to put a date bar.
+   */
+  dateBar?: boolean;
+  /**
+   * How this series' sibling run previews (frontmatter, else the nearest
+   * `_config.yaml`; consumers default undefined to 'strip'). Kept off
+   * CardMeta for the same reason as `dateBar`.
+   */
+  seriesPreview?: 'strip' | 'dots' | 'none';
 };
 
 
@@ -370,6 +385,8 @@ export function resolveCard(
     width: data.width ?? cascade.width,
     dateLabel: data.dateLabel ?? cascade.dateLabel,
     gallery: data.gallery ?? cascade.gallery,
+    dateBar: data.dateBar ?? cascade.dateBar,
+    seriesPreview: data.seriesPreview ?? (cascade.seriesPreview as ResolvedCard['seriesPreview']),
   } satisfies ResolvedCard;
 }
 

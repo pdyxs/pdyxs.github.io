@@ -753,6 +753,18 @@
           if (d) d.style.viewTransitionName = 'home-divider';
         } else if (newCard) {
           newCard.style.viewTransitionName = 'panel-card-open';
+          // Hand the name off rather than sharing it: unlike the home-page-mode
+          // branch above (masked out of the new snapshot by `homepage.hidden`
+          // below), `clickedLink` is an ordinary in-stack card-link — the card
+          // it lives on stays visible after the push (a behind card is a CROP,
+          // never removed — see the desktop-vs-mobile collapse note in
+          // CLAUDE.md), so it would otherwise still carry this name into the
+          // new snapshot alongside `newCard` and the browser aborts the whole
+          // transition as "duplicate view-transition-name". Clearing it here,
+          // inside the same synchronous callback and before the new snapshot
+          // is captured, is what makes this pairing 1-old/1-new like every
+          // other named transition on the site.
+          if (clickedLink) (clickedLink as HTMLElement).style.viewTransitionName = '';
         }
         if (homepage) homepage.hidden = true;
       });
@@ -1011,6 +1023,12 @@
 
       const replaceItem = target.closest<HTMLElement>('[data-replace-slot]');
       if (replaceItem?.dataset.replaceSlot) {
+        // Unlike the strip lens's terminal tile (a <button>, no default action
+        // to suppress), a series card-link is a real <a href> — same reason
+        // as the data-push-card branch below: stop the browser's own
+        // navigation now that the SPA replace is handling it, or the two race
+        // and the native navigation wins, discarding the rest of the stack.
+        e.preventDefault();
         replaceSlot(uidToFetchUrl(replaceItem.dataset.replaceSlot), replaceItem.dataset.replaceParams);
         return;
       }

@@ -537,6 +537,82 @@ pre > code:not([class]) {
   font-size: 0.85rem;
 }
 
+/* ── Series quick-nav floating arrows (SeriesNavRenderer) ──────────────
+   Mobile-only edge arrows, gated to the active card the same way the sticky
+   header above is: every series card in the stack renders its own copy of
+   this markup, and `position: fixed` ignores DOM ancestry's own layout
+   entirely — un-gated, a piled series card behind the active one would float
+   its own arrow pair on screen too. See the comment in SeriesNavRenderer.astro
+   for why this can't be a scoped rule there. */
+/* The wrapper carries no box of its own (display: contents) — each button
+   position: fixed's itself independently against the viewport edge. A flex
+   wrapper with justify-content: space-between looked right with both
+   buttons present, but the first/last chapter renders only ONE of them (see
+   SeriesNavRenderer.astro), and space-between collapses a single flex child
+   to flex-start — the "next" arrow landing on the LEFT on chapter one was
+   that bug, not a left/right mixup. Independent fixed positioning has no
+   such failure mode: a button's side is never a function of its sibling's
+   presence. */
+.series-floating-nav {
+  display: none;
+}
+
+.stack-card--active .series-floating-nav {
+  display: contents;
+}
+
+.series-floating-btn {
+  display: none;
+  pointer-events: auto;
+  align-items: center;
+  justify-content: center;
+  width: 0.95rem;
+  height: 2rem;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border);
+  text-decoration: none;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.stack-card--active .series-floating-btn {
+  display: flex;
+}
+
+/* A small inset from the viewport edge, not flush — flush read as clipped
+   off-screen. This still overlaps the card itself on a narrow phone (the
+   card's own side gutter is often narrower than the button), which is the
+   point: a fixed-position edge control has nowhere else to go, so the fix
+   for "overlapping the card" is a button small and light enough that the
+   overlap reads as an intentional floating control, not a stray box. */
+.series-floating-btn--prev {
+  left: var(--space-xs);
+}
+
+.series-floating-btn--next {
+  right: var(--space-xs);
+}
+
+.series-floating-btn:hover {
+  background: var(--color-selected-bg);
+  color: var(--color-selected-fg);
+  -webkit-text-stroke-color: var(--color-selected-bg);
+}
+
+/* Desktop: the fan layout occupies the edges (behind/ahead cards, piles), and
+   the sticky header's quick-nav buttons are already reachable while
+   scrolling — see the CSS-first-responsive rule in CLAUDE.md. */
+@media (min-width: 681px) {
+  .stack-card--active .series-floating-btn {
+    display: none;
+  }
+}
+
 /* ── The clip reveal (issue #110) ──────────────────────────────────
    #98's ruling: geometric clip is the whole animation vocabulary. The dither
    dissolve that was scrubbed against it animates a length inside a mask-image,
@@ -574,6 +650,9 @@ pre > code:not([class]) {
 .stack-card-spine-title,
 /* The lens footnote shares the header's dithered surface (see .lens-note). */
 .lens-note,
+/* The header's close button sits on the same dithered surface as the title
+   beside it. */
+.stack-card-close,
 /* Surfaces whose background becomes a dither on hover (--color-bg-hover).
    The stroke is inert until that dither appears, so applying it at rest is
    free. Class names are matched from here rather than each component's
@@ -596,6 +675,7 @@ pre,
 }
 
 /* Smaller UI text needs a lighter stroke than the 1.1rem header titles. */
+.stack-card-close,
 .stack-card-spine-title,
 .card-listing-item,
 .browse-card-item,
@@ -983,6 +1063,14 @@ pre,
   line-height: 1;
   padding: 0;
   color: var(--color-text);
+  /* Fixed box, glyph centred inside it: the hover weight jump below (300 to
+     700) widens the glyph's own ink, which otherwise reflows this flex
+     item's width and shoves the quicknav beside it sideways. The box stays
+     put; only the glyph inside it gets bolder. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
 }
 
 .stack-card-close:hover { font-weight: 700; }
@@ -1570,9 +1658,39 @@ pre,
    edge of the card, not content floating inside it — so this one wrapper
    cancels the body's top padding and its inline inset (--body-inset-inline, set
    on .stack-card-body-inner) and its children just fill it. Doing the maths
-   once here is what keeps image and band edges aligned. */
+   once here is what keeps image and band edges aligned.
+
+   The top cancellation is scoped to :first-child deliberately: a series card
+   with a date bar (SeriesDateBar.astro) renders that ABOVE the masthead, so
+   .generic-bleed is no longer flush against the container's own padding —
+   it's flush against the date bar's bottom margin instead. Un-scoped, this
+   negative margin pulled the image up regardless of what precedes it,
+   clipping into the date bar rather than cancelling the container's padding. */
 .generic-bleed {
-  margin: calc(-1 * var(--space-lg)) calc(-1 * var(--body-inset-inline, 0px)) var(--space-lg);
+  margin: 0 calc(-1 * var(--body-inset-inline, 0px)) var(--space-lg);
+}
+
+.generic-bleed:first-child {
+  margin-top: calc(-1 * var(--space-lg));
+}
+
+/* A series card in 'dots' preview (SeriesDotStrip.astro) renders that strip
+   directly after the masthead — dateline and the date bar both take a
+   different slot or are absent (see GenericRenderer.astro), so this
+   adjacency reliably holds whenever it applies. .generic-bleed's own
+   var(--space-lg) bottom margin reads as a normal paragraph gap everywhere
+   else it's used; between two bits of series chrome it's just dead air, so
+   pull the strip up to a tight --space-xs instead of overriding the margin
+   generally. */
+/* .stack-card-body-inner qualifier is load-bearing, not decorative: it's
+   what makes this MORE specific than SeriesDotStrip.astro's own scoped
+   `.series-dot-strip[data-astro-cid-*] { margin: 0 0 var(--space-md) }`
+   (2 selectors either way — a bare `.generic-bleed + .series-dot-strip` ties
+   it, and in dev the component's Vite-injected <style> tag lands after this
+   stylesheet, so the tie went to margin-top: 0 and this rule silently did
+   nothing). */
+.stack-card-body-inner .generic-bleed + .series-dot-strip {
+  margin-top: calc(-1 * var(--space-lg) + var(--space-xs));
 }
 
 .generic-bleed > .generic-image,
@@ -1601,7 +1719,7 @@ pre,
      it, so this is a guard rather than a correction: the band's bordered chips
      and buttons must never sit flush against the card frame — which reads as a
      collision — if a card mode drops --body-inset-inline to 0 (page mode does). */
-  padding: var(--space-sm) max(var(--body-inset-inline, 0px), var(--space-sm));
+  padding: var(--space-xs) max(var(--body-inset-inline, 0px), var(--space-xs));
   border-bottom: var(--border-width) solid var(--color-border);
 }
 

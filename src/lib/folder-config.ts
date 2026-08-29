@@ -89,6 +89,19 @@ export type FolderCascade = {
    */
   gallery?: boolean;
   /**
+   * Nearest-ancestor `dateBar` — whether a series card shows the calendar-style
+   * date bar instead of the ordinary dateline. Nearest-wins, like `renderer`.
+   * See CardMeta's/ResolvedCard's `dateBar` and computeSeriesDateBar (series.ts).
+   */
+  dateBar?: boolean;
+  /**
+   * Nearest-ancestor `seriesPreview` — how a series' sibling run previews on
+   * this card ('strip' | 'dots' | 'none'). Nearest-wins, like `renderer`, and
+   * deliberately independent of `navRenderer`: a series can show the compact
+   * dots without a dedicated header nav, or the full strip with one.
+   */
+  seriesPreview?: string;
+  /**
    * The SUM of every ancestor `_config.yaml` `priority` — the one cascading key
    * that accumulates rather than nearest-wins, because a boost on `what` and a
    * boost on `what/puzzles` are two separate statements and the deeper one is
@@ -122,6 +135,8 @@ type ConfigFile = {
   dateLabel?: string;
   width?: string;
   gallery?: boolean;
+  dateBar?: boolean;
+  seriesPreview?: string;
   priority?: number;
   sort?: string;
   excludeTags?: string[];
@@ -159,6 +174,8 @@ export async function resolveFolderCascade(
   let dateLabel: string | undefined;
   let width: string | undefined;
   let gallery: boolean | undefined;
+  let dateBar: boolean | undefined;
+  let seriesPreview: string | undefined;
   let priority: number | undefined;
   let sort: FolderSort | undefined;
   const cascadeTags: string[] = [];
@@ -180,6 +197,8 @@ export async function resolveFolderCascade(
     if (parsed.width) width = parsed.width;
     // Explicit typeof check, not truthiness: `gallery: false` is the whole point.
     if (typeof parsed.gallery === 'boolean') gallery = parsed.gallery;
+    if (typeof parsed.dateBar === 'boolean') dateBar = parsed.dateBar;
+    if (typeof parsed.seriesPreview === 'string') seriesPreview = parsed.seriesPreview;
     // `priority` ACCUMULATES — every other key here replaces. See priority.ts.
     if (typeof parsed.priority === 'number') priority = (priority ?? 0) + parsed.priority;
     const parsedSort = parseFolderSort(parsed.sort);
@@ -230,5 +249,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, width, gallery, priority, sort, cascadeTags, excludeTags, overrides, tagIdentity };
+  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, width, gallery, dateBar, seriesPreview, priority, sort, cascadeTags, excludeTags, overrides, tagIdentity };
 }
