@@ -647,6 +647,29 @@ Four things that bite:
 
 ## Conventions
 
+### Anything that ships in a card fragment is styled in `global.css`
+
+A card fragment is fetched and injected into whatever page the visitor is
+already on. Astro only bundles a component's scoped `<style>` into the pages
+that render that component **at build time**, so a scoped rule on fragment
+markup simply does not exist on the page the fragment lands in — the card
+paints unstyled and only looks right after a reload onto `/card/...`, which is
+what makes this invisible in local single-page testing.
+
+So a component whose markup can arrive inside a fragment carries **no scoped
+`<style>` at all**; its rules go in `global.css`, like `.card-header`,
+`.generic-bleed`, `.stack-pile` and `.series-*` already do. That includes every
+card renderer, every nav renderer, and anything they compose
+(`SeriesDateBar`, `SeriesDotStrip`, `SeriesNavRenderer`).
+
+The second, independent reason for the same placement: **every** entry in the
+stack renders its own copy of the fragment markup, so a rule that is only true
+of the *active* card (`.series-floating-*`, `.card-header--stuck`) has to name
+`.stack-card--active` — which a scoped rule cannot do.
+
+The islands are the exception: a `.svelte` component's styles are shipped with
+the island, which hydrates wherever it lands, so those stay scoped.
+
 ### All semantic colors and spacing go through CSS custom properties
 
 No hex literals or raw pixel values outside `:root` for anything that represents a design token (colors, spacing, radii, breakpoints). Dark-mode support and future theming depend on this.

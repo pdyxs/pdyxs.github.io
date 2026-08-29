@@ -80,7 +80,7 @@ const siblings = entry
 
 {/* Mobile-only edge arrows: the same prev/next links as the header pair,
     pinned to the viewport for one-thumb reach while reading a long chapter.
-    Rendered unconditionally; hidden at desktop by the media query below. */}
+    Rendered unconditionally; hidden at desktop by a media query in global.css. */}
 {siblings && (siblings.prev || siblings.next) && (
   <div class="series-floating-nav" aria-hidden="true">
     {siblings.prev && (
@@ -92,56 +92,13 @@ const siblings = entry
   </div>
 )}
 
-<style>
-  .series-quicknav {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    /* Auto margin absorbs the header's justify-content: space-between gap on
-       this side only, so the title hugs the left edge and this + the close
-       button hug the right, together — "a slot just before the ×" rather
-       than floating wherever space-between happens to land a 3rd flex item. */
-    margin-left: auto;
-    /* The shared 4px --dither-text-stroke default (global.css) is sized for
-       1.1rem header titles; at this nav's small glyph size it reads as a
-       solid blob rather than a chevron. */
-    --dither-text-stroke: 3px;
-  }
+{/* No scoped <style>. `.series-quicknav*` and `.series-floating-*` both live
+    in global.css, for two independent reasons:
 
-  .series-position {
-    font-size: 0.85em;
-    color: var(--color-text-muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .series-quicknav-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
-    color: var(--color-text);
-    text-decoration: none;
-    line-height: 1;
-  }
-
-  a.series-quicknav-btn:hover {
-    background: var(--color-selected-bg);
-    color: var(--color-selected-fg);
-    -webkit-text-stroke-color: var(--color-selected-bg);
-  }
-
-  .series-quicknav-btn--disabled {
-    color: var(--color-text-muted);
-  }
-
-  /* .series-floating-nav / .series-floating-btn are styled in global.css, not
-     here: every entry in the stack renders its own SeriesNavRenderer output
-     (see "Every entry renders one .stack-card" in CLAUDE.md) — a scoped rule
-     here can't say "only when I'm the active card". `position: fixed` also
-     ignores its DOM ancestor's own layout entirely, so an un-gated floating
-     nav would render once per series card sitting in the stack (piled ones
-     included), stacking duplicate arrow pairs on screen. Visibility is
-     therefore keyed off the existing `.stack-card--active` contract, the
-     same way `.card-header--stuck` styling is (global.css). */
-</style>
+    - this markup ships inside a card FRAGMENT, injected into a page that
+      never rendered this component at build time — so Astro never bundled a
+      scoped rule into that page's CSS and the nav landed unstyled;
+    - the floating pair additionally needs `.stack-card--active` gating, which
+      a scoped rule cannot express: every series card in the stack renders its
+      own copy of this markup, and `position: fixed` ignores DOM ancestry, so
+      un-gated a piled card behind the active one floats its own arrows. */}

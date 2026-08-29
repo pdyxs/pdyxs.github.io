@@ -38,7 +38,10 @@ const PARAM_SEP = '~';
  *  must not carry its own copy of the character. */
 export const ENTRY_SEP = '.';
 const LENS_PREFIX = 'lens/';
-const LENS_BASE = '/lens';
+/** The path prefix the ACTIVE lens location occupies (see `pathForActive`).
+ *  Exported because it is also how a location tells whether it is the active
+ *  one: only the active entry is named in the path. */
+export const LENS_BASE = '/lens';
 
 /**
  * The query keys this codec owns. They describe the SHAPE OF THE STACK — which

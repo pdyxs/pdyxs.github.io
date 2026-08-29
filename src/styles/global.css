@@ -613,6 +613,231 @@ pre > code:not([class]) {
   }
 }
 
+/* ── Series chrome: quick-nav, date bar, dot strip ─────────────────────
+   These three components' markup ships inside a CARD FRAGMENT, which is
+   fetched and injected into whatever page the visitor is already on
+   (CardStack.svelte / card-fragments.ts). Astro only bundles a component's
+   scoped <style> into pages that render it at build time, so scoped rules
+   here simply do not exist on a lens page — the fragment landed unstyled and
+   only looked right after a reload onto /card/... . Any styling for markup
+   that can arrive as a fragment belongs in this file, the same as
+   .card-header / .generic-bleed / .stack-pile above. */
+
+/* SeriesNavRenderer.astro — the header pair. */
+.series-quicknav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  /* Auto margin absorbs the header's justify-content: space-between gap on
+     this side only, so the title hugs the left edge and this + the close
+     button hug the right, together — "a slot just before the ×" rather
+     than floating wherever space-between happens to land a 3rd flex item. */
+  margin-left: auto;
+  /* The shared 4px --dither-text-stroke default is sized for 1.1rem header
+     titles; at this nav's small glyph size it reads as a solid blob rather
+     than a chevron. */
+  --dither-text-stroke: 3px;
+}
+
+.series-position {
+  font-size: 0.85em;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.series-quicknav > .series-quicknav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-text);
+  text-decoration: none;
+  line-height: 1;
+}
+
+a.series-quicknav-btn:hover {
+  background: var(--color-selected-bg);
+  color: var(--color-selected-fg);
+  -webkit-text-stroke-color: var(--color-selected-bg);
+}
+
+.series-quicknav-btn--disabled {
+  color: var(--color-text-muted);
+}
+
+/* SeriesDateBar.astro — the calendar strip. */
+.series-date-bar {
+  margin: 0;
+  font-size: 0.8rem;
+  /* Own scroll region: a long trip (arctic runs 18 days) can outgrow a
+     narrow card, and this is calendar data — squeezing columns to fit
+     would make the days unreadable rather than just requiring a scroll. */
+  overflow-x: auto;
+}
+
+/* Cancels .stack-card-body-inner's top padding, the same trick
+   .generic-bleed:first-child uses to sit its image flush under the header
+   — this is the FIRST thing in the body when a series has a date bar (see
+   GenericRenderer.astro), so it inherits that same responsibility. Scoped
+   to :first-child for the same reason: a card without a date bar never
+   renders this element at all, so the scoping here is only ever
+   theoretical, but stating the real rule (not "always cancel") keeps it
+   honest if a future layout ever puts something before it. */
+.series-date-bar:first-child {
+  margin-top: calc(-1 * var(--space-lg));
+}
+
+.series-date-bar-months,
+.series-date-bar-days {
+  display: grid;
+  grid-template-columns: repeat(var(--series-date-bar-cols), minmax(1rem, 1fr));
+}
+
+.series-date-bar-month {
+  color: var(--color-text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.series-date-bar-days {
+  font-size: 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.series-date-bar-cell {
+  display: contents;
+}
+
+/* Child combinator, not a bare class: the link variant also carries
+   `.card-link`, whose `display: block` is declared LATER in this file and ties
+   on specificity (0,1,0) — so a bare `.series-date-bar-day` loses the tie and
+   only the non-link days stay centred. The scoped rule this replaced won by
+   accident, via its `[data-astro-cid-*]` attribute. Naming the cell is the
+   honest way to say it, and it can't drift with source order.
+   Same reasoning for `.series-quicknav-btn` and `.series-dot-arrow` below. */
+.series-date-bar-cell > .series-date-bar-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+  border: var(--border-width) solid var(--color-border);
+  border-right: none;
+  color: var(--color-text);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.series-date-bar-cell:first-child .series-date-bar-day {
+  border-left: none;
+}
+
+a.series-date-bar-day:hover {
+  background: var(--color-bg-hover);
+}
+
+/* The active day — mirror of every flat-surface rule, same tokens as
+   BrowseCard's --current tile (see the --color-selected-* table in
+   CLAUDE.md). Restated stroke: it's inherited and paper-coloured, which
+   fattens glyphs on an inverted surface instead of clearing dots behind
+   them. */
+.series-date-bar-cell--active .series-date-bar-day {
+  background: var(--color-selected-bg);
+  color: var(--color-selected-fg);
+  border-color: var(--color-selected-bg);
+  -webkit-text-stroke-color: var(--color-selected-bg);
+  font-weight: 700;
+}
+
+.series-date-bar-day:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: -2px;
+}
+
+/* SeriesDotStrip.astro — the compact position strip. */
+.series-dot-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-md);
+}
+
+.series-dot-track {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Allows the row to shrink below its natural width instead of wrapping —
+     the whole point for a 22-chapter series (see the component header). */
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.series-dot-item {
+  display: contents;
+}
+
+.series-dot {
+  display: block;
+  /* Basis, not a fixed size: shrinks on a narrow/long series, never grows
+     past it on a short one — a wrapper that stretched to fill the card
+     would make Fate's Hand's 6 squares comically large. */
+  flex: 0 1 12px;
+  width: 12px;
+  height: 12px;
+  min-width: 4px;
+  min-height: 4px;
+  border: var(--border-width) solid var(--color-border);
+  padding: 0;
+}
+
+a.series-dot:hover {
+  background: var(--color-bg-hover);
+}
+
+/* "You are here" — the mirror of every flat-surface rule, same tokens as
+   BrowseCard's --current tile (see the --color-selected-* table in
+   CLAUDE.md). No text/stroke to restate here — an empty square carries no
+   glyph. */
+.series-dot-item--current .series-dot {
+  background: var(--color-selected-bg);
+  border-color: var(--color-selected-bg);
+  cursor: default;
+}
+
+.series-dot:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+
+.series-dot-strip > .series-dot-arrow {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-text);
+  text-decoration: none;
+  line-height: 1;
+}
+
+a.series-dot-arrow:hover {
+  background: var(--color-selected-bg);
+  color: var(--color-selected-fg);
+  -webkit-text-stroke-color: var(--color-selected-bg);
+}
+
+.series-dot-arrow--disabled {
+  color: var(--color-text-muted);
+}
+
 /* ── The clip reveal (issue #110) ──────────────────────────────────
    #98's ruling: geometric clip is the whole animation vocabulary. The dither
    dissolve that was scrubbed against it animates a length inside a mask-image,
@@ -1048,8 +1273,14 @@ pre,
 }
 
 
+/* `border-left`/`border-right`/`border-bottom`, deliberately not the `border`
+   shorthand: the active header sets its own `border-top` above (issue #110,
+   the sticky-divider trick) and this selector also matches it — `border: none`
+   here used to wipe that out on every equally-specific match, leaving the
+   compact/stuck header with no line dividing it from the page it's carrying. */
 .stack-card > .card-header {
-  border: none;
+  border-left: none;
+  border-right: none;
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
@@ -1682,13 +1913,10 @@ pre,
    else it's used; between two bits of series chrome it's just dead air, so
    pull the strip up to a tight --space-xs instead of overriding the margin
    generally. */
-/* .stack-card-body-inner qualifier is load-bearing, not decorative: it's
-   what makes this MORE specific than SeriesDotStrip.astro's own scoped
-   `.series-dot-strip[data-astro-cid-*] { margin: 0 0 var(--space-md) }`
-   (2 selectors either way — a bare `.generic-bleed + .series-dot-strip` ties
-   it, and in dev the component's Vite-injected <style> tag lands after this
-   stylesheet, so the tie went to margin-top: 0 and this rule silently did
-   nothing). */
+/* The .stack-card-body-inner qualifier is what makes this outrank the plain
+   `.series-dot-strip` base rule above (which sets margin: 0 0 var(--space-md));
+   a bare `.generic-bleed + .series-dot-strip` would too, but only by source
+   order, and this rule sits BEFORE that block. State the specificity. */
 .stack-card-body-inner .generic-bleed + .series-dot-strip {
   margin-top: calc(-1 * var(--space-lg) + var(--space-xs));
 }

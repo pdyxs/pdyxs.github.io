@@ -13,6 +13,7 @@
   import type { FiveWDimension } from '../lib/five-w';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid, DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
+  import { LENS_BASE } from '../lib/stack-codec';
   import type { TagNode } from '../lib/browse-helpers';
   import type { TagDisplay } from '../lib/tag-display';
   import FilterBar from './FilterBar.svelte';
@@ -44,6 +45,15 @@
   // non-accepting lens is covered without patching each call site.
   function enforceNoFilters() {
     if (lens.acceptsFilters) return;
+    // ...and only when THIS lens is the active location. Every entry in the
+    // stack renders its own shell — a `from` entry is collapsed, not absent —
+    // so a cold load of `/lens/interesting?filter.what=...&from=0` mounts the
+    // home lens's shell too, and un-gated it stripped the ACTIVE lens's
+    // filters out of the shared store and the URL (the same class of bug as
+    // the floating series arrows: a rule about the active card written where
+    // every card can run it). The active location is the one named in the
+    // path, which is the codec's own contract (`pathForActive`).
+    if (window.location.pathname !== `${LENS_BASE}/${lens.id}`) return;
     lensFilterStore.set(emptyFilterState());
     const current = window.location.search;
     const strippedQuery = stripFilterParams(new URLSearchParams(current)).toString();
