@@ -882,7 +882,7 @@
   {
     "uid": "what/posts/2024-10-08-last-year-i-started-playing-with",
     "code": "2Q",
-    "title": "Last year I started playing with lino printing.This is the first…"
+    "title": "Last year I started playing with lino printing. This is the first…"
   },
   {
     "uid": "what/posts/2024-11-27-more-fun-with-linocut-linoprint",
@@ -1608,5 +1608,25 @@
   {
     "uid": "what/writing/2011-07-19-playtesting-102/2011-08-02-playtesting-103",
     "code": "5g"
+  },
+  {
+    "uid": "what/writing/2019-07-18-on-creative-anxiety-and-residency-retrospectives",
+    "code": "5h",
+    "title": "On Creative Anxiety, and residency retrospectives"
+  },
+  {
+    "uid": "what/writing/2020-04-29-not-quite-abandoned",
+    "code": "5i",
+    "title": "Not Quite Abandoned"
+  },
+  {
+    "uid": "what/writing/2020-05-08-momemtum",
+    "code": "5j",
+    "title": "Momemtum"
+  },
+  {
+    "uid": "what/writing/2020-06-02-gotta-get-outta-this-project-timeline",
+    "code": "5k",
+    "title": "Gotta Get Outta This Project Timeline"
   }
 ]
