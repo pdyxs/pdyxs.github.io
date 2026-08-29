@@ -117,6 +117,13 @@ export function isRemoteImageUrl(url: string): boolean {
   return REMOTE_IMAGE_URL.test(url);
 }
 
+const REMOTE_VIDEO_URL = /^https?:\/\/.*\.(mp4|webm|mov)(\?.*)?$/i;
+
+/** Same rule as isRemoteImageUrl, for a remote video URL used as a header `image`. */
+export function isRemoteVideoUrl(url: string): boolean {
+  return REMOTE_VIDEO_URL.test(url);
+}
+
 /**
  * Resolves the set of media to show in a card's gallery.
  *

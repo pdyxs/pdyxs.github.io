@@ -30,6 +30,8 @@ export type SerialisedCard = {
   thumb?: string;
   /** Responsive srcset for a local thumbnail (multiple widths); absent for remote images. */
   thumbSrcset?: string;
+  /** 'video' when `thumb` is a video URL to render with `<video>` rather than `<img>`; absent (image) otherwise. */
+  thumbKind?: 'video';
   /** Present only on a collapsed-folder representative: member count, for the count badge. */
   collapsed?: { count: number };
   /** Resolved publish-lifecycle status (see CardMeta.status), carried through

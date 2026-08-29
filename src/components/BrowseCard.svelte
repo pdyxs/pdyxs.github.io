@@ -47,7 +47,12 @@
     data-push-card={current ? undefined : card.uid}
     aria-current={current ? 'true' : undefined}
   >
-    {#if card.thumb}
+    {#if card.thumb && card.thumbKind === 'video'}
+      <!-- No frame grab is generated for a video header — preload="metadata"
+           gets the browser to paint the first frame for free, same as
+           ImageGallery's video tiles. -->
+      <video class="browse-card-thumb" src={card.thumb} muted preload="metadata"></video>
+    {:else if card.thumb}
       <img
         class="browse-card-thumb"
         src={card.thumb}

@@ -11,9 +11,12 @@
 // which is why card previews on a card body rendered without their images.
 
 import { getImage } from 'astro:assets';
-import { resolveLocalImage, isRemoteImageUrl } from './images';
+import { resolveLocalImage, resolveLocalVideo, isRemoteImageUrl, isRemoteVideoUrl } from './images';
+import { parseEmbedUrl, embedPosterUrl } from './embeds';
 import type { CardMeta } from './cards';
 import type { SerialisedCardFull } from './frontpage';
+
+type Thumb = { thumb?: string; thumbSrcset?: string; thumbKind?: 'video' };
 
 /**
  * Resolve a card's header `image` to a thumbnail.
@@ -24,8 +27,18 @@ import type { SerialisedCardFull } from './frontpage';
  * when the URL ends in a known image extension: the migrated content is full of
  * dead Jekyll-era embed and video links that would otherwise render as broken
  * images.
+ *
+ * A header `image` that is itself video — a colocated file (e.g. an
+ * Instagram-era `.mp4`) or a remote video URL — has no frame grab to serve as
+ * an `<img>`, so it's carried through as-is with `thumbKind: 'video'` and
+ * rendered with `<video preload="metadata">`, which the browser paints with
+ * the first frame for free (the same trick ImageGallery already relies on for
+ * video gallery tiles). A header `image` that is a YouTube/Vimeo URL (rather
+ * than a frame grab or a video file) falls back to that provider's poster, the
+ * same one the gallery facade uses — otherwise a video-headed card has no
+ * preview at all.
  */
-async function resolveThumb(card: CardMeta): Promise<{ thumb?: string; thumbSrcset?: string }> {
+async function resolveThumb(card: CardMeta): Promise<Thumb> {
   const localImage = resolveLocalImage(card.uid, card.image);
   if (localImage) {
     const generated = await getImage({ src: localImage, widths: [360, 720], format: 'webp' });
@@ -33,6 +46,18 @@ async function resolveThumb(card: CardMeta): Promise<{ thumb?: string; thumbSrcs
   }
   if (card.image && isRemoteImageUrl(card.image)) {
     return { thumb: card.image };
+  }
+  const localVideo = resolveLocalVideo(card.uid, card.image);
+  if (localVideo) {
+    return { thumb: localVideo, thumbKind: 'video' };
+  }
+  if (card.image && isRemoteVideoUrl(card.image)) {
+    return { thumb: card.image, thumbKind: 'video' };
+  }
+  const embed = parseEmbedUrl(card.image);
+  if (embed) {
+    const poster = embedPosterUrl(embed);
+    if (poster) return { thumb: poster };
   }
   return {};
 }
@@ -47,7 +72,7 @@ async function resolveThumb(card: CardMeta): Promise<{ thumb?: string; thumbSrcs
  * crosses the wire stays a decision.
  */
 export async function serialiseBrowseCard(card: CardMeta): Promise<SerialisedCardFull> {
-  const { thumb, thumbSrcset } = await resolveThumb(card);
+  const { thumb, thumbSrcset, thumbKind } = await resolveThumb(card);
   return {
     uid: card.uid,
     title: card.title,
@@ -72,6 +97,7 @@ export async function serialiseBrowseCard(card: CardMeta): Promise<SerialisedCar
     order: card.order,
     thumb,
     thumbSrcset,
+    thumbKind,
   };
 }
 
