@@ -22,6 +22,7 @@ tags: []
 # project:        # string
 # series:         # string
 # order:          # number
+# storyDate:      # date (YYYY-MM-DD)
 # icon:           # string
 # map:            # string
 # latitude:       # number
