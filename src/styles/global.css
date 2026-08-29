@@ -1179,7 +1179,7 @@ pre,
    with the spine shut and 6029px with it open — the whole body relaid out,
    which is the reflow the occlusion model exists to avoid. */
 .stack-card > .body-wrapper {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   grid-row: 2;
 }
 
