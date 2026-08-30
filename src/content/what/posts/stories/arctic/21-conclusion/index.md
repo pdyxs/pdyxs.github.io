@@ -1,10 +1,9 @@
 ---
-inspected: false
+inspected: true
 tags:
-  - why/viewable
 image: image.png
 title: Conclusion
-date: '2018-09-02 15:00:00 +1000'
+date: 2018-09-02 15:00:00 +1000
 storyDate: 2018-06-13
 series: arctic
 order: 21

@@ -5,6 +5,8 @@ description: >
 # wherever I was by then. Pin the trip location and drop the derivation.
 tags:
   - where/europe/norway/svalbard
+  - why/learn/travel
+  - why/viewable
 excludeTags:
   - generated/location
 collapse: true

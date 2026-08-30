@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 image: image.png
 title: The Arctic Circle
 icon: info-circle

@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 image: image.png
 title: Surge Glaciers
 series: arctic

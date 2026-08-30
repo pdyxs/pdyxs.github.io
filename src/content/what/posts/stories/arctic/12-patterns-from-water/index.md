@@ -1,11 +1,11 @@
 ---
-inspected: false
+inspected: true
 image: image.png
 title: Trees in the Ground
 photo-dates:
   - 2018-06-22T00:00:00.000Z
   - 2018-06-23T00:00:00.000Z
-date: '2018-08-10 04:00:00 +1000'
+date: 2018-08-10 04:00:00 +1000
 storyDate: 2018-06-22
 series: arctic
 order: 12

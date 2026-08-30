@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 image: image.png
 title: Fractals in the Mud
 series: arctic

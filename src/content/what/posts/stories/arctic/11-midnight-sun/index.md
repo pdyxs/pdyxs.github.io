@@ -1,8 +1,8 @@
 ---
-inspected: false
+inspected: true
 image: image.png
 title: The Midnight Sun
-date: '2018-08-08 15:00:00 +1000'
+date: 2018-08-08 15:00:00 +1000
 storyDate: 2018-06-18
 series: arctic
 order: 11

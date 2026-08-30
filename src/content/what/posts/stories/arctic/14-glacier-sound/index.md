@@ -1,8 +1,8 @@
 ---
-inspected: false
+inspected: true
 image: image.png
 title: The sound of glaciers
-date: '2018-08-13 04:00:00 +1000'
+date: 2018-08-13 04:00:00 +1000
 storyDate: 2018-06-16
 series: arctic
 order: 14

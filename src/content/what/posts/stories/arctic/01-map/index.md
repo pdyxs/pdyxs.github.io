@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 map: countries/norway
 icon: globe-asia
 latitude: 79.3
