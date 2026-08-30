@@ -110,13 +110,25 @@
      header, so the peek has to be a visible slice of one rather than a hairline;
      the desktop block cuts it down to the staircase's own scale. */
   --stack-scroll-peek: 28px;
+  /* DEBUG KNOB. Multiplies every stack duration below, so the whole transition
+     can be slowed down as one and watched. Ships at 1 — the durations here are
+     the real ones. The two JS slack timeouts that pair with them scale by this
+     too (`motionScale()` in CardStack.svelte); nothing else reads it. */
+  --stack-motion-scale: 1;
   /* One card sliding to a new slot. Zeroed under reduced motion below. */
-  --stack-motion-ms: 320ms;
+  --stack-motion-ms: calc(480ms * var(--stack-motion-scale));
   /* The clip reveal of a body whose content has just arrived. */
-  --stack-reveal-ms: 320ms;
+  --stack-reveal-ms: calc(480ms * var(--stack-motion-scale));
+  /* The body expand/collapse (the grid 0fr <-> 1fr trick). */
+  --stack-body-ms: calc(450ms * var(--stack-motion-scale));
+  /* The View Transition that morphs a link into the pushed card, and the
+     crossfade a series/lens replace runs instead. */
+  --stack-vt-ms: calc(450ms * var(--stack-motion-scale));
   /* The compact/full swap of the sticky active header. Short on purpose: it is
-     a response to scrolling, and anything slower trails the scroll it answers. */
-  --stack-stuck-ms: 180ms;
+     a response to scrolling, and anything slower trails the scroll it answers.
+     It keeps its RATIO to the rest (~0.56 of a card move) rather than a fixed
+     ms, so the whole set stays one piece of timing. */
+  --stack-stuck-ms: calc(270ms * var(--stack-motion-scale));
   /* Ceiling for an image the body renders inline. Landscape diagrams are
      unaffected (they hit the 100% width cap first); it exists for tall portrait
      images — a worked example photographed in portrait would otherwise run
@@ -422,10 +434,25 @@ pre > code:not([class]) {
 
 /* ── View Transitions ──────────────────────────────────────────── */
 
+/* The series/lens REPLACE (`replaceSlot` in CardStack.svelte). Its own name
+   rather than a share of `panel-card-open`, so a push mid-flight over the same
+   region can never collide with it — two live elements holding one name aborts
+   the whole transition. */
+::view-transition-group(panel-card-replace) {
+  z-index: 1;
+  animation-duration: var(--stack-vt-ms);
+  animation-timing-function: ease-in-out;
+}
+
+::view-transition-old(panel-card-replace),
+::view-transition-new(panel-card-replace) {
+  animation-duration: var(--stack-vt-ms);
+}
+
 ::view-transition-group(panel-card-open),
 ::view-transition-group(panel-card-close) {
   z-index: 1;
-  animation-duration: 300ms;
+  animation-duration: var(--stack-vt-ms);
   animation-timing-function: ease-in-out;
 }
 
@@ -433,12 +460,12 @@ pre > code:not([class]) {
 ::view-transition-new(panel-card-open),
 ::view-transition-old(panel-card-close),
 ::view-transition-new(panel-card-close) {
-  animation-duration: 300ms;
+  animation-duration: var(--stack-vt-ms);
 }
 
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 300ms;
+  animation-duration: var(--stack-vt-ms);
 }
 
 /* Home → card morph: the page-mode title and divider slide into the pushed
@@ -446,7 +473,7 @@ pre > code:not([class]) {
 ::view-transition-group(home-title),
 ::view-transition-group(home-divider) {
   z-index: 1;
-  animation-duration: 300ms;
+  animation-duration: var(--stack-vt-ms);
   animation-timing-function: ease-in-out;
 }
 
@@ -1102,7 +1129,7 @@ pre,
 /* `--left-col` is REGISTERED, and not for the reason it looks like.
    Measured in Chrome 152 (2026-08-22): a `var()` inside
    `grid-template-columns` interpolates identically whether or not the
-   property is registered — both animate 0 -> 40px over 320ms through the same
+   property is registered — both animate 0 -> 40px over --stack-motion-ms through the same
    intermediate track sizes — because the substitution happens at
    computed-value time and it is `grid-template-columns` itself that
    transitions. Registration buys nothing for the animation.
@@ -1328,7 +1355,7 @@ pre,
 .body-wrapper {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 300ms ease-out;
+  transition: grid-template-rows var(--stack-body-ms) ease-out;
 }
 
 .body-wrapper.open {
@@ -1361,7 +1388,7 @@ pre,
 
    There used to be a `.stack-card--collapsed .stack-card-body { display: none }`
    here instead. It removed the very box `.body-wrapper`'s `0fr -> 1fr`
-   transition animates, so mobile collapse SNAPPED — the 300ms transition below
+   transition animates, so mobile collapse SNAPPED — the --stack-body-ms transition below
    had been dead since it was written. Deleting it is the whole of "mobile
    animates smoothly" (issue #109). */
 .stack-card--collapsed .body-wrapper.open {
@@ -1549,7 +1576,7 @@ pre,
   /* MOTION. `left`/`top` and never `transform`: a transform on an ancestor of a
      dithered surface re-anchors its `background-attachment: fixed` grid, and
      #98 confirmed on a real display that the shimmer this causes is visible
-     over a 320ms slide, not just at rest. Offsets repaint the dither instead of
+     over the slide, not just at rest. Offsets repaint the dither instead of
      compositing it, which is the cost this design accepts.
 
      `grid-template-columns` is in the list because the spine opening and
@@ -1567,7 +1594,25 @@ pre,
     transition:
       left var(--stack-motion-ms) ease-out,
       top var(--stack-motion-ms) ease-out,
-      grid-template-columns var(--stack-motion-ms) ease-out;
+      grid-template-columns var(--stack-motion-ms) ease-out,
+      clip-path var(--stack-motion-ms) ease-out;
+  }
+
+  /* The ASSEMBLY's own box, and the other half of the same movement.
+     `--stack-card-width` is the active card's declared `--max-width` (every
+     card wears it), and the margins are the fans' reserved slots and rows — so
+     all four change the moment a different card becomes active. Untransitioned,
+     re-activating a 680px card from behind a 550px one SNAPPED the whole stack
+     to its new size in a single frame while `left`/`top` slid over
+     `--stack-motion-ms` beside it: the fan glided, the cards jumped.
+
+     Same duration and same `.stack-motion` gate as the cards above, for the
+     same reason the pile shares them — a box that resized on a different clock
+     from the cards inside it reads as two mechanisms. */
+  #card-stack.stack-motion .card-stack-inner {
+    transition:
+      width var(--stack-motion-ms) ease-out,
+      margin var(--stack-motion-ms) ease-out;
   }
 
   /* The one in-flow node. Its `--geo-left`/`--geo-top` are both 0 by
@@ -1585,6 +1630,25 @@ pre,
      ahead card's full width bleeds out to the right of the fan. It is still a
      full-size node with its content laid out at full width (printing never
      moves); this crops what is PAINTED. */
+  /* The identity crop, and it is here ONLY so the rule below has something to
+     interpolate to. `clip-path` does not animate to or from `none`, so an
+     ahead card being activated went from a 40px sliver to its full width in a
+     SINGLE FRAME while its `left` and the assembly's `width` slid over
+     --stack-motion-ms beside it. That is the ahead fan's own version of the
+     snap, and it has no behind-side counterpart: behind cards are cropped by
+     painting order, which has nothing to switch off.
+
+     Scoped to the desktop block, which is what makes it safe. `clip-path`
+     clips fixed-position descendants too, and the active card has one —
+     `.series-floating-btn` — but it is `display: none` at this breakpoint, so
+     there is nothing here for the identity inset to clip away. Do not lift
+     this rule out of the media query without revisiting that. (The dither is
+     unaffected either way: clip-path creates no containing block, which is
+     why the fan can use it where `transform` is forbidden.) */
+  #card-stack .stack-card {
+    clip-path: inset(0 0 0 0);
+  }
+
   #card-stack .stack-card[data-role="ahead"] {
     clip-path: inset(0 calc(100% - var(--spine-width)) 0 0);
   }
@@ -1818,6 +1882,8 @@ pre,
     --stack-motion-ms: 0ms;
     --stack-reveal-ms: 0ms;
     --stack-stuck-ms: 0ms;
+    --stack-body-ms: 0ms;
+    --stack-vt-ms: 0ms;
   }
 
   .body-wrapper {

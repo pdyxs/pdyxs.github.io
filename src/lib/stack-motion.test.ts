@@ -68,7 +68,7 @@ describe('scrollSettleAction', () => {
     });
 
   it('waits while a body collapse is running', () => {
-    // The mobile case: the card travels up the page for the whole 300ms.
+    // The mobile case: the card travels up the page for the whole collapse.
     expect(at({ animating: true, previousOffset: 9000, currentOffset: 6000 })).toBe('wait');
     // ...and keeps waiting even when two frames happen to read alike.
     expect(at({ animating: true })).toBe('wait');

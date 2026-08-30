@@ -306,6 +306,23 @@
   }
 
   /**
+   * The debug slowdown multiplier, read from `--stack-motion-scale` in
+   * `global.css` — the same knob every stack duration is a `calc()` of.
+   *
+   * The two JS timeouts below are SLACK against those CSS durations, not
+   * durations themselves, so they have to scale with them: left at their
+   * shipped values they would fire mid-animation the moment the knob goes
+   * above 1, and the slowdown would silently truncate rather than slow.
+   * Ships resolving to 1.
+   */
+  function motionScale(): number {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--stack-motion-scale');
+    const n = parseFloat(raw);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  }
+
+  /**
    * Whether the visitor has asked for less motion.
    *
    * `matchMedia` here is the documented exception, not a breach of the
@@ -326,7 +343,7 @@
    * The wait is the mobile half of the crop-vs-reflow asymmetry. Desktop
    * collapse is a crop, so the target is final the instant the store moves;
    * mobile collapse is a reflow, and the outgoing card's body animates to
-   * nothing over 300ms, carrying the card being navigated to up the page with
+   * nothing over 450ms, carrying the card being navigated to up the page with
    * it. Aimed at the start, a push out of a long lens landed 254px past its own
    * header. `scrollSettleAction` is the decision; this is the rAF loop around
    * it, and it costs desktop one frame because nothing is moving there to wait
@@ -374,7 +391,7 @@
       // is silent, and what the visitor gets is wherever the browser's own
       // clamp left them as the page reflowed under the collapse.
       if (!el) {
-        if (elapsedMs < SCROLL_SETTLE_TIMEOUT_MS) requestAnimationFrame(step);
+        if (elapsedMs < SCROLL_SETTLE_TIMEOUT_MS * motionScale()) requestAnimationFrame(step);
         return;
       }
 
@@ -386,6 +403,7 @@
         animating: stackIsAnimating(),
         framesSeen,
         elapsedMs,
+        timeoutMs: SCROLL_SETTLE_TIMEOUT_MS * motionScale(),
       });
       if (action === 'wait') {
         previousOffset = currentOffset;
@@ -474,11 +492,39 @@
 
   const HOME_UID = 'lens/home';
 
+  /**
+   * The element a push MORPHS INTO the new card — the "old" half of the
+   * `panel-card-open` View Transition, and the thing whose absence makes
+   * `performPush` take the instant-fallback branch.
+   *
+   * Two classes, because two components render a card-shaped link and neither
+   * is a special case of the other: `.card-link` (`CardLink.astro`, plus the
+   * front page's `FilterSlot` / `PinnedSlot`) and `.browse-card-link`
+   * (`BrowseCard.svelte` — every lens result tile).
+   *
+   * Naming only the first meant every push from a RESULT GRID — the default
+   * browse lens, every `See more ->`, every `collection:` / `tag:` landing —
+   * resolved `clickedLink` to null and lost two things silently, with no
+   * error and nothing in the DOM to show for it: the view transition never
+   * started, and `usePlaceholder` (which is gated on the same value) went
+   * false, so the push additionally sat on the network before showing
+   * anything. The card simply appeared at its final size.
+   *
+   * A `[data-push-card]` element matching NEITHER is still perfectly
+   * pushable; it just gets no morph, which is the right outcome for a link
+   * that is not card-shaped — an inline `card:` link in prose has no card
+   * geometry for the transition to start from.
+   */
+  const MORPH_SOURCE_SELECTOR = '.card-link, .browse-card-link';
+
   /** Safety net for the closing card's collapse, which `global.css` declares at
-   *  300ms on `.body-wrapper`. Slack, not a duration: `waitForTransition`
-   *  resolves on the event and clears this, so it only ever fires when no
-   *  `transitionend` arrives at all. */
-  const BODY_COLLAPSE_FALLBACK_MS = 400;
+   *  450ms on `.body-wrapper` (`--stack-body-ms`). Slack, not a duration:
+   *  `waitForTransition` resolves on the event and clears this, so it only ever
+   *  fires when no `transitionend` arrives at all — which means it has to sit
+   *  ABOVE that 450ms with room to spare, or it pre-empts the very transition
+   *  it is insuring. Scaled by `motionScale()` at the call site for the same
+   *  reason. */
+  const BODY_COLLAPSE_FALLBACK_MS = 600;
 
   /**
    * The params a location owns, out of a query string. `from`/`to` are the
@@ -635,8 +681,51 @@
     const ok = await fragments.ensure(incoming.slot, uid);
     if (!ok) return;
 
-    stackStore.update(s => replaceActiveSlot(s, incoming));
-    updateUrl('replace');
+    const outgoing = elFor(get(stackStore).activeSlot);
+    const commit = () => stackStore.update(s => replaceActiveSlot(s, incoming));
+
+    // A replace is a CROSSFADE, not the push's morph, and the difference is
+    // not cosmetic. `replaceActiveSlot` gives the incoming location a fresh
+    // slot (see the note above), so its DOM node is created rather than moved
+    // — the outgoing node is destroyed in the same commit. Nothing is left for
+    // a CSS transition to run on, which is why this path animated NOTHING at
+    // all before: not the body, not the geometry. A view transition is the
+    // only mechanism that can span a node swap, because it animates snapshots
+    // rather than elements.
+    //
+    // One name across both halves, so old and new pair into a single group.
+    // `panel-card-replace` is deliberately distinct from the push's
+    // `panel-card-open`: a push may be mid-flight over the same region, and
+    // two live elements sharing a name is the "duplicate view-transition-name"
+    // abort the push path already works to avoid.
+    //
+    // NOT `skipBodyOpen`, unlike the push. The incoming chapter replaces an
+    // already-open card at the same size, so deferring its body would play the
+    // crossfade to a full card and then collapse and re-open it.
+    if (!startVT || !outgoing) {
+      commit();
+      updateUrl('replace');
+      return;
+    }
+
+    outgoing.style.viewTransitionName = 'panel-card-replace';
+    const vt = startVT(() => {
+      flushSync(commit);
+      // Handed off inside the same synchronous callback, before the new
+      // snapshot is captured — the outgoing node is already gone by now, so
+      // this is a 1-old/1-new pairing like every other named transition here.
+      const incomingEl = elFor(incoming.slot);
+      if (incomingEl) incomingEl.style.viewTransitionName = 'panel-card-replace';
+      // Inside the callback, with the commit it describes. `startVT` returns
+      // BEFORE running this — the browser captures the outgoing snapshot
+      // first — so an `updateUrl` sequenced after the `startVT(...)` call
+      // reads the pre-replace store and writes the outgoing card's URL.
+      updateUrl('replace');
+    });
+
+    await vt.finished;
+    const settled = elFor(incoming.slot);
+    if (settled) settled.style.viewTransitionName = '';
   }
 
   async function pushCard(url: string, clickedLink?: Element | null, params: ParamPairs = []) {
@@ -850,7 +939,7 @@
         // the decision, and it reads the computed style rather than the
         // preference so it cannot drift from what the CSS actually resolves to.
         if (transitionWillFire(getComputedStyle(bw).transitionDuration)) {
-          await waitForTransition(bw, 'grid-template-rows', BODY_COLLAPSE_FALLBACK_MS);
+          await waitForTransition(bw, 'grid-template-rows', BODY_COLLAPSE_FALLBACK_MS * motionScale());
         }
       }
 
@@ -1040,8 +1129,8 @@
         // browser navigating away now that the SPA push is handling it.
         e.preventDefault();
         // Home's front-page slot links now live inside the stack; pass the
-        // clicked `.card-link` so the push can morph it into the new card.
-        pushCard(uidToFetchUrl(pushItem.dataset.pushCard), pushItem.closest('.card-link'));
+        // clicked card-shaped link so the push can morph it into the new card.
+        pushCard(uidToFetchUrl(pushItem.dataset.pushCard), pushItem.closest(MORPH_SOURCE_SELECTOR));
         return;
       }
 
@@ -1061,7 +1150,7 @@
       const link = (e.target as Element).closest<HTMLElement>('[data-push-card]');
       if (link?.dataset.pushCard) {
         e.preventDefault();
-        pushCard(uidToFetchUrl(link.dataset.pushCard), link.closest('.card-link'));
+        pushCard(uidToFetchUrl(link.dataset.pushCard), link.closest(MORPH_SOURCE_SELECTOR));
       }
     }
     homepage?.addEventListener('click', onHomepageClick);

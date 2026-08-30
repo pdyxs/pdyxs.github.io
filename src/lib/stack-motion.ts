@@ -65,13 +65,17 @@ export function transitionWillFire(computedDuration: string | null | undefined):
 /**
  * How long to keep waiting for the layout to stop moving before aiming anyway.
  *
- * Generous against the 300ms body collapse it exists for, because the cost of
+ * Generous against the 450ms body collapse it exists for — twice it, which is
+ * the ratio to preserve if `--stack-body-ms` moves again — because the cost of
  * the two errors is not symmetric: aiming a frame late is invisible, while
  * aiming early lands the visitor inside the card with its header off-screen —
  * which is the whole bug. Bounded at all only because a page whose height never
  * settles (a slow image above the fold) must not leave the scroll unaimed.
+ *
+ * Multiplied by `--stack-motion-scale` at the call site, so slowing the stack
+ * down to watch it does not make this fire mid-collapse.
  */
-export const SCROLL_SETTLE_TIMEOUT_MS = 600;
+export const SCROLL_SETTLE_TIMEOUT_MS = 900;
 
 /**
  * Frames to watch before "nothing moved" is allowed to mean "nothing is going
@@ -83,7 +87,7 @@ export const SCROLL_SETTLE_TIMEOUT_MS = 600;
  * card's node appears, its offset reads identical on the next two frames, and
  * only on the third does the collapse begin — so two samples of "stable" is
  * exactly the wrong number to trust. Four frames is ~64ms at 60Hz, which is
- * three times the gap and imperceptible against a scroll that takes 300ms.
+ * three times the gap and imperceptible against a scroll that takes 450ms.
  */
 export const SCROLL_SETTLE_MIN_FRAMES = 4;
 
@@ -111,7 +115,7 @@ export interface ScrollSettleInput {
  * scroll owner (issue #110 follow-up). On DESKTOP a collapse is a crop: no
  * height changes, so the target measured the instant the store moves is already
  * final. On MOBILE it is a reflow: the outgoing card's body animates `1fr` to
- * `0fr` over 300ms, and everything below it — including the card being
+ * `0fr` over 450ms, and everything below it — including the card being
  * navigated to — travels up by the whole of that body. Aimed at the first
  * measurement, a push out of a long lens aimed at a 12089px document and landed
  * in a 2314px one, with the header ~800px above the viewport.
