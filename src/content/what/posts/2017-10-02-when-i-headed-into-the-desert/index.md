@@ -1,9 +1,10 @@
 ---
-inspected: false
-title: "When I headed into the desert proper, I was struck by (apart from how…"
-date: '2017-10-02 06:16:00 +1000'
-tags: []
-image: "17873160649174856.jpg"
+inspected: true
+title: When I headed into the desert proper, I was struck by (apart from how…
+date: 2017-10-02 06:16:00 +1000
+tags:
+  - why/learn/travel
+image: 17873160649174856.jpg
 source: instagram
 ---
 

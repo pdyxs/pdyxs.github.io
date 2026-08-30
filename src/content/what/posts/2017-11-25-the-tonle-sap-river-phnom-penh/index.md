@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "The Tonle Sap river, Phnom Penh"
-date: '2017-11-25 23:06:00 +1000'
+inspected: true
+title: The Tonle Sap river, Phnom Penh
+date: 2017-11-25 23:06:00 +1000
 tags:
-  - why/viewable
-image: "17884092601144449.jpg"
+image: 17884092601144449.jpg
 source: instagram
 ---
 

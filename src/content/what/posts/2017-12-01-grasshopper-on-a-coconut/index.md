@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "Grasshopper on a coconut"
-date: '2017-12-01 04:15:00 +1000'
+inspected: true
+title: Grasshopper on a coconut
+date: 2017-12-01 04:15:00 +1000
 tags:
-  - why/viewable
-image: "17883677266156837.jpg"
+image: 17883677266156837.jpg
 source: instagram
 ---
 

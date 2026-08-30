@@ -1,10 +1,10 @@
 ---
-inspected: false
+inspected: true
 title: "I think the thing that's struck me the most during #MIGW17 is how…"
-date: '2017-10-27 01:26:00 +1000'
+date: 2017-10-27 01:26:00 +1000
 tags:
-  - "migw17"
-image: "17904498244042661.jpg"
+  - why/learn/gamedev
+image: 17904498244042661.jpg
 source: instagram
 ---
 
