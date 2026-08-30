@@ -1,8 +1,8 @@
 ---
-inspected: false
+inspected: true
 image: social.png
 title: Stay Away from the Wildlife
-date: '2019-07-25 04:00:00 +1000'
+date: 2019-07-25 04:00:00 +1000
 storyDate: 2018-08-06
 series: galapagos
 order: 3

@@ -1,8 +1,8 @@
 ---
-inspected: false
+inspected: true
 image: social.png
 title: Semi-Arid Desert
-date: '2019-08-01 04:00:00 +1000'
+date: 2019-08-01 04:00:00 +1000
 storyDate: 2018-08-07
 series: galapagos
 order: 4
