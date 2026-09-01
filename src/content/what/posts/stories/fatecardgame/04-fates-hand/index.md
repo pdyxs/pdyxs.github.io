@@ -1,9 +1,11 @@
 ---
-inspected: false
+inspected: true
 image: original.png
 title: Fate's Hand
 series: fatecardgame
 order: 4
+tags:
+  - what/games/analog/fatecardgame
 ---
 One of the key underlying ideas behind this game is that Fate should have the best cards: ideally, Fate would hold all the cards (just for the poetry of it). Early versions of the game had Fate acting as the game’s deck, as well as offering cards to the Mortals. But playtesting showed that this was really problematic, especially for new players: having so many options and tasks is the epitome of analysis paralysis.
 
