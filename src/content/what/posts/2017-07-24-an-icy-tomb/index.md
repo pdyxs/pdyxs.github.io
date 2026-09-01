@@ -1,10 +1,10 @@
 ---
-inspected: false
-title: "An icy tomb"
-date: '2017-07-24 04:26:00 +1000'
+inspected: true
+title: An icy tomb
+date: 2017-07-24 04:26:00 +1000
 tags:
   - why/viewable
-image: "17878423015110331.jpg"
+image: 17878423015110331.jpg
 source: instagram
 ---
 

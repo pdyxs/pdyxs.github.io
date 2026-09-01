@@ -1,14 +1,9 @@
 ---
-inspected: false
-title: "Now this..."
-date: '2017-05-25 05:02:00 +1000'
+inspected: true
+title: Now this...
+date: 2017-05-25 05:02:00 +1000
 tags:
-  - "alsoitviolatesgoodvrdesign"
-  - "nausea"
-  - "noreallywhy"
-  - "why"
-  - why/viewable
-image: "17881649230011084.jpg"
+image: 17881649230011084.jpg
 source: instagram
 ---
 

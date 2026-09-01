@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "Double rainbow!"
-date: '2013-03-02 23:39:00 +1000'
+inspected: true
+title: Double rainbow!
+date: 2013-03-02 23:39:00 +1000
 tags:
-  - why/viewable
-image: "17842314985027766.jpg"
+image: 17842314985027766.jpg
 source: instagram
 ---
 

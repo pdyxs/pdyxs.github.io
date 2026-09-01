@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "This game is slightly large..."
-date: '2015-10-29 23:45:00 +1000'
+inspected: true
+title: This game is slightly large...
+date: 2015-10-29 23:45:00 +1000
 tags:
-  - why/viewable
-image: "17845077025027766.jpg"
+image: 17845077025027766.jpg
 source: instagram
 ---
 

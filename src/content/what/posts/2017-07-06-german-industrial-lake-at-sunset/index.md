@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "German industrial lake at sunset"
-date: '2017-07-06 11:08:00 +1000'
+inspected: true
+title: German industrial lake at sunset
+date: 2017-07-06 11:08:00 +1000
 tags:
-  - why/viewable
-image: "17888279596026550.jpg"
+image: 17888279596026550.jpg
 source: instagram
 ---
 

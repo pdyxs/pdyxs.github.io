@@ -1,13 +1,9 @@
 ---
-inspected: false
-title: "They call this a fountain, but it looks more like a super fancy…"
-date: '2016-05-17 03:13:00 +1000'
+inspected: true
+title: They call this a fountain, but it looks more like a super fancy…
+date: 2016-05-17 03:13:00 +1000
 tags:
-  - "barcelona"
-  - "imightneedaswim"
-  - "practicalmonuments"
-  - why/viewable
-image: "17856497314041904.jpg"
+image: 17856497314041904.jpg
 source: instagram
 ---
 

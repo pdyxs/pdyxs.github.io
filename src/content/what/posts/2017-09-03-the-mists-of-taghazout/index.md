@@ -1,11 +1,11 @@
 ---
-inspected: false
-title: "The mists of Taghazout"
-date: '2017-09-03 10:42:00 +1000'
+inspected: true
+title: The mists of Taghazout
+date: 2017-09-03 10:42:00 +1000
 tags:
-  - why/viewable
-image: "17896364632057172.jpg"
+image: 17896364632057172.jpg
 source: instagram
+series: fogstagram
 ---
 
 The mists of Taghazout

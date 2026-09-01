@@ -1,13 +1,10 @@
 ---
-inspected: false
-title: "Setting the scene..."
-date: '2015-01-24 16:01:00 +1000'
+inspected: true
+title: Setting the scene...
+date: 2015-01-24 16:01:00 +1000
 tags:
-  - "ggj15"
-  - "ggjsyd"
   - what/games/analog/houston-we-have-a
-  - why/viewable
-image: "17843022229027766.jpg"
+image: 17843022229027766.jpg
 source: instagram
 ---
 

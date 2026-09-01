@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "Now THATs a wall..."
-date: '2013-02-09 23:16:00 +1000'
+inspected: true
+title: Now THATs a wall...
+date: 2013-02-09 23:16:00 +1000
 tags:
-  - why/viewable
-image: "17842311589027766.jpg"
+image: 17842311589027766.jpg
 source: instagram
 ---
 

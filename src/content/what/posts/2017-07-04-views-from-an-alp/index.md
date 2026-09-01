@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "Views from an Alp"
-date: '2017-07-04 23:26:00 +1000'
+inspected: true
+title: Views from an Alp
+date: 2017-07-04 23:26:00 +1000
 tags:
-  - why/viewable
-image: "17863166809144180.jpg"
+image: 17863166809144180.jpg
 source: instagram
 ---
 

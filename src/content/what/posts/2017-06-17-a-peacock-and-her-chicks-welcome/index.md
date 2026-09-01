@@ -1,10 +1,9 @@
 ---
-inspected: false
-title: "A peacock and her chicks welcome us to Ustica"
-date: '2017-06-17 00:36:00 +1000'
+inspected: true
+title: A peacock and her chicks welcome us to Ustica
+date: 2017-06-17 00:36:00 +1000
 tags:
-  - why/viewable
-image: "17883888136011008.jpg"
+image: 17883888136011008.jpg
 source: instagram
 ---
 

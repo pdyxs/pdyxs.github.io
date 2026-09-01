@@ -1,10 +1,12 @@
 ---
-inspected: false
+inspected: true
 image: original.png
 title: In Fate's Hands
 icon: info-circle
 series: fatecardgame
 order: 0
+tags:
+  - what/games/analog/fatecardgame
 ---
 Meet “In Fate’s Hands”, a card game where one player is Fate, and they hold all the cards.
 

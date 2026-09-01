@@ -1,15 +1,9 @@
 ---
-inspected: false
+inspected: true
 title: "The mountain of Subway #feedthemasses #GGJSyd #ggj15 #eatfresh"
-date: '2015-01-23 17:07:00 +1000'
+date: 2015-01-23 17:07:00 +1000
 tags:
-  - "eatfresh"
-  - "feedthemasses"
-  - "ggj15"
-  - "ggjsyd"
-  - what/games/analog/houston-we-have-a
-  - why/viewable
-image: "17843021818027766.jpg"
+image: 17843021818027766.jpg
 source: instagram
 ---
 

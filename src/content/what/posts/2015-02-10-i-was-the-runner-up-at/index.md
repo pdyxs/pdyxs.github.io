@@ -1,13 +1,10 @@
 ---
-inspected: false
-title: "I was the runner up at game jam this year!"
-date: '2015-02-10 12:54:00 +1000'
+inspected: true
+title: I was the runner up at game jam this year!
+date: 2015-02-10 12:54:00 +1000
 tags:
-  - "houstonproblems"
-  - "themiddlegroundisdeath"
   - what/games/analog/houston-we-have-a
-  - why/viewable
-image: "17841586705027766.jpg"
+image: 17841586705027766.jpg
 source: instagram
 ---
 
