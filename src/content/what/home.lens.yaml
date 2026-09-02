@@ -1,6 +1,11 @@
 # Lens definition — id is the file stem ("home"), dimension is the parent
 # folder ("what"). See src/lib/lens-registry.ts for how these are assembled.
 label: A bit of everything
+# The SITE's subtitle, shown under the "pdyxs.wtf" heading on every lens page.
+# Authored here rather than in code, and deliberately NOT the lens's label: the
+# page header says what the site is, while the lens names itself in its card
+# header (see src/lib/lens-chrome.ts).
+subtitle: Paul Sztajer — games, puzzles, writing and work
 icon: scatter
 component: home
 order: 0
