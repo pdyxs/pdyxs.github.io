@@ -1321,6 +1321,42 @@ A **push** is unchanged in every respect — it keeps `panel-card-open`, and it
 keeps its width motion: the fan really does shift a slot, and "the fan glided,
 the cards jumped" is the failure that transition was added to fix.
 
+**Back/Forward takes the same two holds** (issue #127). Both were added on the
+`replaceSlot` path only, and the cold-load guard cannot stand in for them here:
+that one is set by the pre-paint script, and a popstate is not a load. Measured
+forward-again into `/lens/interesting?filter.what=art` — 24 unfiltered cards
+painted for ~130ms, then the grid re-columned *during* the resize and the
+document collapsed 6003px → 1938px. Masked in the direction people try first,
+because Back from a filtered lens goes to `/`, which has slots rather than a
+results grid.
+
+`holdIncomingActive` (`CardStack.svelte`) is that pair, and where it sits is the
+whole of the ruling. A popstate rebuilds the stack **wholesale** —
+`seedStackState(null)`, then `initFromUrl` — so there is no "incoming entry" to
+hand it the way a replace has; it reads the ACTIVE location back out of the
+store after the commit, and flags **only that one**:
+
+- a `from`/`to` entry arrives **collapsed**. It is a spine with no results grid
+  to hold, and the `data-stack-resizing` body pin would act on a body nobody can
+  see.
+- a popstate can land on a **card**. `filtersPendingForTransition` already
+  returns null for one, so the skeleton guard self-selects; the assembly hold is
+  about the *box*, not the lens, so it is asked either way and answers "no
+  transition" for the equal-width case that card → card usually is.
+
+Both `onPopstate` branches therefore `flushSync` their commit — the same reason
+`replaceSlot` does, that the island mounts when its node is inserted and the
+flag has to be on that node in the same task — and call it **before**
+`initFromUrl`. `initFromUrl`'s splice does not restart the resize:
+`--stack-card-width` is `min(--max-width, viewport − fans)`, and only the
+`--max-width` half is what changed.
+
+It is **not awaited**. `rebuilding` gates whether the correcting scrolls
+animate, and holding it true for the length of the resize would make a
+navigation started inside that window scroll instantly — the hold manages its
+own attribute lifecycle and has nothing to say to the scroll owner, whose
+signature a popstate deliberately clears.
+
 ### Progressive reveal appends; it never windows
 
 `BrowseResults` renders a leading slice of a **grid** and asks for the next step

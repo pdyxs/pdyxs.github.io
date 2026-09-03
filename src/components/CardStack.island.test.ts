@@ -1547,6 +1547,114 @@ describe('lens transition guard', () => {
     expect(guardOn(CARD_B)).toBeNull();
   });
 
+  // ── Back/Forward (issue #127) ──────────────────────────────────
+  //
+  // The one navigation that never went through either guard. `onPopstate`
+  // rebuilds the stack WHOLESALE (`seedStackState(null)`, then `initFromUrl`)
+  // rather than swapping one entry, so the flag cannot ride on an "incoming"
+  // argument the way `replaceSlot`'s does — it is applied to whatever the
+  // rebuild made ACTIVE.
+
+  it('flags the lens a FORWARD lands on — the reported case', async () => {
+    history.replaceState(null, '', '/');
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+
+    const item = document.createElement('button');
+    item.dataset.replaceSlot = 'lens/interesting';
+    item.dataset.replaceParams = 'filter.what=what%3Agames';
+    document.body.appendChild(item);
+    item.click();
+    await settle();
+
+    history.back();
+    await settle();
+    expect(activeEntry(get(stackStore))?.key).toBe('lens/home');
+
+    history.forward();
+    await settle();
+
+    expect(guardOn('lens/interesting')).toBe('filtered');
+    // Still never <html>, for the same reason as every other transition.
+    expect(document.documentElement.hasAttribute(ATTR)).toBe(false);
+  });
+
+  it('flags the lens a BACK lands on, when the one behind has a grid too', async () => {
+    history.replaceState(null, '', '/');
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+
+    const toA = document.createElement('button');
+    toA.dataset.replaceSlot = 'lens/interesting';
+    toA.dataset.replaceParams = 'filter.what=what%3Agames';
+    document.body.appendChild(toA);
+    toA.click();
+    await settle();
+
+    const toB = document.createElement('button');
+    toB.dataset.replaceSlot = 'lens/unseen';
+    toB.dataset.replaceParams = 'filter.what=what%3Agames';
+    document.body.appendChild(toB);
+    toB.click();
+    await settle();
+    // The lens we are about to leave carries its own guard; clear it so the
+    // assertion below can only be satisfied by the popstate re-flagging A.
+    document.querySelector(`.stack-card[data-uid="lens/unseen"]`)?.removeAttribute(ATTR);
+    document.querySelector(`.stack-card[data-uid="lens/interesting"]`)?.removeAttribute(ATTR);
+
+    history.back();
+    await settle();
+
+    expect(guardOn('lens/interesting')).toBe('filtered');
+  });
+
+  it('never flags a popstate onto a CARD, and never a restored from/to spine', async () => {
+    // Two exclusions in one: a card fragment renders the same on both sides of
+    // the wire, and a `from` entry arrives COLLAPSED — a spine with no results
+    // grid to hold. Only the ACTIVE location is ever flagged.
+    history.replaceState(null, '', `/card/${CARD_A}`);
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector(`[data-uid="${CARD_A}"] .stack-card-body-inner`)!.appendChild(link);
+    link.click();
+    await settle();
+
+    history.back();
+    await settle();
+    expect(activeEntry(get(stackStore))?.key).toBe(CARD_A);
+    expect(guardOn(CARD_A)).toBeNull();
+
+    history.forward();
+    await settle();
+    expect(activeEntry(get(stackStore))?.key).toBe(CARD_B);
+    expect(guardOn(CARD_B)).toBeNull();
+    // The `from` entry the rebuild restored is a spine, and unflagged.
+    expect(guardOn(CARD_A)).toBeNull();
+  });
+
+  it('pushes no history entry — a popstate is a rebuild, not a navigation (#124)', async () => {
+    history.replaceState(null, '', '/');
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+
+    const item = document.createElement('button');
+    item.dataset.replaceSlot = 'lens/interesting';
+    item.dataset.replaceParams = 'filter.what=what%3Agames';
+    document.body.appendChild(item);
+    item.click();
+    await settle();
+
+    const len = history.length;
+    history.back();
+    await settle();
+    history.forward();
+    await settle();
+
+    expect(history.length).toBe(len);
+  });
+
   it('drops a cold load’s <html> guard when the card it covered is replaced away', async () => {
     // Its island goes with the destroyed node, so nothing is left to clear it
     // and the 3s net would resolve it into a page-wide `stalled`.

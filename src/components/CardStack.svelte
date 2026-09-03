@@ -828,6 +828,65 @@
     if (value !== null) applyFiltersPending(el, value);
   }
 
+  /**
+   * The two holds a popstate needs, applied to the location it lands ON
+   * (issue #127).
+   *
+   * Back/Forward is the one navigation that never went through either guard.
+   * `guardIncomingLens` and `holdWhileAssemblyResizes` were both added on the
+   * `replaceSlot` path, and the COLD-load guard cannot stand in for them here:
+   * that one is set by the pre-paint inline script in `Base.astro`, and a
+   * popstate is not a load. Measured forward-again into
+   * `/lens/interesting?filter.what=art`: 24 unfiltered cards painted for
+   * ~130ms, then the grid re-columned DURING the assembly's width transition
+   * and the document collapsed 6003px -> 1938px. That is #125's churn and
+   * #126's, still live, on the one path that never got a guard.
+   *
+   * ── Why it is HERE, and only here
+   *
+   * A popstate rebuilds the stack WHOLESALE — `seedStackState(null)` throws
+   * every entry away and `initFromUrl` reads them back — so unlike a replace
+   * there is no single "incoming entry" handed to us. There is still exactly
+   * one location that needs holding, and it is the ACTIVE one:
+   *
+   * - a `from`/`to` entry arrives COLLAPSED. It is a spine, it has no results
+   *   grid to hold, and both attributes would be pure cost there — the
+   *   `data-stack-resizing` body-width pin in particular acts on a body nobody
+   *   can see.
+   * - a popstate can land on a CARD rather than a lens.
+   *   `filtersPendingForTransition` already returns null for one, so the
+   *   skeleton guard self-selects and no card is ever flagged. The assembly
+   *   hold is not lens-specific — it is about the box, and the same body-width
+   *   pin that stops a lens's grid re-columning stops a card's prose
+   *   re-wrapping — so it is asked for either way, and answers "no transition
+   *   running" for the common card->card case where the declared widths match.
+   *
+   * ── Why it is asked BEFORE `initFromUrl` rather than after
+   *
+   * The island mounts the moment its node is inserted, which is the commit
+   * immediately above every call site here — so the skeleton guard has to be
+   * on the node in that same task or the unfiltered set has already painted.
+   * The assembly hold is asked in the same breath for the same reason: the
+   * width transition is started by that commit, and `initFromUrl`'s own
+   * splice does not restart it (`--stack-card-width` is `min(--max-width,
+   * viewport - fans)`, and the `--max-width` half is the active location's
+   * alone — the fan only enters at viewport widths narrow enough for the cap
+   * to bind, where the whole assembly is not resizing anyway).
+   *
+   * NOT awaited by the caller. `rebuilding` gates whether the correcting
+   * scrolls animate, and holding it true for the length of the resize would
+   * make a navigation started during that window scroll instantly — the hold
+   * manages its own attribute lifecycle and has nothing to say to the scroll
+   * owner.
+   */
+  function holdIncomingActive() {
+    const entry = activeEntry(get(stackStore));
+    if (!entry) return;
+    const el = elFor(entry.slot);
+    guardIncomingLens(entry, el);
+    void holdWhileAssemblyResizes(el);
+  }
+
   // `extraParams` (e.g. a serialised FilterState query string) rides along
   // for a replace that must carry the current filter selections into the new
   // slot — e.g. selecting a lens from a DimensionPanel while filters are
@@ -1496,6 +1555,14 @@
       if (path === '/' || path === '') {
         // `/` is the home lens as the sole page-mode entry.
         await seedHomeActive(false);
+        // `seedHomeActive` writes the store; `flushSync` is what makes the home
+        // card's node exist in THIS task, so the holds below land before the
+        // browser paints it (issue #127). Home is never flagged by
+        // `guardIncomingLens` — it carries no filters and does not re-rank — so
+        // what this buys is the assembly hold on the 960px -> 680px shrink,
+        // which is the direction the bug was masked in.
+        flushSync();
+        holdIncomingActive();
         await initFromUrl();
         rebuilding = false;
         return;
@@ -1507,7 +1574,12 @@
         const entry = locationEntryFor(uid, paramsFromSearch(window.location.search));
         const ok = await fragments.ensure(entry.slot, entry.uid);
         if (ok) {
-          stackStore.update(s => pushToStack(s, entry));
+          // Committed synchronously, exactly as `replaceSlot` does and for the
+          // same reason: the card's node — and the island inside it — must
+          // exist to be flagged in this task, before the fragment it just
+          // mounted is painted (issue #127).
+          flushSync(() => stackStore.update(s => pushToStack(s, entry)));
+          holdIncomingActive();
           markReadIfKnown(entry.uid, entry.slot);
           await initFromUrl();
         }
