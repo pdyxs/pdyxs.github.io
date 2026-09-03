@@ -7,6 +7,7 @@ import {
   markRead,
   clearViewState,
   readToRecord,
+  hasAnyViewState,
 } from './card-view-state';
 
 // Clear localStorage before each test so tests are isolated
@@ -190,5 +191,26 @@ describe('readToRecord', () => {
     expect(readToRecord(undefined, cardFragment('what/posts/foo', 'h'))).toBeNull();
     expect(readToRecord('what/posts/foo', undefined)).toBeNull();
     expect(readToRecord(null, null)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// hasAnyViewState — "is rung 3 live at all", for the transition guard (#125)
+// ---------------------------------------------------------------------------
+
+describe('hasAnyViewState', () => {
+  it('is false for a first-time visitor, who pays no loading state for an inert re-rank', () => {
+    expect(hasAnyViewState()).toBe(false);
+  });
+
+  it('is true once anything has been read', () => {
+    markRead('what/puzzles/fog', 'hash-1');
+    expect(hasAnyViewState()).toBe(true);
+  });
+
+  it('ignores unrelated localStorage keys', () => {
+    localStorage.setItem('theme', 'dark');
+    expect(hasAnyViewState()).toBe(false);
+    localStorage.removeItem('theme');
   });
 });

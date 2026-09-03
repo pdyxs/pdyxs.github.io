@@ -153,14 +153,27 @@ html[data-theme="dark"] {
   --status-unlisted-border:  #e0b84f;
 }
 
-/* ── Anti-FOUC: filtered cold load ─────────────────────────────── */
+/* ── Anti-FOUC: a results set that is about to move ────────────── */
 /* The flag is set pre-paint by the inline script in Base.astro when the URL
    carries filters, and cleared by BrowseLensBrowser once the filtered view is
    committed. Hiding the list + count (not the whole grid) keeps the filter bar
-   and chips visible while the reduced set resolves. */
-html[data-filters-pending] .fp-browse-list,
-html[data-filters-pending] .fp-browse-empty,
-html[data-filters-pending] .fp-result-count {
+   and chips visible while the reduced set resolves.
+
+   TWO HOSTS, and the selector says which (issue #125). A cold load flags
+   <html>: there is one lens on the page and hiding results everywhere is the
+   same as hiding this one's. A client-side lens transition flags the incoming
+   `.stack-card` instead — the stack can hold a second browse lens behind the
+   active one, and a global flag would blank that one too *and* be cleared by
+   its island the moment the shared filter store moved, revealing the incoming
+   card mid-churn. See src/lib/filters-pending.ts.
+
+   `:is(html, .stack-card)` rather than two rule sets, and it raises every one
+   of these selectors' specificity by a class (`html` is an element) rather
+   than lowering it — which matters, because two of them are already winning
+   deliberately narrow fights against Svelte-scoped rules further down. */
+:is(html, .stack-card)[data-filters-pending] .fp-browse-list,
+:is(html, .stack-card)[data-filters-pending] .fp-browse-empty,
+:is(html, .stack-card)[data-filters-pending] .fp-result-count {
   display: none;
 }
 
@@ -172,7 +185,7 @@ html[data-filters-pending] .fp-result-count {
    `display: none` in BrowseResults' own styles; this is the only rule that
    turns it on. Appearance stays with the component, visibility stays here with
    the rest of the guard. */
-html[data-filters-pending] .fp-skeleton--grid {
+:is(html, .stack-card)[data-filters-pending] .fp-skeleton--grid {
   display: block;
 }
 
@@ -192,13 +205,13 @@ html[data-filters-pending] .fp-skeleton--grid {
    hydration order is identical to the server's — so holding its run back for a
    re-rank is a skeleton flash bought for nothing. `""` is that re-rank case;
    `filtered` and `stalled` are the two the strip must answer. */
-html[data-filters-pending="filtered"] .fp-browse-grid .card-strip,
-html[data-filters-pending="stalled"] .fp-browse-grid .card-strip {
+:is(html, .stack-card)[data-filters-pending="filtered"] .fp-browse-grid .card-strip,
+:is(html, .stack-card)[data-filters-pending="stalled"] .fp-browse-grid .card-strip {
   display: none;
 }
 
-html[data-filters-pending="filtered"] .fp-skeleton--strip,
-html[data-filters-pending="stalled"] .fp-skeleton--strip {
+:is(html, .stack-card)[data-filters-pending="filtered"] .fp-skeleton--strip,
+:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton--strip {
   display: block;
 }
 
@@ -209,16 +222,16 @@ html[data-filters-pending="stalled"] .fp-skeleton--strip {
    worse failure than an honest stall. (The unguarded re-rank case, where the
    URL carries no filters and the SSR content is already correct, still reveals
    — see the script.) */
-html[data-filters-pending="stalled"] .fp-skeleton-note {
+:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton-note {
   display: none;
 }
 
-html[data-filters-pending="stalled"] .fp-skeleton-stalled {
+:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton-stalled {
   display: block;
 }
 
 /* Nothing is coming, so stop promising tiles. */
-html[data-filters-pending="stalled"] .fp-skeleton-list {
+:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton-list {
   display: none;
 }
 
@@ -229,7 +242,7 @@ html[data-filters-pending="stalled"] .fp-skeleton-list {
    outranks the three-class rule above, and the tiles stayed on screen under a
    message saying nothing was coming. Measured, not assumed. Naming
    .fp-browse-grid as well restores the ordering. */
-html[data-filters-pending="stalled"] .fp-browse-grid .fp-skeleton--strip .fp-skeleton-list {
+:is(html, .stack-card)[data-filters-pending="stalled"] .fp-browse-grid .fp-skeleton--strip .fp-skeleton-list {
   display: none;
 }
 

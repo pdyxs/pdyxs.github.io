@@ -18,7 +18,14 @@
   import { parseCollectionLink } from '../lib/collection-link';
   import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../dimensions';
-  import { markRead, readToRecord } from '../lib/card-view-state';
+  import { hasAnyViewState, markRead, readToRecord } from '../lib/card-view-state';
+  import { getLensDefinition } from '../lib/lens-registry';
+  import {
+    applyFiltersPending,
+    clearFiltersPending,
+    filtersPendingForTransition,
+    hasFilterParamKey,
+  } from '../lib/filters-pending';
   import { placeholderTitle } from '../lib/card-title';
   import { lensChromeForKey } from '../lib/lens-chrome';
   import { waitForTransition } from '../lib/transition-wait';
@@ -737,6 +744,86 @@
     historyFn(null, '', `${path}${search}`);
   }
 
+  /**
+   * Commit a REPLACE without letting the assembly's width transition run —
+   * the other half of issue #125, and the half that turned out to be the churn.
+   *
+   * Measured, `/` -> What -> Most* Interesting at 1400x900: `--max-width` goes
+   * 680px -> 960px at the commit and is correct from that instant, but
+   * `.card-stack-inner`'s `width` is transitioned over `--stack-motion-ms`
+   * (480ms) — so the incoming lens's results grid is laid out at every width
+   * between the two. `.fp-browse-list` is `repeat(auto-fill, minmax(280px, 1fr))`:
+   * it holds TWO columns for 450ms and then reflows to three, which is the
+   * 1877px collapse the ticket recorded. It happens with an empty read history
+   * and no filters, so it is not the hydration re-sort the ticket diagnosed —
+   * see the report on #125.
+   *
+   * Suppressed only for a replace, and the existing comment in `replaceSlot`
+   * is why: a replace is a CROSSFADE. The incoming node is created and the
+   * outgoing destroyed in one commit, the fan either side is unchanged, and
+   * the whole visible change is already spanned by the view transition. There
+   * is nothing for a CSS transition to carry, so starting a 480ms one under
+   * the crossfade only guarantees the content inside it is laid out wrong for
+   * 480ms. A PUSH is the opposite case and keeps its motion: the fan really
+   * does shift a slot, and "the fan glided, the cards jumped" is the failure
+   * the `.card-stack-inner` transition was added to fix.
+   *
+   * The `offsetWidth` read is load-bearing: it forces the style+layout pass
+   * that commits the new width WHILE the gate class is off, so re-adding the
+   * class finds nothing changed and starts no transition. Without it the two
+   * class writes coalesce into one recalc and the transition runs anyway.
+   */
+  function commitWithoutWidthMotion(commit: () => void) {
+    const stackEl = document.getElementById('card-stack');
+    const motion = stackEl?.classList.contains('stack-motion') ?? false;
+    if (motion) stackEl!.classList.remove('stack-motion');
+    flushSync(commit);
+    if (motion) {
+      void stackEl!.offsetWidth;
+      stackEl!.classList.add('stack-motion');
+    }
+  }
+
+  /**
+   * Drop a cold load's <html>-level guard when the card it covered is about to
+   * be destroyed (a replace takes the active card's node and its island with
+   * it). Nothing would be left to clear it, and the 3s safety net would then
+   * resolve it into a page-wide `stalled` — blanking the results the incoming
+   * card is about to show. A push leaves the outgoing island alive, so it
+   * clears its own host and this is not called there.
+   */
+  function dropRootGuard() {
+    clearFiltersPending(document.documentElement);
+  }
+
+  /**
+   * Hold an incoming lens's results behind the #119/#123 skeleton until its
+   * island commits the order the CLIENT decides (issue #125).
+   *
+   * A fragment is fetched by uid, so the server always renders a lens
+   * unfiltered and in the build-time half of the ranking chain. On a cold load
+   * Base.astro's pre-paint script covers the gap between that and what the
+   * browser decides; a client-side transition hydrates the same fragment IN
+   * VIEW, and covered nothing — measured at ~400ms of churn ending in a 1877px
+   * collapse as cards of different heights changed places.
+   *
+   * Flagged on the incoming CARD, never on <html>: the stack can hold a second
+   * browse lens behind the active one. `filtersPendingForTransition` is the
+   * decision (and returns null for a card, for an unfiltered date strip, and
+   * for a first-time visitor's inert re-rank); this is the applier.
+   */
+  function guardIncomingLens(entry: LocationEntry, el: HTMLElement | null | undefined) {
+    if (!el) return;
+    const lensId = lensNameForKey(entry.key);
+    const value = filtersPendingForTransition({
+      isLens: lensId !== null,
+      lensConfig: lensId ? getLensDefinition(lensId)?.config : null,
+      hasFilterParams: hasFilterParamKey(filtersForKey(entry.key).map(([key]) => key)),
+      hasReadHistory: hasAnyViewState(),
+    });
+    if (value !== null) applyFiltersPending(el, value);
+  }
+
   // `extraParams` (e.g. a serialised FilterState query string) rides along
   // for a replace that must carry the current filter selections into the new
   // slot — e.g. selecting a lens from a DimensionPanel while filters are
@@ -791,24 +878,44 @@
     // already-open card at the same size, so deferring its body would play the
     // crossfade to a full card and then collapse and re-open it.
     if (!startVT || !outgoing) {
-      commit();
-      updateUrl('replace');
+      // Committed synchronously so the incoming card's node exists to be
+      // flagged in the same task, before the browser paints the fragment it
+      // just mounted.
+      commitWithoutWidthMotion(commit);
+      dropRootGuard();
+      guardIncomingLens(incoming, elFor(incoming.slot));
+      // PUSH, not replace (issue #124). "Replace" names the STACK operation —
+      // `replaceActiveSlot` does swap the active slot out — and says nothing
+      // about history. Conflating the two left a lens transition with no
+      // history entry at all, so Back from `/lens/interesting` skipped the
+      // home page the visitor came from and left the site. A lens transition
+      // is a navigation; only a filter toggle (onCardParam, which re-keys the
+      // active location rather than moving to another one) is a replace.
+      updateUrl();
       return;
     }
 
     outgoing.style.viewTransitionName = 'panel-card-replace';
     const vt = startVT(() => {
-      flushSync(commit);
+      commitWithoutWidthMotion(commit);
       // Handed off inside the same synchronous callback, before the new
       // snapshot is captured — the outgoing node is already gone by now, so
       // this is a 1-old/1-new pairing like every other named transition here.
       const incomingEl = elFor(incoming.slot);
       if (incomingEl) incomingEl.style.viewTransitionName = 'panel-card-replace';
+      // Also inside the callback, and for the same reason as the name: the
+      // OUTGOING snapshot was captured before it ran, so flagging here holds
+      // the incoming results without skeletonising the card we are crossfading
+      // away from.
+      dropRootGuard();
+      guardIncomingLens(incoming, incomingEl);
       // Inside the callback, with the commit it describes. `startVT` returns
       // BEFORE running this — the browser captures the outgoing snapshot
       // first — so an `updateUrl` sequenced after the `startVT(...)` call
       // reads the pre-replace store and writes the outgoing card's URL.
-      updateUrl('replace');
+      //
+      // PUSH, not replace — see the instant-fallback branch above (issue #124).
+      updateUrl();
     });
 
     await vt.finished;
@@ -923,6 +1030,11 @@
       const vt = startVT(() => {
         flushSync(doUpdate);
         const newCard = elFor(slot);
+        // Before the new snapshot is captured. A placeholder push mounts with
+        // no results at all, but `replaceBody` splices the fetched fragment's
+        // unfiltered grid into this same node a few hundred ms later — the flag
+        // is what stops that landing in view.
+        guardIncomingLens(entry, newCard);
         if (wasHomePageMode) {
           const t = newCard?.querySelector<HTMLElement>('.card-header-title');
           const d = newCard?.querySelector<HTMLElement>('.card-header');
@@ -984,6 +1096,9 @@
       doUpdate();
       if (homepage) homepage.hidden = true;
       await tick();
+      // `tick()` resolves after Svelte has written the DOM and before the
+      // browser paints it, so the flag lands on the same frame the card does.
+      guardIncomingLens(entry, elFor(slot));
     }
 
     markReadIfKnown(uid, slot);

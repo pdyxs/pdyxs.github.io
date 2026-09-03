@@ -55,6 +55,16 @@
      * the sentinel nor the button ever renders.
      */
     reveal?: RevealSettings | null;
+    /**
+     * The results root, bound back out for the caller (issue #125).
+     *
+     * The lens bodies clear the `data-filters-pending` guard by walking UP from
+     * their own DOM position — the host is <html> on a cold load and the
+     * incoming `.stack-card` on a client-side transition, and `closest()` is
+     * what tells them apart without either of them having to know. None of them
+     * renders an element of its own, so the node they walk from is this one.
+     */
+    host?: HTMLElement | null;
   }
 
   let {
@@ -66,6 +76,7 @@
     terminal,
     emptyMessage = 'No cards match the current filters.',
     reveal = revealSettings(),
+    host = $bindable(null),
   }: Props = $props();
 
   const count = $derived(totalCount ?? cards.length);
@@ -129,7 +140,7 @@
   });
 </script>
 
-<main class="fp-browse-grid" aria-label="Browse results">
+<main class="fp-browse-grid" aria-label="Browse results" bind:this={host}>
   <p class="fp-result-count">
     {count} card{count === 1 ? '' : 's'}
   </p>

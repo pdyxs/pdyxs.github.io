@@ -14,6 +14,7 @@
     type ReadHistory,
   } from '../../lib/history-lens';
   import { revealSettings } from '../../lib/progressive-reveal';
+  import { clearFiltersPending } from '../../lib/filters-pending';
   import BrowseResults from '../BrowseResults.svelte';
 
   interface Props {
@@ -109,16 +110,19 @@
   // "will apply to every grid lens at once", as unseen.lens.yaml put it.
   const reveal = $derived(revealSettings(config));
 
-  // Same anti-FOUC clearing as BrowseLensBrowser.svelte.
+  // Same anti-FOUC clearing as BrowseLensBrowser.svelte, including why it walks
+  // up from `host` rather than naming <html> (issue #125).
+  let host = $state<HTMLElement | null>(null);
   $effect(() => {
     resultCards;
     if (mounted && $lensFiltersSynced) {
-      document.documentElement.removeAttribute('data-filters-pending');
+      clearFiltersPending(host);
     }
   });
 </script>
 
 <BrowseResults
+  bind:host
   cards={resultCards}
   {tagDisplay}
   filterState={activeFilter}

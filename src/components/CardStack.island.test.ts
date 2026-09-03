@@ -28,7 +28,7 @@ import { activeEntry } from '../lib/stack-layout';
 import { deserialiseStack } from '../lib/stack-codec';
 import { manifestLookup } from '../lib/stack-manifest-client';
 import { tagManifestLookup } from '../lib/tag-manifest-client';
-import { clearViewState, hasBeenRead } from '../lib/card-view-state';
+import { clearViewState, hasBeenRead, markRead } from '../lib/card-view-state';
 
 const CARD_A = 'what/games/digital/numbeanies';
 const CARD_B = 'what/puzzles/fog';
@@ -285,6 +285,42 @@ describe('delegated click → push', () => {
     const state = get(stackStore);
     expect(activeEntry(state)?.key).toBe('lens/interesting');
     expect(state.entries.map(e => e.key)).toEqual(['lens/interesting']);
+  });
+
+  // Issue #124. A lens transition left NO history entry, so Back from a lens
+  // skipped the page the visitor arrived from and left the site
+  // (`history.length` stayed put; Back landed on about:blank).
+  //
+  // The trap is the word: `replaceActiveSlot` genuinely does swap the active
+  // slot out of the STACK, and `updateUrl('replace')` was read as following
+  // from that. History is a separate axis — a lens transition is a navigation.
+  // A filter toggle stays a replace, and that is asserted below.
+  it('pushes a history entry for a lens transition, so Back returns (#124)', async () => {
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+    const before = history.length;
+
+    const item = document.createElement('button');
+    item.dataset.replaceSlot = 'lens/interesting';
+    document.body.appendChild(item);
+    item.click();
+    await settle();
+
+    expect(activeEntry(get(stackStore))?.key).toBe('lens/interesting');
+    expect(history.length).toBe(before + 1);
+  });
+
+  it('a filter toggle re-keys in place and adds NO history entry (#124)', async () => {
+    mountStack({ activeUid: 'lens/interesting', activeHtml: fragment('lens/interesting', { hash: null }) });
+    await settle();
+    const before = history.length;
+
+    document.dispatchEvent(new CustomEvent('cardparam', {
+      detail: { uid: 'lens/interesting', params: [['filter.what', 'games']] },
+    }));
+    await settle();
+
+    expect(history.length).toBe(before);
   });
 
   it('still replaces from a [data-replace-slot] INSIDE the stack', async () => {
@@ -1399,5 +1435,132 @@ describe('the overflow pile (#111)', () => {
     await settle();
     expect(pile()).toBe(before);
     expect(document.querySelectorAll('.stack-pile')).toHaveLength(1);
+  });
+});
+
+// ── The lens-transition guard (issue #125) ─────────────────────────
+//
+// A lens fragment is fetched by uid, so the server always renders it unfiltered
+// and in the build-time half of the ranking chain; the island then re-sorts on
+// hydration. On a cold load Base.astro's pre-paint script covers that. A
+// client-side transition covered nothing — measured at ~400ms of churn ending
+// in a 1877px collapse.
+//
+// Reachable here because happy-dom has no `document.startViewTransition`, so
+// both `replaceSlot` and `performPush` take their documented instant-fallback
+// branch. What is NOT reachable is the VT branch's placement of the same call,
+// which is inside the transition callback for the reason its comment gives.
+describe('lens transition guard', () => {
+  const ATTR = 'data-filters-pending';
+
+  // <html> survives `document.body.innerHTML = ''`, so a leaked guard would
+  // silently change what every later test in this file sees.
+  afterEach(() => document.documentElement.removeAttribute(ATTR));
+
+  function guardOn(key: string) {
+    return document.querySelector(`.stack-card[data-uid="${key}"]`)?.getAttribute(ATTR) ?? null;
+  }
+
+  it('flags an incoming FILTERED lens, on the card and nowhere else', async () => {
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+
+    const item = document.createElement('button');
+    item.dataset.replaceSlot = 'lens/interesting';
+    item.dataset.replaceParams = 'filter.what=what%3Agames';
+    document.body.appendChild(item);
+    item.click();
+    await settle();
+
+    expect(guardOn('lens/interesting')).toBe('filtered');
+    // Never <html>: the stack can hold a second browse lens behind this one.
+    expect(document.documentElement.hasAttribute(ATTR)).toBe(false);
+  });
+
+  it('flags an incoming ranking lens for a returning visitor as a re-rank', async () => {
+    markRead(CARD_A, 'hash-a');
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+
+    const item = document.createElement('button');
+    item.dataset.replaceSlot = 'lens/interesting';
+    item.dataset.replaceParams = '';
+    document.body.appendChild(item);
+    item.click();
+    await settle();
+
+    expect(guardOn('lens/interesting')).toBe('');
+  });
+
+  it('costs a first-time visitor nothing — rung 3 cannot reorder an empty history', async () => {
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+
+    const item = document.createElement('button');
+    item.dataset.replaceSlot = 'lens/interesting';
+    item.dataset.replaceParams = '';
+    document.body.appendChild(item);
+    item.click();
+    await settle();
+
+    expect(guardOn('lens/interesting')).toBeNull();
+  });
+
+  it('leaves an unfiltered date strip alone: its hydration order is the server’s', async () => {
+    markRead(CARD_A, 'hash-a');
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+
+    const item = document.createElement('button');
+    item.dataset.replaceSlot = 'lens/newest';
+    item.dataset.replaceParams = '';
+    document.body.appendChild(item);
+    item.click();
+    await settle();
+
+    expect(guardOn('lens/newest')).toBeNull();
+  });
+
+  it('flags a lens PUSHED by a tag: link, which arrives filtered by construction', async () => {
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const tag = document.createElement('a');
+    tag.setAttribute('href', 'tag:what:puzzles');
+    document.querySelector('.stack-card-body-inner')!.appendChild(tag);
+    tag.click();
+    await settle();
+
+    expect(guardOn('lens/interesting')).toBe('filtered');
+  });
+
+  it('never flags a card push — a card fragment renders the same on both sides of the wire', async () => {
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector('.stack-card-body-inner')!.appendChild(link);
+    link.click();
+    await settle();
+
+    expect(guardOn(CARD_B)).toBeNull();
+  });
+
+  it('drops a cold load’s <html> guard when the card it covered is replaced away', async () => {
+    // Its island goes with the destroyed node, so nothing is left to clear it
+    // and the 3s net would resolve it into a page-wide `stalled`.
+    mountStack({ activeUid: 'lens/interesting', activeHtml: fragment('lens/interesting', { hash: null }) });
+    await settle();
+    document.documentElement.setAttribute(ATTR, 'filtered');
+
+    const item = document.createElement('button');
+    item.dataset.replaceSlot = 'lens/newest';
+    item.dataset.replaceParams = '';
+    document.body.appendChild(item);
+    item.click();
+    await settle();
+
+    expect(document.documentElement.hasAttribute(ATTR)).toBe(false);
   });
 });

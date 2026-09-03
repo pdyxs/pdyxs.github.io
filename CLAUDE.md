@@ -1234,6 +1234,44 @@ first-time visitor's re-sort is a no-op, so they pay nothing. The seen set is
 snapshotted once in `onMount`, never read live — a list reshuffling because you
 opened a card elsewhere in the stack is worse than being one navigation stale.
 
+**The guard has two hosts, and a transition is not a cold load** (issue #125).
+That pre-paint script only runs on a cold load, so a client-side lens
+transition (`replaceSlot`, `pushCard`) fetched the same server-rendered
+fragment and hydrated it **in view**, with nothing covering the swap. It now
+flags the **incoming `.stack-card`** instead of `<html>` — the stack can hold a
+second browse lens behind the active one, and a page-wide flag would blank that
+one too *and* be cleared by its island the moment the shared filter store
+moved. `filtersPendingForTransition` (`src/lib/filters-pending.ts`) is the
+decision, and it asks the same two questions from what the stack knows rather
+than from the pathname: carried filters → `filtered` (a fragment is fetched by
+uid, so the server always rendered it unfiltered); else a re-ranking lens for a
+returning visitor → `''`. A card, an unfiltered date strip, and a first-time
+visitor all get `null` and land immediately.
+
+The corollary is how it is **cleared**: `clearFiltersPending` walks UP from the
+island's own results root, so `closest()` finds whichever host covers *this*
+island — the card on a transition, `<html>` on a cold load — and finds nothing
+for an island in another card. All three lens bodies clear that way; none names
+`<html>`. The CSS host is `:is(html, .stack-card)`, one rule set rather than
+two, and it *raises* every guard selector's specificity by a class rather than
+lowering it — which matters, because two of them already win deliberately
+narrow fights against Svelte-scoped rules (see #123).
+
+**A replace must not start the assembly's width transition, and that — not the
+re-sort — was the churn #125 measured.** `.card-stack-inner`'s `width` is
+transitioned over `--stack-motion-ms`, so the incoming lens's grid was laid out
+at every width between the outgoing card's and its own: at 1400px,
+`repeat(auto-fill, minmax(280px, 1fr))` held **two** columns for 450ms and then
+reflowed to three, which is the 1877px collapse. It reproduces with an empty
+read history and no filters, so the hydration re-sort cannot be its cause.
+`commitWithoutWidthMotion` drops `.stack-motion`, commits, forces the layout
+pass (the `offsetWidth` read is load-bearing — without it the two class writes
+coalesce into one recalc and the transition runs anyway) and puts the class
+back. Only for a **replace**: that is a crossfade whose incoming node is
+created and whose fan is unchanged, so there is nothing for a CSS transition to
+carry. A **push** keeps its motion — the fan really does shift a slot, and "the
+fan glided, the cards jumped" is the failure that transition was added to fix.
+
 ### Progressive reveal appends; it never windows
 
 `BrowseResults` renders a leading slice of a **grid** and asks for the next step

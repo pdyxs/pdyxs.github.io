@@ -7,6 +7,7 @@
   import type { SerialisedCardFull } from '../../lib/frontpage';
   import type { TagDisplay } from '../../lib/tag-display';
   import type { StatusValue } from '../../lib/status-visibility';
+  import { clearFiltersPending } from '../../lib/filters-pending';
   import BrowseCard from '../BrowseCard.svelte';
 
   type EditorialCard = SerialisedCardFull & { status: StatusValue };
@@ -45,16 +46,18 @@
   const filteredCards = $derived(applyFilters(cardMetas, activeFilter, cardBackedSet));
   const groups = $derived(groupCardsByStatus(filteredCards));
 
-  // Same anti-FOUC clearing as BrowseLensBrowser.svelte.
+  // Same anti-FOUC clearing as BrowseLensBrowser.svelte, including why it walks
+  // up from this island's own root rather than naming <html> (issue #125).
+  let host = $state<HTMLElement | null>(null);
   $effect(() => {
     groups;
     if (mounted && $lensFiltersSynced) {
-      document.documentElement.removeAttribute('data-filters-pending');
+      clearFiltersPending(host);
     }
   });
 </script>
 
-<div class="editorial-groups" aria-label="Editorial status groups">
+<div class="editorial-groups" aria-label="Editorial status groups" bind:this={host}>
   {#if groups.length === 0}
     <p class="editorial-empty">Nothing in flight — every card matching the current filters is published.</p>
   {:else}

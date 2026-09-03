@@ -16,6 +16,7 @@
   import { isStripLens, stripTerminal } from '../../lib/strip-lens';
   import { archiveLensId } from '../../lib/lens-registry';
   import { revealSettings } from '../../lib/progressive-reveal';
+  import { clearFiltersPending } from '../../lib/filters-pending';
   import BrowseResults from '../BrowseResults.svelte';
 
   interface Props {
@@ -129,21 +130,30 @@
       : null,
   );
 
-  // Clear the pre-paint anti-FOUC guard (set by Base.astro's inline script when
-  // the URL carries filters) once this island has mounted (so sortedCards now
+  // Clear the anti-FOUC guard once this island has mounted (so sortedCards now
   // reflects the store, not the SSR-matching full set) AND the shell has synced
   // the selection. Reading sortedCards makes the effect re-run when the reduced
-  // set lands, so we never reveal before the DOM reflects it. The guard is on
-  // <html>, so a bare-cold no-filter load (guard never set) no-ops.
+  // set lands, so we never reveal before the DOM reflects it.
+  //
+  // Cleared by walking UP from this island's own results root, never by naming
+  // <html> (issue #125). There are two hosts — <html> for a cold load, the
+  // incoming `.stack-card` for a client-side lens transition — and `closest()`
+  // finds whichever is covering THIS island. It also finds nothing for an
+  // island sitting in some other card of the stack, which is the point: a
+  // second browse lens behind the active one re-runs this effect every time
+  // the shared filter store moves, and naming <html> made it reveal the
+  // incoming card mid-re-sort. A load with no guard set at all no-ops.
+  let host = $state<HTMLElement | null>(null);
   $effect(() => {
     sortedCards;
     if (mounted && $lensFiltersSynced) {
-      document.documentElement.removeAttribute('data-filters-pending');
+      clearFiltersPending(host);
     }
   });
 </script>
 
 <BrowseResults
+  bind:host
   cards={sortedCards}
   totalCount={filteredCards.length}
   {tagDisplay}

@@ -168,3 +168,26 @@ export function clearViewState(): void {
     localStorage.removeItem(key);
   }
 }
+
+/**
+ * Has this visitor read ANYTHING? — the "is rung 3 live at all" question.
+ *
+ * Rung 3 of the ranking chain (unseen before seen) can only reorder a list for
+ * someone with a history, so a first-time visitor's hydration re-sort is a
+ * no-op and must not cost them a loading state. Base.astro's pre-paint script
+ * asks the same question of localStorage directly (it can import nothing); this
+ * is the same test for the client-side transition guard, which can.
+ *
+ * Storage may be blocked outright (private mode, a hardened browser), and the
+ * honest answer there is "no history" rather than a thrown error.
+ */
+export function hasAnyViewState(): boolean {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      if ((localStorage.key(i) ?? '').startsWith(LS_PREFIX)) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
