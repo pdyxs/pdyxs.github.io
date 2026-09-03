@@ -4,6 +4,7 @@ import { getContainerRenderer } from '@astrojs/svelte';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
 import LensStackCard from './LensStackCard.astro';
 import { DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
+import { siteSubtitle } from '../lib/lens-chrome';
 
 async function makeContainer() {
   const renderers = [{ ...getContainerRenderer(), ssr: svelteServerRenderer }];
@@ -52,7 +53,8 @@ describe('LensStackCard', () => {
     const card = div.querySelector('.stack-card')!;
     expect(card.classList.contains('stack-card--page')).toBe(true);
     expect(div.querySelector('.page-title')?.textContent).toContain('pdyxs.wtf');
-    expect(div.querySelector('.page-subtitle')?.textContent).toContain('A bit of everything');
+    // The SITE's subtitle, not the lens's label (which is what it used to be).
+    expect(div.querySelector('.page-subtitle')?.textContent).toBe(siteSubtitle());
   });
 
   it('card presentation (default) does not carry the page class', async () => {

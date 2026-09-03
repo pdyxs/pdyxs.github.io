@@ -6,6 +6,7 @@ import svelteServerRenderer from '@astrojs/svelte/server.js';
 import IndexPage from '../pages/index.astro';
 import LensNamePage from '../pages/lens/[name].astro';
 import { stackStore } from '../stores/card-stack-store';
+import { siteSubtitle } from '../lib/lens-chrome';
 
 async function makeContainer() {
   const renderers = [{ ...getContainerRenderer(), ssr: svelteServerRenderer }];
@@ -50,7 +51,8 @@ describe('/ folds into the home lens', () => {
     const card = div.querySelector('.stack-card--page');
     expect(card?.getAttribute('data-uid')).toBe('lens/home');
     expect(div.querySelector('.page-title')?.textContent).toContain('pdyxs.wtf');
-    expect(div.querySelector('.page-subtitle')?.textContent).toContain('A bit of everything');
+    // The SITE's subtitle, not the lens's label (which is what it used to be).
+    expect(div.querySelector('.page-subtitle')?.textContent).toBe(siteSubtitle());
     // The bespoke front-page filter bar / site-header markup is gone.
     expect(div.querySelector('.site-header')).toBeNull();
   });

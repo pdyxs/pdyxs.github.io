@@ -61,6 +61,24 @@ function unionTags(members: CardMeta[]): string[] {
 }
 
 /**
+ * The colon-form value of every collapsed folder (see collapse-config.ts) —
+ * i.e. the values that name a whole rather than a category.
+ *
+ * Two consumers, one idea. `CardMeta.collapsedContainer` is the same fact seen
+ * from a card ("the whole I am a part of", which suppresses its chip); this is
+ * it seen from the panel ("not somewhere to drill into", NodeContext's
+ * `excludedValues`).
+ */
+export function collapsedFolderValues(config: CollapseConfig): Set<string> {
+  const values = new Set<string>();
+  for (const folderUid of config.keys()) {
+    const value = ownValueForCard(folderUid);
+    if (value) values.add(value);
+  }
+  return values;
+}
+
+/**
  * Returns a new card list in which every folder named in `config` is replaced
  * by a single representative card. Cards outside any collapsed folder pass
  * through untouched, and the representative keeps the destination card's
@@ -112,6 +130,10 @@ export function collapseCollections(
       renderer: dest.renderer,
       image: dest.image,
       collapsed: { count: members.length },
+      // The representative IS the folder, so the folder's value is its own
+      // container too — which is what suppresses a chip repeating the title
+      // this card was just given (see card-tag-display.ts).
+      collapsedContainer: folderValue,
       // Stable across which member is destination — keyed to folder identity.
       contentHash: computeContentHash(title, description, folderUid),
       // Collapse runs on an already-listing-filtered pool (see LensStackCard),

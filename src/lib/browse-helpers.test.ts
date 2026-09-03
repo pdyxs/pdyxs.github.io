@@ -962,3 +962,40 @@ describe("groupNodesIntoSections", () => {
         expect(groupNodesIntoSections([])).toEqual([]);
     });
 });
+
+describe('excludedValues (collapsed folders are not drill-in targets)', () => {
+  const cards = [
+    fakeCardMeta({ uid: 'what/stories/arctic/00-intro', tags: ['what:stories/arctic'] }),
+    fakeCardMeta({ uid: 'what/stories/galapagos/00-intro', tags: ['what:stories/galapagos'] }),
+    fakeCardMeta({ uid: 'what/art/lino', tags: ['what:art'] }),
+  ];
+  const declared = ['what:stories', 'what:stories/arctic', 'what:stories/galapagos', 'what:art'];
+  const display = {
+    'what:stories': { name: 'Stories', declared: true },
+    'what:stories/arctic': { name: 'The Arctic Circle', declared: true },
+    'what:stories/galapagos': { name: 'The Galapagos Islands', declared: true },
+    'what:art': { name: 'Art', declared: true },
+  };
+  const excluded = new Set(['what:stories/arctic', 'what:stories/galapagos']);
+
+  it('drops the collapsed folders from the declared list AND from the card tags', () => {
+    // Both sources matter: the representative carries the folder value as a
+    // tag, so removing it from `declaredValues` alone would not hide it.
+    expect(extractDimensionTags(cards, 'what', declared, excluded))
+      .toEqual(['what:art', 'what:stories']);
+  });
+
+  it('leaves the parent in place, still counting its collapsed members', () => {
+    const roots = buildTagHierarchy(cards, 'what', declared, display, new Set(), excluded);
+    const stories = roots.find(n => n.value === 'what:stories');
+    expect(stories?.children).toEqual([]);
+    expect(stories?.count).toBe(2);
+  });
+
+  it('offers the folders normally when nothing is excluded', () => {
+    const roots = buildTagHierarchy(cards, 'what', declared, display, new Set());
+    const stories = roots.find(n => n.value === 'what:stories');
+    expect(stories?.children.map(c => c.value))
+      .toEqual(['what:stories/arctic', 'what:stories/galapagos']);
+  });
+});

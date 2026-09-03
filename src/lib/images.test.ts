@@ -74,6 +74,27 @@ describe('resolveGalleryImages', () => {
     ]);
   });
 
+  // The masthead renders a header embed as a live player (GenericRenderer),
+  // so prepending it here would show the same video twice on one card.
+  it('does not lead the gallery with a header image that is an embed', () => {
+    const result = resolveGalleryImages(
+      'what/art/art-heist',
+      'https://www.youtube.com/embed/HS1Xem613Rw',
+      ['https://example.com/x.jpg'],
+    );
+    expect(result).toEqual([{ src: 'https://example.com/x.jpg', kind: 'image' }]);
+  });
+
+  it('still galleries a header embed that images[] names explicitly', () => {
+    const result = resolveGalleryImages(
+      'what/art/art-heist',
+      'https://www.youtube.com/embed/HS1Xem613Rw',
+      ['https://www.youtube.com/embed/HS1Xem613Rw'],
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].kind).toBe('embed');
+  });
+
   it('resolves Vimeo URLs in images[] even with no generated poster', () => {
     const result = resolveGalleryImages('what/art/art-heist', undefined, [
       'https://player.vimeo.com/video/257695244',

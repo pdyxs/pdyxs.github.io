@@ -103,12 +103,34 @@ export function computeCardTagDisplay(
    * resolve names downstream and would only ever compare raw values.
    */
   labelOf?: (tag: string) => string,
+  /**
+   * This card's collapsed container (`CardMeta.collapsedContainer`) — the
+   * colon-form value of the folder it is a *part of*, when that folder opts
+   * into collapsing. That tag is dropped.
+   *
+   * Every card carries its parent folder's value as a path tag
+   * (`derivePathTags`), and for nearly every folder that reads as a category:
+   * an art card chipped "Art" is telling you something. A collapsed folder is
+   * not a category — it is one work, and its cards are its chapters. The chip
+   * then says "In Fate's Hands" on a chapter *of* In Fate's Hands, and its
+   * `tag:` link filters to a lens holding exactly one result: the collapsed
+   * representative, i.e. where you already are. On the representative itself
+   * it is worse — the folder's identity is that card's own title, so the chip
+   * repeats it verbatim.
+   *
+   * Only the chip is dropped. The tag stays on the card, so filtering, the
+   * collapse union and the lens are untouched — and the containment relation
+   * is still stated, by the series section naming the story (GenericRenderer)
+   * and by the nav renderer's position indicator.
+   */
+  selfContainer?: string,
 ): CardTagDisplay {
   const kept: TagChip[] = [];
   const seenLabels = new Set<string>();
 
   for (const tag of cardTags) {
     if (isChipHidden(tag)) continue;
+    if (selfContainer && tag === selfContainer) continue;
     if (labelOf) {
       const label = labelOf(tag);
       if (seenLabels.has(label)) continue;

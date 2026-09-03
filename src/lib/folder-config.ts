@@ -120,6 +120,18 @@ export type FolderCascade = {
    * wins, like `renderer` — NOT additive like `priority`.
    */
   sort?: FolderSort;
+  /**
+   * The colon-form value of the nearest ancestor folder that declares
+   * `collapse` (e.g. "what:stories/fatecardgame"), or undefined when this card
+   * sits in no collapsed folder. Nearest-wins, like `renderer`.
+   *
+   * collapse-config.ts reads the same key for the *transform* — which folders
+   * become one representative card. This reads it for the card's own view of
+   * the relation: "the whole I am a part of". A card in a collapsed folder is
+   * a chapter of a thing, not a member of a category named after it, which is
+   * why its path chip is suppressed (see card-tag-display.ts).
+   */
+  collapsedContainer?: string;
   /** This folder's own tag identity (name/description) — not inherited by descendants. */
   tagIdentity: { name?: string; description?: string };
 };
@@ -137,6 +149,8 @@ type ConfigFile = {
   gallery?: boolean;
   dateBar?: boolean;
   seriesPreview?: string;
+  /** `true`, or a child slug naming the representative — see collapse-config.ts. */
+  collapse?: unknown;
   priority?: number;
   sort?: string;
   excludeTags?: string[];
@@ -176,6 +190,7 @@ export async function resolveFolderCascade(
   let gallery: boolean | undefined;
   let dateBar: boolean | undefined;
   let seriesPreview: string | undefined;
+  let collapsedContainer: string | undefined;
   let priority: number | undefined;
   let sort: FolderSort | undefined;
   const cascadeTags: string[] = [];
@@ -199,6 +214,17 @@ export async function resolveFolderCascade(
     if (typeof parsed.gallery === 'boolean') gallery = parsed.gallery;
     if (typeof parsed.dateBar === 'boolean') dateBar = parsed.dateBar;
     if (typeof parsed.seriesPreview === 'string') seriesPreview = parsed.seriesPreview;
+    // Any `collapse` value marks the folder collapsed; which child represents
+    // it is collapse-config.ts's business, not this cascade's. Colon-form
+    // inlined rather than borrowing ownValueForCard: this module is loaded by
+    // Node build scripts via type stripping, and card-identity.ts's own
+    // extensionless import would not resolve there.
+    if (parsed.collapse === true || (typeof parsed.collapse === 'string' && parsed.collapse.length > 0)) {
+      const slashIdx = candidates[i].indexOf('/');
+      collapsedContainer = slashIdx === -1
+        ? undefined
+        : `${candidates[i].slice(0, slashIdx)}:${candidates[i].slice(slashIdx + 1)}`;
+    }
     // `priority` ACCUMULATES — every other key here replaces. See priority.ts.
     if (typeof parsed.priority === 'number') priority = (priority ?? 0) + parsed.priority;
     const parsedSort = parseFolderSort(parsed.sort);
@@ -249,5 +275,5 @@ export async function resolveFolderCascade(
     }
   }
 
-  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, width, gallery, dateBar, seriesPreview, priority, sort, cascadeTags, excludeTags, overrides, tagIdentity };
+  return { renderer, navRenderer, status, cardDescriptionParts, dateLabel, width, gallery, dateBar, seriesPreview, collapsedContainer, priority, sort, cascadeTags, excludeTags, overrides, tagIdentity };
 }

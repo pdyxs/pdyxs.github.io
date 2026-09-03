@@ -34,6 +34,31 @@
     openIndex = (openIndex - 1 + items.length) % items.length;
   }
 
+  /**
+   * Moves the overlay out to <body> for as long as it is open.
+   *
+   * The viewer is `position: fixed`, and it mounts inside the card that owns
+   * the images — which on desktop is `#card-stack .stack-card`, carrying
+   * `clip-path: inset(...)` (global.css, the ahead-fan crop). A clip-path
+   * clips fixed-position descendants too, so left in place the "full-screen"
+   * overlay was cropped to the active card's box. That rule cannot go: the
+   * identity inset on every card is what the ahead crop animates from.
+   *
+   * Svelte's scoped-style classes are on the nodes themselves, so they survive
+   * the move; the CSS variables it reads are all on `:root`.
+   *
+   * The standing rule this encodes: nothing `position: fixed` may live inside
+   * `.stack-card` and be visible at desktop.
+   */
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        node.remove();
+      },
+    };
+  }
+
   function onKeydown(e: KeyboardEvent) {
     if (openIndex === null) return;
     if (e.key === 'Escape') close();
@@ -46,6 +71,7 @@
 
 {#if openIndex !== null && items[openIndex]}
   <div
+    use:portal
     class="image-gallery-lightbox"
     role="dialog"
     aria-modal="true"

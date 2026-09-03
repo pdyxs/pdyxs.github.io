@@ -12,6 +12,7 @@ medium: Card Game
 actions: []
 quotes: []
 images: []
-status: draft
 ---
 The Odysseys is a game about fate, and choosing to accept or fight it.
+
+In it, most players are the captains of the ships heading home with Odysseus, on a fateful journey home. The final player is fate, who has individual destinies in store for each of them.

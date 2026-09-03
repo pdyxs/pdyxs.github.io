@@ -6,3 +6,4 @@ description: >
 # the card header worded as such. See resolveDateline in src/lib/card-date.ts.
 dateLabel: Published
 width: 900px
+group: Writing

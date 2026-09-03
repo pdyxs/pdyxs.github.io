@@ -3,17 +3,18 @@ import { resolveFolderCascade, makeFileReader } from './folder-config';
 import { resolveNavRenderer } from './location-resolver';
 import SeriesNavRenderer from '../components/card-renderers/SeriesNavRenderer.astro';
 
-// Regression guard for the stale-registration bug: story chapters live under
-// `what/posts/stories/`, but the nav renderer was once keyed by a hardcoded
-// `what/stories` path prefix that no longer matched, so the series prev/next
-// nav silently stopped rendering. Nav renderers now cascade by name from
+// Regression guard for the stale-registration bug: the nav renderer was once
+// keyed by a hardcoded content path prefix, which stopped matching the moment
+// the stories moved — so the series prev/next nav silently stopped rendering.
+// (They have since moved again, from `what/posts/stories/` to `what/stories/`,
+// which is exactly the event this guard exists to survive.) Nav renderers now cascade by name from
 // `_config.yaml` (navRenderer: series). This test reads the REAL content tree,
 // so if stories move again without updating their config, it fails here rather
 // than silently dropping the nav shell in production.
 describe('series nav renderer wiring (real content tree)', () => {
   it('resolves a story chapter to the SeriesNavRenderer via its cascaded navRenderer', async () => {
     const cascade = await resolveFolderCascade(
-      'what/posts/stories/arctic/00-introduction',
+      'what/stories/arctic/00-introduction',
       makeFileReader(),
     );
     expect(cascade.navRenderer).toBe('series');

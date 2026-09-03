@@ -27,7 +27,7 @@
   {
     "uid": "what/art/lino-printing",
     "code": "5",
-    "title": "Lino Printing"
+    "title": "Lino Tiles"
   },
   {
     "uid": "what/art/qistigram",
@@ -207,7 +207,7 @@
   {
     "uid": "what/posts/2013-11-17-the-beginnings-of-the-walk-of",
     "code": "F",
-    "title": "The beginnings of the walk of art"
+    "title": "The beginnings of the wall of art"
   },
   {
     "uid": "what/posts/2014-03-07-sometimes-you-just-find-cool-things",
@@ -556,8 +556,7 @@
   },
   {
     "uid": "what/posts/2018-07-15-its-been-a-few-weeks-since",
-    "code": "1N",
-    "title": "It’s been a few weeks since I was in Svalbard, and I really don’t…"
+    "code": "1N"
   },
   {
     "uid": "what/posts/2018-07-20-inside-a-luminarium-at-bluedot-festival",
@@ -896,173 +895,139 @@
   },
   {
     "uid": "what/posts/stories/arctic/00-introduction",
-    "code": "2T",
-    "title": "The Arctic Circle"
+    "code": "2T"
   },
   {
     "uid": "what/posts/stories/arctic/01-map",
-    "code": "2U",
-    "title": "Map"
+    "code": "2U"
   },
   {
     "uid": "what/posts/stories/arctic/02-glacier",
-    "code": "2V",
-    "title": "Glaciers"
+    "code": "2V"
   },
   {
     "uid": "what/posts/stories/arctic/03-surge-glacier",
-    "code": "2W",
-    "title": "Surge Glaciers"
+    "code": "2W"
   },
   {
     "uid": "what/posts/stories/arctic/04-flowers",
-    "code": "2X",
-    "title": "Flowers"
+    "code": "2X"
   },
   {
     "uid": "what/posts/stories/arctic/05-reindeer",
-    "code": "2Y",
-    "title": "Reindeer"
+    "code": "2Y"
   },
   {
     "uid": "what/posts/stories/arctic/06-morraine-and-tundra",
-    "code": "2Z",
-    "title": "Moraine and Tundra"
+    "code": "2Z"
   },
   {
     "uid": "what/posts/stories/arctic/07-fractals-in-mud",
-    "code": "30",
-    "title": "Fractals in the Mud"
+    "code": "30"
   },
   {
     "uid": "what/posts/stories/arctic/08-cultural-heritage",
-    "code": "31",
-    "title": "Cultural Heritage"
+    "code": "31"
   },
   {
     "uid": "what/posts/stories/arctic/09-polar-bear-tracks",
-    "code": "32",
-    "title": "Polar Bear Tracks"
+    "code": "32"
   },
   {
     "uid": "what/posts/stories/arctic/10-polar-bear-encounter",
-    "code": "33",
-    "title": "Polar Bear Encounter"
+    "code": "33"
   },
   {
     "uid": "what/posts/stories/arctic/11-midnight-sun",
-    "code": "34",
-    "title": "The Midnight Sun"
+    "code": "34"
   },
   {
     "uid": "what/posts/stories/arctic/12-patterns-from-water",
-    "code": "35",
-    "title": "Trees in the Ground"
+    "code": "35"
   },
   {
     "uid": "what/posts/stories/arctic/13-melting-rocks",
-    "code": "36",
-    "title": "Melting Rocks"
+    "code": "36"
   },
   {
     "uid": "what/posts/stories/arctic/14-glacier-sound",
-    "code": "37",
-    "title": "The sound of glaciers"
+    "code": "37"
   },
   {
     "uid": "what/posts/stories/arctic/15-the-northernmost-rock",
-    "code": "38",
-    "title": "The Northernmost Rock"
+    "code": "38"
   },
   {
     "uid": "what/posts/stories/arctic/16-rock-jenga",
-    "code": "39",
-    "title": "Rock Jenga"
+    "code": "39"
   },
   {
     "uid": "what/posts/stories/arctic/17-climbing-the-mast",
-    "code": "3a",
-    "title": "Climbing the Mast"
+    "code": "3a"
   },
   {
     "uid": "what/posts/stories/arctic/18-walruses",
-    "code": "3b",
-    "title": "Walruses"
+    "code": "3b"
   },
   {
     "uid": "what/posts/stories/arctic/19-plastic",
-    "code": "3c",
-    "title": "Plastic"
+    "code": "3c"
   },
   {
     "uid": "what/posts/stories/arctic/20-the-worlds-northernmost-atm",
-    "code": "3d",
-    "title": "The World's Northernmost ATM"
+    "code": "3d"
   },
   {
     "uid": "what/posts/stories/arctic/21-conclusion",
-    "code": "3e",
-    "title": "Conclusion"
+    "code": "3e"
   },
   {
     "uid": "what/posts/stories/fatecardgame/00-introduction",
-    "code": "3f",
-    "title": "In Fate's Hands"
+    "code": "3f"
   },
   {
     "uid": "what/posts/stories/fatecardgame/01-history",
-    "code": "3g",
-    "title": "Where it’s from"
+    "code": "3g"
   },
   {
     "uid": "what/posts/stories/fatecardgame/02-themes",
-    "code": "3h",
-    "title": "Themes"
+    "code": "3h"
   },
   {
     "uid": "what/posts/stories/fatecardgame/03-art",
-    "code": "3i",
-    "title": "Art"
+    "code": "3i"
   },
   {
     "uid": "what/posts/stories/fatecardgame/04-fates-hand",
-    "code": "3j",
-    "title": "Fate's Hand"
+    "code": "3j"
   },
   {
     "uid": "what/posts/stories/fatecardgame/05-fates-roles",
-    "code": "3k",
-    "title": "Fate's Role"
+    "code": "3k"
   },
   {
     "uid": "what/posts/stories/galapagos/00-introduction",
-    "code": "3l",
-    "title": "The Galapagos Islands"
+    "code": "3l"
   },
   {
     "uid": "what/posts/stories/galapagos/01-tourism",
-    "code": "3m",
-    "title": "Tourism in the Galapagos"
+    "code": "3m"
   },
   {
     "uid": "what/posts/stories/galapagos/02-sea-wolves",
-    "code": "3n",
-    "title": "Sea Wolves"
+    "code": "3n"
   },
   {
     "uid": "what/posts/stories/galapagos/03-stay-away",
-    "code": "3o",
-    "title": "Stay Away from the Wildlife"
+    "code": "3o"
   },
   {
     "uid": "what/posts/stories/galapagos/04-semi-arid",
-    "code": "3p",
-    "title": "Semi-Arid Desert"
+    "code": "3p"
   },
   {
     "uid": "what/posts/stories/galapagos/05-sideways-leaves",
-    "code": "3q",
-    "title": "Leaves on their sides"
+    "code": "3q"
   },
   {
     "uid": "what/puzzles/a-murder-most-fogged",
@@ -1481,7 +1446,7 @@
   {
     "uid": "what/software/pdyxs-wtf",
     "code": "4Q",
-    "title": "pdyxs.wtf"
+    "title": "This website"
   },
   {
     "uid": "what/puzzles/convergent-clues/cityscrapers",
@@ -1628,5 +1593,175 @@
     "uid": "what/writing/2020-06-02-gotta-get-outta-this-project-timeline",
     "code": "5k",
     "title": "Gotta Get Outta This Project Timeline"
+  },
+  {
+    "uid": "what/stories/arctic/00-introduction",
+    "code": "5l",
+    "title": "The Arctic Circle"
+  },
+  {
+    "uid": "what/stories/arctic/01-map",
+    "code": "5m",
+    "title": "Map"
+  },
+  {
+    "uid": "what/stories/arctic/02-glacier",
+    "code": "5n",
+    "title": "Glaciers"
+  },
+  {
+    "uid": "what/stories/arctic/03-surge-glacier",
+    "code": "5o",
+    "title": "Surge Glaciers"
+  },
+  {
+    "uid": "what/stories/arctic/04-flowers",
+    "code": "5p",
+    "title": "Flowers"
+  },
+  {
+    "uid": "what/stories/arctic/05-reindeer",
+    "code": "5q",
+    "title": "Reindeer"
+  },
+  {
+    "uid": "what/stories/arctic/06-morraine-and-tundra",
+    "code": "5r",
+    "title": "Moraine and Tundra"
+  },
+  {
+    "uid": "what/stories/arctic/07-fractals-in-mud",
+    "code": "5s",
+    "title": "Fractals in the Mud"
+  },
+  {
+    "uid": "what/stories/arctic/08-cultural-heritage",
+    "code": "5t",
+    "title": "Cultural Heritage"
+  },
+  {
+    "uid": "what/stories/arctic/09-polar-bear-tracks",
+    "code": "5u",
+    "title": "Polar Bear Tracks"
+  },
+  {
+    "uid": "what/stories/arctic/10-polar-bear-encounter",
+    "code": "5v",
+    "title": "Polar Bear Encounter"
+  },
+  {
+    "uid": "what/stories/arctic/11-midnight-sun",
+    "code": "5w",
+    "title": "The Midnight Sun"
+  },
+  {
+    "uid": "what/stories/arctic/12-patterns-from-water",
+    "code": "5x",
+    "title": "Trees in the Ground"
+  },
+  {
+    "uid": "what/stories/arctic/13-melting-rocks",
+    "code": "5y",
+    "title": "Melting Rocks"
+  },
+  {
+    "uid": "what/stories/arctic/14-glacier-sound",
+    "code": "5z",
+    "title": "The sound of glaciers"
+  },
+  {
+    "uid": "what/stories/arctic/15-the-northernmost-rock",
+    "code": "5A",
+    "title": "The Northernmost Rock"
+  },
+  {
+    "uid": "what/stories/arctic/16-rock-jenga",
+    "code": "5B",
+    "title": "Rock Jenga"
+  },
+  {
+    "uid": "what/stories/arctic/17-climbing-the-mast",
+    "code": "5C",
+    "title": "Climbing the Mast"
+  },
+  {
+    "uid": "what/stories/arctic/18-walruses",
+    "code": "5D",
+    "title": "Walruses"
+  },
+  {
+    "uid": "what/stories/arctic/19-plastic",
+    "code": "5E",
+    "title": "Plastic"
+  },
+  {
+    "uid": "what/stories/arctic/20-the-worlds-northernmost-atm",
+    "code": "5F",
+    "title": "The World's Northernmost ATM"
+  },
+  {
+    "uid": "what/stories/arctic/21-conclusion",
+    "code": "5G",
+    "title": "Conclusion"
+  },
+  {
+    "uid": "what/stories/fatecardgame/00-introduction",
+    "code": "5H",
+    "title": "In Fate's Hands"
+  },
+  {
+    "uid": "what/stories/fatecardgame/01-history",
+    "code": "5I",
+    "title": "Where it’s from"
+  },
+  {
+    "uid": "what/stories/fatecardgame/02-themes",
+    "code": "5J",
+    "title": "Themes"
+  },
+  {
+    "uid": "what/stories/fatecardgame/03-art",
+    "code": "5K",
+    "title": "Art"
+  },
+  {
+    "uid": "what/stories/fatecardgame/04-fates-hand",
+    "code": "5L",
+    "title": "Fate's Hand"
+  },
+  {
+    "uid": "what/stories/fatecardgame/05-fates-roles",
+    "code": "5M",
+    "title": "Fate's Role"
+  },
+  {
+    "uid": "what/stories/galapagos/00-introduction",
+    "code": "5N",
+    "title": "The Galapagos Islands"
+  },
+  {
+    "uid": "what/stories/galapagos/01-tourism",
+    "code": "5O",
+    "title": "Tourism in the Galapagos"
+  },
+  {
+    "uid": "what/stories/galapagos/02-sea-wolves",
+    "code": "5P",
+    "title": "Sea Wolves"
+  },
+  {
+    "uid": "what/stories/galapagos/03-stay-away",
+    "code": "5Q",
+    "title": "Stay Away from the Wildlife"
+  },
+  {
+    "uid": "what/stories/galapagos/04-semi-arid",
+    "code": "5R",
+    "title": "Semi-Arid Desert"
+  },
+  {
+    "uid": "what/stories/galapagos/05-sideways-leaves",
+    "code": "5S",
+    "title": "Leaves on their sides"
   }
 ]

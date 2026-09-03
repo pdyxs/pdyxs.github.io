@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { collapseCollections } from './collapse';
+import { collapseCollections, collapsedFolderValues } from './collapse';
 import type { FolderIdentity } from './collapse';
 import type { CollapseConfig } from './collapse-config';
 import { fakeCardMeta } from '../test/fixtures';
@@ -117,5 +117,36 @@ describe('collapseCollections', () => {
     const cards = arcticCards();
     const config: CollapseConfig = new Map([['what/posts/stories/empty', {}]]);
     expect(collapseCollections(cards, config, () => ({}))).toHaveLength(4);
+  });
+});
+
+describe('collapsedContainer on the representative', () => {
+  it('names the folder itself, so the chip repeating its title is suppressed', () => {
+    const config: CollapseConfig = new Map([[ARCTIC, {}]]);
+    const out = collapseCollections(arcticCards(), config, identity({
+      'what:posts/stories/arctic': { name: 'The Arctic Circle' },
+    }));
+    const rep = out.find(c => c.collapsed);
+    expect(rep?.title).toBe('The Arctic Circle');
+    expect(rep?.collapsedContainer).toBe('what:posts/stories/arctic');
+    // The folder value is in its union of tags — which is exactly what the
+    // chip rule now drops.
+    expect(rep?.tags).toContain('what:posts/stories/arctic');
+  });
+});
+
+describe('collapsedFolderValues', () => {
+  it('maps every collapsed folder uid to its colon-form value', () => {
+    const config: CollapseConfig = new Map([
+      [ARCTIC, {}],
+      ['what/stories/fatecardgame', { target: '00-introduction' }],
+    ]);
+    expect(collapsedFolderValues(config)).toEqual(
+      new Set(['what:posts/stories/arctic', 'what:stories/fatecardgame']),
+    );
+  });
+
+  it('is empty when nothing collapses', () => {
+    expect(collapsedFolderValues(new Map())).toEqual(new Set());
   });
 });

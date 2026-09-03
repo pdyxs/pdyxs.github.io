@@ -215,6 +215,17 @@ export type CardMeta = {
   /** Present only on a collapsed-folder representative (see collapse.ts): how
    * many member cards the folder collapsed. Drives the browse-card count badge. */
   collapsed?: { count: number };
+  /**
+   * The colon-form value of the collapsed folder this card is a part of
+   * (`what:stories/fatecardgame`), or absent for the great majority of cards,
+   * which sit in no collapsed folder. Cascaded from `_config.yaml` — see
+   * FolderCascade.collapsedContainer.
+   *
+   * On CardMeta rather than ResolvedCard because it crosses the wire: the chip
+   * rule that consumes it (card-tag-display.ts) is the ONE rule shared by a
+   * card's own masthead and every listing, so the browse client needs it too.
+   */
+  collapsedContainer?: string;
   /** Resolved publish-lifecycle status: frontmatter `status` ?? cascaded _config.yaml `status` ?? 'published'. */
   status: StatusValue;
   /** Build-time listing/reachability visibility, computed from `status`/`date`/isDev — see computeStatusVisibility. */
@@ -387,6 +398,7 @@ export function resolveCard(
     gallery: data.gallery ?? cascade.gallery,
     dateBar: data.dateBar ?? cascade.dateBar,
     seriesPreview: data.seriesPreview ?? (cascade.seriesPreview as ResolvedCard['seriesPreview']),
+    collapsedContainer: cascade.collapsedContainer,
   } satisfies ResolvedCard;
 }
 

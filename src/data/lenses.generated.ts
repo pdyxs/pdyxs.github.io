@@ -7,6 +7,7 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     "id": "home",
     "dimension": "what",
     "label": "A bit of everything",
+    "subtitle": "Paul Sztajer — games, puzzles, writing and work",
     "icon": "scatter",
     "component": "home",
     "acceptsFilters": false,

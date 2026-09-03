@@ -42,6 +42,18 @@ export interface NodeContext {
    * self-contained pool can omit it.
    */
   cardBackedValues?: Set<string>;
+  /**
+   * Values this dimension must not offer as a place to drill INTO, with
+   * everything under them — in practice the collapsed folders (see
+   * collapse.ts). A collapsed folder browses as one card, so offering it as a
+   * filter value would list the same single representative the reader can
+   * already see, under a heading that duplicates that card's own title. The
+   * folder's parent keeps its full count: the representative still carries the
+   * folder value as a tag, which is what prefix-matches it into `what:stories`.
+   *
+   * Optional; omitted means nothing is excluded.
+   */
+  excludedValues?: ReadonlySet<string>;
 }
 
 /** Shared per-pool derivation, computed once per applyFilters call. */

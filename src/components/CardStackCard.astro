@@ -108,7 +108,7 @@ const seriesDateBar = card.dateBar && entry?.data?.series
       date={card.date}
       {tagDisplay}
     >
-      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} />
+      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
     </NavComponent>
   ) : (
     <>
@@ -127,7 +127,7 @@ const seriesDateBar = card.dateBar && entry?.data?.series
       <div class="body-wrapper open">
         <div class="stack-card-body">
           <div class="stack-card-body-inner">
-            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} />
+            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
           </div>
         </div>
       </div>

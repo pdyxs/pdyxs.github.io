@@ -148,7 +148,8 @@ export function isRemoteVideoUrl(url: string): boolean {
  * The header image leads the gallery in both branches — it's the card's own
  * media and belongs in the lightbox set — and is only prepended when the
  * resolved list doesn't already carry it, so an `images[]` that names the
- * header doesn't show it twice.
+ * header doesn't show it twice. A header *embed* is not prepended at all: the
+ * masthead already plays it.
  */
 export function resolveGalleryImages(
   entryId: string,
@@ -158,8 +159,17 @@ export function resolveGalleryImages(
   body?: string,
 ): GalleryImageSource[] {
   const header = resolveMediaRef(entryId, headerImage);
+  // An embed header is the exception to the lead-the-gallery rule below: the
+  // masthead renders it as a live, fullscreen-capable player
+  // (GenericRenderer.astro), so the lightbox adds nothing and the card would
+  // simply show the same video twice. An `images[]` that names it explicitly
+  // still galleries it — that is a deliberate request, and only the automatic
+  // prepend is skipped here.
+  const leadsGallery = header && header.kind !== 'embed' ? header : undefined;
   const withHeader = (sources: GalleryImageSource[]): GalleryImageSource[] =>
-    header && !sources.some(s => s.src === header.src) ? [header, ...sources] : sources;
+    leadsGallery && !sources.some(s => s.src === leadsGallery.src)
+      ? [leadsGallery, ...sources]
+      : sources;
 
   if (images && images.length > 0) {
     const resolved = images

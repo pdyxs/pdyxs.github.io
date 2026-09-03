@@ -151,7 +151,11 @@
   onMount(() => {
     function onDocumentClick(e: MouseEvent) {
       const target = e.target as Element;
-      if (!target.closest('.fp-dimension-controls') && openDimension !== null) {
+      // `.browse-dim-panel` is portaled to <body> (see DimensionPanel), so it
+      // is no longer inside the toolbar — without this a click on any panel
+      // row would read as an outside click and close the panel under it.
+      const inside = target.closest('.fp-dimension-controls') || target.closest('.browse-dim-panel');
+      if (!inside && openDimension !== null) {
         openDimension = null;
         drillPath = [];
       }

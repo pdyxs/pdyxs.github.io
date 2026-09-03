@@ -252,3 +252,43 @@ describe('resolveFolderCascade', () => {
     expect(result.renderer).toBe('game');
   });
 });
+
+describe('resolveFolderCascade collapsedContainer', () => {
+  it('resolves the colon-form value of the nearest ancestor declaring collapse', async () => {
+    const files: Record<string, string> = {
+      'what/_config.yaml': 'name: What\n',
+      'what/stories/_config.yaml': 'renderer: story\n',
+      'what/stories/fatecardgame/_config.yaml': 'collapse: true\nname: In Fate’s Hands\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    const result = await resolveFolderCascade('what/stories/fatecardgame/02-themes', readFile);
+    expect(result.collapsedContainer).toBe('what:stories/fatecardgame');
+  });
+
+  it('accepts the named-target form of collapse', async () => {
+    const files: Record<string, string> = {
+      'what/stories/arctic/_config.yaml': 'collapse: 00-introduction\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/stories/arctic/01-map', readFile)).collapsedContainer)
+      .toBe('what:stories/arctic');
+  });
+
+  it('is undefined when no ancestor collapses', async () => {
+    const files: Record<string, string> = { 'what/art/_config.yaml': 'name: Art\n' };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/art/lino-printing', readFile)).collapsedContainer)
+      .toBeUndefined();
+  });
+
+  it('a card IN the collapsed folder gets it; the folder’s own siblings do not', async () => {
+    const files: Record<string, string> = {
+      'what/stories/fatecardgame/_config.yaml': 'collapse: true\n',
+    };
+    const readFile = async (path: string) => files[path] ?? null;
+    expect((await resolveFolderCascade('what/stories/fatecardgame/02-themes', readFile)).collapsedContainer)
+      .toBe('what:stories/fatecardgame');
+    expect((await resolveFolderCascade('what/stories/some-other-card', readFile)).collapsedContainer)
+      .toBeUndefined();
+  });
+});

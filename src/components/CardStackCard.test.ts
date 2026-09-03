@@ -182,7 +182,7 @@ describe("CardStackCard", () => {
         const html = await container.renderToString(CardStackCard, {
             props: {
                 card: card({
-                    uid: "what/posts/stories/arctic/09-polar-bear-tracks",
+                    uid: "what/stories/arctic/09-polar-bear-tracks",
                     title: "Sentinel Title",
                     navRenderer: "series",
                 }),

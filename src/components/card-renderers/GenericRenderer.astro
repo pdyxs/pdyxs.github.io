@@ -1,7 +1,8 @@
 ---
 import type { RenderResult } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
-import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages, cardLocalImages } from '../../lib/images';
+import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages, cardLocalImages, isRemoteImageUrl, isRemoteVideoUrl } from '../../lib/images';
+import { parseEmbedUrl, EMBED_IFRAME_ALLOW } from '../../lib/embeds';
 import { resolveHeaderMedia } from '../../lib/renderers';
 import type { HeaderMediaImage } from '../../lib/header-media';
 import { displayFor } from '../../lib/tag-display';
@@ -72,12 +73,15 @@ interface Props {
   dateLabel?: string;
   /** `ResolvedCard.gallery` — `false` suppresses the gallery strip. Default true. */
   gallery?: boolean;
+  /** `ResolvedCard.collapsedContainer` — the collapsed folder this card is a
+   * part of. Suppresses the chip repeating it, and names the series section. */
+  collapsedContainer?: string;
 }
 
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], seriesCards = [], seriesDateBar = null, seriesPreview, cardTags = [], date, dateLabel, gallery = true } = Astro.props as Props;
+const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], seriesCards = [], seriesDateBar = null, seriesPreview, cardTags = [], date, dateLabel, gallery = true, collapsedContainer } = Astro.props as Props;
 const data = entry?.data;
 
 // Whether this card is a dated thing, and how its date is worded — decided by
@@ -91,7 +95,18 @@ const dateline = seriesDateBar ? null : resolveDateline(dateLabel, date);
 const localImage = entry ? resolveLocalImage(entry.id, data?.image) : undefined;
 // A header `image:` that points to a colocated video renders as <video>.
 const localVideo = entry && !localImage ? resolveLocalVideo(entry.id, data?.image) : undefined;
-const remoteImageSrc = !localImage && !localVideo && data?.image?.startsWith('http') ? data.image : undefined;
+// A remote header `image:` is not automatically an <img>. The legacy Jekyll
+// content puts YouTube/Vimeo URLs in this field, and it also carries direct
+// video URLs — so the same three-way resolution the gallery does (parseEmbedUrl
+// / isRemoteVideoUrl / isRemoteImageUrl, all in src/lib/images.ts) has to
+// happen here too. Rendering any http string as an <img> painted a broken
+// image for every one of them, silently: an embed URL serves an HTML page.
+//
+// An unrecognised remote URL resolves to nothing rather than to a broken <img>.
+const remoteHeaderUrl = !localImage && !localVideo && data?.image?.startsWith('http') ? data.image : undefined;
+const headerEmbed = remoteHeaderUrl ? parseEmbedUrl(remoteHeaderUrl) : undefined;
+const remoteVideoSrc = !headerEmbed && remoteHeaderUrl && isRemoteVideoUrl(remoteHeaderUrl) ? remoteHeaderUrl : undefined;
+const remoteImageSrc = !headerEmbed && !remoteVideoSrc && remoteHeaderUrl && isRemoteImageUrl(remoteHeaderUrl) ? remoteHeaderUrl : undefined;
 
 const sourceLabel = data?.source
   ? data.source.charAt(0).toUpperCase() + data.source.slice(1)
@@ -115,7 +130,22 @@ const tags = computeCardTagDisplay(
   {},
   Infinity,
   tag => displayFor(tag, tagDisplay).name,
+  collapsedContainer,
 ).tags.map(chip => chip.value);
+
+// The series section names the story where it can. With the container chip
+// gone (see computeCardTagDisplay's `selfContainer`), a generic "In this
+// series" heading would leave a chapter like "Themes" with nothing on it
+// saying which story it belongs to — so the containment relation moves from a
+// facet chip to the structure that actually expresses it. Falls back when the
+// folder declared no `name:`, and to the generic wording for a frontmatter-only
+// series run, which has no folder identity to borrow.
+// `declared` is the guard, not truthiness of `name`: displayFor humanises the
+// slug for an undeclared value, so an unnamed folder would head its own series
+// "Fatecardgame".
+const containerDisplay = collapsedContainer ? displayFor(collapsedContainer, tagDisplay) : undefined;
+const seriesName = containerDisplay?.declared ? containerDisplay.name : undefined;
+const seriesHeading = seriesName ?? 'In this series';
 
 const hasInlineImages = bodyHasInlineImage(entry?.body);
 
@@ -137,7 +167,7 @@ const headerMediaImages: HeaderMediaImage[] = entry && HeaderMedia
     )
   : [];
 
-const hasHeaderMedia = Boolean(HeaderMedia || remoteImageSrc || localImage || localVideo);
+const hasHeaderMedia = Boolean(HeaderMedia || headerEmbed || remoteImageSrc || remoteVideoSrc || localImage || localVideo);
 const hasMasthead = tags.length > 0 || actions.length > 0;
 
 const gallerySources = entry && gallery
@@ -172,7 +202,28 @@ const galleryImages = await Promise.all(
           <HeaderMedia entryId={entry!.id} images={headerMediaImages} />
         ) : (
           <>
+            {/* The same responsive figure the body form emits (embedFigure,
+                src/lib/video-embeds.ts) — a live iframe, not the gallery's
+                poster facade. The masthead is the card's primary media and
+                there is no poster big enough for it: embedPosterUrl serves
+                mqdefault at 320x180, which is a thumbnail. youtube-nocookie
+                defers cookies until playback, which is what makes a live
+                iframe acceptable here. */}
+            {headerEmbed && (
+              <figure class="video-embed generic-embed" data-provider={headerEmbed.provider}>
+                <iframe
+                  src={headerEmbed.embedUrl}
+                  title={headerEmbed.provider === 'youtube' ? 'YouTube video' : 'Vimeo video'}
+                  loading="lazy"
+                  allow={EMBED_IFRAME_ALLOW}
+                  allowfullscreen
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  frameborder="0"
+                ></iframe>
+              </figure>
+            )}
             {remoteImageSrc && <img src={remoteImageSrc} alt="" class="generic-image" />}
+            {remoteVideoSrc && <video src={remoteVideoSrc} class="generic-video" controls preload="metadata"></video>}
             {localImage && <Image src={localImage} alt="" class="generic-image" />}
             {localVideo && <video src={localVideo} class="generic-video" controls preload="metadata"></video>}
           </>
@@ -219,7 +270,7 @@ const galleryImages = await Promise.all(
         style (default) keeps its existing position among the other card
         strips near the bottom; see the gate down there. */}
     {seriesPreview === 'dots' && seriesCards.length > 1 && entry && (
-      <SeriesDotStrip cards={seriesCards} currentUid={entry.id} />
+      <SeriesDotStrip cards={seriesCards} currentUid={entry.id} label={seriesName} />
     )}
 
     {/* Credits lead the body: the labels are self-describing, so the list needs
@@ -294,7 +345,7 @@ const galleryImages = await Promise.all(
         A one-card "series" is just this card, so it needs no strip. */}
     {seriesPreview !== 'dots' && seriesCards.length > 1 && (
       <section class="generic-section">
-        <h3 class="generic-section-heading">In this series</h3>
+        <h3 class="generic-section-heading">{seriesHeading}</h3>
         <CardStrip
           cards={seriesCards}
           {tagDisplay}

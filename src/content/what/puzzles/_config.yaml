@@ -34,3 +34,4 @@ gallery: false
 # what the travel log currently says (see src/lib/exclude-tags.ts).
 excludeTags:
   - generated/location
+group: Projects

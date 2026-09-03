@@ -28,7 +28,7 @@ import { deriveLensChrome } from '../lib/lens-chrome';
 import { getAllCards } from '../lib/cards';
 import { getTagRegistry, getDimensionGroupOrder, flattenTagDisplay, makeContentTreeReader } from '../lib/tag-registry';
 import { discoverCollapseConfig } from '../lib/collapse-config';
-import { collapseCollections } from '../lib/collapse';
+import { collapseCollections, collapsedFolderValues } from '../lib/collapse';
 import { FIVE_W_DIMENSIONS } from '../lib/five-w';
 import { cardOwnValues } from '../lib/card-identity';
 import { DIMENSIONS, emptyFilterState } from '../dimensions';
@@ -48,8 +48,10 @@ const uid = `lens/${name}`;
 const lens = getLensDefinition(name);
 
 // Cold-load chrome uses the empty filter state — these are fully static routes
-// with no live query string. The client refines the title once
-// LensFilterShell reads window.location.search.
+// with no live query string, and a fragment is fetched by uid, so what renders
+// here is always the UNFILTERED lens. The filters are part of the location's
+// identity rather than the fragment's, so CardStack applies them to the title
+// on the client (applyLensTitle; see src/lib/lens-chrome.ts).
 const filterState: FilterState = emptyFilterState();
 const chrome = lens ? deriveLensChrome(lens, filterState) : null;
 
@@ -110,7 +112,15 @@ if (lens) {
   // hand-injection site here any more — a dimension that renders nowhere (the
   // null dimension) simply returns none, and the dev-only status dimension
   // isn't in the registry at all in a production build.
-  const nodeContext = { cards: browseCards, declaredValues, display: tagDisplay, cardBackedValues };
+  // A collapsed folder is offered as one card, so it is not offered as a place
+  // to drill into — see NodeContext.excludedValues. Its parent keeps the count.
+  const nodeContext = {
+    cards: browseCards,
+    declaredValues,
+    display: tagDisplay,
+    cardBackedValues,
+    excludedValues: collapsedFolderValues(collapseConfig),
+  };
   hierarchies = Object.fromEntries(
     DIMENSIONS.map(dimension => [dimension.id, dimension.nodes(nodeContext)]),
   );
@@ -140,10 +150,11 @@ if (lens) {
     </div>
     <header class="page-header">
       <h1 class="page-title"><a href="/" class="page-title-link">{chrome.pageTitle}</a></h1>
-      <p class="page-subtitle">
-        {chrome.pageSubtitle}
-        {chrome.note && <small class="lens-note">{chrome.note}</small>}
-      </p>
+      {/* The SITE's subtitle, not the lens's — page mode is the root of the
+          stack, so its header says what the site is. The lens names itself in
+          card mode (and, once it is behind another card, in its spine). Its
+          footnote goes with that name, so it isn't rendered here either. */}
+      {chrome.pageSubtitle && <p class="page-subtitle">{chrome.pageSubtitle}</p>}
     </header>
     {/* 1px IntersectionObserver target for the sticky active header (slice #110). */}
     <div class="card-header-sentinel"></div>

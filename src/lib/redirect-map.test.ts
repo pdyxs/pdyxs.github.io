@@ -26,10 +26,10 @@ const UIDS = [
   'what/games/analog/gotta-get-outta-this-space',
   'what/games/digital/numbeanies',
   'what/art/art-heist',
-  'what/posts/stories/arctic/00-introduction',
-  'what/posts/stories/arctic/02-glacier',
-  'what/posts/stories/arctic/14-glacier-sound',
-  'what/posts/stories/galapagos/00-introduction',
+  'what/stories/arctic/00-introduction',
+  'what/stories/arctic/02-glacier',
+  'what/stories/arctic/14-glacier-sound',
+  'what/stories/galapagos/00-introduction',
   'where/work/seethrough',
 ];
 
@@ -148,12 +148,12 @@ describe('resolveOldUrl', () => {
   it('resolves a renumbered story item within its own story only', () => {
     expect(
       resolve({ from: '/arctic/1-1-glacier', label: 'arctic', strategy: 'story-item', slug: '1-1-glacier', group: 'arctic' }),
-    ).toMatchObject({ to: '/card/what/posts/stories/arctic/02-glacier', via: 'story-item' });
+    ).toMatchObject({ to: '/card/what/stories/arctic/02-glacier', via: 'story-item' });
   });
 
   it('resolves a story index page to the first item of that story', () => {
     expect(resolve({ from: '/where/arctic', label: 'places', strategy: 'story-index', slug: 'arctic', group: 'arctic' })).toMatchObject(
-      { to: '/card/what/posts/stories/arctic/00-introduction', via: 'story-index' },
+      { to: '/card/what/stories/arctic/00-introduction', via: 'story-index' },
     );
   });
 
@@ -209,7 +209,7 @@ describe('resolveOldUrl', () => {
       group: 'arctic',
     });
     expect(r.via).toBe('fallback');
-    expect(r.to).toBe('/card/what/posts/stories/arctic/00-introduction');
+    expect(r.to).toBe('/card/what/stories/arctic/00-introduction');
     expect(r.reason).toMatch(/start of the "arctic" story/);
   });
 
@@ -320,9 +320,9 @@ describe('the generated redirect map', () => {
       '/card/what/games/analog/gotta-get-outta-this-space',
     );
     expect(REDIRECTS['/what/projects/art-heist']).toBe('/card/what/art/art-heist');
-    expect(REDIRECTS['/arctic/1-1-glacier']).toBe('/card/what/posts/stories/arctic/02-glacier');
-    expect(REDIRECTS['/galapagos/00-introduction']).toBe('/card/what/posts/stories/galapagos/00-introduction');
-    expect(REDIRECTS['/where/arctic']).toBe('/card/what/posts/stories/arctic/00-introduction');
+    expect(REDIRECTS['/arctic/1-1-glacier']).toBe('/card/what/stories/arctic/02-glacier');
+    expect(REDIRECTS['/galapagos/00-introduction']).toBe('/card/what/stories/galapagos/00-introduction');
+    expect(REDIRECTS['/where/arctic']).toBe('/card/what/stories/arctic/00-introduction');
     expect(REDIRECTS['/workhistory/seethrough']).toBe('/card/where/work/seethrough');
   });
 
@@ -353,7 +353,6 @@ describe('the generated redirect map', () => {
     expect(UNRESOLVED_OLD_URLS.map(u => u.from).sort()).toEqual([
       '/arctic/0-1-map',
       '/cv',
-      '/what/projects/fatecardgame',
       '/who',
     ]);
   });
@@ -364,11 +363,10 @@ describe('the generated redirect map', () => {
       expect(UNRESOLVED_OLD_URLS.map(u => u.from), entry.from).toContain(entry.from);
       expect(REDIRECTS[entry.from], entry.from).toBe(entry.to);
     }
-    // All four current misses trace to a card that exists but is `status:
+    // All three current misses trace to a card that exists but is `status:
     // draft`. Publishing one restores its old URL and drops it from this list.
     expect(ORPHANED_OLD_URLS.map(o => `${o.uid} ${o.from}`).sort()).toEqual([
-      'what/games/analog/fatecardgame /what/projects/fatecardgame',
-      'what/posts/stories/arctic/01-map /arctic/0-1-map',
+      'what/stories/arctic/01-map /arctic/0-1-map',
       'who/about-me /cv',
       'who/about-me /who',
     ]);

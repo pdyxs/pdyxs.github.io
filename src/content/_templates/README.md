@@ -12,7 +12,7 @@ dimension roots, so nothing here can become a card.
 One template per **container folder** — every directory under `src/content`
 whose `_config.yaml` declares a `name` (i.e. has a tag identity, so cards can be
 filed under it). Files are named after the folder path with `/` replaced by `-`,
-e.g. `what/posts/stories/arctic` → `what-posts-stories-arctic.md`.
+e.g. `what/stories/arctic` → `what-stories-arctic.md`.
 
 Running one in Obsidian:
 
@@ -59,7 +59,7 @@ The suggested field list comes from the content schema
 (`src/content.config.ts`) alone: every template offers the `common` fields, and
 a folder additionally picks up a schema section when one of its path segments
 names it — `what/puzzles` → the `// ── puzzles ──` fields, `where/work` → the
-`work` fields, `what/posts/stories/*` → both `posts / writing` and `stories`.
+`work` fields, `what/stories/*` → the `stories` fields.
 Fields referenced by a folder's cascaded `cardDescriptionParts` are always
 included.
 

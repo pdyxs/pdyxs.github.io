@@ -128,3 +128,32 @@ describe('isChipHidden — which generated tags reach a chip', () => {
     expect(display.overflow).toBe(0);
   });
 });
+
+describe('computeCardTagDisplay selfContainer', () => {
+  it('drops the chip naming the collapsed folder the card is a part of', () => {
+    const { tags } = computeCardTagDisplay(
+      ['what:stories/fatecardgame', 'what:games/analog/fatecardgame'],
+      {},
+      Infinity,
+      undefined,
+      'what:stories/fatecardgame',
+    );
+    expect(tags.map(t => t.value)).toEqual(['what:games/analog/fatecardgame']);
+  });
+
+  it('keeps the parent-folder chip when the card is in no collapsed folder', () => {
+    const { tags } = computeCardTagDisplay(['what:art', 'why:viewable'], {});
+    expect(tags.map(t => t.value)).toEqual(['what:art', 'why:viewable']);
+  });
+
+  it('drops nothing else that merely starts with the container value', () => {
+    const { tags } = computeCardTagDisplay(
+      ['what:stories/fatecardgame/extra', 'what:stories'],
+      {},
+      Infinity,
+      undefined,
+      'what:stories/fatecardgame',
+    );
+    expect(tags.map(t => t.value)).toEqual(['what:stories/fatecardgame/extra', 'what:stories']);
+  });
+});

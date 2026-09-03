@@ -2,9 +2,9 @@
 // Source: the retired Jekyll site on the `master` branch (_config.yml + collections/),
 // resolved against src/content by src/lib/redirect-map.ts. Regenerated on predev/prebuild.
 //
-// 123 old URLs: 119 resolved to a card, 4 fell back to a lens.
+// 123 old URLs: 120 resolved to a card, 3 fell back to a lens.
 //   arctic: 21/22 resolved
-//   currentprojects: 0/1 resolved
+//   currentprojects: 1/1 resolved
 //   fatecardgame: 6/6 resolved
 //   futureprojects: 3/3 resolved
 //   galapagos: 6/6 resolved
@@ -20,41 +20,41 @@
  * has no server-side redirect capability).
  */
 export const REDIRECTS: Record<string, string> = {
-  "/arctic/0-0-introduction": "/card/what/posts/stories/arctic/00-introduction",
-  "/arctic/0-1-map": "/card/what/posts/stories/arctic/00-introduction",
-  "/arctic/1-1-glacier": "/card/what/posts/stories/arctic/02-glacier",
-  "/arctic/1-2-surge-glacier": "/card/what/posts/stories/arctic/03-surge-glacier",
-  "/arctic/1-3-flowers": "/card/what/posts/stories/arctic/04-flowers",
-  "/arctic/1-4-reindeer": "/card/what/posts/stories/arctic/05-reindeer",
-  "/arctic/1-5-morraine-and-tundra": "/card/what/posts/stories/arctic/06-morraine-and-tundra",
-  "/arctic/1-6-fractals-in-mud": "/card/what/posts/stories/arctic/07-fractals-in-mud",
-  "/arctic/1-7-cultural-heritage": "/card/what/posts/stories/arctic/08-cultural-heritage",
-  "/arctic/1-8-polar-bear-tracks": "/card/what/posts/stories/arctic/09-polar-bear-tracks",
-  "/arctic/1-9-polar-bear-encounter": "/card/what/posts/stories/arctic/10-polar-bear-encounter",
-  "/arctic/2-1-midnight-sun": "/card/what/posts/stories/arctic/11-midnight-sun",
-  "/arctic/2-2-patterns-from-water": "/card/what/posts/stories/arctic/12-patterns-from-water",
-  "/arctic/2-3-melting-rocks": "/card/what/posts/stories/arctic/13-melting-rocks",
-  "/arctic/2-4-glacier-sound": "/card/what/posts/stories/arctic/14-glacier-sound",
-  "/arctic/2-5-the-northernmost-rock": "/card/what/posts/stories/arctic/15-the-northernmost-rock",
-  "/arctic/2-6-rock-jenga": "/card/what/posts/stories/arctic/16-rock-jenga",
-  "/arctic/3-1-climbing-the-mast": "/card/what/posts/stories/arctic/17-climbing-the-mast",
-  "/arctic/3-2-walruses": "/card/what/posts/stories/arctic/18-walruses",
-  "/arctic/3-3-plastic": "/card/what/posts/stories/arctic/19-plastic",
-  "/arctic/3-4-the-worlds-northernmost-atm": "/card/what/posts/stories/arctic/20-the-worlds-northernmost-atm",
-  "/arctic/4-conclusion": "/card/what/posts/stories/arctic/21-conclusion",
+  "/arctic/0-0-introduction": "/card/what/stories/arctic/00-introduction",
+  "/arctic/0-1-map": "/card/what/stories/arctic/00-introduction",
+  "/arctic/1-1-glacier": "/card/what/stories/arctic/02-glacier",
+  "/arctic/1-2-surge-glacier": "/card/what/stories/arctic/03-surge-glacier",
+  "/arctic/1-3-flowers": "/card/what/stories/arctic/04-flowers",
+  "/arctic/1-4-reindeer": "/card/what/stories/arctic/05-reindeer",
+  "/arctic/1-5-morraine-and-tundra": "/card/what/stories/arctic/06-morraine-and-tundra",
+  "/arctic/1-6-fractals-in-mud": "/card/what/stories/arctic/07-fractals-in-mud",
+  "/arctic/1-7-cultural-heritage": "/card/what/stories/arctic/08-cultural-heritage",
+  "/arctic/1-8-polar-bear-tracks": "/card/what/stories/arctic/09-polar-bear-tracks",
+  "/arctic/1-9-polar-bear-encounter": "/card/what/stories/arctic/10-polar-bear-encounter",
+  "/arctic/2-1-midnight-sun": "/card/what/stories/arctic/11-midnight-sun",
+  "/arctic/2-2-patterns-from-water": "/card/what/stories/arctic/12-patterns-from-water",
+  "/arctic/2-3-melting-rocks": "/card/what/stories/arctic/13-melting-rocks",
+  "/arctic/2-4-glacier-sound": "/card/what/stories/arctic/14-glacier-sound",
+  "/arctic/2-5-the-northernmost-rock": "/card/what/stories/arctic/15-the-northernmost-rock",
+  "/arctic/2-6-rock-jenga": "/card/what/stories/arctic/16-rock-jenga",
+  "/arctic/3-1-climbing-the-mast": "/card/what/stories/arctic/17-climbing-the-mast",
+  "/arctic/3-2-walruses": "/card/what/stories/arctic/18-walruses",
+  "/arctic/3-3-plastic": "/card/what/stories/arctic/19-plastic",
+  "/arctic/3-4-the-worlds-northernmost-atm": "/card/what/stories/arctic/20-the-worlds-northernmost-atm",
+  "/arctic/4-conclusion": "/card/what/stories/arctic/21-conclusion",
   "/cv": "/",
-  "/fatecardgame/00-introduction": "/card/what/posts/stories/fatecardgame/00-introduction",
-  "/fatecardgame/01-history": "/card/what/posts/stories/fatecardgame/01-history",
-  "/fatecardgame/02-themes": "/card/what/posts/stories/fatecardgame/02-themes",
-  "/fatecardgame/03-art": "/card/what/posts/stories/fatecardgame/03-art",
-  "/fatecardgame/04-fates-hand": "/card/what/posts/stories/fatecardgame/04-fates-hand",
-  "/fatecardgame/05-fates-roles": "/card/what/posts/stories/fatecardgame/05-fates-roles",
-  "/galapagos/00-introduction": "/card/what/posts/stories/galapagos/00-introduction",
-  "/galapagos/01-tourism": "/card/what/posts/stories/galapagos/01-tourism",
-  "/galapagos/02-sea-wolves": "/card/what/posts/stories/galapagos/02-sea-wolves",
-  "/galapagos/03-stay-away": "/card/what/posts/stories/galapagos/03-stay-away",
-  "/galapagos/04-semi-arid": "/card/what/posts/stories/galapagos/04-semi-arid",
-  "/galapagos/05-sideways-leaves": "/card/what/posts/stories/galapagos/05-sideways-leaves",
+  "/fatecardgame/00-introduction": "/card/what/stories/fatecardgame/00-introduction",
+  "/fatecardgame/01-history": "/card/what/stories/fatecardgame/01-history",
+  "/fatecardgame/02-themes": "/card/what/stories/fatecardgame/02-themes",
+  "/fatecardgame/03-art": "/card/what/stories/fatecardgame/03-art",
+  "/fatecardgame/04-fates-hand": "/card/what/stories/fatecardgame/04-fates-hand",
+  "/fatecardgame/05-fates-roles": "/card/what/stories/fatecardgame/05-fates-roles",
+  "/galapagos/00-introduction": "/card/what/stories/galapagos/00-introduction",
+  "/galapagos/01-tourism": "/card/what/stories/galapagos/01-tourism",
+  "/galapagos/02-sea-wolves": "/card/what/stories/galapagos/02-sea-wolves",
+  "/galapagos/03-stay-away": "/card/what/stories/galapagos/03-stay-away",
+  "/galapagos/04-semi-arid": "/card/what/stories/galapagos/04-semi-arid",
+  "/galapagos/05-sideways-leaves": "/card/what/stories/galapagos/05-sideways-leaves",
   "/help": "/",
   "/ice": "/",
   "/obs": "https://drive.google.com/drive/folders/1BIuuqsW2uFCa7Iw0fj4vQjJA5L_9nsA9?usp=sharing",
@@ -116,7 +116,7 @@ export const REDIRECTS: Record<string, string> = {
   "/what/projects/bravehearts": "/card/what/games/digital/bravehearts",
   "/what/projects/budget-haver": "/card/what/software/budget-haver",
   "/what/projects/cybersecurity": "/card/what/games/digital/cybersecurity",
-  "/what/projects/fatecardgame": "/lens/interesting",
+  "/what/projects/fatecardgame": "/card/what/games/analog/fatecardgame",
   "/what/projects/flatland-fallen-angle": "/card/what/games/digital/flatland-fallen-angle",
   "/what/projects/genetic-sequences": "/card/what/art/genetic-sequences",
   "/what/projects/gottagetouttathisspace": "/card/what/games/analog/gotta-get-outta-this-space",
@@ -133,8 +133,8 @@ export const REDIRECTS: Record<string, string> = {
   "/what/projects/where-the-heart-is": "/card/what/games/digital/where-the-heart-is",
   "/when": "/lens/interesting",
   "/where": "/",
-  "/where/arctic": "/card/what/posts/stories/arctic/00-introduction",
-  "/where/galapagos": "/card/what/posts/stories/galapagos/00-introduction",
+  "/where/arctic": "/card/what/stories/arctic/00-introduction",
+  "/where/galapagos": "/card/what/stories/galapagos/00-introduction",
   "/who": "/",
   "/why": "/",
   "/workhistory/3p": "/card/where/work/3p",
@@ -151,8 +151,7 @@ export const REDIRECTS: Record<string, string> = {
  * REDIRECTS row, and the list is asserted against in src/lib/redirect-map.test.ts.
  */
 export const UNRESOLVED_OLD_URLS: readonly { from: string; to: string; reason: string }[] = [
-  { from: "/arctic/0-1-map", to: "/card/what/posts/stories/arctic/00-introduction", reason: "no match for slug \"0-1-map\"; sent to the start of the \"arctic\" story" },
-  { from: "/what/projects/fatecardgame", to: "/lens/interesting", reason: "no match for slug \"fatecardgame\"" },
+  { from: "/arctic/0-1-map", to: "/card/what/stories/arctic/00-introduction", reason: "no match for slug \"0-1-map\"; sent to the start of the \"arctic\" story" },
   { from: "/who", to: "/", reason: "no such card: who/about-me" },
   { from: "/cv", to: "/", reason: "no such card: who/about-me" },
 ];
@@ -164,8 +163,7 @@ export const UNRESOLVED_OLD_URLS: readonly { from: string; to: string; reason: s
  * the offending cards by name — publishing one closes its entry here.
  */
 export const ORPHANED_OLD_URLS: readonly { uid: string; from: string; to: string }[] = [
-  { uid: "what/posts/stories/arctic/01-map", from: "/arctic/0-1-map", to: "/card/what/posts/stories/arctic/00-introduction" },
-  { uid: "what/games/analog/fatecardgame", from: "/what/projects/fatecardgame", to: "/lens/interesting" },
+  { uid: "what/stories/arctic/01-map", from: "/arctic/0-1-map", to: "/card/what/stories/arctic/00-introduction" },
   { uid: "who/about-me", from: "/who", to: "/" },
   { uid: "who/about-me", from: "/cv", to: "/" },
 ];

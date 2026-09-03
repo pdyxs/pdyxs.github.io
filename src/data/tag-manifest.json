@@ -2810,5 +2810,21 @@
   {
     "uid": "what:writing/2011-07-19-playtesting-102",
     "code": "bk"
+  },
+  {
+    "uid": "what:stories",
+    "code": "bl"
+  },
+  {
+    "uid": "what:stories/arctic",
+    "code": "bm"
+  },
+  {
+    "uid": "what:stories/fatecardgame",
+    "code": "bn"
+  },
+  {
+    "uid": "what:stories/galapagos",
+    "code": "bo"
   }
 ]

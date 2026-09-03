@@ -42,6 +42,7 @@ export function makeFiveWDimension(id: FiveWDimension): Dimension<string[]> {
         ctx.declaredValues,
         ctx.display,
         ctx.cardBackedValues,
+        ctx.excludedValues,
       );
     },
 

@@ -23,6 +23,11 @@ export interface LensDefinition {
   /** Human-readable label — used both for nav chips and, combined with any
    * active filters, the chrome title once the lens is active. */
   label: string;
+  /** The SITE's subtitle line, authored on the home lens only (see
+   * lens-chrome.ts). It is not the lens's own description: page mode is the
+   * root of the stack, and its header says what the site is, not what you are
+   * currently browsing. Optional — absent, the page header shows no subtitle. */
+  subtitle?: string;
   /** A footnote shown beside the label in the lens chrome (never on the nav
    * chip, which has no room for one). Optional, and used by exactly one lens:
    * Most* Interesting's "*an attempt at that, anyway". That is load-bearing

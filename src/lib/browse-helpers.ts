@@ -34,6 +34,10 @@ export type SerialisedCard = {
   thumbKind?: 'video';
   /** Present only on a collapsed-folder representative: member count, for the count badge. */
   collapsed?: { count: number };
+  /** The collapsed folder this card is a part of (see CardMeta.collapsedContainer).
+   * Crosses the wire because the chip rule it drives is shared by the masthead
+   * and every listing — see computeCardTagDisplay's `selfContainer`. */
+  collapsedContainer?: string;
   /** Resolved publish-lifecycle status (see CardMeta.status), carried through
    * so the dev-only status facet (issue #52) can narrow the browse-family
    * lens's client-side card pool by real status, and so the dev-only status
@@ -140,6 +144,21 @@ export type TagSection = {
 // ---------------------------------------------------------------------------
 
 /**
+ * True when `value` is `excluded`, or sits underneath it. Used to drop a
+ * collapsed folder's whole subtree from the panel in one predicate — nested
+ * collapse is unsupported, but a value under an excluded one would otherwise
+ * be silently reparented onto its grandparent.
+ */
+function isExcludedValue(value: string, excluded: ReadonlySet<string>): boolean {
+  if (excluded.size === 0) return false;
+  if (excluded.has(value)) return true;
+  for (const ex of excluded) {
+    if (value.startsWith(ex + '/')) return true;
+  }
+  return false;
+}
+
+/**
  * Returns all unique valid filter values for a given dimension.
  *
  * This is the union of two sources:
@@ -151,11 +170,20 @@ export type TagSection = {
  *
  * Only tags that are valid filter values (i.e. `dimension:value`) are
  * included. Bare dimension roots (e.g. `what`) are excluded.
+ *
+ * `excludedValues` removes a value (and anything under it) from BOTH sources.
+ * Its one caller passes the collapsed folders: a collapsed folder is one card,
+ * not a category, so it must not be offered as somewhere to drill INTO — see
+ * the note on NodeContext.excludedValues. Removing it from the declared list
+ * alone would not be enough, since the representative card carries the folder's
+ * value as a tag (that is what keeps it inside its parent's filter) and would
+ * reintroduce the node from the second source.
  */
 export function extractDimensionTags(
   cards: CardMeta[],
   dimension: FiveWDimension,
   declaredValues: string[] = [],
+  excludedValues: ReadonlySet<string> = new Set(),
 ): string[] {
   const prefix = `${dimension}:`;
   const seen = new Set<string>();
@@ -171,7 +199,7 @@ export function extractDimensionTags(
       }
     }
   }
-  return [...seen].sort();
+  return [...seen].filter(v => !isExcludedValue(v, excludedValues)).sort();
 }
 
 // ---------------------------------------------------------------------------
@@ -223,8 +251,9 @@ export function buildTagHierarchy(
   declaredValues: string[] = [],
   display: Record<string, TagDisplay> = {},
   cardBackedValues: Set<string> = cardOwnValues(cards),
+  excludedValues: ReadonlySet<string> = new Set(),
 ): TagNode[] {
-  const allTags = extractDimensionTags(cards, dimension, declaredValues);
+  const allTags = extractDimensionTags(cards, dimension, declaredValues, excludedValues);
   if (allTags.length === 0) return [];
 
   // Expand to include every intermediate ancestor prefix. A value set that
@@ -236,7 +265,11 @@ export function buildTagHierarchy(
   const allValues = new Set<string>();
   for (const tag of allTags) {
     allValues.add(tag);
-    for (const ancestor of ancestorPrefixes(tag)) allValues.add(ancestor);
+    // An excluded value is skipped here too, or it would come back as a
+    // synthesised ancestor of something below it.
+    for (const ancestor of ancestorPrefixes(tag)) {
+      if (!isExcludedValue(ancestor, excludedValues)) allValues.add(ancestor);
+    }
   }
 
   // Build a lookup of value → node (without children yet)

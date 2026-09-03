@@ -81,6 +81,7 @@ export async function serialiseBrowseCard(card: CardMeta): Promise<SerialisedCar
     tags: card.tags,
     renderer: card.renderer,
     collapsed: card.collapsed,
+    collapsedContainer: card.collapsedContainer,
     status: card.status,
     // Required: every lens body declares `cards: SerialisedCardFull[]`, and
     // the ranking chain's unseen rung keys view-state on this hash.

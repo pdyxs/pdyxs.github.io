@@ -19,15 +19,33 @@ interface Props {
   cards: BrowseCardData[];
   /** uid of the card already open — renders as a marked, non-navigating square, same rule as CardStrip/BrowseCard's `current`. */
   currentUid: string;
+  /**
+   * The series' own name — the declared identity of the collapsed folder the
+   * chapter sits in (GenericRenderer resolves it; absent for a
+   * frontmatter-only run, which has no folder identity to borrow).
+   *
+   * It is here because the chip that used to say it was dropped: a chapter's
+   * path tag names the story it is a part of, which is a containment relation
+   * and not a facet (see computeCardTagDisplay's `selfContainer`). This is
+   * where the relation actually belongs — on the thing already drawing the
+   * run — so a chapter titled "Themes" still says what it is a chapter of.
+   *
+   * Plain text, deliberately not a link: the only target would be the `tag:`
+   * lens the chip already linked to, which holds exactly one result — the
+   * collapsed representative, i.e. where the reader already is.
+   */
+  label?: string;
 }
 
-const { cards, currentUid } = Astro.props;
+const { cards, currentUid, label } = Astro.props;
 const currentIndex = cards.findIndex(c => c.uid === currentUid);
 const prev = currentIndex > 0 ? cards[currentIndex - 1] : undefined;
 const next = currentIndex >= 0 && currentIndex < cards.length - 1 ? cards[currentIndex + 1] : undefined;
 ---
 
-<nav class="series-dot-strip" aria-label="Position in series">
+<nav class="series-dot-strip" aria-label={label ? `Position in ${label}` : 'Position in series'}>
+  {label && <span class="series-dot-label">{label}</span>}
+
   {prev ? (
     <a class="series-dot-arrow card-link" href={`/card/${prev.uid}`} data-replace-slot={prev.uid} aria-label="Previous chapter">‹</a>
   ) : (
