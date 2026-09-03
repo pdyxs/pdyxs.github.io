@@ -159,7 +159,77 @@ html[data-theme="dark"] {
    committed. Hiding the list + count (not the whole grid) keeps the filter bar
    and chips visible while the reduced set resolves. */
 html[data-filters-pending] .fp-browse-list,
+html[data-filters-pending] .fp-browse-empty,
 html[data-filters-pending] .fp-result-count {
+  display: none;
+}
+
+/* ...and the skeleton stands in its place (issue #119). Hiding the results
+   without drawing anything left ~470ms of empty space below an already
+   populated filter bar — measured warm and wired, and far longer on a real
+   connection, which is what read to the visitor as "everything loads, then the
+   filters apply". The skeleton is server-rendered into every grid lens page and
+   `display: none` in BrowseResults' own styles; this is the only rule that
+   turns it on. Appearance stays with the component, visibility stays here with
+   the rest of the guard. */
+html[data-filters-pending] .fp-skeleton--grid {
+  display: block;
+}
+
+/* ...and the same for a STRIP lens (issue #123), which #119 did not cover at
+   all: the rules above name .fp-browse-list, and Newest/Oldest render
+   .card-strip. A filtered cold load of /lens/newest?filter.what=games painted
+   the unfiltered 30-card run at first paint and kept it for ~880ms — the
+   literal "loads with all cards first, then applies the filters" report.
+
+   Scoped to `.fp-browse-grid` so it is the RESULTS strip that is hidden and
+   never a strip inside a card body ("Cards about this", a series run): those
+   are already the right content, and a lens can sit in a stack beside them.
+
+   Keyed on the FILTERED states only, unlike the grid. The guard has two
+   triggers (see Base.astro): a filtered URL, and a re-rank-only load for a
+   returning visitor. A strip lens sorts on date and never re-ranks — its
+   hydration order is identical to the server's — so holding its run back for a
+   re-rank is a skeleton flash bought for nothing. `""` is that re-rank case;
+   `filtered` and `stalled` are the two the strip must answer. */
+html[data-filters-pending="filtered"] .fp-browse-grid .card-strip,
+html[data-filters-pending="stalled"] .fp-browse-grid .card-strip {
+  display: none;
+}
+
+html[data-filters-pending="filtered"] .fp-skeleton--strip,
+html[data-filters-pending="stalled"] .fp-skeleton--strip {
+  display: block;
+}
+
+/* The 3s safety net (Base.astro) no longer reveals the unfiltered set when the
+   island fails to land — it re-flags the guard as `stalled` instead. On a
+   FILTERED URL the prerendered list is the wrong answer to the question the
+   visitor asked, and showing 268 cards under a filter bar reading "Games" is a
+   worse failure than an honest stall. (The unguarded re-rank case, where the
+   URL carries no filters and the SSR content is already correct, still reveals
+   — see the script.) */
+html[data-filters-pending="stalled"] .fp-skeleton-note {
+  display: none;
+}
+
+html[data-filters-pending="stalled"] .fp-skeleton-stalled {
+  display: block;
+}
+
+/* Nothing is coming, so stop promising tiles. */
+html[data-filters-pending="stalled"] .fp-skeleton-list {
+  display: none;
+}
+
+/* The same rule for the strip's row, spelled one selector longer on purpose.
+   The strip variant's `display: flex` is a SCOPED rule in BrowseResults.svelte,
+   and Svelte's scoping appends its hash class to every compound — so
+   `.fp-skeleton--strip.svelte-x .fp-skeleton-list.svelte-x` (four classes)
+   outranks the three-class rule above, and the tiles stayed on screen under a
+   message saying nothing was coming. Measured, not assumed. Naming
+   .fp-browse-grid as well restores the ordering. */
+html[data-filters-pending="stalled"] .fp-browse-grid .fp-skeleton--strip .fp-skeleton-list {
   display: none;
 }
 
@@ -788,8 +858,22 @@ a.series-date-bar-day:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Wraps only for the label, which claims a full row of its own below —
+     the arrows and the track never wrap (the track shrinks instead). */
+  flex-wrap: wrap;
   gap: var(--space-xs);
   margin: 0 0 var(--space-md);
+}
+
+/* The series' own name, above its dots — see the `label` prop's note in
+   SeriesDotStrip.astro for why this line exists at all. De-emphasised by size
+   and letterform, never by a faded colour: the palette has no grey. */
+.series-dot-label {
+  flex: 1 0 100%;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  margin-bottom: calc(var(--space-xs) * -1);
 }
 
 .series-dot-track {
@@ -1433,6 +1517,22 @@ pre,
   display: none;
 }
 
+/* ── The pre-paint fan skeleton (issue #122) ─────────────────────
+   Drawn by Base.astro's head script and inserted by StackNav's, before paint;
+   removed by CardStack once the real from/to entries are in the DOM.
+
+   DESKTOP ONLY, and for the same reason the fan reservation it completes is:
+   at mobile `.card-stack-inner` is `display: contents`, every card is an
+   in-flow row of one plain column, and nothing is reserved for a fan because
+   there is no fan — the four reservation properties are read only by the
+   desktop block. A skeleton there would be a row inserted into the flow, which
+   is a different job with a different failure mode (it would have to be
+   removed at exactly the frame the real row lands, or it causes the shift it
+   exists to prevent). */
+.stack-skeleton {
+  display: none;
+}
+
 /* MOBILE: the wrapper is transparent to layout, so the cards are direct flex
    children of #card-stack and the stack is one plain column — collapsed
    headers above the active card and below it, every one of them shown. That
@@ -1532,7 +1632,13 @@ pre,
      keeps climbing in `top` (up to MAX_PILE_LAYERS - 1 further), so each fan
      reaches further up and down than it does sideways — reserve the slot count
      here and the deepest pile edges land outside the container. */
-  .card-stack-inner {
+  /* `.stack-skeleton-inner` is named here rather than given a copy of these
+     five declarations: it is the pre-paint layer's positioning box and has to
+     be the SAME box, or the spines it holds are drawn somewhere the real ones
+     will not land. Sharing the selector is what makes that structural instead
+     of a comment asking the next editor to change two places. */
+  .card-stack-inner,
+  .stack-skeleton-inner {
     display: block;
     position: relative;
     width: var(--stack-card-width);
@@ -1540,6 +1646,66 @@ pre,
     margin-bottom: calc(var(--ahead-rows, 0) * var(--stack-stagger));
     margin-left: calc(var(--behind-slots, 0) * var(--spine-width));
     margin-right: calc(var(--ahead-slots, 0) * var(--spine-width));
+  }
+
+  /* ── The pre-paint fan skeleton (issue #122) ──────────────────
+     A layer laid exactly over `.card-stack-inner`, holding one collapsed spine
+     per from/to entry with its title in a load state. It exists for the window
+     between first paint and hydration — ~180ms on a warm wired dev server, far
+     longer on a real connection — during which #101's reservation holds an
+     empty strip open.
+
+     It is a SEPARATE layer, appended after `.card-stack-inner` rather than
+     into it. `.card-stack-inner` is the island's keyed `{#each}`, and an
+     unexpected node in there is a hydration mismatch: #120 measured Svelte 5
+     discarding and re-creating the entire subtree, which silently takes the
+     nested `<astro-island>`s inside the active card (the lens filter panel,
+     the browse results) with it — they never hydrate.
+
+     `inset` mirrors #card-stack's own `padding: 0 0 var(--space-lg)` so this
+     layer's content box is #card-stack's, and the flex trio mirrors the
+     centring #card-stack does for `.card-stack-inner`. `align-items: stretch`
+     is what gives the inner box the active card's height without measuring it:
+     the flex line is as tall as `.card-stack-inner`'s margin box, less this
+     element's own (identical) margins.
+
+     NO z-index anywhere in here, deliberately. Every spine is drawn at its
+     true `--spine-width`, which is all of a collapsed card that is ever
+     visible — so a behind spine sits entirely to the LEFT of the active card
+     and overlaps nothing, and an ahead spine overlaps only the 4px
+     `forwardOverlap` tuck that belongs on top of it anyway. Being the last
+     child is therefore the whole of the painting order, for the layer against
+     the real card and for the spines against each other (the table hands them
+     over in `z` order). */
+  /* The positioning box the skeleton hangs off — see StackNav.astro for why it
+     cannot be `#card-stack` itself. It wraps `#card-stack` and nothing else, so
+     its border box IS #card-stack's; `position` is declared only here, where
+     #card-stack is positioned anyway, so no absolutely-positioned descendant
+     anywhere resolves differently because of it.
+
+     `--stack-card-width` is resolved a second time here, because the layer is
+     outside the island and cannot read #card-stack's copy. Not a fork of the
+     formula — the same declaration, differing only in where it reads the slot
+     counts from, and for the skeleton's whole lifetime those are on <html>
+     (the head script's write) where both elements see them identically.
+     Afterwards the island writes them onto #card-stack, this copy goes stale,
+     and nothing is left reading it. `--max-width` is restated inline on the
+     element by StackNav, from the same route value #card-stack gets. */
+  .stack-shell {
+    position: relative;
+    --stack-card-width: min(
+      var(--max-width),
+      calc(100vw - (var(--behind-slots, 0) + var(--ahead-slots, 0)) * var(--spine-width))
+    );
+  }
+
+  .stack-skeleton {
+    display: flex;
+    position: absolute;
+    inset: 0 0 var(--space-lg);
+    justify-content: center;
+    align-items: stretch;
+    pointer-events: none;
   }
 
   /* Restore the top border the mobile sibling rule removes: on desktop the
@@ -1670,6 +1836,72 @@ pre,
     width: var(--border-width);
     background: var(--color-border);
     z-index: 3;
+  }
+
+  /* ── The skeleton's spines (issue #122) ──────────────────────
+     Self-contained, and that is forced rather than chosen. Every rule that
+     places a real card is written `#card-stack .stack-card`, and this layer is
+     deliberately NOT inside `#card-stack` (see StackNav.astro — inside it, 0 of
+     51 SSR nodes survived hydration). So a skeleton spine borrows none of them
+     and states what it is directly.
+
+     What it is, is a SPINE — not a card. Only the leftmost `--spine-width` of a
+     collapsed card is ever on screen; the rest is cropped by the card in front
+     of it. Drawing the sliver instead of the whole card is also what keeps the
+     layer out of the active card's way with no z-index anywhere: a behind spine
+     sits entirely to its left, and an ahead spine overlaps only the 4px
+     `forwardOverlap` tuck that belongs on top of it.
+
+     `border-right: none`, because the real card's right edge is off in the part
+     that gets cropped away, and a border here would double up against the
+     active card's left one. An AHEAD spine is the exception — nothing sits in
+     front of it to close that edge, which is the same reason the real ahead
+     cards redraw it with an `::after`. Border-box puts it in the same pixel. */
+  .stack-skeleton-card {
+    position: absolute;
+    left: var(--geo-left, 0px);
+    top: var(--geo-top, 0px);
+    width: var(--spine-width);
+    height: 100%;
+    border: var(--border-width) solid var(--color-border);
+    border-right: none;
+    background: var(--card-surface, var(--dither-2));
+    /* `clip`, never `hidden` — `hidden` would make this a scroll container and
+       re-parent the sticky title below to a box that never scrolls. */
+    overflow: clip;
+  }
+
+  .stack-skeleton-card[data-role="ahead"] {
+    border-right: var(--border-width) solid var(--color-border);
+  }
+
+  /* The title in its load state.
+
+     STATIC, like the browse skeleton (#119) and for the same reasons: the
+     palette is two colours with no grey, so the conventional shimmer is
+     unrepresentable; softening one with `opacity` is a bug; and a moving
+     gradient over a dithered surface is exactly the re-rasterisation the fixed
+     dither grid exists to prevent.
+
+     Sized and placed as the vertical title run it stands in for.
+     `.stack-card-spine-title` is `writing-mode: vertical-rl`, so its glyphs
+     start at the spine's RIGHT edge and run down from the gap its
+     `padding-inline` leaves below the header — the bar mirrors both, so the
+     real title lands where the bar was rather than beside it. Sticky for the
+     same reason `.stack-card-spine-inner` is: a title that scrolled away while
+     its card did not would be a different thing from what replaces it.
+
+     A FIXED length, not a percentage: 9rem is about what a card title runs to
+     at this size, and the spine's own `overflow: clip` handles a card too short
+     to hold it. */
+  .stack-skeleton-title {
+    display: block;
+    position: sticky;
+    top: var(--space-md);
+    width: 0.7em;
+    height: 9rem;
+    margin: var(--space-md) 0.35rem 0 auto;
+    background: var(--dither-6);
   }
 
   /* ── The overflow pile (issue #111) ────────────────────────────
@@ -1985,6 +2217,17 @@ pre,
    order, and this rule sits BEFORE that block. State the specificity. */
 .stack-card-body-inner .generic-bleed + .series-dot-strip {
   margin-top: calc(-1 * var(--space-lg) + var(--space-xs));
+}
+
+/* A header `image:` that is a YouTube/Vimeo URL renders as the body's
+   .video-embed figure (GenericRenderer.astro). In the masthead it is
+   full-bleed like the image it replaces: the card's own frame draws the sides,
+   so only the bottom edge is ours, and the figure's paragraph margin would
+   otherwise open a gap between the video and the tags/actions band. */
+.generic-bleed > .generic-embed {
+  margin: 0;
+  border: none;
+  border-bottom: var(--border-width) solid var(--color-border);
 }
 
 .generic-bleed > .generic-image,

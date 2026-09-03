@@ -64,23 +64,45 @@
     return false;
   }
 
-  // The panel is a DOM descendant of `.stack-card-body`, which is
-  // `overflow: hidden` for the expand/collapse grid animation. An
-  // absolutely-positioned panel gets clipped at the card body's bottom edge,
-  // which on a short (little-content) page sits right around the footer — so
-  // the dropdown appeared cut off. `position: fixed` escapes that clip
-  // (no transformed ancestors create a containing block in any state where
-  // this panel can open), and we anchor it to the trigger button here. The
-  // panel stays a DOM child of `.fp-dimension-controls`, so FilterBar's
-  // click-outside detection and CardStack's delegated lens-replacement clicks
-  // are unaffected.
+  // The panel is rendered inside `.stack-card-body` (`overflow: hidden` for the
+  // expand/collapse grid animation) inside `.stack-card` (`clip-path: inset(...)`,
+  // the ahead fan's crop — see global.css § THE ASYMMETRY). `position: fixed`
+  // escapes the overflow, but NOT the clip-path: a clip-path clips every
+  // descendant regardless of positioning, including fixed ones. So the panel
+  // was cut off at the active card's own edges — visibly on the rightmost
+  // dimension (Why), whose panel extends past the card's right edge.
+  //
+  // So it is PORTALED to <body> on first anchor, out of every clipping ancestor
+  // the stack has. Two consequences, both handled:
+  //  - the trigger's rect can no longer be found by walking up from the panel,
+  //    so `anchorEl` is captured BEFORE the move and reused thereafter;
+  //  - the panel is no longer inside `.fp-dimension-controls`, so FilterBar's
+  //    click-outside detection has to exempt `.browse-dim-panel` explicitly.
+  //  - CardStack's delegated lens-replacement handler had to MOVE to the
+  //    document. It matches on `[data-replace-slot]`, but it lived in
+  //    `onStackClick`, bound to `#card-stack` — so once this panel left that
+  //    subtree, selecting a lens from the dimension bar did nothing at all,
+  //    silently, because a delegated handler that never fires is
+  //    indistinguishable from a click on nothing. This comment used to assert
+  //    the opposite; the assertion is what let it go unnoticed.
   let panelEl: HTMLDivElement;
+  /** The trigger wrapper this panel is anchored to, captured pre-portal. */
+  let anchorEl: Element | null = null;
+
+  // Idempotent, and called from anchorPanel rather than onMount so it cannot
+  // be ordered after the first anchoring $effect (which would capture a null
+  // anchor and leave the panel parked at 0,0).
+  function ensurePortal() {
+    if (anchorEl || !panelEl) return;
+    anchorEl = panelEl.closest('.fp-dim-wrapper');
+    document.body.appendChild(panelEl);
+  }
 
   function anchorPanel() {
     if (!panelEl) return;
-    const wrapper = panelEl.closest('.fp-dim-wrapper');
-    if (!wrapper) return;
-    const rect = wrapper.getBoundingClientRect();
+    ensurePortal();
+    if (!anchorEl) return;
+    const rect = anchorEl.getBoundingClientRect();
     // Overlap the button's bottom border, matching the old
     // `top: calc(100% - 1em - 1px)` connected look.
     const em = parseFloat(getComputedStyle(panelEl).fontSize) || 16;
@@ -110,6 +132,11 @@
     return () => {
       window.removeEventListener('scroll', onScroll, { capture: true } as EventListenerOptions);
       window.removeEventListener('resize', onScroll);
+      // MANDATORY, not tidiness. Svelte's {#if} teardown removes the block's
+      // nodes from the parent it put them in; the portal moved this one to
+      // <body>, so that teardown finds nothing and the closed panel is left
+      // behind. Without this, every open/close cycle orphans another panel.
+      panelEl?.remove();
     };
   });
 

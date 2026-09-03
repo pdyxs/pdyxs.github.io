@@ -20,7 +20,7 @@
 // The rule the split imposes: **no `.astro` import may reach this file.** There
 // is no Astro plugin in this project to transform one.
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
-import { mount, unmount, tick } from 'svelte';
+import { mount, unmount, tick, createRawSnippet } from 'svelte';
 import { get } from 'svelte/store';
 import CardStack from './CardStack.svelte';
 import { stackStore, seedStackState } from '../stores/card-stack-store';
@@ -63,11 +63,24 @@ function page(url: string) {
 let component: Record<string, unknown> | null = null;
 let target: HTMLElement;
 
-/** Mount the island the way `StackNav.astro` does, into a fresh document body. */
-function mountStack(props: { activeUid?: string; activeHtml?: string | null } = {}) {
+/**
+ * Mount the island the way `StackNav.astro` does, into a fresh document body.
+ *
+ * The active location is SLOT content now (issue #121), not an `activeHtml`
+ * prop — Astro's Svelte renderer hands it over as a raw snippet wrapping the
+ * markup in `<astro-slot>`, so that is exactly what these tests supply. The
+ * helper still takes `activeHtml`: what each test is saying is "this card was
+ * server-rendered", and how it reaches the island is this file's business, not
+ * theirs.
+ */
+function mountStack(props: { activeUid?: string; activeHtml?: string | null; initialWidth?: string } = {}) {
+  const { activeHtml, ...rest } = props;
+  const children = activeHtml
+    ? createRawSnippet(() => ({ render: () => `<astro-slot>${activeHtml}</astro-slot>` }))
+    : undefined;
   target = document.createElement('div');
   document.body.appendChild(target);
-  component = mount(CardStack as any, { target, props }) as Record<string, unknown>;
+  component = mount(CardStack as any, { target, props: { ...rest, children } }) as Record<string, unknown>;
   return component;
 }
 
@@ -245,6 +258,51 @@ describe('delegated click → push', () => {
     expect(get(stackStore).activeSlot).toBe(CARD_B);
   });
 
+  // Issue: selecting a lens from the dimension bar did nothing at all.
+  //
+  // `[data-replace-slot]` used to be handled in `onStackClick`, bound to
+  // `#card-stack`. DimensionPanel portals itself to <body> to escape the
+  // stack's clipping ancestors, so its lens rows are NOT in that subtree and
+  // the handler never fired — no error, no navigation, nothing. Containment
+  // was never the right test: of the three emitters, only the strip's terminal
+  // tile is actually inside the stack.
+  //
+  // The first test is the regression; the second is the one it must not break.
+  it('replaces the active slot from a [data-replace-slot] OUTSIDE the stack', async () => {
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+
+    // Where a portaled DimensionPanel's lens row lives: <body>, not #card-stack.
+    const item = document.createElement('button');
+    item.dataset.replaceSlot = 'lens/interesting';
+    item.dataset.replaceParams = '';
+    document.body.appendChild(item);
+    expect(item.closest('#card-stack')).toBeNull();
+
+    item.click();
+    await settle();
+
+    const state = get(stackStore);
+    expect(activeEntry(state)?.key).toBe('lens/interesting');
+    expect(state.entries.map(e => e.key)).toEqual(['lens/interesting']);
+  });
+
+  it('still replaces from a [data-replace-slot] INSIDE the stack', async () => {
+    mountStack({ activeUid: 'lens/newest', activeHtml: fragment('lens/newest', { hash: null }) });
+    await settle();
+
+    // Where the capped strip's terminal tile lives (CardStrip.svelte).
+    const tile = document.createElement('button');
+    tile.dataset.replaceSlot = 'lens/interesting';
+    tile.dataset.replaceParams = '';
+    document.querySelector('.stack-card-body-inner')!.appendChild(tile);
+
+    tile.click();
+    await settle();
+
+    expect(activeEntry(get(stackStore))?.key).toBe('lens/interesting');
+  });
+
   it('activates a collapsed card when it is clicked', async () => {
     mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
     await settle();
@@ -264,11 +322,17 @@ describe('delegated click → push', () => {
 });
 
 describe('placeholder titles (#105)', () => {
-  // `what/art/lino-printing` is titled "Lino Printing" in the manifest;
-  // CARD_B (`what/puzzles/fog`) is deliberately absent from it, which is what
-  // makes it the fallback case. CARD_A is numbeanies and is already mounted,
-  // so it is no use as a push target here.
+  // `what/art/lino-printing` carries a title in the manifest; CARD_B
+  // (`what/puzzles/fog`) is deliberately absent from it, which is what makes it
+  // the fallback case. CARD_A is numbeanies and is already mounted, so it is no
+  // use as a push target here.
+  //
+  // The expected title is READ from the manifest rather than written out: what
+  // is under test is that the placeholder paints the manifest's title instead
+  // of the uid, and hardcoding the string turns every retitle of that card into
+  // a failure of this test.
   const LINO = 'what/art/lino-printing';
+  const LINO_TITLE = manifestLookup.titleForUid(LINO)!;
 
   /**
    * The placeholder path needs a view transition, and happy-dom has none — so
@@ -325,9 +389,9 @@ describe('placeholder titles (#105)', () => {
     await settle();
 
     // Still in flight: this is the placeholder, and it is what the visitor sees.
-    expect(titleOf(LINO)).toBe('Lino Printing');
+    expect(titleOf(LINO)).toBe(LINO_TITLE);
     // The spine carries it too — and through the spine, #111's pile bands.
-    expect(titleOf(LINO, '.stack-card-spine-title')).toBe('Lino Printing');
+    expect(titleOf(LINO, '.stack-card-spine-title')).toBe(LINO_TITLE);
     expect(document.querySelector(`[data-uid="${LINO}"]`)!.textContent).not.toContain(LINO);
 
     release();
@@ -343,7 +407,7 @@ describe('placeholder titles (#105)', () => {
     pushLink(LINO, 'A print I made').click();
     await settle();
 
-    expect(titleOf(LINO)).toBe('Lino Printing');
+    expect(titleOf(LINO)).toBe(LINO_TITLE);
 
     release();
     await settle();
@@ -782,6 +846,52 @@ describe('lens identity (#100)', () => {
   });
 });
 
+describe('a lens in the stack names its filters', () => {
+  // A fragment is fetched by uid, so it always renders its lens UNFILTERED —
+  // the filters live in the location's key. Without the applier, two views of
+  // one lens sitting side by side in the stack both read "Most* Interesting"
+  // and nothing on screen says which is which.
+  const titles = (slot: string) => {
+    const el = document.querySelector(`[data-uid="${CSS.escape(slot)}"]`)!;
+    return [
+      el.querySelector('.card-header-title')!.textContent,
+      el.querySelector('.stack-card-spine-title')!.textContent,
+    ];
+  };
+
+  it('a filter toggle repaints the active lens title, header and spine', async () => {
+    mountStack({ activeUid: 'lens/newest', activeHtml: fragment('lens/newest', { hash: null }) });
+    await settle();
+    expect(titles('lens/newest')).toEqual(['Newest', 'Newest']);
+
+    document.dispatchEvent(new CustomEvent('cardparam', {
+      detail: { uid: 'lens/newest', params: [['filter.what', 'what:puzzles']] },
+    }));
+    await settle();
+
+    expect(titles('lens/newest')).toEqual(['Newest · Puzzles', 'Newest · Puzzles']);
+  });
+
+  it('a lens pushed with filters says so, once its fragment lands', async () => {
+    // The fetched fragment titles itself "lens/newest" (the fixture's uid) and
+    // `syncTitles` copies that onto the mounted card — the applier runs after.
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const link = document.createElement('a');
+    link.setAttribute('href', 'tag:what:puzzles');
+    document.body.appendChild(link);
+    link.click();
+    await settle();
+
+    const lens = get(stackStore).entries.find(e => e.uid.startsWith('lens/'))!;
+    expect(titles(lens.slot)).toEqual([
+      'Most* Interesting · Puzzles',
+      'Most* Interesting · Puzzles',
+    ]);
+  });
+});
+
 describe('cold-load stack skeleton (#101)', () => {
   // `CARD_A` and `CARD_B` are real uids, so the shipped manifest has codes AND
   // titles for both — which is the whole premise: the browser knows every
@@ -869,6 +979,48 @@ describe('cold-load stack skeleton (#101)', () => {
 
     expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_B]);
     expect(document.querySelector(`[data-uid="${CARD_A}"]`)).toBeNull();
+  });
+  // ── The skeleton the head script draws before paint (#122) ──
+  /** What Base.astro's head script draws and StackNav inserts, before paint. */
+  function drawSkeleton() {
+    const layer = document.createElement('div');
+    layer.className = 'stack-skeleton';
+    layer.innerHTML = '<div class="stack-skeleton-inner"><div class="stack-skeleton-card"></div></div>';
+    document.body.appendChild(layer);
+    return layer;
+  }
+
+  it('drops it as soon as the real spines are in the DOM, not when they fill', async () => {
+    // The skeleton stands in for the fan's SHAPE, and the shape lands in one
+    // store write (#101) — long before any fragment arrives. Waiting for the
+    // fetches would leave a drawn fan and a drawn skeleton on screen together.
+    const releaseAll = deferFetches();
+    drawSkeleton();
+    history.replaceState(null, '', `/card/${CARD_B}?from=${codeFor(CARD_A)}`);
+    mountStack({ activeUid: CARD_B, activeHtml: fragment(CARD_B) });
+    await settle();
+
+    expect(document.querySelectorAll('.stack-card')).toHaveLength(2);
+    expect(document.querySelector('.stack-skeleton')).toBeNull();
+
+    releaseAll();
+    await settle();
+  });
+
+  it('drops it even when the codec resolves no fan at all', async () => {
+    // `initFromUrl` returns early when the decoded stack is one entry deep,
+    // before it ever splices anything — and that exit needs the dismissal too.
+    // The two counts CAN disagree: the head script counted separators in the
+    // raw `from`, and the codec is what decides how many entries those become.
+    // Left drawn, the skeleton would sit there for the session promising cards
+    // that are never coming.
+    drawSkeleton();
+    history.replaceState(null, '', `/card/${CARD_B}`);
+    mountStack({ activeUid: CARD_B, activeHtml: fragment(CARD_B) });
+    await settle();
+
+    expect(get(stackStore).entries).toHaveLength(1);
+    expect(document.querySelector('.stack-skeleton')).toBeNull();
   });
 });
 

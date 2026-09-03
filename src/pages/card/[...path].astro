@@ -70,7 +70,7 @@ if (localImage) {
 
 <Base {title} {description} {date} image={ogImage} ogType={date ? 'article' : 'website'}>
   <div id="homepage" hidden></div>
-  <StackNav activeUid={path}>
+  <StackNav activeUid={path} initialWidth={card.width}>
     <CardStackCard {card} {tagDisplay} {relatedCards} {subjectCards} />
   </StackNav>
 </Base>

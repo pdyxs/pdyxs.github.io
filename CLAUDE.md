@@ -234,6 +234,72 @@ The shape is **optimistic**, so a location whose fragment 404s is removed from
 the store again — which is what the sequential version expressed by never
 splicing it in.
 
+### The fan is drawn before paint, with its titles in a load state
+
+The second half of the same script (issue #122). Reserving the space still left
+it EMPTY until the island landed — measured on a warm wired dev server, the
+skeleton is in the DOM ~30ms *before* FCP and the real spines arrive ~300-400ms
+after it, and that gap is what a visitor reads as "the stack doesn't show
+straight away".
+
+The split is forced rather than chosen: the script can count `from`/`to`
+entries out of the URL, but it cannot know their TITLES —
+`stack-manifest.json` is 46KB and arrives as a JS chunk long after the HTML. So
+**shape immediately, titles at hydration**, and the load state is a static
+dither bar sized and placed as the vertical title run it stands in for. Static
+for #119's reasons, restated: no grey to shimmer in, `opacity` is a bug, and a
+moving gradient over a dithered surface is the re-rasterisation the fixed grid
+exists to prevent.
+
+**The layer is not in the island, and that was measured, twice.** It began as a
+trailing child of `#card-stack`, on the reasoning that hydration walks the
+children it expects and never looks past them. It looks: with the skeleton
+there, **0 of 51** tagged SSR nodes survived hydration and the active card's
+element reference was replaced — #120's failure exactly, which on a lens page
+means the filter panel and the browse results never come alive. Without it,
+51 of 51. So `StackNav.astro` renders a `.stack-shell` wrapper the island does
+not own, and the layer hangs off that.
+
+Four things that fall out of being outside `#card-stack`:
+
+- **It inherits none of `#card-stack`'s rules.** Every rule that places a real
+  card is written `#card-stack .stack-card`, so a skeleton spine states what it
+  is directly (`.stack-skeleton-card`) rather than borrowing them.
+- **It draws a SPINE, not a card.** Only the leftmost `--spine-width` of a
+  collapsed card is ever on screen; the rest is cropped by the card in front.
+  Drawing the sliver is also what keeps the layer out of the active card's way
+  with **no z-index anywhere** — a behind spine sits entirely to its left, and
+  an ahead spine overlaps only the 4px `forwardOverlap` tuck that belongs on
+  top. Being the last child is the whole of the painting order, which is why
+  the table hands each side's spines over in `z` order.
+- **`--stack-card-width` and `--max-width` are restated on the shell**, since
+  it cannot read `#card-stack`'s. Not a fork: `--stack-card-width` is the same
+  declaration, differing only in where it reads the slot counts from, and for
+  the skeleton's whole lifetime those are on `<html>` where both elements see
+  them identically. `--max-width` is written inline by `StackNav` from the same
+  route value `#card-stack` gets — without it a 960px lens's fan is measured
+  against the 680px default.
+- **Desktop only**, like the reservation it completes. At mobile
+  `.card-stack-inner` is `display: contents` and every card is an in-flow row,
+  so nothing is reserved and a skeleton there would be a different job with a
+  different failure mode.
+
+Still no arithmetic in the script. `fanSkeletonTable`
+(`src/lib/stack-skeleton.ts`) is a second build-time table beside
+`fanReservationTable`, computed by running `computeGeometry` and emitting
+`left`/`top` as finished CSS lengths — ahead ones as `calc(100% + Npx)`, which
+works because the table is built at `activeWidth: 0` (so the term IS the offset)
+and the layer's box is exactly one active card wide. Both tables share
+`saturationPoint`, because they are read with the same clamped count and must
+not disagree about where clamping starts.
+
+**`CardStack` drops the layer at both of `initFromUrl`'s exits, and only
+there.** Earlier — at mount, say — would replace a drawn fan with an empty
+strip for however long the store write takes, reintroducing the gap it exists
+to cover. Later — after the fetches — would leave the skeleton and the real
+spines on screen together. The moment after `initFromUrl`'s `await tick()` is
+the one frame at which the swap costs nothing.
+
 ### Fragments are HTML; the stack is state (`src/lib/card-fragments.ts`)
 
 The other half of that invariant. A location is rendered server-side as one
@@ -280,6 +346,59 @@ is how the active location's `--max-width` is reapplied after the
 placeholder→real swap. Note `applyMaxWidth`'s `typeof document` guard: the
 island is server-rendered too, and the SSR seed is a write.
 
+### The active card is slot content, and its DOM must be adopted
+
+`StackNav.astro` hands the SSR-rendered active location to the island as Astro
+**slot content** — never as a prop (issue #121). Astro serialises every island
+prop into the `props` attribute of `<astro-island>`, so an `activeHtml` string
+shipped the whole card **twice**: once as real DOM, once JSON-escaped, the
+nested islands' own props included. Measured: 763 KB of a 1.53 MB filtered lens
+page, 62 KB of a 255 KB card page. Slot content is emitted as real DOM inside
+`<astro-slot>` and never enters `props`, which took the CardStack island's props
+from 763 KB to 103 bytes.
+
+**The constraint that rules out the obvious alternative** (spike #120, and it is
+why this is a slot rather than a cheaper fix): the active card's DOM must be
+hydration-**adopted**, never re-created, because `LensFilterShell` and
+`BrowseLensBrowser` are nested `<astro-island>` elements inside it. Svelte 5 does
+not adopt an `{@html}` range whose client value differs from the server's — it
+discards the whole subtree and rebuilds it, and the nested islands then **never
+hydrate**, silently. So "seed the cache from `cardEl.outerHTML` in `onMount`"
+cannot work: by then the markup is already gone.
+
+Four things worth knowing:
+
+- **It renders inside the SAME keyed `{#each}`**, as `{@render children?.()}`
+  under `{#if entry.slot === ssrSlot}`. One node per entry, keyed by slot,
+  is what the whole geometry rests on; the slot content is one entry among the
+  rest and differs only in where its markup came from. `ssrSlot` is a plain
+  const decided in the same `untrack` block as the store seed, and is identical
+  on both sides of hydration — a filtered lens's filters differ between server
+  (no query string) and client, but they ride in the **key**, and a first
+  allocation's slot is always its uid.
+- **`<astro-slot>` is `display: contents`** (Astro ships that rule itself), so
+  it generates no box: the active card stays in flow, a collapsed one is still
+  absolutely positioned against `.card-stack-inner`, and `data-role`/`data-piled`,
+  the five `--geo-*` writes, the pile overlay and the ResizeObserver are all
+  untouched. Verified in a browser at both breakpoints, including an 8-card
+  fan with a pile.
+- **The fragment cache is adopted from the DOM at mount** — `fragments.adopt`,
+  which lives in `card-fragments.ts` with every other HTML read. It runs FIRST
+  in `onMount`, before `markReadIfKnown`, which keys read state on the content
+  hash it finds in the cache. Timing is safe because `astro-island` **defers a
+  nested island's hydration until its ancestor fires `astro:hydrate`**: right
+  then the islands inside the card still carry their `ssr` attribute and their
+  props, and a snapshot taken later would cache inert markup.
+- **`initialWidth` is a prop now.** It used to be `extractLocationWidth`d out of
+  the string during component init so the right `--max-width` was in the very
+  first paint; there is no string at init any more, so the two routes that
+  already know the value pass it down (`card.width` / `lens.width` — the very
+  values that become `data-width` on the fragment). `applyMaxWidth` falls back
+  to it for the SSR slot, because the layout effect's first pass runs *before*
+  `onMount` seeds the cache and would otherwise remove the server-rendered
+  inline style for a frame — a 960px browse lens snapping to the 680px default
+  on every cold load.
+
 ### Svelte store is the authoritative card-stack state
 
 The `writable<StackState>` store in `src/stores/card-stack-store.ts` is the single source of truth for which cards are in the stack and which is active. `CardStack.svelte` derives CSS classes (`stack-card--active`, `stack-card--collapsed`) and layout state from the store via `$derived` and applies them via `$effect`. The CSS classes are styling contracts only — never query them in JS to infer state.
@@ -306,15 +425,15 @@ slot for where its HTML is cached.
 (issue #102). The store is module-level and `astro build` prerenders every page
 in **one process**, so it is per-visitor state in the browser and
 per-*process* state in the prerenderer — page N's stack is still sitting in it
-when page N+1 renders. The seed used to write only when both `activeUid` and
-`activeHtml` were present, so the home page (which has neither) inherited the
-previous page's stack. What that renders is `#card-stack` **without** its
+when page N+1 renders. The seed used to write only when it had both an
+`activeUid` and the active location's markup, so the home page (which has
+neither) inherited the previous page's stack. What that renders is `#card-stack` **without** its
 `hidden` attribute, wrapping an empty `.active-card-col` around no card at all —
 the card's own markup does not come with it, since the fragment cache is
 per-instance. It also made an SSR crash reachable: a `document`-touching applier
 ran because the active location was non-null on a page that has no active card.
 
-Today every route that renders the island supplies both props (`LensPage.astro`
+Today every route that renders the island supplies both (`LensPage.astro`
 seeds `lens/<name>`, so even `/` has an active location), so the leak is latent
 rather than live in the current build — which is precisely why no visible
 symptom was ever found. It becomes live again the moment any page renders
@@ -472,6 +591,11 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `data-role="behind|active|ahead"` and `data-piled` (written by the applier)
 - `.stack-pile`, `.stack-pile-inner`, `.stack-pile-label`, `.stack-pile-bands`,
   `.stack-pile-band`, `.stack-pile-band-text` (island-rendered, desktop only)
+- `.stack-shell`, `.stack-skeleton`, `.stack-skeleton-inner`,
+  `.stack-skeleton-card`, `.stack-skeleton-title` (issue #122 — written by
+  `Base.astro`'s inline script, removed by `CardStack`, desktop only). The
+  shell is the island's own wrapper in `StackNav.astro`; the rest exist only
+  between first paint and hydration.
 
 Deleted with the geometry swap (issue #109), and not to be reintroduced:
 `.fan-corner`, `.active-card-col`, `.stack-overflow*`, `data-side`,
@@ -541,6 +665,37 @@ ResizeObserver that measures `activeWidth` — caps the sticky label so a stack
 shorter than the viewport doesn't get a 100vh child forcing its own height. It
 is guarded on a real measurement: at mobile `.card-stack-inner` is
 `display: contents` and measures zero.
+
+### A lens names itself; the page header names the site
+
+Two strings, two owners, both decided in `deriveLensChrome`
+(`src/lib/lens-chrome.ts`):
+
+- **The page-mode subtitle is the SITE's**, authored as `subtitle:` on the home
+  lens (`src/content/what/home.lens.yaml`) and identical on every lens page. It
+  used to be the lens's own label, which made the site header say what you were
+  currently browsing rather than what the site is. Page mode is the ROOT of the
+  stack — there is nothing to disambiguate there — so the lens's own name is not
+  rendered in it at all, footnote included.
+- **The card-mode title is the lens plus its filters** (`Newest · Puzzles`),
+  because a lens location's identity *is* the lens plus its filter set
+  (`lens-key.ts`). Two views of Most\* Interesting can sit in one stack, and
+  the title is the only thing on screen that tells them apart.
+
+Home is the exception at both ends: its card title is the site title (it is the
+stack root, and its spine is the site's branding), and it accepts no filters.
+
+**The filtered half of the title can only be applied on the client.** A
+fragment is fetched by uid — `/fragment/lens/newest` — so the server always
+renders the lens unfiltered, and a filter toggle re-keys an entry whose HTML
+landed long before. `lensChromeForKey` turns a location key back into the
+title; `applyLensTitle` in `CardStack.svelte` writes it into the two places a
+fragment names itself (its `.card-header-title` and its
+`.stack-card-spine-title`), from the layout effect — the store→DOM applier, and
+a re-key is a store change like any other. It runs **again after every
+`replaceBody`**, whose `syncTitles` has just copied the fetched fragment's
+unfiltered title onto the kept header. `titleForSlot` is the same decision for
+a pile band's label, which reads the fragment cache rather than the DOM.
 
 ### Card resolution happens once, in `resolveCard()`
 
@@ -974,6 +1129,26 @@ height is the tallest card in the *whole* run, not the tallest one on screen —
 already true of every strip, but far more visible over 30 heterogeneous cards
 than over a six-chapter series.
 
+**Its anti-FOUC skeleton states nothing about the count** (issue #123). #119's
+guard names `.fp-browse-list`, so a filtered cold load of a strip lens painted
+the unfiltered run at first paint and kept it for ~880ms — the literal original
+report. The strip's skeleton reuses the `.fp-skeleton*` tiles in one clipped
+row (`.fp-skeleton--strip`, four tiles so the fourth is cut off at the edge)
+and deliberately draws **no dot track, no terminal tile and no control row**:
+each of the three is a *claim about how many cards matched*, which is exactly
+the number the page does not have until the island hydrates. A wrong number is
+worse than no number, and a track re-laid-out from 30 dots to 17 is the visible
+half of the bug.
+
+Two things about how it is guarded. The strip rules key on the guard's
+**value** — `filtered` / `stalled`, never the bare re-rank `""` — because a
+strip lens sorts on date and never re-ranks, so holding its run back for a
+returning visitor would buy a skeleton flash for a swap that cannot happen.
+And the stalled rule that hides the row is spelled one selector longer than the
+grid's: the strip's `display: flex` is a *scoped* rule, and Svelte's scoping
+appends its hash class to every compound, which out-specifies the plain global
+one. Measured, not assumed.
+
 ### The history lenses partition the pool on `uid` alone
 
 Seen and Unseen (issue #84) are one body — `HistoryLensBrowser.svelte`, keyed
@@ -1041,8 +1216,9 @@ Two things are unique to it:
   delegates to `rankCards` (`src/lib/ranking.ts`) — the same comparator the home
   page's day-seeded slots and the Unseen lens use. Don't write a second ordering.
 - **`note:`** is a lens-level footnote (*"\*an attempt at that, anyway"*),
-  rendered by `deriveLensChrome` beside the title in both chrome modes and
-  hidden on a collapsed card. It is kept a **separate string from the title**:
+  rendered by `deriveLensChrome` beside the title in card mode and hidden on a
+  collapsed card. Page mode shows no lens title at all (see the lens-chrome
+  section), so it carries no footnote either. It is kept a **separate string from the title**:
   `CardStack` reads `.card-header-title`'s `textContent` as a placeholder card's
   name and would otherwise name the card after its own disclaimer.
 
@@ -1135,7 +1311,84 @@ incremental — an id already in the committed map is never re-fetched, so offli
 builds are a no-op — and an unresolved id is reported in the generated file's
 header and renders a labelled tile rather than a broken image.
 
-New CSS contract: `.video-embed` (global.css). New tokens: none.
+**A header `image:` may be an embed URL too**, and the Jekyll content leaves
+several that way. The masthead renders it as the *same* `.video-embed` figure
+the body form emits — a live iframe, not the gallery's poster facade — because
+a masthead is the card's primary media and `embedPosterUrl` only offers
+`mqdefault` at 320×180, which is a thumbnail. `youtube-nocookie` is what makes
+a live iframe acceptable: no cookies until playback. A header embed is
+therefore **not** prepended to the gallery (the one exception to the
+header-leads-the-gallery rule in `resolveGalleryImages`) — it is already
+playable and fullscreen-capable where it sits, so a lightbox copy would only
+show the same video twice.
+
+The general rule underneath both: **a remote `image:` is not automatically an
+`<img>`.** `GenericRenderer` resolves it three ways — `parseEmbedUrl`, then
+`isRemoteVideoUrl`, then `isRemoteImageUrl` — and an unrecognised URL renders
+*nothing*. It used to render any `http` string as an `<img>`, so an embed URL
+(which serves an HTML page) painted a broken image with no error anywhere.
+
+New CSS contract: `.video-embed`, `.generic-embed` (global.css). New tokens: none.
+
+### A card never chips the whole it is a part of
+
+Every card carries its parent folder's value as a path tag (`derivePathTags`),
+and for nearly every folder that reads as a **category** — an art card chipped
+"Art" is telling you something. A **collapsed** folder is not a category: it is
+one work, and its cards are its chapters. So the chip said "In Fate's Hands" on
+a chapter *of* In Fate's Hands, and its `tag:` link filtered to a lens holding
+exactly one result — the collapsed representative, i.e. where the reader
+already was. On the representative itself it was worse: the folder's identity
+*is* that card's title, so the chip repeated it verbatim.
+
+`FolderCascade.collapsedContainer` is the fact — the colon-form value of the
+nearest ancestor declaring `collapse`, cascading nearest-wins like `renderer`.
+It rides on **`CardMeta`**, not `ResolvedCard`, and crosses the wire on
+`SerialisedCard`, because the chip rule it drives is the one rule shared by a
+card's own masthead and every listing (`computeCardTagDisplay`'s
+`selfContainer`). `collapseCollections` stamps the folder's own value onto the
+representative it synthesises, which is what suppresses the self-titling chip
+in listings.
+
+**The panel says the same thing.** A collapsed folder is not offered as a place
+to drill INTO — `NodeContext.excludedValues`, fed by `collapsedFolderValues`
+(collapse.ts) at `LensStackCard`'s composition point, and honoured by
+`extractDimensionTags`/`buildTagHierarchy`. So *Stories (3)* is a leaf with no
+`›`, where it used to open onto three values that each listed the one
+representative the reader could already see, under a heading duplicating that
+card's own title. Two details:
+
+- **BOTH sources have to be filtered.** The value is in `declaredValues` (the
+  folder declares a `name:`) *and* on the representative's tags — and it has to
+  stay on those tags, since that is what prefix-matches it into `what:stories`
+  and gives the parent its count of 3.
+- **Excluded means the subtree.** The predicate drops anything under an
+  excluded value too, or a descendant would be silently reparented onto its
+  grandparent; the same guard runs over the synthesised ancestors, which would
+  otherwise reintroduce the node from below.
+
+Three things worth knowing:
+
+- **Only the chip is dropped.** The tag stays on the card, so filtering, the
+  collapse tag union and the lens are untouched. This is a display rule, not a
+  tagging one — which is also why `excludeTags` could not have expressed it: a
+  veto applies to the generated delta, and a path tag is unvetoable by
+  construction.
+- **`collapse` is now read in two places, for two questions.**
+  `collapse-config.ts` answers "which folders become one representative card"
+  (the transform); the cascade answers "which whole am I a part of" (the card's
+  own view of the relation). Neither is derivable from the other's output at
+  the point it is needed.
+- **The relation moved rather than vanished.** With the chip gone, a chapter
+  titled "Themes" would otherwise say nothing about which story it belongs to,
+  so the series presentation names it: `SeriesDotStrip`'s `label`, and the
+  strip's `In this series` heading. It is **plain text, never a link** — the
+  only target would be the one-result lens the chip already pointed at. The
+  guard is `TagDisplay.declared`, not a truthy `name`: `displayFor` humanises
+  the slug for an undeclared value, so an unnamed folder would head its own
+  series "Fatecardgame".
+
+New CSS contract: `.series-dot-label` (global.css). New tokens: none.
 
 ### A gallery never repeats what the body already shows
 
@@ -1202,6 +1455,23 @@ on any card — the section is what keeps it out of every other folder's Templat
 scaffold, and puzzles are the only folder that routinely needs it.
 
 ### One lightbox, two ways in
+
+**Nothing `position: fixed` may live inside `.stack-card` and be visible at
+desktop.** `#card-stack .stack-card` carries `clip-path: inset(0 0 0 0)` (the
+identity crop the ahead fan animates from — see the geometry section, it cannot
+go), and **a `clip-path` clips fixed-position descendants**. That is a separate
+hazard from the containing-block one the dither section warns about, and it
+catches the opposite property: `clip-path` is safe for the dither and fatal
+here. `.series-floating-btn` survives only because it is `display: none` at
+that breakpoint.
+
+`Lightbox.svelte` is `position: fixed` and mounts inside the card that owns the
+images, so it was cropped to the active card's box — a "full-screen" viewer
+that wasn't. It now moves itself out to `<body>` for as long as it is open
+(the `portal` action in that component). Svelte's scoped-style classes are on
+the nodes themselves so they survive the move, and every custom property it
+reads is on `:root`.
+
 
 `Lightbox.svelte` is the full-screen viewer — overlay, keyboard map, prev/next
 wrap — and nothing else. Two callers decide what the set is:

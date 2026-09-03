@@ -1,10 +1,66 @@
 ---
+// The card-stack island's server shell.
+//
+// The active location is passed as SLOT CONTENT, never as a prop (issue #121).
+// Astro serialises every island prop into the `props` attribute of
+// `<astro-island>`, so rendering the card to a string here shipped the whole
+// thing TWICE — once as real DOM, once JSON-escaped, the nested islands' own
+// props (all 268 browse cards) included. Measured at 757 KB of 1.53 MB on a
+// filtered lens page.
+//
+// Slot content is emitted as real DOM inside `<astro-slot>` and never enters
+// `props`, so the markup ships exactly once. `CardStack.svelte` renders it with
+// `{@render children?.()}` for the SSR-seeded entry, inside the same keyed
+// `{#each}` every other entry goes through.
+//
+// The one thing that could not come with it is the declared width. It used to
+// be read out of the rendered string during component init, so the correct
+// `--max-width` was in the very first paint; slot content is DOM, not a string
+// available at init. The width is therefore passed down explicitly by the two
+// routes that already know it (`card.width` / `lens.width` — the same values
+// that become `data-width` on the fragment).
 interface Props {
   activeUid?: string;
+  initialWidth?: string;
 }
-const { activeUid } = Astro.props;
+const { activeUid, initialWidth } = Astro.props;
 import CardStack from './CardStack.svelte';
-const activeHtml = Astro.slots.has('default') ? await Astro.slots.render('default') : null;
 ---
 
-<CardStack client:load {activeUid} {activeHtml} />
+{/* `--max-width` is restated on the shell because the pre-paint skeleton hangs
+    off it, OUTSIDE the island — so it cannot inherit the value the island
+    renders inline on `#card-stack`, and would measure a 960px lens's fan
+    against the 680px default. Same source, same moment, one line. */}
+<div class="stack-shell" style={initialWidth ? `--max-width: ${initialWidth};` : undefined}>
+  <CardStack client:load {activeUid} {initialWidth}>
+    <slot />
+  </CardStack>
+  {/* The pre-paint fan skeleton's one effect (issue #122).
+
+      Base.astro's head script built the markup — it knows the entry counts and
+      the build-time placement table — but nothing it needs exists yet in
+      <head>, and a script that waited (DOMContentLoaded, an observer) would
+      race the very first paint it exists to beat. This runs inline immediately
+      after the island, which is still before paint.
+
+      OUTSIDE the island, and that is not a preference — it is MEASURED. The
+      skeleton was first appended as a trailing child of `#card-stack`, on the
+      reasoning that hydration walks its children in order and never looks past
+      the last block. It does look: with the skeleton there, 0 of 51 tagged SSR
+      nodes survived hydration and the active card's element reference was
+      replaced — #120's failure exactly, which on a lens page means the filter
+      panel and the browse results never come alive. Without it, 51 of 51. So
+      `.stack-shell` exists to be a positioning box the island does not own,
+      and the layer hangs off that instead.
+
+      After the island, never before: an ahead spine tucks 4px over the active
+      card's edge and belongs on top of it, and being last is the whole of the
+      painting order (see the .stack-skeleton rules in global.css). */}
+  <script is:inline>
+    (function () {
+      var h = window.__pdyxsStackSkeleton;
+      var el = h && document.currentScript.parentElement;
+      if (el) el.insertAdjacentHTML('beforeend', h);
+    })();
+  </script>
+</div>

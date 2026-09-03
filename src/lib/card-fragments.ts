@@ -210,6 +210,31 @@ export interface CardFragments {
   has(slot: string): boolean;
   /** Store a fragment we already hold (the SSR-rendered active location). */
   seed(slot: string, html: string): void;
+  /**
+   * Adopt the server-rendered DOM for `slot` into the cache (issue #121).
+   *
+   * The active location no longer reaches the island as an HTML *string* — it
+   * arrives as Astro slot content, i.e. as real DOM that Svelte hydration
+   * adopts rather than re-creates. That is the whole point (the markup used to
+   * ship twice, once as DOM and once JSON-escaped inside the island's `props`),
+   * but the cache still needs the string: a location closed and later re-pushed
+   * is mounted from it, and `factsFor` reads the declared width and the content
+   * hash out of it.
+   *
+   * So the string is recovered from the DOM we were handed. This is the one
+   * fragment that is read out of the page rather than fetched, and it belongs
+   * here for the same reason every other read does — CardStack.svelte holds no
+   * HTML handling of its own.
+   *
+   * Timing matters and is safe: `astro-island` defers a nested island's
+   * hydration until its ancestor island fires `astro:hydrate`, so at the
+   * stack's own `onMount` the nested islands inside the card still carry their
+   * `ssr` attribute and their props. Snapshot later and they would be adopted
+   * as inert markup.
+   *
+   * Returns false when there was nothing to adopt.
+   */
+  adopt(slot: string, cardEl: Element | null | undefined): boolean;
   /** Store a placeholder to render while the real fragment is in flight. */
   seedPlaceholder(slot: string, title: string): void;
   /**
@@ -254,6 +279,11 @@ export function createCardFragments(options: CardFragmentsOptions = {}): CardFra
     get: (key) => cache.get(key),
     has: (key) => cache.has(key),
     seed: write,
+    adopt(slot, cardEl) {
+      if (!cardEl) return false;
+      write(slot, cardEl.outerHTML);
+      return true;
+    },
     seedPlaceholder: (slot, title) => write(slot, buildPlaceholderHtml(slot, title)),
     load: (uid) => loader(uid),
     async ensure(slot, uid = slot) {

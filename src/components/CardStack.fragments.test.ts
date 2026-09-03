@@ -45,6 +45,22 @@ describe('CardStack holds no HTML parsing of its own', () => {
     expect(source).toMatch(/createCardFragments\(/);
   });
 
+  it('adopts the SSR location\'s markup rather than parsing it itself', () => {
+    // The active location arrives as Astro slot content now (issue #121), so
+    // the one fragment that is not fetched is read out of the DOM instead —
+    // and that read belongs to the module like every other one. If this ever
+    // becomes an `.outerHTML` in the component, the two tests above catch it;
+    // this one says where it went instead.
+    expect(source).toMatch(/fragments\.adopt\(ssrSlot, elFor\(ssrSlot\)\)/);
+    // ...and that it happens before anything reads the cache. `markReadIfKnown`
+    // keys read state on the content hash it finds there, so an adopt sequenced
+    // after it records nothing at all, silently.
+    const mountStart = source.indexOf('\n  onMount(() => {');
+    expect(mountStart).toBeGreaterThan(-1);
+    expect(source.indexOf('fragments.adopt(', mountStart))
+      .toBeLessThan(source.indexOf('markReadIfKnown(activeUid)', mountStart));
+  });
+
   it('renders every card from the fragment store', () => {
     // Via StackFragment, which captures the HTML once: `{@html}` re-renders
     // when its expression changes, and the cache's value for a slot changes
@@ -53,6 +69,18 @@ describe('CardStack holds no HTML parsing of its own', () => {
     const mounts = source.match(/<StackFragment [^>]*\/>/g) ?? [];
     expect(mounts.length).toBeGreaterThan(0);
     for (const mount of mounts) expect(mount).toMatch(/html=\{fragments\.get\(/);
+  });
+
+  it('renders the SSR location inside the same keyed each block', () => {
+    // The slot content is one entry among the rest — same `{#each}`, same
+    // `(entry.slot)` key. Rendered outside it, the "one node per entry, keyed
+    // by slot" invariant the whole geometry rests on would be gone.
+    const each = source.slice(
+      source.indexOf('{#each $stackStore.entries as entry (entry.slot)}'),
+      source.indexOf('{/each}', source.indexOf('{#each $stackStore.entries as entry (entry.slot)}')),
+    );
+    expect(each).toMatch(/\{@render children\?\.\(\)\}/);
+    expect(each).toMatch(/entry\.slot === ssrSlot/);
   });
 });
 

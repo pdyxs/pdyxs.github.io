@@ -22,14 +22,14 @@ const lens = getLensDefinition(name);
 const chrome = lens ? deriveLensChrome(lens, { }) : null;
 // The <title> tracks the lens's card title (home → "pdyxs.wtf").
 const title = chrome?.cardTitle ?? '';
-// A lens is a browsing surface, not a dated article — the page subtitle is the
+// A lens is a browsing surface, not a dated article — the site subtitle is the
 // closest thing it has to a description, and og:image falls back to the site
 // default (no lens has an image of its own).
 const description = chrome?.pageSubtitle || undefined;
 ---
 <Base {title} {description} ogType="website">
   <div id="homepage" hidden></div>
-  <StackNav activeUid={`lens/${name}`}>
+  <StackNav activeUid={`lens/${name}`} initialWidth={lens?.width}>
     <LensStackCard {name} presentation="page" />
   </StackNav>
 </Base>

@@ -190,6 +190,38 @@ describe('the fragment store', () => {
   });
 });
 
+describe('adopt (the SSR location, which arrives as DOM rather than a string)', () => {
+  it('recovers the fragment string from the server-rendered element', () => {
+    // Issue #121: the active location is Astro slot content now, so its markup
+    // is never a string on the client. The cache still needs one — `factsFor`
+    // reads the width and the content hash out of it, and a re-push mounts
+    // from it.
+    const host = document.createElement('div');
+    host.innerHTML = fragment('what/a', { title: 'Fog', width: '520px' });
+    const fragments = createCardFragments({ load: fakeSource({}) });
+
+    expect(fragments.adopt('what/a', host.querySelector('.stack-card'))).toBe(true);
+    expect(fragments.get('what/a')).toBe(fragment('what/a', { title: 'Fog', width: '520px' }));
+    expect(fragments.factsFor('what/a')).toEqual({ title: 'Fog', width: '520px' });
+  });
+
+  it('announces the write like any other', () => {
+    const changed: string[] = [];
+    const host = document.createElement('div');
+    host.innerHTML = fragment('what/a');
+    const fragments = createCardFragments({ onChange: (k) => changed.push(k) });
+
+    fragments.adopt('what/a', host.querySelector('.stack-card'));
+    expect(changed).toEqual(['what/a']);
+  });
+
+  it('caches nothing and reports failure when there is no element', () => {
+    const fragments = createCardFragments();
+    expect(fragments.adopt('what/a', null)).toBe(false);
+    expect(fragments.has('what/a')).toBe(false);
+  });
+});
+
 describe('replaceBody (the placeholder → real content swap)', () => {
   function mountedPlaceholder(uid: string, title: string): HTMLElement {
     const host = document.createElement('div');

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick, untrack, flushSync } from 'svelte';
+  import type { Snippet } from 'svelte';
   import { get } from 'svelte/store';
   import { stackStore, seedStackState, pushToStack, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '../stores/card-stack-store';
   import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry, planPush } from '../lib/stack-layout';
@@ -19,11 +20,11 @@
   import { filterUrlForTagValue } from '../dimensions';
   import { markRead, readToRecord } from '../lib/card-view-state';
   import { placeholderTitle } from '../lib/card-title';
+  import { lensChromeForKey } from '../lib/lens-chrome';
   import { waitForTransition } from '../lib/transition-wait';
   import StackFragment from './StackFragment.svelte';
   import {
     createCardFragments,
-    extractLocationWidth,
     titleOfElement,
     uidToFetchUrl,
     urlToUid,
@@ -31,10 +32,31 @@
 
   interface Props {
     activeUid?: string;
-    activeHtml?: string | null;
+    /**
+     * The active location's declared width, handed down by the route rather
+     * than parsed out of its markup — see `initialWidth` below.
+     */
+    initialWidth?: string;
+    /**
+     * The SSR-rendered active location, as Astro SLOT content (issue #121).
+     *
+     * It used to arrive as an `activeHtml` string prop, which Astro serialised
+     * into the island's `props` attribute — shipping the whole card twice, the
+     * nested islands' own props included (757 KB of a 1.53 MB lens page). Slot
+     * content is emitted as real DOM inside `<astro-slot>` and never enters
+     * `props`.
+     *
+     * Its DOM must be hydration-ADOPTED, never re-created: `LensFilterShell`
+     * and `BrowseLensBrowser` are nested `<astro-island>` elements inside it,
+     * and a re-created subtree silently never hydrates. That is why this is a
+     * snippet rendered in place and not a string read back at mount — Svelte 5
+     * discards an `{@html}` range whose client value differs from the server's
+     * (measured, issue #120).
+     */
+    children?: Snippet;
   }
 
-  let { activeUid, activeHtml }: Props = $props();
+  let { activeUid, initialWidth, children }: Props = $props();
 
   // Every fragment the stack renders, and every fact read out of one, lives in
   // this module (issue #97) — the component holds no HTML parsing of its own.
@@ -103,10 +125,14 @@
   // inherited. Every render therefore states its own initial stack, and a render
   // with no active location states the empty one; `seedStackState` is that
   // decision.
-  untrack(() => {
+  //
+  // The fragment CACHE is no longer seeded here: the markup is slot content, so
+  // there is no string at init. It is adopted from the DOM in `onMount`
+  // instead (`fragments.adopt`), which is the earliest point the nodes are
+  // certainly there and still the latest point that is safe.
+  const ssrSlot: string | null = untrack(() => {
     let entry: LocationEntry | null = null;
-    if (activeUid && activeHtml) {
-      fragments.seed(activeUid, activeHtml);
+    if (activeUid && children) {
       // A lens cold-loaded with `?filter.…` is *that filtered location*, not the
       // bare lens that happens to have a query string beside it — so the entry
       // is built from the URL, not from the uid alone (issue #100).
@@ -114,15 +140,21 @@
       entry = locationEntryFor(activeUid, paramsFromSearch(search));
     }
     stackStore.set(seedStackState(entry));
+    // Which entry renders the slot content — a plain const, because it never
+    // changes. Identical on both sides of hydration: the filters differ
+    // between server (no query string) and client, but they ride in the KEY,
+    // and a first allocation's slot is always its uid.
+    return entry?.slot ?? null;
   });
 
-  // Per-location responsive width (issue #27): a plain, non-reactive value
-  // captured once from the SSR-active location's rendered fragment. Rendered
-  // as a static inline style below so the correct --max-width is present in
-  // the very first paint, before hydration — the $effect further down keeps
-  // it in sync as the stack changes thereafter (mirrors --behind-slots /
-  // --ahead-slots, which are also effect-owned post-mount).
-  const initialWidth = untrack(() => activeUid ? extractLocationWidth(activeHtml ?? undefined) : undefined);
+  // Per-location responsive width (issue #27) is now a PROP, `initialWidth`.
+  // It used to be read out of the SSR fragment string during init
+  // (`extractLocationWidth(activeHtml)`); there is no such string any more, so
+  // the two routes that already know the value — `card.width` / `lens.width`,
+  // the very values that become `data-width` on the fragment — pass it down.
+  // Rendered as a static inline style below so the correct --max-width is in
+  // the very first paint, before hydration; the $effect further down keeps it
+  // in sync as the stack changes thereafter.
 
   const geometry = $derived(geometryFor($stackStore, { ...STACK_GEOMETRY, activeWidth }));
   const hasCards = $derived($stackStore.entries.length > 0);
@@ -180,7 +212,16 @@
     // anything to on that pass — the first paint gets its width from the
     // `initialWidth` inline style instead.
     if (typeof document === 'undefined') return;
-    const width = activeSlot ? fragments.factsFor(activeSlot).width : undefined;
+    // The `?? initialWidth` is the one window this covers, and it is real: the
+    // fragment cache is seeded from the DOM in onMount, which runs AFTER the
+    // layout effect's first pass. Without the fallback that first pass would
+    // find no width for the SSR location and REMOVE the server-rendered inline
+    // style — a wide lens (browse is 960px) snapping to the 680px default for
+    // a frame on every cold load. Same value either way: the prop is what
+    // became the fragment's own `data-width`.
+    const width = activeSlot
+      ? (fragments.factsFor(activeSlot).width ?? (activeSlot === ssrSlot ? initialWidth : undefined))
+      : undefined;
     const stackEl = document.getElementById('card-stack');
     if (width) {
       document.documentElement.style.setProperty('--max-width', width);
@@ -238,6 +279,11 @@
       el.style.setProperty('--card-surface', `var(--dither-${card.dither})`);
       el.style.setProperty('--card-surface-hover', `var(--dither-${Math.min(16, card.dither + 2)})`);
       el.dataset.role = card.role;
+      // A lens states its filters in its own name (see applyLensTitle). Here
+      // because the layout effect is the store→DOM applier, and a re-key — what
+      // a filter toggle does to the active lens — is a store change like any
+      // other.
+      applyLensTitle(card.slot);
       if (card.piled) el.dataset.piled = ''; else delete el.dataset.piled;
       const bw = el.querySelector<HTMLElement>('.body-wrapper');
       // A collapsed body is hidden but still LAID OUT — cropped by the spine on
@@ -599,6 +645,48 @@
   // differ whenever a location holds a suffixed handle (`lens/x#2`), and read
   // state must never be keyed on one of those.
   /**
+   * The title a location displays.
+   *
+   * For a CARD the fragment is the whole truth. For a LENS it is not: the
+   * fragment is fetched by uid and therefore always renders the lens
+   * unfiltered, while the location it mounts as carries its filter set in its
+   * key (issue #100) — and that set is what tells two views of one lens apart,
+   * both from each other and from the unfiltered lens they were narrowed from.
+   * So a lens's title is derived from its key here rather than read out of its
+   * HTML. `lensChromeForKey` is the decision; this picks which source applies.
+   */
+  function titleForSlot(slot: string): string | null {
+    const entry = entryForSlot(get(stackStore), slot);
+    const chrome = entry ? lensChromeForKey(entry.key) : null;
+    return chrome ? chrome.cardTitle : fragments.factsFor(slot).title;
+  }
+
+  /**
+   * Writes a lens location's filtered title into the two places a fragment
+   * states its own name — its header and its spine.
+   *
+   * A no-op for a card. Called from the layout effect (so a re-key, which is
+   * what a filter toggle does to the active lens, repaints its title) and again
+   * after every `replaceBody`, whose `syncTitles` copies the *fetched*
+   * fragment's unfiltered title onto the kept header.
+   */
+  function applyLensTitle(slot: string) {
+    const entry = entryForSlot(get(stackStore), slot);
+    const chrome = entry ? lensChromeForKey(entry.key) : null;
+    const el = elFor(slot);
+    if (!chrome || !el) return;
+    const header = el.querySelector('.card-header-title');
+    // The header title is `<span class="card-header-title"><b>…</b></span>`;
+    // a placeholder's is the same shape. Write the innermost node so the
+    // emphasis survives, and never the span itself — the footnote is a
+    // sibling, but the `<b>` is not.
+    const target = header?.querySelector('b') ?? header;
+    if (target && target.textContent !== chrome.cardTitle) target.textContent = chrome.cardTitle;
+    const spine = el.querySelector('.stack-card-spine-title');
+    if (spine && spine.textContent !== chrome.cardTitle) spine.textContent = chrome.cardTitle;
+  }
+
+  /**
    * A band's label: the card's own title, or "N more" for the band that
    * absorbs everything past the cap. `count` is never 1 for a band that isn't
    * showing its own card (see `pileSections`), so this can't produce "1 more".
@@ -609,7 +697,7 @@
    */
   function bandLabel(band: { slot: string; count: number }): string {
     if (band.count > 1) return `${band.count} more`;
-    return fragments.factsFor(band.slot).title ?? band.slot;
+    return titleForSlot(band.slot) ?? band.slot;
   }
 
   /**
@@ -882,6 +970,9 @@
           // couldn't see (it ran against the placeholder, which declares none)
           // is reapplied by the fragment store's onChange, not from here.
           fragments.replaceBody(slot, html, elFor(slot));
+          // `syncTitles` just copied the fetched fragment's UNFILTERED title
+          // onto this card's kept header — restate the location's own.
+          applyLensTitle(slot);
         }
         // One rAF so the browser paints the closed card before we start opening it
         await new Promise<void>(r => requestAnimationFrame(() => r()));
@@ -966,6 +1057,28 @@
     }
   }
 
+  /**
+   * Drop the pre-paint fan skeleton (issue #122).
+   *
+   * Base.astro's head script draws one collapsed spine per `from`/`to` entry
+   * before paint — the shape is knowable from the URL, the titles are not
+   * (`stack-manifest.json` is a 46KB chunk that lands long after the HTML). It
+   * lives as a separate layer appended AFTER `.card-stack-inner`, never into
+   * it: that block is this component's keyed `{#each}`, and an unexpected node
+   * inside it is a hydration mismatch — #120 measured Svelte 5 discarding and
+   * re-creating the whole subtree, which takes the nested `<astro-island>`s in
+   * the active card with it.
+   *
+   * Called at both of `initFromUrl`'s exits, and only there. Removing it any
+   * earlier (at mount, say) would replace the drawn fan with an empty strip for
+   * however long the store write takes — reintroducing the gap it exists to
+   * cover, just later. Removing it at the point the REAL entries are in the DOM
+   * is what makes the swap invisible.
+   */
+  function dismissSkeleton() {
+    document.querySelector('.stack-skeleton')?.remove();
+  }
+
   async function initFromUrl() {
     const { state: parsed, paramsByKey } = deserialiseStack(window.location.pathname, window.location.search, manifestLookup, tagManifestLookup);
 
@@ -979,7 +1092,14 @@
       if (activeParams?.length) cardParams.set(parsedActive.key, activeParams);
     }
 
-    if (parsed.entries.length <= 1) return;
+    if (parsed.entries.length <= 1) {
+      // The URL carried a `from`/`to` the codec could not resolve into entries
+      // (a retired short code, say). Nothing is coming, so the skeleton must
+      // still go — a spine that never fills is worse than one that was never
+      // drawn.
+      dismissSkeleton();
+      return;
+    }
 
     const activeIdxInParsed = parsed.entries.findIndex(e => e.slot === parsed.activeSlot);
     const fromLocations = parsed.entries.slice(0, activeIdxInParsed);
@@ -1033,6 +1153,10 @@
     });
     // The nodes have to exist before `replaceBody` can write into them.
     await tick();
+    // ...and by the same token the real spines are now drawn, with their real
+    // titles, exactly where the skeleton drew placeholders. This is the one
+    // frame at which the swap costs nothing.
+    dismissSkeleton();
 
     // Fetches run in PARALLEL now. They were sequential only because each one
     // gated the next entry's appearance; nothing gates anything any more, and a
@@ -1054,10 +1178,25 @@
       // cache the real fragment and leave the card showing its skeleton for
       // the rest of the session.
       fragments.replaceBody(location.slot, html, elFor(location.slot));
+      applyLensTitle(location.slot);
     }));
   }
 
   onMount(() => {
+    // Recover the SSR location's markup into the fragment cache. It arrived as
+    // DOM (slot content), and the cache still needs the string: `factsFor`
+    // reads the declared width and the content hash out of it, and a location
+    // closed and later re-pushed is mounted from it.
+    //
+    // FIRST, before anything below reads the cache — `markReadIfKnown` keys
+    // read state on the content hash, and an empty cache would silently record
+    // nothing. And it must be here rather than later: `astro-island` defers a
+    // nested island's hydration until its ancestor fires `astro:hydrate`, so
+    // right now the islands inside this card still carry their `ssr` attribute
+    // and their props; snapshot them after that and a re-push would mount
+    // inert markup.
+    if (ssrSlot) fragments.adopt(ssrSlot, elFor(ssrSlot));
+
     startVT = (document as any).startViewTransition?.bind(document);
     const homepage = document.getElementById('homepage');
 
@@ -1110,18 +1249,6 @@
         return;
       }
 
-      const replaceItem = target.closest<HTMLElement>('[data-replace-slot]');
-      if (replaceItem?.dataset.replaceSlot) {
-        // Unlike the strip lens's terminal tile (a <button>, no default action
-        // to suppress), a series card-link is a real <a href> — same reason
-        // as the data-push-card branch below: stop the browser's own
-        // navigation now that the SPA replace is handling it, or the two race
-        // and the native navigation wins, discarding the rest of the stack.
-        e.preventDefault();
-        replaceSlot(uidToFetchUrl(replaceItem.dataset.replaceSlot), replaceItem.dataset.replaceParams);
-        return;
-      }
-
       const pushItem = target.closest<HTMLElement>('[data-push-card]');
       if (pushItem?.dataset.pushCard) {
         // A real <a href> carrying data-push-card (e.g. a card-backed tag
@@ -1156,6 +1283,31 @@
     homepage?.addEventListener('click', onHomepageClick);
 
     function onDocumentClick(e: MouseEvent) {
+      // `[data-replace-slot]` is handled HERE, on the document, and not in
+      // onStackClick beside the other stack mutations — because the one thing
+      // that emits it most is NOT inside `#card-stack`. DimensionPanel portals
+      // itself to <body> to escape the stack's clipping ancestors, taking its
+      // lens list with it, so a listener bound to `#card-stack` never sees a
+      // lens click and selecting a lens from the dimension bar did nothing at
+      // all — silently, with no error, because a delegated handler that never
+      // fires looks exactly like a click on nothing.
+      //
+      // The emitters are three and only one of them is in the stack: the
+      // portaled panel's lens rows (DimensionPanel), the capped strip's
+      // terminal tile (CardStrip) and the filter-fallthrough chip
+      // (LensFilterShell). Containment was never the right test.
+      const replaceItem = (e.target as Element).closest<HTMLElement>('[data-replace-slot]');
+      if (replaceItem?.dataset.replaceSlot) {
+        // Unlike the strip lens's terminal tile (a <button>, no default action
+        // to suppress), a series card-link is a real <a href> — same reason as
+        // the data-push-card branch: stop the browser's own navigation now that
+        // the SPA replace is handling it, or the two race and the native
+        // navigation wins, discarding the rest of the stack.
+        e.preventDefault();
+        replaceSlot(uidToFetchUrl(replaceItem.dataset.replaceSlot), replaceItem.dataset.replaceParams);
+        return;
+      }
+
       const tagLink = (e.target as Element).closest<HTMLAnchorElement>('a[href^="tag:"]');
       if (tagLink) {
         e.preventDefault();
@@ -1288,7 +1440,20 @@
        instead of travelling there, so nothing animates (issue #99). -->
   <div class="card-stack-inner" bind:this={innerEl}>
     {#each $stackStore.entries as entry (entry.slot)}
-      <StackFragment html={fragments.get(entry.slot) ?? ''} />
+      {#if entry.slot === ssrSlot}
+        <!-- The SSR-seeded location, rendered from Astro slot content rather
+             than from the fragment cache (issue #121). It is the same kind of
+             node in the same keyed block as every other entry — what differs
+             is only where its markup came from, and that its DOM is ADOPTED by
+             hydration rather than created, which is what keeps the nested
+             `<astro-island>`s inside it (the lens filter panel, the browse
+             results) alive to hydrate. The `<astro-slot>` wrapper Astro emits
+             around it is `display: contents`, so it generates no box and the
+             geometry places the card exactly as before. -->
+        {@render children?.()}
+      {:else}
+        <StackFragment html={fragments.get(entry.slot) ?? ''} />
+      {/if}
     {/each}
 
     <!-- The overflow representation (issue #111). Island-owned, NOT fragment

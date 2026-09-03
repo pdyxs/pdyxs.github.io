@@ -3,6 +3,7 @@ import '../styles/global.css';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import { STACK_GEOMETRY } from '../lib/stack-geometry';
 import { fanReservationTable } from '../lib/stack-reservation';
+import { fanSkeletonTable } from '../lib/stack-skeleton';
 import { ENTRY_SEP } from '../lib/stack-codec';
 import {
   buildArticleJsonLd,
@@ -38,6 +39,10 @@ const pageTitle = title === SITE_NAME ? title : `${title} — ${SITE_NAME}`;
 // irrelevant to slot/row counts (it only places the ahead fan horizontally), so
 // any value does; the type requires one.
 const stackReservation = fanReservationTable({ ...STACK_GEOMETRY, activeWidth: 0 });
+// ...and where each of that fan's spines is DRAWN (issue #122), from the same
+// build-time run of the same geometry. `fanSkeletonTable` needs no
+// `activeWidth`: it emits ahead placements as offsets from it, in CSS.
+const stackSkeleton = fanSkeletonTable(STACK_GEOMETRY);
 
 const site = Astro.site?.href ?? SITE_URL;
 const seoPage = {
@@ -97,36 +102,63 @@ const jsonLd = [
         }
       })();
     </script>
+    {/* Anti-FOUC for filtered cold loads.
+
+        Lens pages are statically prerendered with the FULL card set (the build
+        has no query string), so a refresh on a filtered URL would paint every
+        card before the client reads the filter and reduces the set. The script
+        sets a pre-paint flag when the URL carries filters; global.css hides the
+        browse results and shows the skeleton in their place until
+        BrowseLensBrowser clears it once the filtered view is in the DOM (see
+        lensFiltersSynced).
+
+        A second trigger, same guard (issue #81): a RANKED lens's order also
+        changes on hydration, because the chain's unseen-before-seen rung
+        (src/lib/ranking.ts) can only be evaluated against localStorage. The
+        server can't know that state, so it renders the build-time rungs and the
+        browser re-sorts — which, unguarded, is a whole grid visibly reshuffling
+        a beat after it paints, and reads as a bug rather than as "cards you've
+        read moved down".
+
+        Deliberately conditional on there BEING a read history: a first-time
+        visitor's hydration re-sort is a no-op, so they get an instant paint and
+        pay nothing. Scoped to /lens/ paths — a card page has no results grid to
+        hold, and `/` (the home lens) has slots, not a grid.
+
+        The two triggers part company at the 3s safety net, which is why the
+        script tracks them separately (issue #119). If the island never lands:
+
+        - re-rank only (no filters in the URL) — REVEAL. The prerendered set is
+          the right content in a stale order, and holding correct results back
+          forever over a sort is the worse trade.
+        - filtered URL — do NOT reveal. The prerendered 268 are the wrong answer
+          to the question the visitor asked, and painting them under a filter bar
+          reading "Games" is precisely the "everything loads, then the filters
+          apply" failure this guard exists to prevent. The flag is re-flagged
+          `stalled` instead, which swaps the skeleton's note for an explanation.
+
+        The attribute's VALUE is which of the two triggers fired (issue #123):
+        `filtered` for a filtered URL, `""` for re-rank-only, and `stalled`
+        once the net gives up on a filtered one. Every #119 rule keys on the
+        attribute's presence and so is unaffected; the strip guard keys on
+        `filtered`/`stalled`, because a strip lens sorts on date and never
+        re-ranks — hiding its run for a re-rank would cost a returning visitor
+        a skeleton flash for a swap that cannot happen.
+
+        `is:inline` bodies are emitted verbatim on every page, so the rationale
+        lives up here where the build strips it. */}
     <script is:inline>
-      // Anti-FOUC for filtered cold loads. Lens pages are statically prerendered
-      // with the FULL card set (the build has no query string), so a refresh on
-      // a filtered URL would paint every card before the client reads the filter
-      // and reduces the set. Set a pre-paint flag when the URL carries filters;
-      // CSS hides the browse results until BrowseLensBrowser clears it once the
-      // filtered view is in the DOM (see lensFiltersSynced).
-      //
-      // A second trigger, same guard (issue #81): a RANKED lens's order also
-      // changes on hydration, because the chain's unseen-before-seen rung
-      // (src/lib/ranking.ts) can only be evaluated against localStorage. The
-      // server can't know that state, so it renders the build-time rungs and
-      // the browser re-sorts — which, unguarded, is a whole grid visibly
-      // reshuffling a beat after it paints, and reads as a bug rather than as
-      // "cards you've read moved down".
-      //
-      // Deliberately conditional on there BEING a read history: a first-time
-      // visitor's hydration re-sort is a no-op, so they get an instant paint
-      // and pay nothing. Scoped to /lens/ paths — a card page has no results
-      // grid to hold, and `/` (the home lens) has slots, not a grid.
       (function () {
         var s = window.location.search;
-        var active = false;
+        var filtered = false;
         if (s) {
           new URLSearchParams(s).forEach(function (_value, key) {
             if (key === 'filter' || key.indexOf('filter.') === 0) {
-              active = true;
+              filtered = true;
             }
           });
         }
+        var active = filtered;
         if (!active && window.location.pathname.indexOf('/lens/') === 0) {
           try {
             for (var i = 0; i < localStorage.length; i++) {
@@ -135,14 +167,15 @@ const jsonLd = [
                 break;
               }
             }
-          } catch (e) { /* storage blocked — nothing to re-rank on */ }
+          } catch (e) { /* storage blocked */ }
         }
         if (!active) return;
-        document.documentElement.setAttribute('data-filters-pending', '');
-        // Safety net: if the filter island never hydrates (script error, etc.),
-        // reveal the full set rather than hiding results forever.
+        var el = document.documentElement;
+        el.setAttribute('data-filters-pending', filtered ? 'filtered' : '');
         setTimeout(function () {
-          document.documentElement.removeAttribute('data-filters-pending');
+          if (!el.hasAttribute('data-filters-pending')) return;
+          if (filtered) el.setAttribute('data-filters-pending', 'stalled');
+          else el.removeAttribute('data-filters-pending');
         }, 3000);
       })();
     </script>
@@ -169,26 +202,79 @@ const jsonLd = [
         setting them at mobile is inert — the same reason the applier writes
         them unconditionally.
 
+        ── The skeleton (issue #122) ──
+
+        Reserving the space is half the job; until the island hydrates the
+        reserved strip is EMPTY. Measured on this URL: 174ms to first paint with
+        the active card alone, 355ms before the fan's spines exist. So the same
+        counts also pick a row out of `stackSkeleton` and the script emits that
+        many collapsed spines, as a `.stack-skeleton` layer.
+
+        It cannot fill in their TITLES — `stack-manifest.json` is 46KB and
+        arrives as a JS chunk long after the HTML — which is what forces the
+        split the ticket asks for: shape immediately, titles at hydration.
+
+        Still no arithmetic here. `fanSkeletonTable` emits `left`/`top` as
+        finished CSS lengths, ahead ones as `calc(100% + Npx)` against a box
+        that is exactly one active card wide, so the two rules the script would
+        otherwise have to restate (slots-vs-rows, and "the ahead fan is measured
+        off the active card's width") each keep one implementation.
+
+        The layer is a SEPARATE one, appended after `.card-stack-inner` rather
+        than into it, and removed by the island. `.card-stack-inner` is the
+        island's keyed `{#each}`: an unexpected node in there is a hydration
+        mismatch, and #120 measured what that costs — Svelte 5 discards and
+        re-creates the whole subtree, and the nested `<astro-island>`s inside
+        the active card (the lens filter panel, the browse results) then never
+        hydrate at all. The layer carries no z-index and each spine is drawn at
+        its true `--spine-width`, so DOM order alone is the occlusion and
+        nothing overlaps the real card except the ahead fan's 4px tuck, which
+        belongs on top anyway.
+
+        The markup is built here and INSERTED by a one-line script in
+        StackNav.astro: `#card-stack` does not exist yet in <head>, and a script
+        that waited for it would race the first paint it exists to beat.
+
         This rationale lives in an Astro comment rather than inside the script
         because `is:inline` script bodies are emitted VERBATIM, comments and
         all, on every one of the site's ~590 pages. */}
-    <script is:inline define:vars={{ stackReservation, ENTRY_SEP }}>
+    <script is:inline define:vars={{ stackReservation, stackSkeleton, ENTRY_SEP }}>
       (function () {
         var usp = new URLSearchParams(window.location.search);
         var from = usp.get('from');
         var to = usp.get('to');
         if (!from && !to) return;
         var count = function (v) { return v ? v.split(ENTRY_SEP).filter(Boolean).length : 0; };
-        var row = function (side, n) {
-          return side && side.length ? side[Math.min(Math.max(0, n), side.length - 1)] : { slots: 0, rows: 0 };
+        var pick = function (side, n) {
+          return side && side.length ? side[Math.min(Math.max(0, n), side.length - 1)] : null;
         };
-        var b = row(stackReservation.behind, count(from));
-        var a = row(stackReservation.ahead, count(to));
+        var nb = count(from);
+        var na = count(to);
+        var b = pick(stackReservation.behind, nb) || { slots: 0, rows: 0 };
+        var a = pick(stackReservation.ahead, na) || { slots: 0, rows: 0 };
         var st = document.documentElement.style;
         st.setProperty('--behind-slots', String(b.slots));
         st.setProperty('--behind-rows', String(b.rows));
         st.setProperty('--ahead-slots', String(a.slots));
         st.setProperty('--ahead-rows', String(a.rows));
+
+        var html = '';
+        var draw = function (cards, role) {
+          for (var i = 0; i < (cards || []).length; i++) {
+            var c = cards[i];
+            html += '<div class="stack-skeleton-card" data-role="' + role
+              + '" style="--geo-left:' + c[0] + ';--geo-top:' + c[1]
+              + ';--card-surface:var(--dither-' + c[2] + ')">'
+              + '<span class="stack-skeleton-title"></span></div>';
+          }
+        };
+        draw(pick(stackSkeleton.behind, nb), 'behind');
+        draw(pick(stackSkeleton.ahead, na), 'ahead');
+        if (html) {
+          window.__pdyxsStackSkeleton =
+            '<div class="stack-skeleton" aria-hidden="true"><div class="stack-skeleton-inner">'
+            + html + '</div></div>';
+        }
       })();
     </script>
   </head>

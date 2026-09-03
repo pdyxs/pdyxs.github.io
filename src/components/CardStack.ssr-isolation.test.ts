@@ -2,9 +2,13 @@
 //
 // `stackStore` is module-level and `astro build` prerenders every page in one
 // process, so the store is per-visitor state on the client and per-*process*
-// state on the server. The seed used to write only when both `activeUid` and
-// `activeHtml` were present, so a render with neither inherited whatever the
-// previously-prerendered page had left in the module.
+// state on the server. The seed used to write only when it had both an
+// `activeUid` and the active location's markup, so a render with neither
+// inherited whatever the previously-prerendered page had left in the module.
+//
+// The markup is Astro SLOT content now rather than an `activeHtml` prop (issue
+// #121), so the guard's *shape* changed — `activeUid && children`. The property
+// it holds did not, and this file is what says so.
 //
 // Every route currently supplies both props (LensPage.astro seeds `lens/<name>`
 // for `/` too), which is why the leak never produced a visible symptom anyone
@@ -18,6 +22,7 @@
 // mount tests in `CardStack.island.test.ts` could not reproduce, since there
 // is no prerenderer in a browser.
 import { describe, it, expect, beforeEach } from 'vitest';
+import { createRawSnippet } from 'svelte';
 import { render } from 'svelte/server';
 import { get } from 'svelte/store';
 import CardStack from './CardStack.svelte';
@@ -26,9 +31,17 @@ import { stackStore, seedStackState } from '../stores/card-stack-store';
 const CARD_UID = 'what/games/digital/numbeanies';
 const CARD_HTML = `<div class="stack-card" data-uid="${CARD_UID}"><div class="card-header"></div></div>`;
 
-/** One prerendered page: the props `StackNav.astro` passes for that route. */
+/**
+ * One prerendered page: what `StackNav.astro` hands the island for that route.
+ * `activeHtml` becomes the default-slot snippet, exactly as Astro's Svelte
+ * server renderer builds it.
+ */
 function renderPage(props: { activeUid?: string; activeHtml?: string | null }) {
-  return render(CardStack as any, { props }).body;
+  const { activeHtml, ...rest } = props;
+  const children = activeHtml
+    ? createRawSnippet(() => ({ render: () => `<astro-slot>${activeHtml}</astro-slot>` }))
+    : undefined;
+  return render(CardStack as any, { props: { ...rest, children } }).body;
 }
 
 describe('prerendering one page does not leak into the next', () => {
@@ -48,10 +61,10 @@ describe('prerendering one page does not leak into the next', () => {
 
   it('renders the home page identically whether or not a card page preceded it', () => {
     // The visible half of the leak: with an inherited stack, `#card-stack`
-    // renders WITHOUT its `hidden` attribute and emits an empty
-    // `.active-card-col` on a page that has no card at all. (The card's own
-    // markup does not come with it — the fragment cache is per-instance — so
-    // what a prerender would ship is an empty shell.)
+    // renders WITHOUT its `hidden` attribute on a page that has no card at all.
+    // (The card's own markup does not come with it — it is this render's own
+    // slot content, and there is none — so what a prerender would ship is an
+    // empty shell.)
     const cold = renderPage({});
     renderPage({ activeUid: CARD_UID, activeHtml: CARD_HTML });
     const afterCard = renderPage({});

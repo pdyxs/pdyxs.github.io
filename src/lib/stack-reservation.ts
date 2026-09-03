@@ -42,8 +42,13 @@ export interface ReservationTable {
  *
  * `cap + MAX_PILE_LAYERS - 1` is where rows stop moving: the pile occupies slot
  * `cap`, and its deepest drawn edge sits `MAX_PILE_LAYERS - 1` further down.
+ *
+ * Exported for `stack-skeleton.ts`, which tabulates the same counts and must
+ * saturate at the same place — two tables handed to the same inline script and
+ * indexed by the same entry count cannot be allowed to disagree about where
+ * clamping starts.
  */
-function saturationPoint(cap: number): number {
+export function saturationPoint(cap: number): number {
   return Math.max(0, cap) + MAX_PILE_LAYERS - 1;
 }
 
