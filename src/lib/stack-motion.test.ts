@@ -3,6 +3,7 @@ import {
   scrollBehaviourFor,
   scrollSettleAction,
   transitionWillFire,
+  widthTransitionOf,
   SCROLL_SETTLE_MIN_FRAMES,
   SCROLL_SETTLE_TIMEOUT_MS,
 } from './stack-motion';
@@ -107,5 +108,29 @@ describe('scrollSettleAction', () => {
     // Deliberate: rounding here would let a layout creeping by fractions read
     // as settled. The deadline is what bounds the cost of being strict.
     expect(at({ previousOffset: 53.5, currentOffset: 53.4 })).toBe('wait');
+  });
+});
+
+describe('widthTransitionOf', () => {
+  it('finds the assembly resize among the transitions an element is running', () => {
+    const left = { transitionProperty: 'left' };
+    const width = { transitionProperty: 'width' };
+    expect(widthTransitionOf([left, width, { transitionProperty: 'margin-left' }])).toBe(width);
+  });
+
+  it('returns null when nothing is resizing — which is how the hold is released', () => {
+    // The three cases that all arrive here and must not hold: two lenses that
+    // declare the same width (no property changed, so no transition is
+    // created), mobile (`.card-stack-inner` is `display: contents`), and
+    // reduced motion (`--stack-motion-ms` is 0ms, and a zero-duration
+    // transition is never created at all).
+    expect(widthTransitionOf([])).toBe(null);
+    expect(widthTransitionOf([{ transitionProperty: 'left' }])).toBe(null);
+  });
+
+  it('ignores an animation that is not a transition at all', () => {
+    // `getAnimations()` returns CSS animations and Web Animations too; only a
+    // CSSTransition carries `transitionProperty`.
+    expect(widthTransitionOf([{ animationName: 'stack-reveal' } as never])).toBe(null);
   });
 });

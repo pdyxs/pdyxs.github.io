@@ -589,6 +589,9 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`
 - `data-role="behind|active|ahead"` and `data-piled` (written by the applier)
+- `data-stack-resizing` (issue #126 — written by `holdWhileAssemblyResizes` onto
+  the incoming `.stack-card` for the length of the assembly's width transition;
+  the name lives in `src/lib/stack-motion.ts`)
 - `.stack-pile`, `.stack-pile-inner`, `.stack-pile-label`, `.stack-pile-bands`,
   `.stack-pile-band`, `.stack-pile-band-text` (island-rendered, desktop only)
 - `.stack-shell`, `.stack-skeleton`, `.stack-skeleton-inner`,
@@ -1257,20 +1260,66 @@ two, and it *raises* every guard selector's specificity by a class rather than
 lowering it — which matters, because two of them already win deliberately
 narrow fights against Svelte-scoped rules (see #123).
 
-**A replace must not start the assembly's width transition, and that — not the
-re-sort — was the churn #125 measured.** `.card-stack-inner`'s `width` is
-transitioned over `--stack-motion-ms`, so the incoming lens's grid was laid out
-at every width between the outgoing card's and its own: at 1400px,
+**A lens change animates the REAL BOX, and holds its results behind the
+skeleton while it does.** This is the churn #125 measured (not the re-sort) and
+the vocabulary #126 settled. `.card-stack-inner`'s `width` is transitioned over
+`--stack-motion-ms`, so the incoming lens's grid was laid out at every width
+between the outgoing card's and its own: at 1400px,
 `repeat(auto-fill, minmax(280px, 1fr))` held **two** columns for 450ms and then
-reflowed to three, which is the 1877px collapse. It reproduces with an empty
-read history and no filters, so the hydration re-sort cannot be its cause.
-`commitWithoutWidthMotion` drops `.stack-motion`, commits, forces the layout
-pass (the `offsetWidth` read is load-bearing — without it the two class writes
-coalesce into one recalc and the transition runs anyway) and puts the class
-back. Only for a **replace**: that is a crossfade whose incoming node is
-created and whose fan is unchanged, so there is nothing for a CSS transition to
-carry. A **push** keeps its motion — the fan really does shift a slot, and "the
-fan glided, the cards jumped" is the failure that transition was added to fix.
+reflowed to three — the 1877px collapse, reproducible with an empty read history
+and no filters, which is why the hydration re-sort cannot be its cause.
+
+#125 answered that by *suppressing* the width transition on a replace. #126
+found the cost: the view transition that spanned the swap was then the only
+thing moving, and a VT paints **snapshots** (the UA stylesheet stretches
+`::view-transition-old`/`-new` to `inline-size: 100%` of a group animating
+between the two rects), so the header was being **scaled as a bitmap** —
+680px → 960px in one frame under a 514ms transition. Back never did that: a
+popstate rebuild leaves `.card-stack-inner` alive and its width transition
+simply runs, over ~443ms of real layout.
+
+So `replaceSlot` has **no view transition at all** any more. It commits
+synchronously, exactly as a popstate does, and the surviving `.card-stack-inner`
+carries the resize. Three consequences worth stating:
+
+- **The fresh slot was never the problem.** `.card-stack-inner` is outside the
+  keyed `{#each}`, so it survives a node swap the same way it survives a
+  rebuild. Reusing the outgoing handle would hit the outgoing fragment in the
+  cache and never fetch — that rule stands untouched.
+- **Two lenses of the same width now swap instantly** instead of crossfading
+  (every lens but home declares 960px). That is what Back between them already
+  did, and one vocabulary was the ask.
+- **The churn is held, not re-admitted.** `data-stack-resizing` (owned by
+  `holdWhileAssemblyResizes`, named in `src/lib/stack-motion.ts`) goes on the
+  incoming `.stack-card` and shows the same #119/#123 skeleton in place of the
+  same four elements `data-filters-pending` hides — deliberately the *same* set,
+  so a transition wearing both and then losing one changes nothing on screen.
+  A **second** attribute rather than a longer lease on the first, because the
+  guard is cleared by the lens island the moment its own order commits, which
+  is a fact about the island and says nothing about whether the box it sits in
+  has stopped moving.
+
+The hold is **asked, not predicted**: the commit has run, one forced layout pass
+creates whatever transition it started, and `widthTransitionOf` either finds a
+`width` CSSTransition on `.card-stack-inner` or does not. Three cases release
+immediately by that one route — equal declared widths (lens → lens), mobile
+(`display: contents`, no box), and reduced motion (`--stack-motion-ms` is 0ms
+and a zero-duration transition is never created). None can stall, and no
+`transitionWillFire` check or timeout is needed.
+
+The last piece is that **the resizing card's content is laid out at its
+destination**: `.stack-card[data-stack-resizing] .stack-card-body-inner` is
+pinned to `--stack-card-width`, which is an *unregistered* custom property and
+therefore holds its final value from the commit while the `width` it feeds
+animates towards it. Without it even the placeholder re-columned mid-flight
+(measured: 1652 → 1839 → 1263 over one 430ms resize). With it the document
+height is flat across the whole resize. Page mode gets its own copy of the rule
+without the `- 2 * var(--border-width)`, because a page-mode card has no border
+and would otherwise settle with a 2px snap.
+
+A **push** is unchanged in every respect — it keeps `panel-card-open`, and it
+keeps its width motion: the fan really does shift a slot, and "the fan glided,
+the cards jumped" is the failure that transition was added to fix.
 
 ### Progressive reveal appends; it never windows
 

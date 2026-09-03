@@ -171,9 +171,26 @@ html[data-theme="dark"] {
    of these selectors' specificity by a class (`html` is an element) rather
    than lowering it — which matters, because two of them are already winning
    deliberately narrow fights against Svelte-scoped rules further down. */
+/* A SECOND, independent reason to be holding the same content back, ORed in
+   here rather than folded into the attribute above (issue #126). A lens change
+   now animates the real box — `.card-stack-inner`'s `width` — and the incoming
+   grid is laid out against it, so uncovered it would hold two columns from
+   680px to ~930px and then reflow to three, which is precisely the churn #125
+   recorded. `data-filters-pending` cannot express that: it is cleared by the
+   lens island the moment its own order is committed, which is a fact about the
+   island and says nothing about whether the box it sits in has stopped moving.
+   `.stack-card` only, never <html>: nothing resizes the assembly on a cold
+   load. See src/lib/stack-motion.ts.
+
+   The two sets of selectors hide and show EXACTLY the same four things, so a
+   transition holding both attributes and then losing one changes nothing on
+   screen — a difference between them would be a visible step mid-flight. */
 :is(html, .stack-card)[data-filters-pending] .fp-browse-list,
 :is(html, .stack-card)[data-filters-pending] .fp-browse-empty,
-:is(html, .stack-card)[data-filters-pending] .fp-result-count {
+:is(html, .stack-card)[data-filters-pending] .fp-result-count,
+.stack-card[data-stack-resizing] .fp-browse-list,
+.stack-card[data-stack-resizing] .fp-browse-empty,
+.stack-card[data-stack-resizing] .fp-result-count {
   display: none;
 }
 
@@ -185,7 +202,8 @@ html[data-theme="dark"] {
    `display: none` in BrowseResults' own styles; this is the only rule that
    turns it on. Appearance stays with the component, visibility stays here with
    the rest of the guard. */
-:is(html, .stack-card)[data-filters-pending] .fp-skeleton--grid {
+:is(html, .stack-card)[data-filters-pending] .fp-skeleton--grid,
+.stack-card[data-stack-resizing] .fp-skeleton--grid {
   display: block;
 }
 
@@ -517,20 +535,10 @@ pre > code:not([class]) {
 
 /* ── View Transitions ──────────────────────────────────────────── */
 
-/* The series/lens REPLACE (`replaceSlot` in CardStack.svelte). Its own name
-   rather than a share of `panel-card-open`, so a push mid-flight over the same
-   region can never collide with it — two live elements holding one name aborts
-   the whole transition. */
-::view-transition-group(panel-card-replace) {
-  z-index: 1;
-  animation-duration: var(--stack-vt-ms);
-  animation-timing-function: ease-in-out;
-}
-
-::view-transition-old(panel-card-replace),
-::view-transition-new(panel-card-replace) {
-  animation-duration: var(--stack-vt-ms);
-}
+/* There is no `panel-card-replace` group any more (issue #126). A lens change
+   is not a crossfade of two snapshots: it animates the real `.card-stack-inner`
+   box, which is what Back has always done and what a view transition painting
+   over the top of it made invisible. See `replaceSlot` in CardStack.svelte. */
 
 ::view-transition-group(panel-card-open),
 ::view-transition-group(panel-card-close) {
@@ -1659,6 +1667,37 @@ pre,
     margin-bottom: calc(var(--ahead-rows, 0) * var(--stack-stagger));
     margin-left: calc(var(--behind-slots, 0) * var(--spine-width));
     margin-right: calc(var(--ahead-slots, 0) * var(--spine-width));
+  }
+
+  /* ── The resizing card's content is laid out at its DESTINATION (issue #126)
+     The other half of the assembly-resize hold. `.card-stack-inner`'s `width`
+     is what transitions, so everything inside it is laid out at every width
+     between the two — and `.fp-skeleton-list` is `repeat(auto-fill,
+     minmax(280px, 1fr))` just like the real grid, so even the placeholder
+     re-columned mid-flight and took 576px of document height with it (measured
+     1652 -> 1839 -> 1263 over the 430ms resize).
+
+     `--stack-card-width` is the answer, and it is already sitting there: it is
+     a `min()` of `--max-width`, which the applier writes at the commit, and an
+     UNREGISTERED custom property does not interpolate — so it holds the final
+     width from the first frame while the `width` it feeds animates towards it.
+     Pinning the body to it lays the content out once, at the size it will
+     settle at, and the card's own `clip-path` reveals it as the frame widens.
+
+     `- 2 * var(--border-width)` because this box is inside the card's border
+     and everything here is `box-sizing: border-box`. Desktop only, for the
+     same reason the geometry is: at mobile `--stack-card-width` is not declared
+     and nothing resizes. */
+  .stack-card[data-stack-resizing] > .body-wrapper .stack-card-body-inner {
+    width: calc(var(--stack-card-width) - 2 * var(--border-width));
+  }
+
+  /* ...and page mode has no card border to be inside (see the `border: none`
+     above), so it pins to the width itself. Stated rather than absorbed into a
+     2px rounding: the pin is released the moment the resize ends, and a body
+     2px narrower than its box for 430ms would settle with a visible snap. */
+  .stack-card--page[data-stack-resizing] > .body-wrapper .stack-card-body-inner {
+    width: var(--stack-card-width);
   }
 
   /* ── The pre-paint fan skeleton (issue #122) ──────────────────

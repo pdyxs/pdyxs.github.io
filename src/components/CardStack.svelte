@@ -6,7 +6,7 @@
   import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry, planPush } from '../lib/stack-layout';
   import type { LocationEntry, StackState } from '../lib/stack-layout';
   import { geometryFor, scrollTargetFor, STACK_GEOMETRY } from '../lib/stack-geometry';
-  import { scrollBehaviourFor, scrollSettleAction, transitionWillFire, SCROLL_SETTLE_TIMEOUT_MS } from '../lib/stack-motion';
+  import { scrollBehaviourFor, scrollSettleAction, transitionWillFire, widthTransitionOf, SCROLL_SETTLE_TIMEOUT_MS, STACK_RESIZING_ATTR } from '../lib/stack-motion';
   import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from '../lib/lens-key';
   import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
   import { filterStateFromParams } from '../dimensions';
@@ -745,43 +745,47 @@
   }
 
   /**
-   * Commit a REPLACE without letting the assembly's width transition run —
-   * the other half of issue #125, and the half that turned out to be the churn.
+   * Hold the incoming lens's results behind the #119/#123 skeleton for as long
+   * as the ASSEMBLY is resizing (issue #126).
    *
-   * Measured, `/` -> What -> Most* Interesting at 1400x900: `--max-width` goes
-   * 680px -> 960px at the commit and is correct from that instant, but
-   * `.card-stack-inner`'s `width` is transitioned over `--stack-motion-ms`
-   * (480ms) — so the incoming lens's results grid is laid out at every width
-   * between the two. `.fp-browse-list` is `repeat(auto-fill, minmax(280px, 1fr))`:
-   * it holds TWO columns for 450ms and then reflows to three, which is the
-   * 1877px collapse the ticket recorded. It happens with an empty read history
-   * and no filters, so it is not the hydration re-sort the ticket diagnosed —
-   * see the report on #125.
+   * A lens change animates the real box now: `.card-stack-inner`'s `width` is
+   * transitioned over `--stack-motion-ms`, and that box is what the incoming
+   * grid is laid out against. Measured at 1400x900, `/` -> What -> Art:
+   * uncovered, `.fp-browse-list` (`repeat(auto-fill, minmax(280px, 1fr))`)
+   * holds TWO columns from 680px to ~930px and then reflows to three, taking
+   * the document height with it — which is exactly the churn #125 recorded and
+   * suppressed the width transition to avoid. Covered, the results land once,
+   * at the final width.
    *
-   * Suppressed only for a replace, and the existing comment in `replaceSlot`
-   * is why: a replace is a CROSSFADE. The incoming node is created and the
-   * outgoing destroyed in one commit, the fan either side is unchanged, and
-   * the whole visible change is already spanned by the view transition. There
-   * is nothing for a CSS transition to carry, so starting a 480ms one under
-   * the crossfade only guarantees the content inside it is laid out wrong for
-   * 480ms. A PUSH is the opposite case and keeps its motion: the fan really
-   * does shift a slot, and "the fan glided, the cards jumped" is the failure
-   * the `.card-stack-inner` transition was added to fix.
+   * The hold is ASKED, not predicted: the commit has just run, so forcing one
+   * style+layout pass creates whatever transition it started, and
+   * `widthTransitionOf` either finds it or does not. Three cases release
+   * immediately and by the same route — two lenses that declare the same width
+   * (every lens but home is 960px, so lens -> lens is a genuine no-op), mobile
+   * (`.card-stack-inner` is `display: contents` and has no box to transition),
+   * and reduced motion (`--stack-motion-ms` is 0ms, and a zero-duration
+   * transition is never created at all). None of them can stall.
    *
-   * The `offsetWidth` read is load-bearing: it forces the style+layout pass
-   * that commits the new width WHILE the gate class is off, so re-adding the
-   * class finds nothing changed and starts no transition. Without it the two
-   * class writes coalesce into one recalc and the transition runs anyway.
+   * `finished` rejects if a later navigation cancels the transition; the
+   * attribute comes off either way, and off a node that may by then be
+   * detached, which is harmless.
    */
-  function commitWithoutWidthMotion(commit: () => void) {
-    const stackEl = document.getElementById('card-stack');
-    const motion = stackEl?.classList.contains('stack-motion') ?? false;
-    if (motion) stackEl!.classList.remove('stack-motion');
-    flushSync(commit);
-    if (motion) {
-      void stackEl!.offsetWidth;
-      stackEl!.classList.add('stack-motion');
+  async function holdWhileAssemblyResizes(el: HTMLElement | null | undefined) {
+    const inner = innerEl;
+    if (!el || !inner || typeof inner.getAnimations !== 'function') return;
+    // Load-bearing, and the mirror of the read `commitWithoutWidthMotion` made
+    // for the opposite reason: without it the transition the commit started
+    // does not exist yet to be found.
+    void inner.offsetWidth;
+    const resize = widthTransitionOf(inner.getAnimations());
+    if (!resize) return;
+    el.setAttribute(STACK_RESIZING_ATTR, '');
+    try {
+      await resize.finished;
+    } catch {
+      // Cancelled by the next navigation — release, and let that one hold.
     }
+    el.removeAttribute(STACK_RESIZING_ATTR);
   }
 
   /**
@@ -856,71 +860,53 @@
     const ok = await fragments.ensure(incoming.slot, uid);
     if (!ok) return;
 
-    const outgoing = elFor(get(stackStore).activeSlot);
     const commit = () => stackStore.update(s => replaceActiveSlot(s, incoming));
 
-    // A replace is a CROSSFADE, not the push's morph, and the difference is
-    // not cosmetic. `replaceActiveSlot` gives the incoming location a fresh
-    // slot (see the note above), so its DOM node is created rather than moved
-    // — the outgoing node is destroyed in the same commit. Nothing is left for
-    // a CSS transition to run on, which is why this path animated NOTHING at
-    // all before: not the body, not the geometry. A view transition is the
-    // only mechanism that can span a node swap, because it animates snapshots
-    // rather than elements.
+    // ── A lens change animates the REAL BOX, in both directions (issue #126)
     //
-    // One name across both halves, so old and new pair into a single group.
-    // `panel-card-replace` is deliberately distinct from the push's
-    // `panel-card-open`: a push may be mid-flight over the same region, and
-    // two live elements sharing a name is the "duplicate view-transition-name"
-    // abort the push path already works to avoid.
+    // There is no view transition here any more, and that is the whole fix.
+    // A VT paints SNAPSHOTS for its duration — the UA stylesheet stretches both
+    // `::view-transition-old` and `::view-transition-new` to `inline-size: 100%`
+    // of a group that is itself animating between the old and new rects — so
+    // any real box animating underneath it is invisible, and what the viewer
+    // sees is the header being scaled as a bitmap. Measured: the width snapped
+    // 680px -> 960px in ONE frame while a `panel-card-replace` transition ran
+    // for ~514ms over the top of it.
     //
-    // NOT `skipBodyOpen`, unlike the push. The incoming chapter replaces an
-    // already-open card at the same size, so deferring its body would play the
-    // crossfade to a full card and then collapse and re-open it.
-    if (!startVT || !outgoing) {
-      // Committed synchronously so the incoming card's node exists to be
-      // flagged in the same task, before the browser paints the fragment it
-      // just mounted.
-      commitWithoutWidthMotion(commit);
-      dropRootGuard();
-      guardIncomingLens(incoming, elFor(incoming.slot));
-      // PUSH, not replace (issue #124). "Replace" names the STACK operation —
-      // `replaceActiveSlot` does swap the active slot out — and says nothing
-      // about history. Conflating the two left a lens transition with no
-      // history entry at all, so Back from `/lens/interesting` skipped the
-      // home page the visitor came from and left the site. A lens transition
-      // is a navigation; only a filter toggle (onCardParam, which re-keys the
-      // active location rather than moving to another one) is a replace.
-      updateUrl();
-      return;
-    }
-
-    outgoing.style.viewTransitionName = 'panel-card-replace';
-    const vt = startVT(() => {
-      commitWithoutWidthMotion(commit);
-      // Handed off inside the same synchronous callback, before the new
-      // snapshot is captured — the outgoing node is already gone by now, so
-      // this is a 1-old/1-new pairing like every other named transition here.
-      const incomingEl = elFor(incoming.slot);
-      if (incomingEl) incomingEl.style.viewTransitionName = 'panel-card-replace';
-      // Also inside the callback, and for the same reason as the name: the
-      // OUTGOING snapshot was captured before it ran, so flagging here holds
-      // the incoming results without skeletonising the card we are crossfading
-      // away from.
-      dropRootGuard();
-      guardIncomingLens(incoming, incomingEl);
-      // Inside the callback, with the commit it describes. `startVT` returns
-      // BEFORE running this — the browser captures the outgoing snapshot
-      // first — so an `updateUrl` sequenced after the `startVT(...)` call
-      // reads the pre-replace store and writes the outgoing card's URL.
-      //
-      // PUSH, not replace — see the instant-fallback branch above (issue #124).
-      updateUrl();
-    });
-
-    await vt.finished;
-    const settled = elFor(incoming.slot);
-    if (settled) settled.style.viewTransitionName = '';
+    // Back does not do that. A popstate rebuilds through `initFromUrl`, the
+    // surviving `.card-stack-inner` keeps its identity, and its `width`
+    // transition simply runs — ~443ms over 28 frames of real layout. That is
+    // the behaviour this path now takes, so a lens change has one vocabulary
+    // whichever direction it is reached from.
+    //
+    // The fresh slot stays exactly as it was. It was never what made the VT
+    // necessary: `.card-stack-inner` is OUTSIDE the keyed `{#each}`, so it
+    // survives a node swap the same way it survives a popstate, and it is the
+    // element the width transition runs on. Reusing the outgoing handle would
+    // hit the outgoing fragment in the cache and never fetch (see above), and
+    // buys nothing here.
+    //
+    // The cost, stated plainly: two lenses of the same width (every lens but
+    // home declares 960px) now swap instantly instead of crossfading. That is
+    // what Back between them already did, and one vocabulary was the ask.
+    //
+    // Committed synchronously so the incoming card's node exists to be flagged
+    // in the same task, before the browser paints the fragment it just mounted.
+    flushSync(commit);
+    dropRootGuard();
+    const incomingEl = elFor(incoming.slot);
+    guardIncomingLens(incoming, incomingEl);
+    // PUSH, not replace (issue #124). "Replace" names the STACK operation —
+    // `replaceActiveSlot` does swap the active slot out — and says nothing
+    // about history. Conflating the two left a lens transition with no history
+    // entry at all, so Back from `/lens/interesting` skipped the home page the
+    // visitor came from and left the site. A lens transition is a navigation;
+    // only a filter toggle (onCardParam, which re-keys the active location
+    // rather than moving to another one) is a replace.
+    updateUrl();
+    // ...and the results stay behind the skeleton until that box has stopped
+    // moving, which is the half of #125 this must not undo.
+    await holdWhileAssemblyResizes(incomingEl);
   }
 
   async function pushCard(url: string, clickedLink?: Element | null, params: ParamPairs = []) {

@@ -153,3 +153,51 @@ export function scrollSettleAction({
   if (previousOffset === null) return 'wait';
   return previousOffset === currentOffset ? 'aim' : 'wait';
 }
+
+// ── The assembly resize, and what it hides while it runs (issue #126) ──
+//
+// A lens change animates the REAL box: `.card-stack-inner`'s `width` is
+// transitioned over `--stack-motion-ms`, and that box is what the incoming
+// lens's results grid is laid out against. Left uncovered, the grid is laid out
+// at every width between the two — `repeat(auto-fill, minmax(280px, 1fr))`
+// holds two columns and then reflows to three, which is exactly the churn #125
+// recorded. So the incoming card wears this attribute for as long as the
+// assembly is resizing, and the #119/#123 skeleton stands in for its results;
+// they land once, at the final width.
+//
+// It is a SECOND attribute rather than a longer lease on `data-filters-pending`
+// because it is a second, independent reason to be holding the same content
+// back: that guard is cleared by the lens island the moment its own order is
+// committed, which is a fact about the island and says nothing about whether
+// the box it is sitting in has stopped moving. Each attribute stays the only
+// record of its own fact, and global.css ORs them.
+export const STACK_RESIZING_ATTR = 'data-stack-resizing';
+
+/** The subset of `Animation` this decision needs. `CSSTransition` carries it. */
+export interface TransitionLike {
+  transitionProperty?: string;
+}
+
+/**
+ * The running `width` transition among an element's animations, or null.
+ *
+ * This is how "will the assembly resize?" is ASKED rather than predicted, and
+ * it answers three questions at once that no comparison of declared widths
+ * could: two lenses that both declare 960px start no transition, neither does
+ * mobile (where `.card-stack-inner` is `display: contents` and has no box at
+ * all), and neither does reduced motion — the `prefers-reduced-motion` block
+ * zeroes `--stack-motion-ms`, and a zero-duration transition is never created.
+ * All three release the hold immediately, by the same route, for free.
+ *
+ * The caller must force a style/layout pass first (an `offsetWidth` read), so
+ * the transition the commit just started exists to be found — the same
+ * load-bearing read `commitWithoutWidthMotion` used to make for the opposite
+ * reason.
+ */
+export function widthTransitionOf<T>(animations: readonly T[]): T | null {
+  // Unconstrained, and the read is the cast: the caller hands over `Animation[]`
+  // and wants an `Animation` back (it awaits `finished`), while the property
+  // that identifies one lives on the `CSSTransition` subtype. Narrowing the
+  // parameter would cost the caller the very member it came for.
+  return animations.find(a => (a as TransitionLike).transitionProperty === 'width') ?? null;
+}
