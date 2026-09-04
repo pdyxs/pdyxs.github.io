@@ -9,6 +9,7 @@ date: 2024-10-08
 medium: Printmaking
 actions: []
 quotes: []
+image: lino-1.jpg
 ---
 I'm pretty new to lino printing, and wanted to find a way to make small pieces that would help me build my skills while still contributing to something bigger.
 

@@ -1,7 +1,8 @@
 ---
 title: Follow me
-status: draft
-date: 2026-09-04
 tags: []
+inspected: true
 ---
-[Bluesky]()
+[Bluesky](https://bsky.app/profile/pdyxs.bsky.social)
+
+[Instagram](https://www.instagram.com/pdyxs/)
