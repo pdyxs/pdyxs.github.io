@@ -5,7 +5,7 @@ label: A bit of everything
 # Authored here rather than in code, and deliberately NOT the lens's label: the
 # page header says what the site is, while the lens names itself in its card
 # header (see src/lib/lens-chrome.ts).
-subtitle: Paul Sztajer — games, puzzles, writing and work
+subtitle: Paul Sztajer — games, puzzles and writing
 icon: scatter
 component: home
 order: 0
