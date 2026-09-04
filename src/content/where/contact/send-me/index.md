@@ -1,7 +1,6 @@
 ---
-inspected: false
-title: Send me something
-status: draft
+inspected: true
+title: Contact Me
 ---
 
 Email me at talk@pdyxs.wtf

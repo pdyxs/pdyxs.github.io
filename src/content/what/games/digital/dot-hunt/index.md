@@ -1,7 +1,7 @@
 ---
-inspected: false
+inspected: true
 title: dot-hunt
-description: A digital alternate-reality scavenger-hunt game, starting with a San Francisco-based prototype
+description: A prototype of a digital alternate-reality scavenger-hunt game
 date: 2018-10-15
 medium: Digital ARG
 actions:
@@ -9,8 +9,7 @@ actions:
     url: https://space-archeology.surge.sh/map
     kind: play
 quotes: []
-status: draft
+status: unlisted
 tags:
-  - when/shelved
 ---
-dot-hunt is a digital alternate-reality game built around city-based scavenger hunts, starting with a San Francisco-based prototype.
+dot-hunt is a prototype of a digital alternate-reality game built around city-based scavenger hunts, starting with a San Francisco-based prototype.
