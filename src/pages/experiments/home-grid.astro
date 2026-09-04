@@ -87,7 +87,7 @@ type ProtoSlot = {
   span: { small: number; large: number };
   side?: 'right';
   /** NOT in #131's schema. Only variant B sets it — that is the question. */
-  rows?: number;
+  rows?: { small: number; large: number };
 };
 
 type Layout = { name: string; note: string; slots: ProtoSlot[] };
@@ -104,13 +104,13 @@ const LAYOUTS: Record<string, Layout> = {
     ],
   },
   B: {
-    name: 'Target arrangement, with a rows: key',
+    name: 'Target arrangement, with a rows: key — two tiers of column widths',
     note:
-      'Identical config, except slot 2 declares `rows: 2`. This key does NOT exist in #131 — if this is the only layout that reads right, the schema gains it and the map re-opens.',
+      'The winner. The arrangement holds from 681px up; the two authorable tiers are only about how wide the columns are. Small (681\u2013999px): 7 / 5-right / 7 \u2014 the rail needs a bigger fraction of a narrow page to stay usable. Large (\u22651000px): 8 / 4-right / 8. Slot 2 declares `rows: 2` at both, a key #131 does not have. Below 681px every slot is span 12 and rows is ignored \u2014 681px is where stacked becomes the arrangement; this line only chooses widths.',
     slots: [
-      { card: 'puzzle', label: 'A Puzzle', seeMore: true, variant: 'brief', span: { small: 8, large: 8 } },
-      { card: 'project', label: 'A Project', seeMore: true, variant: 'full', span: { small: 4, large: 4 }, side: 'right', rows: 2 },
-      { card: 'post', label: 'A Post', seeMore: true, variant: 'brief', span: { small: 8, large: 8 } },
+      { card: 'puzzle', label: 'A Puzzle', seeMore: true, variant: 'brief', span: { small: 7, large: 8 } },
+      { card: 'project', label: 'A Project', seeMore: true, variant: 'full', span: { small: 5, large: 4 }, side: 'right', rows: { small: 2, large: 2 } },
+      { card: 'post', label: 'A Post', seeMore: true, variant: 'brief', span: { small: 7, large: 8 } },
     ],
   },
   C: {
@@ -179,10 +179,10 @@ const KEYS = Object.keys(LAYOUTS);
             {LAYOUTS[key].slots.map((slot) => (
               <section
                 class:list={['fp-slot', slot.side === 'right' && 'fp-slot--rail', `fp-slot--${slot.variant}`]}
-                style={`--slot-span-small:${slot.span.small};--slot-span-large:${slot.span.large};${slot.rows ? `--proto-rows:${slot.rows};` : ''}`}
+                style={`--slot-span-small:${slot.span.small};--slot-span-large:${slot.span.large};${slot.rows ? `--proto-rows-small:${slot.rows.small};--proto-rows-large:${slot.rows.large};` : ''}`}
               >
                 <p class="proto-spec">
-                  span {slot.span.small}/{slot.span.large}{slot.side ? ' · right' : ''} · {slot.variant}{slot.rows ? ` · rows ${slot.rows}` : ''}
+                  span {slot.span.small}/{slot.span.large}{slot.side ? ' · right' : ''} · {slot.variant}{slot.rows ? ` · rows ${slot.rows.small}/${slot.rows.large}` : ''}
                 </p>
                 {slot.label && <h2 class="fp-slot-label">{slot.label}</h2>}
                 <ul class="proto-list">
@@ -287,6 +287,10 @@ const KEYS = Object.keys(LAYOUTS);
     .fp-slot--rail {
       grid-column: span var(--slot-span-small) / -1;
     }
+    /* NOT in the schema — variant B only, and the question this page asks. */
+    .fp-slot {
+      grid-row: span var(--proto-rows-small, 1);
+    }
   }
 
   /* The small/large line — a literal by necessity (#131 premise correction). */
@@ -297,11 +301,9 @@ const KEYS = Object.keys(LAYOUTS);
     .fp-slot--rail {
       grid-column: span var(--slot-span-large) / -1;
     }
-  }
-
-  /* NOT in the schema — variant B only, and the question this page asks. */
-  .fp-slot[style*='--proto-rows'] {
-    grid-row: span var(--proto-rows);
+    .fp-slot {
+      grid-row: span var(--proto-rows-large, 1);
+    }
   }
 
   /* ---- stand-in for #130's `brief` variant, which does not exist yet ---- */
