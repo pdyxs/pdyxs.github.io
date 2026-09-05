@@ -15,7 +15,8 @@
  *
  * IMPORTANT: this script must not import lens-registry.ts (or anything that
  * does), or it would depend on the very file it generates. It reads YAML with
- * js-yaml and nothing else from the project.
+ * js-yaml, and the one project module it does import — src/lib/home-slots.ts —
+ * is a deliberate leaf for exactly that reason (see its header).
  *
  * Run automatically before `npm run dev`/`build` via the "pre*" lifecycle
  * scripts, ordered BEFORE generate-stack-manifest.mjs (manifest enumeration
@@ -27,6 +28,7 @@ import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { load as parseYaml } from 'js-yaml';
+import { parseHomeSlots } from '../src/lib/home-slots.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(__dirname, '../src/content');
@@ -97,7 +99,16 @@ async function collectLenses() {
     if (typeof parsed.acceptsFilters === 'boolean') decl.acceptsFilters = parsed.acceptsFilters;
     if (typeof parsed.presentation === 'string') decl.presentation = parsed.presentation;
     if (typeof parsed.devOnly === 'boolean') decl.devOnly = parsed.devOnly;
-    if (parsed.config && typeof parsed.config === 'object') decl.config = parsed.config;
+    if (parsed.config && typeof parsed.config === 'object') {
+      // Home's slot layout is validated AND normalised here, so the generated
+      // file shows what actually renders rather than the author's shorthand.
+      // parseHomeSlots throws with the offending slot's 1-based number, which
+      // fails the build instead of rendering a silently-wrong front page.
+      decl.config =
+        parsed.component === 'home' || id === 'home'
+          ? { ...parsed.config, slots: parseHomeSlots(parsed.config) }
+          : parsed.config;
+    }
 
     lenses.push(decl);
   }

@@ -1420,7 +1420,7 @@
   {
     "uid": "where/contact/send-me",
     "code": "4K",
-    "title": "Send me something"
+    "title": "Contact Me"
   },
   {
     "uid": "lens/oldest",
@@ -1763,5 +1763,14 @@
     "uid": "what/stories/galapagos/05-sideways-leaves",
     "code": "5S",
     "title": "Leaves on their sides"
+  },
+  {
+    "uid": "where/contact/Untitled/Untitled",
+    "code": "5T"
+  },
+  {
+    "uid": "where/contact/follow-me",
+    "code": "5U",
+    "title": "Follow me"
   }
 ]

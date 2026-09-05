@@ -7,47 +7,88 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
     "id": "home",
     "dimension": "what",
     "label": "A bit of everything",
-    "subtitle": "Paul Sztajer — games, puzzles, writing and work",
+    "subtitle": "Paul Sztajer — games, puzzles and writing",
     "icon": "scatter",
     "component": "home",
+    "width": "1100px",
     "acceptsFilters": false,
     "config": {
       "slots": [
         {
-          "type": "pinned",
-          "uid": "who/about-me"
+          "uid": "who/about-me",
+          "span": {
+            "small": 7,
+            "large": 8
+          },
+          "rows": {
+            "small": 1,
+            "large": 1
+          },
+          "side": "main",
+          "variant": "brief",
+          "seeMore": false
         },
         {
-          "type": "filter",
-          "label": "A Project",
-          "pool": 5,
           "filter": {
             "what": [
               "what:games",
               "what:art",
               "what:software"
             ]
-          }
+          },
+          "pool": 5,
+          "span": {
+            "small": 5,
+            "large": 4
+          },
+          "rows": {
+            "small": 2,
+            "large": 2
+          },
+          "side": "right",
+          "variant": "full",
+          "label": "A Project",
+          "seeMore": true
         },
         {
-          "type": "filter",
-          "label": "A Puzzle",
-          "pool": 5,
           "filter": {
             "what": [
               "what:puzzles"
             ]
-          }
+          },
+          "pool": 5,
+          "span": {
+            "small": 7,
+            "large": 8
+          },
+          "rows": {
+            "small": 1,
+            "large": 1
+          },
+          "side": "main",
+          "variant": "brief",
+          "label": "A Puzzle",
+          "seeMore": true
         },
         {
-          "type": "filter",
-          "label": "A Post",
-          "pool": 5,
           "filter": {
             "what": [
               "what:writing"
             ]
-          }
+          },
+          "pool": 5,
+          "span": {
+            "small": 12,
+            "large": 12
+          },
+          "rows": {
+            "small": 1,
+            "large": 1
+          },
+          "side": "main",
+          "variant": "brief",
+          "label": "A Post",
+          "seeMore": true
         }
       ]
     }

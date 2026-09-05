@@ -8,6 +8,8 @@
   // Shared with GenericRenderer's dateline so a card's date reads identically
   // in a listing and on the card itself — see lib/card-date.ts.
   import { formatCardDate } from '../lib/card-date';
+  import { resolveBrowseCardVariant } from '../lib/browse-card-variants';
+  import type { BrowseCardVariantName } from '../lib/browse-card-variants';
 
   interface Props {
     card: BrowseCardData;
@@ -21,15 +23,28 @@
      * linking to where you already are is a dead click.
      */
     current?: boolean;
+    /**
+     * How much of the card to show (issue #130). Defaults to `full`, which is
+     * what every existing call site renders — the four of them (BrowseResults,
+     * CardStrip, EditorialLensBrowser, AuditLensBody) pass nothing and are
+     * unchanged. `current` stays orthogonal: it describes the card's relation
+     * to where the reader is, not how much to show.
+     */
+    variant?: BrowseCardVariantName;
   }
 
-  let { card, tagDisplay = {}, filterState = { }, current = false }: Props = $props();
+  let { card, tagDisplay = {}, filterState = { }, current = false, variant }: Props = $props();
+
+  // The record decides WHICH elements render and how many chips; the CSS
+  // decides how they look, reading the two numbers back off the custom
+  // properties written inline below.
+  const v = $derived(resolveBrowseCardVariant(variant));
 
   const tagChips = $derived(
     computeCardTagDisplay(
       card.tags,
       filterState,
-      4,
+      v.tagLimit,
       tag => displayFor(tag, tagDisplay).name,
       card.collapsedContainer,
     ),
@@ -40,7 +55,13 @@
   const statusBadge = $derived(computeStatusBadge(card.status, card.date ? new Date(card.date) : undefined));
 </script>
 
-<li class="browse-card-item" class:browse-card-item--current={current}>
+<li
+  class="browse-card-item"
+  class:browse-card-item--current={current}
+  class:browse-card-item--brief={variant === 'brief'}
+  style:--browse-card-desc-lines={v.descriptionLines}
+  style:--browse-card-min-height={v.minHeight}
+>
   <!-- A real anchor: keyboard-focusable and cmd/middle-clickable. The delegated
        data-push-card handler in CardStack.svelte intercepts left-clicks and
        preventDefaults, doing the in-stack push instead of a full navigation.
@@ -53,12 +74,12 @@
     data-push-card={current ? undefined : card.uid}
     aria-current={current ? 'true' : undefined}
   >
-    {#if card.thumb && card.thumbKind === 'video'}
+    {#if v.thumb && card.thumb && card.thumbKind === 'video'}
       <!-- No frame grab is generated for a video header — preload="metadata"
            gets the browser to paint the first frame for free, same as
            ImageGallery's video tiles. -->
       <video class="browse-card-thumb" src={card.thumb} muted preload="metadata"></video>
-    {:else if card.thumb}
+    {:else if v.thumb && card.thumb}
       <img
         class="browse-card-thumb"
         src={card.thumb}
@@ -83,7 +104,7 @@
             {statusBadge.label}{statusBadge.dateLabel ? ` · ${statusBadge.dateLabel}` : ''}
           </span>
         {/if}
-        {#if card.date}
+        {#if v.date && card.date}
           <time
             class="browse-card-date"
             datetime={new Date(card.date).toISOString()}
@@ -96,7 +117,7 @@
     {#if card.description}
       <p class="browse-card-desc">{card.description}</p>
     {/if}
-    {#if tagChips.tags.length > 0 || tagChips.overflow > 0}
+    {#if v.tags && (tagChips.tags.length > 0 || tagChips.overflow > 0)}
       <ul class="browse-card-tags" aria-label="Tags">
         {#each tagChips.tags as chip}
           <li class="browse-card-tag" class:browse-card-tag--active={chip.active}>
@@ -163,6 +184,12 @@
     background: var(--color-selected-bg);
   }
 
+  /* `.browse-card-item--brief` (issue #130) has NO rule here, deliberately —
+     it is a hook, and everything `brief` changes is either an element the
+     record does not render or a number it hands to a custom property. Having
+     nothing to write is the evidence that the record is carrying its weight;
+     an empty ruleset would say the same thing and trip svelte-check. */
+
   .browse-card-link:focus-visible {
     outline: 2px solid var(--color-text);
     outline-offset: -2px;
@@ -179,8 +206,16 @@
     background: var(--color-bg-stripes);
   }
 
+  /* The interior is what the placeholder holds space for (issue #133): the
+     floor is per-variant in BROWSE_CARD_VARIANTS and arrives as
+     --browse-card-min-height, so the real card can only ever grow into space
+     the placeholder was already holding. The banner is deliberately outside
+     it — `aspect-ratio: 16/9` makes its height a function of the card's width,
+     and the placeholder draws its own 16/9 band so the two agree anyway. */
   .browse-card-content {
     padding: var(--space-md);
+    box-sizing: border-box;
+    min-height: var(--browse-card-min-height);
   }
 
   .browse-card-header {
@@ -239,8 +274,10 @@
     margin: 0 0 var(--space-xs);
     line-height: 1.4;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
+    /* From the variant record, not a per-variant CSS block — a future variant
+       needs no matching rule for a number the record already holds. */
+    -webkit-line-clamp: var(--browse-card-desc-lines);
+    line-clamp: var(--browse-card-desc-lines);
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

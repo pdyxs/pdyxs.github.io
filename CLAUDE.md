@@ -599,6 +599,16 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
   `Base.astro`'s inline script, removed by `CardStack`, desktop only). The
   shell is the island's own wrapper in `StackNav.astro`; the rest exist only
   between first paint and hydration.
+- `.fp-slot-grid`, `.fp-slot`, `.fp-slot--rail`, `.fp-slot-label`,
+  `.fp-see-more` (issues #131, #132 — the home lens's 12-column slot grid).
+  These live in `global.css`, not in `HomeLensSlots.svelte`: they render
+  inside the home lens *fragment*. `.fp-slot-placeholder*`, `.fp-slot-stalled`
+  and `.fp-slot-card-list` stay scoped to the island, per the islands
+  exception, and exist only between first paint and the card pool arriving.
+- `.browse-card-item--brief` (issue #130) — the `BrowseCard` variant hook. It
+  deliberately carries **no rule at all**: everything `brief` changes is either
+  an element `BROWSE_CARD_VARIANTS` does not render or a number it hands to
+  `--browse-card-desc-lines` / `--browse-card-min-height`.
 
 Deleted with the geometry swap (issue #109), and not to be reintroduced:
 `.fan-corner`, `.active-card-col`, `.stack-overflow*`, `data-side`,
@@ -668,6 +678,48 @@ ResizeObserver that measures `activeWidth` — caps the sticky label so a stack
 shorter than the viewport doesn't get a 100vh child forcing its own height. It
 is guarded on a real measurement: at mobile `.card-stack-inner` is
 `display: contents` and measures zero.
+
+### The home lens is a 12-column grid whose cells are stated before their cards
+
+`home.lens.yaml`'s `config.slots` is the whole of the front page's layout
+(issues #129–#133). Four rules hold it together:
+
+- **`parseHomeSlots` (`src/lib/home-slots.ts`) validates AND normalises, at
+  generation time.** `scripts/generate-lens-registry.mjs` bakes the normalised
+  slots into `lenses.generated.ts`, so that file shows what actually renders
+  rather than the author's shorthand, and an authoring slip (`spann: 4`,
+  `side: left`, an unknown `variant:`) is a build error naming the slot's
+  1-based number. `.strict()` is what makes the typo an error rather than a
+  silently ignored key. The module is a deliberate **leaf** — the generator
+  must not reach `lens-registry.ts`, which is also why this does not live in
+  `frontpage.ts`.
+- **All tiers are emitted and CSS picks.** `resolveSlotSpans` /
+  `resolveSlotRows` cascade upward, mobile-first, onto `--slot-span-small` /
+  `-large` and `--slot-rows-small` / `-large`; the base rules are a literal
+  `span 12` / `span 1` and the two breakpoints (681px, 1000px) are literals in
+  `global.css`. No `matchMedia` — and no container query either, since
+  `container-type` would make the slot a containing block for the fixed dither.
+- **One flat grid, `side: right` as `span N / -1`.** No `grid-auto-flow: dense`
+  (it backfills a hole with a *later* slot, which silently breaks config
+  order), no rail container, no sum-to-12 validation. A hole is visible; a
+  reordering is not.
+- **The grid is server-rendered from the config alone and only its interiors
+  are provisional.** `HomeLensSlots` renders every cell — spans, rows, labels,
+  `See more →` — with a placeholder interior while `resolvedSlots === null`.
+  There is no layer and no removal moment, and `null` is not `[]`: a slot whose
+  card resolves to `null` draws chrome and no interior *permanently*, which
+  reads correctly only because the rest of the page has filled.
+
+**The floor is per variant and it is measured.** `BROWSE_CARD_VARIANTS`
+(`src/lib/browse-card-variants.ts`) holds `minHeight` for each variant, written
+onto both `BrowseCard`'s `.browse-card-content` and the placeholder's interior
+as `--browse-card-min-height`, so the swap can only grow into space already
+held. It covers the interior and **not** the 16/9 banner, whose height is a
+function of the card's width — the placeholder draws its own band instead.
+`BrowseCard.island.test.ts` sums the rendered card's own vertical parts and
+asserts the record agrees, because a floor disagreeing with the card it holds
+space for is exactly the document-height jump the placeholder exists to prevent
+and nothing else would catch it.
 
 ### A lens names itself; the page header names the site
 

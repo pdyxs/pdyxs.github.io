@@ -33,11 +33,17 @@ community plugin) — accept, then enable Templater if it isn't already on.
 | `.obsidian/core-plugins.json`, `community-plugins.json` | which plugins are on |
 | `.obsidian/plugins/templater-obsidian/data.json` | Templater's template folder |
 | `_templates/` | the card scaffolds (generated — `npm run generate:card-templates`) |
-| `.obsidian/plugins/*/` (code) | **ignored** — install plugins per device |
+| `.obsidian/plugins/pdyxs-card-links/` | our own link picker — source, so committed |
+| `.obsidian/hotkeys.json` | key bindings (currently just the link picker) |
+| `.obsidian/plugins/*/` (other code) | **ignored** — install plugins per device |
 | `.obsidian/workspace*.json`, `cache`, `.trash/` | **ignored** — per-device churn |
 
-Plugin *code* is deliberately not vendored: it's ~1MB of JS that has no business
-in a site repo, and Obsidian installs it per device in a couple of clicks.
+Third-party plugin *code* is deliberately not vendored: it's ~1MB of JS that has
+no business in a site repo, and Obsidian installs it per device in a couple of
+clicks. `pdyxs-card-links` is the exception — it's ours, one dependency-free
+`main.js` with no build step, and it's how `card:` / `collection:` / `tag:`
+links get written. It still has to be *enabled* per device. See
+`.obsidian/plugins/pdyxs-card-links/README.md`.
 
 The settings that carry the design:
 

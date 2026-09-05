@@ -4,47 +4,51 @@ import type { FilterState } from '../dimensions';
 import { filterStateToParams } from '../dimensions';
 import { selectSlotCard } from './slot-selection';
 import { DEFAULT_BROWSE_LENS_ID } from './lens-registry';
+import { resolveBrowseCardVariant } from './browse-card-variants';
+import type { BrowseCardVariant } from './browse-card-variants';
+import type { NormalisedSlot, SlotTiers } from './home-slots';
 
-export type PinnedSlotConfig = {
-  type: 'pinned';
-  uid: string;
-};
-
-export type FilterSlotConfig = {
-  type: 'filter';
-  filter: FilterState;
-  label: string;
-  /**
-   * How many of this slot's top-ranked cards the day-seed picks between
-   * (issue #83). Declared per slot in the lens YAML; DEFAULT_SLOT_POOL when
-   * absent. A bigger pool trades day-to-day variety for authored control.
-   */
-  pool?: number;
-};
-
-export type SlotConfig = PinnedSlotConfig | FilterSlotConfig;
-
+/**
+ * The home lens's `config` block, as baked into lenses.generated.ts by
+ * scripts/generate-lens-registry.mjs — already validated and normalised by
+ * parseHomeSlots (home-slots.ts), so nothing here defaults anything.
+ */
 export type FrontPageConfig = {
-  slots: SlotConfig[];
+  slots: NormalisedSlot[];
 };
 
 export type SerialisedCardFull = SerialisedCard & { contentHash: string };
 
-export type ResolvedPinned = {
-  type: 'pinned';
-  uid: string;
-  title: string;
-  description?: string;
-};
-
-export type ResolvedFilter = {
-  type: 'filter';
-  label: string;
+/**
+ * One resolved slot: the grid cell's layout, its chrome, and the card that
+ * landed in it.
+ *
+ * There is no pinned/filter union any more (#131). A slot is a cell with a
+ * card in it; where the card came from is `frontpage.ts`'s business and
+ * nothing downstream needs to know.
+ */
+export type ResolvedSlot = {
+  /**
+   * The card, or null when nothing resolved.
+   *
+   * A `uid:` naming no card renders with `card: null` — chrome and grid cell
+   * intact, no card. Dropping the slot silently (which is what the old
+   * PinnedSlot path did) would reflow every other slot around a typo now that
+   * `span` exists. A visible hole is a signal.
+   *
+   * Singular, deliberately: shipping an array-of-one for a future `count:`
+   * makes every call site handle a case that cannot occur. The schema doesn't
+   * preclude it, and this field changes shape in one file when it lands.
+   */
   card: SerialisedCardFull | null;
-  browseUrl: string;
+  variant: BrowseCardVariant;
+  span: SlotTiers;
+  rows: SlotTiers;
+  side: 'main' | 'right';
+  label?: string;
+  /** Present only when the slot asked for it (`seeMore: true`). */
+  seeMoreUrl?: string;
 };
-
-export type ResolvedSlot = ResolvedPinned | ResolvedFilter;
 
 /**
  * Builds the URL for a given filter state. Always routes to the fallback
@@ -76,8 +80,11 @@ export type ResolvedFrontPageSlots = {
 };
 
 /**
- * Resolves a FrontPageConfig's slots against a card set: pinned slots resolve
- * directly by uid; filter slots use the day-seeded selectSlotCard() pick.
+ * Resolves a FrontPageConfig's slots against a card set: a `uid:` slot resolves
+ * directly by uid; a `filter:` slot uses the day-seeded selectSlotCard() pick.
+ *
+ * Card selection alone — the layout half of a slot arrived normalised and is
+ * copied straight through.
  *
  * Pure decision, no side effects — selectSlotCard reads view-state
  * (localStorage) as one rung of the ranking chain, but nothing here writes it.
@@ -105,25 +112,32 @@ export function resolveFrontPageSlots(
     visibility: { listed: true, reachable: true },
   }));
 
-  const slots: ResolvedSlot[] = [];
-
-  for (const slotConfig of config.slots) {
-    if (slotConfig.type === 'pinned') {
-      const card = byUid.get(slotConfig.uid);
-      if (card) slots.push({ type: 'pinned', uid: card.uid, title: card.title, description: card.description });
-    } else {
+  const slots: ResolvedSlot[] = config.slots.map(slot => {
+    let card: SerialisedCardFull | null = null;
+    if (slot.uid !== undefined) {
+      card = byUid.get(slot.uid) ?? null;
+    } else if (slot.filter !== undefined) {
       const meta = selectSlotCard(
         cardMetas,
-        slotConfig.filter,
+        slot.filter,
         now,
         undefined,
         cardBackedValues,
-        slotConfig.pool,
+        slot.pool,
       );
-      const card = meta ? byUid.get(meta.uid) ?? null : null;
-      slots.push({ type: 'filter', label: slotConfig.label, card, browseUrl: buildBrowseUrl(slotConfig.filter) });
+      card = meta ? byUid.get(meta.uid) ?? null : null;
     }
-  }
+
+    return {
+      card,
+      variant: resolveBrowseCardVariant(slot.variant),
+      span: slot.span,
+      rows: slot.rows,
+      side: slot.side,
+      ...(slot.label !== undefined ? { label: slot.label } : {}),
+      ...(slot.seeMore && slot.filter ? { seeMoreUrl: buildBrowseUrl(slot.filter) } : {}),
+    };
+  });
 
   return { slots };
 }

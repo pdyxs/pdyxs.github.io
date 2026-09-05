@@ -22,10 +22,15 @@ describe('LENS_REGISTRY', () => {
   });
 
   it('width is a plain CSS-length string when a lens declares one', () => {
-    const newest = getLensDefinition('newest');
-    expect(typeof newest?.width).toBe('string');
-    const home = getLensDefinition('home');
-    expect(home?.width).toBeUndefined();
+    for (const lens of LENS_REGISTRY) {
+      if (lens.width === undefined) continue;
+      expect(lens.width, `lens "${lens.id}" declares a non-length width`).toMatch(/^\d+(\.\d+)?[a-z%]+$/);
+    }
+    // Home is the widest lens on the site (issue #132) — every browse-family
+    // lens is 960px. It used to declare none at all, which is why this test
+    // was written around it; `width` is still optional, home just isn't the
+    // example of that any more.
+    expect(getLensDefinition('home')?.width).toBe('1100px');
   });
 
   it('acceptsFilters defaults to true unless declared otherwise', () => {

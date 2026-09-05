@@ -97,12 +97,18 @@ describe('LensStackCard', () => {
     expect(div.querySelector('.stack-card')?.getAttribute('data-width')).toBe('960px');
   });
 
-  it('omits data-width when the lens declares no width (falls back to the global default)', async () => {
+  // Home used to be the lens with no declared width, which is what this
+  // asserted; since #132 it declares the site's widest (1100px), and every
+  // lens on the site now declares one. `width` is still optional on a
+  // LensDefinition — Astro simply omits the attribute for `undefined` — so
+  // what is left to assert is that the declared value reaches the fragment,
+  // which is what CardStack's applyMaxWidth reads back.
+  it('carries the lens\'s declared width through as data-width', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });
     const div = dom(html);
 
-    expect(div.querySelector('.stack-card')?.hasAttribute('data-width')).toBe(false);
+    expect(div.querySelector('.stack-card')?.getAttribute('data-width')).toBe('1100px');
   });
 
   it('falls back to a not-found message for an unregistered lens name', async () => {
@@ -144,7 +150,10 @@ describe('LensStackCard', () => {
     const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });
     const div = dom(html);
 
-    expect(div.querySelector('.front-page-slots')).not.toBeNull();
+    // The grid is rendered from home.lens.yaml alone (issue #133) — server-side
+    // and unconditionally, with placeholder interiors until the pool arrives.
+    expect(div.querySelector('.fp-slot-grid')).not.toBeNull();
+    expect(div.querySelectorAll('.fp-slot').length).toBeGreaterThan(0);
   });
 
   // ── Spine + sentinel (issue #108) ────────────────────────────────────────

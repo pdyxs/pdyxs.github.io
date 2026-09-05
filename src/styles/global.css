@@ -86,6 +86,10 @@
   --space-lg:     2rem;
   --space-xl:     3.5rem;
 
+  /* The home slot grid's gutter. One number: the rail's gutter and the row
+     rhythm are the same gap (see .fp-slot-grid). */
+  --fp-slot-gap:  var(--space-md);
+
   --max-width:    680px;
   /* The card-stack occlusion geometry's two lengths. Both are RESTATED from
      STACK_GEOMETRY (src/lib/stack-geometry.ts), which is the source of truth —
@@ -2498,4 +2502,97 @@ pre,
 .footer-toggle {
   display: flex;
   justify-content: center;
+}
+
+
+/* ── Home lens slot grid (issues #131, #132) ────────────────────────────────
+   These render inside the home lens FRAGMENT, so they cannot be scoped rules
+   in HomeLensSlots.svelte: Astro only bundles a component's scoped styles into
+   the pages that render it at build time, and a fragment lands on whatever
+   page the visitor is already on. `.fp-slot-label` and `.fp-see-more` moved
+   here verbatim from the deleted FilterSlot.svelte.
+
+   One flat 12-column grid; every slot is a direct child, in config order.
+   `side: right` is `span N / -1` — end at the last line, start N columns back —
+   and main-track slots auto-place from the left and flow into the gap beside
+   it. Deliberately NO `grid-auto-flow: dense`: dense backfills a hole with a
+   LATER slot, unpredictably, which is the one thing that silently breaks
+   config order — the whole ask. A hole "reads as a bug, but i'll just not do
+   that" (#132), and it is visible, which a reordering is not. */
+.fp-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--fp-slot-gap);
+  /* FilterBar draws a border-bottom and adds no space under it, so every lens
+     body owns its own top inset — browse gets one incidentally, from
+     .fp-result-count's margin sitting above the list. Home has no control row,
+     so the first slot row would butt straight against that line. Same value as
+     the gap: the space above the first row reads as the row rhythm rather than
+     as a second, unrelated number. */
+  padding-top: var(--fp-slot-gap);
+}
+
+/* Mobile: every slot is a full-width row, in config order, for free — no
+   `order` computation and no second layout model. `side` and `rows` are
+   ignored here, and there is deliberately no --slot-span-mobile: a slot that
+   could be half-width at 500px would re-litigate the crop-vs-reflow line the
+   card stack owns at 681px. */
+.fp-slot {
+  grid-column: span 12;
+  grid-row: span 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+@media (min-width: 681px) {
+  .fp-slot {
+    grid-column: span var(--slot-span-small);
+    grid-row: span var(--slot-rows-small);
+  }
+  .fp-slot--rail { grid-column: span var(--slot-span-small) / -1; }
+}
+
+/* The small/large line. A literal by necessity, and in exactly one @media
+   block: a custom property cannot be read in a media condition, there is no
+   PostCSS or Sass here, and container queries — the one escape that would
+   work — are ruled out by the dither invariant, since `container-type:
+   inline-size` implies layout containment and so makes the element a
+   containing block for the fixed dither. A slot grid is full of dithered
+   cards.
+
+   It is also a PLACEHOLDER VALUE: "i'll only know this when i actually make
+   real content" (#132). Tuning it later is a one-line edit precisely because
+   nothing else reads it. */
+@media (min-width: 1000px) {
+  .fp-slot {
+    grid-column: span var(--slot-span-large);
+    grid-row: span var(--slot-rows-large);
+  }
+  .fp-slot--rail { grid-column: span var(--slot-span-large) / -1; }
+}
+
+.fp-slot-label {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.fp-see-more {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  align-self: flex-end;
+  padding-right: var(--space-lg);
+}
+
+.fp-see-more:hover {
+  color: var(--color-text);
+  text-decoration: underline;
 }

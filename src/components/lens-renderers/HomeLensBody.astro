@@ -6,12 +6,19 @@
 // *this file*, not HomeLensSlots.svelte directly.
 import HomeLensSlots from './HomeLensSlots.svelte';
 import type { FrontPageConfig, SerialisedCardFull } from '../../lib/frontpage';
+import type { TagDisplay } from '../../lib/tag-display';
 
 interface Props {
   cards: SerialisedCardFull[];
   config: FrontPageConfig;
+  tagDisplay?: Record<string, TagDisplay>;
+  // Declared, not dropped (issue #135). Every lens body is handed this by
+  // LensStackCard; this one used to declare `cards` and `config` only, so it
+  // silently swallowed the array and selectSlotCard fell back to cardOwnValues
+  // over the listing-filtered pool. See HomeLensSlots' own note.
+  cardBackedValues?: string[];
 }
 
-const { cards, config } = Astro.props;
+const { cards, config, tagDisplay, cardBackedValues } = Astro.props as Props;
 ---
-<HomeLensSlots client:load {config} {cards} />
+<HomeLensSlots client:load {config} {cards} {tagDisplay} {cardBackedValues} />
