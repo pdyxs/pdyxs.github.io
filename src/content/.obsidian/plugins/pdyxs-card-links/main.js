@@ -280,6 +280,17 @@ function insertLink(editor, item) {
   editor.focus();
 }
 
+/**
+ * A selection stands in for a search only when it plausibly IS one. A
+ * paragraph pasted into the box would match nothing and hide the whole list
+ * behind an empty result, which is worse than opening unfiltered.
+ */
+function queryFromSelection(selection) {
+  const text = (selection || '').trim();
+  if (!text || text.length > 80 || /[\r\n]/.test(text)) return '';
+  return text;
+}
+
 function renderItem(el, item) {
   el.addClass('pdyxs-link-suggestion');
   const kind = el.createSpan({ text: item.kind, cls: 'pdyxs-link-kind' });
@@ -293,12 +304,29 @@ function renderItem(el, item) {
 // --- command modal ---------------------------------------------------------
 
 class LinkModal extends FuzzySuggestModal {
-  constructor(app, items, editor, placeholder) {
+  constructor(app, items, editor, placeholder, initialQuery) {
     super(app);
     this.items = items;
     this.editor = editor;
+    this.initialQuery = initialQuery;
     this.setPlaceholder(placeholder);
   }
+
+  /**
+   * A selection is usually the card's name, so it opens the modal already
+   * searched for — and left SELECTED, so typing replaces it and the arrow keys
+   * or a click edit it. The selection is still what becomes the link label,
+   * whatever the query is narrowed to from here.
+   */
+  onOpen() {
+    super.onOpen();
+    if (!this.initialQuery) return;
+    this.inputEl.value = this.initialQuery;
+    // SuggestModal only re-renders off the input event, never off the value.
+    this.inputEl.dispatchEvent(new Event('input'));
+    this.inputEl.select();
+  }
+
   getItems() {
     return this.items;
   }
@@ -456,7 +484,7 @@ module.exports = class PdyxsLinksPlugin extends Plugin {
             new Notice('pdyxs links: nothing indexed yet');
             return;
           }
-          new LinkModal(this.app, items, editor, placeholder).open();
+          new LinkModal(this.app, items, editor, placeholder, queryFromSelection(editor.getSelection())).open();
         },
       });
 

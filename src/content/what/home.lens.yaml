@@ -12,12 +12,23 @@ order: 0
 # Home is the stack root and can't narrow by filter — a filter added here
 # falls through to the default browse lens (see DEFAULT_BROWSE_LENS_ID).
 acceptsFilters: false
-# Frontpage slot layout: one pinned card plus featured filter slots. Consumed
-# by the home lens body (HomeLensBody/HomeLensSlots) as a FrontPageConfig.
+# The site's widest lens (browse is 960px). Settled in #132 by looking, against
+# 960 / 1200 / 1400.
+width: 1100px
+# Frontpage slot layout. Exactly one of `uid:` / `filter:` per slot; everything
+# else is optional and defaults so that an unspanned slot is full width at every
+# tier. `span` and `rows` take a scalar shorthand or a {small, large} mapping;
+# the mobile tier is fixed (12 columns, 1 row) and is not authorable.
+#
+# Validated and normalised by parseHomeSlots (src/lib/home-slots.ts) at
+# generation time, and baked into src/data/lenses.generated.ts in its
+# normalised form — so what that file shows is what actually renders.
 config:
   slots:
-    - type: pinned
-      uid: who/about-me
+    - uid: who/about-me
+      span: { small: 7, large: 8 }
+      variant: brief
+
     # `filter` IS the FilterState: a flat dimension-id -> values map. Don't
     # nest the dimensions under a `selections:` key — that reads as a
     # dimension named "selections", which matches nothing and silently
@@ -28,18 +39,30 @@ config:
     # authored `priority` decides what is eligible and the calendar day decides
     # which of them you get. Optional; DEFAULT_SLOT_POOL (5) when absent.
     # Raise it for variety, lower it to hold a slot to your very best.
-    - type: filter
-      label: A Project
-      pool: 5
-      filter:
+    - filter:
         what: [what:games, what:art, what:software]
-    - type: filter
-      label: A Puzzle
       pool: 5
-      filter:
+      span: { small: 5, large: 4 }
+      side: right
+      rows: 2
+      variant: full
+      label: A Project
+      seeMore: true
+
+    - filter:
         what: [what:puzzles]
-    - type: filter
-      label: A Post
       pool: 5
-      filter:
+      span: { small: 7, large: 8 }
+      variant: brief
+      label: A Puzzle
+      seeMore: true
+
+    # The fourth slot takes the default `span: 12` so it fills its own row:
+    # #132 judged a hole as "reads as a bug, but i'll just not do that", and a
+    # 7-wide fourth slot would leave one.
+    - filter:
         what: [what:writing]
+      pool: 5
+      variant: brief
+      label: A Post
+      seeMore: true

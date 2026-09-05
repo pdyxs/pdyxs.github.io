@@ -24,8 +24,14 @@ tag)*, which searches everything at once. The binding is committed in
 `.obsidian/hotkeys.json`; change it in Settings → Hotkeys like any other.
 
 **Commands:** the scoped *Insert card / collection / tag link* commands are in
-the palette too, unbound. With text selected, the selection is kept as the link
-label.
+the palette too, unbound.
+
+**With text selected**, the picker opens already searched for it, with the
+query selected so typing replaces it — highlight a card's name and it's the top
+hit before you touch the keyboard. The selection stays the link label whatever
+you narrow the query to. A selection that spans lines, or runs past 80
+characters, isn't a name, so it's kept as the label but the picker opens
+unfiltered.
 
 ## What's in the picker
 
