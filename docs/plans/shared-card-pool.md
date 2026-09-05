@@ -735,3 +735,125 @@ Stated as open rather than invented:
 - **#143** (`hierarchies`/`tagDisplay` duplication), **#144** (retiring
   `data-filters-pending`) and **#145** (deferring a collapsed card's hydration) are
   enabled by this spec and are explicitly not part of it.
+
+---
+
+## After — the measured result (slice 10, [#155](https://github.com/pdyxs/pdyxs.github.io/issues/155))
+
+Re-measured from a clean `rm -rf dist && npm run build` on `astro-rebuild` with all
+ten slices landed, using the script in *The measurement to re-run* above (Node's
+`zlib.gzipSync` at its default level, over all 736 generated documents).
+
+The **before** column is the pre-slice-8 build recorded in
+[#153](https://github.com/pdyxs/pdyxs.github.io/issues/153), which is the last build in
+which the five keys were still props. Slices 1–7 changed no output bytes (slice 1's
+done condition was normalised HTML equality, and 5–7 cut the islands over while the
+props stayed passed), so it is the pre-effort baseline for everything but the card
+pages; those are slice 9's own before/after, taken on the same tree
+([#154](https://github.com/pdyxs/pdyxs.github.io/issues/154)).
+
+### Site-wide, 736 documents
+
+| | before | after | ratio |
+|---|---|---|---|
+| raw HTML | 29,599,349 B | **13,868,874 B** | **2.13×** |
+| gzipped HTML | 5,851,580 B | **3,810,389 B** | **1.54×** |
+| island `props` | 17,185,599 B | **1,475,772 B** | **11.6×** |
+| documents | 736 | 736 | — |
+
+**15.7 MB of raw HTML and 15.7 MB of island props left the build.** The two ratios
+differ because gzip was already eating most of the duplication — which was always the
+point: the cost the pool removes is the HTML-unescape plus `JSON.parse` of a ~290 KB
+attribute on the main thread before hydration, on *every* document, and that cost is
+paid on the raw bytes, not the compressed ones.
+
+### Per route
+
+| document | raw before → after | ratio | gz before → after | ratio | island props before → after |
+|---|---|---|---|---|---|
+| `/` | 490,181 → **37,358** | 13.1× | 66,520 → **8,363** | 8.0× | 456,081 → **3,754** |
+| `/lens/interesting` | 468,654 → **34,679** | 13.5× | 61,361 → **8,024** | 7.6× | 434,158 → **682** |
+| `/lens/newest` | 467,426 → **33,454** | 14.0× | 61,301 → **7,922** | 7.7× | 434,290 → **814** |
+| `/lens/oldest` | 467,399 → **33,427** | 14.0× | 61,278 → **7,898** | 7.8× | 434,295 → **819** |
+| `/lens/seen` | 487,019 → **34,197** | 14.2× | 65,962 → **7,874** | 8.4× | 452,908 → **581** |
+| `/lens/unseen` | 487,151 → **34,328** | 14.2× | 65,991 → **7,907** | 8.3× | 452,920 → **593** |
+| `/fragment/lens/home` | 466,437 → **13,610** | 34.3× | 60,823 → **2,952** | 20.6× | 455,984 → **3,657** |
+| `/fragment/lens/interesting` | 445,149 → **11,176** | 39.8× | 55,763 → **2,754** | 20.2× | 434,055 → **579** |
+| `/fragment/lens/newest` | 444,181 → **10,206** | 43.5× | 55,778 → **2,735** | 20.4× | 434,192 → **716** |
+| `/fragment/lens/oldest` | — → **10,211** | — | — → **2,736** | — | — → **721** |
+| `/fragment/lens/seen` | 463,816 → **10,992** | 42.2× | 60,453 → **2,710** | 22.3× | 452,812 → **485** |
+| `/fragment/lens/unseen` | 463,830 → **11,007** | 42.1× | 60,454 → **2,712** | 22.3× | 452,822 → **495** |
+| largest `/card/…` (was `what/games/digital/particulars`) | 133,405 → **69,619** | 1.92× | 22,541 → **12,922** | 1.74× | 84,270 → **20,584** |
+| largest `/card/…` *by props* today (`where/work/seethrough`) | — | **75,054** | — | — | **24,512** |
+| `/cards.json` (new) | — | **234,851 / 48,179 gz** | — | — | fetched once per visitor |
+
+The residual `props` on a lens document is `lens` + `config` and nothing else — the
+per-location identity that fails the byte-identical membership test by design. `/`'s
+3,754 B is the home lens's `config.slots`; the unfiltered lenses are 485–819 B.
+
+(`/fragment/lens/oldest` has no before figure — #153's table did not carry that row.
+Its sibling `/fragment/lens/newest` is the same shape and the same size to within 5 B.)
+
+### `/cards.json`
+
+234,851 B raw / **48,179 B gz** measured with Node's `zlib.gzipSync`; the CLI `gzip -6`
+reading is **48,581 B**, which is the figure #153 recorded. The bytes are identical —
+the 402 B is a compressor-settings difference, not a content one. Either way the
+spec's *The payload* section is right and the retracted 42.8 KB estimate stays
+retracted: **the asset is ~48 KB gzipped**.
+
+Per key, on the shipped asset:
+
+| key | raw | gz |
+|---|---|---|
+| `cards` | 166,643 | 36,695 |
+| `hierarchies` | 34,654 | 4,969 |
+| `tagDisplay` | 18,830 | 3,811 |
+| `cardBackedValues` | 14,603 | 4,634 |
+| `groupOrder` | 48 | 66 |
+| **total** | **234,851** | **48,179** |
+
+### Three corrections the effort produced
+
+**1. #141's 47× prediction for `/fragment/lens/home` was not met raw, and essentially
+was met gzipped. Record 34.3× / 20.6×, with the reason.** Predicted 8,628 raw /
+2,484 gz; measured 13,610 / 2,952. Gzipped that is 19% over the prediction and
+inside the noise of a different build. Raw is 58% over, and **the prediction pre-dates
+[#133](https://github.com/pdyxs/pdyxs.github.io/issues/133)**: #141 produced its
+"after" by deleting the five keys from the parsed `props` of a build taken at the time,
+and the home lens has since become a server-rendered 12-column slot grid drawn from
+`config` alone. That is real markup which did not exist when the prediction was made,
+and the 3,657 B of props left on that document *is* that `config` — per-location
+identity, which stays by design. The shortfall is new server-rendered content, not
+payload that failed to leave. The unfiltered lens fragments beat their prediction
+outright, exactly as the "→ ~10,000 / ~2,800 once #140 deletes the SSR'd grid" note
+said they would.
+
+**2. The asset is ~48 KB gz, not the 42.8 KB estimated** — already corrected in
+*The payload* above from [#147](https://github.com/pdyxs/pdyxs.github.io/issues/147),
+restated here so the two sections cannot drift. The estimate summed only the four
+keys it had measured, leaving `cardBackedValues` as `—` in the gz column while still
+counting its 14.2 KB into the raw total; its real 4.5 KB gz plus ~1 KB of top-level
+JSON structure is the whole of the gap. Raw was near-perfect.
+
+**3. Slice 9's done condition was deliberately not met as written, and that is a
+correction to the standing decision's arithmetic rather than a failure.** The
+condition said "the largest card page's island props are single-digit KB". They are
+24,512 B, and the largest page changed identity to `/card/where/work/seethrough` —
+whose "Cards about this" strip is the 25-card SeeThrough affiliation closure. Its
+breakdown is `cards=14,153  tagDisplay=2,606  label=22`. What remains is `CardStrip`'s
+**card** props, which this spec's own standing decision keeps ("`CardStrip` keeps its
+card props"): they are per-page content, not the shared pool, and narrowing them is a
+different question. **The condition is met for the thing the slice was about** — every
+card page's `tagDisplay` is single-digit KB, median 642 B per strip against 18.2 KB
+before, and the site-wide props total fell 11,418,454 → 1,475,772 on that change alone.
+The number to correct is the spec's **"~1.2 KB" for a strip's card props**: right for a
+typical strip, and low by an order of magnitude for the biggest affiliation closures.
+Nine card pages still exceed 10 KB of props on `cards` alone.
+
+### What is not in any table
+
+Unchanged from the statement above it, and still the two numbers that matter most:
+**one** `/cards.json` request per visitor per cache window, started before hydration by
+`Base.astro`'s inline script; and `JSON.parse` of a 48 KB gzipped fetched body once per
+document instead of an HTML-unescape plus parse of a ~290 KB attribute on every one.

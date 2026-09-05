@@ -605,6 +605,14 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
   inside the home lens *fragment*. `.fp-slot-placeholder*`, `.fp-slot-stalled`
   and `.fp-slot-card-list` stay scoped to the island, per the islands
   exception, and exist only between first paint and the card pool arriving.
+- `.fp-skeleton--pending`, `.fp-skeleton--failed`, `.fp-pool-error`,
+  `.fp-pool-retry` (map #136 — `BrowseSkeleton.svelte`). These are the *only*
+  `.fp-skeleton*` names that are island state rather than guard state: the base
+  rule is `.fp-skeleton { display: none }` and every other one waits for
+  `data-filters-pending`, which these two modifiers deliberately do not. They
+  are scoped to the island, per the islands exception, and the pair of them
+  says `display: block` — nothing more, so the guard's own rules landing on top
+  of them is a no-op rather than a fight.
 - `.browse-card-item--brief` (issue #130) — the `BrowseCard` variant hook. It
   deliberately carries **no rule at all**: everything `brief` changes is either
   an element `BROWSE_CARD_VARIANTS` does not render or a number it hands to
@@ -1408,6 +1416,123 @@ animate, and holding it true for the length of the resize would make a
 navigation started inside that window scroll instantly — the hold manages its
 own attribute lifecycle and has nothing to say to the scroll owner, whose
 signature a popstate deliberately clears.
+
+### The card pool is fetched once per visitor, not shipped per island
+
+`/cards.json` (map [#136](https://github.com/pdyxs/pdyxs.github.io/issues/136),
+spec `docs/plans/shared-card-pool.md`). The site's browse data used to travel as
+`<astro-island>` props: 223 KB of `cards` **byte-identical on every lens route and
+every lens fragment**, three times over on a single lens page, re-sent by every
+fragment, and structurally uncacheable because it lived in HTML. An ordinary stack
+URL was three documents totalling 524 KB, 78% of it hydrating two islands carrying
+the whole pool to render a 24px collapsed spine. Measured after: **17,185,599 →
+1,475,772 B of island props site-wide**, and `/fragment/lens/home` from 466,437 to
+13,610 raw.
+
+**The filename is fixed and unhashed, and that is a ruling.** `src/pages/cards.json.ts`
+is a hand-rolled static endpoint for the same reason `/rss.xml` and `/sitemap.xml` are
+— the payload needs `getAllCards()`, which only runs inside the build, and the
+`lenses.generated.ts` pattern is unavailable because `browse-card.ts` calls
+`getImage()` per card, so thumbnail URLs come out of Astro's image pipeline *during*
+the build. Astro strips the `.ts` and the route path **is** the output filename
+(`getOutFile`, a `switch` in `astro/dist/core/build/common.js` with no hook before
+`fs.writeFile`), so the file's own name is the whole of the contract and islands
+hardcode the literal. The choice was made on **failure mode, not bytes**: a fixed name
+degrades to a visitor holding a payload slightly newer than their cached HTML, which
+cannot produce a broken page (the active card is SSR'd and never comes from the pool,
+and the listings re-render from the pool on hydration anyway). A hashed name degrades
+to **no pool at all** — a cached document naming a deleted hash 404s, and on
+`pdyxs.wtf` that 404 comes back `max-age=14400`, so a miss is negatively cached for
+*hours* against HTML's ten minutes. The recorded upgrade path, if one is ever wanted,
+is `/cards.json?v=<hash>` — fixed path, hashed query, one hash call site instead of two.
+
+**Five keys, and the membership test is "is this byte-identical on every route".**
+`cards`, `tagDisplay`, `hierarchies`, `groupOrder`, `cardBackedValues`. `lens`,
+`config`, `activeUid` and `initialWidth` fail it — they are per-location *identity* —
+and stay props, which is why a lens document still carries 485–819 B and `/` carries
+3,754 B of `config.slots`. Two keys join on the test rather than on size:
+`groupOrder` is 48 bytes but is always consumed by the same island as `hierarchies`,
+and `cardBackedValues` crosses the wire for only one body today but is
+`cardOwnValues()` over the **unfiltered** pool, so it is route-independent. The asset
+is 234,851 B raw / **~48 KB gzipped** — not the 42.8 KB first estimated, which summed
+only four of the five keys. **The pool is narrowed nowhere**: home needs 4 cards and
+`/lens/newest` caps at 30, but a narrowed copy is a *second asset* — a second URL, a
+second cache entry, a second loading state — to save bytes already paid for once, and
+the ranking chain needs the full pool to apply a cap that is a display rule.
+
+**The fetch starts before hydration, and `<link rel=preload>` was rejected for that
+job.** An `is:inline` script in `Base.astro`'s `<head>` sets
+`window.__cardsPool = fetch('/cards.json').then(r => r.json())`, and
+`src/lib/card-pool.client.ts` **adopts** that promise, falling back to its own `fetch`
+only where there isn't one (a fragment injected into a host document that predates the
+script, a test, an island rendered outside a page). A preload link's cache-match rules
+— `as` and `crossorigin` must agree exactly with the later fetch — fail **silently**,
+and the symptom is a doubled 48 KB request nobody notices. `??` rather than `||` at the
+adoption site for the same reason: a falsy-but-present value is still a document that
+already tried.
+
+Three things about the loader that are load-bearing:
+
+- **The pre-hydration promise is a ONE-SHOT.** `window.__cardsPool` is a settled
+  promise for the life of the document, so a *failed* one hands back the same
+  rejection forever — every retry would re-read the original failure and no request
+  would ever be made. Once an attempt fails the loader stops consulting it and fetches
+  for itself. Measured in a browser with `/cards.json` aborted: without that,
+  "Try again" cannot succeed even after the network comes back.
+- **A success is kept for the document; a failure is dropped.** That single-flight
+  asymmetry is what makes the retry control real, and it is why there is exactly **one
+  retry control per fetch** — not one per cell. The loader is the unit that failed, so
+  it is the unit that retries, and a grid of per-card retry buttons would fire N
+  requests for one shared asset.
+- **The five keys are checked as a shape, not trusted.** GitHub Pages serves a 404 as
+  an HTML document. Most of those die in `JSON.parse`, but "parsed to *something*" is
+  not "is the pool", and an island handed `{}` renders an empty site with no error
+  anywhere. `isSharedCardPoolAsset` converts that into a visible failure.
+  `POOL_TIMEOUT_MS` is 8000 — one number shared between home's stall and the browse
+  family's failure state, and deliberately larger than the 3000ms `STALL_MS` it
+  replaced, which was sized against `onMount` work rather than a network round trip.
+
+**No lens fragment server-renders a results grid any more.** Each island renders
+`pool === null ? <BrowseSkeleton /> : results` from its own template, so the results
+area has exactly one owner and the pending state is not a second copy of the grid
+markup. That is also what makes the fragments 40× smaller than a grid-shipping
+fragment could ever be.
+
+**`.fp-skeleton--pending` and `.fp-skeleton--failed` exist because the guard has no
+claim on this box.** The base rule is `.fp-skeleton { display: none }`, flipped only by
+a `data-filters-pending` value — which is set by a pre-paint script for a *filtered*
+cold load and by a lens transition, and is set on **neither** of the two loads that now
+need the skeleton most: an unfiltered cold load, and a fragment injected into the
+stack. A body rendering the skeleton because it has no cards yet would therefore render
+it invisible, and the visitor would get a blank results area for the length of the
+fetch. So the pending box turns *itself* on, exactly as the failure box does, and for
+the same reason: this is **island state, not a fourth CSS guard**. The guard's rules
+still fire on top where they apply, harmlessly — both say `display: block`.
+
+**Card pages narrow at build; they do not fetch.** A card page needs a median of 6
+distinct tag values, so the trade was "fetch 48 KB gz to use half a kilobyte" against
+"pick the half-kilobyte at build". Narrowing wins, and **not on bytes** — those bytes
+would be fetched on the next navigation anyway. It wins on sequencing: `displayFor`
+falls back to `humaniseSegment`, so a fetching card page's non-blocking path is
+paint-then-swap (`Seethrough` → `SeeThrough Studios`), which is precisely the bug class
+#119/#123/#125 exist to prevent, on the site's most cold-entered surface (search
+results, RSS, social previews, Jekyll redirects). `narrowTagDisplay`
+(`src/lib/tag-display.ts`) is the decision — the union of the previews' own `tags` plus
+each card's `collapsedContainer`, which is exactly the set `BrowseCard` resolves out of
+the map. It keeps `tagDisplay` as a `CardStrip` prop and narrows the *data*; resolving
+chips server-side would fork `CardStrip`/`BrowseCard`'s contract by call site.
+
+**The trap, and it is silent and permanent:** the narrowing goes at the three
+`CardStrip` call sites in `GenericRenderer`, **not** in `card/[...path].astro`'s
+`getStaticPaths()` where the full `tagDisplay` is built. `seriesCards` is resolved
+later, in `CardStackCard.astro` via `resolveSeriesCards`, so a set narrowed in
+`getStaticPaths` would not cover the series strip's preview tags — and nothing would
+report it. `displayFor` would simply humanise every series sibling's chips forever.
+
+What remains on a card page is `CardStrip`'s **card** props, kept by design: 24,512 B
+on `/card/where/work/seethrough`, whose "Cards about this" strip is the 25-card
+SeeThrough affiliation closure. The spec's "~1.2 KB per strip" is right for a typical
+strip and an order of magnitude low for the biggest closures.
 
 ### Progressive reveal appends; it never windows
 
