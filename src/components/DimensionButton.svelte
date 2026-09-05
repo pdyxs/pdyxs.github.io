@@ -6,6 +6,13 @@
     isActive: boolean;
     isOpen: boolean;
     hasNodes: boolean;
+    /**
+     * Why the dimension has no values yet, when that is not simply "it has
+     * none". The button is disabled in both cases; this is what stops the
+     * tooltip claiming the dimension is empty while its values are still on
+     * the wire (slice 7 of docs/plans/shared-card-pool.md).
+     */
+    poolState?: 'ready' | 'pending' | 'failed';
     selectionCount: number;
     onToggle: () => void;
     /** Icon of the currently active lens filed under this dimension, if any.
@@ -14,7 +21,30 @@
     lensIcon?: string;
   }
 
-  let { label, isActive, isOpen, hasNodes, selectionCount, onToggle, lensIcon }: Props = $props();
+  let {
+    label,
+    isActive,
+    isOpen,
+    hasNodes,
+    poolState = 'ready',
+    selectionCount,
+    onToggle,
+    lensIcon,
+  }: Props = $props();
+
+  // A panel must never open onto an empty list (#140), so the button is
+  // disabled until this dimension has values to show. `hasNodes` already
+  // expressed that — an unarrived pool is an empty `hierarchies`, so the
+  // disabling comes for free — but the REASON has to be stated separately,
+  // because "there are none" and "they haven't arrived" are different claims
+  // and only one of them is true at a time.
+  const unavailableReason = $derived(
+    poolState === 'pending'
+      ? 'Loading filters…'
+      : poolState === 'failed'
+        ? "Filters couldn't be loaded."
+        : 'No tags available for this dimension',
+  );
 
   const dots = $derived(Array.from({ length: selectionCount }));
 </script>
@@ -30,7 +60,7 @@
   aria-pressed={isOpen}
   aria-label="{label} filter{isActive ? ` (${selectionCount} active)` : ''}"
   disabled={!hasNodes}
-  title={hasNodes ? undefined : 'No tags available for this dimension'}
+  title={hasNodes ? undefined : unavailableReason}
 >
   <span class="browse-dim-label">{label}</span>
 </button>

@@ -19,11 +19,21 @@
      * (alphabetical) group ordering. */
     groupOrder?: Partial<Record<FiveWDimension, string[]>>;
     filterState: FilterState;
+    /** Passed straight through to every DimensionButton, so a disabled button
+     * can say whether the dimension is empty or merely unarrived. */
+    poolState?: 'ready' | 'pending' | 'failed';
     onFilterToggle: (dimensionId: DimensionId, value: string) => void;
     onClearDimension: (dimensionId: DimensionId) => void;
   }
 
-  let { hierarchies, groupOrder = {}, filterState, onFilterToggle, onClearDimension }: Props = $props();
+  let {
+    hierarchies,
+    groupOrder = {},
+    filterState,
+    poolState = 'ready',
+    onFilterToggle,
+    onClearDimension,
+  }: Props = $props();
 
   let openDimension = $state<FiveWDimension | null>(null);
   let drillPath = $state<string[]>([]);
@@ -183,6 +193,7 @@
         {isActive}
         {isOpen}
         {hasNodes}
+        {poolState}
         selectionCount={selectedValues(filterState, dim).length}
         onToggle={() => togglePanel(dim)}
         {lensIcon}

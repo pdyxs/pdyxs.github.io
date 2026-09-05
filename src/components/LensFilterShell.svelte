@@ -16,19 +16,71 @@
   import { LENS_BASE } from '../lib/stack-codec';
   import type { TagNode } from '../lib/browse-helpers';
   import type { TagDisplay } from '../lib/tag-display';
+  import { poolFailureMessage } from '../lib/browse-skeleton';
+  import {
+    loadCardPool,
+    failureReason,
+    type CardPoolFailureReason,
+  } from '../lib/card-pool.client';
+  import type { SharedCardPoolAsset } from '../lib/card-pool';
   import FilterBar from './FilterBar.svelte';
   import ActiveFilterChips from './ActiveFilterChips.svelte';
 
   interface Props {
     lens: LensDefinition;
-    hierarchies: Record<string, TagNode[]>;
-    /** Per-dimension panel-section order (see groupNodesIntoSections); passed
-     * straight through to FilterBar. */
+    /**
+     * PASSED BUT UNUSED since slice 7 of docs/plans/shared-card-pool.md — the
+     * hierarchy, its section order and the value labels all come from
+     * `/cards.json` now. They stay declared until slice 8, which is what stops
+     * `LensStackCard` passing them.
+     */
+    hierarchies?: Record<string, TagNode[]>;
     groupOrder?: Partial<Record<FiveWDimension, string[]>>;
     tagDisplay?: Record<string, TagDisplay>;
+    /**
+     * The pool source, injected so a test can drive this island against a fake
+     * one — the same seam `createCardFragments({ load })` is for the stack.
+     * Production never passes it.
+     */
+    loadPool?: () => Promise<SharedCardPoolAsset>;
   }
 
-  let { lens, hierarchies, groupOrder = {}, tagDisplay = {} }: Props = $props();
+  let { lens, loadPool = loadCardPool }: Props = $props();
+
+  /**
+   * The bar itself needs none of this and never waits for it: its buttons come
+   * from the static FIVE_W_DIMENSIONS, so it renders complete at first paint
+   * (#140). What waits is what goes INSIDE a panel.
+   *
+   * `null` until the pool lands, and the empty object is what reaches FilterBar
+   * meanwhile — which disables every dimension button for free, since
+   * `hasNodes` is already the thing that decides that. The button's tooltip is
+   * what has to be told the difference (see DimensionButton.poolState): a panel
+   * that cannot open because its values are in flight is not a dimension with
+   * no values.
+   */
+  let pool = $state<SharedCardPoolAsset | null>(null);
+  let failure = $state<CardPoolFailureReason | null>(null);
+
+  const hierarchies = $derived(pool?.hierarchies ?? {});
+  const groupOrder = $derived(pool?.groupOrder ?? {});
+  const tagDisplay = $derived(pool?.tagDisplay ?? {});
+  const poolState = $derived<'ready' | 'pending' | 'failed'>(
+    pool ? 'ready' : failure ? 'failed' : 'pending',
+  );
+
+  // One attempt. A failure is dropped by the loader, so calling this again is
+  // the whole of the retry contract (see card-pool.client.ts).
+  function requestPool() {
+    failure = null;
+    loadPool()
+      .then(asset => {
+        pool = asset;
+      })
+      .catch(error => {
+        failure = failureReason(error);
+      });
+  }
 
   const hasActiveFilters = $derived(hasAnySelection($lensFilterStore));
 
@@ -77,6 +129,7 @@
   }
 
   onMount(() => {
+    requestPool();
     enforceNoFilters();
     // `lensFiltersSynced` (the anti-FOUC guard's release) is set by CardStack
     // alongside the store it now seeds — one signal, one owner.
@@ -130,10 +183,22 @@
 <FilterBar
   {hierarchies}
   {groupOrder}
+  {poolState}
   filterState={$lensFilterStore}
   onFilterToggle={handleFilterToggle}
   onClearDimension={handleClearDimension}
 />
+
+<!-- ONE control per failed fetch, not one per dimension — five buttons for a
+     single failed request offers a choice that does not exist (settled for
+     home in slice 6). The message is the same decision the browse skeleton
+     renders, so the two surfaces cannot word the same failure differently. -->
+{#if failure}
+  <div class="lens-filter-pool-failure">
+    <p class="fp-pool-error">{poolFailureMessage(failure)}</p>
+    <button type="button" class="fp-pool-retry" onclick={requestPool}>Try again</button>
+  </div>
+{/if}
 
 {#if hasActiveFilters}
   <ActiveFilterChips
@@ -155,6 +220,38 @@
 ></button>
 
 <style>
+  /* The islands exception (CLAUDE.md): a .svelte component's styles ship with
+     its own island and hydrate wherever it lands, so these live here rather
+     than in global.css. Duplicated from BrowseSkeleton for the same reason
+     home's copy is — the two are never co-resident. */
+  .lens-filter-pool-failure {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    margin-top: var(--space-sm);
+  }
+
+  .fp-pool-error {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+
+  .fp-pool-retry {
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    padding: 0.2rem 0.6rem;
+    border: var(--border-width) solid var(--color-border);
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
+  .fp-pool-retry:hover {
+    background: var(--color-bg-hover);
+  }
+
   .lens-filter-fallthrough-trigger {
     position: absolute;
     width: 0;
