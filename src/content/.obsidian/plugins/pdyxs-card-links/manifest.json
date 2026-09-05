@@ -1,0 +1,9 @@
+{
+  "id": "pdyxs-card-links",
+  "name": "pdyxs.wtf links",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Insert card:, collection: and tag: links into card content, from a picker built out of the vault itself.",
+  "author": "Paul Sztajer",
+  "isDesktopOnly": false
+}
