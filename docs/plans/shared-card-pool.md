@@ -559,6 +559,24 @@ check if the skeleton is ever divided further. `.fp-browse-grid` stays in
 `BrowseResults` and now carries a different hash from the tiles it names, which is
 harmless precisely because it is only ever named from a global rule.
 
+**One retry control per failed fetch, not per cell (slice 6).** The table says
+`.fp-pool-retry` lives in the skeleton *and* `HomeLensSlots` without saying whether it
+is per-slot. Home renders **one**, below the grid, with the *message* per-cell —
+mirroring what `stalled` already did, and because four buttons for one failed fetch
+offers a choice that does not exist. **Slice 7 faces the same question for
+`LensFilterShell`** and should answer it the same way: one control per fetch.
+
+Two smaller consequences worth recording. Home's failure text reuses the existing
+`.fp-slot-stalled` element rather than the skeleton-scoped `.fp-pool-error`, so the
+failure message has two class names sitewide; and the retry *rule* is duplicated rather
+than shared, because the islands exception ships a `.svelte` component's styles with
+its own island and these two are never co-resident. Cheap, but it will drift if the
+token set changes.
+
+**Home's failure state is genuinely new behaviour**, which "#140: a timing change, not
+a redesign" undersells. That claim is true of the *pending* state — the #133 grid is
+unchanged — but a stall was never retryable, and now it is.
+
 **One global rule gained a twin (slice 5).** The stalled strip rule names
 `.fp-browse-grid` as an ancestor, and that element does not exist while a
 *body-rendered* skeleton is up — so its tiles stayed drawn underneath "nothing is
