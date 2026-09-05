@@ -12,9 +12,7 @@
  * An ordinary /card/... or https://pdyxs.wtf/... href is a full page load that
  * discards the card stack, and is a data bug (src/lib/content-links.test.ts).
  *
- * The index is built from the vault, never from src/data/*.json — those are
- * outside the vault root, so reading them would mean node fs and a
- * desktop-only plugin. Everything needed is in here anyway:
+ * The index has two sources, and the vault one is always authoritative:
  *
  *   cards       every folder holding an index.md; uid is the folder path,
  *               title is frontmatter `title` (which is all resolveCardTitle
@@ -23,9 +21,19 @@
  *   tags        every *.tag.yaml, plus every dimensioned tag actually in use
  *               — in a card's frontmatter or cascaded from a _config.yaml.
  *
- * Consequence worth knowing: values that only exist as *derived* tags — the
- * travel-log where:*, the when:* eras, what:puzzles/level-N — appear only once
- * some card authors them by hand. Author the tag or link the container.
+ * That covers everything a human authored, and it is all that exists inside
+ * the vault. The *derived* values — the travel-log where:*, the when:* eras,
+ * what:puzzles/level-N — are computed at build into src/data/tag-manifest.json,
+ * which sits OUTSIDE the vault root: reading it needs node fs, so that half is
+ * desktop-only and degrades to nothing on mobile (see readDerivedTags).
+ *
+ * Two consequences of the manifest being a build artifact, both real:
+ *   - it is only as fresh as the last predev/prebuild, so a value can be
+ *     missing, or stale enough to link somewhere that no longer exists;
+ *   - it carries no display names, so a derived entry is named by humanising
+ *     its own last segment.
+ * Which is why a vault-known value always wins the dedupe, and derived ones
+ * sort last.
  */
 
 const {
@@ -44,6 +52,9 @@ const DIMENSIONS = ['what', 'when', 'where', 'who', 'why'];
 const DEFAULT_SETTINGS = {
   inlineTrigger: ';;',
   inlineEnabled: true,
+  includeDerived: true,
+  // Relative to the vault root, which is the site's src/content.
+  manifestPath: '../data/tag-manifest.json',
 };
 
 // --- pure helpers ----------------------------------------------------------
@@ -68,6 +79,18 @@ function toFilterValue(raw) {
   return head + ':' + value.slice(slash + 1);
 }
 
+/**
+ * A derived value has no declared name, so it is named after itself. A numeric
+ * last segment is a `when:` month or year, which alone ("03") says nothing —
+ * those keep their whole path instead.
+ */
+function derivedTitle(value) {
+  const rest = value.slice(value.indexOf(':') + 1);
+  const segs = rest.split('/');
+  const last = segs[segs.length - 1];
+  return /^\d+$/.test(last) ? rest : humanise(last);
+}
+
 /** A path segment starting with `_` means "not content" (_templates, _original). */
 function inUnderscoreDir(path) {
   return path.split('/').slice(0, -1).some((seg) => seg.startsWith('_'));
@@ -87,10 +110,34 @@ function markdownFor(item, label) {
 // --- index -----------------------------------------------------------------
 
 class LinkIndex {
-  constructor(app) {
+  constructor(app, settings) {
     this.app = app;
+    this.settings = settings;
     this.items = null;
     this.building = null;
+  }
+
+  /**
+   * The build-time tag manifest, if this device can reach it. Desktop only:
+   * `getBasePath` exists on FileSystemAdapter and nowhere else, and `require`
+   * of a node module throws on mobile — hence the whole thing inside a
+   * try/catch that degrades to "no derived values" rather than to an error.
+   */
+  readDerivedTags() {
+    if (!this.settings.includeDerived) return [];
+    try {
+      const adapter = this.app.vault.adapter;
+      if (typeof adapter.getBasePath !== 'function') return [];
+      const fs = require('fs');
+      const path = require('path');
+      const file = path.resolve(adapter.getBasePath(), this.settings.manifestPath);
+      if (!fs.existsSync(file)) return [];
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      return Array.isArray(parsed) ? parsed.map((e) => e && e.uid).filter(Boolean) : [];
+    } catch (e) {
+      console.warn('[pdyxs-links] could not read the tag manifest', e);
+      return [];
+    }
   }
 
   invalidate() {
@@ -190,11 +237,28 @@ class LinkIndex {
     const declared = new Set(tags.filter((t) => t.declared).map((t) => t.id));
     const deduped = tags.filter((t) => t.declared || (!declared.has(t.id) && !collections.some((c) => c.id === t.id)));
 
+    // Anything the vault already knows wins: it has a declared name, and it is
+    // current in a way a build artifact isn't.
+    const known = new Set([...seenTag, ...deduped.map((t) => t.id)]);
+    const derived = [];
+    for (const value of this.readDerivedTags()) {
+      if (!value.includes(':') || known.has(value)) continue;
+      known.add(value);
+      derived.push({
+        kind: 'tag',
+        id: value,
+        title: derivedTitle(value),
+        detail: value,
+        derived: true,
+      });
+    }
+
     const byTitle = (a, b) => a.title.localeCompare(b.title);
     const items = [
       ...cards.sort(byTitle),
       ...collections.sort(byTitle),
       ...deduped.sort(byTitle),
+      ...derived.sort(byTitle),
     ];
     for (const item of items) item.search = item.title + ' ' + item.detail;
     return items;
@@ -222,7 +286,7 @@ function renderItem(el, item) {
   kind.style.cssText =
     'display:inline-block;min-width:5.5em;margin-right:.6em;opacity:.55;font-size:.8em;text-transform:uppercase;letter-spacing:.04em;';
   el.createSpan({ text: item.title });
-  const detail = el.createDiv({ text: item.detail });
+  const detail = el.createDiv({ text: item.derived ? item.detail + '  · derived' : item.detail });
   detail.style.cssText = 'opacity:.55;font-size:.8em;margin-left:6.1em;';
 }
 
@@ -328,6 +392,33 @@ class LinkSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName('Derived tags (desktop only)')
+      .setDesc(
+        'Also offer the tag values the site computes at build — travel locations, ' +
+          'eras, puzzle difficulty levels. Read from the tag manifest below, so they ' +
+          'are as fresh as the last dev-server or build run, and unavailable on mobile.',
+      )
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.includeDerived).onChange(async (v) => {
+          this.plugin.settings.includeDerived = v;
+          await this.plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName('Tag manifest path')
+      .setDesc('Relative to the vault root (which is the site\'s src/content).')
+      .addText((t) =>
+        t
+          .setPlaceholder(DEFAULT_SETTINGS.manifestPath)
+          .setValue(this.plugin.settings.manifestPath)
+          .onChange(async (v) => {
+            this.plugin.settings.manifestPath = v.trim() || DEFAULT_SETTINGS.manifestPath;
+            await this.plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
       .setName('Trigger string')
       .setDesc('Typing this opens the inline picker. Pick something you never type in prose.')
       .addText((t) =>
@@ -347,7 +438,7 @@ class LinkSettingTab extends PluginSettingTab {
 module.exports = class PdyxsLinksPlugin extends Plugin {
   async onload() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    this.index = new LinkIndex(this.app);
+    this.index = new LinkIndex(this.app, this.settings);
 
     const invalidate = () => this.index.invalidate();
     this.registerEvent(this.app.vault.on('create', invalidate));
@@ -380,5 +471,7 @@ module.exports = class PdyxsLinksPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+    // The derived half of the index is a function of these settings.
+    this.index.invalidate();
   }
 };

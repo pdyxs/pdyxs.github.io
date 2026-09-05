@@ -19,10 +19,13 @@ discards the card stack, and is treated as a data bug — see
 inserts the link with the card's own title as the label. Change or disable the
 trigger in Settings → pdyxs.wtf links.
 
-**Commands:** *Insert link (card, collection or tag)* searches everything at
-once; there are scoped *Insert card / collection / tag link* commands too.
-Bind whichever you use most to a hotkey. With text selected, the selection is
-kept as the link label.
+**Hotkey:** `Ctrl/Cmd + Shift + K` opens *Insert link (card, collection or
+tag)*, which searches everything at once. The binding is committed in
+`.obsidian/hotkeys.json`; change it in Settings → Hotkeys like any other.
+
+**Commands:** the scoped *Insert card / collection / tag link* commands are in
+the palette too, unbound. With text selected, the selection is kept as the link
+label.
 
 ## What's in the picker
 
@@ -36,11 +39,23 @@ file changes, so a card you made a minute ago is linkable:
   (a card's frontmatter, or cascaded from a `_config.yaml`). Authored slash
   form is converted to canonical colon form, as `normaliseAuthoredTag` does.
 
-The one gap: a value that exists **only** as a derived tag — the travel-log
-`where:*`, the `when:*` eras, `what:puzzles/level-N` — is not in the vault, so
-it appears only once some card authors it by hand. Those live in `src/data/`,
-outside the vault root; reading them would mean node `fs` and a desktop-only
-plugin, and this one works on mobile.
+On **desktop** it also reads the build-time tag manifest, which is where the
+*derived* values live — travel-log `where:*`, the `when:*` eras,
+`what:puzzles/level-N`. That takes the tag list from ~40 to ~520. It sits
+outside the vault root (`../data/tag-manifest.json`, adjustable in settings),
+so it needs node `fs`: on mobile the read is skipped and you get the vault half
+only. Toggle it off in settings if you'd rather have the short list.
+
+Two things about those entries, both of which follow from the manifest being a
+build artifact:
+
+- **They're only as fresh as the last `predev`/`prebuild`.** A value can be
+  missing, or stale enough to link somewhere that no longer exists. Anything the
+  vault knows wins the dedupe for that reason, and derived entries sort last and
+  are marked `· derived` in the picker.
+- **They carry no display name**, so each is named by humanising its own last
+  segment — `Svalbard`, `Level 3`. A numeric segment keeps its whole path, since
+  `03` on its own says nothing.
 
 ## Installing
 
