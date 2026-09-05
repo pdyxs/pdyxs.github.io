@@ -21,6 +21,8 @@ tags: []
 #   renderer: story
 #   navRenderer: series
 ---
+To say that we've got a problem with truth in online spaces seems like an understatement. 
+
 As the web has developed and both misinformation and disinformation have become more and more common, I've started thinking about what 
 
 If we want to combat disinformation and misinformation, we have to ask ourselves: what are the strengths of well-researched, evidence-backed information, when it comes to communication? What do we need to surface to ensure that it comes out on top?
