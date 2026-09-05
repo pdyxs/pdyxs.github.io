@@ -5,7 +5,7 @@ import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages, cardLocalIm
 import { parseEmbedUrl, EMBED_IFRAME_ALLOW } from '../../lib/embeds';
 import { resolveHeaderMedia } from '../../lib/renderers';
 import type { HeaderMediaImage } from '../../lib/header-media';
-import { displayFor } from '../../lib/tag-display';
+import { displayFor, narrowTagDisplay } from '../../lib/tag-display';
 import { computeCardTagDisplay } from '../../lib/card-tag-display';
 import type { TagDisplay } from '../../lib/tag-display';
 import type { BrowseCardData } from '../../lib/browse-helpers';
@@ -342,13 +342,22 @@ const galleryImages = await Promise.all(
     {/* The card strips, closest relationship first: the run this card is part
         of, then the two directions of a card-backed tag — named so the arrow is
         obvious: this card's own tags point out, other cards' tags point in.
-        A one-card "series" is just this card, so it needs no strip. */}
+        A one-card "series" is just this card, so it needs no strip.
+
+        Each strip's `tagDisplay` is narrowed to the values ITS OWN previews
+        can render (issue #154). The full map is ~18 KB and these are
+        `client:load`, so it shipped once per strip on the site's most
+        cold-entered surface to name a handful of labels. This is the only
+        place the narrowing can happen: `seriesCards` is resolved in
+        `CardStackCard`, after `getStaticPaths()`, so a set narrowed there
+        would miss every series sibling's tags — and `displayFor` falls back to
+        a humanised slug, so that failure is silent and permanent. */}
     {seriesPreview !== 'dots' && seriesCards.length > 1 && (
       <section class="generic-section">
         <h3 class="generic-section-heading">{seriesHeading}</h3>
         <CardStrip
           cards={seriesCards}
-          {tagDisplay}
+          tagDisplay={narrowTagDisplay(tagDisplay, seriesCards)}
           label="Cards in this series"
           currentUid={entry.id}
           client:load
@@ -359,14 +368,14 @@ const galleryImages = await Promise.all(
     {subjectCards.length > 0 && (
       <section class="generic-section">
         <h3 class="generic-section-heading">This is about</h3>
-        <CardStrip cards={subjectCards} {tagDisplay} label="Cards this is about" client:load />
+        <CardStrip cards={subjectCards} tagDisplay={narrowTagDisplay(tagDisplay, subjectCards)} label="Cards this is about" client:load />
       </section>
     )}
 
     {relatedCards.length > 0 && (
       <section class="generic-section generic-related">
         <h3 class="generic-section-heading">Cards about this</h3>
-        <CardStrip cards={relatedCards} {tagDisplay} label="Cards about this" client:load />
+        <CardStrip cards={relatedCards} tagDisplay={narrowTagDisplay(tagDisplay, relatedCards)} label="Cards about this" client:load />
       </section>
     )}
   </>

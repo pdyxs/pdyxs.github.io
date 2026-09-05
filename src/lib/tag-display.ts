@@ -38,3 +38,40 @@ export function humaniseSegment(value: string): string {
 export function displayFor(value: string, display: Record<string, TagDisplay> = {}): TagDisplay {
   return display[value] ?? { name: humaniseSegment(value), declared: false };
 }
+
+/**
+ * The subset of a display map that a set of previews can actually render.
+ *
+ * A card page's `CardStrip`s used to be handed the whole site-wide display map
+ * — ~18 KB, once per strip, `client:load`, on the site's most cold-entered
+ * surface — to name a median of six values. `BrowseCard` resolves exactly two
+ * things out of it: the label of every tag its card carries (`labelOf`, for the
+ * same-label dedupe) and the label of each chip it renders, which is a subset
+ * of the same list. So the union of the previews' own tags (plus each card's
+ * `collapsedContainer`, the one other value the chip decision names) is the
+ * whole of what the map is asked for.
+ *
+ * Pure and total: an unknown value is simply absent, which is what
+ * `displayFor`'s `humaniseSegment` fallback already handles — but note that
+ * fallback is also why narrowing too far is SILENT. Narrow only where the
+ * complete preview set is in hand (see the three `CardStrip` call sites in
+ * `GenericRenderer.astro`); a set narrowed before `seriesCards` is resolved
+ * misses every series sibling's tags and quietly humanises their chips.
+ */
+export function narrowTagDisplay(
+  display: Record<string, TagDisplay> | undefined,
+  cards: readonly { tags?: string[]; collapsedContainer?: string }[],
+): Record<string, TagDisplay> {
+  if (!display) return {};
+  const needed = new Set<string>();
+  for (const card of cards) {
+    for (const tag of card.tags ?? []) needed.add(tag);
+    if (card.collapsedContainer) needed.add(card.collapsedContainer);
+  }
+  const out: Record<string, TagDisplay> = {};
+  for (const value of needed) {
+    const entry = display[value];
+    if (entry) out[value] = entry;
+  }
+  return out;
+}
