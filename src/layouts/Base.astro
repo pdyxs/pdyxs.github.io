@@ -86,6 +86,47 @@ const jsonLd = [
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;700&family=Saira+Stencil&display=swap" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title="pdyxs.wtf" href="/rss.xml" />
+    {/* The shared card pool's fetch, started before hydration (issue #148,
+        docs/plans/shared-card-pool.md).
+
+        Every island that lists cards reads them from `/cards.json` instead of
+        from a prop, so the skeleton's duration IS this fetch's latency — which
+        makes what STARTS the fetch the main lever on the state being
+        specified, not an implementation detail. Started here, in `<head>`, it
+        is in flight while the document is still parsing and long before the
+        first island chunk has been evaluated.
+
+        `<link rel="preload" as="fetch">` alone was REJECTED for this (#140):
+        its cache-match rules require `as` and `crossorigin` to agree exactly
+        with the later fetch, they fail SILENTLY when they don't, and the
+        symptom is a doubled 48 KB request nobody notices. A promise cannot
+        miss its own cache.
+
+        The URL and the global are literals on both sides — #138 fixed the
+        filename precisely so no `define:vars` is needed here. They are named
+        as `CARD_POOL_URL` / `CARD_POOL_PROMISE_KEY` in card-pool.client.ts,
+        which reads this promise and falls back to its own fetch when there
+        isn't one.
+
+        The bare `.catch` is not error handling: the loader consumes the
+        rejection and turns it into the islands' failure state. It exists only
+        so a failed fetch is not ALSO an unhandled rejection in the console
+        during the window where nothing has attached a handler yet.
+
+        This rationale is up here in an Astro comment, which the build strips,
+        because `is:inline` bodies are emitted VERBATIM — comments and all — on
+        every one of the site's ~590 pages (#122 measured one such comment at
+        910 gz per page against 339). */}
+    <script is:inline>
+      (function () {
+        var p = fetch('/cards.json').then(function (r) {
+          if (!r.ok) throw new Error('cards.json ' + r.status);
+          return r.json();
+        });
+        p.catch(function () {});
+        window.__cardsPool = p;
+      })();
+    </script>
     <script is:inline>
       (function () {
         var pref = localStorage.getItem('theme');
