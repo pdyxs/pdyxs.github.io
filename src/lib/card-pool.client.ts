@@ -145,13 +145,22 @@ export function createCardPoolLoader(
   } = options;
 
   let inflight: Promise<SharedCardPoolAsset> | null = null;
+  // The pre-hydration promise is a ONE-SHOT, and this is what makes the retry
+  // control real (#150). `window.__cardsPool` is a settled promise for the life
+  // of the document, so a failed one keeps handing back the SAME rejection —
+  // every retry would re-read the original failure and no request would ever be
+  // made. Once an attempt has failed, this loader stops consulting it and
+  // fetches for itself. Measured in a browser with /cards.json aborted: without
+  // this, "Try again" could not succeed even after the network came back.
+  let preloadUsable = true;
 
   async function attempt(): Promise<SharedCardPoolAsset> {
-    // The pre-hydration promise if the document started one, our own fetch
-    // otherwise. `??` rather than `||`: a falsy-but-present value is still a
-    // document that already tried, and re-fetching over the top of it is the
-    // doubled request this whole arrangement exists to avoid.
-    const source = preloaded() ?? (await fetchPool());
+    // The pre-hydration promise if the document started one and it hasn't
+    // already failed, our own fetch otherwise. `??` rather than `||`: a
+    // falsy-but-present value is still a document that already tried, and
+    // re-fetching over the top of it is the doubled request this whole
+    // arrangement exists to avoid.
+    const source = (preloadUsable ? preloaded() : undefined) ?? (await fetchPool());
     const parsed = await source;
     if (!isSharedCardPoolAsset(parsed)) {
       throw new CardPoolError('malformed', `${CARD_POOL_URL} is not a card pool`);
@@ -176,6 +185,9 @@ export function createCardPoolLoader(
   return function load(): Promise<SharedCardPoolAsset> {
     inflight ??= withTimeout(attempt()).catch(error => {
       inflight = null;
+      // Whatever failed, the document's own promise cannot be retried, so the
+      // next attempt starts from a fresh fetch.
+      preloadUsable = false;
       throw error;
     });
     return inflight;

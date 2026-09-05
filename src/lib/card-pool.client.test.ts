@@ -157,6 +157,22 @@ describe('createCardPoolLoader — failure', () => {
     expect(fetchPool).toHaveBeenCalledTimes(2);
   });
 
+  it('stops consulting a FAILED pre-hydration promise, so a retry can succeed', async () => {
+    // `window.__cardsPool` is settled for the life of the document, so a failed
+    // one hands back the same rejection every time it is read. Without dropping
+    // it, the retry control could never succeed however healthy the network got
+    // — measured in a browser with /cards.json aborted (#150).
+    const preloaded = vi.fn(() => Promise.reject(new TypeError('Failed to fetch')));
+    const fetchPool = vi.fn(async () => fakeAsset('second'));
+    const load = createCardPoolLoader({ preloaded, fetchPool });
+
+    await expect(load()).rejects.toThrow('Failed to fetch');
+    expect(fetchPool).not.toHaveBeenCalled();
+
+    expect((await load()).cards).toEqual([{ uid: 'second' }]);
+    expect(fetchPool).toHaveBeenCalledTimes(1);
+  });
+
   it('shares one in-flight failure between concurrent callers', async () => {
     const fetchPool = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     const load = createCardPoolLoader({ fetchPool });

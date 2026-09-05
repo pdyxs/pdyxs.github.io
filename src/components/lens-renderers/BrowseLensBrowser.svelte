@@ -17,18 +17,36 @@
   import { archiveLensId } from '../../lib/lens-registry';
   import { revealSettings } from '../../lib/progressive-reveal';
   import { clearFiltersPending } from '../../lib/filters-pending';
+  import {
+    loadCardPool,
+    failureReason,
+    type CardPoolFailureReason,
+  } from '../../lib/card-pool.client';
+  import type { SharedCardPoolAsset } from '../../lib/card-pool';
   import BrowseResults from '../BrowseResults.svelte';
+  import BrowseSkeleton from '../BrowseSkeleton.svelte';
 
   interface Props {
-    cards: SerialisedCardFull[];
+    /**
+     * PASSED BUT UNUSED since slice 5 of docs/plans/shared-card-pool.md — the
+     * cards, their labels and the card-backed value set all come from
+     * `/cards.json` now. They stay declared until slice 8, which is what stops
+     * `LensStackCard` passing them: dropping them here first would only make
+     * the props it still sends unrecognised.
+     */
+    cards?: SerialisedCardFull[];
     tagDisplay?: Record<string, TagDisplay>;
-    config?: Record<string, unknown>;
-    /** Card-backed values from the FULL card set — see applyFilters. The pool
-     * above is listing-filtered, so this cannot be re-derived from it. */
     cardBackedValues?: string[];
+    config?: Record<string, unknown>;
+    /**
+     * The pool source, injected so a test can drive this island against a fake
+     * one — the same seam `createCardFragments({ load })` is for the stack.
+     * Production never passes it.
+     */
+    loadPool?: () => Promise<SharedCardPoolAsset>;
   }
 
-  let { cards, tagDisplay = {}, config, cardBackedValues }: Props = $props();
+  let { config, loadPool = loadCardPool }: Props = $props();
 
   // The generic body for any filter-accepting lens with no bespoke rendering
   // (the "browse lens family" — see lens-registry.ts). Filtering is derived
@@ -36,40 +54,67 @@
   // sibling island) rather than owned locally — applyFilters is pure and
   // cheap, so re-deriving here is not a second copy of STATE, just a
   // computation from the single source of truth.
-  // The client's first (hydration) render MUST match the server's, which was
-  // statically prerendered with the FULL card set (the build has no query
-  // string). This body and LensFilterShell are separate client:load islands
-  // sharing lensFilterStore, and they hydrate in a nondeterministic order. If
-  // the shell's onMount syncs the URL filter into the store *before* this island
-  // renders, reading the store here would produce the reduced set against the
-  // full-set SSR DOM. Svelte's keyed {#each} then mis-pairs nodes and — because
-  // it keeps the *server* value for any attribute that mismatches on hydration —
-  // freezes each card's <img> to whatever card occupied that DOM slot in the
-  // unfiltered set while the text updates to the filtered card. (That is the
-  // "wrong images after a filtered refresh" bug.) So we defer reading the store
-  // until after mount; until then we derive from the empty filter state, exactly
-  // reproducing SSR. Post-mount the store drives a normal reconcile, which
-  // updates src/srcset correctly (the freeze is hydration-only).
-  let mounted = $state(false);
+  //
+  // THE CARDS COME FROM THE SHARED POOL (slice 5 of
+  // docs/plans/shared-card-pool.md, #150), not from a prop. Two consequences,
+  // and the first one deletes a hazard rather than adding one:
+  //
+  //  - There is no server-rendered grid any more, so there is no SSR render to
+  //    reproduce on hydration. The long-standing `mounted` flag whose first job
+  //    was to make the hydration render match the server's full-pool DOM — the
+  //    frozen-<img> bug — has nothing left to guard: the server renders the
+  //    skeleton, and so does the client's first render. What survives it is the
+  //    seenSnapshot below, which now settles beside the pool's arrival.
+  //  - `null` is not `[]` (the #133 rule). An empty array here would render
+  //    "No cards match the current filters" over a request still in flight, so
+  //    the pending state is its own branch of the template.
+  //
+  // The pending state is ISLAND state, not a fourth CSS guard (#140 decision
+  // 2): with nothing server-rendered there is no real DOM to hide, so the
+  // skeleton draws itself (`standalone`) rather than waiting for
+  // `data-filters-pending`.
+  let pool = $state<SharedCardPoolAsset | null>(null);
+  let failure = $state<CardPoolFailureReason | null>(null);
 
   // Rung 3 of the ranking chain (unseen before seen), for a lens that ranks.
-  // Snapshotted once on mount rather than read live: 264 localStorage lookups
-  // is not something to redo on every filter keystroke, and a list reshuffling
-  // under a reader because they opened a card in another stack entry would be
-  // worse than being one navigation stale. Skipped entirely for a lens that
-  // doesn't rank (Newest/Oldest sort on date and would pay the cost for
-  // nothing).
+  // Snapshotted once when the pool lands rather than read live: 264
+  // localStorage lookups is not something to redo on every filter keystroke,
+  // and a list reshuffling under a reader because they opened a card in
+  // another stack entry would be worse than being one navigation stale.
+  // Skipped entirely for a lens that doesn't rank (Newest/Oldest sort on date
+  // and would pay the cost for nothing).
   let seenSnapshot = $state<Set<string>>(new Set());
-  onMount(() => {
-    if (isRankingLens(config)) {
-      const seen = new Set<string>();
-      for (const card of cards) {
-        if (getViewState(card.uid, card.contentHash) === 'read') seen.add(card.uid);
-      }
-      seenSnapshot = seen;
-    }
-    mounted = true;
-  });
+
+  // One attempt. A failure is dropped by the loader, so calling this again is
+  // the whole of the retry contract (see card-pool.client.ts) — which is what
+  // the skeleton's retry control does.
+  function requestPool() {
+    failure = null;
+    loadPool()
+      .then(asset => {
+        if (isRankingLens(config)) {
+          const seen = new Set<string>();
+          for (const card of asset.cards) {
+            if (getViewState(card.uid, card.contentHash) === 'read') seen.add(card.uid);
+          }
+          seenSnapshot = seen;
+        }
+        // Assigned after the snapshot so the two settle in one render: the
+        // grid is never painted in the wrong order and then re-ranked.
+        pool = asset;
+      })
+      .catch(error => {
+        failure = failureReason(error);
+      });
+  }
+
+  // onMount, not module scope: the fetch is a client-only effect, and the
+  // island server-renders too.
+  onMount(requestPool);
+
+  const cards = $derived(pool?.cards ?? []);
+  const tagDisplay = $derived(pool?.tagDisplay ?? {});
+  const cardBackedValues = $derived(pool?.cardBackedValues);
 
   // status/visibility don't cross the serialisation boundary on the
   // SerialisedCard type by default (see browse-helpers.ts); this pool is
@@ -87,17 +132,16 @@
       visibility: { listed: true, reachable: true },
     }))
   );
-  const activeFilter: FilterState = $derived(mounted ? $lensFilterStore : { });
+  const activeFilter: FilterState = $derived($lensFilterStore);
   const cardBackedSet = $derived(cardBackedValues ? new Set(cardBackedValues) : undefined);
   const filteredCards = $derived(applyFilters(cardMetas, activeFilter, cardBackedSet));
 
   // The two runtime rungs of the ranking chain, which is why the browser owns
   // them and browse-helpers only takes them: which values are selected is this
-  // lens's business, and seen-ness is the visitor's. Before mount both are
-  // inert — `activeFilter` is empty and `seenSnapshot` is empty — so the
-  // hydration render reproduces the server's build-time-only ranking exactly.
-  // See the anti-FOUC note above: that is also why the swap to the real order
-  // happens behind the `data-filters-pending` guard rather than on screen.
+  // lens's business, and seen-ness is the visitor's. Both are known by the time
+  // anything is rendered now — the grid's first paint is already the real
+  // order, which is what the `data-filters-pending` guard used to have to cover
+  // for. (The guard stays for now regardless; see #144.)
   const matchContext = $derived(makeMatchContext(cardBackedSet ?? new Set<string>()));
   const rankingCtx = $derived({
     matchCount: (card: CardMeta) => countSelectedValueMatches(card, activeFilter, matchContext),
@@ -116,8 +160,8 @@
   // A capped timeline lens (Newest/Oldest) lays its results out as a strip and
   // closes the run with a tile to the archive. The count the tile states is the
   // full match, not the capped run — filteredCards, the same value the count
-  // line reports. Both are derived from `activeFilter`, so before mount they
-  // describe the unfiltered pool exactly as the server rendered it.
+  // line reports. `layout` is decided from the lens config alone, so the
+  // pending skeleton already knows which shape it is standing in for.
   const layout = $derived(isStripLens(config) ? 'strip' : 'grid');
   const terminal = $derived(
     layout === 'strip'
@@ -146,19 +190,27 @@
   let host = $state<HTMLElement | null>(null);
   $effect(() => {
     sortedCards;
-    if (mounted && $lensFiltersSynced) {
+    if (pool !== null && $lensFiltersSynced) {
       clearFiltersPending(host);
     }
   });
 </script>
 
-<BrowseResults
-  bind:host
-  cards={sortedCards}
-  totalCount={filteredCards.length}
-  {tagDisplay}
-  filterState={$lensFilterStore}
-  layout={layout}
-  terminal={terminal}
-  reveal={reveal}
-/>
+{#if pool === null}
+  <!-- `null` is not `[]`: an empty pool would render "no cards match" over a
+       request still in flight. `standalone` is what turns the box on — the base
+       `.fp-skeleton` rule is `display: none` and only the guard ever flipped
+       it, and the guard is not set on an unfiltered cold load. -->
+  <BrowseSkeleton {layout} {failure} standalone onRetry={requestPool} />
+{:else}
+  <BrowseResults
+    bind:host
+    cards={sortedCards}
+    totalCount={filteredCards.length}
+    {tagDisplay}
+    filterState={$lensFilterStore}
+    layout={layout}
+    terminal={terminal}
+    reveal={reveal}
+  />
+{/if}

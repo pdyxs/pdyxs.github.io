@@ -345,6 +345,14 @@ an honest stall — and the case is stronger in both directions here: there is n
 to reveal at all, and the failure is **total** (no cards anywhere on the page) rather
 than cosmetic. A fetch is also retryable in a way a hydration stall never was.
 
+**The pre-hydration promise is a one-shot, and the retry control is what found
+it** (slice 5). `window.__cardsPool` is settled for the life of the document, so
+a *failed* one hands back the same rejection every time the loader reads it —
+"Try again" could not succeed however healthy the network became. The loader
+stops consulting the preloaded promise after any failed attempt and fetches for
+itself instead; unit-tested in `card-pool.client.test.ts`, and measured in a
+browser with `/cards.json` aborted and then unblocked.
+
 **One timeout value, shared** between the home stall and the browse-family failure,
 following `FILTERS_PENDING_STALL_MS`' precedent of one number with one meaning. Name it
 beside the client loader.
@@ -507,6 +515,7 @@ names unless a session deviates deliberately.
 |---|---|---|
 | `.fp-pool-error` | the extracted browse skeleton component (scoped) | the honest "couldn't load" message when the fetch fails or times out |
 | `.fp-pool-retry` | same, and `HomeLensSlots` | the retry control, shared by both surfaces so one rule covers them |
+| `.fp-skeleton--pending` | same (island-scoped) | **the same switch, for the state above it.** Added in slice 5 and, like `--failed`, not anticipated here: a body renders the skeleton itself now, and the only thing that ever turned `.fp-skeleton`'s `display: none` off was a `data-filters-pending` value — which is set on a *filtered* cold load and a lens transition, and on **neither** an unfiltered cold load nor a fragment. Without it the whole results area is blank for the length of the fetch, which is the state this slice exists to draw. It is what marks an island-drawn skeleton, which is also why the stalled guard's strip rule needed a twin naming it — see below. |
 | `.fp-skeleton--failed` | same | **turns the skeleton's own box on.** Added in slice 4 and not anticipated here: the base rule is `.fp-skeleton { display: none }`, flipped on only by a `data-filters-pending` value, so a failure message rendered inside that box would never be visible. A failure is *island* state, not a CSS-guarded pending state, so it cannot borrow the guard's switch and must carry its own. **Slice 5 would otherwise render a message nobody can see.** |
 
 Both are **island-scoped, not `global.css`** — the islands exception to
@@ -527,6 +536,17 @@ neighbour (`… .fp-browse-grid .fp-skeleton--strip .fp-skeleton-list`) to out-s
 Svelte's scoping hash — moving the markup to a *different* component changes which hash
 is appended, so that rule must be re-verified in a browser, not assumed (#123 measured
 it once already).
+
+**Re-opened in slice 5, and it needed one rule.** The arithmetic below still
+holds compound-for-compound, but slice 5 changed the *ancestor*: a pending
+skeleton is rendered by the lens body directly, so `BrowseResults` — and with it
+`.fp-browse-grid` — does not exist while it is on screen. The five-class stalled
+rule that hides the strip's tiles therefore stopped matching, and a filtered slow
+load of `/lens/newest` showed the tiles under a message saying nothing was
+coming. Measured in a browser, before and after. The fix is a twin rule naming
+`.fp-skeleton--pending.fp-skeleton--strip .fp-skeleton-list`, which restores the
+count to five without depending on an ancestor. The GRID's stalled rule needs no
+twin: three classes against a two-class scoped rule, winning from anywhere.
 
 **Resolved in slice 4, and the reason generalises:** nothing had to change. The global
 rule is 5 classes (`… [data-filters-pending="stalled"] .fp-browse-grid

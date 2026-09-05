@@ -135,14 +135,30 @@ describe('LensStackCard', () => {
     expect(div.querySelector('.fp-dimension-controls[role="toolbar"]')).not.toBeNull();
   });
 
-  it('renders the newest lens body with the full unfiltered card count', async () => {
+  // NO LENS FRAGMENT SERVER-RENDERS A RESULTS GRID ANY MORE (#140, implemented
+  // for the browse family in #150). This used to assert the opposite — the full
+  // unfiltered count in `.fp-result-count` — and the change is forced rather
+  // than chosen: the body takes its cards from `/cards.json` on the client, and
+  // Astro renders an island server-side *from its props*, so there is nothing
+  // to render a grid from. What the server emits instead is the pending
+  // skeleton, and it draws itself (`fp-skeleton--pending`) rather than waiting
+  // for the `data-filters-pending` guard, which is set on neither an unfiltered
+  // cold load nor a fragment.
+  it('server-renders the pending skeleton, not a results grid', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(LensStackCard, { props: { name: 'newest' } });
     const div = dom(html);
 
-    const countText = div.querySelector('.fp-result-count')?.textContent?.trim();
-    expect(countText).toMatch(/^\d+ cards?$/);
-    expect(Number(countText!.match(/\d+/)![0])).toBeGreaterThan(0);
+    const skeleton = div.querySelector('.fp-skeleton');
+    expect(skeleton).not.toBeNull();
+    expect(skeleton!.classList.contains('fp-skeleton--pending')).toBe(true);
+    // Newest is a strip lens, and the skeleton knows that from the config alone.
+    expect(skeleton!.classList.contains('fp-skeleton--strip')).toBe(true);
+
+    expect(div.querySelector('.fp-result-count')).toBeNull();
+    expect(div.querySelector('.fp-browse-list')).toBeNull();
+    // `null` is not `[]`: no "no cards match" over a request still in flight.
+    expect(div.querySelector('.fp-browse-empty')).toBeNull();
   });
 
   it('renders the home lens body (day-seeded front-page slots)', async () => {

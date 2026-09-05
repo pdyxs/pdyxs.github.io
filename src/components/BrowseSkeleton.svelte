@@ -40,10 +40,28 @@
     layout?: 'grid' | 'strip';
     /**
      * Why the card pool could not be loaded, or `null` while it is still
-     * pending. **Nothing sets this yet** — slice 4 is a pure extraction plus
-     * two states nothing can reach; slice 5 is what wires the loader in.
+     * pending. Set by the browse-family lens bodies, which own the loader
+     * (slice 5 of docs/plans/shared-card-pool.md).
      */
     failure?: CardPoolFailureReason | null;
+    /**
+     * Whether this skeleton is ISLAND state rather than the CSS guard's.
+     *
+     * The base rule is `.fp-skeleton { display: none }`, and the only thing
+     * that ever turned it on was a `data-filters-pending` value — which is set
+     * by a pre-paint script for a *filtered* cold load and by a lens
+     * transition, and is set on neither of the two loads that now need this
+     * box most (an unfiltered cold load, and a fragment injected into the
+     * stack). A body rendering the skeleton because it has no cards yet would
+     * therefore render it invisible, and the visitor would get a blank results
+     * area for the length of the fetch.
+     *
+     * So the pending box turns itself on, exactly as `.fp-skeleton--failed`
+     * does, and for the same reason: this is island state, not a fourth CSS
+     * guard (#140 decision 2). The guard's own rules still fire on top of it
+     * where they apply, which is harmless — both say `display: block`.
+     */
+    standalone?: boolean;
     /**
      * Called by the retry control. `loadCardPool()` drops a failed attempt, so
      * calling it again starts a fresh one — see card-pool.client.ts.
@@ -51,7 +69,7 @@
     onRetry?: (() => void) | null;
   }
 
-  let { layout = 'grid', failure = null, onRetry = null }: Props = $props();
+  let { layout = 'grid', failure = null, onRetry = null, standalone = false }: Props = $props();
 </script>
 
 <!-- The loading state for the anti-FOUC guard (issues #119, #123). It is in the
@@ -69,7 +87,11 @@
      A FAILURE is not a pending state and is not guarded: it is island state that
      the visitor must see wherever it is rendered, so .fp-skeleton--failed turns
      the box on itself rather than waiting for an attribute nothing would set. -->
-<div class="fp-skeleton fp-skeleton--{layout}" class:fp-skeleton--failed={failure !== null}>
+<div
+  class="fp-skeleton fp-skeleton--{layout}"
+  class:fp-skeleton--failed={failure !== null}
+  class:fp-skeleton--pending={standalone && failure === null}
+>
   {#if failure !== null}
     <p class="fp-pool-error">{poolFailureMessage(failure)}</p>
     {#if onRetry}
@@ -113,9 +135,11 @@
     display: none;
   }
 
-  /* The one exception, and it is not part of the guard: a failed pool load is a
-     fact the island knows and the visitor is owed, so it draws itself. */
-  .fp-skeleton--failed {
+  /* Two exceptions, and neither is part of the guard: a failed pool load is a
+     fact the island knows and the visitor is owed, and a body that has no pool
+     yet has nothing else on screen to hold the space. Both draw themselves. */
+  .fp-skeleton--failed,
+  .fp-skeleton--pending {
     display: block;
   }
 

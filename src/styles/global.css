@@ -276,6 +276,21 @@ html[data-theme="dark"] {
   display: none;
 }
 
+/* ...and the same rule again for a skeleton the LENS BODY renders itself, which
+   is where the strip's tiles now come from on a cold load (issue #150). With
+   the cards fetched rather than SSR'd, a pending body renders <BrowseSkeleton>
+   directly and BrowseResults — and with it `.fp-browse-grid` — does not exist
+   yet, so the rule above cannot reach it and the tiles stayed on screen under a
+   message saying nothing was coming. `.fp-skeleton--pending` stands in for the
+   ancestor: it is the class that marks an island-drawn skeleton, and naming it
+   in the same compound keeps this at five classes against the scoped rule's
+   four. Measured in a browser at /lens/newest?filter.what=games, both before
+   and after. The GRID's stalled rule needs no twin — it is three classes
+   against a two-class scoped rule and wins from any ancestor. */
+:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton--pending.fp-skeleton--strip .fp-skeleton-list {
+  display: none;
+}
+
 /* ── Reset ─────────────────────────────────────────────────────── */
 
 *, *::before, *::after {
