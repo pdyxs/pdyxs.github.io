@@ -1,3 +1,5 @@
+import type { CardPoolFailureReason } from './card-pool.client';
+
 // The results-area loading state for a filtered (or re-ranked) cold load —
 // issue #119, part of #118.
 //
@@ -68,4 +70,30 @@ export const SKELETON_STRIP_TILE_COUNT = 4;
  */
 export function skeletonTileCount(layout: 'grid' | 'strip'): number {
   return layout === 'strip' ? SKELETON_STRIP_TILE_COUNT : SKELETON_TILE_COUNT;
+}
+
+/**
+ * What the results area says when the shared card pool could not be loaded
+ * (issue #149, slice 4 of docs/plans/shared-card-pool.md).
+ *
+ * One line per `CardPoolFailureReason`, and the rule is that it must not claim
+ * to know more than the loader does. The loader can tell three things apart —
+ * the request never finished, the request failed, the response was not a card
+ * pool — and nothing else. So there is no "check your connection" (a blocked
+ * request and a dead network are the same `TypeError`), no "try again later"
+ * (nothing here knows whether later is different), and no card counts.
+ *
+ * Every message ends at the failure; the retry control beside it is what says
+ * what can be done about it. Pure, so the wording is testable without a
+ * network — the component is the thin applier.
+ */
+export function poolFailureMessage(reason: CardPoolFailureReason): string {
+  switch (reason) {
+    case 'timeout':
+      return 'These results are taking too long to load.';
+    case 'malformed':
+      return "These results didn't arrive in a form this page can read.";
+    default:
+      return "These results couldn't be loaded.";
+  }
 }

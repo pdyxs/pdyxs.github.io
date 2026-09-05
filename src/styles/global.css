@@ -203,7 +203,7 @@ html[data-theme="dark"] {
    populated filter bar — measured warm and wired, and far longer on a real
    connection, which is what read to the visitor as "everything loads, then the
    filters apply". The skeleton is server-rendered into every grid lens page and
-   `display: none` in BrowseResults' own styles; this is the only rule that
+   `display: none` in BrowseSkeleton's own styles; this is the only rule that
    turns it on. Appearance stays with the component, visibility stays here with
    the rest of the guard. */
 :is(html, .stack-card)[data-filters-pending] .fp-skeleton--grid,
@@ -258,12 +258,20 @@ html[data-theme="dark"] {
 }
 
 /* The same rule for the strip's row, spelled one selector longer on purpose.
-   The strip variant's `display: flex` is a SCOPED rule in BrowseResults.svelte,
+   The strip variant's `display: flex` is a SCOPED rule in BrowseSkeleton.svelte,
    and Svelte's scoping appends its hash class to every compound — so
    `.fp-skeleton--strip.svelte-x .fp-skeleton-list.svelte-x` (four classes)
    outranks the three-class rule above, and the tiles stayed on screen under a
    message saying nothing was coming. Measured, not assumed. Naming
-   .fp-browse-grid as well restores the ordering. */
+   .fp-browse-grid as well restores the ordering.
+
+   The markup moved out of BrowseResults into BrowseSkeleton in issue #149, and
+   this arithmetic is what had to survive it: BOTH compounds of that scoped rule
+   are in the same component, before and after, so it is still one hash on two
+   compounds — four classes — and this rule is still the five-class one that
+   beats it. Splitting the pair across two components is the move that would
+   silently lose the fight, since `.fp-browse-grid` would then carry a different
+   hash from the tiles it names. Re-verified in a browser at /lens/newest. */
 :is(html, .stack-card)[data-filters-pending="stalled"] .fp-browse-grid .fp-skeleton--strip .fp-skeleton-list {
   display: none;
 }

@@ -4,6 +4,7 @@ import {
   SKELETON_STRIP_TILE_COUNT,
   skeletonTiles,
   skeletonTileCount,
+  poolFailureMessage,
 } from './browse-skeleton';
 import { DEFAULT_REVEAL_STEP } from './progressive-reveal';
 
@@ -47,5 +48,30 @@ describe('strip skeleton (issue #123)', () => {
     expect(skeletonTiles(skeletonTileCount('strip'))).toHaveLength(
       SKELETON_STRIP_TILE_COUNT,
     );
+  });
+});
+
+describe('poolFailureMessage (issue #149)', () => {
+  const reasons = ['timeout', 'network', 'malformed'] as const;
+
+  it('says something different for each reason the loader can tell apart', () => {
+    const messages = reasons.map(poolFailureMessage);
+    expect(new Set(messages).size).toBe(reasons.length);
+  });
+
+  it('claims nothing the loader does not know', () => {
+    // A blocked request and a dead network are the same TypeError, and nothing
+    // here knows whether "later" is different or how many cards were coming.
+    // The retry control beside the message is what offers the action.
+    for (const reason of reasons) {
+      const message = poolFailureMessage(reason);
+      expect(message).not.toMatch(/connection|offline|internet|later|\d/i);
+      expect(message.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it('names the timeout as a timeout rather than as a failure', () => {
+    expect(poolFailureMessage('timeout')).toMatch(/too long/i);
+    expect(poolFailureMessage('network')).not.toMatch(/too long/i);
   });
 });

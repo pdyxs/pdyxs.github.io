@@ -5,6 +5,11 @@
 // skeleton at all, that it is tagged for the strip rules, and — the whole
 // ruling — that it states NOTHING about the count. The dots and the terminal
 // tile are both claims about a number the page does not have yet.
+//
+// The markup itself moved to BrowseSkeleton.svelte in issue #149, and its own
+// states are covered in BrowseSkeleton.island.test.ts. These stay here on
+// purpose: what they assert is that BrowseResults hands the right `layout`
+// down, which is the join the extraction could have broken.
 import { describe, it, expect, afterEach } from 'vitest';
 import { mount, unmount } from 'svelte';
 import BrowseResults from './BrowseResults.svelte';
