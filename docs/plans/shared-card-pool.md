@@ -507,6 +507,7 @@ names unless a session deviates deliberately.
 |---|---|---|
 | `.fp-pool-error` | the extracted browse skeleton component (scoped) | the honest "couldn't load" message when the fetch fails or times out |
 | `.fp-pool-retry` | same, and `HomeLensSlots` | the retry control, shared by both surfaces so one rule covers them |
+| `.fp-skeleton--failed` | same | **turns the skeleton's own box on.** Added in slice 4 and not anticipated here: the base rule is `.fp-skeleton { display: none }`, flipped on only by a `data-filters-pending` value, so a failure message rendered inside that box would never be visible. A failure is *island* state, not a CSS-guarded pending state, so it cannot borrow the guard's switch and must carry its own. **Slice 5 would otherwise render a message nobody can see.** |
 
 Both are **island-scoped, not `global.css`** — the islands exception to
 *"anything that ships in a card fragment is styled in `global.css`"*: a `.svelte`
@@ -526,6 +527,16 @@ neighbour (`… .fp-browse-grid .fp-skeleton--strip .fp-skeleton-list`) to out-s
 Svelte's scoping hash — moving the markup to a *different* component changes which hash
 is appended, so that rule must be re-verified in a browser, not assumed (#123 measured
 it once already).
+
+**Resolved in slice 4, and the reason generalises:** nothing had to change. The global
+rule is 5 classes (`… [data-filters-pending="stalled"] .fp-browse-grid
+.fp-skeleton--strip .fp-skeleton-list`) against a scoped rule Svelte compiles to 4, and
+both compounds of that scoped rule moved *into the same new component* — so it is still
+one hash over two compounds, still 4, and the global rule still wins. **The move that
+would break it is splitting that pair across two components**, which is the thing to
+check if the skeleton is ever divided further. `.fp-browse-grid` stays in
+`BrowseResults` and now carries a different hash from the tiles it names, which is
+harmless precisely because it is only ever named from a global rule.
 
 **Non-CSS names entering the contract:** `window.__cardsPool`, the pre-hydration promise
 `Base.astro` sets and the client loader consumes, and the literal URL `/cards.json`.
