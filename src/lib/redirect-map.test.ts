@@ -348,12 +348,10 @@ describe('the generated redirect map', () => {
       expect(entry.reason, entry.from).toBeTruthy();
       expect(REDIRECTS[entry.from], entry.from).toBe(entry.to);
     }
-    // The known misses are the cards still marked `status: draft`, which have
+    // The known miss is the card still marked `status: draft`, which has
     // no reachable page in a production build.
     expect(UNRESOLVED_OLD_URLS.map(u => u.from).sort()).toEqual([
       '/arctic/0-1-map',
-      '/cv',
-      '/who',
     ]);
   });
 
@@ -363,12 +361,10 @@ describe('the generated redirect map', () => {
       expect(UNRESOLVED_OLD_URLS.map(u => u.from), entry.from).toContain(entry.from);
       expect(REDIRECTS[entry.from], entry.from).toBe(entry.to);
     }
-    // All three current misses trace to a card that exists but is `status:
-    // draft`. Publishing one restores its old URL and drops it from this list.
+    // The current miss traces to a card that exists but is `status:
+    // draft`. Publishing it restores its old URL and drops it from this list.
     expect(ORPHANED_OLD_URLS.map(o => `${o.uid} ${o.from}`).sort()).toEqual([
       'what/stories/arctic/01-map /arctic/0-1-map',
-      'who/about-me /cv',
-      'who/about-me /who',
     ]);
   });
 

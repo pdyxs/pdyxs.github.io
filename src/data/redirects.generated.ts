@@ -2,7 +2,7 @@
 // Source: the retired Jekyll site on the `master` branch (_config.yml + collections/),
 // resolved against src/content by src/lib/redirect-map.ts. Regenerated on predev/prebuild.
 //
-// 123 old URLs: 120 resolved to a card, 3 fell back to a lens.
+// 123 old URLs: 122 resolved to a card, 1 fell back to a lens.
 //   arctic: 21/22 resolved
 //   currentprojects: 1/1 resolved
 //   fatecardgame: 6/6 resolved
@@ -11,7 +11,7 @@
 //   pastprojects: 15/15 resolved
 //   places: 2/2 resolved
 //   posts: 52/52 resolved
-//   static: 8/10 resolved
+//   static: 10/10 resolved
 //   workhistory: 6/6 resolved
 
 /**
@@ -42,7 +42,7 @@ export const REDIRECTS: Record<string, string> = {
   "/arctic/3-3-plastic": "/card/what/stories/arctic/19-plastic",
   "/arctic/3-4-the-worlds-northernmost-atm": "/card/what/stories/arctic/20-the-worlds-northernmost-atm",
   "/arctic/4-conclusion": "/card/what/stories/arctic/21-conclusion",
-  "/cv": "/",
+  "/cv": "/card/who/about-me",
   "/fatecardgame/00-introduction": "/card/what/stories/fatecardgame/00-introduction",
   "/fatecardgame/01-history": "/card/what/stories/fatecardgame/01-history",
   "/fatecardgame/02-themes": "/card/what/stories/fatecardgame/02-themes",
@@ -135,7 +135,7 @@ export const REDIRECTS: Record<string, string> = {
   "/where": "/",
   "/where/arctic": "/card/what/stories/arctic/00-introduction",
   "/where/galapagos": "/card/what/stories/galapagos/00-introduction",
-  "/who": "/",
+  "/who": "/card/who/about-me",
   "/why": "/",
   "/workhistory/3p": "/card/where/work/3p",
   "/workhistory/chaostheory": "/card/where/work/chaostheory",
@@ -152,8 +152,6 @@ export const REDIRECTS: Record<string, string> = {
  */
 export const UNRESOLVED_OLD_URLS: readonly { from: string; to: string; reason: string }[] = [
   { from: "/arctic/0-1-map", to: "/card/what/stories/arctic/00-introduction", reason: "no match for slug \"0-1-map\"; sent to the start of the \"arctic\" story" },
-  { from: "/who", to: "/", reason: "no such card: who/about-me" },
-  { from: "/cv", to: "/", reason: "no such card: who/about-me" },
 ];
 
 /**
@@ -164,6 +162,4 @@ export const UNRESOLVED_OLD_URLS: readonly { from: string; to: string; reason: s
  */
 export const ORPHANED_OLD_URLS: readonly { uid: string; from: string; to: string }[] = [
   { uid: "what/stories/arctic/01-map", from: "/arctic/0-1-map", to: "/card/what/stories/arctic/00-introduction" },
-  { uid: "who/about-me", from: "/who", to: "/" },
-  { uid: "who/about-me", from: "/cv", to: "/" },
 ];

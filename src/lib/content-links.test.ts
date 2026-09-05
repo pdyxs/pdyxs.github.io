@@ -15,6 +15,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { uidFromContentPath } from './content-uid';
+import { isVaultInfrastructurePath } from './content-glob';
 
 const CONTENT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../content');
 
@@ -33,6 +34,7 @@ function markdownFiles(): Array<{ rel: string; text: string }> {
   return walk(CONTENT_DIR)
     .map(f => ({ rel: relative(CONTENT_DIR, f).split('\\').join('/'), full: f }))
     .filter(({ rel }) => /\.(md|mdx)$/i.test(rel))
+    .filter(({ rel }) => !isVaultInfrastructurePath(rel))
     .map(({ rel, full }) => ({ rel, text: readFileSync(full, 'utf8') }));
 }
 
