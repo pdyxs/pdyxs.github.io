@@ -1772,5 +1772,18 @@
     "uid": "where/contact/follow-me",
     "code": "5U",
     "title": "Follow me"
+  },
+  {
+    "uid": "where/work/Untitled",
+    "code": "5V"
+  },
+  {
+    "uid": "what/stories/the-web/Untitled",
+    "code": "5W"
+  },
+  {
+    "uid": "what/stories/the-web/the-advantages-of-truth",
+    "code": "5X",
+    "title": "The advantages of truth"
   }
 ]
