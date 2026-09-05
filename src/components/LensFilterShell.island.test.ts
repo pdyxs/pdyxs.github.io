@@ -46,10 +46,16 @@ function poolWithHierarchy(): SharedCardPoolAsset {
 }
 
 let host: HTMLElement;
-let app: ReturnType<typeof mount> | null = null;
+let app: Record<string, unknown> | null = null;
 
 function render(loadPool: () => Promise<SharedCardPoolAsset>) {
-  app = mount(LensFilterShell, { target: host, props: { lens: LENS, loadPool } });
+  // An Astro-processed component's inferred prop type carries the client
+  // directives, which is past what mount() accepts — the same cast as
+  // HomeLensSlots.island.test.ts and CardStack.island.test.ts.
+  app = mount(LensFilterShell as any, {
+    target: host,
+    props: { lens: LENS, loadPool },
+  }) as Record<string, unknown>;
 }
 
 const buttons = () => [...host.querySelectorAll<HTMLButtonElement>('.browse-dim-btn')];
@@ -69,7 +75,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  if (app) unmount(app);
+  if (app) unmount(app as any);
   app = null;
   host.remove();
 });
