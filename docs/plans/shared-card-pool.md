@@ -138,14 +138,22 @@ fixed name wins and is not dropped.
 **Five keys, and the membership test is "is this byte-identical on every route".**
 ([#139](https://github.com/pdyxs/pdyxs.github.io/issues/139))
 
-| key | astro-encoded today | plain JSON | gz |
-|---|---|---|---|
-| `cards` | 217.8 KB | 181.7 KB | 36.3 KB |
-| `hierarchies` | 46.9 KB | 33.9 KB | 4.9 KB |
-| `tagDisplay` | 23.6 KB | 18.3 KB | 3.7 KB |
-| `cardBackedValues` | 15.4 KB | — | — |
-| `groupOrder` | 0.1 KB | 0.0 KB | 0.1 KB |
-| **asset total** | | **234 KB** | **42.8 KB** |
+| key | astro-encoded today | plain JSON | gz | **measured on the shipped asset** |
+|---|---|---|---|---|
+| `cards` | 217.8 KB | 181.7 KB | 36.3 KB | 162.1 KB / 35.8 KB gz |
+| `hierarchies` | 46.9 KB | 33.9 KB | 4.9 KB | 33.8 KB / 4.9 KB gz |
+| `tagDisplay` | 23.6 KB | 18.3 KB | 3.7 KB | 18.2 KB / 3.7 KB gz |
+| `cardBackedValues` | 15.4 KB | — | — | 14.2 KB / 4.5 KB gz |
+| `groupOrder` | 0.1 KB | 0.0 KB | 0.1 KB | 0.0 KB / 0.1 KB gz |
+| **asset total** | | **234 KB** | ~~42.8 KB~~ | **234.4 KB / 48.4 KB gz** |
+
+**The 42.8 KB gz figure was wrong and slice 10 must not record it.** Measured on the
+real `dist/cards.json` in [#147](https://github.com/pdyxs/pdyxs.github.io/issues/147):
+the estimate summed only the four keys it had measured, leaving `cardBackedValues` as
+`—` in the gz column while still counting it into the 234 KB raw total. Its real cost
+is 14.2 KB raw / **4.5 KB gz**, so the asset is **~48 KB gz**. Raw was near-perfect
+(within 0.2%); `cards` reads 162 KB rather than 181 KB only because the pool is 264
+cards now, not the 269 the map measured.
 
 `lens`, `config`, `activeUid` and `initialWidth` fail the test — they are per-location
 identity — and stay props.
