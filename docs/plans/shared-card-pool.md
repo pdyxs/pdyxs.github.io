@@ -44,7 +44,7 @@ dependency order is the numbering; where two slices are genuinely parallel it sa
 
 | # | slice | done when | verified by |
 |---|---|---|---|
-| 1 | **Extract the builder** — `buildCardPool()` + `toSharedAsset()` in `src/lib/card-pool.ts`; `LensStackCard` calls it instead of running the pipeline inline. Module-level memo. | `LensStackCard.astro`'s frontmatter contains no pipeline, and the built HTML is unchanged. | `npm run check`, `npm test`, and a byte diff of `dist/` against a build taken before the slice. |
+| 1 | **Extract the builder** — `buildCardPool()` + `toSharedAsset()` in `src/lib/card-pool.ts`; `LensStackCard` calls it instead of running the pipeline inline. Module-level memo. | `LensStackCard.astro`'s frontmatter contains no pipeline, and the built HTML is unchanged *in the normalised sense below*. | `npm run check`, `npm test`, and a **normalised** diff of `dist/` against a build taken before the slice. |
 | 2 | **Ship the endpoint** — `src/pages/cards.json.ts`. Nothing consumes it. | `dist/cards.json` exists, parses, and holds exactly the five keys. | A test asserting `toSharedAsset(buildCardPool())` has exactly the five keys and that each is JSON-round-trippable; `ls -l dist/cards.json`. |
 | 3 | **The client loader** — `src/lib/card-pool.client.ts` (`loadCardPool()`), plus the `is:inline` promise in `Base.astro`. Still nothing consumes it. | A cold load issues exactly **one** request for `/cards.json`, started before hydration. | Playwright network panel via `/verify`: one entry, initiated by the document, not by a chunk. |
 | 4 | **Extract the skeleton** — the `.fp-skeleton*` markup out of `BrowseResults.svelte` into its own component, with the pending / failed states and the retry control. Still driven only by `data-filters-pending`. | No visual change anywhere; the guard's CSS still finds every selector it names. | Existing tests, plus a browser pass on a filtered cold load of `/lens/interesting?filter.what=games`. |
@@ -54,6 +54,22 @@ dependency order is the numbering; where two slices are genuinely parallel it sa
 | 8 | **Drop the props** — `LensStackCard` stops passing the five keys; the body shims stop declaring them; `AuditLensBody` takes `tagDisplay` from the builder itself. | `/fragment/lens/home`'s island props are `lens` + `config` and nothing else. | The measurement script below, run against `dist/fragment/lens/home/index.html`. **This is the slice that banks the win.** |
 | 9 | **Narrow `tagDisplay` on card pages** — at the three `CardStrip` call sites in `GenericRenderer`. Independent of 1–8; can be built at any point. | The largest card page's island props are single-digit KB, and no chip anywhere reads as a humanised slug. | `narrowTagDisplay` unit test; a chip-by-chip browser diff on a card with a series, subjects and related cards. |
 | 10 | **Re-measure and record** — the table below, re-run, appended to this file and to #136. | The measured "after" column exists. | Itself. |
+
+### "Unchanged" means normalised, not literally byte-identical
+
+Measured while building slice 1 ([#146](https://github.com/pdyxs/pdyxs.github.io/issues/146)),
+and it will bite every slice that adds a file. **Adding any module to the SSR graph rotates
+every client chunk's content hash** — a `diff -rq` of two `dist/` trees then reports ~640
+entries (586 `.html`, 54 `.js`) for a change that alters no output. The build itself is
+deterministic (same source twice diffs clean), and the cause was isolated by probe: leaving
+the whole inline pipeline in place and adding one trivial server-only re-export module
+produced the *identical* diff.
+
+So the comparison to make is **normalised HTML equality** — rewrite the hashed chunk
+filenames and the derived `<astro-island uid>` values to placeholders, then diff. On slice 1
+that gave 0 of 734 documents differing, with every `props` attribute byte-for-byte unchanged,
+which is the claim the done-condition is actually trying to make. A literal byte diff cannot
+be satisfied and must not be treated as a failure.
 
 Slices 1–3 change no behaviour and ship no bytes; the risk is concentrated in 5–8.
 Slice 4 must land before 5. Slice 8 must land after 5, 6 and 7 — until all three
