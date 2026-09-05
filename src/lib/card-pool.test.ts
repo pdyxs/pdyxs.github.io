@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toSharedAsset, type CardPoolBundle } from './card-pool';
+import { buildCardPool, toSharedAsset, type CardPoolBundle } from './card-pool';
 
 /**
  * A bundle with every key populated by a distinguishable sentinel, so the pick
@@ -73,4 +73,46 @@ describe('toSharedAsset', () => {
     const after = JSON.stringify({ ...bundle, cardBackedValues: [...bundle.cardBackedValues] });
     expect(after).toBe(before);
   });
+});
+
+/**
+ * The endpoint's contract, against the REAL builder rather than a sentinel
+ * bundle. `src/pages/cards.json.ts` is `JSON.stringify(toSharedAsset(await
+ * buildCardPool()))` and nothing else, so what is asserted here is what that
+ * route emits — the route itself is unreachable from a test (it is an Astro
+ * page module, and the `island` project could not import it at all).
+ *
+ * This runs in the `astro` project deliberately: `buildCardPool` reaches
+ * `browse-card.ts` and therefore `astro:assets`, which only resolves through
+ * Astro's own Vite config.
+ */
+describe('the /cards.json payload', () => {
+  it('has exactly the five shared keys, and each round-trips through JSON', async () => {
+    const asset = toSharedAsset(await buildCardPool());
+
+    // Key EQUALITY again, this time on the real bundle: the fake-bundle test
+    // above guards the pick, this one guards what actually ships.
+    expect(Object.keys(asset).sort()).toEqual([
+      'cardBackedValues',
+      'cards',
+      'groupOrder',
+      'hierarchies',
+      'tagDisplay',
+    ]);
+
+    // Round-trippable per key, not just in aggregate: a `Set`, a `Map`, a
+    // `Date` or an `undefined` reaching the asset survives JSON.stringify by
+    // silently becoming `{}`, a string or a dropped key, and only a per-key
+    // comparison names which one did it.
+    for (const [key, value] of Object.entries(asset)) {
+      expect(JSON.parse(JSON.stringify(value)), key).toEqual(value);
+    }
+
+    // And the whole document, which is the byte sequence the route writes.
+    expect(JSON.parse(JSON.stringify(asset))).toEqual(asset);
+  }, 60_000);
+
+  it('is memoised at module level — two builds are one object', async () => {
+    expect(await buildCardPool()).toBe(await buildCardPool());
+  }, 60_000);
 });
