@@ -1,9 +1,9 @@
 ---
-inspected: false
+inspected: true
 title: Who I am
 order: 1
 description: Paul Sztajer — Software Engineer and Creative Technologist
-status: draft
+width: 600px
 ---
 
 I'm Paul Sztajer, a software engineer and interaction designer. My favourite thing to do is to develop works that illuminate complex systems and ideas.

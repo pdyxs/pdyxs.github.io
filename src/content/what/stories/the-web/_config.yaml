@@ -1,0 +1,10 @@
+name: Website musings
+description: >
+  Reflections on how the web works, and how I'm making this website
+tags:
+  - what/software/pdyxs-wtf
+excludeTags:
+  - generated/location
+collapse: true
+dateBar: true
+seriesPreview: dots
