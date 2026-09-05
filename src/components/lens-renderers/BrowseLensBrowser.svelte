@@ -10,8 +10,6 @@
   import type { FilterState } from '../../dimensions';
   import { isRankingLens, sortCardsForBrowse, limitCardsForBrowse } from '../../lib/browse-helpers';
   import type { CardMeta } from '../../lib/cards';
-  import type { SerialisedCardFull } from '../../lib/frontpage';
-  import type { TagDisplay } from '../../lib/tag-display';
   import { getViewState } from '../../lib/card-view-state';
   import { isStripLens, stripTerminal } from '../../lib/strip-lens';
   import { archiveLensId } from '../../lib/lens-registry';
@@ -27,16 +25,6 @@
   import BrowseSkeleton from '../BrowseSkeleton.svelte';
 
   interface Props {
-    /**
-     * PASSED BUT UNUSED since slice 5 of docs/plans/shared-card-pool.md — the
-     * cards, their labels and the card-backed value set all come from
-     * `/cards.json` now. They stay declared until slice 8, which is what stops
-     * `LensStackCard` passing them: dropping them here first would only make
-     * the props it still sends unrecognised.
-     */
-    cards?: SerialisedCardFull[];
-    tagDisplay?: Record<string, TagDisplay>;
-    cardBackedValues?: string[];
     config?: Record<string, unknown>;
     /**
      * The pool source, injected so a test can drive this island against a fake

@@ -39,10 +39,15 @@ import type { SerialisedCardFull } from './frontpage';
 
 /**
  * Everything the pipeline derives. The server needs more of it than the client
- * asset does — `LensStackCard` still wants `cardBackedValues` as a `Set`, and
+ * asset does — `cardBackedValues` is wanted as a `Set` server-side, and
  * `declaredValues`/`collapseConfig` are server-side facts — so the builder
  * returns the whole bundle and `toSharedAsset` picks the client's five keys out
  * of it.
+ *
+ * Since slice 8 the bundle's server-side consumers are `/cards.json` (via
+ * `toSharedAsset`) and `AuditLensBody`, which takes `tagDisplay` for its
+ * BrowseCard previews. `LensStackCard` no longer calls the builder at all: it
+ * passes no card data to anyone.
  */
 export interface CardPoolBundle {
   /** Every card, unfiltered. */

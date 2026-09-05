@@ -4,16 +4,16 @@
 // a dynamically-resolved variable breaks Astro's hydration bundling). The
 // lazy-load boundary is one level up: lens-components.ts dynamically imports
 // *this file*, not BrowseLensBrowser.svelte directly.
+//
+// `config` is the whole of it since slice 8 of docs/plans/shared-card-pool.md:
+// the cards, their labels and the card-backed value set are byte-identical on
+// every lens, so the island fetches them from /cards.json instead.
 import BrowseLensBrowser from './BrowseLensBrowser.svelte';
-import type { SerialisedCardFull } from '../../lib/frontpage';
-import type { TagDisplay } from '../../lib/tag-display';
 
 interface Props {
-  cards: SerialisedCardFull[];
-  tagDisplay?: Record<string, TagDisplay>;
   config?: Record<string, unknown>;
 }
 
-const { cards, tagDisplay, config } = Astro.props;
+const { config } = Astro.props;
 ---
-<BrowseLensBrowser client:load {cards} {tagDisplay} {config} />
+<BrowseLensBrowser client:load {config} />

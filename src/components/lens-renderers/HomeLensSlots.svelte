@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { resolveFrontPageSlots, buildBrowseUrl } from '../../lib/frontpage';
-  import type { FrontPageConfig, ResolvedSlot, SerialisedCardFull } from '../../lib/frontpage';
+  import type { FrontPageConfig, ResolvedSlot } from '../../lib/frontpage';
   import type { TagDisplay } from '../../lib/tag-display';
   import { lensFilterStore } from '../../stores/lens-filter-store';
   import { applyFilters } from '../../dimensions';
@@ -18,16 +18,6 @@
 
   interface Props {
     config: FrontPageConfig;
-    /**
-     * PASSED BUT UNUSED since slice 6 of docs/plans/shared-card-pool.md — the
-     * cards, their labels and the card-backed value set all come from
-     * `/cards.json` now. They stay declared until slice 8, which is what stops
-     * `LensStackCard` passing them: dropping them here first would only make
-     * the props it still sends unrecognised.
-     */
-    cards?: SerialisedCardFull[];
-    tagDisplay?: Record<string, TagDisplay>;
-    cardBackedValues?: string[];
     /**
      * The pool source, injected so a test can drive this island against a fake
      * one — the same seam `createCardFragments({ load })` is for the stack.

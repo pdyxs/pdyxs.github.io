@@ -4,21 +4,18 @@
 // dynamically-resolved variable breaks Astro's hydration bundling). The
 // lazy-load boundary is one level up: lens-components.ts dynamically imports
 // *this file*, not HomeLensSlots.svelte directly.
+//
+// `config` is the whole of it since slice 8 of docs/plans/shared-card-pool.md.
+// The slot LAYOUT is this config and renders server-side from it alone; the
+// cards that fill the slots come from /cards.json (issue #133's placeholder
+// interiors are what stand in until they land).
 import HomeLensSlots from './HomeLensSlots.svelte';
-import type { FrontPageConfig, SerialisedCardFull } from '../../lib/frontpage';
-import type { TagDisplay } from '../../lib/tag-display';
+import type { FrontPageConfig } from '../../lib/frontpage';
 
 interface Props {
-  cards: SerialisedCardFull[];
   config: FrontPageConfig;
-  tagDisplay?: Record<string, TagDisplay>;
-  // Declared, not dropped (issue #135). Every lens body is handed this by
-  // LensStackCard; this one used to declare `cards` and `config` only, so it
-  // silently swallowed the array and selectSlotCard fell back to cardOwnValues
-  // over the listing-filtered pool. See HomeLensSlots' own note.
-  cardBackedValues?: string[];
 }
 
-const { cards, config, tagDisplay, cardBackedValues } = Astro.props as Props;
+const { config } = Astro.props as Props;
 ---
-<HomeLensSlots client:load {config} {cards} {tagDisplay} {cardBackedValues} />
+<HomeLensSlots client:load {config} />

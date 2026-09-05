@@ -13,11 +13,16 @@
 // thereafter and morphs between the two headers via View Transitions. Both
 // headers live in the DOM at once so that morph has stable old/new targets.
 //
-// LensStackCard is also the shared-fetch owner for every lens: it takes
-// allCards/hierarchies/tagDisplay from the shared card pool (src/lib/card-pool.ts,
-// built once per process — every lens body wants the same universe of cards)
-// and resolves the lens's body component via an awaited dynamic import() —
-// the lazy-load boundary in src/lib/lens-components.ts.
+// LensStackCard passes NO card data to its islands (slice 8 of
+// docs/plans/shared-card-pool.md, map #136). The five shared keys —
+// cards/tagDisplay/hierarchies/groupOrder/cardBackedValues — are byte-identical
+// on every lens route and every fragment, so they ship once as /cards.json and
+// every island fetches them (src/lib/card-pool.client.ts). What is left here is
+// per-location identity: `lens` and `lens.config`. That is the whole of the
+// win — /fragment/lens/home was 466 KB of props for a 24px collapsed spine.
+// The one thing this component still resolves is the lens's body component,
+// via an awaited dynamic import() — the lazy-load boundary in
+// src/lib/lens-components.ts.
 // The dimension-filter bar (LensFilterShell) and the resolved body render as
 // SIBLING islands: Astro's client:* islands can't share live reactive props
 // across independent hydration boundaries, so they coordinate only through
@@ -25,7 +30,6 @@
 // store's header comment.
 import { getLensDefinition } from '../lib/lens-registry';
 import { deriveLensChrome } from '../lib/lens-chrome';
-import { buildCardPool, toSharedAsset } from '../lib/card-pool';
 import { emptyFilterState } from '../dimensions';
 import type { FilterState } from '../dimensions';
 import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '../lib/lens-components';
@@ -54,27 +58,9 @@ const chrome = lens ? deriveLensChrome(lens, filterState) : null;
 // appears in that dimension's panel, but is still the sole stack anchor.
 const isHome = lens?.id === 'home';
 
-let hierarchies: any = null;
-let groupOrder: any = {};
-let tagDisplay: any = {};
-let serialisedCards: any[] = [];
-// Serialised (array) form of the card-backed value set, for the client island.
-let cardBackedValuesList: string[] = [];
 let BodyComponent: any = null;
 
 if (lens) {
-  // The card pool is built once per process and shared by every lens route and
-  // fragment — see src/lib/card-pool.ts for the pipeline and for why the
-  // module-level memo there is the deliberate opposite of #102's rule.
-  const pool = await buildCardPool();
-  ({
-    cards: serialisedCards,
-    tagDisplay,
-    hierarchies,
-    groupOrder,
-    cardBackedValues: cardBackedValuesList,
-  } = toSharedAsset(pool));
-
   const bodyLoader = LENS_BODY_LOADERS[lens.component] ?? DEFAULT_BODY_LOADER;
   BodyComponent = (await bodyLoader()).default;
 }
@@ -116,10 +102,8 @@ if (lens) {
     <div class="body-wrapper open">
       <div class="stack-card-body">
         <div class="stack-card-body-inner">
-          <LensFilterShell client:load lens={lens} hierarchies={hierarchies} groupOrder={groupOrder} tagDisplay={tagDisplay} />
-          {BodyComponent && (
-            <BodyComponent cards={serialisedCards} tagDisplay={tagDisplay} config={lens.config} cardBackedValues={cardBackedValuesList} />
-          )}
+          <LensFilterShell client:load lens={lens} />
+          {BodyComponent && <BodyComponent config={lens.config} />}
         </div>
       </div>
     </div>

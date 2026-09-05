@@ -4,8 +4,6 @@
   import { applyFilters, countSelectedValueMatches, makeMatchContext } from '../../dimensions';
   import type { FilterState } from '../../dimensions';
   import type { CardMeta } from '../../lib/cards';
-  import type { SerialisedCardFull } from '../../lib/frontpage';
-  import type { TagDisplay } from '../../lib/tag-display';
   import { getReadAt, hasBeenRead } from '../../lib/card-view-state';
   import {
     historyEmptyMessage,
@@ -25,14 +23,6 @@
   import BrowseSkeleton from '../BrowseSkeleton.svelte';
 
   interface Props {
-    /**
-     * PASSED BUT UNUSED since slice 5 of docs/plans/shared-card-pool.md — they
-     * come from `/cards.json` now, and stay declared until slice 8 stops
-     * `LensStackCard` passing them.
-     */
-    cards?: SerialisedCardFull[];
-    tagDisplay?: Record<string, TagDisplay>;
-    cardBackedValues?: string[];
     config?: Record<string, unknown>;
     /** The pool source, injected so a test can drive this island against a
      * fake one. Production never passes it. */

@@ -161,6 +161,47 @@ describe('LensStackCard', () => {
     expect(div.querySelector('.fp-browse-empty')).toBeNull();
   });
 
+  // THE DONE CONDITION OF SLICE 8 (docs/plans/shared-card-pool.md, #153): the
+  // five shared keys are gone from every island's props. They are byte-identical
+  // on every lens route and every fragment, so they ship once as `/cards.json`
+  // and each island fetches them — `/fragment/lens/home` was 466 KB of `props`
+  // for a 24px collapsed spine.
+  //
+  // Asserted on the SERIALISED `props` attribute rather than on the component's
+  // prop list, because that attribute IS the payload: Astro JSON-escapes every
+  // island prop into it, so a key re-added anywhere upstream shows up here
+  // whatever it was called at the call site.
+  const SHARED_POOL_KEYS = ['cards', 'tagDisplay', 'hierarchies', 'groupOrder', 'cardBackedValues'];
+
+  it.each(['home', 'newest', 'seen'])(
+    'ships no shared-pool key in any island props (%s)',
+    async name => {
+      const container = await makeContainer();
+      const html = await container.renderToString(LensStackCard, { props: { name } });
+      const islands = [...dom(html).querySelectorAll('astro-island')];
+
+      expect(islands.length).toBeGreaterThan(0);
+      for (const island of islands) {
+        const props = JSON.parse(island.getAttribute('props') ?? '{}');
+        for (const key of SHARED_POOL_KEYS) expect(props).not.toHaveProperty(key);
+      }
+    },
+  );
+
+  // The other half of the same claim: what IS left is per-location identity.
+  // `lens` for the filter shell, `config` for the body — and nothing else.
+  it('leaves the islands with lens and config only', async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });
+    const keys = [...dom(html).querySelectorAll('astro-island')].map(island =>
+      Object.keys(JSON.parse(island.getAttribute('props') ?? '{}')).sort(),
+    );
+
+    expect(keys).toContainEqual(['lens']);
+    expect(keys).toContainEqual(['config']);
+    for (const k of keys) expect(k.every(key => key === 'lens' || key === 'config')).toBe(true);
+  });
+
   it('renders the home lens body (day-seeded front-page slots)', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(LensStackCard, { props: { name: 'home' } });

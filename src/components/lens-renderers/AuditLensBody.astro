@@ -8,11 +8,17 @@
 // onDocumentClick already handles. (Contrast EditorialLensBody.astro, which
 // needs a Svelte shim because it participates in the live lensFilterStore.)
 //
-// It deliberately does NOT use the `cards` prop LensStackCard passes every lens
-// body. That pool is listing-filtered and folder-collapsed — exactly the cards
-// most in need of auditing (unlisted drafts, individual series members like the
-// arctic story chapters) are missing from it, and it carries no bodies. The
-// audit reads the raw collection instead, so its counts cover everything.
+// It deliberately does NOT browse the shared card pool's `cards`. That pool is
+// listing-filtered and folder-collapsed — exactly the cards most in need of
+// auditing (unlisted drafts, individual series members like the arctic story
+// chapters) are missing from it, and it carries no bodies. The audit reads the
+// raw collection instead, so its counts cover everything.
+//
+// It does want the pool's `tagDisplay`, for the BrowseCard previews in the
+// not-inspected worklist, and since slice 8 of docs/plans/shared-card-pool.md
+// it reads that off the builder itself rather than taking it as a prop —
+// LensStackCard passes card data to nobody now. The builder is memoised, so
+// this is a map lookup, not a second pipeline run.
 import { getCollection } from 'astro:content';
 import { makeFileReader, resolveFolderCascade } from '../../lib/folder-config';
 import {
@@ -24,19 +30,13 @@ import {
 import { generatorFrontmatterKeys } from '../../lib/filter-generators';
 import { localAssetFilenames } from '../../lib/images';
 import { serialiseBrowseCards } from '../../lib/browse-card';
+import { buildCardPool } from '../../lib/card-pool';
 import { auditCards, auditedCardCount, type AuditCard } from '../../lib/audit';
 import { ORPHANED_OLD_URLS } from '../../data/redirects.generated';
 import type { BrowseCardData } from '../../lib/browse-helpers';
-import type { TagDisplay } from '../../lib/tag-display';
 import BrowseCard from '../BrowseCard.svelte';
 
-interface Props {
-  cards?: unknown[];
-  tagDisplay?: Record<string, TagDisplay>;
-  config?: Record<string, unknown>;
-}
-
-const { tagDisplay = {} } = Astro.props as Props;
+const { tagDisplay } = await buildCardPool();
 
 const entries = await getCollection('content');
 const reader = makeFileReader();

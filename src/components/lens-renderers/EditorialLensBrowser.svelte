@@ -4,9 +4,6 @@
   import { applyFilters } from '../../dimensions';
   import type { FilterState } from '../../dimensions';
   import { groupCardsByStatus } from '../../lib/status-groups';
-  import type { SerialisedCardFull } from '../../lib/frontpage';
-  import type { TagDisplay } from '../../lib/tag-display';
-  import type { StatusValue } from '../../lib/status-visibility';
   import { clearFiltersPending } from '../../lib/filters-pending';
   import {
     loadCardPool,
@@ -17,17 +14,7 @@
   import BrowseCard from '../BrowseCard.svelte';
   import BrowseSkeleton from '../BrowseSkeleton.svelte';
 
-  type EditorialCard = SerialisedCardFull & { status: StatusValue };
-
   interface Props {
-    /**
-     * PASSED BUT UNUSED since slice 5 of docs/plans/shared-card-pool.md — they
-     * come from `/cards.json` now, and stay declared until slice 8 stops
-     * `LensStackCard` passing them.
-     */
-    cards?: EditorialCard[];
-    tagDisplay?: Record<string, TagDisplay>;
-    cardBackedValues?: string[];
     config?: Record<string, unknown>;
     /** The pool source, injected so a test can drive this island against a
      * fake one. Production never passes it. */

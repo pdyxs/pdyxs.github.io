@@ -10,12 +10,9 @@
     toggleValue,
   } from '../dimensions';
   import type { DimensionId, FilterState } from '../dimensions';
-  import type { FiveWDimension } from '../lib/five-w';
   import type { LensDefinition } from '../lib/lens-registry';
   import { lensUid, DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
   import { LENS_BASE } from '../lib/stack-codec';
-  import type { TagNode } from '../lib/browse-helpers';
-  import type { TagDisplay } from '../lib/tag-display';
   import { poolFailureMessage } from '../lib/browse-skeleton';
   import {
     loadCardPool,
@@ -28,15 +25,6 @@
 
   interface Props {
     lens: LensDefinition;
-    /**
-     * PASSED BUT UNUSED since slice 7 of docs/plans/shared-card-pool.md — the
-     * hierarchy, its section order and the value labels all come from
-     * `/cards.json` now. They stay declared until slice 8, which is what stops
-     * `LensStackCard` passing them.
-     */
-    hierarchies?: Record<string, TagNode[]>;
-    groupOrder?: Partial<Record<FiveWDimension, string[]>>;
-    tagDisplay?: Record<string, TagDisplay>;
     /**
      * The pool source, injected so a test can drive this island against a fake
      * one — the same seam `createCardFragments({ load })` is for the stack.
