@@ -516,6 +516,7 @@ names unless a session deviates deliberately.
 | `.fp-pool-error` | the extracted browse skeleton component (scoped) | the honest "couldn't load" message when the fetch fails or times out |
 | `.fp-pool-retry` | same, and `HomeLensSlots` | the retry control, shared by both surfaces so one rule covers them |
 | `.fp-skeleton--pending` | same (island-scoped) | **the same switch, for the state above it.** Added in slice 5 and, like `--failed`, not anticipated here: a body renders the skeleton itself now, and the only thing that ever turned `.fp-skeleton`'s `display: none` off was a `data-filters-pending` value — which is set on a *filtered* cold load and a lens transition, and on **neither** an unfiltered cold load nor a fragment. Without it the whole results area is blank for the length of the fetch, which is the state this slice exists to draw. It is what marks an island-drawn skeleton, which is also why the stalled guard's strip rule needed a twin naming it — see below. |
+| `.fp-skeleton--pending` | same | **the twin of `--failed`, and needed for the same reason.** Added in slice 5, also unanticipated: `.fp-skeleton` is `display: none` and *only* `data-filters-pending` ever switched it on — an attribute set on neither an unfiltered cold load nor a fragment. A body-rendered pending state has no guard to borrow, so it too carries its own switch. |
 | `.fp-skeleton--failed` | same | **turns the skeleton's own box on.** Added in slice 4 and not anticipated here: the base rule is `.fp-skeleton { display: none }`, flipped on only by a `data-filters-pending` value, so a failure message rendered inside that box would never be visible. A failure is *island* state, not a CSS-guarded pending state, so it cannot borrow the guard's switch and must carry its own. **Slice 5 would otherwise render a message nobody can see.** |
 
 Both are **island-scoped, not `global.css`** — the islands exception to
@@ -557,6 +558,20 @@ would break it is splitting that pair across two components**, which is the thin
 check if the skeleton is ever divided further. `.fp-browse-grid` stays in
 `BrowseResults` and now carries a different hash from the tiles it names, which is
 harmless precisely because it is only ever named from a global rule.
+
+**One global rule gained a twin (slice 5).** The stalled strip rule names
+`.fp-browse-grid` as an ancestor, and that element does not exist while a
+*body-rendered* skeleton is up — so its tiles stayed drawn underneath "nothing is
+coming". The fix is a twin naming `.fp-skeleton--pending` instead, at the same five
+classes and with no ancestor. The grid rule needed no twin. Measured before and after,
+not reasoned about.
+
+**The pre-hydration promise is a one-shot, and the retry contract had to account for
+it.** A rejected `window.__cardsPool` is settled *forever*, so every retry re-read the
+same failure and "Try again" could never succeed. `loadCardPool()` now drops the
+preloaded promise after any failure and fetches for itself. This was invisible to
+slice 4's unit tests, which never exercise the `preloaded` seam — a warning about the
+seam, not just about this bug.
 
 **Non-CSS names entering the contract:** `window.__cardsPool`, the pre-hydration promise
 `Base.astro` sets and the client loader consumes, and the literal URL `/cards.json`.
