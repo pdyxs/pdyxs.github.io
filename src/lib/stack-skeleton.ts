@@ -38,17 +38,29 @@ import { computeGeometry, type GeoParams } from './stack-geometry';
 import { saturationPoint } from './stack-reservation';
 
 /**
- * One collapsed spine to draw: `[--geo-left, --geo-top, dither level]`, the
- * first two already CSS lengths and the third indexing `--dither-N`.
+ * One collapsed spine to draw: `[--geo-left, --geo-top, dither level, peek
+ * height]`, the first two and the last already CSS lengths and the third
+ * indexing `--dither-N`.
+ *
+ * `peek` is BEHIND-only (ahead cards are always spine-width — see the module
+ * comment on `fanSkeletonTable`). A real collapsed behind card is a full-width
+ * absolutely-positioned box, cropped to a spine only by the card painted over
+ * it — and that painted-over card starts at ITS OWN top, not at this card's,
+ * so the band from this card's own top down to the next one's is never
+ * covered and shows this card's full width. The skeleton used to draw every
+ * row at spine-width for its whole height, which left that band blank during
+ * loading (a real, reported gap: a "small piece of header" visible above the
+ * active card and to the right of the spine, missing while the fan was still
+ * a skeleton). `peek` is that band's height — `-top`, since `top` is how far
+ * above the reserved margin (where the real content starts) this card sits.
  *
  * A TUPLE rather than a named-field object, which is the one place this module
  * trades readability for bytes and does it on purpose: the table is baked into
  * an `is:inline` script and therefore emitted verbatim on every page that
- * renders a stack. Naming the three fields costs ~24 bytes per spine across 30
- * tabulated spines — about 750 bytes a page — to say what the destructure at
- * the single consumer says once.
+ * renders a stack. Naming the fields costs bytes across 30 tabulated spines to
+ * say what the destructure at the single consumer says once.
  */
-export type SkeletonCard = [left: string, top: string, dither: number];
+export type SkeletonCard = [left: string, top: string, dither: number, peek: string];
 
 export interface SkeletonTable {
   /** Indexed by the number of entries behind the active one, saturating. */
@@ -94,7 +106,7 @@ export function fanSkeletonTable(params: Omit<GeoParams, 'activeWidth'>): Skelet
       computeGeometry(n + 1, n, p).cards
         .filter(c => c.role === 'behind')
         .sort((a, b) => a.z - b.z)
-        .map((c): SkeletonCard => [px(c.left), px(c.top), c.dither]),
+        .map((c): SkeletonCard => [px(c.left), px(c.top), c.dither, px(-c.top)]),
     );
   }
   for (let n = 0; n <= saturationPoint(p.forwardFan); n++) {
@@ -102,7 +114,7 @@ export function fanSkeletonTable(params: Omit<GeoParams, 'activeWidth'>): Skelet
       computeGeometry(n + 1, 0, p).cards
         .filter(c => c.role === 'ahead')
         .sort((a, b) => a.z - b.z)
-        .map((c): SkeletonCard => [offsetFromActiveWidth(c.left), px(c.top), c.dither]),
+        .map((c): SkeletonCard => [offsetFromActiveWidth(c.left), px(c.top), c.dither, '0px']),
     );
   }
 

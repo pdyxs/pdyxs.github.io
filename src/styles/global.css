@@ -1847,6 +1847,32 @@ pre,
     border-right: var(--border-width) solid var(--color-border);
   }
 
+  /* BEHIND's "peek". A real collapsed behind card is a full-width, absolutely
+     positioned box cropped to a spine only by the card painted over it — and
+     that card starts at ITS OWN top, not this one's, so the band from this
+     card's own top down to the next card's is never covered and shows this
+     card's full width (a small full-width header slice above the active
+     card, to the right of the spine). Reported as missing during loading:
+     this rule only ever drew a spine-width column for the whole height, which
+     has no equivalent band at all.
+
+     `--geo-peek` (`fanSkeletonTable`, built from `-top`) is exactly that
+     band's height, so the shape below reproduces it without knowing about any
+     other entry: each entry's polygon covers its own top down to the shared
+     bottom (where the reserved margin ends), so a nearer entry's (smaller)
+     polygon simply paints over the tail of a farther one's (larger) polygon —
+     painting order and nesting alone produce the staircase, the same as the
+     real cards. */
+  .stack-skeleton-card[data-role="behind"] {
+    width: var(--stack-card-width);
+    border-right: var(--border-width) solid var(--color-border);
+    clip-path: polygon(
+      0 0, 100% 0, 100% var(--geo-peek, 0px),
+      var(--spine-width) var(--geo-peek, 0px), var(--spine-width) 100%,
+      0 100%
+    );
+  }
+
   /* The title in its load state.
 
      STATIC, like the browse skeleton (#119) and for the same reasons: the

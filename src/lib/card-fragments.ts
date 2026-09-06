@@ -38,6 +38,8 @@
 // change, exactly as it did before.
 
 import { extractLocationWidth } from './location-width';
+import { locationKind } from './stack-layout';
+import { SITE_TITLE, siteSubtitle } from './lens-chrome';
 
 export { extractLocationWidth };
 
@@ -121,12 +123,27 @@ export function escapeHtml(s: string): string {
  * and the spine is what occludes the card behind it once this one is collapsed
  * (issue #109). Left out, every card pushed through a view transition would be
  * a permanently transparent hole in the stack.
+ *
+ * A LENS placeholder also needs a `.page-header` — the real fragment always
+ * has one (LensStackCard.astro renders both chrome modes unconditionally, and
+ * a `.stack-card--page` toggle just picks which one CSS reveals). Without it,
+ * a lens restored from a placeholder (a cold-loaded `from`/`to` entry) has no
+ * `.page-header` node for `replaceBody` to ever fill in — it patches only the
+ * BODY, by design — so closing down to that lens later flips it into page
+ * mode with nothing for the site-header CSS rule to show.
  */
 export function buildPlaceholderHtml(slot: string, title: string): string {
+  const pageHeader = locationKind(slot) === 'lens'
+    ? `<header class="page-header">` +
+      `<h1 class="page-title"><a href="/" class="page-title-link">${escapeHtml(SITE_TITLE)}</a></h1>` +
+      (siteSubtitle() ? `<p class="page-subtitle">${escapeHtml(siteSubtitle()!)}</p>` : '') +
+      `</header>`
+    : '';
   return `<div class="stack-card" data-uid="${escapeHtml(slot)}">` +
     `<div class="stack-card-spine"><div class="stack-card-spine-inner">` +
     `<span class="stack-card-spine-title">${escapeHtml(title)}</span>` +
     `</div></div>` +
+    pageHeader +
     `<div class="card-header-sentinel"></div>` +
     `<div class="card-header">` +
     `<span class="card-header-title"><b>${escapeHtml(title)}</b></span>` +

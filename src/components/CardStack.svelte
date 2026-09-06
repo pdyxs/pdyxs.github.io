@@ -198,14 +198,23 @@
   // already active — pushCard's placeholder→real-content swap). See
   // card-fragments.ts for why the cache itself is not reactive.
   //
-  // Written to BOTH <html> and #card-stack, and that is not redundant. The
-  // server renders #card-stack with the *initial* location's width as an inline
-  // style (see `initialWidth` below) so the first paint is correct before
-  // hydration. An inline style on #card-stack beats an inherited value from
-  // <html> for everything inside it — so a card pushed on top of, say, the
-  // browse lens (960px) would keep wearing the lens's width no matter what this
-  // wrote to <html>. Setting the element too replaces that stale SSR value
-  // rather than leaving it to shadow every later navigation.
+  // Written to <html>, #card-stack AND .stack-shell, and none of that is
+  // redundant. The server renders both #card-stack and its ANCESTOR
+  // .stack-shell (StackNav.astro) with the *initial* location's width as an
+  // inline style (see `initialWidth` below), so the first paint — including
+  // the pre-hydration skeleton, which hangs off .stack-shell and cannot see
+  // #card-stack's inline value — is correct before hydration.
+  //
+  // Once mounted, a location with no declared width (`width` resolves to
+  // undefined below) has this function REMOVE the property from #card-stack —
+  // but removing it there only stops that one element overriding the cascade.
+  // .stack-shell's own SSR-baked inline value is still sitting on an ANCESTOR
+  // of #card-stack, so an unwidthed pushed card fell through to *that* stale
+  // value instead of <html>'s (or :root's) — permanently, since nothing after
+  // hydration ever revisited .stack-shell. Measured live: push a lens's own
+  // 960px, then push a card with no declared width, and #card-stack's
+  // computed --max-width stayed 960px forever. So .stack-shell has to be kept
+  // in sync right alongside #card-stack, not just <html>.
   function applyMaxWidth(activeSlot: string | null) {
     // The island is server-rendered too, and the fragment store's onChange can
     // fire there (the SSR seed above is a write). There is no document to apply
@@ -223,12 +232,15 @@
       ? (fragments.factsFor(activeSlot).width ?? (activeSlot === ssrSlot ? initialWidth : undefined))
       : undefined;
     const stackEl = document.getElementById('card-stack');
+    const shellEl = document.querySelector<HTMLElement>('.stack-shell');
     if (width) {
       document.documentElement.style.setProperty('--max-width', width);
       stackEl?.style.setProperty('--max-width', width);
+      shellEl?.style.setProperty('--max-width', width);
     } else {
       document.documentElement.style.removeProperty('--max-width');
       stackEl?.style.removeProperty('--max-width');
+      shellEl?.style.removeProperty('--max-width');
     }
   }
 

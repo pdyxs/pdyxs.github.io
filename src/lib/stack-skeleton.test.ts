@@ -18,14 +18,14 @@ describe('fanSkeletonTable', () => {
       const real = computeGeometry(n + 1, n, p).cards.filter(c => c.role === 'behind');
       expect(behind[n]).toHaveLength(real.length);
       for (const card of real) {
-        expect(behind[n]).toContainEqual([`${card.left}px`, `${card.top}px`, card.dither]);
+        expect(behind[n]).toContainEqual([`${card.left}px`, `${card.top}px`, card.dither, `${-card.top}px`]);
       }
     }
     for (let n = 0; n < ahead.length; n++) {
       const real = computeGeometry(n + 1, 0, p).cards.filter(c => c.role === 'ahead');
       expect(ahead[n]).toHaveLength(real.length);
       for (const card of real) {
-        expect(ahead[n]).toContainEqual([cssOffset(card.left), `${card.top}px`, card.dither]);
+        expect(ahead[n]).toContainEqual([cssOffset(card.left), `${card.top}px`, card.dither, '0px']);
       }
     }
   });
@@ -42,7 +42,7 @@ describe('fanSkeletonTable', () => {
 
     for (const card of real) {
       const offset = card.left - width;
-      expect(ahead[3]).toContainEqual([cssOffset(offset), `${card.top}px`, card.dither]);
+      expect(ahead[3]).toContainEqual([cssOffset(offset), `${card.top}px`, card.dither, '0px']);
     }
   });
 
