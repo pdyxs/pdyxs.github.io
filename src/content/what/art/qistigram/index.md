@@ -34,6 +34,7 @@ meta:
   - label: Technology
     values:
       - Unity, Python (Qiskit framework)
+priority: -2
 ---
 Qistigram was made as a part of Qiskit Camp Europe - a quantum computing hackathon in Switzerland.
 

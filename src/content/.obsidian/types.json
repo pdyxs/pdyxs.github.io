@@ -4,6 +4,7 @@
     "aliases": "aliases",
     "cssclasses": "multitext",
     "tags": "tags",
-    "actions": "multitext"
+    "actions": "multitext",
+    "priority": "number"
   }
 }
