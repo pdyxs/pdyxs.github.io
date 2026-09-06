@@ -1070,6 +1070,25 @@ pre,
   border-color: var(--status-archived-border);
 }
 
+/* ── Priority badge (dev-only) ─────────────────────────────────────
+   Shows a card's summed build-time priority (priority.ts, ranking rung 2)
+   while authoring, so tuning a folder/tag priority can be checked against
+   real listings without instrumenting the console. Rendered only in
+   BrowseCard, gated by import.meta.env.DEV in the template — this is a
+   dev-build-only surface, never shipped live. */
+.priority-badge {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-stripes);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
 /* ── Page-mode lens chrome ─────────────────────────────────────── */
 /* A lens that is the sole/root stack entry (presentationMode → 'page')
    presents as the front page: no card border, a site-header title/subtitle

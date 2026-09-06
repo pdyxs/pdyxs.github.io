@@ -99,6 +99,9 @@
         {/if}
       </p>
       <span class="browse-card-header-meta">
+        {#if import.meta.env.DEV}
+          <span class="priority-badge" title="Calculated priority (ranking.ts rung 2)">P:{card.priority}</span>
+        {/if}
         {#if import.meta.env.DEV && statusBadge}
           <span class="status-badge status-badge--{statusBadge.status}">
             {statusBadge.label}{statusBadge.dateLabel ? ` · ${statusBadge.dateLabel}` : ''}
@@ -175,7 +178,8 @@
   .browse-card-item--current .browse-card-date,
   .browse-card-item--current .browse-card-desc,
   .browse-card-item--current .browse-card-badge,
-  .browse-card-item--current .browse-card-tag {
+  .browse-card-item--current .browse-card-tag,
+  .browse-card-item--current :global(.priority-badge) {
     color: var(--color-selected-fg);
   }
 
