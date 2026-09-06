@@ -23,7 +23,17 @@ tags: []
 ---
 To say that we've got a problem with truth in online spaces is an understatement. It was an understatement before generative AI showed up, and now it's a statement limbo champion.
 
-My 
+As someone who's interested in how interaction shapes behaviour, my instinct here is , and how we might make better decisions about those mediums in the future.
+
+The question that I want to ask is 'what are the strengths of the truth over and above a falsehood'? Do our current methods of sharing information play to those strengths? And what might it look like if we designed something that did?
+
+First, a short aside on truth. 
+
+
+
+Past mediums relied on authority as a proxy for rigor
+
+
 
 As the web has developed and both misinformation and disinformation have become more and more common, I've started thinking about what 
 
