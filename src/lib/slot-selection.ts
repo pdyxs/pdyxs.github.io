@@ -17,9 +17,11 @@
 // deliberately: if you were shown a card and didn't open it, the front page
 // failing to show it again is the bug, not the repetition.
 //
-// Unseen-ness survives as one rung of the shared chain (rung 3), which is the
-// right weight for it: it breaks ties between equally-prioritised cards instead
-// of overriding the author.
+// Unseen-ness survives as two rungs of the shared chain: rung 4 breaks ties
+// between equally-prioritised cards, and rung 2 pins the top-priority unseen
+// card(s) ahead of everything else in the slot's filtered set — so a slot pool
+// isn't just re-reads of the same high-priority card once a visitor has caught
+// up on it.
 
 import type { CardMeta } from './cards';
 import type { FilterState } from '../dimensions';
@@ -82,6 +84,11 @@ export function contentHashFor(card: CardMeta): string {
  *
  * @param timezone - IANA timezone string; defaults to the viewer's local timezone.
  * @param pool - how many top-ranked cards to pick between; defaults to DEFAULT_SLOT_POOL.
+ * @param isSeen - overrides the default per-card getViewState check. Callers
+ * that have already expanded a collapsed series (collapsed-series.ts) pass
+ * their own `readUids`-backed check here, since a series representative's
+ * seen-ness is "any member seen", not just its own hash — see
+ * HomeLensSlots.svelte.
  * Returns null if no cards match the filter.
  */
 export function selectSlotCard(
@@ -91,6 +98,7 @@ export function selectSlotCard(
   timezone?: string,
   cardBackedValues?: Set<string>,
   pool: number = DEFAULT_SLOT_POOL,
+  isSeen: (card: CardMeta) => boolean = card => getViewState(card.uid, contentHashFor(card)) === 'read',
 ): CardMeta | null {
   const tz = timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const backed = cardBackedValues ?? cardOwnValues(cards);
@@ -102,7 +110,7 @@ export function selectSlotCard(
   const ctx = makeMatchContext(backed);
   const ranked = rankCards<CardMeta>(filtered, {
     matchCount: card => countSelectedValueMatches(card, filterState, ctx),
-    isSeen: card => getViewState(card.uid, contentHashFor(card)) === 'read',
+    isSeen,
   });
 
   const shortlist = ranked.slice(0, Math.max(1, pool));

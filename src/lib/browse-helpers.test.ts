@@ -799,8 +799,9 @@ describe("sortCardsForBrowse", () => {
     });
 
     it("passes the runtime rungs through to the chain", () => {
-        // Rung 3: unseen before seen. The accessor is the caller's, because
-        // localStorage is only knowable in the browser.
+        // Rung 2/4: unseen before seen (here, the sole unseen card is trivially
+        // pinned). The accessor is the caller's, because localStorage is only
+        // knowable in the browser.
         const a = fakeCardMeta({ uid: "posts/a" });
         const b = fakeCardMeta({ uid: "posts/b" });
         const result = sortCardsForBrowse(

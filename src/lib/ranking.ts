@@ -7,18 +7,30 @@
 //
 //   1. filter-match count, descending — with several values selected in one
 //      dimension, a card matching more of them always comes first
-//   2. priority                        (see priority.ts — it ACCUMULATES)
-//   3. unseen before seen
-//   4. `order`, only between two cards sharing a folder
-//   5. that folder's declared `sort`   (see folder-sort.ts)
-//   6. uid, so the result is deterministic
+//   2. pinned unseen: within a matchCount tier, the highest-priority unseen
+//      card(s) jump to the very front — see below
+//   3. priority                        (see priority.ts — it ACCUMULATES)
+//   4. unseen before seen
+//   5. `order`, only between two cards sharing a folder
+//   6. that folder's declared `sort`   (see folder-sort.ts)
+//   7. uid, so the result is deterministic
 //
-// Rungs 1 and 3 are runtime — filters change and seen-ness is per-visitor — so
-// they arrive as accessors on the context rather than as card fields. Rungs 2,
-// 4, 5 and 6 are decided at build and ride on CardMeta.
+// Rungs 1, 2 and 4 are runtime — filters change and seen-ness is per-visitor —
+// so they arrive as accessors on the context rather than as card fields. Rungs
+// 3, 5, 6 and 7 are decided at build and ride on CardMeta.
 //
 // Priority sits ABOVE seen deliberately: the other way round, an authored boost
 // quietly stops mattering to exactly the returning visitors it was aimed at.
+//
+// Rung 2 exists so that isn't absolute: a returning visitor with nothing new at
+// the top priority tier would otherwise see nothing but re-reads, however far
+// they scroll. It borrows priority as its tie-break ONLY among unseen cards, so
+// "which unseen card gets pinned" still reads as the same authored signal —
+// but it does not compete with rung 3's own ordering of everything else, which
+// is why a lower-priority unseen card can be pinned ahead of a higher-priority
+// seen one. It is scoped to the current matchCount tier (rung 1) so a pin never
+// promotes a worse filter match, and it is computed once per rankCards() call
+// — a global fact about the list, not a pairwise one — rather than per pair.
 //
 // `order` keeps its existing meaning — sequence WITHIN a folder (series
 // position, collapse representative). It is not overloaded into a global
@@ -53,8 +65,15 @@ export type RankableCard = {
 export type RankingContext<T extends RankableCard = RankableCard> = {
   /** How many selected filter values this card matches (rung 1). */
   matchCount?: (card: T) => number;
-  /** Whether the visitor has already read this card (rung 3). */
+  /** Whether the visitor has already read this card (rung 4). */
   isSeen?: (card: T) => boolean;
+  /**
+   * Precomputed by `rankCards` — true for a card that should be pinned ahead
+   * of priority (rung 2). Not meant to be supplied by callers; `compareCards`
+   * accepts it purely so the rung can be expressed as a pairwise read like
+   * every other one.
+   */
+  isPinnedUnseen?: (card: T) => boolean;
 };
 
 /** A card's containing folder, or '' for a card sitting at the tree root. */
@@ -76,11 +95,17 @@ export function compareCards<T extends RankableCard>(a: T, b: T, ctx: RankingCon
     if (diff !== 0) return diff;
   }
 
-  // 2. Priority, descending — higher is more interesting.
+  // 2. Pinned unseen — jumps ahead of priority. See the module comment.
+  if (ctx.isPinnedUnseen) {
+    const pinnedDiff = Number(ctx.isPinnedUnseen(b)) - Number(ctx.isPinnedUnseen(a));
+    if (pinnedDiff !== 0) return pinnedDiff;
+  }
+
+  // 3. Priority, descending — higher is more interesting.
   const priorityDiff = (b.priority ?? DEFAULT_PRIORITY) - (a.priority ?? DEFAULT_PRIORITY);
   if (priorityDiff !== 0) return priorityDiff;
 
-  // 3. Unseen before seen.
+  // 4. Unseen before seen.
   if (ctx.isSeen) {
     const seenDiff = Number(ctx.isSeen(a)) - Number(ctx.isSeen(b));
     if (seenDiff !== 0) return seenDiff;
@@ -88,25 +113,54 @@ export function compareCards<T extends RankableCard>(a: T, b: T, ctx: RankingCon
 
   const sameFolder = folderOf(a.uid) === folderOf(b.uid);
   if (sameFolder) {
-    // 4. `order`, ascending — but only within one folder, and only when both
+    // 5. `order`, ascending — but only within one folder, and only when both
     // cards declare it. One card of a pair having an `order` says nothing
     // about how it relates to a sibling that has none.
     if (a.order !== undefined && b.order !== undefined && a.order !== b.order) {
       return a.order - b.order;
     }
 
-    // 5. The folder's declared sort. Both cards share the folder, so they
+    // 6. The folder's declared sort. Both cards share the folder, so they
     // agree on the key and direction; an undeclared sort is the default.
     const sort = a.sort ?? b.sort ?? DEFAULT_FOLDER_SORT;
     const sortDiff = compareSortValues(a.sort?.value, b.sort?.value, sort.direction);
     if (sortDiff !== 0) return sortDiff;
   }
 
-  // 6. uid.
+  // 7. uid.
   return a.uid.localeCompare(b.uid);
+}
+
+/**
+ * For each matchCount tier present in `cards`, the highest priority declared
+ * by any unseen card in that tier. A tier with no unseen cards has no entry —
+ * "pin nothing" rather than "pin everything", which a `-Infinity` sentinel
+ * would get wrong.
+ */
+function topUnseenPriorityByTier<T extends RankableCard>(
+  cards: readonly T[],
+  ctx: RankingContext<T>,
+): Map<number, number> {
+  const tiers = new Map<number, number>();
+  if (!ctx.isSeen) return tiers;
+  for (const card of cards) {
+    if (ctx.isSeen(card)) continue;
+    const tier = ctx.matchCount ? ctx.matchCount(card) : 0;
+    const priority = card.priority ?? DEFAULT_PRIORITY;
+    const current = tiers.get(tier);
+    if (current === undefined || priority > current) tiers.set(tier, priority);
+  }
+  return tiers;
 }
 
 /** Ranks a card list. Does not mutate the input. */
 export function rankCards<T extends RankableCard>(cards: readonly T[], ctx: RankingContext<T> = {}): T[] {
-  return [...cards].sort((a, b) => compareCards(a, b, ctx));
+  const topUnseenPriority = topUnseenPriorityByTier(cards, ctx);
+  const isPinnedUnseen = (card: T): boolean => {
+    if (!ctx.isSeen || ctx.isSeen(card)) return false;
+    const tier = ctx.matchCount ? ctx.matchCount(card) : 0;
+    return (card.priority ?? DEFAULT_PRIORITY) === topUnseenPriority.get(tier);
+  };
+  const fullCtx: RankingContext<T> = { ...ctx, isPinnedUnseen };
+  return [...cards].sort((a, b) => compareCards(a, b, fullCtx));
 }

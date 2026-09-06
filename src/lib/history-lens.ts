@@ -24,7 +24,7 @@
 //     makes them partition the pool exactly.
 //
 // "This changed, look again" is not given up — it already has a home in the
-// ranking chain's rung 3, which reads the hash-SENSITIVE getViewState, so an
+// ranking chain's rung 4, which reads the hash-SENSITIVE getViewState, so an
 // edited card floats back up the ranked lenses and the front page. Freshness
 // is a ranking signal; membership here is a fact about the visitor.
 
@@ -78,8 +78,9 @@ export function seenCards<T extends { uid: string }>(cards: readonly T[], histor
  * (ranking.ts) — the same chain Most* Interesting sorts by.
  *
  * `ctx.isSeen` is deliberately not passed on by callers: every card here is
- * unseen by construction, so rung 3 can only ever tie. Rung 1 (filter-match
- * count) is the one that still does work.
+ * unseen by construction, so rungs 2 (pinned unseen) and 4 (unseen-before-seen)
+ * can only ever tie — rung 2's pin computation is a no-op without an `isSeen`
+ * accessor. Rung 1 (filter-match count) is the one that still does work.
  */
 export function unseenCards<T extends RankableCard>(
   cards: readonly T[],

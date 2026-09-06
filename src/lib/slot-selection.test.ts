@@ -128,14 +128,27 @@ describe('selectSlotCard — seen-ness', () => {
       .toBe(unseen.uid);
   });
 
-  it('does not let seen-ness outrank priority', () => {
-    // The whole reason rung 2 sits above rung 3: an authored boost must keep
-    // mattering to exactly the returning visitor it was aimed at.
+  it('pins the top unseen card ahead of a higher-priority read one', () => {
+    // Rung 2: the slot's sole unseen card is trivially "top priority among
+    // unseen" and jumps ahead of the boosted-but-read card.
     const boosted = fakeCardMeta({ uid: 'posts/boosted', priority: 100 });
     const unseen  = fakeCardMeta({ uid: 'posts/unseen',  priority: 0 });
     markRead(boosted.uid, contentHashFor(boosted));
 
     expect(selectSlotCard([boosted, unseen], EMPTY_FILTER, DAY1_A, UTC, undefined, 1)?.uid)
+      .toBe(unseen.uid);
+  });
+
+  it('still lets an authored boost outrank a read card once nothing unseen remains at the top', () => {
+    // Rung 3: with no unseen card to pin, priority governs as before — an
+    // authored boost keeps mattering to exactly the returning visitor it was
+    // aimed at.
+    const boosted = fakeCardMeta({ uid: 'posts/boosted', priority: 100 });
+    const plain   = fakeCardMeta({ uid: 'posts/plain',  priority: 0 });
+    markRead(boosted.uid, contentHashFor(boosted));
+    markRead(plain.uid, contentHashFor(plain));
+
+    expect(selectSlotCard([boosted, plain], EMPTY_FILTER, DAY1_A, UTC, undefined, 1)?.uid)
       .toBe(boosted.uid);
   });
 
@@ -154,6 +167,21 @@ describe('selectSlotCard — seen-ness', () => {
 
     expect(selectSlotCard([edited, other], EMPTY_FILTER, DAY1_A, UTC, undefined, 1)?.uid)
       .toBe(edited.uid);
+  });
+
+  it('takes an injected `isSeen` over the default getViewState check', () => {
+    // HomeLensSlots.svelte passes its own `isSeen`, backed by
+    // expandCollapsedSeries's `readUids` — a collapsed series representative
+    // counts as seen from "any member seen", which no per-card getViewState
+    // check on the representative's own uid/hash could express. Nothing here
+    // is actually read via markRead; the override alone must decide it.
+    const boosted = fakeCardMeta({ uid: 'posts/boosted', priority: 100 });
+    const rep = fakeCardMeta({ uid: 'posts/series-rep', priority: 50 });
+    const isSeen = (card: { uid: string }) => card.uid === rep.uid;
+
+    expect(
+      selectSlotCard([boosted, rep], EMPTY_FILTER, DAY1_A, UTC, undefined, 1, isSeen)?.uid,
+    ).toBe(boosted.uid);
   });
 });
 
