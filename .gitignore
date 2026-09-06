@@ -20,6 +20,8 @@ src/content/.obsidian/workspace*.json
 src/content/.obsidian/cache
 src/content/.obsidian/plugins/*/*
 !src/content/.obsidian/plugins/*/data.json
+# ...except our own plugin, which is source, not vendored code.
+!src/content/.obsidian/plugins/pdyxs-card-links/**
 # obsidian-git's data.json can carry git credentials — never commit it.
 src/content/.obsidian/plugins/obsidian-git/data.json
 src/content/.trash/
