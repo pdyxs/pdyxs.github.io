@@ -45,6 +45,12 @@ export default defineConfig({
         awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 10 },
       },
     },
+    // `astro preview` serves the real build output through Vite's preview
+    // server, which validates the Host header the same way `server` does
+    // for dev (issue #91's build.pdyxs.wtf preview).
+    preview: {
+      allowedHosts: ['build.pdyxs.wtf'],
+    },
     // Dev only: content YAML (`_config.yaml`, `*.tag.yaml`, `*.lens.yaml`) is
     // read by fs / consumed by a pre* generator, so nothing in the module graph
     // changes when it does. See scripts/dev-reload-plugin.mjs.
