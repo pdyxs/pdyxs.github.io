@@ -35,4 +35,4 @@ gallery: false
 excludeTags:
   - generated/location
 group: Projects
-priority: 10
+priority: 18
