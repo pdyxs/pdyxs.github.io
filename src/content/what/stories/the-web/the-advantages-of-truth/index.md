@@ -21,7 +21,9 @@ tags: []
 #   renderer: story
 #   navRenderer: series
 ---
-To say that we've got a problem with truth in online spaces seems like an understatement. 
+To say that we've got a problem with truth in online spaces is an understatement. It was an understatement before generative AI showed up, and now it's a statement limbo champion.
+
+My 
 
 As the web has developed and both misinformation and disinformation have become more and more common, I've started thinking about what 
 
