@@ -20,7 +20,7 @@
     [-0.5, -0.25]
   ];
 
-  function exitImagePosition(imagePosition, exit): Position {
+  function exitImagePosition(imagePosition: Position, exit: number): Position {
     return [
       imagePosition[0] + exitLocations[exit][0] * 2,
       imagePosition[1] + exitLocations[exit][1] * 2
@@ -66,7 +66,7 @@
     images.map((_, i) => i).filter((i) => !placements.has(i))
   );
 
-  function availableImagesForExit(exit) {
+  function availableImagesForExit(exit: number) {
     if (exit < 0) return [...unplacedIndexes];
     return unplacedIndexes.filter(i => EXITS[i].includes((exit + 4) % 8));
   }
@@ -86,7 +86,8 @@
 
   let currentFocus: Position = $state([0,0]);
 
-  function place(index: i) {
+  function place(index: number) {
+    if (currentPlacement == null) return;
     placements.set(index, currentPlacement.position);
     currentFocus = currentPlacement.position;
     currentPlacement = undefined;
@@ -100,6 +101,10 @@
   function refocus(position: Position) {
     currentPlacement = undefined;
     currentFocus = position;
+  }
+
+  function arePositionsEqual(p1: Position, p2: Position) {
+    return p1[0] === p2[0] && p1[1] === p2[1];
   }
 
 </script>
@@ -121,28 +126,34 @@
                     {#if !currentPlacement}
                       {#each image.exits as exit}
                           {#if availableImagesForExit(exit).length > 0}
-                            <div class="exit"
+                            <button type="button" class="exit"
                                 style:--exit-x={exitLocations[exit][0]}
                                 style:--exit-y={exitLocations[exit][1]}
                                 onclick={() => startPlacement(image.position, exit)}
-                            ></div>
+                                aria-label="Exit {exit}"
+                            ></button>
                           {/if}
                       {/each}
                     {/if}
-                    <img
-                        src={image.src}
-                        width={image.width}
-                        height={image.height}
-                        alt=""
-                        loading="lazy"
-                        onclick={() => refocus(image.position)}
-                        />
+                    <button type="button" class="image-placed"
+                        class:current={arePositionsEqual(image.position, currentFocus)}
+                        onclick={() => refocus(image.position)}>
+                        <img
+                            src={image.src}
+                            width={image.width}
+                            height={image.height}
+                            alt="Return to this linoprint"
+                            loading="lazy"
+                            />
+                    </button>
             </div>
         {/each}
         {#if placeableImages.length > 0}
             <div class="placeable-container">
             {#each placeableImages as image (image.filename)}
-                <img class="image-placeable" src={image.src} alt="" onclick={() => place(image.index)} />
+                <button type="button" class="image-placeable" onclick={() => place(image.index)}>
+                    <img src={image.src} alt="Place this linoprint here" />
+                </button>
             {/each}
             </div>
         {/if}
@@ -162,7 +173,7 @@
       --lino-gap: 0px;                                  /* between tiles */
       --lino-step: calc(var(--lino-tile) + var(--lino-gap));
 
-      --lino-frame: calc(var(--lino-tile) / 10);        /* was 20px @ 500 */
+      --lino-frame: calc(var(--lino-tile) / 5);        /* was 20px @ 500 */
       --lino-wiggle: var(--lino-frame);                 /* travel, peak-to-peak */
       --lino-exit-size: calc(var(--lino-tile) / 20);    /* was 20px @ 500 */
       --lino-exit-ring: calc(var(--lino-exit-size) / 5); /* each stripe */
@@ -185,6 +196,7 @@
   }
 
   .image-placeable {
+      all: unset;
       width: var(--placeable-tile);
       height: var(--placeable-tile);
       max-width: var(--placeable-tile);
@@ -192,7 +204,20 @@
 
       &:hover {
           transform: scale(1.2);
+          cursor: pointer;
       }
+  }
+
+  .image-placed {
+    all: unset;
+
+    &:hover {
+        cursor: pointer;
+    }
+
+    &.current:hover {
+        cursor: default;
+    }
   }
 
   .lino-wiggle {
@@ -231,6 +256,7 @@
   /* --exit-x/--exit-y are fractions of the tile (-0.5 … 0.5) from its centre,
      so an exit stays welded to its edge at every size. */
   .exit {
+      all: unset;
       position: absolute;
       width: var(--lino-exit-size);
       height: var(--lino-exit-size);
@@ -250,9 +276,15 @@
           0 0 0 var(--lino-exit-ring) var(--color-bg),
           0 0 0 calc(var(--lino-exit-ring) * 2) var(--color-text);
 
+      &::before {
+          content: "";
+          position: absolute;
+          inset: calc(-1 * var(--lino-exit-size));
+      }
 
       &:hover {
           transform: scale(110%);
+          cursor: pointer;
       }
   }
 </style>

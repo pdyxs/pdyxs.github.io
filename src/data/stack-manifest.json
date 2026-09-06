@@ -1785,5 +1785,10 @@
     "uid": "what/stories/the-web/the-advantages-of-truth",
     "code": "5X",
     "title": "The advantages of truth"
+  },
+  {
+    "uid": "what/stories/the-web/looking-greyscale",
+    "code": "5Y",
+    "title": "looking-greyscale"
   }
 ]
