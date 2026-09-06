@@ -26,9 +26,9 @@ width: 1100px
 config:
   slots:
     - uid: who/about-me
-      span: { small: 7, large: 7 }
+      span: { small: 7, large: 8 }
       variant: brief
-      label: " "
+      label: " "
 
     - filter:
         what: [what:games, what:art, what:software]
@@ -43,7 +43,7 @@ config:
     - filter:
         what: [what:writing]
       pool: 5
-      span: { small: 7, large: 7 }
+      span: { small: 7, large: 8 }
       variant: brief
       label: Some writing
       seeMore: true
@@ -65,12 +65,7 @@ config:
       seeMore: true
 
     - uid: what/software/pdyxs-wtf
-      span: { small: 8, large: 4 }
+      stackUid: where/contact/follow-me
+      span: { small: 12, large: 4 }
       variant: brief
       label: More
-
-    - uid: where/contact/follow-me
-      span: { small: 4, large: 4 }
-      variant: brief
-      side: right
-      label: " "
