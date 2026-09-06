@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: The Clone Gunmen
 date: 2026-06-10
 series: convergent-clues

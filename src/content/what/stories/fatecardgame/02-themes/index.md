@@ -3,6 +3,7 @@ inspected: true
 title: Themes
 series: fatecardgame
 order: 2
+date: 2019-07-20T00:00:00.000Z
 image: social.mp4
 tags:
   - what/games/analog/fatecardgame

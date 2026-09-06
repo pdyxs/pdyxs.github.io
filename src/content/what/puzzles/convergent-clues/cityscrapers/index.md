@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Cityscrapers
 date: 2025-03-16
 series: convergent-clues

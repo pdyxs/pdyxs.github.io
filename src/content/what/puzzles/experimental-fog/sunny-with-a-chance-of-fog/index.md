@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Sunny, with a Chance of Fog
 date: 2025-03-23
 series: experimental-fog

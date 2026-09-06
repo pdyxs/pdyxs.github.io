@@ -4,6 +4,7 @@ image: original.png
 title: Art
 series: fatecardgame
 order: 3
+date: 2019-07-20T00:00:00.000Z
 tags:
   - what/games/analog/fatecardgame
 ---

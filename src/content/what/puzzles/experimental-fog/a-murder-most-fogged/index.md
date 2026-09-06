@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: A Murder Most Fogged
 date: 2025-01-24
 series: experimental-fog

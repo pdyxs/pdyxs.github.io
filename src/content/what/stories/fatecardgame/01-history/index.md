@@ -4,6 +4,7 @@ image: original.jpg
 title: Where it’s from
 series: fatecardgame
 order: 1
+date: 2019-07-07T00:00:00.000Z
 tags:
   - what/games/analog/fatecardgame
 ---

@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Commonality
 date: 2024-12-16
 series: convergent-clues

@@ -4,6 +4,7 @@ image: original.png
 title: Fate's Hand
 series: fatecardgame
 order: 4
+date: 2019-07-22T00:00:00.000Z
 tags:
   - what/games/analog/fatecardgame
 ---

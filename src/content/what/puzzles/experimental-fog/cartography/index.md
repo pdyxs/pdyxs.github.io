@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Cartography
 date: 2025-01-26
 series: experimental-fog

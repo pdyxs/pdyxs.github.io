@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Little Fillers
 date: 2024-12-20
 series: convergent-clues

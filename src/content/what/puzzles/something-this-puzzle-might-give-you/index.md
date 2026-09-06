@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Something this Puzzle might give you
 date: 2024-12-22
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000L87

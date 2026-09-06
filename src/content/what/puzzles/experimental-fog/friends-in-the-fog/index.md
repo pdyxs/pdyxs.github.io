@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Friends in the Fog
 date: 2025-04-13
 series: experimental-fog

@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Recounting the Counting
 date: 2025-01-14
 series: experimental-fog

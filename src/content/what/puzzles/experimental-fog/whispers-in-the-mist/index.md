@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Whispers in the Mist
 date: 2025-02-02
 series: experimental-fog

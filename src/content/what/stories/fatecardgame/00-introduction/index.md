@@ -5,6 +5,7 @@ title: In Fate's Hands
 icon: info-circle
 series: fatecardgame
 order: 0
+date: 2019-07-07T00:00:00.000Z
 tags:
   - what/games/analog/fatecardgame
 ---
