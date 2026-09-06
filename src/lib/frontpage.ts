@@ -41,6 +41,14 @@ export type ResolvedSlot = {
    * preclude it, and this field changes shape in one file when it lands.
    */
   card: SerialisedCardFull | null;
+  /**
+   * The second pinned card for a `stackUid:` slot (see home-slots.ts) —
+   * rendered directly beneath `card`, inside the same cell. Present only when
+   * the slot declared `stackUid:`; absent (not merely null) otherwise, so a
+   * slot with no stack renders no second card list at all rather than an
+   * empty one.
+   */
+  stackCard?: SerialisedCardFull | null;
   variant: BrowseCardVariant;
   span: SlotTiers;
   rows: SlotTiers;
@@ -130,6 +138,7 @@ export function resolveFrontPageSlots(
 
     return {
       card,
+      ...(slot.stackUid !== undefined ? { stackCard: byUid.get(slot.stackUid) ?? null } : {}),
       variant: resolveBrowseCardVariant(slot.variant),
       span: slot.span,
       rows: slot.rows,

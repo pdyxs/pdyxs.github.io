@@ -26,6 +26,7 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
           },
           "side": "main",
           "variant": "brief",
+          "label": " ",
           "seeMore": false
         },
         {
@@ -53,7 +54,7 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
         {
           "filter": {
             "what": [
-              "what:puzzles"
+              "what:writing"
             ]
           },
           "pool": 5,
@@ -67,19 +68,60 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
           },
           "side": "main",
           "variant": "brief",
+          "label": "Some writing",
+          "seeMore": true
+        },
+        {
+          "filter": {
+            "what": [
+              "what:puzzles"
+            ]
+          },
+          "pool": 5,
+          "span": {
+            "small": 6,
+            "large": 4
+          },
+          "rows": {
+            "small": 1,
+            "large": 1
+          },
+          "side": "main",
+          "variant": "full",
           "label": "A Puzzle",
           "seeMore": true
         },
         {
           "filter": {
             "what": [
-              "what:writing"
+              "what:posts"
             ]
           },
           "pool": 5,
           "span": {
+            "small": 6,
+            "large": 4
+          },
+          "rows": {
+            "small": 1,
+            "large": 1
+          },
+          "side": "main",
+          "variant": "full",
+          "label": "A Post",
+          "seeMore": true
+        },
+        {
+          "uid": "what/software/pdyxs-wtf",
+          "stackUid": "where/contact/follow-me",
+          "stackDirection": {
+            "small": "row",
+            "large": "column"
+          },
+          "stackSplit": 2,
+          "span": {
             "small": 12,
-            "large": 12
+            "large": 4
           },
           "rows": {
             "small": 1,
@@ -87,8 +129,8 @@ export const LENS_DECLARATIONS: LensDeclaration[] = [
           },
           "side": "main",
           "variant": "brief",
-          "label": "A Post",
-          "seeMore": true
+          "label": "More",
+          "seeMore": false
         }
       ]
     }

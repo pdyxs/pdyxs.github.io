@@ -66,6 +66,8 @@ config:
 
     - uid: what/software/pdyxs-wtf
       stackUid: where/contact/follow-me
+      stackDirection: { small: row, large: column }
+      stackSplit: 2
       span: { small: 12, large: 4 }
       variant: brief
       label: More

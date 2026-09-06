@@ -76,6 +76,11 @@
       // config, must be able to draw the link before the pool arrives.
       seeMoreUrl: slot.seeMore && slot.filter ? buildBrowseUrl(slot.filter) : null,
       card: resolvedSlots?.[i]?.card ?? null,
+      // Undefined (not null) when the slot declared no `stackUid:` — that's
+      // what keeps the second card list out of the DOM entirely for every
+      // ordinary slot, rather than rendering an empty one.
+      hasStack: slot.stackUid !== undefined,
+      stackCard: resolvedSlots?.[i]?.stackCard ?? null,
       resolved: resolvedSlots !== null,
     })),
   );
@@ -129,12 +134,33 @@
   onMount(requestPool);
 </script>
 
+<!-- The interior is PINNED, not guessed: --browse-card-min-height is the
+     variant's measured floor, the same number BrowseCard's own content box
+     carries, so the real card can only grow into space already held. A
+     guessed height would set every row's height at first paint and the real
+     card would change it at hydration — a document-height jump on `/`, which
+     is the whole thing this exists to prevent. Shared by the primary and
+     stacked placeholders so a `stackUid:` slot reserves space for both cards
+     rather than only the first. -->
+{#snippet placeholder(v: (typeof BROWSE_CARD_VARIANTS)[keyof typeof BROWSE_CARD_VARIANTS])}
+  <div class="fp-slot-placeholder" style:--browse-card-min-height={v.minHeight} aria-hidden="true">
+    {#if v.thumb}
+      <div class="fp-slot-placeholder-thumb"></div>
+    {/if}
+    <div class="fp-slot-placeholder-content">
+      <div class="fp-slot-placeholder-line fp-slot-placeholder-line--title"></div>
+      <div class="fp-slot-placeholder-line"></div>
+      <div class="fp-slot-placeholder-line fp-slot-placeholder-line--short"></div>
+    </div>
+  </div>
+{/snippet}
+
 <!-- The real grid, server-rendered from home.lens.yaml alone. This is NOT a
      skeleton and there is no layer to remove: the cells are the finished ones
      and only their interiors are provisional, so the grid never moves — it
      fills. (Which is the tell that it is the right shape.) -->
 <div class="fp-slot-grid">
-  {#each cells as { slot, variant, seeMoreUrl, card, resolved }, i (i)}
+  {#each cells as { slot, variant, seeMoreUrl, card, hasStack, stackCard, resolved }, i (i)}
     <!-- Keyed by index: today's `type === 'pinned' ? uid : label` cannot
          survive optional labels, and this list is server-resolved and static. -->
     <div
@@ -150,7 +176,37 @@
       {/if}
 
       {#if resolved}
-        {#if card}
+        {#if hasStack}
+          <!-- Both cards live in ONE wrapper inside this single grid cell,
+               never as a second grid item — a `stackUid:` slot needs its
+               second card to follow the first with no gap, regardless of how
+               tall the row-track this slot's cell happens to share with other
+               slots ends up being. Two grid items can't do that: each
+               stretches to fill its own row-track independently, and any
+               slack in a shared track lands wherever THAT item's flex
+               alignment puts it, not next to a sibling in a different track.
+               `.fp-slot-stack` also carries the small-tier row split that
+               reproduces the two cards sitting side by side, which is why the
+               wrapper exists even when one side hasn't resolved a card. See
+               CLAUDE.md's home-slots section. -->
+          <div
+            class="fp-slot-stack"
+            style:--stack-direction-small={slot.stackDirection?.small}
+            style:--stack-direction-large={slot.stackDirection?.large}
+            style:--stack-split={slot.stackSplit}
+          >
+            {#if card}
+              <ul class="fp-slot-card-list">
+                <BrowseCard {card} {tagDisplay} variant={slot.variant} />
+              </ul>
+            {/if}
+            {#if stackCard}
+              <ul class="fp-slot-card-list">
+                <BrowseCard card={stackCard} {tagDisplay} variant={slot.variant} />
+              </ul>
+            {/if}
+          </div>
+        {:else if card}
           <ul class="fp-slot-card-list">
             <BrowseCard {card} {tagDisplay} variant={slot.variant} />
           </ul>
@@ -164,28 +220,18 @@
              what can be DONE about it is the one retry control below the grid,
              rather than one per slot saying the same thing five times. -->
         <p class="fp-slot-stalled">{poolFailureMessage(failure)}</p>
-      {:else}
-        <!-- The interior is PINNED, not guessed: --browse-card-min-height is
-             the variant's measured floor, the same number BrowseCard's own
-             content box carries, so the real card can only grow into space
-             already held. A guessed height would set every row's height at
-             first paint and the real cards would change it at hydration — a
-             document-height jump on `/`, which is the whole thing this
-             exists to prevent. -->
+      {:else if hasStack}
         <div
-          class="fp-slot-placeholder"
-          style:--browse-card-min-height={variant.minHeight}
-          aria-hidden="true"
+          class="fp-slot-stack"
+          style:--stack-direction-small={slot.stackDirection?.small}
+          style:--stack-direction-large={slot.stackDirection?.large}
+          style:--stack-split={slot.stackSplit}
         >
-          {#if variant.thumb}
-            <div class="fp-slot-placeholder-thumb"></div>
-          {/if}
-          <div class="fp-slot-placeholder-content">
-            <div class="fp-slot-placeholder-line fp-slot-placeholder-line--title"></div>
-            <div class="fp-slot-placeholder-line"></div>
-            <div class="fp-slot-placeholder-line fp-slot-placeholder-line--short"></div>
-          </div>
+          {@render placeholder(variant)}
+          {@render placeholder(variant)}
         </div>
+      {:else}
+        {@render placeholder(variant)}
       {/if}
 
       {#if seeMoreUrl}

@@ -53,7 +53,12 @@ export const DEFAULT_SLOT_ROWS = 1;
  *
  * `resolveSlotSpans` and `resolveSlotRows` are the same function shape by
  * design: two keys sitting beside each other in the same slot must not read
- * differently.
+ * differently. `resolveStackDirection` below follows the identical shape for
+ * a string scalar rather than sharing this implementation — a shared generic
+ * version was tried and dropped: unifying a type parameter against a
+ * `'row'|'column'` string union collides with TypeScript's built-in
+ * `String.prototype.small()`/`large()` typings (the deprecated HTML-wrapper
+ * methods) and infers nonsense. Not worth fighting for two call sites.
  */
 function resolveTiers(declared: DeclaredTiers | undefined, base: number): SlotTiers {
   if (declared === undefined) return { small: base, large: base };
@@ -68,6 +73,32 @@ export function resolveSlotSpans(declared?: DeclaredTiers): SlotTiers {
 
 export function resolveSlotRows(declared?: DeclaredTiers): SlotTiers {
   return resolveTiers(declared, DEFAULT_SLOT_ROWS);
+}
+
+/**
+ * How a `stackUid:` slot's two cards sit relative to each other — stacked
+ * top-to-bottom, or side by side sharing the row. Tiered like `span`/`rows`
+ * because the two cards being side by side only makes sense at a width wide
+ * enough to hold both without either going too narrow to read; the deciding
+ * width isn't the same for every pairing, so it's authored per slot rather
+ * than fixed in CSS.
+ */
+export type StackDirection = 'row' | 'column';
+export type StackDirectionTiers = { small: StackDirection; large: StackDirection };
+export type DeclaredStackDirection = StackDirection | { small?: StackDirection; large?: StackDirection };
+
+/** A `stackUid:` slot that declares no `stackDirection` stacks top-to-bottom
+ * at every tier — the name's own default. */
+export const DEFAULT_STACK_DIRECTION: StackDirection = 'column';
+/** A `stackUid:` slot in `row` direction that declares no `stackSplit` gives
+ * both cards equal width. */
+export const DEFAULT_STACK_SPLIT = 1;
+
+export function resolveStackDirection(declared?: DeclaredStackDirection): StackDirectionTiers {
+  if (declared === undefined) return { small: DEFAULT_STACK_DIRECTION, large: DEFAULT_STACK_DIRECTION };
+  if (typeof declared === 'string') return { small: declared, large: declared };
+  const small = declared.small ?? DEFAULT_STACK_DIRECTION;
+  return { small, large: declared.large ?? small };
 }
 
 // ---------------------------------------------------------------------------
@@ -86,6 +117,12 @@ const rowsSchema = z.union([
   z.object({ small: rowsValue.optional(), large: rowsValue.optional() }).strict(),
 ]);
 
+const stackDirectionValue = z.enum(['row', 'column']);
+const stackDirectionSchema = z.union([
+  stackDirectionValue,
+  z.object({ small: stackDirectionValue.optional(), large: stackDirectionValue.optional() }).strict(),
+]);
+
 /**
  * One authored slot.
  *
@@ -101,11 +138,29 @@ const rowsSchema = z.union([
  * `side` is a one-member enum rather than `rail: true`, so `side: left` is a
  * validation error rather than a silent no-op, and the enum extends later
  * without a rename.
+ *
+ * `stackUid` pins a SECOND card directly beneath this slot's own, inside the
+ * SAME grid cell — for two short pinned cards that need to read as one
+ * column with no gap between them, regardless of how tall the row-track they
+ * share with other slots ends up being. It's only legal beside `uid:`: a
+ * `filter:` slot's card is a day-seeded pick, and stacking a second pick
+ * beneath it has no obvious meaning. Two DIFFERENT NormalisedSlot fields
+ * (`uid`/`stackUid`) rather than an array, so every existing single-card call
+ * site keeps its shape — see `ResolvedSlot.card`'s own "singular,
+ * deliberately" note in frontpage.ts for the same reasoning.
+ *
+ * `stackDirection` and `stackSplit` are only meaningful beside `stackUid` —
+ * they configure how ITS pair sits, not anything about the slot's own single
+ * card — and are validation errors without it, for the same "no silent no-op"
+ * reasoning `side`/`align` follow elsewhere in this file.
  */
 const slotSchema = z
   .object({
     uid: z.string().optional(),
     filter: z.record(z.string(), z.array(z.string())).optional(),
+    stackUid: z.string().optional(),
+    stackDirection: stackDirectionSchema.optional(),
+    stackSplit: z.number().positive().optional(),
     pool: z.number().int().positive().optional(),
     span: spanSchema.optional(),
     rows: rowsSchema.optional(),
@@ -145,6 +200,12 @@ export type NormalisedSlot = {
   span: SlotTiers;
   rows: SlotTiers;
   side: 'main' | 'right';
+  /** See `stackUid` on `AuthoredSlot` above. `stackDirection`/`stackSplit` are
+   * present only alongside it — a slot with no stack has nothing for them to
+   * configure. */
+  stackUid?: string;
+  stackDirection?: StackDirectionTiers;
+  stackSplit?: number;
   variant: BrowseCardVariantName;
   label?: string;
   seeMore: boolean;
@@ -174,10 +235,27 @@ function normaliseSlot(slot: AuthoredSlot, index: number): NormalisedSlot {
   if (!hasFilter && slot.pool !== undefined) {
     throw slotError(index, 'declares `pool:` on a `uid:` slot, which selects no card');
   }
+  if (!hasUid && slot.stackUid !== undefined) {
+    throw slotError(index, 'declares `stackUid:` on a `filter:` slot — only a `uid:` slot can stack a second pin');
+  }
+  const hasStack = slot.stackUid !== undefined;
+  if (!hasStack && slot.stackDirection !== undefined) {
+    throw slotError(index, 'declares `stackDirection:` without `stackUid:`, which has no pair to arrange');
+  }
+  if (!hasStack && slot.stackSplit !== undefined) {
+    throw slotError(index, 'declares `stackSplit:` without `stackUid:`, which has no pair to split');
+  }
 
   return {
     ...(hasUid ? { uid: slot.uid } : {}),
     ...(hasFilter ? { filter: slot.filter as FilterState } : {}),
+    ...(hasStack
+      ? {
+          stackUid: slot.stackUid,
+          stackDirection: resolveStackDirection(slot.stackDirection),
+          stackSplit: slot.stackSplit ?? DEFAULT_STACK_SPLIT,
+        }
+      : {}),
     ...(slot.pool !== undefined ? { pool: slot.pool } : {}),
     span: resolveSlotSpans(slot.span),
     rows: resolveSlotRows(slot.rows),
