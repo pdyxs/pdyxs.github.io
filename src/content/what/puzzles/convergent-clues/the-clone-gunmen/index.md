@@ -1,10 +1,11 @@
 ---
-inspected: true
+inspected: false
 title: The Clone Gunmen
 date: 2026-06-10
 series: convergent-clues
 order: 4
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000T86
+priority: 0
 sudokupad_url: https://sudokupad.app/pdyxs/the-clone-gunmen
 image: bild.png
 difficulty: Level 4 (Hard)

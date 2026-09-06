@@ -1,10 +1,11 @@
 ---
-inspected: true
+inspected: false
 title: Recounting the Counting
 date: 2025-01-14
 series: experimental-fog
 order: 1
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LL7
+priority: 1
 sudokupad_url: https://sudokupad.app/pdyxs/recounting-the-counting
 image: bild.png
 difficulty: Level 3 (Medium)

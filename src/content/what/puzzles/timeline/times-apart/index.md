@@ -12,6 +12,7 @@ tags:
   - what/games/analog/time-fight
 imagePad: 1%
 description: A time travel sudoku
+priority: 2
 ---
 
 This is a prequel to my [Time War puzzles](collection:what:puzzles/timeline), aimed at creating a smoother on-ramp to the time travel ruleset.

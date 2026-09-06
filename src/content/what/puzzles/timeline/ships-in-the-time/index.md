@@ -12,6 +12,7 @@ tags:
   - what/games/analog/time-fight
 imagePad: 1%
 description: Another time
+priority: 2
 ---
 
 Here's a follow-up to [Times Apart](card:what/puzzles/timeline/times-apart), taking the timeline mechanic to a 9x9.

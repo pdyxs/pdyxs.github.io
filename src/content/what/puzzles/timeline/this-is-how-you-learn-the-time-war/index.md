@@ -5,6 +5,7 @@ date: 2025-02-26
 series: timeline
 order: 2
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000M6F
+priority: 2
 sudokupad_url: https://sudokupad.app/pdyxs/this-is-how-you-learn-the-time-war
 image: bild.png
 difficulty: Level 4 (Hard)

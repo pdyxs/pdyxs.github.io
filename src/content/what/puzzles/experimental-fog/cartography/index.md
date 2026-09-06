@@ -1,10 +1,11 @@
 ---
-inspected: true
+inspected: false
 title: Cartography
 date: 2025-01-26
 series: experimental-fog
 order: 3
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LRL
+priority: 0
 sudokupad_url: https://sudokupad.app/pdyxs/cartography
 image: bild.png
 difficulty: Level 3 (Medium)

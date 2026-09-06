@@ -1,10 +1,11 @@
 ---
-inspected: true
+inspected: false
 title: Little Fillers 2
 date: 2025-01-27
 series: convergent-clues
 order: 2
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LS4
+priority: 1
 sudokupad_url: https://sudokupad.app/pdyxs/little-fillers-2
 image: bild.png
 difficulty: Level 3 (Medium)

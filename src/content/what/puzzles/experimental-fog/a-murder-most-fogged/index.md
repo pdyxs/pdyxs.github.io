@@ -1,10 +1,11 @@
 ---
-inspected: true
+inspected: false
 title: A Murder Most Fogged
 date: 2025-01-24
 series: experimental-fog
 order: 2
 url: https://logic-masters.de/Raetselportal/Raetsel/zeigen.php?id=000LQI
+priority: 0
 sudokupad_url: https://sudokupad.app/pdyxs/a-murder-most-fogged
 image: bild.png
 difficulty: Level 2 (Easy)
