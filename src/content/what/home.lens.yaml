@@ -26,7 +26,7 @@ width: 1100px
 config:
   slots:
     - uid: who/about-me
-      span: { small: 7, large: 8 }
+      span: { small: 7, large: 7 }
       variant: brief
 
     - filter:
@@ -42,16 +42,34 @@ config:
     - filter:
         what: [what:writing]
       pool: 5
-      span: { small: 7, large: 8 }
+      span: { small: 7, large: 7 }
       variant: brief
-      label: A Post
+      label: Some writing
       seeMore: true
 
     - filter:
         what: [what:puzzles]
       pool: 5
-      span: { small: 7, large: 8 }
-      variant: full
-      side: right
+      span: { small: 6, large: 4 }
+      variant: full 
       label: A Puzzle
       seeMore: true
+
+    - filter:
+        what: [what:posts]
+      pool: 5
+      span: { small: 6, large: 4 }
+      variant: full 
+      label: A Post
+      seeMore: true
+
+    - uid: what/software/pdyxs-wtf
+      span: { small: 6, large: 4 }
+      variant: brief
+      side: right
+      label: More
+
+    - uid: where/contact/follow-me
+      span: { small: 6, large: 4 }
+      variant: brief
+      side: right
