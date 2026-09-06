@@ -8,7 +8,6 @@ import {
   isPlayable,
 } from './why-tags';
 import { resolveActions } from './card-actions';
-import { generatedTagsForCard, generatorDerivations } from './filter-generators';
 import { discoverTagSources, makeContentTreeReader } from './tag-registry';
 
 describe('isPlayable', () => {

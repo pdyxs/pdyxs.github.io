@@ -168,7 +168,7 @@ export function createCardPoolLoader(
     return parsed;
   }
 
-  function withTimeout(body: Promise<SharedCardPoolAsset>): Promise<SharedCardPoolAsset> {
+  async function withTimeout(body: Promise<SharedCardPoolAsset>): Promise<SharedCardPoolAsset> {
     let timer: ReturnType<typeof setTimeout>;
     const expiry = new Promise<never>((_resolve, reject) => {
       timer = setTimeout(
