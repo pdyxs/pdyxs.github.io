@@ -1435,19 +1435,19 @@ to **no pool at all** — a cached document naming a deleted hash 404s, and on
 *hours* against HTML's ten minutes. The recorded upgrade path, if one is ever wanted,
 is `/cards.json?v=<hash>` — fixed path, hashed query, one hash call site instead of two.
 
-**Five keys, and the membership test is "is this byte-identical on every route".**
-`cards`, `tagDisplay`, `hierarchies`, `groupOrder`, `cardBackedValues`. `lens`,
+**Six keys, and the membership test is "is this byte-identical on every route".**
+`cards`, `tagDisplay`, `hierarchies`, `groupOrder`, `cardBackedValues`, and
+`seriesMembers` (added for collapsed-series read tracking — see below). `lens`,
 `config`, `activeUid` and `initialWidth` fail it — they are per-location *identity* —
 and stay props, which is why a lens document still carries 485–819 B and `/` carries
 3,754 B of `config.slots`. Two keys join on the test rather than on size:
 `groupOrder` is 48 bytes but is always consumed by the same island as `hierarchies`,
 and `cardBackedValues` crosses the wire for only one body today but is
-`cardOwnValues()` over the **unfiltered** pool, so it is route-independent. The asset
-is 234,851 B raw / **~48 KB gzipped** — not the 42.8 KB first estimated, which summed
-only four of the five keys. **The pool is narrowed nowhere**: home needs 4 cards and
-`/lens/newest` caps at 30, but a narrowed copy is a *second asset* — a second URL, a
-second cache entry, a second loading state — to save bytes already paid for once, and
-the ranking chain needs the full pool to apply a cap that is a display rule.
+`cardOwnValues()` over the **unfiltered** pool, so it is route-independent. **The pool
+is narrowed nowhere**: home needs 4 cards and `/lens/newest` caps at 30, but a
+narrowed copy is a *second asset* — a second URL, a second cache entry, a second
+loading state — to save bytes already paid for once, and the ranking chain needs the
+full pool to apply a cap that is a display rule.
 
 **The fetch starts before hydration, and `<link rel=preload>` was rejected for that
 job.** An `is:inline` script in `Base.astro`'s `<head>` sets
@@ -1473,7 +1473,7 @@ Three things about the loader that are load-bearing:
   retry control per fetch** — not one per cell. The loader is the unit that failed, so
   it is the unit that retries, and a grid of per-card retry buttons would fire N
   requests for one shared asset.
-- **The five keys are checked as a shape, not trusted.** GitHub Pages serves a 404 as
+- **The six keys are checked as a shape, not trusted.** GitHub Pages serves a 404 as
   an HTML document. Most of those die in `JSON.parse`, but "parsed to *something*" is
   not "is the pool", and an island handed `{}` renders an empty site with no error
   anywhere. `isSharedCardPoolAsset` converts that into a visible failure.
@@ -1523,6 +1523,58 @@ What remains on a card page is `CardStrip`'s **card** props, kept by design: 24,
 on `/card/where/work/seethrough`, whose "Cards about this" strip is the 25-card
 SeeThrough affiliation closure. The spec's "~1.2 KB per strip" is right for a typical
 strip and an order of magnitude low for the biggest closures.
+
+### A collapsed series can show two entries: the whole, and what's left to read
+
+`collapseCollections` (collapse.ts) runs once, at build time, on the server — it has
+no notion of any particular visitor, so it can only ever emit ONE representative per
+collapsed folder. Whether a visitor should see one entry or two is a question about
+THEIR read history, which exists only in their browser. So this is a second,
+client-side expansion pass, `expandCollapsedSeries` (`src/lib/collapsed-series.ts`),
+run wherever a browse-family body consumes the shared pool.
+
+The rule: the representative is always kept, and its own read state — as far as
+ranking and the history lenses are concerned — is **"has ANY member of the series
+been read"**, not just whether the representative's own uid was opened directly.
+Reading chapter 3 of a 6-chapter series counts the whole series as read even though
+the representative still points at chapter 1. A SECOND entry is added only when that's
+true AND at least one member remains unread: the first such member, in series order,
+as a real un-collapsed card — own title, own tags, own thumbnail — behaving exactly
+like any other card wherever it lands (filtering, ranking, the browse grid).
+
+**This is why `seriesMembers` exists as a sixth shared-pool key.** The client needs
+each collapsed folder's real membership (not just its one representative) to compute
+either half of the rule, and a member is dropped from `cards` entirely by
+`collapseCollections` — there is nowhere else to get it from. `collapsedSeriesMembers`
+(collapse.ts) computes it from the SAME per-folder resolution `collapseCollections`
+uses (`resolveFolder`, shared between the two) so the representative's uid this key is
+keyed by can never disagree with the one `cards` actually carries. Folders with fewer
+than two members are omitted — there's nothing to distinguish from the representative.
+
+**It is a pure, re-derived computation, not a stored fact.** Nothing is written to
+`localStorage` to represent "the series is read" — `isSeriesRead`/`expandCollapsedSeries`
+re-check every member's current read state on every call. The alternative (propagating
+a write to the representative's own address whenever any member is read) was rejected:
+it would create a second, parallel copy of "is this series read", which could drift
+from the true per-member states — e.g. if the one chapter actually read is later
+edited and its own hash-aware check reverts, a propagated write would leave the series
+stuck showing "read" with nothing to un-stick it. Recomputing live has no such state to
+drift.
+
+**One function, two read concepts, by design.** `isRead` is injected so the same
+`expandCollapsedSeries` serves both of the site's existing "seen" concepts (see "One
+seen concept, keyed two ways" above) without hardcoding either: hash-aware
+`getViewState` for the ranking chain (rungs 2 and 4 — `BrowseLensBrowser.svelte`,
+`HomeLensSlots.svelte` via `selectSlotCard`'s injectable `isSeen`), and uid-only
+`hasBeenRead` for the Seen/Unseen lenses (`HistoryLensBrowser.svelte`), which partition
+on uid alone for the same reason every other card does (an edited-but-read chapter
+must stay in Seen). A representative's `readAt` for the Seen lens's own sort is the
+**most recent** read among its members (`mostRecentReadAt`, card-view-state.ts), for
+the same reason — the representative's own address may never have been the one
+actually opened.
+
+Deliberately NOT wired into `EditorialLensBrowser.svelte`: that dev-only dashboard
+groups by publish status, not read state, and has no isSeen concept to begin with.
 
 ### Progressive reveal appends; it never windows
 

@@ -7,6 +7,7 @@ import {
   markRead,
   clearViewState,
   readToRecord,
+  mostRecentReadAt,
 } from './card-view-state';
 
 // Clear localStorage before each test so tests are isolated
@@ -130,6 +131,39 @@ describe('compareReadAt', () => {
 
   it('is zero for two missing timestamps', () => {
     expect(compareReadAt(null, null)).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// mostRecentReadAt
+// ---------------------------------------------------------------------------
+
+describe('mostRecentReadAt', () => {
+  it('is null when none of the uids has been read', () => {
+    expect(mostRecentReadAt(['a', 'b'])).toBeNull();
+  });
+
+  it('picks the latest readAt among several read uids', () => {
+    markRead('a', 'h', '2024-01-01T00:00:00.000Z');
+    markRead('b', 'h', '2024-06-01T00:00:00.000Z');
+    markRead('c', 'h', '2024-03-01T00:00:00.000Z');
+    expect(mostRecentReadAt(['a', 'b', 'c'])).toBe('2024-06-01T00:00:00.000Z');
+  });
+
+  it('ignores an unread uid mixed in with read ones', () => {
+    markRead('a', 'h', '2024-01-01T00:00:00.000Z');
+    expect(mostRecentReadAt(['a', 'never-read'])).toBe('2024-01-01T00:00:00.000Z');
+  });
+
+  it('prefers a known time over an unknown-time (pre-#83) read', () => {
+    localStorage.setItem('pdyxs:view-state:legacy', JSON.stringify({ hash: 'h', state: 'read' }));
+    markRead('known', 'h', '2024-01-01T00:00:00.000Z');
+    expect(mostRecentReadAt(['legacy', 'known'])).toBe('2024-01-01T00:00:00.000Z');
+  });
+
+  it('is null when every read uid has an unknown time', () => {
+    localStorage.setItem('pdyxs:view-state:legacy', JSON.stringify({ hash: 'h', state: 'read' }));
+    expect(mostRecentReadAt(['legacy'])).toBeNull();
   });
 });
 

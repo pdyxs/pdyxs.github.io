@@ -9,7 +9,7 @@ import {
   CARD_POOL_PROMISE_KEY,
 } from './card-pool.client';
 
-/** The five keys, minimally shaped. */
+/** The six keys, minimally shaped. */
 function fakeAsset(marker = 'a') {
   return {
     cards: [{ uid: marker }],
@@ -17,6 +17,7 @@ function fakeAsset(marker = 'a') {
     hierarchies: { what: [] },
     groupOrder: { what: ['Series'] },
     cardBackedValues: ['what:games'],
+    seriesMembers: {},
   };
 }
 
@@ -25,7 +26,7 @@ afterEach(() => {
 });
 
 describe('isSharedCardPoolAsset', () => {
-  it('accepts the five-key asset', () => {
+  it('accepts the six-key asset', () => {
     expect(isSharedCardPoolAsset(fakeAsset())).toBe(true);
   });
 
@@ -39,7 +40,7 @@ describe('isSharedCardPoolAsset', () => {
   });
 
   it('rejects an asset missing any one key', () => {
-    for (const key of ['cards', 'tagDisplay', 'hierarchies', 'groupOrder', 'cardBackedValues']) {
+    for (const key of ['cards', 'tagDisplay', 'hierarchies', 'groupOrder', 'cardBackedValues', 'seriesMembers']) {
       const partial: Record<string, unknown> = fakeAsset();
       delete partial[key];
       expect(isSharedCardPoolAsset(partial), key).toBe(false);

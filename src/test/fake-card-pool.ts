@@ -7,7 +7,7 @@
 //
 // Kept in src/test/ rather than beside one component because all three
 // browse-family bodies (#150, slice 5 of docs/plans/shared-card-pool.md) read
-// the same five-key asset and must agree about what one looks like.
+// the same six-key asset and must agree about what one looks like.
 import { createCardPoolLoader, CardPoolError } from '../lib/card-pool.client';
 import type { CardPoolFailureReason } from '../lib/card-pool.client';
 import type { SharedCardPoolAsset } from '../lib/card-pool';
@@ -32,13 +32,17 @@ export function fakeCard(
   };
 }
 
-export function fakePool(cards: SerialisedCardFull[]): SharedCardPoolAsset {
+export function fakePool(
+  cards: SerialisedCardFull[],
+  seriesMembers: Record<string, SerialisedCardFull[]> = {},
+): SharedCardPoolAsset {
   return {
     cards,
     tagDisplay: { 'what:puzzles': { name: 'Puzzles', declared: true } },
     hierarchies: {},
     groupOrder: {},
     cardBackedValues: [],
+    seriesMembers,
   };
 }
 

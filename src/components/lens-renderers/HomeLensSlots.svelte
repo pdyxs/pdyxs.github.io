@@ -8,12 +8,15 @@
   import { applyFilters } from '../../dimensions';
   import { BROWSE_CARD_VARIANTS } from '../../lib/browse-card-variants';
   import { poolFailureMessage } from '../../lib/browse-skeleton';
+  import { getViewState } from '../../lib/card-view-state';
+  import { expandCollapsedSeries } from '../../lib/collapsed-series';
   import {
     loadCardPool,
     failureReason,
     type CardPoolFailureReason,
   } from '../../lib/card-pool.client';
   import type { SharedCardPoolAsset } from '../../lib/card-pool';
+  import type { CardMeta } from '../../lib/cards';
   import BrowseCard from '../BrowseCard.svelte';
 
   interface Props {
@@ -99,7 +102,15 @@
     // `.listed` before serialising), so synthesising the published/visible
     // defaults is accurate — the same reasoning, and the same values, as
     // resolveFrontPageSlots applies to this pool a few lines below.
-    const cardMetas = pool.cards.map(c => ({
+    // Expand a collapsed series (collapsed-series.ts) before anything else
+    // sees the pool: a home slot must pin/rank a representative by "any
+    // member seen", not just its own hash, and offer the "continue reading"
+    // chapter as a real, independently-selectable card once that's true.
+    const isMemberRead = (m: { uid: string; contentHash: string }) =>
+      getViewState(m.uid, m.contentHash) === 'read';
+    const { cards, readUids } = expandCollapsedSeries(pool.cards, pool.seriesMembers, isMemberRead);
+
+    const cardMetas = cards.map(c => ({
       ...c,
       date: c.date ? new Date(c.date) : undefined,
       status: 'published' as const,
@@ -109,7 +120,13 @@
     const filtered = applyFilters(cardMetas, get(lensFilterStore), backed);
     const serialisedFiltered = filtered.map(c => ({ ...c, date: c.date?.toISOString() ?? null }));
 
-    return resolveFrontPageSlots(config, serialisedFiltered, new Date(), backed).slots;
+    return resolveFrontPageSlots(
+      config,
+      serialisedFiltered,
+      new Date(),
+      backed,
+      (card: CardMeta) => readUids.has(card.uid),
+    ).slots;
   }
 
   // One attempt. A failure is dropped by the loader, so calling this again is

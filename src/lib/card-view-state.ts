@@ -94,6 +94,28 @@ export function hasBeenRead(uid: string): boolean {
 }
 
 /**
+ * The most recent `readAt` among several uids, or null if none of them has a
+ * known one.
+ *
+ * For a collapsed series' representative — whose own address may not be the
+ * uid the visitor actually opened (see collapsed-series.ts) — "when was this
+ * read" means the most recent read among ALL its chapters, the same way
+ * "was this read at all" means ANY of them. An unread uid contributes nothing;
+ * a read-but-unknown-time uid (pre-#83) contributes nothing either, UNLESS
+ * every read uid is like that, in which case the honest answer stays "unknown"
+ * rather than a knowable time being displaced by one that isn't.
+ */
+export function mostRecentReadAt(uids: readonly string[]): string | null {
+  let best: string | null = null;
+  for (const uid of uids) {
+    if (!hasBeenRead(uid)) continue;
+    const at = getReadAt(uid);
+    if (at !== null && (best === null || at > best)) best = at;
+  }
+  return best;
+}
+
+/**
  * Orders two `readAt` values most-recent-first, with a missing timestamp last.
  *
  * Missing means "read, at an unknown time" (a pre-#83 entry), never "not read"

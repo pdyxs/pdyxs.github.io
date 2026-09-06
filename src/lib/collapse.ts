@@ -10,7 +10,9 @@
 //   - it carries the UNION of all member cards' tags, so any filter that
 //     matched any chapter still surfaces the collapsed series,
 //   - it sorts by the LATEST member date, so an actively-updated series stays
-//     fresh in the "newest" lens.
+//     fresh in the "newest" lens,
+//   - its content hash is the destination's OWN hash, not one derived from the
+//     folder identity — see the comment at the assignment below.
 //
 // This runs ONCE, upstream of hierarchy/count building and card serialisation
 // (LensStackCard.astro), so the results grid, frontpage slots, and
@@ -19,21 +21,26 @@
 // navigable cards for direct routes, the stack, and series nav.
 
 import type { CardMeta } from './cards';
-import { computeContentHash } from './cards';
 import { ownValueForCard } from './card-identity';
 import type { CollapseConfig } from './collapse-config';
 
 /** Folder identity (declared name/description) for a folder's colon-form value. */
 export type FolderIdentity = { name?: string; description?: string };
 
-/** Picks a folder's representative member: lowest `order`, tiebroken by uid. */
-function pickFirst(members: CardMeta[]): CardMeta {
+/**
+ * A folder's members in series order: lowest `order` first, tiebroken by uid.
+ * This is the "reading order" for the folder — independent of which member
+ * `target` (or the lowest-order default) picks as the clickable destination,
+ * since a series can name a different chapter as its destination (see
+ * `resolveFolder` below) without changing what order its chapters read in.
+ */
+function sortMembers(members: CardMeta[]): CardMeta[] {
   return [...members].sort((a, b) => {
     const ao = a.order ?? Infinity;
     const bo = b.order ?? Infinity;
     if (ao !== bo) return ao - bo;
     return a.uid.localeCompare(b.uid);
-  })[0];
+  });
 }
 
 /** Most recent member date, or undefined if no member carries a date. */
@@ -78,6 +85,49 @@ export function collapsedFolderValues(config: CollapseConfig): Set<string> {
   return values;
 }
 
+/** A folder's resolved destination card plus its full series-ordered membership. */
+type ResolvedFolder = { dest: CardMeta; orderedMembers: CardMeta[] };
+
+/**
+ * Resolves one collapsed folder's destination (per `target`, falling back to
+ * the lowest-`order` member) and its full series order. Shared by
+ * `collapseCollections` (which only needs `dest`) and `collapsedSeriesMembers`
+ * (which only needs `orderedMembers`) so the two can never disagree about
+ * either — the earlier bug class this file guards against elsewhere.
+ */
+function resolveFolder(folderUid: string, target: string | undefined, members: CardMeta[]): ResolvedFolder {
+  const orderedMembers = sortMembers(members);
+  let dest: CardMeta | undefined;
+  if (target) {
+    const targetUid = `${folderUid}/${target}`;
+    // The target names a child folder; its card uid is either exactly that
+    // (a flat index) or nested beneath it.
+    dest = members.find(c => c.uid === targetUid || c.uid.startsWith(`${targetUid}/`));
+  }
+  return { dest: dest ?? orderedMembers[0], orderedMembers };
+}
+
+/**
+ * Every collapsed folder's full membership, in series order, keyed by its
+ * representative's uid (the same `dest.uid` `collapseCollections` uses) — the
+ * lookup `expandCollapsedSeries` (collapsed-series.ts) needs client-side to
+ * decide whether a series counts as read and, if so, which chapter is next.
+ *
+ * A folder with only one member (or none) is omitted: there is no "series" to
+ * distinguish from the representative itself.
+ */
+export function collapsedSeriesMembers(cards: CardMeta[], config: CollapseConfig): Map<string, CardMeta[]> {
+  const result = new Map<string, CardMeta[]>();
+  for (const [folderUid, { target }] of config) {
+    const prefix = `${folderUid}/`;
+    const members = cards.filter(c => c.uid.startsWith(prefix));
+    if (members.length < 2) continue;
+    const { dest, orderedMembers } = resolveFolder(folderUid, target, members);
+    result.set(dest.uid, orderedMembers);
+  }
+  return result;
+}
+
 /**
  * Returns a new card list in which every folder named in `config` is replaced
  * by a single representative card. Cards outside any collapsed folder pass
@@ -107,14 +157,7 @@ export function collapseCollections(
     const members = cards.filter(c => c.uid.startsWith(prefix));
     if (members.length === 0) continue;
 
-    let dest: CardMeta | undefined;
-    if (target) {
-      const targetUid = `${folderUid}/${target}`;
-      // The target names a child folder; its card uid is either exactly that
-      // (a flat index) or nested beneath it.
-      dest = members.find(c => c.uid === targetUid || c.uid.startsWith(`${targetUid}/`));
-    }
-    if (!dest) dest = pickFirst(members);
+    const { dest } = resolveFolder(folderUid, target, members);
 
     const folderValue = ownValueForCard(folderUid);
     const identity = folderValue ? identityFor(folderValue) : {};
@@ -134,8 +177,16 @@ export function collapseCollections(
       // container too — which is what suppresses a chip repeating the title
       // this card was just given (see card-tag-display.ts).
       collapsedContainer: folderValue,
-      // Stable across which member is destination — keyed to folder identity.
-      contentHash: computeContentHash(title, description, folderUid),
+      // The destination's OWN hash, not one derived from the folder identity
+      // (title/description above): opening the representative literally opens
+      // `dest`, and read tracking (getViewState) compares this hash against
+      // whatever `dest`'s own direct card page recorded on read. Those two
+      // must be byte-identical or a collapsed series can never register as
+      // seen — reading the chapter stamps `dest.contentHash`, but a
+      // folder-derived hash here would almost never match it, so the pool's
+      // representative would sit at 'unseen' forever regardless of what was
+      // actually read.
+      contentHash: dest.contentHash,
       // Collapse runs on an already-listing-filtered pool (see LensStackCard),
       // so every member (including dest) is already listed/reachable; carry
       // the representative's own status/visibility through unchanged.

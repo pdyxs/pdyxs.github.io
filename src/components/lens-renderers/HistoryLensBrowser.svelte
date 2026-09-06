@@ -4,13 +4,14 @@
   import { applyFilters, countSelectedValueMatches, makeMatchContext } from '../../dimensions';
   import type { FilterState } from '../../dimensions';
   import type { CardMeta } from '../../lib/cards';
-  import { getReadAt, hasBeenRead } from '../../lib/card-view-state';
+  import { hasBeenRead, mostRecentReadAt } from '../../lib/card-view-state';
   import {
     historyEmptyMessage,
     historyMode,
     selectHistoryCards,
     type ReadHistory,
   } from '../../lib/history-lens';
+  import { expandCollapsedSeries } from '../../lib/collapsed-series';
   import { revealSettings } from '../../lib/progressive-reveal';
   import {
     loadCardPool,
@@ -67,13 +68,26 @@
     failure = null;
     loadPool()
       .then(asset => {
+        // Expand a collapsed series (collapsed-series.ts) before partitioning:
+        // a representative counts as read here if ANY of its chapters does
+        // (uid-only, matching this lens's own read concept — see the ruling
+        // above), and the "continue reading" entry it adds is a real,
+        // individually-addressed chapter that partitions on its own uid like
+        // any other card.
+        const isRead = (m: { uid: string }) => hasBeenRead(m.uid);
+        const { cards, readUids } = expandCollapsedSeries(asset.cards, asset.seriesMembers, isRead);
         const snapshot: Record<string, string | null> = {};
-        for (const card of asset.cards) {
-          if (hasBeenRead(card.uid)) snapshot[card.uid] = getReadAt(card.uid);
+        for (const card of cards) {
+          if (!readUids.has(card.uid)) continue;
+          // A representative's OWN readAt may be unset (its address was never
+          // directly opened); the honest "when" is the most recent read among
+          // whichever of its chapters was.
+          const members = asset.seriesMembers[card.uid];
+          snapshot[card.uid] = members ? mostRecentReadAt(members.map(m => m.uid)) : mostRecentReadAt([card.uid]);
         }
         readSnapshot = snapshot;
         // After the snapshot, so membership and the pool land in one render.
-        pool = asset;
+        pool = { ...asset, cards };
       })
       .catch(error => {
         failure = failureReason(error);

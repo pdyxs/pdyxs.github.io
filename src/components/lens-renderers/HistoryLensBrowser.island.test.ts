@@ -137,3 +137,53 @@ describe('Seen and Unseen partition the pool', () => {
     expect(seenUids.length + unseenUids.length).toBe(CARDS.length);
   });
 });
+
+describe('a collapsed series across Seen and Unseen', () => {
+  const REP = fakeCard('what/stories/trip/00-intro');
+  const MID = fakeCard('what/stories/trip/01-mid');
+  const END = fakeCard('what/stories/trip/02-end');
+  const SERIES_POOL = fakePool([REP], { [REP.uid]: [REP, MID, END] });
+
+  it('puts only the representative in Unseen while nothing has been read', async () => {
+    const el = render({ config: { readState: 'unseen' }, loadPool: readyLoader(SERIES_POOL) });
+    await vi.waitFor(() => {
+      expect(el.querySelector('.fp-browse-list')).not.toBeNull();
+    });
+    expect(renderedUids(el)).toEqual([`/card/${REP.uid}`]);
+  });
+
+  it('replaces the representative with the next unread chapter in Unseen once one chapter is read', async () => {
+    markRead(REP.uid, REP.contentHash);
+    const el = render({ config: { readState: 'unseen' }, loadPool: readyLoader(SERIES_POOL) });
+    await vi.waitFor(() => {
+      expect(el.querySelector('.fp-browse-list')).not.toBeNull();
+    });
+    // The representative counts as read (any member read) so it drops out of
+    // Unseen; the next chapter — a real, individually-addressed card — takes
+    // its place.
+    expect(renderedUids(el)).toEqual([`/card/${MID.uid}`]);
+  });
+
+  it('shows the representative in Seen once any chapter is read, timestamped by the most recent one', async () => {
+    markRead(REP.uid, REP.contentHash, '2024-01-01T00:00:00.000Z');
+    markRead(MID.uid, MID.contentHash, '2024-06-01T00:00:00.000Z');
+    const el = render({ config: { readState: 'seen' }, loadPool: readyLoader(SERIES_POOL) });
+    await vi.waitFor(() => {
+      expect(el.querySelector('.fp-browse-list')).not.toBeNull();
+    });
+    expect(renderedUids(el)).toEqual([`/card/${REP.uid}`]);
+  });
+
+  it('empties both lenses once every chapter has been read', async () => {
+    markRead(REP.uid, REP.contentHash);
+    markRead(MID.uid, MID.contentHash);
+    markRead(END.uid, END.contentHash);
+    const seen = render({ config: { readState: 'seen' }, loadPool: readyLoader(SERIES_POOL) });
+    const unseen = render({ config: { readState: 'unseen' }, loadPool: readyLoader(SERIES_POOL) });
+    await vi.waitFor(() => {
+      expect(seen.querySelector('.fp-browse-list')).not.toBeNull();
+      expect(unseen.querySelector('.fp-browse-empty')).not.toBeNull();
+    });
+    expect(renderedUids(seen)).toEqual([`/card/${REP.uid}`]);
+  });
+});

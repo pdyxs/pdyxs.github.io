@@ -62,7 +62,7 @@ export class CardPoolError extends Error {
 }
 
 /**
- * The five keys, checked as a shape rather than trusted.
+ * The six keys, checked as a shape rather than trusted.
  *
  * A pure decision, and not a pedantic one: GitHub Pages serves a 404 as an HTML
  * document, and a misconfigured host can serve `index.html` for anything. Most
@@ -78,7 +78,8 @@ export function isSharedCardPoolAsset(value: unknown): value is SharedCardPoolAs
     Array.isArray(v.cardBackedValues) &&
     isPlainObject(v.tagDisplay) &&
     isPlainObject(v.hierarchies) &&
-    isPlainObject(v.groupOrder)
+    isPlainObject(v.groupOrder) &&
+    isPlainObject(v.seriesMembers)
   );
 }
 

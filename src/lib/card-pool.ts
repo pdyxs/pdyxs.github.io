@@ -28,7 +28,7 @@ import {
   type TagRegistry,
 } from './tag-registry';
 import { discoverCollapseConfig, type CollapseConfig } from './collapse-config';
-import { collapseCollections, collapsedFolderValues } from './collapse';
+import { collapseCollections, collapsedFolderValues, collapsedSeriesMembers } from './collapse';
 import { FIVE_W_DIMENSIONS, type FiveWDimension } from './five-w';
 import { cardOwnValues } from './card-identity';
 import { DIMENSIONS } from '../dimensions';
@@ -41,7 +41,7 @@ import type { SerialisedCardFull } from './frontpage';
  * Everything the pipeline derives. The server needs more of it than the client
  * asset does — `cardBackedValues` is wanted as a `Set` server-side, and
  * `declaredValues`/`collapseConfig` are server-side facts — so the builder
- * returns the whole bundle and `toSharedAsset` picks the client's five keys out
+ * returns the whole bundle and `toSharedAsset` picks the client's six keys out
  * of it.
  *
  * Since slice 8 the bundle's server-side consumers are `/cards.json` (via
@@ -70,15 +70,24 @@ export interface CardPoolBundle {
   hierarchies: Record<string, TagNode[]>;
   /** `browseCards` through the one shared preview serialiser. */
   cards: SerialisedCardFull[];
+  /**
+   * Every collapsed folder's full membership, in series order, keyed by its
+   * representative's uid — serialised the same way as `cards`, so a member
+   * behaves exactly like any other card wherever the client drops it in (see
+   * collapsed-series.ts). Folders with fewer than two members are absent (see
+   * `collapsedSeriesMembers`).
+   */
+  seriesMembers: Record<string, SerialisedCardFull[]>;
 }
 
-/** The five keys that are byte-identical on every route. */
+/** The six keys that are byte-identical on every route. */
 export interface SharedCardPoolAsset {
   cards: SerialisedCardFull[];
   tagDisplay: Record<string, TagDisplay>;
   hierarchies: Record<string, TagNode[]>;
   groupOrder: Partial<Record<FiveWDimension, string[]>>;
   cardBackedValues: string[];
+  seriesMembers: Record<string, SerialisedCardFull[]>;
 }
 
 // Module-level memo. This is the DELIBERATE OPPOSITE of the #102 SSR-isolation
@@ -157,6 +166,18 @@ async function build(): Promise<CardPoolBundle> {
   // browse-card.ts for the thumbnail rules and the explicit-pick invariant.
   const cards = await serialiseBrowseCards(browseCards);
 
+  // Every collapsed folder's real membership, in series order — computed over
+  // the same `listedCards` collapseCollections drew from, so it can never
+  // name a member collapseCollections didn't also see. Serialised through the
+  // same shared serialiser as `cards`: a member is a real card and needs
+  // exactly the same preview shape (thumbnail included) to stand in as one.
+  const seriesMemberEntries = await Promise.all(
+    [...collapsedSeriesMembers(listedCards, collapseConfig)].map(
+      async ([destUid, members]) => [destUid, await serialiseBrowseCards(members)] as const,
+    ),
+  );
+  const seriesMembers = Object.fromEntries(seriesMemberEntries);
+
   return {
     allCards,
     listedCards,
@@ -169,6 +190,7 @@ async function build(): Promise<CardPoolBundle> {
     browseCards,
     hierarchies,
     cards,
+    seriesMembers,
   };
 }
 
@@ -179,7 +201,7 @@ export function buildCardPool(): Promise<CardPoolBundle> {
 }
 
 /**
- * The client payload: an EXPLICIT five-key pick, never a spread (CLAUDE.md,
+ * The client payload: an EXPLICIT six-key pick, never a spread (CLAUDE.md,
  * "The client payload is an explicit pick, never a spread"). A spread would
  * skip excess-property checking, so every field later added to the bundle
  * would join the shared asset silently.
@@ -193,5 +215,6 @@ export function toSharedAsset(bundle: CardPoolBundle): SharedCardPoolAsset {
     hierarchies: bundle.hierarchies,
     groupOrder: bundle.groupOrder,
     cardBackedValues: [...bundle.cardBackedValues],
+    seriesMembers: bundle.seriesMembers,
   };
 }

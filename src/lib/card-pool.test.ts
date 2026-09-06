@@ -19,11 +19,12 @@ function fakeBundle(): CardPoolBundle {
     browseCards: [{ uid: 'browse' }],
     hierarchies: { what: [{ value: 'what:games' }] },
     cards: [{ uid: 'serialised' }],
+    seriesMembers: { 'what/stories/00-intro': [{ uid: 'what/stories/00-intro' }] },
   } as unknown as CardPoolBundle;
 }
 
 describe('toSharedAsset', () => {
-  it('picks exactly the five shared keys', () => {
+  it('picks exactly the six shared keys', () => {
     // Key EQUALITY, not inclusion: a field later added to the bundle must not
     // be able to join the client asset silently. See CLAUDE.md, "The client
     // payload is an explicit pick, never a spread".
@@ -32,6 +33,7 @@ describe('toSharedAsset', () => {
       'cards',
       'groupOrder',
       'hierarchies',
+      'seriesMembers',
       'tagDisplay',
     ]);
   });
@@ -43,6 +45,7 @@ describe('toSharedAsset', () => {
     expect(asset.tagDisplay).toBe(bundle.tagDisplay);
     expect(asset.hierarchies).toBe(bundle.hierarchies);
     expect(asset.groupOrder).toBe(bundle.groupOrder);
+    expect(asset.seriesMembers).toBe(bundle.seriesMembers);
   });
 
   it('serialises cardBackedValues from a Set to an array', () => {
@@ -87,7 +90,7 @@ describe('toSharedAsset', () => {
  * Astro's own Vite config.
  */
 describe('the /cards.json payload', () => {
-  it('has exactly the five shared keys, and each round-trips through JSON', async () => {
+  it('has exactly the six shared keys, and each round-trips through JSON', async () => {
     const asset = toSharedAsset(await buildCardPool());
 
     // Key EQUALITY again, this time on the real bundle: the fake-bundle test
@@ -97,6 +100,7 @@ describe('the /cards.json payload', () => {
       'cards',
       'groupOrder',
       'hierarchies',
+      'seriesMembers',
       'tagDisplay',
     ]);
 
@@ -114,5 +118,18 @@ describe('the /cards.json payload', () => {
 
   it('is memoised at module level — two builds are one object', async () => {
     expect(await buildCardPool()).toBe(await buildCardPool());
+  }, 60_000);
+
+  it('ships every collapsed series\' real membership, keyed by its representative', async () => {
+    const asset = toSharedAsset(await buildCardPool());
+    // The Galapagos story folder collapses to one representative but has six
+    // real chapters — the exact case this key exists for (see
+    // collapsed-series.ts). Whichever chapter is currently the representative,
+    // its own uid must key into a full, multi-member series list.
+    const galapagos = asset.cards.find(c => c.uid.startsWith('what/stories/galapagos/'));
+    expect(galapagos).toBeDefined();
+    const members = asset.seriesMembers[galapagos!.uid];
+    expect(members?.length).toBeGreaterThanOrEqual(2);
+    expect(members?.every(m => m.uid.startsWith('what/stories/galapagos/'))).toBe(true);
   }, 60_000);
 });

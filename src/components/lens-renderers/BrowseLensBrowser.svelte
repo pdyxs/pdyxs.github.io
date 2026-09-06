@@ -11,6 +11,7 @@
   import { isRankingLens, sortCardsForBrowse, limitCardsForBrowse } from '../../lib/browse-helpers';
   import type { CardMeta } from '../../lib/cards';
   import { getViewState } from '../../lib/card-view-state';
+  import { expandCollapsedSeries } from '../../lib/collapsed-series';
   import { isStripLens, stripTerminal } from '../../lib/strip-lens';
   import { archiveLensId } from '../../lib/lens-registry';
   import { revealSettings } from '../../lib/progressive-reveal';
@@ -65,13 +66,18 @@
   let pool = $state<SharedCardPoolAsset | null>(null);
   let failure = $state<CardPoolFailureReason | null>(null);
 
-  // Rung 3 of the ranking chain (unseen before seen), for a lens that ranks.
-  // Snapshotted once when the pool lands rather than read live: 264
-  // localStorage lookups is not something to redo on every filter keystroke,
-  // and a list reshuffling under a reader because they opened a card in
-  // another stack entry would be worse than being one navigation stale.
-  // Skipped entirely for a lens that doesn't rank (Newest/Oldest sort on date
-  // and would pay the cost for nothing).
+  // Rungs 2 and 4 of the ranking chain (pinned unseen / unseen before seen),
+  // for a lens that ranks. Snapshotted once when the pool lands rather than
+  // read live: 264 localStorage lookups is not something to redo on every
+  // filter keystroke, and a list reshuffling under a reader because they
+  // opened a card in another stack entry would be worse than being one
+  // navigation stale. Skipped entirely for a lens that doesn't rank
+  // (Newest/Oldest sort on date and would pay the cost for nothing).
+  //
+  // Sourced from `expandCollapsedSeries`'s `readUids`, not a plain per-card
+  // getViewState loop: a collapsed representative's own seen-ness is "any
+  // member seen" (collapsed-series.ts), which a per-card check on the
+  // representative's own uid/hash alone can't express.
   let seenSnapshot = $state<Set<string>>(new Set());
 
   // One attempt. A failure is dropped by the loader, so calling this again is
@@ -81,16 +87,20 @@
     failure = null;
     loadPool()
       .then(asset => {
+        // Expand a collapsed series into its "continue reading" entry once any
+        // of its chapters has been read (collapsed-series.ts). This has to run
+        // before the seen snapshot below: the representative's OWN seen-ness
+        // is "any member seen", not just its own hash, and `readUids` is the
+        // one place that fact is decided.
+        const isRead = (m: { uid: string; contentHash: string }) =>
+          getViewState(m.uid, m.contentHash) === 'read';
+        const { cards, readUids } = expandCollapsedSeries(asset.cards, asset.seriesMembers, isRead);
         if (isRankingLens(config)) {
-          const seen = new Set<string>();
-          for (const card of asset.cards) {
-            if (getViewState(card.uid, card.contentHash) === 'read') seen.add(card.uid);
-          }
-          seenSnapshot = seen;
+          seenSnapshot = readUids;
         }
         // Assigned after the snapshot so the two settle in one render: the
         // grid is never painted in the wrong order and then re-ranked.
-        pool = asset;
+        pool = { ...asset, cards };
       })
       .catch(error => {
         failure = failureReason(error);

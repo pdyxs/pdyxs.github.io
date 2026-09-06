@@ -17,6 +17,7 @@ import BrowseLensBrowser from './BrowseLensBrowser.svelte';
 import { lensFilterStore } from '../../stores/lens-filter-store';
 import { emptyFilterState } from '../../dimensions';
 import { poolFailureMessage } from '../../lib/browse-skeleton';
+import { markRead } from '../../lib/card-view-state';
 import {
   fakeCard,
   fakePool,
@@ -111,5 +112,40 @@ describe('BrowseLensBrowser pool states', () => {
     });
     expect(attempts()).toBe(2);
     expect(el.querySelector('.fp-pool-error')).toBeNull();
+  });
+});
+
+describe('BrowseLensBrowser — collapsed series expansion', () => {
+  const REP = fakeCard('what/stories/trip/00-intro');
+  const MID = fakeCard('what/stories/trip/01-mid');
+  const END = fakeCard('what/stories/trip/02-end');
+  const SERIES_POOL = fakePool([REP], { [REP.uid]: [REP, MID, END] });
+
+  it('shows only the representative when nothing in the series has been read', async () => {
+    const el = render({ config: {}, loadPool: readyLoader(SERIES_POOL) });
+    await vi.waitFor(() => {
+      expect(el.querySelector('.fp-browse-list')).not.toBeNull();
+    });
+    expect(el.querySelectorAll('.browse-card-item')).toHaveLength(1);
+  });
+
+  it('adds the first unread chapter once another chapter has been read', async () => {
+    markRead(REP.uid, REP.contentHash);
+    const el = render({ config: {}, loadPool: readyLoader(SERIES_POOL) });
+    await vi.waitFor(() => {
+      expect(el.querySelectorAll('.browse-card-item')).toHaveLength(2);
+    });
+    expect(el.querySelector('.fp-result-count')?.textContent?.trim()).toBe('2 cards');
+  });
+
+  it('drops the "continue reading" entry once every chapter has been read', async () => {
+    markRead(REP.uid, REP.contentHash);
+    markRead(MID.uid, MID.contentHash);
+    markRead(END.uid, END.contentHash);
+    const el = render({ config: {}, loadPool: readyLoader(SERIES_POOL) });
+    await vi.waitFor(() => {
+      expect(el.querySelector('.fp-browse-list')).not.toBeNull();
+    });
+    expect(el.querySelectorAll('.browse-card-item')).toHaveLength(1);
   });
 });

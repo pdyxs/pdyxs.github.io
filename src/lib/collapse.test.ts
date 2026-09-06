@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { collapseCollections, collapsedFolderValues } from './collapse';
+import { collapseCollections, collapsedFolderValues, collapsedSeriesMembers } from './collapse';
 import type { FolderIdentity } from './collapse';
 import type { CollapseConfig } from './collapse-config';
 import { fakeCardMeta } from '../test/fixtures';
@@ -98,6 +98,18 @@ describe('collapseCollections', () => {
     ]);
   });
 
+  it('carries the destination\'s own content hash, not one derived from the folder identity', () => {
+    // Read tracking compares this hash against whatever a direct visit to the
+    // destination card recorded (data-content-hash on CardStackCard.astro,
+    // which is `dest.contentHash`). A folder-derived hash here would never
+    // match that, so a collapsed series could never register as seen.
+    const cards = arcticCards();
+    const config: CollapseConfig = new Map([[ARCTIC, {}]]);
+    const dest = cards.find(c => c.uid === `${ARCTIC}/00-intro`)!;
+    const [rep] = collapseCollections(cards, config, () => ({ name: 'The Arctic', description: 'A trip' }));
+    expect(rep.contentHash).toBe(dest.contentHash);
+  });
+
   it('sorts by the latest member date', () => {
     const cards = arcticCards();
     const config: CollapseConfig = new Map([[ARCTIC, {}]]);
@@ -132,6 +144,48 @@ describe('collapsedContainer on the representative', () => {
     // The folder value is in its union of tags — which is exactly what the
     // chip rule now drops.
     expect(rep?.tags).toContain('what:posts/stories/arctic');
+  });
+});
+
+describe('collapsedSeriesMembers', () => {
+  it('lists every real member in series order, keyed by the representative uid', () => {
+    const config: CollapseConfig = new Map([[ARCTIC, {}]]);
+    const result = collapsedSeriesMembers(arcticCards(), config);
+    expect([...result.keys()]).toEqual([`${ARCTIC}/00-intro`]);
+    expect(result.get(`${ARCTIC}/00-intro`)?.map(m => m.uid)).toEqual([
+      `${ARCTIC}/00-intro`,
+      `${ARCTIC}/01-map`,
+      `${ARCTIC}/02-glacier`,
+    ]);
+  });
+
+  it('keys by the ACTUAL destination when `target` names a different chapter, without changing series order', () => {
+    const config: CollapseConfig = new Map([[ARCTIC, { target: '02-glacier' }]]);
+    const result = collapsedSeriesMembers(arcticCards(), config);
+    expect([...result.keys()]).toEqual([`${ARCTIC}/02-glacier`]);
+    // Still order-ascending, even though the destination is the last chapter.
+    expect(result.get(`${ARCTIC}/02-glacier`)?.map(m => m.uid)).toEqual([
+      `${ARCTIC}/00-intro`,
+      `${ARCTIC}/01-map`,
+      `${ARCTIC}/02-glacier`,
+    ]);
+  });
+
+  it('omits a folder with fewer than two members — nothing to distinguish from the representative', () => {
+    const single = [fakeCardMeta({ uid: `${ARCTIC}/00-intro`, order: 0 })];
+    const config: CollapseConfig = new Map([[ARCTIC, {}]]);
+    expect(collapsedSeriesMembers(single, config)).toEqual(new Map());
+  });
+
+  it('is empty when nothing collapses', () => {
+    expect(collapsedSeriesMembers(arcticCards(), new Map())).toEqual(new Map());
+  });
+
+  it('never disagrees with collapseCollections about which uid is the representative', () => {
+    const cards = arcticCards();
+    const config: CollapseConfig = new Map([[ARCTIC, { target: '01-map' }]]);
+    const [rep] = collapseCollections(cards, config, () => ({}));
+    expect([...collapsedSeriesMembers(cards, config).keys()]).toEqual([rep.uid]);
   });
 });
 

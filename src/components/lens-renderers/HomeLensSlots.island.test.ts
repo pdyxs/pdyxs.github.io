@@ -20,6 +20,7 @@ import { lensFilterStore } from '../../stores/lens-filter-store';
 import { emptyFilterState } from '../../dimensions';
 import { poolFailureMessage } from '../../lib/browse-skeleton';
 import { BROWSE_CARD_VARIANTS } from '../../lib/browse-card-variants';
+import { markRead } from '../../lib/card-view-state';
 import {
   fakeCard,
   fakePool,
@@ -147,5 +148,43 @@ describe('HomeLensSlots pool states', () => {
     expect(attempts()).toBe(2);
     expect(el.querySelector('.fp-slot-stalled')).toBeNull();
     expect(el.querySelector('.fp-pool-retry')).toBeNull();
+  });
+});
+
+describe('HomeLensSlots — collapsed series expansion', () => {
+  const REP = fakeCard('what/stories/trip/00-intro');
+  const MID = fakeCard('what/stories/trip/01-mid');
+  const SERIES_POOL = fakePool([REP], { [REP.uid]: [REP, MID] });
+
+  const UID_CONFIG: FrontPageConfig = {
+    slots: [
+      {
+        uid: MID.uid,
+        span: { small: 12, large: 12 },
+        rows: { small: 1, large: 1 },
+        side: 'main',
+        variant: 'brief',
+        seeMore: false,
+      },
+    ],
+  };
+
+  it('resolves a `uid:` slot naming the "continue reading" chapter once it exists', async () => {
+    // The chapter isn't in the pool at all until expansion adds it — a slot
+    // naming it directly proves resolveFromPool ran the expansion before
+    // handing cards to resolveFrontPageSlots.
+    markRead(REP.uid, REP.contentHash);
+    const el = render({ config: UID_CONFIG, loadPool: readyLoader(SERIES_POOL) });
+    await vi.waitFor(() => {
+      expect(el.querySelectorAll('.browse-card-item')).toHaveLength(1);
+    });
+  });
+
+  it('resolves to nothing for that same slot when the series is still fully unread', async () => {
+    const el = render({ config: UID_CONFIG, loadPool: readyLoader(SERIES_POOL) });
+    await vi.waitFor(() => {
+      expect(el.querySelector('.fp-slot')).not.toBeNull();
+    });
+    expect(el.querySelector('.browse-card-item')).toBeNull();
   });
 });

@@ -105,6 +105,8 @@ export function resolveFrontPageSlots(
   now: Date,
   /** Card-backed values from the FULL card set — see applyFilters. */
   cardBackedValues?: Set<string>,
+  /** Forwarded to `selectSlotCard` — see its own doc for why. */
+  isSeen?: (card: CardMeta) => boolean,
 ): ResolvedFrontPageSlots {
   const byUid = new Map(cards.map(c => [c.uid, c]));
   // SerialisedCard (browse-helpers.ts) doesn't carry status/visibility across
@@ -132,6 +134,7 @@ export function resolveFrontPageSlots(
         undefined,
         cardBackedValues,
         slot.pool,
+        isSeen,
       );
       card = meta ? byUid.get(meta.uid) ?? null : null;
     }
