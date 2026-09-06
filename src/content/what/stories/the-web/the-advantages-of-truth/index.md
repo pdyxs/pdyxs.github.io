@@ -27,11 +27,15 @@ As someone who's interested in how interaction shapes behaviour, my instinct her
 
 The question that I want to ask is 'what are the strengths of the truth over and above a falsehood'? Do our current methods of sharing information play to those strengths? And what might it look like if we designed something that did?
 
+
+
 First, a short aside on truth. 
 
 
 
-Past mediums relied on authority as a proxy for rigor
+Past mediums relied on authority as a proxy for rigor. A newspaper is basically using access to a high volume printing press to denote authority, because not many people had access to that. The format implicitly limited the pool of who could 
+
+But these days, it's easy to .
 
 
 
