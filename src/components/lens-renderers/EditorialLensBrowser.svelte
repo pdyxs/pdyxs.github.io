@@ -1,10 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
+  import { lensFilterStore } from '../../stores/lens-filter-store';
   import { applyFilters } from '../../dimensions';
   import type { FilterState } from '../../dimensions';
   import { groupCardsByStatus } from '../../lib/status-groups';
-  import { clearFiltersPending } from '../../lib/filters-pending';
   import {
     loadCardPool,
     failureReason,
@@ -75,25 +74,14 @@
   const cardBackedSet = $derived(cardBackedValues ? new Set(cardBackedValues) : undefined);
   const filteredCards = $derived(applyFilters(cardMetas, activeFilter, cardBackedSet));
   const groups = $derived(groupCardsByStatus(filteredCards));
-
-  // Same anti-FOUC clearing as BrowseLensBrowser.svelte, including why it walks
-  // up from this island's own root rather than naming <html> (issue #125).
-  let host = $state<HTMLElement | null>(null);
-  $effect(() => {
-    groups;
-    if (pool !== null && $lensFiltersSynced) {
-      clearFiltersPending(host);
-    }
-  });
 </script>
 
 {#if pool === null}
   <!-- The same pending/failed placeholder the other two browse-family bodies
-       show, `standalone` so it draws itself rather than waiting for a guard
-       attribute nothing sets here. -->
+       show, `standalone` so it draws itself. -->
   <BrowseSkeleton {failure} standalone onRetry={requestPool} />
 {:else}
-  <div class="editorial-groups" aria-label="Editorial status groups" bind:this={host}>
+  <div class="editorial-groups" aria-label="Editorial status groups">
     {#if groups.length === 0}
       <p class="editorial-empty">Nothing in flight — every card matching the current filters is published.</p>
     {:else}

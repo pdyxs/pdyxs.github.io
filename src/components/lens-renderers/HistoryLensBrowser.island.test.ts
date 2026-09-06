@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount } from 'svelte';
 import HistoryLensBrowser from './HistoryLensBrowser.svelte';
-import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
+import { lensFilterStore } from '../../stores/lens-filter-store';
 import { emptyFilterState } from '../../dimensions';
 import { markRead } from '../../lib/card-view-state';
 import { poolFailureMessage } from '../../lib/browse-skeleton';
@@ -53,7 +53,6 @@ function renderedUids(el: HTMLElement): string[] {
 
 beforeEach(() => {
   lensFilterStore.set(emptyFilterState());
-  lensFiltersSynced.set(false);
   localStorage.clear();
 });
 

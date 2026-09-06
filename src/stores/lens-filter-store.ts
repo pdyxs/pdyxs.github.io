@@ -15,12 +15,3 @@ import { emptyFilterState } from '../dimensions';
  * src/dimensions/registry.ts), so there is nothing per-kind left to duplicate.
  */
 export const lensFilterStore = writable<FilterState>(emptyFilterState());
-
-/**
- * Flips to true once LensFilterShell has synced the filter selection from the
- * URL on mount. The pre-paint anti-FOUC guard (`data-filters-pending`, set by
- * the inline script in Base.astro) hides browse results until a lens body sees
- * this go true and clears the guard — so a filtered cold load never flashes the
- * full unfiltered set before reducing to the selection.
- */
-export const lensFiltersSynced = writable(false);

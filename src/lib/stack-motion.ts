@@ -165,12 +165,14 @@ export function scrollSettleAction({
 // assembly is resizing, and the #119/#123 skeleton stands in for its results;
 // they land once, at the final width.
 //
-// It is a SECOND attribute rather than a longer lease on `data-filters-pending`
-// because it is a second, independent reason to be holding the same content
-// back: that guard is cleared by the lens island the moment its own order is
-// committed, which is a fact about the island and says nothing about whether
-// the box it is sitting in has stopped moving. Each attribute stays the only
-// record of its own fact, and global.css ORs them.
+// It used to be a SECOND attribute alongside a `data-filters-pending` guard
+// that hid a server-rendered results grid the client was about to re-sort —
+// a second, independent reason to be holding the same content back, since that
+// guard was cleared by the lens island the moment its own order was committed,
+// a fact about the island that said nothing about whether the box it sat in
+// had stopped moving. That guard was removed entirely in #144 (no lens
+// fragment server-renders a results grid any more), leaving this attribute as
+// the sole reason the results area is ever held back.
 export const STACK_RESIZING_ATTR = 'data-stack-resizing';
 
 /** The subset of `Animation` this decision needs. `CSSTransition` carries it. */

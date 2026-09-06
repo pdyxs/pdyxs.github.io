@@ -1,13 +1,15 @@
 import type { CardPoolFailureReason } from './card-pool.client';
 
-// The results-area loading state for a filtered (or re-ranked) cold load —
-// issue #119, part of #118.
+// The results-area loading state — issue #119, part of #118.
 //
-// Base.astro's pre-paint script sets `data-filters-pending` and global.css
-// hides `.fp-browse-list` / `.fp-result-count` until the island commits the
-// reduced set. Measured on a warm wired dev server that guard leaves ~470ms of
-// EMPTY SPACE below an already-populated filter bar; on a real connection it is
-// much longer. The skeleton is what stands in that gap.
+// Originally covered a filtered (or re-ranked) cold load's hydration re-sort,
+// via a `data-filters-pending` guard Base.astro's pre-paint script set. That
+// guard was removed entirely in #144: since the shared-card-pool map (#136)
+// landed, no lens fragment server-renders a results grid for it to have hidden
+// — every browse-family body renders this skeleton itself, from `pool ===
+// null`, and reveals its final content only once the pool has arrived. What
+// survives is the `data-stack-resizing` case (issue #126): a lens change still
+// animates the real box, and this skeleton stands in while that resize runs.
 //
 // Pure by design: the only decision here is how many tiles to draw, and the
 // component is the thin applier.

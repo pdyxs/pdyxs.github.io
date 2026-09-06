@@ -119,8 +119,6 @@
   onMount(() => {
     requestPool();
     enforceNoFilters();
-    // `lensFiltersSynced` (the anti-FOUC guard's release) is set by CardStack
-    // alongside the store it now seeds — one signal, one owner.
     window.addEventListener('popstate', enforceNoFilters);
     return () => window.removeEventListener('popstate', enforceNoFilters);
   });

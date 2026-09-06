@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount } from 'svelte';
 import EditorialLensBrowser from './EditorialLensBrowser.svelte';
-import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
+import { lensFilterStore } from '../../stores/lens-filter-store';
 import { emptyFilterState } from '../../dimensions';
 import { poolFailureMessage } from '../../lib/browse-skeleton';
 import {
@@ -44,7 +44,6 @@ function render(props: Record<string, unknown>): HTMLElement {
 
 beforeEach(() => {
   lensFilterStore.set(emptyFilterState());
-  lensFiltersSynced.set(false);
 });
 
 afterEach(() => {

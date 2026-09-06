@@ -55,16 +55,6 @@
      * the sentinel nor the button ever renders.
      */
     reveal?: RevealSettings | null;
-    /**
-     * The results root, bound back out for the caller (issue #125).
-     *
-     * The lens bodies clear the `data-filters-pending` guard by walking UP from
-     * their own DOM position — the host is <html> on a cold load and the
-     * incoming `.stack-card` on a client-side transition, and `closest()` is
-     * what tells them apart without either of them having to know. None of them
-     * renders an element of its own, so the node they walk from is this one.
-     */
-    host?: HTMLElement | null;
   }
 
   let {
@@ -76,7 +66,6 @@
     terminal,
     emptyMessage = 'No cards match the current filters.',
     reveal = revealSettings(),
-    host = $bindable(null),
   }: Props = $props();
 
   const count = $derived(totalCount ?? cards.length);
@@ -140,17 +129,18 @@
   });
 </script>
 
-<main class="fp-browse-grid" aria-label="Browse results" bind:this={host}>
+<main class="fp-browse-grid" aria-label="Browse results">
   <p class="fp-result-count">
     {count} card{count === 1 ? '' : 's'}
   </p>
 
-  <!-- The pending/failed placeholder (issues #119, #123; extracted in #149).
-       Still driven only by `data-filters-pending`: the guard rules in global.css
-       are the only thing that reveals it, and nothing passes it a `failure` yet.
-       Its class names are the load-bearing half — see the note in that
-       component about why the strip's scoped rule and the global rule that
-       out-ranks it both survive the extraction unchanged. -->
+  <!-- The assembly-resize placeholder (issue #126; extracted in #149). This
+       instance only ever renders once the pool has landed and the cards above
+       are already final, so it stands in only while `.card-stack-inner`'s
+       width is transitioning underneath it — see the `data-stack-resizing`
+       rules in global.css, the only thing that ever reveals it. (The
+       `data-filters-pending` guard that used to share this box was removed in
+       #144: nothing server-renders a results grid for it to have covered.) -->
   <BrowseSkeleton {layout} />
 
   {#if cards.length === 0}

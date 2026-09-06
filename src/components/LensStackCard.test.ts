@@ -141,9 +141,8 @@ describe('LensStackCard', () => {
   // than chosen: the body takes its cards from `/cards.json` on the client, and
   // Astro renders an island server-side *from its props*, so there is nothing
   // to render a grid from. What the server emits instead is the pending
-  // skeleton, and it draws itself (`fp-skeleton--pending`) rather than waiting
-  // for the `data-filters-pending` guard, which is set on neither an unfiltered
-  // cold load nor a fragment.
+  // skeleton, and it draws itself (`fp-skeleton--pending`) — there is no
+  // `data-filters-pending` guard any more (#144) for it to have waited on.
   it('server-renders the pending skeleton, not a results grid', async () => {
     const container = await makeContainer();
     const html = await container.renderToString(LensStackCard, { props: { name: 'newest' } });

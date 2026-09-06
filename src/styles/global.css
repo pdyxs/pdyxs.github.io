@@ -157,138 +157,31 @@ html[data-theme="dark"] {
   --status-unlisted-border:  #e0b84f;
 }
 
-/* ── Anti-FOUC: a results set that is about to move ────────────── */
-/* The flag is set pre-paint by the inline script in Base.astro when the URL
-   carries filters, and cleared by BrowseLensBrowser once the filtered view is
-   committed. Hiding the list + count (not the whole grid) keeps the filter bar
-   and chips visible while the reduced set resolves.
+/* ── Assembly resize hold (issue #126) ──────────────────────────── */
+/* `data-stack-resizing` is set by CardStack's `holdWhileAssemblyResizes` for
+   as long as `.card-stack-inner`'s `width` transition is running, and cleared
+   when it finishes (see src/lib/stack-motion.ts). A lens change animates that
+   real box, and the incoming grid is laid out against it — uncovered, it would
+   hold two columns from 680px to ~930px and then reflow to three as the width
+   settles, which is the churn #126 measured and named.
 
-   TWO HOSTS, and the selector says which (issue #125). A cold load flags
-   <html>: there is one lens on the page and hiding results everywhere is the
-   same as hiding this one's. A client-side lens transition flags the incoming
-   `.stack-card` instead — the stack can hold a second browse lens behind the
-   active one, and a global flag would blank that one too *and* be cleared by
-   its island the moment the shared filter store moved, revealing the incoming
-   card mid-churn. See src/lib/filters-pending.ts.
-
-   `:is(html, .stack-card)` rather than two rule sets, and it raises every one
-   of these selectors' specificity by a class (`html` is an element) rather
-   than lowering it — which matters, because two of them are already winning
-   deliberately narrow fights against Svelte-scoped rules further down. */
-/* A SECOND, independent reason to be holding the same content back, ORed in
-   here rather than folded into the attribute above (issue #126). A lens change
-   now animates the real box — `.card-stack-inner`'s `width` — and the incoming
-   grid is laid out against it, so uncovered it would hold two columns from
-   680px to ~930px and then reflow to three, which is precisely the churn #125
-   recorded. `data-filters-pending` cannot express that: it is cleared by the
-   lens island the moment its own order is committed, which is a fact about the
-   island and says nothing about whether the box it sits in has stopped moving.
-   `.stack-card` only, never <html>: nothing resizes the assembly on a cold
-   load. See src/lib/stack-motion.ts.
-
-   The two sets of selectors hide and show EXACTLY the same four things, so a
-   transition holding both attributes and then losing one changes nothing on
-   screen — a difference between them would be a visible step mid-flight. */
-:is(html, .stack-card)[data-filters-pending] .fp-browse-list,
-:is(html, .stack-card)[data-filters-pending] .fp-browse-empty,
-:is(html, .stack-card)[data-filters-pending] .fp-result-count,
+   This used to be ORed together with a `data-filters-pending` guard that
+   covered a different hole — a server-rendered results grid the client was
+   about to re-sort. #144 (following the shared-card-pool map, #136) removed
+   that guard: no lens fragment server-renders a results grid any more, so
+   there was nothing left for it to hide. This half survives unchanged — the
+   box still resizes, and the incoming grid still needs holding while it does. */
 .stack-card[data-stack-resizing] .fp-browse-list,
 .stack-card[data-stack-resizing] .fp-browse-empty,
 .stack-card[data-stack-resizing] .fp-result-count {
   display: none;
 }
 
-/* ...and the skeleton stands in its place (issue #119). Hiding the results
-   without drawing anything left ~470ms of empty space below an already
-   populated filter bar — measured warm and wired, and far longer on a real
-   connection, which is what read to the visitor as "everything loads, then the
-   filters apply". The skeleton is server-rendered into every grid lens page and
-   `display: none` in BrowseSkeleton's own styles; this is the only rule that
-   turns it on. Appearance stays with the component, visibility stays here with
-   the rest of the guard. */
-:is(html, .stack-card)[data-filters-pending] .fp-skeleton--grid,
+/* ...and the skeleton stands in its place, for the same reason issue #119
+   originally drew one: hiding the results without drawing anything left a
+   stretch of empty space below an already-populated filter bar. */
 .stack-card[data-stack-resizing] .fp-skeleton--grid {
   display: block;
-}
-
-/* ...and the same for a STRIP lens (issue #123), which #119 did not cover at
-   all: the rules above name .fp-browse-list, and Newest/Oldest render
-   .card-strip. A filtered cold load of /lens/newest?filter.what=games painted
-   the unfiltered 30-card run at first paint and kept it for ~880ms — the
-   literal "loads with all cards first, then applies the filters" report.
-
-   Scoped to `.fp-browse-grid` so it is the RESULTS strip that is hidden and
-   never a strip inside a card body ("Cards about this", a series run): those
-   are already the right content, and a lens can sit in a stack beside them.
-
-   Keyed on the FILTERED states only, unlike the grid. The guard has two
-   triggers (see Base.astro): a filtered URL, and a re-rank-only load for a
-   returning visitor. A strip lens sorts on date and never re-ranks — its
-   hydration order is identical to the server's — so holding its run back for a
-   re-rank is a skeleton flash bought for nothing. `""` is that re-rank case;
-   `filtered` and `stalled` are the two the strip must answer. */
-:is(html, .stack-card)[data-filters-pending="filtered"] .fp-browse-grid .card-strip,
-:is(html, .stack-card)[data-filters-pending="stalled"] .fp-browse-grid .card-strip {
-  display: none;
-}
-
-:is(html, .stack-card)[data-filters-pending="filtered"] .fp-skeleton--strip,
-:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton--strip {
-  display: block;
-}
-
-/* The 3s safety net (Base.astro) no longer reveals the unfiltered set when the
-   island fails to land — it re-flags the guard as `stalled` instead. On a
-   FILTERED URL the prerendered list is the wrong answer to the question the
-   visitor asked, and showing 268 cards under a filter bar reading "Games" is a
-   worse failure than an honest stall. (The unguarded re-rank case, where the
-   URL carries no filters and the SSR content is already correct, still reveals
-   — see the script.) */
-:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton-note {
-  display: none;
-}
-
-:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton-stalled {
-  display: block;
-}
-
-/* Nothing is coming, so stop promising tiles. */
-:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton-list {
-  display: none;
-}
-
-/* The same rule for the strip's row, spelled one selector longer on purpose.
-   The strip variant's `display: flex` is a SCOPED rule in BrowseSkeleton.svelte,
-   and Svelte's scoping appends its hash class to every compound — so
-   `.fp-skeleton--strip.svelte-x .fp-skeleton-list.svelte-x` (four classes)
-   outranks the three-class rule above, and the tiles stayed on screen under a
-   message saying nothing was coming. Measured, not assumed. Naming
-   .fp-browse-grid as well restores the ordering.
-
-   The markup moved out of BrowseResults into BrowseSkeleton in issue #149, and
-   this arithmetic is what had to survive it: BOTH compounds of that scoped rule
-   are in the same component, before and after, so it is still one hash on two
-   compounds — four classes — and this rule is still the five-class one that
-   beats it. Splitting the pair across two components is the move that would
-   silently lose the fight, since `.fp-browse-grid` would then carry a different
-   hash from the tiles it names. Re-verified in a browser at /lens/newest. */
-:is(html, .stack-card)[data-filters-pending="stalled"] .fp-browse-grid .fp-skeleton--strip .fp-skeleton-list {
-  display: none;
-}
-
-/* ...and the same rule again for a skeleton the LENS BODY renders itself, which
-   is where the strip's tiles now come from on a cold load (issue #150). With
-   the cards fetched rather than SSR'd, a pending body renders <BrowseSkeleton>
-   directly and BrowseResults — and with it `.fp-browse-grid` — does not exist
-   yet, so the rule above cannot reach it and the tiles stayed on screen under a
-   message saying nothing was coming. `.fp-skeleton--pending` stands in for the
-   ancestor: it is the class that marks an island-drawn skeleton, and naming it
-   in the same compound keeps this at five classes against the scoped rule's
-   four. Measured in a browser at /lens/newest?filter.what=games, both before
-   and after. The GRID's stalled rule needs no twin — it is three classes
-   against a two-class scoped rule and wins from any ancestor. */
-:is(html, .stack-card)[data-filters-pending="stalled"] .fp-skeleton--pending.fp-skeleton--strip .fp-skeleton-list {
-  display: none;
 }
 
 /* ── Reset ─────────────────────────────────────────────────────── */

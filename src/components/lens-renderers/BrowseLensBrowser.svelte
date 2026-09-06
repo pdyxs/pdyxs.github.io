@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
+  import { lensFilterStore } from '../../stores/lens-filter-store';
   import {
     applyFilters,
     countSelectedValueMatches,
@@ -14,7 +14,6 @@
   import { isStripLens, stripTerminal } from '../../lib/strip-lens';
   import { archiveLensId } from '../../lib/lens-registry';
   import { revealSettings } from '../../lib/progressive-reveal';
-  import { clearFiltersPending } from '../../lib/filters-pending';
   import {
     loadCardPool,
     failureReason,
@@ -57,10 +56,12 @@
   //    "No cards match the current filters" over a request still in flight, so
   //    the pending state is its own branch of the template.
   //
-  // The pending state is ISLAND state, not a fourth CSS guard (#140 decision
-  // 2): with nothing server-rendered there is no real DOM to hide, so the
-  // skeleton draws itself (`standalone`) rather than waiting for
-  // `data-filters-pending`.
+  // The pending state is ISLAND state, not a CSS guard (#140 decision 2):
+  // with nothing server-rendered there is no real DOM to hide, so the
+  // skeleton draws itself (`standalone`). The `data-filters-pending` guard
+  // this once deferred to is gone entirely (#144) — it existed to hide a
+  // server-rendered results grid the client was about to re-sort, and no
+  // lens fragment server-renders one any more.
   let pool = $state<SharedCardPoolAsset | null>(null);
   let failure = $state<CardPoolFailureReason | null>(null);
 
@@ -128,8 +129,8 @@
   // them and browse-helpers only takes them: which values are selected is this
   // lens's business, and seen-ness is the visitor's. Both are known by the time
   // anything is rendered now — the grid's first paint is already the real
-  // order, which is what the `data-filters-pending` guard used to have to cover
-  // for. (The guard stays for now regardless; see #144.)
+  // order, which is exactly why the `data-filters-pending` guard had nothing
+  // left to hide and was removed in #144.
   const matchContext = $derived(makeMatchContext(cardBackedSet ?? new Set<string>()));
   const rankingCtx = $derived({
     matchCount: (card: CardMeta) => countSelectedValueMatches(card, activeFilter, matchContext),
@@ -162,37 +163,15 @@
       : null,
   );
 
-  // Clear the anti-FOUC guard once this island has mounted (so sortedCards now
-  // reflects the store, not the SSR-matching full set) AND the shell has synced
-  // the selection. Reading sortedCards makes the effect re-run when the reduced
-  // set lands, so we never reveal before the DOM reflects it.
-  //
-  // Cleared by walking UP from this island's own results root, never by naming
-  // <html> (issue #125). There are two hosts — <html> for a cold load, the
-  // incoming `.stack-card` for a client-side lens transition — and `closest()`
-  // finds whichever is covering THIS island. It also finds nothing for an
-  // island sitting in some other card of the stack, which is the point: a
-  // second browse lens behind the active one re-runs this effect every time
-  // the shared filter store moves, and naming <html> made it reveal the
-  // incoming card mid-re-sort. A load with no guard set at all no-ops.
-  let host = $state<HTMLElement | null>(null);
-  $effect(() => {
-    sortedCards;
-    if (pool !== null && $lensFiltersSynced) {
-      clearFiltersPending(host);
-    }
-  });
 </script>
 
 {#if pool === null}
   <!-- `null` is not `[]`: an empty pool would render "no cards match" over a
        request still in flight. `standalone` is what turns the box on — the base
-       `.fp-skeleton` rule is `display: none` and only the guard ever flipped
-       it, and the guard is not set on an unfiltered cold load. -->
+       `.fp-skeleton` rule is `display: none`, and nothing else ever flips it. -->
   <BrowseSkeleton {layout} {failure} standalone onRetry={requestPool} />
 {:else}
   <BrowseResults
-    bind:host
     cards={sortedCards}
     totalCount={filteredCards.length}
     {tagDisplay}

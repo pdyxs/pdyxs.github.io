@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount } from 'svelte';
 import BrowseLensBrowser from './BrowseLensBrowser.svelte';
-import { lensFilterStore, lensFiltersSynced } from '../../stores/lens-filter-store';
+import { lensFilterStore } from '../../stores/lens-filter-store';
 import { emptyFilterState } from '../../dimensions';
 import { poolFailureMessage } from '../../lib/browse-skeleton';
 import {
@@ -41,7 +41,6 @@ beforeEach(() => {
   target = document.createElement('div');
   document.body.appendChild(target);
   lensFilterStore.set(emptyFilterState());
-  lensFiltersSynced.set(false);
   localStorage.clear();
 });
 
@@ -56,8 +55,8 @@ describe('BrowseLensBrowser pool states', () => {
     const el = render({ config: {}, loadPool: pendingLoader() });
     const skeleton = el.querySelector('.fp-skeleton')!;
     expect(skeleton).not.toBeNull();
-    // It draws ITSELF: nothing sets data-filters-pending on an unfiltered cold
-    // load, and the base .fp-skeleton rule is `display: none`.
+    // It draws ITSELF: the base .fp-skeleton rule is `display: none` and
+    // nothing else would flip it.
     expect(skeleton.classList.contains('fp-skeleton--pending')).toBe(true);
     expect(el.querySelector('.fp-browse-list')).toBeNull();
     // `null` is not `[]` — the empty state must not claim a filter matched
@@ -112,27 +111,5 @@ describe('BrowseLensBrowser pool states', () => {
     });
     expect(attempts()).toBe(2);
     expect(el.querySelector('.fp-pool-error')).toBeNull();
-  });
-
-  it('clears the anti-FOUC guard only once the pool has landed', async () => {
-    const host = document.createElement('div');
-    host.className = 'stack-card';
-    host.setAttribute('data-filters-pending', 'filtered');
-    document.body.appendChild(host);
-    host.appendChild(target);
-    lensFiltersSynced.set(true);
-
-    const { load, attempts } = flakyLoader(POOL, 1);
-    render({ config: {}, loadPool: load });
-
-    await vi.waitFor(() => expect(attempts()).toBe(1));
-    // A failure is not an arrival: nothing may be revealed.
-    expect(host.getAttribute('data-filters-pending')).toBe('filtered');
-
-    target.querySelector<HTMLButtonElement>('.fp-pool-retry')!.click();
-    await vi.waitFor(() => {
-      expect(host.getAttribute('data-filters-pending')).toBeNull();
-    });
-    host.remove();
   });
 });

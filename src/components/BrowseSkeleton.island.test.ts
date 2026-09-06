@@ -2,9 +2,10 @@
 // pool).
 //
 // The visibility toggles live in global.css and are not loaded here, so what
-// this asserts is the half a mounted island owns: the class names the guard
-// rules name, the tile counts, and the two new states — a failure that says
-// which failure it was, and a retry control that calls back.
+// this asserts is the half a mounted island owns: the class names the
+// data-stack-resizing rules name, the tile counts, and the two new states —
+// a failure that says which failure it was, and a retry control that calls
+// back.
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { mount, unmount } from 'svelte';
 import BrowseSkeleton from './BrowseSkeleton.svelte';
@@ -34,7 +35,7 @@ afterEach(() => {
 });
 
 describe('BrowseSkeleton pending state', () => {
-  it('keeps the class names the data-filters-pending rules name', () => {
+  it('keeps the class names the data-stack-resizing rules name', () => {
     const el = render({ layout: 'grid' });
     const skeleton = el.querySelector('.fp-skeleton')!;
     expect(skeleton.classList.contains('fp-skeleton--grid')).toBe(true);

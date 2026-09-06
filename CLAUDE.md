@@ -606,13 +606,12 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
   and `.fp-slot-card-list` stay scoped to the island, per the islands
   exception, and exist only between first paint and the card pool arriving.
 - `.fp-skeleton--pending`, `.fp-skeleton--failed`, `.fp-pool-error`,
-  `.fp-pool-retry` (map #136 — `BrowseSkeleton.svelte`). These are the *only*
-  `.fp-skeleton*` names that are island state rather than guard state: the base
-  rule is `.fp-skeleton { display: none }` and every other one waits for
-  `data-filters-pending`, which these two modifiers deliberately do not. They
-  are scoped to the island, per the islands exception, and the pair of them
-  says `display: block` — nothing more, so the guard's own rules landing on top
-  of them is a no-op rather than a fight.
+  `.fp-pool-retry` (map #136 — `BrowseSkeleton.svelte`). The base rule is
+  `.fp-skeleton { display: none }`; these two modifiers turn it on as island
+  state, drawn by a body that has no pool yet or whose fetch failed. They are
+  scoped to the island, per the islands exception, and say `display: block` —
+  nothing more, so the `data-stack-resizing` rule that can also reveal this box
+  (issue #126) landing on top of them is a no-op rather than a fight.
 - `.browse-card-item--brief` (issue #130) — the `BrowseCard` variant hook. It
   deliberately carries **no rule at all**: everything `brief` changes is either
   an element `BROWSE_CARD_VARIANTS` does not render or a number it hands to
@@ -1285,49 +1284,35 @@ Two things are unique to it:
   `CardStack` reads `.card-header-title`'s `textContent` as a placeholder card's
   name and would otherwise name the card after its own disclaimer.
 
-**The chain has two runtime rungs, so the browser's order differs from the
-server's.** Filter-match count and seen-ness are only knowable client-side, so
-the static build renders rungs 2/4/5/6 and `BrowseLensBrowser` re-sorts on
-hydration. Unguarded that is a whole grid visibly reshuffling a beat after it
-paints, which reads as a bug — so `Base.astro`'s inline anti-FOUC script sets
-`data-filters-pending` for a `/lens/` path when localStorage holds **any**
-`pdyxs:view-state:` key, and the browser clears it once the re-sorted DOM is
-committed. Deliberately conditional on there *being* a read history: a
-first-time visitor's re-sort is a no-op, so they pay nothing. The seen set is
-snapshotted once in `onMount`, never read live — a list reshuffling because you
-opened a card elsewhere in the stack is worse than being one navigation stale.
+**The chain has two runtime rungs, so the browser's order can differ from the
+server's.** Filter-match count and seen-ness are only knowable client-side.
+This used to matter to a results grid the server had already rendered: rungs
+2/4/5/6 were baked into static HTML and `BrowseLensBrowser` re-sorted it on
+hydration, which — unguarded — was a whole grid visibly reshuffling a beat
+after it painted. `Base.astro` carried a pre-paint script (`data-filters-pending`)
+whose whole job was covering that reshuffle, plus the equivalent gap on a
+client-side lens transition (`filtersPendingForTransition`,
+`src/lib/filters-pending.ts`, issue #125).
 
-**The guard has two hosts, and a transition is not a cold load** (issue #125).
-That pre-paint script only runs on a cold load, so a client-side lens
-transition (`replaceSlot`, `pushCard`) fetched the same server-rendered
-fragment and hydrated it **in view**, with nothing covering the swap. It now
-flags the **incoming `.stack-card`** instead of `<html>` — the stack can hold a
-second browse lens behind the active one, and a page-wide flag would blank that
-one too *and* be cleared by its island the moment the shared filter store
-moved. `filtersPendingForTransition` (`src/lib/filters-pending.ts`) is the
-decision, and it asks the same two questions from what the stack knows rather
-than from the pathname: carried filters → `filtered` (a fragment is fetched by
-uid, so the server always rendered it unfiltered); else a re-ranking lens for a
-returning visitor → `''`. A card, an unfiltered date strip, and a first-time
-visitor all get `null` and land immediately.
+**That entire mechanism is gone (#144).** The shared-card-pool map (#136)
+removed the thing it existed to hide: no lens fragment server-renders a results
+grid any more (map #140), so every browse-family body (`BrowseLensBrowser`,
+`HistoryLensBrowser`, `EditorialLensBrowser`) renders nothing until its own
+`/cards.json` fetch resolves, and `sortedCards`/`resultCards` already reflect
+both runtime rungs the very first time they render. There is no reshuffle to
+cover, on a cold load or a transition, so `Base.astro`'s pre-paint script,
+`src/lib/filters-pending.ts`, and the `data-filters-pending` rules in
+global.css were deleted outright rather than left dormant. See "The card pool
+is fetched once per visitor" below for what replaced the loading state itself.
 
-The corollary is how it is **cleared**: `clearFiltersPending` walks UP from the
-island's own results root, so `closest()` finds whichever host covers *this*
-island — the card on a transition, `<html>` on a cold load — and finds nothing
-for an island in another card. All three lens bodies clear that way; none names
-`<html>`. The CSS host is `:is(html, .stack-card)`, one rule set rather than
-two, and it *raises* every guard selector's specificity by a class rather than
-lowering it — which matters, because two of them already win deliberately
-narrow fights against Svelte-scoped rules (see #123).
-
-**A lens change animates the REAL BOX, and holds its results behind the
-skeleton while it does.** This is the churn #125 measured (not the re-sort) and
-the vocabulary #126 settled. `.card-stack-inner`'s `width` is transitioned over
-`--stack-motion-ms`, so the incoming lens's grid was laid out at every width
-between the outgoing card's and its own: at 1400px,
-`repeat(auto-fill, minmax(280px, 1fr))` held **two** columns for 450ms and then
-reflowed to three — the 1877px collapse, reproducible with an empty read history
-and no filters, which is why the hydration re-sort cannot be its cause.
+**A lens change still animates the REAL BOX, and still holds its results
+behind the skeleton while it does** (issue #126) — this survives, because it is
+a fact about the box, not about who rendered the cards. `.card-stack-inner`'s
+`width` is transitioned over `--stack-motion-ms`, so the incoming lens's grid
+would otherwise be laid out at every width between the outgoing card's and its
+own: at 1400px, `repeat(auto-fill, minmax(280px, 1fr))` held **two** columns
+for 450ms and then reflowed to three — the 1877px collapse, measured
+independently of the (now-removed) hydration re-sort.
 
 #125 answered that by *suppressing* the width transition on a replace. #126
 found the cost: the view transition that spanned the swap was then the only
@@ -1351,13 +1336,14 @@ carries the resize. Three consequences worth stating:
   did, and one vocabulary was the ask.
 - **The churn is held, not re-admitted.** `data-stack-resizing` (owned by
   `holdWhileAssemblyResizes`, named in `src/lib/stack-motion.ts`) goes on the
-  incoming `.stack-card` and shows the same #119/#123 skeleton in place of the
-  same four elements `data-filters-pending` hides — deliberately the *same* set,
-  so a transition wearing both and then losing one changes nothing on screen.
-  A **second** attribute rather than a longer lease on the first, because the
-  guard is cleared by the lens island the moment its own order commits, which
-  is a fact about the island and says nothing about whether the box it sits in
-  has stopped moving.
+  incoming `.stack-card` and shows the #119/#123 skeleton in place of the
+  results list, empty message and count for as long as the resize runs. It used
+  to be a **second** attribute alongside `data-filters-pending` — a second,
+  independent reason to be holding the same four elements back, since that
+  guard was cleared by the lens island the moment its own order committed,
+  which said nothing about whether the box it sat in had stopped moving. That
+  guard is gone (#144), leaving `data-stack-resizing` as the sole reason this
+  results area is ever held back.
 
 The hold is **asked, not predicted**: the commit has run, one forced layout pass
 creates whatever transition it started, and `widthTransitionOf` either finds a
@@ -1381,32 +1367,35 @@ A **push** is unchanged in every respect — it keeps `panel-card-open`, and it
 keeps its width motion: the fan really does shift a slot, and "the fan glided,
 the cards jumped" is the failure that transition was added to fix.
 
-**Back/Forward takes the same two holds** (issue #127). Both were added on the
-`replaceSlot` path only, and the cold-load guard cannot stand in for them here:
-that one is set by the pre-paint script, and a popstate is not a load. Measured
-forward-again into `/lens/interesting?filter.what=art` — 24 unfiltered cards
-painted for ~130ms, then the grid re-columned *during* the resize and the
-document collapsed 6003px → 1938px. Masked in the direction people try first,
-because Back from a filtered lens goes to `/`, which has slots rather than a
-results grid.
+**Back/Forward takes the same assembly-resize hold** (issue #127; it used to be
+two holds — see below). It was added on the `replaceSlot` path only, and a
+popstate never went through that path either. Measured forward-again into
+`/lens/interesting?filter.what=art` — the grid re-columned *during* the resize
+and the document collapsed 6003px → 1938px. Masked in the direction people try
+first, because Back from a filtered lens goes to `/`, which has slots rather
+than a results grid.
 
-`holdIncomingActive` (`CardStack.svelte`) is that pair, and where it sits is the
-whole of the ruling. A popstate rebuilds the stack **wholesale** —
+`holdIncomingActive` (`CardStack.svelte`) is where it sits, which is the whole
+of the ruling. A popstate rebuilds the stack **wholesale** —
 `seedStackState(null)`, then `initFromUrl` — so there is no "incoming entry" to
 hand it the way a replace has; it reads the ACTIVE location back out of the
-store after the commit, and flags **only that one**:
+store after the commit, and asks for the hold on **only that one**:
 
 - a `from`/`to` entry arrives **collapsed**. It is a spine with no results grid
   to hold, and the `data-stack-resizing` body pin would act on a body nobody can
-  see.
-- a popstate can land on a **card**. `filtersPendingForTransition` already
-  returns null for one, so the skeleton guard self-selects; the assembly hold is
-  about the *box*, not the lens, so it is asked either way and answers "no
-  transition" for the equal-width case that card → card usually is.
+  see — so only the active location is ever asked.
+- a popstate can land on a **card**. The assembly hold is about the *box*, not
+  the lens, so it is asked either way and answers "no transition" for the
+  equal-width case that card → card usually is.
+
+(It used to also flag the incoming lens against the `data-filters-pending`
+guard here — `filtersPendingForTransition` returned null for a card, so a
+popstate landing on one was already excluded before that guard was removed
+outright in #144.)
 
 Both `onPopstate` branches therefore `flushSync` their commit — the same reason
 `replaceSlot` does, that the island mounts when its node is inserted and the
-flag has to be on that node in the same task — and call it **before**
+hold has to be asked for in the same task — and call it **before**
 `initFromUrl`. `initFromUrl`'s splice does not restart the resize:
 `--stack-card-width` is `min(--max-width, viewport − fans)`, and only the
 `--max-width` half is what changed.
@@ -1498,16 +1487,17 @@ area has exactly one owner and the pending state is not a second copy of the gri
 markup. That is also what makes the fragments 40× smaller than a grid-shipping
 fragment could ever be.
 
-**`.fp-skeleton--pending` and `.fp-skeleton--failed` exist because the guard has no
-claim on this box.** The base rule is `.fp-skeleton { display: none }`, flipped only by
-a `data-filters-pending` value — which is set by a pre-paint script for a *filtered*
-cold load and by a lens transition, and is set on **neither** of the two loads that now
-need the skeleton most: an unfiltered cold load, and a fragment injected into the
-stack. A body rendering the skeleton because it has no cards yet would therefore render
-it invisible, and the visitor would get a blank results area for the length of the
-fetch. So the pending box turns *itself* on, exactly as the failure box does, and for
-the same reason: this is **island state, not a fourth CSS guard**. The guard's rules
-still fire on top where they apply, harmlessly — both say `display: block`.
+**`.fp-skeleton--pending` and `.fp-skeleton--failed` exist because there is no CSS
+guard left to turn this box on.** The base rule is `.fp-skeleton { display: none }`.
+The `data-filters-pending` guard that once flipped it — for a *filtered* cold load and
+for a lens transition — was removed entirely in #144, once the shared card pool made it
+provably dead: it existed to hide a server-rendered results grid the client was about
+to re-sort, and no lens fragment server-renders one any more. A body rendering the
+skeleton because it has no cards yet needs *something* to turn the box on, so the
+pending box turns *itself* on, exactly as the failure box does: this is **island state,
+not a CSS guard**. The `data-stack-resizing` rule (issue #126) can still reveal the same
+box from outside, while a lens change's assembly is resizing — harmlessly, since both
+say `display: block`.
 
 **Card pages narrow at build; they do not fetch.** A card page needs a median of 6
 distinct tag values, so the trade was "fetch 48 KB gz to use half a kilobyte" against

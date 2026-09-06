@@ -2,22 +2,15 @@
   The results-area placeholder: pending tiles, and an honest failure state.
 
   Extracted from BrowseResults.svelte in slice 4 of docs/plans/shared-card-pool.md
-  (issue #149). Nothing about the PENDING half changed in that move — the markup,
-  the class names and the appearance rules are the ones #119 and #123 shipped, and
-  they are load-bearing: global.css names most of them in its `data-filters-pending`
-  / `data-stack-resizing` guard rules, which are the only thing that ever reveals
-  this component today.
-
-  SPECIFICITY, and why the move is safe (see the note in global.css at the
-  `… .fp-browse-grid .fp-skeleton--strip .fp-skeleton-list` rule): Svelte appends
-  this component's hash class to every compound of a scoped selector, so
-  `.fp-skeleton--strip .fp-skeleton-list` compiles to four classes and out-ranks
-  the three-class global rule that hides the tiles when the guard goes `stalled`.
-  That is why the global rule names `.fp-browse-grid` as well. Both compounds of
-  the scoped rule live in THIS component, exactly as they both lived in
-  BrowseResults before — one hash, two compounds, four classes, unchanged. The
-  hazard would be splitting that pair across two components, which halves the
-  count and silently loses the fight.
+  (issue #149). Nothing about the PENDING half changed in that move — the markup
+  and appearance rules are the ones #119 and #123 shipped. What HAS changed since
+  is who reveals it: the `data-filters-pending` guard that used to be the only
+  thing turning this on was removed entirely in #144 (no lens fragment
+  server-renders a results grid any more, so it had nothing left to hide). Two
+  things reveal this component today — an island's own `standalone` state (the
+  `class:fp-skeleton--pending`/`--failed` toggles below) and the
+  `data-stack-resizing` rules in global.css, which still hold a lens's results
+  behind this box while the assembly's width transition runs (issue #126).
 
   NO ANIMATION, on purpose. The palette is two colours with no grey, so the
   conventional pale-grey shimmer is unrepresentable; softening one with `opacity`
@@ -45,21 +38,18 @@
      */
     failure?: CardPoolFailureReason | null;
     /**
-     * Whether this skeleton is ISLAND state rather than the CSS guard's.
+     * Whether this skeleton is ISLAND state, drawing itself.
      *
-     * The base rule is `.fp-skeleton { display: none }`, and the only thing
-     * that ever turned it on was a `data-filters-pending` value — which is set
-     * by a pre-paint script for a *filtered* cold load and by a lens
-     * transition, and is set on neither of the two loads that now need this
-     * box most (an unfiltered cold load, and a fragment injected into the
-     * stack). A body rendering the skeleton because it has no cards yet would
-     * therefore render it invisible, and the visitor would get a blank results
-     * area for the length of the fetch.
+     * The base rule is `.fp-skeleton { display: none }`. With no
+     * server-rendered results grid to hide any more (#144 removed the
+     * `data-filters-pending` guard that once turned this on), a body rendering
+     * this because it has no cards yet would render it invisible without this
+     * flag — the visitor would get a blank results area for the length of the
+     * fetch.
      *
      * So the pending box turns itself on, exactly as `.fp-skeleton--failed`
-     * does, and for the same reason: this is island state, not a fourth CSS
-     * guard (#140 decision 2). The guard's own rules still fire on top of it
-     * where they apply, which is harmless — both say `display: block`.
+     * does, and for the same reason: this is island state, not a CSS guard
+     * (#140 decision 2).
      */
     standalone?: boolean;
     /**
@@ -72,21 +62,21 @@
   let { layout = 'grid', failure = null, onRetry = null, standalone = false }: Props = $props();
 </script>
 
-<!-- The loading state for the anti-FOUC guard (issues #119, #123). It is in the
-     SSR HTML of every browse lens page and hidden by default; global.css reveals
-     it — and hides the real list/strip, count and empty message — for as long as
-     the host carries data-filters-pending. The server cannot know the URL had
-     filters (the build has no query string), so which of the two is on screen has
-     to be a CSS decision, not a conditional render.
+<!-- The loading state (issues #119, #123). Base rule is `display: none`; it is
+     shown either by the island's own `standalone` state (a body with no pool
+     yet, drawing its own placeholder), or by the `data-stack-resizing` rules
+     in global.css, which still hide a lens's real list/strip, count and empty
+     message for as long as the assembly's width transition is running
+     (issue #126).
 
      Both layouts get one, from the same tiles: what differs is the container (a
      wrapping grid vs one clipped row) and the count, which is the whole of
      skeletonTileCount(). What the STRIP skeleton deliberately omits is the dot
      track and the terminal tile — see the .fp-skeleton--strip styles.
 
-     A FAILURE is not a pending state and is not guarded: it is island state that
-     the visitor must see wherever it is rendered, so .fp-skeleton--failed turns
-     the box on itself rather than waiting for an attribute nothing would set. -->
+     A FAILURE is not a pending state: it is island state that the visitor must
+     see wherever it is rendered, so .fp-skeleton--failed turns the box on
+     itself rather than waiting for anything else to. -->
 <div
   class="fp-skeleton fp-skeleton--{layout}"
   class:fp-skeleton--failed={failure !== null}
@@ -127,17 +117,17 @@
 
 <style>
   /* ── Loading skeleton (issue #119) ─────────────────────────────
-     Shown only while the guard host carries data-filters-pending; the display
-     toggles live in global.css beside the rest of that guard, so the whole
-     "what is on screen during the hole" story is in one place. Appearance stays
-     here, which is where .fp-browse-list's own layout already lives. */
+     Hidden by default; the `data-stack-resizing` rules in global.css reveal it
+     while a lens change's assembly is still resizing (issue #126). Appearance
+     stays here, which is where .fp-browse-list's own layout already lives. */
   .fp-skeleton {
     display: none;
   }
 
-  /* Two exceptions, and neither is part of the guard: a failed pool load is a
-     fact the island knows and the visitor is owed, and a body that has no pool
-     yet has nothing else on screen to hold the space. Both draw themselves. */
+  /* Two exceptions that draw themselves, as island state rather than a CSS
+     guard: a failed pool load is a fact the island knows and the visitor is
+     owed, and a body that has no pool yet has nothing else on screen to hold
+     the space. */
   .fp-skeleton--failed,
   .fp-skeleton--pending {
     display: block;

@@ -8,7 +8,7 @@
   import { geometryFor, scrollTargetFor, STACK_GEOMETRY } from '../lib/stack-geometry';
   import { scrollBehaviourFor, scrollSettleAction, transitionWillFire, widthTransitionOf, SCROLL_SETTLE_TIMEOUT_MS, STACK_RESIZING_ATTR } from '../lib/stack-motion';
   import { filtersForKey, isLensUid, lensNameForKey, splitLocationParams } from '../lib/lens-key';
-  import { lensFilterStore, lensFiltersSynced } from '../stores/lens-filter-store';
+  import { lensFilterStore } from '../stores/lens-filter-store';
   import { filterStateFromParams } from '../dimensions';
   import { serialiseStack, deserialiseStack, locationParamsFromSearch } from '../lib/stack-codec';
   import type { ParamPairs } from '../lib/stack-codec';
@@ -18,14 +18,7 @@
   import { parseCollectionLink } from '../lib/collection-link';
   import { stackFromParams } from '../lib/browse-stack';
   import { filterUrlForTagValue } from '../dimensions';
-  import { hasAnyViewState, markRead, readToRecord } from '../lib/card-view-state';
-  import { getLensDefinition } from '../lib/lens-registry';
-  import {
-    applyFiltersPending,
-    clearFiltersPending,
-    filtersPendingForTransition,
-    hasFilterParamKey,
-  } from '../lib/filters-pending';
+  import { markRead, readToRecord } from '../lib/card-view-state';
   import { placeholderTitle } from '../lib/card-title';
   import { lensChromeForKey } from '../lib/lens-chrome';
   import { waitForTransition } from '../lib/transition-wait';
@@ -623,7 +616,6 @@
       lastSyncedFilterQuery = query;
       lensFilterStore.set(filterStateFromParams(new URLSearchParams(query)));
     }
-    lensFiltersSynced.set(true);
   }
 
   // Synchronously make the home lens the sole, active, page-mode entry — the
@@ -789,85 +781,34 @@
   }
 
   /**
-   * Drop a cold load's <html>-level guard when the card it covered is about to
-   * be destroyed (a replace takes the active card's node and its island with
-   * it). Nothing would be left to clear it, and the 3s safety net would then
-   * resolve it into a page-wide `stalled` — blanking the results the incoming
-   * card is about to show. A push leaves the outgoing island alive, so it
-   * clears its own host and this is not called there.
-   */
-  function dropRootGuard() {
-    clearFiltersPending(document.documentElement);
-  }
-
-  /**
-   * Hold an incoming lens's results behind the #119/#123 skeleton until its
-   * island commits the order the CLIENT decides (issue #125).
+   * The assembly-resize hold a popstate needs, applied to the location it
+   * lands ON (issue #127).
    *
-   * A fragment is fetched by uid, so the server always renders a lens
-   * unfiltered and in the build-time half of the ranking chain. On a cold load
-   * Base.astro's pre-paint script covers the gap between that and what the
-   * browser decides; a client-side transition hydrates the same fragment IN
-   * VIEW, and covered nothing — measured at ~400ms of churn ending in a 1877px
-   * collapse as cards of different heights changed places.
-   *
-   * Flagged on the incoming CARD, never on <html>: the stack can hold a second
-   * browse lens behind the active one. `filtersPendingForTransition` is the
-   * decision (and returns null for a card, for an unfiltered date strip, and
-   * for a first-time visitor's inert re-rank); this is the applier.
-   */
-  function guardIncomingLens(entry: LocationEntry, el: HTMLElement | null | undefined) {
-    if (!el) return;
-    const lensId = lensNameForKey(entry.key);
-    const value = filtersPendingForTransition({
-      isLens: lensId !== null,
-      lensConfig: lensId ? getLensDefinition(lensId)?.config : null,
-      hasFilterParams: hasFilterParamKey(filtersForKey(entry.key).map(([key]) => key)),
-      hasReadHistory: hasAnyViewState(),
-    });
-    if (value !== null) applyFiltersPending(el, value);
-  }
-
-  /**
-   * The two holds a popstate needs, applied to the location it lands ON
-   * (issue #127).
-   *
-   * Back/Forward is the one navigation that never went through either guard.
-   * `guardIncomingLens` and `holdWhileAssemblyResizes` were both added on the
-   * `replaceSlot` path, and the COLD-load guard cannot stand in for them here:
-   * that one is set by the pre-paint inline script in `Base.astro`, and a
-   * popstate is not a load. Measured forward-again into
-   * `/lens/interesting?filter.what=art`: 24 unfiltered cards painted for
-   * ~130ms, then the grid re-columned DURING the assembly's width transition
-   * and the document collapsed 6003px -> 1938px. That is #125's churn and
-   * #126's, still live, on the one path that never got a guard.
+   * Back/Forward is the one navigation that never went through it.
+   * `holdWhileAssemblyResizes` was added on the `replaceSlot` path, and a
+   * popstate never went through that path either. Measured forward-again into
+   * `/lens/interesting?filter.what=art`: the grid re-columned DURING the
+   * assembly's width transition and the document collapsed 6003px -> 1938px —
+   * #126's churn, still live, on the one path that never got the hold.
    *
    * ── Why it is HERE, and only here
    *
    * A popstate rebuilds the stack WHOLESALE — `seedStackState(null)` throws
    * every entry away and `initFromUrl` reads them back — so unlike a replace
    * there is no single "incoming entry" handed to us. There is still exactly
-   * one location that needs holding, and it is the ACTIVE one:
-   *
-   * - a `from`/`to` entry arrives COLLAPSED. It is a spine, it has no results
-   *   grid to hold, and both attributes would be pure cost there — the
-   *   `data-stack-resizing` body-width pin in particular acts on a body nobody
-   *   can see.
-   * - a popstate can land on a CARD rather than a lens.
-   *   `filtersPendingForTransition` already returns null for one, so the
-   *   skeleton guard self-selects and no card is ever flagged. The assembly
-   *   hold is not lens-specific — it is about the box, and the same body-width
-   *   pin that stops a lens's grid re-columning stops a card's prose
-   *   re-wrapping — so it is asked for either way, and answers "no transition
-   *   running" for the common card->card case where the declared widths match.
+   * one location that needs holding, and it is the ACTIVE one. A `from`/`to`
+   * entry arrives COLLAPSED — a spine, with no body for the `data-stack-
+   * resizing` body-width pin to act on — so only the active location is ever
+   * asked. The hold is not lens-specific — it is about the box, and the same
+   * body-width pin that stops a lens's grid re-columning stops a card's prose
+   * re-wrapping — so it is asked for either way, and answers "no transition
+   * running" for the common card->card case where the declared widths match.
    *
    * ── Why it is asked BEFORE `initFromUrl` rather than after
    *
    * The island mounts the moment its node is inserted, which is the commit
-   * immediately above every call site here — so the skeleton guard has to be
-   * on the node in that same task or the unfiltered set has already painted.
-   * The assembly hold is asked in the same breath for the same reason: the
-   * width transition is started by that commit, and `initFromUrl`'s own
+   * immediately above every call site here — so the width transition the hold
+   * is asked to find is started by that same commit, and `initFromUrl`'s own
    * splice does not restart it (`--stack-card-width` is `min(--max-width,
    * viewport - fans)`, and the `--max-width` half is the active location's
    * alone — the fan only enters at viewport widths narrow enough for the cap
@@ -882,9 +823,7 @@
   function holdIncomingActive() {
     const entry = activeEntry(get(stackStore));
     if (!entry) return;
-    const el = elFor(entry.slot);
-    guardIncomingLens(entry, el);
-    void holdWhileAssemblyResizes(el);
+    void holdWhileAssemblyResizes(elFor(entry.slot));
   }
 
   // `extraParams` (e.g. a serialised FilterState query string) rides along
@@ -949,12 +888,10 @@
     // home declares 960px) now swap instantly instead of crossfading. That is
     // what Back between them already did, and one vocabulary was the ask.
     //
-    // Committed synchronously so the incoming card's node exists to be flagged
-    // in the same task, before the browser paints the fragment it just mounted.
+    // Committed synchronously so the incoming card's node exists in the same
+    // task, before the browser paints the fragment it just mounted.
     flushSync(commit);
-    dropRootGuard();
     const incomingEl = elFor(incoming.slot);
-    guardIncomingLens(incoming, incomingEl);
     // PUSH, not replace (issue #124). "Replace" names the STACK operation —
     // `replaceActiveSlot` does swap the active slot out — and says nothing
     // about history. Conflating the two left a lens transition with no history
@@ -1075,11 +1012,6 @@
       const vt = startVT(() => {
         flushSync(doUpdate);
         const newCard = elFor(slot);
-        // Before the new snapshot is captured. A placeholder push mounts with
-        // no results at all, but `replaceBody` splices the fetched fragment's
-        // unfiltered grid into this same node a few hundred ms later — the flag
-        // is what stops that landing in view.
-        guardIncomingLens(entry, newCard);
         if (wasHomePageMode) {
           const t = newCard?.querySelector<HTMLElement>('.card-header-title');
           const d = newCard?.querySelector<HTMLElement>('.card-header');
@@ -1140,10 +1072,9 @@
       // Instant fallback (no VT support or no clicked link)
       doUpdate();
       if (homepage) homepage.hidden = true;
-      await tick();
       // `tick()` resolves after Svelte has written the DOM and before the
-      // browser paints it, so the flag lands on the same frame the card does.
-      guardIncomingLens(entry, elFor(slot));
+      // browser paints it, so the card element exists for what follows.
+      await tick();
     }
 
     markReadIfKnown(uid, slot);
@@ -1556,11 +1487,9 @@
         // `/` is the home lens as the sole page-mode entry.
         await seedHomeActive(false);
         // `seedHomeActive` writes the store; `flushSync` is what makes the home
-        // card's node exist in THIS task, so the holds below land before the
-        // browser paints it (issue #127). Home is never flagged by
-        // `guardIncomingLens` — it carries no filters and does not re-rank — so
-        // what this buys is the assembly hold on the 960px -> 680px shrink,
-        // which is the direction the bug was masked in.
+        // card's node exist in THIS task, so the hold below lands before the
+        // browser paints it (issue #127) — the assembly hold on the
+        // 960px -> 680px shrink, which is the direction the bug was masked in.
         flushSync();
         holdIncomingActive();
         await initFromUrl();
