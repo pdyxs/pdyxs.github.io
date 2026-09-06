@@ -6,6 +6,7 @@ description: A thought experiment about how existing political systems might be 
 canonical_url: https://medium.com/@pdyxs/government-2-0-f083a5f778b5
 source: medium
 tags: []
+priority: -3
 ---
 
 This is a thought experiment I’ve been playing with in my head for the last couple of months, around how our existing political systems could make deliberate fundamental changes (as opposed to meandering towards whatever cliff happens to look shiny at the time…). I’m particularly thinking about radical changes, like direct democracy, that are suddenly potentially viable with modern technology, but seem impossible to implement without, say, a coup. Which would be bad.

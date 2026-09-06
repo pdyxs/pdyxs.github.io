@@ -7,6 +7,7 @@ canonical_url: https://artplusmarketing.com/finding-the-right-problems-for-citiz
 source: medium
 tags:
   - science
+priority: -2
 ---
 
 Citizen Science is something I’ve been interested in for a few years — there’s some great opportunities to create games that create actual impact in the world, while also educating the general public in scientific principles and methodology.

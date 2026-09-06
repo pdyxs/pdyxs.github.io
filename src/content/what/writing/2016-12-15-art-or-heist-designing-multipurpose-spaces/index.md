@@ -9,6 +9,7 @@ tags:
 description: A look at the design of the original Art Heist, which repurposed an active art exhibition into an interactive theatre piece.
 canonical_url: https://medium.com/@pdyxs/art-or-heist-designing-multi-purpose-spaces-76df3de8c90c
 source: medium
+priority: -1
 ---
 
 This post is about the design of the original Art Heist, which repurposed an active art exhibition into a game where a team of 3 have to steal an artwork.

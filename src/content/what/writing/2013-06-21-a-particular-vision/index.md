@@ -7,6 +7,7 @@ tags:
   - where/work/seethrough
   - why/learn/gamedev
 source: seethroughstudios
+priority: -2
 ---
 Last night, I was having drinks with a couple of devs after an [IGDA Sydney](https://www.facebook.com/groups/SydneyIGDA/) event (a panel about games and narrative which was quite excellent). These devs had played the current build of Particulars, and I started talking about my vision for the rest of the game.
 

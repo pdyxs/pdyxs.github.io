@@ -9,6 +9,7 @@ tags:
   - where/work/seethrough
   - why/learn/gamedev
 source: seethroughstudios
+priority: -2
 ---
 Last weekend I saw Iron Man 3, and was oddly disappointed. The movie was fun despite a few flaws, and was really quite entertaining. It took me a couple of days, but I think I've figured out why I was underwhelmed by it: because I'm (some might say finally) getting sick of media that's satisfied with just being entertaining.
 

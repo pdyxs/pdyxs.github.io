@@ -7,6 +7,7 @@ tags:
   - where/work/seethrough
   - why/learn/gamedev
 source: seethroughstudios
+priority: -2
 ---
 I've been doing a fair bit of reflection about Particulars lately. We've been planning the final stages of the game's development, forcing me to really think about what's important in the game, and why we've made it this way.
 

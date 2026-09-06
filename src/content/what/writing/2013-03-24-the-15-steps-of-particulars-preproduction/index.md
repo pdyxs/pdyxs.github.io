@@ -8,6 +8,7 @@ tags:
   - why/learn/gamedev
 image: Screen-Shot-2013-02-12-at-10.46.35-AM.png
 source: gamasutra
+priority: -1
 ---
 I think it's fair to say that Particulars has had a particularly long development history: the project started in mid 2011, was put on hiatus while funding was found, continued hiatus while other projects completed and is finally rearing its physics-soaked head again in 2013.
 

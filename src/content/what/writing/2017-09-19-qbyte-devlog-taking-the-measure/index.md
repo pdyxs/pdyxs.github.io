@@ -10,6 +10,9 @@ description: Making quantum measurements work in the QByte engine
 canonical_url: https://medium.com/seethrough-studios/qbyte-devlog-taking-the-measure-fb06de96d368
 image: 1--erHcYtTXrYO-Ohor5hFxg-2x.jpg
 source: medium
+priority: -1
+series: QByte Devlog
+order: 1
 ---
 
 *Feedback is always appreciated!*

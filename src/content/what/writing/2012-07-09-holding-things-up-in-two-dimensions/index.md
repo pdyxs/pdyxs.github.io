@@ -8,6 +8,7 @@ tags:
   - why/learn/gamedev
 image: Screen-Shot-2012-07-09-at-10.34.56-PM.png
 source: gamasutra
+priority: -1
 ---
 The weekend before last, I went to Canberra iFest as a speaker (I'll get a summary of that talk and the slides up shortly!). As a part of that, I saw a talk by Daniel Fisher of [Halfbrick](http://halfbrick.com/) about their design process, where he said, amongst other gems, that one of their key processes is to decide what the 'three pillars' of their game is. That is, the three things that wholly describe and are wholly important to their game look, feel, sound, taste and smell, possible sans the taste and smell.
 

@@ -11,6 +11,7 @@ description: The joy and utility of shelving projects.
 canonical_url: https://medium.com/@pdyxs/not-quite-abandoned-c7421eee4205
 image: 1-VtIzMUzldCT-yr9UBWXgLA.png
 source: medium
+priority: 2
 ---
 ### The joy and utility of shelving projects
 

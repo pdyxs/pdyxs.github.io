@@ -4,6 +4,7 @@ title: "Getting Social, Part 1: Fear of the Internet"
 date: 2013-08-05 17:00:00 +1000
 source: seethroughstudios
 tags: []
+priority: -2
 ---
 I'm just going to put it out there: I'm scared of the internet.
 

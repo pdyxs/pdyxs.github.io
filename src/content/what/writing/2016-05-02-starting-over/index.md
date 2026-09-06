@@ -7,6 +7,7 @@ canonical_url: https://medium.com/@pdyxs/starting-over-6dcd12b2d1f3
 source: medium
 tags:
   - where/work/seethrough
+priority: -2
 ---
 The hardest thing about starting over isn’t just getting started, at least not
 in my experience. It’s fighting the voice in your head that asks, over and over,

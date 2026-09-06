@@ -9,6 +9,9 @@ description: Getting lost in the quantum (but also the actual) desert
 canonical_url: https://medium.com/seethrough-studios/qbyte-devlog-cycles-and-cul-de-sacs-2a0c361845a2
 image: 1-0oGIuQ6un8Cyur9c7wbULg-2x.jpg
 source: medium
+priority: -1
+series: QByte Devlog
+order: 3
 ---
 
 It’s been about 6 weeks since I last did a devlog for QByte, and while I’ve definitely made progress, that progress has felt slight, to say the least. It’s the reason I’ve not really written about the project in that time (which, well, is a bit backwards – I’ve realised that to a point, writing about progress each week helps drive that progress).

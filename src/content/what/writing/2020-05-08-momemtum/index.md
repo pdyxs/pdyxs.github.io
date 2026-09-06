@@ -9,6 +9,7 @@ description: An incrementalist approach to developing a creative practice.
 canonical_url: https://medium.com/@pdyxs/momemtum-8e375bea7a8e
 image: 1-jEOQf4l6DK1sX7XDbVFd8w.png
 source: medium
+priority: -1
 ---
 ### An incrementalist approach to developing a creative practice
 

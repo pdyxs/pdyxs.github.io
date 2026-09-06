@@ -8,6 +8,7 @@ tags:
   - why/learn/gamedev
 image: Panel-6-7_final.jpg
 source: gamasutra
+priority: -2
 ---
 I'm sitting in the SeeThrough Studios office after a rather odd week. I've spent a rather large part of last week working on the story of Particulars, both in terms of its plotting and its execution. As a result, the actual design of the game hasn't moved as far as I'd like (read: sorry alpha testers, no new build for you this week!).
 

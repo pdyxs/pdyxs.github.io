@@ -9,6 +9,7 @@ description: Why pre-production and post-production matter.
 canonical_url: https://medium.com/@pdyxs/gotta-get-outta-this-project-timeline-7a274e0a6a86
 image: 1-R8ay9o3z4uByHyVrbncdcA.png
 source: medium
+priority: -1
 ---
 ### Why pre-production and post-production matter
 

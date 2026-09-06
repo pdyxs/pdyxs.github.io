@@ -29,16 +29,6 @@ config:
       span: { small: 7, large: 8 }
       variant: brief
 
-    # `filter` IS the FilterState: a flat dimension-id -> values map. Don't
-    # nest the dimensions under a `selections:` key — that reads as a
-    # dimension named "selections", which matches nothing and silently
-    # widens the slot to the whole card pool (issue #79).
-    #
-    # `pool` is how many of the slot's TOP-RANKED cards the day-seed picks
-    # between — the ranking being the site-wide one (src/lib/ranking.ts), so
-    # authored `priority` decides what is eligible and the calendar day decides
-    # which of them you get. Optional; DEFAULT_SLOT_POOL (5) when absent.
-    # Raise it for variety, lower it to hold a slot to your very best.
     - filter:
         what: [what:games, what:art, what:software]
       pool: 5
@@ -50,19 +40,18 @@ config:
       seeMore: true
 
     - filter:
-        what: [what:puzzles]
+        what: [what:writing]
       pool: 5
       span: { small: 7, large: 8 }
       variant: brief
-      label: A Puzzle
+      label: A Post
       seeMore: true
 
-    # The fourth slot takes the default `span: 12` so it fills its own row:
-    # #132 judged a hole as "reads as a bug, but i'll just not do that", and a
-    # 7-wide fourth slot would leave one.
     - filter:
-        what: [what:writing]
+        what: [what:puzzles]
       pool: 5
-      variant: brief
-      label: A Post
+      span: { small: 7, large: 8 }
+      variant: full
+      side: right
+      label: A Puzzle
       seeMore: true

@@ -8,6 +8,7 @@ tags:
   - why/learn/gamedev
 image: Unstoppabot1.jpg
 source: seethroughstudios
+priority: -1
 ---
 Launching a game is tiring. Launching a game where the launch doesn't really work is exhausting, especially when those who actually play the game seem to really like it.
 

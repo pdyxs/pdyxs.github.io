@@ -10,6 +10,9 @@ description: How I got to v0.1 of QByte
 canonical_url: https://medium.com/seethrough-studios/qbyte-devlog-v0-1-the-simulator-lives-5daf39c52b44
 image: 1-nHg1vN01bgrmHaa3YghUbQ-2x.png
 source: medium
+priority: -1
+series: QByte Devlog
+order: 2
 ---
 
 *Feedback is always appreciated. Specifically, if you are someone or know someone who’s in the quantum computing field, I’d love to hear from you. I think what I’ve built is a decent tool for those who already know the science, but I’d like to confirm that that’s the case.*

@@ -9,6 +9,7 @@ description: A postmortem of my Global Game Jam project
 canonical_url: https://medium.com/@pdyxs/deciding-where-the-heart-is-4484b5476fa1
 image: 1-3bSWZFycxSNjlN---YfbAg.png
 source: medium
+priority: -1
 ---
 ### **Deciding Where the Heart Is**
 

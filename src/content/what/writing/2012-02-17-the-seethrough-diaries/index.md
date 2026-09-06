@@ -7,6 +7,7 @@ tags:
   - where/work/seethrough
   - why/learn/gamedev
 source: kotaku
+priority: -2
 ---
 ***Note: The images and links for this post are long gone (hosted on kotaku au, which is no more).***
 

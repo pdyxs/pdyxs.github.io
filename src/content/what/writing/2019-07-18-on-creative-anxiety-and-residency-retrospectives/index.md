@@ -8,6 +8,7 @@ description: On feeling safe enough to be creative again, after an artist reside
 canonical_url: https://medium.com/@pdyxs/on-creative-anxiety-and-residency-retrospectives-11f06f677332
 image: 1-H5r2CWHAqsJYULJNuARbLA.jpeg
 source: medium
+priority: -1
 ---
 This blog post started as a diary that I wrote about 6 weeks ago, at the halfway point of my artist residency at pvi.
 
