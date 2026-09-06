@@ -119,10 +119,10 @@ export function historyEmptyMessage(
 ): string {
   if (mode === 'seen') {
     return anyHistory
-      ? 'None of the cards you have opened match the current filters.'
-      : 'Nothing here yet. Cards collect here as you open them, most recently read first — and only in this browser, since none of it leaves your machine.';
+      ? 'Too many filters = no cards here.'
+      : "You've not opened anything yet! Go find a card to look at.";
   }
   return anyUnread
-    ? 'You have opened everything the current filters leave. Clear a filter to find more.'
-    : 'You have opened every card on the site. Nothing left to find — Seen will show you the way back.';
+    ? 'Too many filters = no cards here.'
+    : "You have opened every single card! Here, have an achievement...";
 }

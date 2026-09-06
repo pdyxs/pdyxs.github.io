@@ -89,7 +89,7 @@ describe('HistoryLensBrowser pool states', () => {
       expect(el.querySelector('.fp-browse-empty')).not.toBeNull();
     });
     // The reason, from the UNFILTERED pool — not the filter wording.
-    expect(el.querySelector('.fp-browse-empty')?.textContent).toContain('Nothing here yet');
+    expect(el.querySelector('.fp-browse-empty')?.textContent).toContain('not opened anything yet');
   });
 
   it('states a failure and retries into results', async () => {

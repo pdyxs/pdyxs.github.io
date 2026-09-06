@@ -64,7 +64,7 @@
     totalCount,
     layout = 'grid',
     terminal,
-    emptyMessage = 'No cards match the current filters.',
+    emptyMessage = 'Too many filters = no cards here',
     reveal = revealSettings(),
   }: Props = $props();
 

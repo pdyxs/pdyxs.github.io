@@ -92,10 +92,10 @@ export function skeletonTileCount(layout: 'grid' | 'strip'): number {
 export function poolFailureMessage(reason: CardPoolFailureReason): string {
   switch (reason) {
     case 'timeout':
-      return 'These results are taking too long to load.';
+      return 'Loading is taking too long...';
     case 'malformed':
-      return "These results didn't arrive in a form this page can read.";
+      return "Something strange was loaded, please try again.";
     default:
-      return "These results couldn't be loaded.";
+      return "Loading has failed, please try again.";
   }
 }

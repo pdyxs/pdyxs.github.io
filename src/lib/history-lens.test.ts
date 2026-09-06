@@ -116,7 +116,7 @@ describe('a card read before the author edited it', () => {
 describe('historyEmptyMessage', () => {
   it('tells a first-time visitor what Seen will collect', () => {
     const message = historyEmptyMessage('seen', { anyHistory: false, anyUnread: true });
-    expect(message).toMatch(/as you open them/);
+    expect(message).toMatch(/opened anything yet/);
     expect(message).not.toMatch(/filter/);
   });
 
@@ -127,7 +127,7 @@ describe('historyEmptyMessage', () => {
 
   it('congratulates a visitor who has read everything', () => {
     const message = historyEmptyMessage('unseen', { anyHistory: true, anyUnread: false });
-    expect(message).toMatch(/every card on the site/);
+    expect(message).toMatch(/every single card/);
     expect(message).not.toMatch(/filter/);
   });
 
