@@ -6,6 +6,7 @@ source: gamasutra
 tags:
   - what/games/digital/particulars
   - why/learn/gamedev
+priority: -2
 ---
 So, you've started developing your game, and you've got your basic gameplay done. It's time to start playtesting*. The question occurs to you: how many people should be playtesting my game?
 

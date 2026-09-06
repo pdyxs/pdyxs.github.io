@@ -5,6 +5,7 @@ date: 2011-06-09 17:00:00 +1000
 tags:
   - why/learn/gamedev
   - why/learn/travel
+priority: -1
 ---
 *The driver of the van peers out through the windshield as they race over the narrow dirt road, nervous with anticipation. They continue to press on as a fog descends around them, misting all but the closest trees. They hear a howling in the distance as they close in on their destination: a clearing at the end of the road leading to a walking track.*
 

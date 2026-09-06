@@ -6,6 +6,7 @@ tags:
   - why/learn/gamedev
 series: mechanical-breakdown
 order: 0
+priority: -2
 ---
 > I find your lack of control disturbing.
 >

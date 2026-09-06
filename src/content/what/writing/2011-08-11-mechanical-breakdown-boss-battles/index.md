@@ -7,6 +7,7 @@ tags:
   - why/learn/gamedev
 series: mechanical-breakdown
 order: 3
+priority: -1
 ---
 In a Mechanical Breakdown, I look at a particular mechanic utilised in games and examine when it works and when it doesn't, from both the gameplay and the narrative perspective*. The goal is to use existing opinions from around the internet and my own experience to find new ways of looking at existing mechanics.
 

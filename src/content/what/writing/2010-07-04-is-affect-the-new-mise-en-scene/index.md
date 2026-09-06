@@ -4,6 +4,7 @@ title: Is Affect The New Mise-En-Scene?
 date: 2010-07-04 17:00:00 +1000
 tags:
   - why/learn/gamedev
+priority: -2
 ---
 So I've been thinking about how affect is a really useful tool for designing games, and it struck me that to an extent, I've heard this concept before.
 

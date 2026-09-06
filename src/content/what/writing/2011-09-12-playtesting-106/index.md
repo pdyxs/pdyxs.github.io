@@ -7,6 +7,7 @@ date: 2011-09-12 17:00:00 +1000
 source: gamasutra
 tags:
   - why/learn/gamedev
+priority: -2
 ---
 *This is part 6 in a series on how to playtest games (click through to parts [1](card:what/writing/2011-07-14-playtesting-101) [2](card:what/writing/2011-07-19-playtesting-102) [3](card:what/writing/2011-08-02-playtesting-103)
 [4](card:what/writing/2011-08-04-playtesting-104) [5](card:what/writing/2011-08-06-playtesting-105)).*

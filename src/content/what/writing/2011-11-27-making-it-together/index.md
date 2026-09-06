@@ -6,6 +6,7 @@ tags:
   - what/games/digital/particulars
   - why/learn/gamedev
 source: gamasutra
+priority: -2
 ---
 This is going to be a pretty quick post, but it's something I've been pondering on lately. It concerns the actual development (programming) of a game project.
 

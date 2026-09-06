@@ -6,6 +6,7 @@ tags:
   - why/learn/gamedev
 series: mechanical-breakdown
 order: 1
+priority: -1
 ---
 This time, I want to do something a little different with the Mechanical Breakdown. After last week's [RTS article](card:what/writing/2010-06-20-mechanical-breakdown-the-rts) and [followup on Achron](card:what/writing/2010-06-23-achron-real-time-just-got-complicated), I was struck by just how much there can be to a mechanic (not to mention a genre). In particular, the RTS article took me an entire weekend to scribe, and yet it felt incredibly unfinished by its end. So instead of trying to exhaustively examine a mechanic myself, I'm wanting to try a more collaborative approach to the Mechanical Breakdown.
 

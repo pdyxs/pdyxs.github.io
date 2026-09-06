@@ -8,6 +8,7 @@ tags:
   - why/learn/gamedev
 series: mechanical-breakdown
 order: 2
+priority: -1
 ---
 ![](./18j38dsj7ymsbjpg.jpg)
 
