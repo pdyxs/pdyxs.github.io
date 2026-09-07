@@ -1,10 +1,11 @@
 ---
 inspected: false
 title: "Flatland 2.0, Run 1, Day 2 Diary"
-description: "Day two of Flatland 2.0's development diary."
 date: 2012-03-21
 tags:
   - what/games/digital/flatland-fallen-angle
+image: https://www.youtube.com/watch?v=QaGCqDyRB2w
 ---
+An update on the goings on in the Fishbowl by the SeeThrough people. Today, a savvy day, where we build our tools, do admin and develop our business.
 
-https://www.youtube.com/watch?v=QaGCqDyRB2w
+Stay tuned on www.seethroughstudios.com

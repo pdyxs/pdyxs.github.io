@@ -1,10 +1,15 @@
 ---
 inspected: false
 title: "Throw The Looking Glass - Sneak Peek 2"
-description: "An early look at the project that would become Throw The Looking Glass's first game."
 date: 2012-01-16
 tags:
   - where/work/seethrough
+image: https://www.youtube.com/watch?v=eCp-wYKdGiY
 ---
+More sneak peeking? Can it be true?!
 
-https://www.youtube.com/watch?v=eCp-wYKdGiY
+Join the TTLG team for their first study lab and get a glimpse of the first traces of art direction for their debut title, Particulars. Featuring a new cast of characters along with some of your old favourites.
+
+Confused? Intrigued? Inebriated? Never fear! The TTLG Video Updates will soon include interviews and in-game footage, giving you unprecedented access to the goings-on behind the scenes of Particulars.
+
+Stay tuned every fortnight (and sometimes sooner!)
