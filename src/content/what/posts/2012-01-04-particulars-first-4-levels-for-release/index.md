@@ -1,6 +1,6 @@
 ---
-inspected: false
-title: "Particulars - First 4 Levels for Release"
+inspected: true
+title: Particulars - First 4 Levels for Release
 date: 2012-01-04
 tags:
   - what/games/digital/particulars

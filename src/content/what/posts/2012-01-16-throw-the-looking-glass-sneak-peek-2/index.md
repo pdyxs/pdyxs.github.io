@@ -1,9 +1,9 @@
 ---
-inspected: false
-title: "Throw The Looking Glass - Sneak Peek 2"
+inspected: true
+title: Throw The Looking Glass - Sneak Peek 2
 date: 2012-01-16
 tags:
-  - where/work/seethrough
+  - what/games/digital/particulars
 image: https://www.youtube.com/watch?v=eCp-wYKdGiY
 ---
 More sneak peeking? Can it be true?!

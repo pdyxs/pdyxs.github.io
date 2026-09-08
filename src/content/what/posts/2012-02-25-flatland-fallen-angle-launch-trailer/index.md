@@ -1,13 +1,11 @@
 ---
-inspected: false
+inspected: true
 title: "Flatland: Fallen Angle Launch Trailer"
 date: 2012-02-25
 tags:
   - what/games/digital/flatland-fallen-angle
 image: https://www.youtube.com/watch?v=ps0E71V3SqU
 ---
-Get Flatland: Fallen Angle for free from http://www.seethroughstudios.com !
-
  With a tinkle not unlike the sound of shattering crockery, SeeThrough Studios today launched their inaugural game, Flatland: Fallen Angle. Inspired by the 1884 novella Flatland, by Edwin Abbott Abbott, Fallen Angle is the noir-esque tale of an isosceles triangle on the run from the law and hungry for revenge! Over ten astonishingly two-dimensional levels, the player must negotiate the various neighbourhoods of Polygonometropolis, and use their three angles to slice, splinch and shatter anyone who gets in their way!
 
 Built in just ninety-six hours (over three weeks), Flatland: Fallen Angle was conceived as a way to prototype the SeeThrough Studios development philosophy -- "Make games fast. Show your working." -- and its development has been accompanied by a smorgasbord of behind-the-scenes images, videos and words (including a series of development diaries on Kotaku Australia), along with a number of beta releases.
