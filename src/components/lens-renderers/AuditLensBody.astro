@@ -24,7 +24,6 @@ import { makeFileReader, resolveFolderCascade } from '../../lib/folder-config';
 import {
   getAllCards,
   inertDerivationControls,
-  resolveCardDescription,
   resolveCardTitle,
 } from '../../lib/cards';
 import { generatorFrontmatterKeys } from '../../lib/filter-generators';
@@ -58,14 +57,7 @@ const auditInput: AuditCard[] = await Promise.all(
     return {
       uid: e.id,
       title: resolveCardTitle(e.data),
-      // The description *before* body-excerpt fallback — resolveDescription is
-      // what the audit applies, so handing it an already-excerpted value would
-      // make the "no description" finding structurally unreachable.
-      description: resolveCardDescription(e.data, cascade.cardDescriptionParts),
       date: e.data.date,
-      // Frontmatter tags only: path-derived, cascade and generated tags are all
-      // excluded so "declares nothing of its own" stays decidable.
-      authoredTags: e.data.tags,
       image: e.data.image,
       images: e.data.images,
       body: e.body,

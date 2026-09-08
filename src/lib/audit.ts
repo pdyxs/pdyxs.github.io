@@ -13,15 +13,11 @@
 // tested against plain data — see "decisions are pure, effects are thin" in
 // CLAUDE.md. AuditLensBody.astro is the thin gatherer/renderer around it.
 
-import { resolveDescription } from './description';
-
 export type AuditFindingType =
   | 'dead-image-host'
   | 'missing-title'
   | 'missing-date'
-  | 'no-description'
   | 'legacy-markup'
-  | 'no-authored-tags'
   | 'unresolved-local-image'
   | 'orphaned-old-url'
   | 'inert-derivation-control'
@@ -37,22 +33,7 @@ export interface AuditCard {
   uid: string;
   /** Resolved display title (see resolveCardTitle) — '' or absent is a finding. */
   title?: string;
-  /**
-   * The card's description *before* body-excerpt fallback: frontmatter
-   * `description` or the folder's `cardDescriptionParts` template output.
-   * Passing an already-excerpted value is harmless — resolveDescription is
-   * idempotent over its own output (a hand-written value wins immediately).
-   */
-  description?: string;
   date?: Date;
-   /**
-   * Tags the card itself declares in its own frontmatter — NOT the merged
-   * effective tag list. Path-derived, cascade and generator-derived tags are
-   * excluded by construction, which is what makes "no tags beyond derived ones"
-   * decidable. Folder-cascade tags are excluded too: they are the folder's
-   * statement, not the card's.
-   */
-  authoredTags?: readonly string[];
   /** Raw frontmatter `image` — a bare colocated filename or a remote URL. */
   image?: string;
   /** Raw frontmatter `images` — same shapes as `image`. */
@@ -289,22 +270,12 @@ const FINDING_SPECS: readonly FindingSpec[] = [
     hint: 'No `date`, so the card cannot be placed on any timeline lens. Some structural cards legitimately have none.',
     detect: card => (card.date ? undefined : []),
   },
-  {
-    type: 'no-description',
-    label: 'No description and no usable excerpt',
-    hint: 'resolveDescription yields nothing, so share cards, feed items and browse subtitles come out blank.',
-    detect: card =>
-      resolveDescription({ description: card.description }, card.body) === undefined
-        ? []
-        : undefined,
-  },
   // The ongoing read-through worklist. Unlike every other finding here it
   // detects nothing about the content itself: it reports a human judgement
   // recorded in frontmatter, kept current by automated edits resetting it
   // (see CLAUDE.md). It sits below the mechanical findings — during the
   // initial pre-launch sweep it catches nearly every card and would bury
-  // them — but above `no-authored-tags`, since a read-through naturally
-  // precedes tagging. See also src/lib/uninspected-facet.ts, the dev-only
+  // them. See also src/lib/uninspected-facet.ts, the dev-only
   // `why:uninspected` filter that reads the same flag for combining with
   // other dimensions while browsing.
   {
@@ -312,12 +283,6 @@ const FINDING_SPECS: readonly FindingSpec[] = [
     label: 'Not yet inspected',
     hint: 'Nobody has read this card end to end yet. Tick `inspected` in Obsidian once you have.',
     detect: card => (card.inspected === true ? undefined : []),
-  },
-  {
-    type: 'no-authored-tags',
-    label: 'No tags beyond derived ones',
-    hint: 'Every tag on this card comes from its path or a generator — it declares nothing of its own.',
-    detect: card => ((card.authoredTags?.length ?? 0) > 0 ? undefined : []),
   },
 ];
 

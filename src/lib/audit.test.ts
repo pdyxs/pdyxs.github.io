@@ -18,9 +18,7 @@ function cleanCard(overrides: Partial<AuditCard> = {}): AuditCard {
   return {
     uid: 'what/writing/a-clean-card',
     title: 'A Clean Card',
-    description: 'A hand-written one-line summary.',
     date: new Date('2024-03-01'),
-    authoredTags: ['what/writing'],
     image: 'hero.png',
     body: 'Some ordinary prose with a [card link](card:what/games/digital/numbeanies).',
     localAssets: ['hero.png'],
@@ -49,9 +47,7 @@ describe('auditCards — shape', () => {
       'inert-derivation-control',
       'missing-title',
       'missing-date',
-      'no-description',
       'not-inspected',
-      'no-authored-tags',
     ]);
   });
 
@@ -110,7 +106,7 @@ describe('dead-image-host', () => {
   });
 
   it('does not flag a bare word that merely mentions a dead host', () => {
-    const card = cleanCard({ description: 'Originally published on seethroughstudios.' });
+    const card = cleanCard({ body: 'Originally published on seethroughstudios.' });
     expect(finding(auditCards([card]), 'dead-image-host').cardCount).toBe(0);
   });
 });
@@ -195,34 +191,6 @@ describe('missing-date', () => {
   });
 });
 
-describe('no-description', () => {
-  it('flags a card with neither a description nor prose to excerpt', () => {
-    const card = cleanCard({ uid: 'what/gallery/shot', description: undefined, body: '![](hero.png)' });
-    expect(uidsFor([card], 'no-description')).toEqual(['what/gallery/shot']);
-  });
-
-  it('does not flag a card whose body yields an excerpt via resolveDescription', () => {
-    const card = cleanCard({ description: undefined, body: 'A body with real prose in it.' });
-    expect(finding(auditCards([card]), 'no-description').cardCount).toBe(0);
-  });
-
-  it('does not flag a card with a hand-written description and an empty body', () => {
-    const card = cleanCard({ description: 'Hand-written.', body: '' });
-    expect(finding(auditCards([card]), 'no-description').cardCount).toBe(0);
-  });
-});
-
-describe('no-authored-tags', () => {
-  it('flags a card whose only tags are derived (none authored)', () => {
-    expect(uidsFor([cleanCard({ uid: 'what/lonely', authoredTags: [] })], 'no-authored-tags'))
-      .toEqual(['what/lonely']);
-  });
-
-  it('flags a card with no tags field at all', () => {
-    expect(uidsFor([cleanCard({ authoredTags: undefined })], 'no-authored-tags')).toHaveLength(1);
-  });
-});
-
 describe('not-inspected', () => {
   it('flags a card that has not been ticked', () => {
     expect(uidsFor([cleanCard({ uid: 'what/unread', inspected: false })], 'not-inspected'))
@@ -274,9 +242,7 @@ describe('multiple findings', () => {
     expect(findings.filter(f => f.cardCount > 0).map(f => f.type)).toEqual([
       'missing-title',
       'missing-date',
-      'no-description',
       'not-inspected',
-      'no-authored-tags',
     ]);
     expect(auditedCardCount(findings)).toBe(1);
   });
