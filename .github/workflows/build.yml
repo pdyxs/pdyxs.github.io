@@ -1,23 +1,23 @@
 name: Build
 
-# Build-only CI for the Astro rebuild (issue #69).
+# CI + deploy for the Astro rebuild (issue #69, cutover #74).
 #
-# There is NO deploy job here, and there must not be one until the cutover
-# ticket (#74) lands. This repo has exactly one GitHub Pages site and it is
-# already live: build_type `legacy`, source `master /`, cname `pdyxs.wtf`,
-# served by GitHub's built-in Jekyll builder. Adding `actions/deploy-pages`
-# (or `actions/configure-pages` with `enablement`) would not stand up a second
-# site — it would replace the live one. Keep this workflow to build + gates +
-# artifact upload only.
+# This repo has exactly one GitHub Pages site. Before the cutover it was
+# build_type `legacy`, source `master /`, cname `pdyxs.wtf`, served by
+# GitHub's built-in Jekyll builder. The `deploy` job's `configure-pages` step
+# flips that source to `workflow` (GitHub Actions) as part of the SAME run
+# that then deploys — so merging this is the cutover, not a step before it.
+# There is still only one site: this replaces what it serves, it does not
+# stand up a second one.
 
 on:
   push:
     branches:
       - astro-rebuild
   schedule:
-    # Daily rebuild, 18:00 UTC (~4-5am Melbourne). Inert while this workflow is
-    # build-only; it exists now so the shape is proven for when #74 adds the
-    # deploy job and the `scheduled` card status becomes meaningful.
+    # Daily rebuild, 18:00 UTC (~4-5am Melbourne). Now that `deploy` exists,
+    # this keeps the live site in sync with any `scheduled` card crossing its
+    # publish date without a human having to push.
     - cron: "0 18 * * *"
   workflow_dispatch:
 
@@ -99,3 +99,24 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Flips the Pages source from "Deploy from a branch" to "GitHub
+      # Actions" the first time this runs. Rollback (#75's note) is this
+      # switching back via Settings -> Pages -> Source = Deploy from a
+      # branch -> master, which only works while master still holds Jekyll.
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
