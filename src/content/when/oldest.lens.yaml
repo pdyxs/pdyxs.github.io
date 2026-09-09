@@ -3,7 +3,6 @@
 # body (no bespoke loader in lens-components.ts).
 label: Oldest
 icon: timeline-oldest
-component: oldest
 order: 1
 width: 960px
 config:
