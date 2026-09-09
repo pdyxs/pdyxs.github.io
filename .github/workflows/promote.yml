@@ -1,0 +1,95 @@
+name: Promote
+
+# Moves work from `dev` to `main`, which is what GitHub Pages builds.
+# See docs/plans/publishing-pipeline.md §5 (map #157, issue #175).
+#
+# Code and content are gated differently, through ONE primitive:
+#   - content crosses per-file on `inspected: true`, daily and on demand
+#   - code crosses wholesale, only when a human asks for it
+#
+# Deploy already lives in Actions, so promotion and deploy are one visible
+# chain in the Actions tab. Deliberately NOT folded into the server's
+# pdyxs-content-git-sync timer, which would couple "commit my Obsidian edits"
+# to "publish the site" — two jobs with very different blast radii.
+
+on:
+  schedule:
+    # 17:30 UTC, half an hour ahead of build.yml's 18:00 daily rebuild, so a
+    # promotion and the rebuild that publishes a `scheduled` card crossing its
+    # date land in one window rather than a day apart.
+    - cron: "30 17 * * *"
+  workflow_dispatch:
+    inputs:
+      code:
+        description: "Also promote code (wholesale). Content always crosses."
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  # Never two promotions at once: both assert `main`'s tree from `dev`, and the
+  # loser would be pushing a tree computed against a `main` that had moved.
+  group: "promote"
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history and both branches: the promotion diffs `main` against
+          # `dev` and commits to both (content to `main`, the `awaitsCode`
+          # consumption back to `dev`).
+          fetch-depth: 0
+          ref: dev
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # The floor declared in package.json `engines` — scripts/*.mjs import
+          # .ts modules directly, and unflagged type stripping arrived in 22.18.
+          node-version: "22.18.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B main origin/main
+
+      # What is about to ship, printed BEFORE anything moves. This is the whole
+      # mitigation for the one asymmetry rollback leaves open: a code revert on
+      # `main` is durable, but promoting code later from a `dev` that was never
+      # fixed brings the bug back silently. A code promotion is deliberate,
+      # wholesale and human-triggered — this is the natural place to catch it.
+      - name: What has not been promoted
+        run: |
+          echo "### Unpromoted commits on dev" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          git log --oneline main..dev >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          git log --oneline main..dev || true
+
+      - name: Plan
+        run: |
+          node scripts/promote.mjs --dry-run \
+            ${{ (github.event_name == 'workflow_dispatch' && inputs.code) && '--code' || '' }} \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Promote
+        run: |
+          node scripts/promote.mjs \
+            ${{ (github.event_name == 'workflow_dispatch' && inputs.code) && '--code' || '' }}
+
+      # `dev` is pushed too, and only the awaitsCode consumption ever changes
+      # it. Pushing `main` is what triggers build.yml, whose main-only
+      # assertion is the last gate before deploy.
+      - name: Push
+        run: git push origin main dev
