@@ -35,6 +35,8 @@ meta:
   - label: Season
     values:
       - May-August 2017, Dulwich Hill, Sydney
+series: Art Heist Projects
+order: 2
 ---
 An immersive escape room, run in Sydney in 2017.
 
