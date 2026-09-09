@@ -220,6 +220,7 @@ describe('renderCardTemplate', () => {
     expect(frontmatter).toContain('status: draft');
     expect(frontmatter).toContain('date: <% tp.date.now("YYYY-MM-DD") %>');
     expect(frontmatter).toContain('tags: []');
+    expect(frontmatter).toContain('inspected: true');
   });
 
   it('offers the folder fields as YAML comments, so the card parses as-created', () => {
@@ -268,9 +269,10 @@ describe('renderCardTemplate', () => {
 
     // Only the prefilled keys are live; every suggestion is a YAML comment, so a
     // freshly created card satisfies the content schema untouched.
-    expect(Object.keys(frontmatter)).toEqual(['title', 'status', 'date', 'tags']);
+    expect(Object.keys(frontmatter)).toEqual(['title', 'status', 'date', 'tags', 'inspected']);
     expect(frontmatter.title).toBe('A Card: "quoted" & odd');
     expect(frontmatter.status).toBe('draft');
+    expect(frontmatter.inspected).toBe(true);
     expect(frontmatter.tags).toEqual([]);
     expect(frontmatter.date).toBeInstanceOf(Date);
   });

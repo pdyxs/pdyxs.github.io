@@ -11,11 +11,11 @@ title: <% JSON.stringify(title) %>
 status: draft
 date: <% tp.date.now("YYYY-MM-DD") %>
 tags: []
+inspected: true
 # Optional fields for this folder — uncomment the ones you need.
 # description:  # string
 # priority:     # number
 # excludeTags:  # list of strings
-# inspected:    # true | false
 # image:        # string
 ---
 

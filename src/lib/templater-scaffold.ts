@@ -68,7 +68,7 @@ export type ContainerFolder = {
 const CASCADE_ONLY_FIELDS = new Set(['renderer', 'navRenderer']);
 
 /** Fields the template prefills itself, so they must not also be offered as suggestions. */
-const PREFILLED_FIELDS = new Set(['title', 'status', 'date', 'tags']);
+const PREFILLED_FIELDS = new Set(['title', 'status', 'date', 'tags', 'inspected']);
 
 /**
  * Sections every template gets, whatever folder it is for. `common` is the
@@ -228,6 +228,11 @@ const SLUGIFY_JS =
  * a draft-status frontmatter block with the folder's suggested fields
  * commented out beneath it. Commented lines are ordinary YAML comments, so the
  * file passes the content schema the moment it is created.
+ *
+ * `inspected: true` is prefilled rather than offered as a suggestion — a card
+ * Paul writes himself through this scaffold needs no confirmation of his own
+ * words. See "`inspected` is a permanent editorial flag" in CLAUDE.md for the
+ * automated-edit rule this is the counterpart to.
  */
 export function renderCardTemplate(
   folder: ContainerFolder,
@@ -253,6 +258,7 @@ export function renderCardTemplate(
     'status: draft',
     'date: <% tp.date.now("YYYY-MM-DD") %>',
     'tags: []',
+    'inspected: true',
   ];
 
   if (fields.length > 0) {

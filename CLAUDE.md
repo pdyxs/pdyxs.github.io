@@ -2479,10 +2479,9 @@ which only ever writes `inspected: false` onto a card that has no `inspected`
 key at all — that is the one write this rule doesn't cover, since there was
 nothing there to have been "read" yet.
 
-New cards from the Templater scaffold do **not** get `inspected: false` by
-default — the field is commented out there, deliberately. A card Paul writes
-himself needs no confirmation of his own words; the flag is scoped to content
-something *other than him* touched.
+New cards from the Templater scaffold are prefilled `inspected: true`, not
+left commented out — a card Paul writes himself needs no confirmation of his
+own words; the flag is scoped to content something *other than him* touched.
 
 ### Experiments live on dev-only routes
 
