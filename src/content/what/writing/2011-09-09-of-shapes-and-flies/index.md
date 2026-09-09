@@ -3,8 +3,8 @@ inspected: true
 title: "Of Shapes and Flies: A Ludum Dare Double Bill Postmortem"
 date: 2011-09-09 17:00:00 +1000
 tags:
-  - what/games/digital/flatland-fallen-angle
   - why/learn/gamedev
+  - what/games/digital/escape-from-flatland
 source: gamasutra
 priority: -2
 ---

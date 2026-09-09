@@ -3,7 +3,7 @@ inspected: true
 title: Flatland 2.0 Run 1, Day 3 Diary
 date: 2012-03-23
 tags:
-  - what/games/digital/flatland-fallen-angle
+  - what/games/digital/flatland-2
 image: https://www.youtube.com/watch?v=2YuBo1Pl1o8
 series: Flatland 2.0
 order: 3

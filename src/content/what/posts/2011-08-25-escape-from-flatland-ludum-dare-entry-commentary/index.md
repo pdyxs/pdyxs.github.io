@@ -3,7 +3,7 @@ inspected: true
 title: Escape from Flatland - Ludum Dare Entry Commentary
 date: 2011-08-25
 tags:
-  - what/games/digital/flatland-fallen-angle
+  - what/games/digital/escape-from-flatland
 image: https://www.youtube.com/watch?v=56kquKtkZBo
 series: Escape from Flatland
 order: 4

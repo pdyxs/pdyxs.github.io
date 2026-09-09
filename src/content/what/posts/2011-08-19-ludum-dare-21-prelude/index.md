@@ -3,7 +3,7 @@ inspected: true
 title: "Ludum Dare 21: Prelude"
 date: 2011-08-19
 tags:
-  - what/games/digital/flatland-fallen-angle
+  - what/games/digital/escape-from-flatland
 image: https://www.youtube.com/watch?v=QPPzJ8w0hZo
 series: Escape from Flatland
 order: 1
