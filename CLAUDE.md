@@ -884,8 +884,44 @@ stack renders its own copy of the fragment markup, so a rule that is only true
 of the *active* card (`.series-floating-*`, `.card-header--stuck`) has to name
 `.stack-card--active` — which a scoped rule cannot do.
 
-The islands are the exception: a `.svelte` component's styles are shipped with
-the island, which hydrates wherever it lands, so those stay scoped.
+**Islands were never really exempt, and treating them as one was the bug**
+(issue: the Art Heist gallery report). A Svelte island's scoped stylesheet is
+linked into a page's `<head>` by Astro/Rollup at build time, same as any other
+component's CSS — it is not inlined into the JS chunk the `astro-island`
+element loads. `client:load` only ships the *behaviour*; the CSS still
+depends on some page having rendered the island at build time, and Rollup's
+default per-page code-splitting only links a component's CSS into the pages
+that did. `ImageGallery.svelte` and `Lightbox.svelte` are only ever used from
+a single-card render, so nothing else on a lens page happened to pull their
+CSS in — unlike `CardStrip`/`BrowseCard`, whose classes a lens's own results
+grid already uses, which is what made *those* look exempt (they aren't; they
+were one route change away from the same failure). Pushing a card fetched
+`ImageGallery`'s markup as a fragment with no such luck: the gallery rendered,
+fully unstyled. Going the other direction broke worse — a cold `/card/...`
+load with a lens behind it in `from=` renders that lens's filter panel too
+(every stack entry's body is mounted regardless of collapse state), and
+`FilterBar`/`DimensionButton`/`BrowseResults` and the rest are only ever used
+from lens pages: raw `<button>`s, an error banner, no CSS at all. Neither
+direction broke on a cold load of the page that *does* own the component
+(that request's own `<head>` links its own CSS) or in `astro dev` (Vite
+serves every imported component's CSS regardless of page), which is why this
+shipped invisibly both times.
+
+**The fix is `cssCodeSplit: false` in `astro.config.mjs`'s `vite.build`**, not
+a per-component rule. Any location can be pushed onto, or sit behind, any
+other, so "which pages happen to already import this component" is never
+actually a safe signal — moving individual components' CSS to `global.css`
+(the fix above, for `.card-header` and friends) only relocates the same
+whack-a-mole to the next island nobody thought to check. Disabling Rollup's
+CSS code-splitting merges every page's CSS into one bundle every page links,
+so a scoped `<style>` is available wherever its component can land, full
+stop — no per-component discipline required, and Svelte's normal component
+scoping (`.foo.svelte-xxxxx`) still holds, so island CSS stays scoped like
+everything else. `src/config.test.ts` guards the config flag against being
+quietly reverted. The site's total CSS is small enough (~105KB across two
+chunks) that paying it on every page beats re-litigating which components are
+"safe" to leave scoped-and-hoped; revisit if that budget grows enough to
+matter.
 
 ### All semantic colors and spacing go through CSS custom properties
 

@@ -55,5 +55,31 @@ export default defineConfig({
     // read by fs / consumed by a pre* generator, so nothing in the module graph
     // changes when it does. See scripts/dev-reload-plugin.mjs.
     plugins: [devReloadPlugin()],
+    build: {
+      // Any location can be pushed onto the stack from any other, and a
+      // pushed location arrives as a fetched HTML fragment injected into
+      // whatever page is already open — never through that page's own
+      // Astro render. Rollup's default per-page CSS code-splitting links a
+      // component's scoped stylesheet only into the pages that render that
+      // component AT BUILD TIME, so a Svelte island only ever used from one
+      // page family (ImageGallery, the lens filter panel, ...) shipped no
+      // CSS at all the moment its markup arrived via a fragment instead — a
+      // card pushed from a lens rendered its gallery unstyled; a lens
+      // rendered as the `from` entry behind a cold-loaded card rendered its
+      // filter panel as unstyled `<button>`s with an error banner. CardStrip
+      // and BrowseCard happened to escape this only because both page
+      // families already use them, which is an accident of today's routes,
+      // not a guarantee.
+      //
+      // Disabling code-splitting merges every page's CSS into one bundle
+      // that every page links, so a scoped style is available wherever its
+      // component can land, full stop — no per-component discipline, no
+      // "which pages happen to already import this" reasoning. The site's
+      // total CSS is ~61KB (two chunks today); that's a fixed, cacheable
+      // cost worth paying to make this whole bug class structurally
+      // impossible rather than something to keep auditing for. Revisit if
+      // the CSS budget grows enough to matter.
+      cssCodeSplit: false,
+    },
   },
 });
