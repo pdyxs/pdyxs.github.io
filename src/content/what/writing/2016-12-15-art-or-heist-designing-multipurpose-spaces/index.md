@@ -3,9 +3,10 @@ inspected: true
 title: Art or Heist? Designing Multi-Purpose spaces
 date: 2016-12-15 17:00:00 +1000
 tags:
-  - what/art/art-heist
   - art
   - why/learn/gamedev
+  - what/art/art-heist-exhibition
+  - what/art/art-heist
 description: A look at the design of the original Art Heist, which repurposed an active art exhibition into an interactive theatre piece.
 canonical_url: https://medium.com/@pdyxs/art-or-heist-designing-multi-purpose-spaces-76df3de8c90c
 source: medium
