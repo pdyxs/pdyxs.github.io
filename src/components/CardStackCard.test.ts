@@ -250,3 +250,28 @@ describe("CardStackCard resolves nothing itself", () => {
         });
     }
 });
+
+// Issue #174: the resolvers throw on an unregistered name, and the value of
+// that is entirely in whether the throw REACHES the build. A resolver test
+// proves the function throws; this proves Astro propagates it out of a
+// component render rather than swallowing it into a warning and rendering the
+// card anyway — which is the failure mode the whole change exists to remove.
+describe("unregistered renderer names fail the render", () => {
+    it("propagates an unregistered renderer out of CardStackCard", async () => {
+        const container = await makeContainer();
+        await expect(
+            container.renderToString(CardStackCard, {
+                props: { card: card({ renderer: "gneric" }) },
+            }),
+        ).rejects.toThrow(/neither registered nor declared generic/);
+    });
+
+    it("propagates an unregistered navRenderer out of CardStackCard", async () => {
+        const container = await makeContainer();
+        await expect(
+            container.renderToString(CardStackCard, {
+                props: { card: card({ navRenderer: "seires" }) },
+            }),
+        ).rejects.toThrow(/not registered/);
+    });
+});

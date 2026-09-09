@@ -16,6 +16,7 @@ inspected: true
 # description:    # string
 # priority:       # number
 # excludeTags:    # list of strings
+# awaitsCode:     # true | false
 # image:          # string
 # canonical_url:  # url
 # source:         # string

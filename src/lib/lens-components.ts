@@ -20,6 +20,16 @@
 // lens-registry.ts's own framing: Newest is just the default member of that
 // family). Only genuinely bespoke lenses (home's day-seeded slots) need an
 // entry.
+//
+// The KEYS of this map are declared once, in the leaf src/lib/lens-body-keys.ts,
+// because scripts/generate-lens-registry.mjs validates a lens's declared
+// `component:` against them and cannot import this file (it imports .astro
+// components). A lens that DECLARES a component not in that list is a build
+// error; a lens that declares nothing falls through here. Adding a bespoke
+// body means adding its name there as well as its loader here — guarded by
+// lens-components.test.ts, since the two drifting apart would make a
+// legal-looking `component:` fail at generation or a registered loader
+// unreachable.
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 
 export type LensBodyLoader = () => Promise<{ default: AstroComponentFactory }>;

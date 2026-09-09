@@ -48,6 +48,7 @@ describe('auditCards — shape', () => {
       'missing-title',
       'missing-date',
       'not-inspected',
+      'awaiting-code',
     ]);
   });
 
@@ -266,5 +267,25 @@ describe('ref extraction helpers', () => {
 
   it('normaliseLocalRef strips "./", query strings and percent-encoding', () => {
     expect(normaliseLocalRef('./a%20b.png?w=2')).toBe('a b.png');
+  });
+});
+
+describe('awaiting-code finding', () => {
+  const hits = (cards: Parameters<typeof auditCards>[0]) =>
+    auditCards(cards).find(f => f.type === 'awaiting-code')!.cards.map(h => h.uid);
+
+  it('reports an inspected card held for a code promotion', () => {
+    expect(hits([{ uid: 'a', inspected: true, awaitsCode: true }])).toEqual(['a']);
+  });
+
+  it('ignores a card that is not awaiting code', () => {
+    expect(hits([{ uid: 'a', inspected: true }])).toEqual([]);
+  });
+
+  // Reporting it here as well would say nothing: the card is already held by
+  // the inspected gate, and `awaitsCode` only selects which promotion run a
+  // card that is otherwise ready rides.
+  it('ignores an uninspected card even when it awaits code', () => {
+    expect(hits([{ uid: 'a', inspected: false, awaitsCode: true }])).toEqual([]);
   });
 });

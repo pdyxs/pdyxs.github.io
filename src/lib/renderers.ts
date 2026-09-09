@@ -17,6 +17,29 @@ import LinoCanvas from '../components/header-media/LinoCanvas.astro';
 // exist is one GenericRenderer can't express, and so far none has been.
 export const COLLECTION_RENDERERS: Record<string, AstroComponentFactory> = {};
 
+// Renderer names that legitimately have no dedicated component and are MEANT
+// to reach GenericRenderer. Declaring them is what lets resolveCardRenderer()
+// tell "this folder wants the generic card" apart from "somebody typed
+// `renderer: gneric`" — which used to be the same thing, silently, and
+// rendered a plausible-looking card either way (issue #174).
+//
+// The shape is `excludeTags`' generatorDerivations() precedent: a legal set
+// enumerated in one place, so a mistyped value is a build error rather than a
+// no-op that fails open. A new renderer name must be registered in
+// COLLECTION_RENDERERS *or* declared here — and if you are adding it here,
+// that is a claim that GenericRenderer already expresses it.
+export const GENERIC_RENDERERS: ReadonlySet<string> = new Set([
+  'card',
+  'post',
+  'story',
+  // Both retired INTO GenericRenderer rather than being renamed away, so
+  // content still names them: 'puzzle' once its meta rows and play link became
+  // folded fields (card-meta.ts / card-actions.ts), 'work' once its
+  // `when`/`roles` <dl> did (issue #89).
+  'puzzle',
+  'work',
+]);
+
 // Keyed by nav-renderer *name* — the cascaded `navRenderer` value from
 // frontmatter or a `_config.yaml` (see resolveFolderCascade in
 // folder-config.ts), resolved via resolveNavRenderer() once that data is
@@ -43,9 +66,26 @@ export const HEADER_MEDIA_RENDERERS: Record<string, AstroComponentFactory> = {
   'lino-canvas': LinoCanvas,
 };
 
-/** The component for a card's `headerMedia` value, or undefined if unset/unregistered. */
+/**
+ * The component for a card's `headerMedia` value, or undefined if unset.
+ *
+ * THROWS on a declared-but-unregistered name. There is no generic fallback
+ * here (unlike `renderer`): a headerMedia name is only ever written to ask for
+ * one specific bespoke component, so an unregistered one is always a mistake.
+ * It used to fall back to the plain <img>, which renders a perfectly ordinary
+ * card and gives no sign the bespoke header was dropped (issue #174).
+ */
 export function resolveHeaderMedia(name: string | undefined): AstroComponentFactory | undefined {
-  return name ? HEADER_MEDIA_RENDERERS[name] : undefined;
+  if (!name) return undefined;
+  const component = HEADER_MEDIA_RENDERERS[name] as AstroComponentFactory | undefined;
+  if (!component) {
+    throw new Error(
+      `headerMedia: "${name}" is not registered. ` +
+        `Registered: ${Object.keys(HEADER_MEDIA_RENDERERS).join(', ') || '(none)'}. ` +
+        `Add it to HEADER_MEDIA_RENDERERS in src/lib/renderers.ts, or remove the frontmatter key.`,
+    );
+  }
+  return component;
 }
 
 // Collection-view browsing pages (bare collection-name uids, e.g. "posts")
