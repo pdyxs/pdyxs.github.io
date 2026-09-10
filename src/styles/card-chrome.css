@@ -1,0 +1,268 @@
+/* ── The clip reveal (issue #110) ──────────────────────────────────
+   #98's ruling: geometric clip is the whole animation vocabulary. The dither
+   dissolve that was scrubbed against it animates a length inside a mask-image,
+   which regenerates the mask every frame over surfaces that are themselves
+   ~7 fixed gradient layers — it shimmered, and it is out.
+
+   An ANIMATION, not a transition, and that is the load-bearing part: nothing
+   is clipped at rest. `inset(0 0 100% 0)` does not interpolate to `none`, so a
+   transition would need every card body in the stack to carry a permanent
+   no-op `clip-path` just to have something to animate from. A keyframed
+   animation leaves the element with no clip at all the moment it ends.
+
+   `clip-path` is safe where `transform` is not: it creates no containing block,
+   so the `background-attachment: fixed` dither inside the body stays anchored
+   to the viewport and does not shimmer (CLAUDE.md § dither). */
+@keyframes stack-card-reveal {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+.stack-card--revealing .stack-card-body {
+  animation: stack-card-reveal var(--stack-reveal-ms) ease-out;
+}
+
+/* Reusable: any text sitting over a dithered surface gets a paper-coloured
+   outline (stroke behind the fill) so it stays legible without a knockout
+   patch — invisible over a flat background, only clears dots where dither
+   shows through. Width is tunable per context via --dither-text-stroke.
+   Applied to every card-header title here (they come from 5 render paths,
+   including a JS string in CardStack.svelte), so it can't rely on a class. */
+.dither-text,
+.card-header-title,
+/* The spine title reads over whatever --card-surface dither the card behind it
+   was given, and over the card content it overlays. */
+.stack-card-spine-title,
+/* The lens footnote shares the header's dithered surface (see .lens-note). */
+.lens-note,
+/* The header's close button sits on the same dithered surface as the title
+   beside it. */
+.stack-card-close,
+/* Surfaces whose background becomes a dither on hover (--color-bg-hover).
+   The stroke is inert until that dither appears, so applying it at rest is
+   free. Class names are matched from here rather than each component's
+   scoped styles. */
+.card-listing-item,
+.browse-card-item,
+.browse-stack-entry,
+.browse-dim-label,
+.browse-dim-lens-item,
+.browse-dim-item-btn,
+.browse-dim-drill,
+.fp-reveal-more,
+/* Code sits on an L2 dither at rest, not just on hover — without the stroke the
+   dots read through the mono glyphs and the block turns to noise. */
+pre,
+:not(pre) > code,
+.theme-toggle button {
+  -webkit-text-stroke: var(--dither-text-stroke, 4px) var(--color-bg);
+  paint-order: stroke fill;
+}
+
+/* Smaller UI text needs a lighter stroke than the 1.1rem header titles. */
+.stack-card-close,
+.stack-card-spine-title,
+.card-listing-item,
+.browse-card-item,
+.browse-stack-entry,
+.browse-dim-label,
+.browse-dim-lens-item,
+.browse-dim-item-btn,
+.browse-dim-drill,
+pre,
+:not(pre) > code,
+.theme-toggle button {
+  --dither-text-stroke: 3px;
+}
+
+/* No paper knockout — titles read over the dither via the stroke above.
+   Badges/buttons carry their own backgrounds. */
+.card-header > * {
+  padding: 0 2px;
+}
+.card-header-title {
+  background: none;
+  padding: 0;
+}
+
+/* A lens's footnote (LensDefinition.note — only Most* Interesting has one).
+   Rendered beside the label in both chrome modes rather than folded into it:
+   the label makes a claim and this is the asterisk on it, so it must read as
+   an aside, which here means smaller and lighter — never a faded colour, since
+   an opacity over the two-colour palette renders as the grey it doesn't have.
+   `margin-right: auto` keeps it hugging the title against .card-header's
+   space-between, which would otherwise centre it between title and close. */
+.lens-note {
+  margin-left: 0.35em;
+  font-family: var(--font-ui);
+  font-size: 0.7em;
+  letter-spacing: 0;
+  color: var(--color-text);
+}
+
+/* A collapsed card's header is a rotated wayfinding rail, not a claim — the
+   footnote there just runs a second line of tiny type down the whole viewport
+   edge. Hidden rather than truncated: it reappears in full the moment the lens
+   is expanded again. */
+.stack-card--collapsed .lens-note {
+  display: none;
+}
+
+.card-header > .lens-note {
+  margin-right: auto;
+  /* Cancels the 2px inline padding .card-header gives its children, so the
+     footnote sits tight against the title it annotates. */
+  padding-left: 0;
+}
+
+/* `>` for the same reason as the rule above: a slot header nested in a
+   collapsed lens's body is not itself collapsed. */
+.stack-card--collapsed > .card-header {
+  font-size: 0.75em;
+  /* Tighter vertically than an open header, but the same inline inset off the
+     card border — a collapsed title must line up with the open one it becomes. */
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.stack-card--collapsed > .card-header .card-header-title,
+.stack-card--collapsed > .card-header > * {
+  background: none;
+  padding: 0;
+}
+
+/* ── Status badge (dev-only, issue #51) ───────────────────────────
+   Shows a card's declared draft/scheduled/unlisted/archived status while
+   authoring — `published`/absent renders nothing (see computeStatusBadge in
+   lib/status-badge.ts). Rendered inside CardHeader (open card) and
+   BrowseCard (listings); both simply add these two classes, so the pill
+   looks identical in either location. Text stays the neutral --color-text
+   (not a variant-specific text color) — only the tint/border differ per
+   status, matching the .browse-card-tag--active pattern. */
+.status-badge {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* More specific than `.card-header > *` above, so the badge's own
+   background/padding win over that generic surface-patch rule. */
+.card-header > .status-badge {
+  padding: 2px 8px;
+}
+
+.status-badge--draft {
+  background: var(--status-draft-bg);
+  border-color: var(--status-draft-border);
+}
+
+.status-badge--scheduled {
+  background: var(--status-scheduled-bg);
+  border-color: var(--status-scheduled-border);
+}
+
+.status-badge--unlisted {
+  background: var(--status-unlisted-bg);
+  border-color: var(--status-unlisted-border);
+}
+
+.status-badge--archived {
+  background: var(--status-archived-bg);
+  border-color: var(--status-archived-border);
+}
+
+/* ── Priority badge (dev-only) ─────────────────────────────────────
+   Shows a card's summed build-time priority (priority.ts, ranking rung 2)
+   while authoring, so tuning a folder/tag priority can be checked against
+   real listings without instrumenting the console. Rendered only in
+   BrowseCard, gated by import.meta.env.DEV in the template — this is a
+   dev-build-only surface, never shipped live. */
+.priority-badge {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-stripes);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ── Page-mode lens chrome ─────────────────────────────────────── */
+/* A lens that is the sole/root stack entry (presentationMode → 'page')
+   presents as the front page: no card border, a site-header title/subtitle
+   with a divider, and no card-header. Both headers live in the DOM so the
+   home→card View Transition can morph between them; CSS just shows one. */
+
+.page-header {
+  display: none;
+}
+
+/* Page mode has no card border. Specificity must clear both the base
+   `.stack-card` border and the desktop `#card-stack .stack-card` border-top
+   restore below, hence the id + double-class selector. */
+#card-stack .stack-card.stack-card--page {
+  border: none;
+}
+
+.stack-card--page > .page-header {
+  display: block;
+  /* Mobile: no horizontal padding of our own — #card-stack's padding is
+     the only horizontal inset content should get. Desktop restores the
+     original inline padding below. */
+  padding: var(--space-xl) 0 var(--space-lg);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.stack-card--page > .card-header {
+  display: none;
+}
+
+.page-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 400;
+  color: var(--color-text);
+  margin: 0 0 var(--space-xs);
+}
+
+.page-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-title-link:hover {
+  text-decoration: underline;
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  font-family: var(--font-ui);
+}
+
+/* In page mode the body has no card border, so drop the header divider's
+   double-up and let the body breathe like the old .site-main. Mobile: no
+   horizontal padding of its own either (see .stack-card-body-inner above);
+   desktop restores it below. */
+.stack-card--page > .body-wrapper .stack-card-body-inner {
+  --body-inset-inline: 0px;
+}
+
+/* Lenses open with their own sticky filter bar as the first thing in the
+   body — drop the shared top padding so the bar sits flush under the card
+   header instead of floating in a gap above it. */
+[data-uid^="lens/"] > .body-wrapper .stack-card-body-inner {
+  padding-top: 0;
+}
+

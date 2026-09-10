@@ -1,0 +1,93 @@
+/* ── Series quick-nav floating arrows (SeriesNavRenderer) ──────────────
+   Mobile-only edge arrows, gated to the active card the same way the sticky
+   header above is: every series card in the stack renders its own copy of
+   this markup, and `position: fixed` ignores DOM ancestry's own layout
+   entirely — un-gated, a piled series card behind the active one would float
+   its own arrow pair on screen too. See the comment in SeriesNavRenderer.astro
+   for why this can't be a scoped rule there. */
+/* The wrapper carries no box of its own (display: contents) — each button
+   position: fixed's itself independently against the viewport edge. A flex
+   wrapper with justify-content: space-between looked right with both
+   buttons present, but the first/last chapter renders only ONE of them (see
+   SeriesNavRenderer.astro), and space-between collapses a single flex child
+   to flex-start — the "next" arrow landing on the LEFT on chapter one was
+   that bug, not a left/right mixup. Independent fixed positioning has no
+   such failure mode: a button's side is never a function of its sibling's
+   presence. */
+.series-floating-nav {
+  display: none;
+}
+
+.stack-card--active .series-floating-nav {
+  display: contents;
+}
+
+.series-floating-btn {
+  display: none;
+  pointer-events: auto;
+  align-items: center;
+  justify-content: center;
+  width: 0.95rem;
+  height: 2rem;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border);
+  text-decoration: none;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.stack-card--active .series-floating-btn {
+  display: flex;
+}
+
+/* A small inset from the viewport edge, not flush — flush read as clipped
+   off-screen. This still overlaps the card itself on a narrow phone (the
+   card's own side gutter is often narrower than the button), which is the
+   point: a fixed-position edge control has nowhere else to go, so the fix
+   for "overlapping the card" is a button small and light enough that the
+   overlap reads as an intentional floating control, not a stray box. */
+.series-floating-btn--prev {
+  left: var(--space-xs);
+}
+
+.series-floating-btn--next {
+  right: var(--space-xs);
+}
+
+.series-floating-btn:hover {
+  background: var(--color-selected-bg);
+  color: var(--color-selected-fg);
+  -webkit-text-stroke-color: var(--color-selected-bg);
+}
+
+/* Desktop: the fan layout occupies the edges (behind/ahead cards, piles), and
+   the sticky header's quick-nav buttons are already reachable while
+   scrolling — see the CSS-first-responsive rule in CLAUDE.md. */
+@media (min-width: 681px) {
+  .stack-card--active .series-floating-btn {
+    display: none;
+  }
+}
+
+/* ── The rest of the series chrome moved out ───────────────────────────
+   The quick-nav pair, the date bar and the dot strip are now scoped <style>
+   blocks in the components that render them — SeriesNavRenderer.astro,
+   SeriesDateBar.astro and SeriesDotStrip.astro. They ship inside a card
+   FRAGMENT, injected into whatever page the visitor is already on, which used
+   to be the reason they could not be scoped; `cssCodeSplit: false`
+   (astro.config.mjs, guarded by src/config.test.ts) retires that reason by
+   merging every page's CSS into one bundle every page links.
+
+   What stays here is what is NOT about the component: the floating pair is
+   gated on `.stack-card--active`, a fact about position in the stack that a
+   scoped rule cannot express. Its un-gated base rules stay beside their gated
+   overrides — Astro's scoping appends `[data-astro-cid-*]` to every compound,
+   which would raise `.series-floating-btn` to (0,2,0) and tie it with the
+   override it must lose to. One more series rule lives elsewhere for the same
+   kind of reason: `.stack-card-body-inner .generic-bleed + .series-dot-strip`
+   (generic-card.css) is about the strip's adjacency to the masthead. */

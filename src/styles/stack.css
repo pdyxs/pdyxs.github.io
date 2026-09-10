@@ -1,0 +1,344 @@
+/* ── Card stack ────────────────────────────────────────────────── */
+
+#card-stack {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* `--left-col` is REGISTERED, and not for the reason it looks like.
+   Measured in Chrome 152 (2026-08-22): a `var()` inside
+   `grid-template-columns` interpolates identically whether or not the
+   property is registered — both animate 0 -> 40px over --stack-motion-ms through the same
+   intermediate track sizes — because the substitution happens at
+   computed-value time and it is `grid-template-columns` itself that
+   transitions. Registration buys nothing for the animation.
+
+   What it buys is FAILURE CONTAINMENT. Set an *unregistered* `--left-col` to
+   a unitless `40` — the mistake an applier makes as
+   `setProperty('--left-col', geo.left)` instead of `${geo.left}px` — and the
+   whole declaration is invalid at computed-value time, so
+   `grid-template-columns` falls back to `none`. The spine column does not
+   merely mis-size: BOTH children auto-place into one implicit full-width
+   column and the card's grid disintegrates, silently, on every card at once.
+   Typed here, a bad value is ignored and `initial-value` is used instead.
+
+   The `var(--left-col, 0px)` fallback below does NOT cover that case — a
+   fallback answers "unset", not "set to nonsense". It stays anyway, because
+   in a browser with no `@property` support an unset unregistered property
+   with no fallback is the same invalid-at-computed-value-time collapse. */
+@property --left-col {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+/* Every card is a two-column grid: a left SPINE column and the card's own
+   content. The spine is the sliver of an occluded card that stays on screen
+   (issue #99) — the vertical title rail an overlapped card is reduced to.
+   `--left-col` is written per card by the geometry applier (slice #109); until
+   then it is unset, the column falls back to 0px, and the spine is a
+   zero-width, fully clipped no-op.
+
+   `overflow: clip`, never `hidden`: `hidden` makes the card a scroll
+   container, which silently re-parents every `position: sticky` descendant to
+   a box that never scrolls — including the spine's own sticky inner and the
+   lens filter bar. No error, no visible cause; it just stops sticking. */
+.stack-card {
+  border: var(--border-width) solid var(--color-border);
+  display: grid;
+  grid-template-columns: var(--left-col, 0px) 1fr;
+  grid-template-rows: auto 1fr;
+  overflow: clip;
+  /* OPAQUE, on every card. On desktop the cards lie on top of each other and
+     painting order is what crops them; a card whose body let the card behind
+     it read through would occlude nothing. Paper on all of them, active or not
+     — a card just pushed behind is still full-size on screen while its spine
+     closes, so flipping its body to the depth ramp would flash the whole card
+     dark for the length of the move, and a gradient cannot be transitioned to
+     a colour. The ramp is carried by the two surfaces that survive the crop:
+     the spine and the header. */
+  background: var(--color-bg);
+}
+
+/* Everything a card renders is content, and content lives in column 2. Stated
+   as a catch-all so a child nobody placed explicitly (a nav renderer's extra
+   element, the not-found paragraph) can never auto-place itself into the
+   spine's column and vanish at 0px. The spine's own rule below outranks it. */
+.stack-card > * {
+  grid-column: 2;
+}
+
+/* The two headers share row 1 because they are two renderings of the same
+   thing — page-mode chrome and card-mode chrome — and exactly one is
+   displayed at a time (see .page-header / .stack-card--page above). */
+.stack-card > .page-header,
+.stack-card > .card-header,
+.stack-card > .card-header-sentinel {
+  grid-row: 1;
+}
+
+/* The body spans BOTH columns and the spine is painted over it (z-index 2) —
+   it does NOT sit beside the spine in column 2. That is what "printing never
+   moves" means: opening the spine CROPS the body's first `--left-col` pixels
+   instead of narrowing the text and reflowing it. Placed in column 2 (which
+   the catch-all above would otherwise do) a lens card measured 4137px tall
+   with the spine shut and 6029px with it open — the whole body relaid out,
+   which is the reflow the occlusion model exists to avoid. */
+.stack-card > .body-wrapper {
+  grid-column: 2 / -1;
+  grid-row: 2;
+}
+
+/* The 1px IntersectionObserver target that tells slice #110 when the active
+   header has stopped sitting on its card and started carrying the page. It
+   shares the header's grid cell rather than claiming a row of its own, and
+   `align-self: start` pins it to the top of that cell — so it disturbs no
+   layout in the grid. The negative margin keeps it from claiming a pixel of
+   its own anywhere the card is laid out as something other than this grid. */
+.card-header-sentinel {
+  align-self: start;
+  width: 100%;
+  height: 1px;
+  margin-bottom: -1px;
+  pointer-events: none;
+}
+
+/* ── Card spine ─────────────────────────────────────────────────
+   Column 1, spanning both rows, painted OVER the content it overlays — the
+   spine is what occludes the card behind it, so its background must be
+   opaque. `--card-surface` is written per card by the geometry applier
+   (slice #109); the transparent fallback is what keeps this slice inert.
+
+   `contain: size` is load-bearing, not an optimisation: the spine's title is
+   a vertical run of text, and without it that run's length would feed the
+   `1fr` row's flex sizing and set a FLOOR under the card — a collapsed card
+   with a long title would render as tall as its own title. Sized purely by
+   its grid area, the spine can never make a card taller than its content.
+   (`size` alone: `layout`/`paint` containment would create a containing block
+   for `background-attachment: fixed` and re-anchor every dither inside the
+   card — see CLAUDE.md § dither.) */
+.stack-card > .stack-card-spine {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  z-index: 2;
+  min-width: 0;
+  overflow: clip;
+  contain: size;
+  background: var(--card-surface, transparent);
+}
+
+/* No height: a height here is a floor under every card in the stack, and a
+   short card rendered as tall as the viewport looks deliberate rather than
+   broken. The top border rides on a negative margin so that at rest it sits
+   exactly under the card's own border (clipped away, no double weight) and
+   only appears once the sticky inner has travelled down off it. */
+/* `--stack-height` is deliberately UNSET for now, so the `min()` resolves to
+   100vh. It is the cap that keeps a sticky label from being taller than the
+   stack it divides — which only bites once the pile's hover-band split exists
+   to be divided (issue #111), and until then `contain: size` plus the spine's
+   own `overflow: clip` already hold the label inside the card. Whoever lands
+   that slice writes it; it is not a missing applier write today. */
+.stack-card-spine-inner {
+  position: sticky;
+  top: 0;
+  max-height: min(100vh, var(--stack-height, 100vh));
+  margin-top: calc(var(--border-width) * -1);
+  border-top: var(--border-width) solid var(--color-border);
+  overflow: clip;
+}
+
+/* THE ROTATED AXIS. In `vertical-rl` the INLINE axis runs down the page and
+   the BLOCK axis runs across it, so:
+     padding-inline → the gap above the title, off the header divider
+     padding-block  → the gap either side of it, off the spine's edges
+   Written the other way round nothing errors; it just looks wrong. Same trap
+   for the ellipsis: it is `max-height` — the inline size in this writing mode
+   — that makes `text-overflow` fire, not `max-width`. */
+.stack-card-spine-title {
+  writing-mode: vertical-rl;
+  display: block;
+  max-height: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-inline: var(--space-md) 0;
+  padding-block: var(--space-xs);
+  font-family: var(--font-heading);
+  font-size: 0.75em;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
+}
+
+/* MOBILE rule. The stack is a single column there, so adjacent cards share one
+   border between them. Desktop restores the top border below: cards overlap
+   rather than abut, so every one of them needs all four sides.
+   (`.active-card-col` and `.stack-overflow` used to sit between these siblings
+   and needed spelling out; both are gone with the three-layout-system swap.) */
+.stack-card ~ .stack-card {
+  border-top: none;
+}
+
+
+/* `border-left`/`border-right`/`border-bottom`, deliberately not the `border`
+   shorthand: the active header sets its own `border-top` above (issue #110,
+   the sticky-divider trick) and this selector also matches it — `border: none`
+   here used to wipe that out on every equally-specific match, leaving the
+   compact/stuck header with no line dividing it from the page it's carrying. */
+.stack-card > .card-header {
+  border-left: none;
+  border-right: none;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.stack-card-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  font-weight: 300;
+  font-family: var(--font-ui);
+  line-height: 1;
+  padding: 0;
+  color: var(--color-text);
+  /* Fixed box, glyph centred inside it: the hover weight jump below (300 to
+     700) widens the glyph's own ink, which otherwise reflows this flex
+     item's width and shoves the quicknav beside it sideways. The box stays
+     put; only the glyph inside it gets bolder. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+}
+
+.stack-card-close:hover { font-weight: 700; }
+
+.card-link {
+  cursor: pointer;
+  display: block;
+}
+
+.panel-links {
+  display: flex;
+  flex-direction: column;
+  border: var(--border-width) solid var(--color-border);
+}
+
+.panel-links .card-link {
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.panel-links .card-link:last-child {
+  border-bottom: none;
+}
+
+.body-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--stack-body-ms) ease-out;
+}
+
+.body-wrapper.open {
+  grid-template-rows: 1fr;
+}
+
+.stack-card-body {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.stack-card-body-inner {
+  /* A stack card draws its own border, so body content needs an inset off
+     that frame; #card-stack's padding sits *outside* the border and can't
+     provide it. Mobile uses the tighter --space-sm; desktop widens to
+     --space-lg below. Page mode is borderless and overrides this to 0.
+
+     --body-inset-inline is the single source of truth for that padding, so
+     full-bleed content (see .generic-image) can cancel it with a negative
+     margin without re-deriving which breakpoint/card mode it's in. */
+  --body-inset-inline: var(--space-sm);
+  padding: var(--space-lg) var(--body-inset-inline);
+}
+
+/* MOBILE collapse is a reflow, so `.open` — which the island now sets on EVERY
+   card (see the layout effect in CardStack.svelte) — has to be taken back
+   here, and the desktop block restores it. That inversion is what the whole
+   arrangement costs, and it is cheaper than the alternative: telling the two
+   breakpoints apart in JS, which the CSS-first-responsive rule forbids.
+
+   There used to be a `.stack-card--collapsed .stack-card-body { display: none }`
+   here instead. It removed the very box `.body-wrapper`'s `0fr -> 1fr`
+   transition animates, so mobile collapse SNAPPED — the --stack-body-ms transition below
+   had been dead since it was written. Deleting it is the whole of "mobile
+   animates smoothly" (issue #109). */
+.stack-card--collapsed .body-wrapper.open {
+  grid-template-rows: 0fr;
+}
+
+.stack-card--collapsed .stack-card-close { display: none; }
+
+.stack-card--collapsed {
+  cursor: pointer;
+}
+
+.stack-card--collapsed > .card-header {
+  border-bottom: none;
+}
+
+.stack-card--collapsed > .card-header::after {
+  content: '+';
+  font-size: 1.5rem;
+  font-weight: 300;
+  font-family: var(--font-ui);
+  line-height: 1;
+}
+
+/* Hover steps the card's OWN resting level up two, the same delta the flat
+   surfaces use (L0 -> L2, L2 -> L4). A fixed hover level cannot work here: the
+   ramp puts different cards at different rest levels, so half the stack would
+   jump the wrong way. `--card-surface-hover` is written beside `--card-surface`
+   by the applier, clamped at 16. Both the mobile header and the desktop spine
+   are the hovered surface, and both are named because they are the same act. */
+.stack-card--collapsed:hover > .card-header,
+.stack-card--collapsed:hover > .stack-card-spine {
+  background: var(--card-surface-hover, var(--color-bg-hover-strong));
+}
+
+/* MOBILE has no pile, and this is not a feature that was skipped. The geometry
+   places EVERY card and piling changes only left/top/z — the three properties
+   mobile does not consume — so nothing is hidden there and there is nothing for
+   a pile to stand in for. Every collapsed header is already on screen (see
+   amendment 2 on #99, which retracts an earlier plan to build one). */
+.stack-pile {
+  display: none;
+}
+
+/* ── The pre-paint fan skeleton (issue #122) ─────────────────────
+   Drawn by Base.astro's head script and inserted by StackNav's, before paint;
+   removed by CardStack once the real from/to entries are in the DOM.
+
+   DESKTOP ONLY, and for the same reason the fan reservation it completes is:
+   at mobile `.card-stack-inner` is `display: contents`, every card is an
+   in-flow row of one plain column, and nothing is reserved for a fan because
+   there is no fan — the four reservation properties are read only by the
+   desktop block. A skeleton there would be a row inserted into the flow, which
+   is a different job with a different failure mode (it would have to be
+   removed at exactly the frame the real row lands, or it causes the shift it
+   exists to prevent). */
+.stack-skeleton {
+  display: none;
+}
+
+/* MOBILE: the wrapper is transparent to layout, so the cards are direct flex
+   children of #card-stack and the stack is one plain column — collapsed
+   headers above the active card and below it, every one of them shown. That
+   falls out of the geometry rather than being built: it places every card,
+   and piling changes only left/top/z, which mobile does not consume. */
+.card-stack-inner {
+  display: contents;
+}
+

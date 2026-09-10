@@ -1,0 +1,284 @@
+/* ── Tag listing (inside a stack card) ──────────────────────────── */
+
+.tag-description {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-lg);
+}
+
+.card-listing {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.card-listing-item {
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border-light);
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.card-listing-item:hover { background: var(--color-bg-hover); }
+
+.card-listing-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.card-listing-title {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 0.95rem;
+  margin-bottom: var(--space-xs);
+}
+
+.card-listing-date {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.card-listing-desc {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Generic card ──────────────────────────────────────────────── */
+
+/* Full-bleed masthead. The header image and the tags/actions band are the top
+   edge of the card, not content floating inside it — so this one wrapper
+   cancels the body's top padding and its inline inset (--body-inset-inline, set
+   on .stack-card-body-inner) and its children just fill it. Doing the maths
+   once here is what keeps image and band edges aligned.
+
+   The top cancellation is scoped to :first-child deliberately: a series card
+   with a date bar (SeriesDateBar.astro) renders that ABOVE the masthead, so
+   .generic-bleed is no longer flush against the container's own padding —
+   it's flush against the date bar's bottom margin instead. Un-scoped, this
+   negative margin pulled the image up regardless of what precedes it,
+   clipping into the date bar rather than cancelling the container's padding. */
+.generic-bleed {
+  margin: 0 calc(-1 * var(--body-inset-inline, 0px)) var(--space-lg);
+}
+
+.generic-bleed:first-child {
+  margin-top: calc(-1 * var(--space-lg));
+}
+
+/* A series card in 'dots' preview (SeriesDotStrip.astro) renders that strip
+   directly after the masthead — dateline and the date bar both take a
+   different slot or are absent (see GenericRenderer.astro), so this
+   adjacency reliably holds whenever it applies. .generic-bleed's own
+   var(--space-lg) bottom margin reads as a normal paragraph gap everywhere
+   else it's used; between two bits of series chrome it's just dead air, so
+   pull the strip up to a tight --space-xs instead of overriding the margin
+   generally. */
+/* The .stack-card-body-inner qualifier is what makes this outrank the plain
+   `.series-dot-strip` base rule above (which sets margin: 0 0 var(--space-md));
+   a bare `.generic-bleed + .series-dot-strip` would too, but only by source
+   order, and this rule sits BEFORE that block. State the specificity. */
+.stack-card-body-inner .generic-bleed + .series-dot-strip {
+  margin-top: calc(-1 * var(--space-lg) + var(--space-xs));
+}
+
+/* A header `image:` that is a YouTube/Vimeo URL renders as the body's
+   .video-embed figure (GenericRenderer.astro). In the masthead it is
+   full-bleed like the image it replaces: the card's own frame draws the sides,
+   so only the bottom edge is ours, and the figure's paragraph margin would
+   otherwise open a gap between the video and the tags/actions band. */
+.generic-bleed > .generic-embed {
+  margin: 0;
+  border: none;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.generic-bleed > .generic-image,
+.generic-bleed > .generic-video {
+  display: block;
+  width: 100%;
+  /* global img { max-width: 100% } resolves against the padded content box */
+  max-width: none;
+  height: auto;
+  /* Sides are the card's own border now; only the bottom edge is ours. */
+  border: none;
+  border-bottom: var(--border-width) solid var(--color-border);
+  margin: 0;
+}
+
+/* Tags left, actions right — the card's "what it is" and "go do it" on one
+   line, above the fold. Padding re-inserts --body-inset-inline so the band's
+   contents line up with the prose below while its border still spans the card. */
+.generic-masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm) var(--space-md);
+  /* Floor the inset. Mobile sits exactly on the floor and desktop well above
+     it, so this is a guard rather than a correction: the band's bordered chips
+     and buttons must never sit flush against the card frame — which reads as a
+     collision — if a card mode drops --body-inset-inline to 0 (page mode does). */
+  padding: var(--space-xs) max(var(--body-inset-inline, 0px), var(--space-xs));
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+/* Both sit in the band now, so their standalone block spacing goes. */
+.generic-masthead .generic-tags,
+.generic-masthead .generic-actions {
+  margin: 0;
+}
+
+/* Dateline for a dated card (see resolveDateline in lib/card-date.ts).
+   Deliberately NOT a .generic-meta row, whose uppercase dt/dd grid frames its
+   contents as credits — this is a light right-aligned line opening the body,
+   matching how .browse-card-date sits in a preview (same 0.75rem, same
+   right-hand corner), so a card's date reads the same in a listing and on the
+   card itself. The palette has no grey, so "lighter" is size, not value. */
+.generic-dateline {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  text-align: right;
+  margin: 0 0 var(--space-md);
+}
+
+.generic-meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-xs) var(--space-md);
+  margin: 0 0 var(--space-lg);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+}
+
+.generic-meta dt {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  align-self: center;
+}
+
+/* No text-transform: the rows carry authored prose now ("Sub-atomic particle
+   physics", "Winner, Best Narrative, Freeplay Awards 2013"), not the single
+   title-cased `medium:` word this started as. */
+.generic-meta dd {
+  margin: 0;
+  align-self: center;
+}
+
+.generic-source-note {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-lg);
+}
+
+.generic-quotes {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-lg);
+}
+
+.generic-quotes li {
+  margin-bottom: var(--space-md);
+}
+
+.generic-quotes li:last-child {
+  margin-bottom: 0;
+}
+
+/* Set tighter and smaller than body text: a press pull-quote is a citation,
+   not something the body is saying, and at body size it competes with a real
+   blockquote in the prose above. */
+.generic-quote {
+  margin: 0;
+  padding-left: var(--space-md);
+  border-left: var(--border-width) solid var(--color-border-light);
+  font-style: italic;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.generic-quote-attribution {
+  margin: var(--space-xs) 0 0 var(--space-md);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.generic-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.generic-action-link {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--space-xs) var(--space-md);
+}
+
+/* Inverts on hover — the same treatment a selected control wears at rest. */
+.generic-action-link:hover {
+  background: var(--color-selected-bg);
+  color: var(--color-selected-fg);
+  -webkit-text-stroke-color: var(--color-selected-bg);
+}
+
+.generic-tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: 0;
+  margin: var(--space-lg) 0 0;
+}
+
+.generic-tag {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border: 1px solid var(--color-border-light);
+  padding: 1px 6px;
+}
+
+.generic-tag:hover {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+/* The three trailing regions — Credits, Press, Related — share one rule-plus-
+   heading treatment so they read as a run of appendices to the prose rather
+   than three unrelated blocks. .generic-related is kept as a hook only. */
+.generic-section {
+  margin: var(--space-lg) 0 0;
+  padding-top: var(--space-lg);
+  border-top: var(--border-width) solid var(--color-border-light);
+}
+
+.generic-section-heading {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  margin: 0 0 var(--space-sm);
+}
+
+/* The regions own their spacing; their contents must not add a trailing gap. */
+.generic-section > .generic-quotes:last-child {
+  margin-bottom: 0;
+}
+

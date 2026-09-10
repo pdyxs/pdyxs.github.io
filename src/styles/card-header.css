@@ -1,0 +1,87 @@
+/* ── Card header ───────────────────────────────────────────────── */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  /* A stack card draws its own border, so the title needs an inset off that
+     frame; #card-stack's padding sits *outside* the border and can't provide
+     it. Mobile uses the tighter --space-sm; desktop widens to --space-lg
+     below. Page mode is borderless and overrides this to 0. */
+  padding: var(--space-md) var(--space-sm);
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
+  background: var(--dither-2);
+  user-select: none;
+}
+
+/* The card's own level on the depth ramp, resolved to a token reference by the
+   geometry applier (`--card-surface`). It is the header, not the body, that
+   carries the ramp: on desktop the staircase leaves a sliver of each
+   behind-card's header showing above the card in front of it, and on mobile the
+   collapsed header is the whole of what a card is reduced to.
+
+   `>` is load-bearing. `--card-surface` is an inline style on `.stack-card`, so
+   it INHERITS — and `.card-header` is not exclusive to the stack: the front
+   page's slots (FilterSlot, PinnedSlot) render one inside the home lens's body.
+   As a descendant rule this painted every slot header at whatever level the
+   home lens currently sits on, and inverted their own hover (L5 at rest
+   stepping "up" to a lighter L4). The L2 fallback above is what those keep, and
+   is also the pre-hydration value here. */
+.stack-card > .card-header {
+  background: var(--card-surface, var(--dither-2));
+}
+
+/* ── Sticky active header (issue #110) ─────────────────────────────
+   The active card's header follows the viewport the same way the collapsed
+   spines beside it do, so the thing telling you where you are is never the
+   thing that scrolls away first.
+
+   Sticky resolves against the VIEWPORT, not the card, because `.stack-card`
+   uses `overflow: clip` — which clips without creating a scroll container.
+   `hidden` would create one and silently pin this to a box that never scrolls.
+   That is the same reason the spine's own sticky inner works, and it is why
+   the choice of `clip` is written down in two places.
+
+   Only the ACTIVE card: a collapsed card's header is cropped away behind the
+   spine on desktop and closed on mobile, so there is nothing there to stick.
+
+   The negative top margin carries the card's own top edge up with the header,
+   so at rest the border sits exactly on the card's border (no double weight)
+   and only reads as a separate edge once the header has travelled down off it
+   — identical treatment to `.stack-card-spine-inner` above, for the same
+   reason: a stuck header bleeding into the viewport edge while the spines
+   beside it are properly closed looks like a mistake. */
+.stack-card--active > .card-header {
+  position: sticky;
+  top: 0;
+  /* Above the lens filter bar's own sticky bar (z-index 10, FilterBar.svelte),
+     which shares this viewport edge and would otherwise slide over the title.
+     Below the spine's z-index 2 is not a concern for the active card: its
+     `--left-col` is 0px, so its spine has no width to overlap with. */
+  z-index: 11;
+  border-top: var(--border-width) solid var(--color-border);
+  margin-top: calc(var(--border-width) * -1);
+}
+
+/* The compact state, applied by the IntersectionObserver in CardStack.svelte
+   once `.card-header-sentinel` leaves the viewport — i.e. once the header has
+   stopped sitting on its card and started carrying the page.
+
+   `padding-block` only: the inline inset is the card's frame and must not move,
+   or the title slides sideways as you scroll. */
+.card-header {
+  transition:
+    padding-block var(--stack-stuck-ms) ease-out,
+    font-size var(--stack-stuck-ms) ease-out;
+}
+
+.stack-card--active > .card-header--stuck {
+  padding-block: var(--space-xs);
+  font-size: 0.85rem;
+}
+
