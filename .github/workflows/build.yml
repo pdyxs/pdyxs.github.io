@@ -23,6 +23,17 @@ on:
     # publish date without a human having to push.
     - cron: "0 18 * * *"
   workflow_dispatch:
+  # Called by promote.yml after it pushes `main`. A push made with the default
+  # GITHUB_TOKEN deliberately does NOT trigger workflows (GitHub's recursion
+  # guard), so promotion cannot rely on its own push to fire this — it calls it
+  # directly instead, which also makes promote-and-deploy one visible chain
+  # rather than two runs a reader has to associate by timestamp.
+  workflow_call:
+    inputs:
+      ref:
+        description: "Ref to build. Defaults to the ref this run is on."
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -38,6 +49,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # A called run builds what promotion just pushed, not the ref the
+          # caller happens to be running on (which is `dev`).
+          ref: ${{ inputs.ref || github.ref }}
           # Full history: the redirect generator (a prebuild step) reads the
           # retired Jekyll site from `master`. At the default depth-1 fetch of
           # the pushed ref alone, `master` is absent and the generator takes
