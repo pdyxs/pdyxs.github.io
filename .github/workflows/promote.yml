@@ -37,6 +37,8 @@ concurrency:
 jobs:
   promote:
     runs-on: ubuntu-latest
+    outputs:
+      moved: ${{ steps.promote.outputs.moved }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -93,12 +95,37 @@ jobs:
             | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Promote
+        id: promote
         run: |
+          before=$(git rev-parse main)
           node scripts/promote.mjs \
             ${{ (github.event_name == 'workflow_dispatch' && inputs.code) && '--code' || '' }}
+          after=$(git rev-parse main)
+          # Whether main actually moved, so a no-op daily run does not redeploy.
+          if [ "$before" = "$after" ]; then
+            echo "moved=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "moved=true" >> "$GITHUB_OUTPUT"
+          fi
 
       # `dev` is pushed too, and only the awaitsCode consumption ever changes
       # it. Pushing `main` is what triggers build.yml, whose main-only
       # assertion is the last gate before deploy.
       - name: Push
         run: git push origin main dev
+
+  # Build and deploy what was just promoted. This is a CALL rather than a
+  # reliance on the push above: a push made with the default GITHUB_TOKEN does
+  # not trigger workflows, so `main`'s own `on: push` never fires for a
+  # promotion. Calling it also keeps promotion and deploy one chain in the
+  # Actions tab, which is why promotion lives here and not on the server.
+  deploy:
+    needs: promote
+    if: needs.promote.outputs.moved == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/build.yml
+    with:
+      ref: main
