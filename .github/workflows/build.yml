@@ -45,13 +45,36 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      # What was actually built. The deploy job gates on this rather than on
+      # github.ref, because neither a called run nor a scheduled one runs in
+      # the context of the branch it builds.
+      ref: ${{ steps.target.outputs.ref }}
     steps:
+      # THREE ways in, and only one of them agrees with github.ref:
+      #   - called by promote.yml -> inputs.ref ('main'), context is `dev`
+      #   - schedule              -> always the DEFAULT branch (`dev`), and the
+      #                              daily rebuild exists to publish a
+      #                              `scheduled` card crossing its date, which
+      #                              is a fact about production, so: `main`
+      #   - push / dispatch       -> the ref itself
+      - name: Resolve build target
+        id: target
+        run: |
+          if [ -n "${{ inputs.ref }}" ]; then
+            target="${{ inputs.ref }}"
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            target="main"
+          else
+            target="${{ github.ref_name }}"
+          fi
+          echo "ref=$target" >> "$GITHUB_OUTPUT"
+          echo "Building $target"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # A called run builds what promotion just pushed, not the ref the
-          # caller happens to be running on (which is `dev`).
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ steps.target.outputs.ref }}
           # Full history: the redirect generator (a prebuild step) reads the
           # retired Jekyll site from `master`. At the default depth-1 fetch of
           # the pushed ref alone, `master` is absent and the generator takes
@@ -119,6 +142,12 @@ jobs:
 
   deploy:
     needs: build
+    # ONLY `main` is ever published. This is the guard, not the github-pages
+    # environment's branch policy: a called run and a scheduled run both
+    # execute in the DEFAULT branch's context (`dev`), so that policy has to
+    # admit `dev` and can no longer say what is deployable. Stated here, where
+    # it is a property of what was built rather than of who asked.
+    if: needs.build.outputs.ref == 'main'
     runs-on: ubuntu-latest
     permissions:
       pages: write
