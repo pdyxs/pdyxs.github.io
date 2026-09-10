@@ -62,7 +62,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -B main origin/main
+          # Create the local `main` branch WITHOUT checking it out. Checking it
+          # out here would replace the working tree with main's — which does
+          # not contain scripts/promote.mjs, because the script is exactly what
+          # is being promoted. The script does its own checkout, by which point
+          # Node has already loaded it and its imports into memory.
+          git branch -f main origin/main
 
       # What is about to ship, printed BEFORE anything moves. This is the whole
       # mitigation for the one asymmetry rollback leaves open: a code revert on
@@ -78,7 +83,11 @@ jobs:
           git log --oneline main..dev || true
 
       - name: Plan
+        # pipefail, or `tee` supplies the exit status and a failed plan reports
+        # as a green step — which is how the first cutover run got as far as
+        # Promote before anything noticed.
         run: |
+          set -o pipefail
           node scripts/promote.mjs --dry-run \
             ${{ (github.event_name == 'workflow_dispatch' && inputs.code) && '--code' || '' }} \
             | tee -a "$GITHUB_STEP_SUMMARY"
