@@ -235,3 +235,36 @@ describe('nestedCardDirs', () => {
     expect(nestedCardDirs([CARD, `${CARD}-longer`])).toEqual([]);
   });
 });
+
+describe('planPromotion — content-derived generated files', () => {
+  const MANIFEST = 'src/data/stack-manifest.json';
+  const TAGS = 'src/data/tag-manifest.json';
+  const POSTERS = 'src/data/vimeo-posters.generated.ts';
+  const REDIRECTS = 'src/data/redirects.generated.ts';
+
+  // assignCodes never prunes and never reassigns, so the committed manifest is
+  // the authoritative uid->code record. A lagging copy on main means main
+  // hands a newly promoted card a code dev already spent elsewhere — and short
+  // codes ride in shared stack URLs, so the same link would resolve
+  // differently on preview and production.
+  it('crosses the manifests and the poster map on a content run', () => {
+    const p = plan({ diff: diff(['M', MANIFEST], ['M', TAGS], ['M', POSTERS]) });
+    expect(p.checkout).toEqual([MANIFEST, TAGS, POSTERS]);
+  });
+
+  // Re-derived wholesale every run; its existing file is only a FAILURE
+  // fallback, so main's own prebuild is authoritative.
+  it('leaves the redirect map as code', () => {
+    expect(plan({ diff: diff(['M', REDIRECTS]) }).checkout).toEqual([]);
+    expect(plan({ diff: diff(['M', REDIRECTS]), promoteCode: true }).checkout).toEqual([REDIRECTS]);
+  });
+
+  it('still crosses them on a code run, without duplicating', () => {
+    const p = plan({ diff: diff(['M', MANIFEST]), promoteCode: true });
+    expect(p.checkout).toEqual([MANIFEST]);
+  });
+
+  it('removes them if they are deleted', () => {
+    expect(plan({ diff: diff(['D', MANIFEST]) }).remove).toEqual([MANIFEST]);
+  });
+});
