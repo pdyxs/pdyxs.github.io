@@ -23,7 +23,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "restart-server": "systemctl --user restart astro-preview.service",
-    "pad:images": "node scripts/pad-card-images.mjs"
+    "pad:images": "node scripts/pad-card-images.mjs",
+    "promote": "node scripts/promote-dispatch.mjs",
+    "promote:code": "node scripts/promote-dispatch.mjs --code",
+    "promote:plan": "node scripts/promote.mjs --dry-run --from origin/dev --to origin/main"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",
