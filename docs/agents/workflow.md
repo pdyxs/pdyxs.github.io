@@ -16,7 +16,7 @@ restart to show up. A dev-only Vite plugin now watches them, re-runs whichever
 generator the change feeds, and sends `astro:content-changed` itself.
 
 The decision — which generator, whether to refresh — is pure and tested in
-`src/lib/dev-reload.ts`; the plugin only watches, debounces, spawns and signals.
+`src/lib/site/dev-reload.ts`; the plugin only watches, debounces, spawns and signals.
 It also covers **adding or deleting** a card (a new `index.md` needs a short code
 in `src/data/stack-manifest.json`) and `src/icons/lenses/*.svg`. Anything else
 that reads a non-module file at request time belongs in `planDevReload`.
@@ -34,13 +34,13 @@ Two consequences for code:
 
 - Non-card markdown that must live inside `src/content` (Templater scaffolds in
   `_templates/`) is kept out of the collection by `CONTENT_GLOB_PATTERN`
-  (`src/lib/content-glob.ts`), which excludes underscore-prefixed *directories*
+  (`src/lib/content/folders/content-glob.ts`), which excludes underscore-prefixed *directories*
   as well as underscore-prefixed files. Put anything similar under a `_`-folder.
 - Pasted images arrive colocated in the card folder as plain markdown
   (`![](file.png)`), by vault setting — never assume a wikilink converter.
 - The Templater scaffolds in `src/content/_templates/` are **generated** — one per
   container folder, by `scripts/generate-card-templates.mjs` (decisions in
-  `src/lib/templater-scaffold.ts`), wired into `predev`/`prebuild`. Never hand-edit
+  `src/lib/site/templater-scaffold.ts`), wired into `predev`/`prebuild`. Never hand-edit
   one; change the generator and re-run `npm run generate:card-templates`. Adding a
   container folder or a schema field means a regen. See
   `src/content/_templates/README.md`.
@@ -58,9 +58,9 @@ are permanent:
   that lacks the key, so Obsidian's Properties view has a checkbox to render.
   Idempotent, run by hand — never wired into `predev`/`prebuild`, since it
   mutates authored content and must never race a concurrent Obsidian edit.
-- **The `not-inspected` finding** on the dev-only audit lens (`src/lib/audit.ts`)
+- **The `not-inspected` finding** on the dev-only audit lens (`src/lib/site/audit.ts`)
   — the flat worklist view, grouped with every other content finding.
-- **The dev-only `why:uninspected` filter** (`src/lib/uninspected-facet.ts`) —
+- **The dev-only `why:uninspected` filter** (`src/lib/content/tags/uninspected-facet.ts`) —
   the same flag, but combinable with every other dimension while browsing
   ("uninspected puzzles", "uninspected posts from 2019"), which the flat
   audit list can't do. See that file for why it's deliberately *not* a
@@ -84,6 +84,78 @@ nothing there to have been "read" yet.
 New cards from the Templater scaffold are prefilled `inspected: true`, not
 left commented out — a card Paul writes himself needs no confirmation of his
 own words; the flag is scoped to content something *other than him* touched.
+
+## Where a module lives, and which import idiom it uses
+
+`src/lib` and `src/components` are foldered by what the code is *about*, not by
+kind. Tests sit beside the module they cover, `*.island.test.ts` keeps that exact
+filename wherever it lands (the vitest project split is by filename, not path —
+see [testing.md](testing.md)).
+
+```
+src/lib/
+├── stack/     state/   the stack as data: codec, manifest, fragments, read state, URL params
+│   └──        layout/  the stack as geometry: fan placement, motion, reservation, skeleton
+├── content/   cards/   resolveCard and everything it decides
+│   ├──        folders/ the `_config.yaml` cascade, content roots, uids, globs
+│   └──        tags/    the five-w dimensions, tag registry, generators, affiliations
+├── browse/    lenses/  the lens registry, keys, chrome, icons, strip/history lenses
+│   ├──        results/ the browse pool, ranking, cards, reveal
+│   └──        home/    the home lens's slot grid and day-seeded selection
+├── render/             renderers and what a card body composes: images, embeds, actions
+└── site/               whole-site output: seo, sitemap, rss, redirects, promotion, audit
+```
+
+```
+src/components/
+├── stack/            CardStack and the card shell around it
+├── browse/           BrowseCard / BrowseResults / BrowseSkeleton / CardStrip
+├── filters/          the filter panel, its buttons and chips, LensFilterShell, LensIcon
+├── media/            ImageGallery, Lightbox, InlineImageViewer
+├── lens/             the lens page shells (LensPage, LensStackCard)
+├── card-renderers/   registered in COLLECTION_RENDERERS / NAV_RENDERERS, plus the series pieces
+├── lens-renderers/   registered in LENS_BODY_LOADERS
+├── header-media/     bespoke masthead renderers
+└── site/             page chrome (ThemeToggle)
+```
+
+**Two import idioms live here, and the split is forced rather than chosen.**
+
+- **Aliases** — `@stack/*`, `@content/*`, `@browse/*`, `@render/*`, `@site/*`,
+  `@components/*`, `@stores/*`, `@dimensions`, `@data/*` — for everything
+  resolved by Vite: Astro, both vitest projects, `svelte-check`. Declared in
+  `tsconfig.json`.
+- **Relative paths with an explicit `.ts` extension** for every module in the
+  closure reachable from `scripts/*.mjs`. Those scripts run under plain Node
+  type-stripping (the `engines` floor is 22.18), and Node honours neither
+  tsconfig paths nor extensionless specifiers. An alias import added anywhere in
+  that closure breaks a generator **at runtime**, not at build — `npm run build`
+  and `npm test` both pass, and `npm run generate:*` throws. The closure is
+  currently ~40 of the `src/lib` modules; if a module already imports its
+  siblings with `.ts` on the end, it is in the closure and must stay that way.
+
+`vitest.island.config.ts` is a plain Vite config with no Astro plugin, so it
+reads no tsconfig paths: the alias list is restated there by hand as
+`resolve.alias`. Adding an alias means adding it in both places.
+
+**The closure is guarded, and it has to be, because every check you would think
+to run goes through Vite.** `src/lib/site/script-import-closure.test.ts` parses
+the `../src/…` imports out of every `scripts/*.mjs` and loads each one in a
+plain `node -e` subprocess — so the entry set is derived rather than listed (a
+new script import is covered with no edit to the test) and the transitive depth
+is covered by Node itself (an import added *below* an entry fails too). It
+catches more than aliases: any top-level `import.meta.env`, any `.astro`
+import, any extensionless specifier.
+
+The live example is `lens-body-keys.ts`, a deliberate leaf now sitting directly
+beside `lens-components.ts` in `browse/lenses/`. That neighbour spreads
+`import.meta.env.DEV` at the top level, which Vite substitutes and Node leaves
+undefined — so folding the four-string key list into it, an attractive tidy now
+that the two are siblings, passes `npm run build`, passes `astro check`, passes
+every other test, and fails only when `predev` next runs the generator. The
+scripts themselves are deliberately never imported by the test, only read: most
+have a top-level `main()`, and importing `pad-card-images.mjs` re-pads
+committed images.
 
 ## Experiments live on dev-only routes
 

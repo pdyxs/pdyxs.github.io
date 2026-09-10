@@ -8,9 +8,45 @@ All color switching is driven by the `data-theme` attribute on `<html>`. It is a
 
 **Three-state preference:** `localStorage` stores `"light"`, `"dark"`, or is absent/`"system"`. When system, a `matchMedia` change listener keeps `data-theme` in sync as the OS setting changes.
 
-**Rule:** Any new colored surface must use a CSS custom property from `:root` (or the `html[data-theme="dark"]` override block in `global.css`). No hardcoded hex literals or `background: white` outside `:root`.
+**Rule:** Any new colored surface must use a CSS custom property from `:root` (or the `html[data-theme="dark"]` override block in `src/styles/tokens.css`). No hardcoded hex literals or `background: white` outside `:root`.
 
-## Anything that ships in a card fragment is styled in `global.css`
+## `global.css` is an import index, and source order in it is load-bearing
+
+`src/styles/global.css` (the one sheet `Base.astro` imports) contains **nothing
+but a comment header and an `@import` list** — CSS requires every `@import` to
+precede any other rule, and `./dither.generated.css` has to stay first. The
+rules themselves live in the focused sheets beside it — ten of them, plus
+the generated dither set:
+
+| sheet | what it owns |
+|---|---|
+| `dither.generated.css` | `--dither-N` / `--dither-ink-N` — **generated** by `scripts/gen-dither.mjs`; never hand-edit |
+| `tokens.css` | the custom properties, the `html[data-theme="dark"]` block, and the `data-stack-resizing` assembly-resize hold |
+| `base.css` | reset, typography, body images, video embeds, code blocks |
+| `layout.css` | page layout, project/post listings, tag pill, section heading, site header, View Transitions |
+| `card-header.css` | `.card-header`, and the sticky active header (issue #110) |
+| `series.css` | the stack-positional half of the series chrome: the mobile floating arrows, gated on `.stack-card--active` (the quick-nav pair, date bar and dot strip are scoped `<style>` blocks in their own components) |
+| `card-chrome.css` | the clip reveal, the `.dither-text` paper stroke, header titles, the lens note, the dev-only status/priority badges, page-mode lens chrome |
+| `stack.css` | the card stack — cards, spines, piles, the pre-paint fan skeleton |
+| `stack-desktop.css` | the desktop stack (`min-width: 681px`) and the reduced-motion block |
+| `generic-card.css` | tag listing inside a stack card, and the generic card renderer |
+| `site-footer.css` | the site footer |
+
+**The order of that list is the order the rules were in when this was one
+2,599-line file, and it must stay that way.** The old file resolved several
+specificity ties by position and said so in its own comments — 22 rules
+qualified on `.stack-card--active` / `.stack-card--collapsed` win only because
+they sit *after* the base rule they override. The split was a pure line-range
+cut for exactly that reason: nothing was reordered, merged or deduped. (The
+series and home families have since moved out into their components' scoped
+`<style>` blocks — see the fragment section below — so the bundle is no longer
+byte-identical to that file, but the sheets that remain are still in its
+order.) A new sheet goes at the position its rules
+need, never alphabetically; a new rule goes in the sheet whose section it
+belongs to, at the end of that section, not at the end of whichever file is
+convenient.
+
+## A card fragment's CSS: scoped is fine, because `cssCodeSplit: false`
 
 A card fragment is fetched and injected into whatever page the visitor is
 already on. Astro only bundles a component's scoped `<style>` into the pages
@@ -19,16 +55,42 @@ markup simply does not exist on the page the fragment lands in — the card
 paints unstyled and only looks right after a reload onto `/card/...`, which is
 what makes this invisible in local single-page testing.
 
-So a component whose markup can arrive inside a fragment carries **no scoped
-`<style>` at all**; its rules go in `global.css`, like `.card-header`,
-`.generic-bleed`, `.stack-pile` and `.series-*` already do. That includes every
-card renderer, every nav renderer, and anything they compose
-(`SeriesDateBar`, `SeriesDotStrip`, `SeriesNavRenderer`).
+**That reason is retired.** The fix below — `cssCodeSplit: false` — merges
+every page's CSS into one bundle that every page links, so a scoped `<style>`
+is available wherever its component's markup can land, fragment included. A
+component that owns its markup may therefore own its rules: `SeriesDateBar`,
+`SeriesDotStrip`, `SeriesNavRenderer`'s header pair and `HomeLensSlots`'s whole
+`.fp-slot*` grid are scoped `<style>` blocks in those components today,
+verified both cold-loaded and pushed as a fragment onto a lens.
 
-The second, independent reason for the same placement: **every** entry in the
-stack renders its own copy of the fragment markup, so a rule that is only true
-of the *active* card (`.series-floating-*`, `.card-header--stuck`) has to name
-`.stack-card--active` — which a scoped rule cannot do.
+**What still belongs in a shared sheet is what is not about the component.**
+Two kinds:
+
+- **Rules qualified on stack position.** Every entry in the stack renders its
+  own copy of the fragment markup, so a rule that is only true of the *active*
+  card — `.series-floating-*`, `.card-header--stuck` — has to name
+  `.stack-card--active`, `.stack-card--collapsed`, `.stack-card--page`,
+  `data-role`, `data-piled` or `data-stack-resizing`. A scoped rule cannot say
+  any of that. **Their un-gated base rules stay with them**, because Astro's
+  scoping appends `[data-astro-cid-*]` to every compound and would raise the
+  base into a tie with the override it must lose to.
+- **Rules about a component's relationship to something outside it.**
+  `.stack-card-body-inner .generic-bleed + .series-dot-strip`
+  (`generic-card.css`) is about the strip's adjacency to the masthead, not
+  about the strip. `.card-header` (`card-header.css`), `.generic-bleed`
+  (`generic-card.css`) and `.stack-pile` (`stack.css`) stay put for the same
+  kind of reason.
+
+**The trap when you move a rule out, and it is silent.** Astro (and Svelte)
+scoping raises specificity **once per compound selector**, so a two-compound
+base rule gains (0,2,0) while its own single-compound `:hover` gains only
+(0,1,0) — the base then outranks the state rule it used to lose to. Moving
+`.series-dot-strip > .series-dot-arrow` alongside `a.series-dot-arrow:hover`
+did exactly that: the hover kept its ink background and lost its paper glyph
+colour, i.e. ink-on-ink, on an inverted surface. The fix is to restate the same
+parent on the state rule (`.series-dot-strip > a.series-dot-arrow:hover`) so
+the pair keeps the relationship it had as global rules. **A resting-state
+screenshot cannot see this** — check hover and focus explicitly.
 
 **Islands were never really exempt, and treating them as one was the bug**
 (issue: the Art Heist gallery report). A Svelte island's scoped stylesheet is
@@ -56,9 +118,9 @@ shipped invisibly both times.
 **The fix is `cssCodeSplit: false` in `astro.config.mjs`'s `vite.build`**, not
 a per-component rule. Any location can be pushed onto, or sit behind, any
 other, so "which pages happen to already import this component" is never
-actually a safe signal — moving individual components' CSS to `global.css`
-(the fix above, for `.card-header` and friends) only relocates the same
-whack-a-mole to the next island nobody thought to check. Disabling Rollup's
+actually a safe signal — moving individual components' CSS into the global
+sheets only relocated the same whack-a-mole to the next island nobody thought
+to check, which is why that is no longer the rule. Disabling Rollup's
 CSS code-splitting merges every page's CSS into one bundle every page links,
 so a scoped `<style>` is available wherever its component can land, full
 stop — no per-component discipline required, and Svelte's normal component
@@ -103,13 +165,13 @@ A selected control is the page inverted — it sits at the ink end of the dither
 
 `--dither-14` is paper dots on ink, so the hover delta is identical in both directions. Three tokens cover it: `--color-selected-bg` (fill, border, **and text-stroke**), `--color-selected-fg` (text, counts, glyphs, internal dividers), `--color-selected-bg-hover`.
 
-The stroke is the trap. `-webkit-text-stroke` is inherited and paper-coloured by default (see the `.dither-text` block in `global.css`), which is correct on a flat surface and *wrong* on an inverted one: paper stroke behind paper glyphs fattens them instead of clearing dots behind them. Any selected rule whose element inherits the stroke must restate `-webkit-text-stroke-color: var(--color-selected-bg)`.
+The stroke is the trap. `-webkit-text-stroke` is inherited and paper-coloured by default (see the `.dither-text` block in `src/styles/card-chrome.css`), which is correct on a flat surface and *wrong* on an inverted one: paper stroke behind paper glyphs fattens them instead of clearing dots behind them. Any selected rule whose element inherits the stroke must restate `-webkit-text-stroke-color: var(--color-selected-bg)`.
 
 These are applied as per-component rules rather than one shared class because Svelte's scoping inflates selector specificity — a global `.is-selected` loses to a component's own scoped base rule. The tokens are the contract; the rules live with the component.
 
 ## Code blocks are monochrome, and an untagged fence wraps
 
-`markdown.syntaxHighlight` is `false` in `astro.config.mjs`. Shiki's themes hardcode hex (the default `github-dark` painted every block `#24292e` in *both* themes), and a two-colour palette has nowhere to put syntax hues. Astro therefore emits bare `<pre><code>` and `global.css` owns the surface: ink on `--dither-2`, with the `.dither-text` paper stroke so the dots don't read through the mono glyphs.
+`markdown.syntaxHighlight` is `false` in `astro.config.mjs`. Shiki's themes hardcode hex (the default `github-dark` painted every block `#24292e` in *both* themes), and a two-colour palette has nowhere to put syntax hues. Astro therefore emits bare `<pre><code>` and `src/styles/base.css` owns the surface: ink on `--dither-2`, with the `.dither-text` paper stroke so the dots don't read through the mono glyphs.
 
 The language tag is the wrap switch. A tagged fence keeps `overflow-x: auto` — wrapping real code makes its line breaks ambiguous. An **untagged** fence is almost always prose someone reached for a code block to quote, so `pre > code:not([class])` gets `white-space: pre-wrap` plus a `-2ch` hanging indent. Turning `syntaxHighlight` back on would break that selector, since Shiki always emits a class.
 

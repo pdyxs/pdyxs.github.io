@@ -6,7 +6,7 @@ chrome: [card-rendering.md](card-rendering.md). Lenses, ranking and browse:
 
 ## Card resolution happens once, in `resolveCard()`
 
-`resolveCard(entry, cascade, ctx)` (`src/lib/cards.ts`) is the only place a card's
+`resolveCard(entry, cascade, ctx)` (`src/lib/content/cards/cards.ts`) is the only place a card's
 title, description, tags, renderer, nav renderer, status, visibility and content
 hash are decided. It is pure and synchronous — the cascade is read by the caller,
 and `isDev`/`now` arrive in `ctx` — so the whole sequence is unit-testable without
@@ -44,15 +44,15 @@ joins them. What crosses the wire is a decision.
 
 Two discovery rules live in exactly one place each:
 
-- **`resolveDescription` (`src/lib/description.ts`)** decides a card's one-line summary — hand-written `description` first, else a markdown-stripped, word-boundary-truncated body excerpt. `resolveCard()` runs it once and stores the result on `CardMeta.description`; OG/Twitter meta, JSON-LD, RSS and browse-card subtitles all read that field. Don't re-derive a summary at a call site.
-- **`visibility.listed`** decides what is publicly advertised. `buildFeedItems` (`src/lib/rss.ts`) and `buildSitemapEntries` (`src/lib/sitemap.ts`) both filter on it; `src/lib/sitemap.test.ts` asserts they agree card-for-card against the shared fixtures in `src/test/card-fixtures.ts`. This is why `/sitemap.xml` is a hand-rolled route rather than `@astrojs/sitemap` — page enumeration would advertise `unlisted` cards, which are reachable by design.
+- **`resolveDescription` (`src/lib/content/cards/description.ts`)** decides a card's one-line summary — hand-written `description` first, else a markdown-stripped, word-boundary-truncated body excerpt. `resolveCard()` runs it once and stores the result on `CardMeta.description`; OG/Twitter meta, JSON-LD, RSS and browse-card subtitles all read that field. Don't re-derive a summary at a call site.
+- **`visibility.listed`** decides what is publicly advertised. `buildFeedItems` (`src/lib/site/rss.ts`) and `buildSitemapEntries` (`src/lib/site/sitemap.ts`) both filter on it; `src/lib/site/sitemap.test.ts` asserts they agree card-for-card against the shared fixtures in `src/test/card-fixtures.ts`. This is why `/sitemap.xml` is a hand-rolled route rather than `@astrojs/sitemap` — page enumeration would advertise `unlisted` cards, which are reachable by design.
 
-Share metadata itself (canonical URL, OG/Twitter tag list, JSON-LD documents) is decided by pure functions in `src/lib/seo.ts`; `Base.astro` is the thin applier that emits them. `og:image` falls back to `DEFAULT_OG_IMAGE` (`public/og-default.png`, 1200×630) whenever a card has no usable header image.
+Share metadata itself (canonical URL, OG/Twitter tag list, JSON-LD documents) is decided by pure functions in `src/lib/site/seo.ts`; `Base.astro` is the thin applier that emits them. `og:image` falls back to `DEFAULT_OG_IMAGE` (`public/og-default.png`, 1200×630) whenever a card has no usable header image.
 
 ## Content-relative paths resolve from the working directory, not the module
 
 Anything that reads `src/content` at request time goes through
-`assertContentRoot()` / `CONTENT_ROOT` (`src/lib/content-root.ts`) — never
+`assertContentRoot()` / `CONTENT_ROOT` (`src/lib/content/folders/content-root.ts`) — never
 `fileURLToPath(import.meta.url)`. The module's own location is not the project's:
 `astro build` bundles these modules into the prerender output, where
 `../content` resolves to `dist/.prerender/content`, which has never existed.
@@ -67,13 +67,13 @@ The second half of the rule is that it must fail *loudly*. A per-file
 "no such file" is the normal case and has to stay cheap, which is exactly what
 made a broken root indistinguishable from an empty tree. So the distinction is
 drawn once, at reader construction: `assertContentRoot()` throws if the root is
-missing or contains zero `_config.yaml` files. `src/lib/content-root.test.ts`
+missing or contains zero `_config.yaml` files. `src/lib/content/folders/content-root.test.ts`
 covers the real resolution and guards both readers' source against
 `import.meta.url` coming back.
 
 ## Renderer registration is mandatory
 
-Any new content collection must set its default renderer via `_config.yaml` in its content directory (resolved by `resolveFolderCascade` in `src/lib/folder-config.ts`, which walks every ancestor `_config.yaml` from the dimension root down — nearest wins); any new renderer component must be registered in `COLLECTION_RENDERERS` (`src/lib/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
+Any new content collection must set its default renderer via `_config.yaml` in its content directory (resolved by `resolveFolderCascade` in `src/lib/content/folders/folder-config.ts`, which walks every ancestor `_config.yaml` from the dimension root down — nearest wins); any new renderer component must be registered in `COLLECTION_RENDERERS` (`src/lib/render/renderers.ts`). Renderers must early-exit on missing `entry` and treat `Content` as optional — follow `GenericRenderer`'s shape.
 
 Panel sections (`group:` on a container `_config.yaml`, ordered by the dimension
 root's `groupOrder`) apply at **every** drill level, not just the root: drilling
@@ -102,7 +102,7 @@ exception like this one. A folder's tags apply to its descendants *in addition
 to* their own, and the same reasoning makes an exclusion accumulate.)
 
 Negatives push a card down. Nothing about the word "priority" signals any of
-this, which is why it is stated here, at the top of `src/lib/priority.ts`, and
+this, which is why it is stated here, at the top of `src/lib/content/cards/priority.ts`, and
 in the schema comment in `src/content.config.ts` — three places, deliberately.
 The magnitude convention (hundreds to move a folder as a block, ones to sort
 within it) is the author's; the code enforces no scale.
@@ -114,7 +114,7 @@ tag would double it, and tuning becomes unpredictable exactly where you are
 trying to tune. `tagPrioritySum` skips any tag naming one of the card's own
 ancestors.
 
-The decision is pure (`src/lib/priority.ts`); `resolveCard()` calls it and
+The decision is pure (`src/lib/content/cards/priority.ts`); `resolveCard()` calls it and
 stores one integer on `CardMeta.priority`. Affiliation tags land *after*
 resolution (they are a fixed point over the whole pool), so `getAllCards()`
 tops the sum up with whatever those tags declare rather than recomputing it.
@@ -124,7 +124,7 @@ Container `_config.yaml` priorities deliberately do **not** enter the
 counted-once rule, enforced at the source.
 
 `imagePad`'s hazard applies here too: zod *strips* unknown frontmatter keys, so
-`priorty: 100` would be silently ignored. `src/lib/priority-frontmatter.test.ts`
+`priorty: 100` would be silently ignored. `src/lib/content/cards/priority-frontmatter.test.ts`
 scans the raw markdown for near-misses and fails, because by the time content
 reaches the audit lens the offending key is already gone.
 
@@ -157,7 +157,7 @@ tags:
   - when/released
 ```
 
-`normaliseAuthoredTag` (`src/lib/five-w.ts`) rewrites the leading segment to the
+`normaliseAuthoredTag` (`src/lib/content/tags/five-w.ts`) rewrites the leading segment to the
 canonical `where:work/seethrough` — which stays the form used **everywhere
 downstream**: URLs, `src/data/*.generated.ts`, lens/tag YAML,
 `stack-manifest.json` and every `indexOf(':')` split site. Conversion fires only
@@ -168,10 +168,10 @@ untouched, and the function is idempotent.
 Four call sites, and they are the whole boundary:
 
 - the `tags` field transform in `src/content.config.ts`
-- the `_config.yaml` cascade in `resolveFolderCascade` (`src/lib/folder-config.ts`)
+- the `_config.yaml` cascade in `resolveFolderCascade` (`src/lib/content/folders/folder-config.ts`)
 - `scripts/generate-stack-manifest.mjs`, which reads frontmatter through
   gray-matter and so never sees the schema transform
-- `parseExcludeTags` (`src/lib/exclude-tags.ts`), for the value form of
+- `parseExcludeTags` (`src/lib/content/tags/exclude-tags.ts`), for the value form of
   `excludeTags` — and it is the one call site that must **intercept before
   normalising**. `generated/location` is not a dimensioned tag, so
   `normaliseAuthoredTag` would pass it straight through as an ordinary
@@ -200,7 +200,7 @@ suppression sentinels into this one field (`location: none`, `era: none`, and
 `playable`/`viewable`/`buyable: never`), then retired the two *value* overrides
 (`location:`, `era:`) that remained.
 
-One field, two forms (`src/lib/exclude-tags.ts`).
+One field, two forms (`src/lib/content/tags/exclude-tags.ts`).
 
 **Retiring `location:`/`era:` came with a semantic shift worth stating.** Those
 keys **replaced** a derivation; an authored tag **adds** to it. So a card that
@@ -313,7 +313,7 @@ filter value, so an identity there would display nowhere while making
 folder that must never hold one.
 
 Two of its five values are generated (`whyAffordanceGenerator`, decisions in
-`src/lib/why-tags.ts`):
+`src/lib/content/tags/why-tags.ts`):
 
 | value | predicate | suppress with |
 |---|---|---|
@@ -384,7 +384,7 @@ free for the same reason — `derivePathTags` already gives every card its paren
 affiliation membership is a fixed point over every card's tags and can only be
 decided once, over the pool. So it is a separate pass:
 
-- `computeAffiliationTags` (`src/lib/affiliations.ts`) is the pure decision —
+- `computeAffiliationTags` (`src/lib/content/tags/affiliations.ts`) is the pure decision —
   BFS from the seeds over a reverse-tag index, `members` set per declaration so
   cycles terminate.
 - `getAllCards()` runs it after every card has resolved and merges the result.
@@ -422,7 +422,7 @@ tells you something. Both chip call sites (`GenericRenderer`, `BrowseCard`) pass
 
 ## Difficulty is parsed once and rendered as stars
 
-`src/lib/difficulty.ts` owns the whole of it. LMD rates a puzzle 1–5 and words
+`src/lib/content/cards/difficulty.ts` owns the whole of it. LMD rates a puzzle 1–5 and words
 it "Level 3 (Medium)", which is what frontmatter carries — that string stays the
 source of truth (it's what the LMD page says, and it round-trips on a re-rate),
 but it isn't what a reader reads and it sorts alphabetically, which files Level 5
@@ -520,7 +520,8 @@ Three things worth knowing:
   the slug for an undeclared value, so an unnamed folder would head its own
   series "Fatecardgame".
 
-New CSS contract: `.series-dot-label` (global.css). New tokens: none.
+New CSS contract: `.series-dot-label` (a scoped `<style>` in
+`SeriesDotStrip.astro`). New tokens: none.
 
 ## Old-URL redirects are generated, never hand-edited
 
@@ -531,7 +532,7 @@ resolved against the current `src/content` tree. `astro.config.mjs` feeds the ma
 to Astro's `redirects`, which emits one meta-refresh page per entry in the static
 build (GitHub Pages has no server-side redirects).
 
-All resolution logic is pure and tested in `src/lib/redirect-map.ts`. Two rules
+All resolution logic is pure and tested in `src/lib/site/redirect-map.ts`. Two rules
 hold: every old URL gets a redirect (an unresolvable one falls back to the
 closest lens rather than 404ing), and every fallback is reported — in
 `UNRESOLVED_OLD_URLS`, in the generated file's header, and on stdout. If content

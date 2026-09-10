@@ -6,7 +6,7 @@ the URL says about it. Layout, motion and scrolling live in
 
 ## CardStack.svelte owns all card-stack mutations
 
-Any code that pushes, collapses, expands, reorders, or hides cards goes through `src/components/CardStack.svelte`. `src/components/StackNav.astro` is a thin Astro shell that renders `<CardStack client:load />` — it has no `<script>` block. Renderers and other scripts must not reach into `#card-stack` directly. This keeps the VT lifecycle, state, and layout updates in one place.
+Any code that pushes, collapses, expands, reorders, or hides cards goes through `src/components/stack/CardStack.svelte`. `src/components/stack/StackNav.astro` is a thin Astro shell that renders `<CardStack client:load />` — it has no `<script>` block. Renderers and other scripts must not reach into `#card-stack` directly. This keeps the VT lifecycle, state, and layout updates in one place.
 
 ## `from` and `to` belong to the stack, never to a location
 
@@ -15,7 +15,7 @@ of the stack*: which locations sit before and after the active one. Everything
 else in the query belongs to the active location, either as its identity (a
 lens's `filter.*`, which rides in its key) or as side state it carries (a card's
 `tab=bio`). `STACK_STRUCTURE_PARAM_KEYS` and `locationParamsFromSearch`
-(`src/lib/stack-codec.ts`) are that one distinction, and **every** path that
+(`src/lib/stack/state/stack-codec.ts`) are that one distinction, and **every** path that
 turns a query string into a location's params goes through it — the codec's own
 `deserialiseStack`, `CardStack`'s mount seed, `onPopstate`, and
 `pushFilteredLens`.
@@ -67,7 +67,7 @@ Four things that bite:
   as an absence in `CardStack.fragments.test.ts`, because a behavioural test
   would see the right HTML in the cache either way.
 - **The inline script computes no geometry.** `fanReservationTable`
-  (`src/lib/stack-reservation.ts`) builds a lookup table by calling
+  (`src/lib/stack/layout/stack-reservation.ts`) builds a lookup table by calling
   `computeGeometry` itself, and `Base.astro` bakes it in at build time via
   `define:vars`; the script counts `from`/`to` entries and reads a row. The
   slots-vs-rows distinction — a piled card shares its slot's `left` but keeps
@@ -87,7 +87,7 @@ The shape is **optimistic**, so a location whose fragment 404s is removed from
 the store again — which is what the sequential version expressed by never
 splicing it in.
 
-## Fragments are HTML; the stack is state (`src/lib/card-fragments.ts`)
+## Fragments are HTML; the stack is state (`src/lib/stack/state/card-fragments.ts`)
 
 The other half of that invariant. A location is rendered server-side as one
 `.stack-card`, and everything the client knows about it — title, declared
@@ -109,7 +109,7 @@ spine both, and through the spine into any pile band that later names the card.
 
 That is why the title a placeholder is *seeded* with matters: get it wrong and
 it is wrong for the session, not for a frame. `placeholderTitle`
-(`src/lib/card-title.ts`) is the single decision — **manifest, else the clicked
+(`src/lib/stack/state/card-title.ts`) is the single decision — **manifest, else the clicked
 link, and never the uid** (issue #105). The manifest wins because it carries
 `resolveCardTitle`'s output, the same function the real fragment renders
 through, so it is the one copy guaranteed to agree with what lands; a listing's
@@ -241,7 +241,7 @@ server renderer work.
 
 ## Arriving at a card is reading it
 
-Read state (`markRead`, `src/lib/card-view-state.ts`) is recorded on **arrival**,
+Read state (`markRead`, `src/lib/stack/state/card-view-state.ts`) is recorded on **arrival**,
 not only on a client-side push. A cold load of `/card/...` renders the body
 open, so arrival and reading are the same act there in a way they aren't for a
 stack push — and the visitor who arrives that way (search result, shared link,

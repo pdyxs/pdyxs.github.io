@@ -15,7 +15,7 @@ Every entry renders one `.stack-card`, all of them siblings inside
 `.card-stack-inner`, in `entries` order and keyed by `slot`. The **active card
 is the only in-flow node** — it gives the container its height — and every other
 card is `position: absolute`, placed by `computeGeometry`
-(`src/lib/stack-geometry.ts`). **Painting order does the occlusion**: a behind
+(`src/lib/stack/layout/stack-geometry.ts`). **Painting order does the occlusion**: a behind
 card is cropped for free by the card in front of it, so nothing has to crop it.
 
 The applier writes five properties per card — `--geo-left`, `--geo-top`,
@@ -216,7 +216,7 @@ Four things that fall out of being outside `#card-stack`:
   different failure mode.
 
 Still no arithmetic in the script. `fanSkeletonTable`
-(`src/lib/stack-skeleton.ts`) is a second build-time table beside
+(`src/lib/stack/layout/stack-skeleton.ts`) is a second build-time table beside
 `fanReservationTable`, computed by running `computeGeometry` and emitting
 `left`/`top` as finished CSS lengths — ahead ones as `calc(100% + Npx)`, which
 works because the table is built at `activeWidth: 0` (so the term IS the offset)
@@ -242,7 +242,7 @@ wrong primitive: it does nothing when the target is already partly visible,
 which in a stack is always.
 
 The rule is `scrollTargetFor(activeCardTop, scrollY, peek)`
-(`src/lib/stack-geometry.ts`): the active card's header at the top of the
+(`src/lib/stack/layout/stack-geometry.ts`): the active card's header at the top of the
 viewport, **less a peek**. The peek is not cosmetic —
 
 1. it is the **scroll affordance** (flush to the top, the stack above is
@@ -275,13 +275,13 @@ Three things that bite:
   also own it.
 
 **Cold load and popstate are instant; a navigation is smooth**
-(`scrollBehaviourFor`, `src/lib/stack-motion.ts`). A rebuild splices entries in
+(`scrollBehaviourFor`, `src/lib/stack/layout/stack-motion.ts`). A rebuild splices entries in
 one fetch at a time and each one needs a correcting scroll — smoothing those is
 the page fighting itself, and on first paint it races the browser and loses
 visibly.
 
 **The scroll aims only once the layout has stopped moving** (`scrollSettleAction`,
-`src/lib/stack-motion.ts`), and this is the crop-vs-reflow asymmetry reaching a
+`src/lib/stack/layout/stack-motion.ts`), and this is the crop-vs-reflow asymmetry reaching a
 third place — after `.body-wrapper.open` and the geometry applier. On desktop a
 collapse is a crop, so the target measured the instant the store moves is
 already final. On MOBILE it is a reflow: the outgoing card's body animates to
@@ -327,7 +327,7 @@ last.
 `--stack-motion-ms` / `--stack-reveal-ms` / `--stack-stuck-ms` are zeroed in a
 `prefers-reduced-motion` block, and `.body-wrapper`'s collapse with them.
 
-That is what makes `transitionWillFire` (`src/lib/stack-motion.ts`) necessary.
+That is what makes `transitionWillFire` (`src/lib/stack/layout/stack-motion.ts`) necessary.
 **A zero-duration transition starts nothing and fires no `transitionend`**, so
 `closeCard`'s wait for the closing card's collapse would sit through its entire
 400ms fallback — turning "instant" into a stall, which is the opposite of what
@@ -361,7 +361,7 @@ track interpolates instead of snapping.
 `home.lens.yaml`'s `config.slots` is the whole of the front page's layout
 (issues #129–#133). Four rules hold it together:
 
-- **`parseHomeSlots` (`src/lib/home-slots.ts`) validates AND normalises, at
+- **`parseHomeSlots` (`src/lib/browse/home/home-slots.ts`) validates AND normalises, at
   generation time.** `scripts/generate-lens-registry.mjs` bakes the normalised
   slots into `lenses.generated.ts`, so that file shows what actually renders
   rather than the author's shorthand, and an authoring slip (`spann: 4`,
@@ -374,7 +374,7 @@ track interpolates instead of snapping.
   `resolveSlotRows` cascade upward, mobile-first, onto `--slot-span-small` /
   `-large` and `--slot-rows-small` / `-large`; the base rules are a literal
   `span 12` / `span 1` and the two breakpoints (681px, 1000px) are literals in
-  `global.css`. No `matchMedia` — and no container query either, since
+  `src/styles/home.css`. No `matchMedia` — and no container query either, since
   `container-type` would make the slot a containing block for the fixed dither.
 - **One flat grid, `side: right` as `span N / -1`.** No `grid-auto-flow: dense`
   (it backfills a hole with a *later* slot, which silently breaks config
@@ -388,7 +388,7 @@ track interpolates instead of snapping.
   reads correctly only because the rest of the page has filled.
 
 **The floor is per variant and it is measured.** `BROWSE_CARD_VARIANTS`
-(`src/lib/browse-card-variants.ts`) holds `minHeight` for each variant, written
+(`src/lib/browse/results/browse-card-variants.ts`) holds `minHeight` for each variant, written
 onto both `BrowseCard`'s `.browse-card-content` and the placeholder's interior
 as `--browse-card-min-height`, so the swap can only grow into space already
 held. It covers the interior and **not** the 16/9 banner, whose height is a
@@ -412,7 +412,7 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `data-role="behind|active|ahead"` and `data-piled` (written by the applier)
 - `data-stack-resizing` (issue #126 — written by `holdWhileAssemblyResizes` onto
   the incoming `.stack-card` for the length of the assembly's width transition;
-  the name lives in `src/lib/stack-motion.ts`)
+  the name lives in `src/lib/stack/layout/stack-motion.ts`)
 - `.stack-pile`, `.stack-pile-inner`, `.stack-pile-label`, `.stack-pile-bands`,
   `.stack-pile-band`, `.stack-pile-band-text` (island-rendered, desktop only)
 - `.stack-shell`, `.stack-skeleton`, `.stack-skeleton-inner`,
@@ -422,10 +422,16 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
   between first paint and hydration.
 - `.fp-slot-grid`, `.fp-slot`, `.fp-slot--rail`, `.fp-slot-label`,
   `.fp-see-more` (issues #131, #132 — the home lens's 12-column slot grid).
-  These live in `global.css`, not in `HomeLensSlots.svelte`: they render
-  inside the home lens *fragment*. `.fp-slot-placeholder*`, `.fp-slot-stalled`
-  and `.fp-slot-card-list` stay scoped to the island, per the islands
-  exception, and exist only between first paint and the card pool arriving.
+  These are a **scoped `<style>` in `HomeLensSlots.svelte`**, together with
+  `.fp-slot-stack`, `.fp-slot-placeholder*`, `.fp-slot-stalled` and
+  `.fp-slot-card-list`. They render inside the home lens *fragment*, which used
+  to be why the first five had to live in `src/styles/home.css` (now deleted) —
+  `cssCodeSplit: false` retires that reason, and nothing in the grid is
+  qualified on stack position, so the whole family moved together. They stay on
+  this list because the class names are still a layout contract: renaming one is
+  a `HomeLensSlots.svelte` refactor, and `--slot-span-*` / `--slot-rows-*` /
+  `--stack-direction-*` / `--stack-split` are written onto `.fp-slot` /
+  `.fp-slot-stack` by that island from `home-slots.ts`'s normalised config.
 - `.fp-skeleton--pending`, `.fp-skeleton--failed`, `.fp-pool-error`,
   `.fp-pool-retry` (map #136 — `BrowseSkeleton.svelte`). The base rule is
   `.fp-skeleton { display: none }`; these two modifiers turn it on as island

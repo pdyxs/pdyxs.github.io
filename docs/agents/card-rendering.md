@@ -2,7 +2,7 @@
 
 ## Nav renderer pattern (`NAV_RENDERERS`)
 
-Collections that need custom navigation (e.g. prev/next chapter buttons, position indicators) register a nav renderer in `NAV_RENDERERS` (`src/lib/renderers.ts`). A nav renderer owns the full card shell — header and body structure — and receives the content renderer as `<slot />`. It is responsible for rendering `<CardHeader>` (or a custom header), the `.body-wrapper` / `.stack-card-body` structure, and any footer nav. Props passed by `card/[...path].astro`: `title`, `titleSuffix`, `entry`, `allEntries`.
+Collections that need custom navigation (e.g. prev/next chapter buttons, position indicators) register a nav renderer in `NAV_RENDERERS` (`src/lib/render/renderers.ts`). A nav renderer owns the full card shell — header and body structure — and receives the content renderer as `<slot />`. It is responsible for rendering `<CardHeader>` (or a custom header), the `.body-wrapper` / `.stack-card-body` structure, and any footer nav. Props passed by `card/[...path].astro`: `title`, `titleSuffix`, `entry`, `allEntries`.
 
 A nav renderer is usually declared by the folder (`navRenderer: series` in a
 `_config.yaml`), but `getSeriesSiblings` matches on the `series:` frontmatter
@@ -23,7 +23,7 @@ scrolled to it.
 content renderer as a slot, so anything it appends lands *below* the content
 renderer's own "This is about" / "Cards about this" strips — three sections of
 the same kind, with the most relevant one last. So `CardStackCard` resolves the
-previews (`resolveSeriesCards`, `src/lib/series-cards.ts` — the IO shell around
+previews (`resolveSeriesCards`, `src/lib/render/series-cards.ts` — the IO shell around
 the pure `getSeriesSiblings`) and passes them to the content renderer as
 `seriesCards`; `GenericRenderer` renders "In this series" ahead of the other
 two. The trigger is the card's `series:` frontmatter alone, not the nav renderer,
@@ -45,7 +45,7 @@ Two traps that cost a round each:
 
 ## Collection view renderer pattern (`COLLECTION_VIEW_RENDERERS`)
 
-Collection views are browsing cards for an entire collection — e.g. `/card/posts` lists all posts with tag filter chips. They use bare collection-name UIDs (`posts`, `projects`) with no id component, which is a deliberate exception to the `collection/id` invariant. Register them in `COLLECTION_VIEW_RENDERERS` (`src/lib/renderers.ts`). The renderer is a plain Astro component that fetches all cards server-side and passes them to `<CollectionBrowser client:load />`. To link to a collection view from card content, use `[text](collection:posts)` — `CardStack.onDocumentClick` handles the `collection:` protocol and pushes `/card/posts`.
+Collection views are browsing cards for an entire collection — e.g. `/card/posts` lists all posts with tag filter chips. They use bare collection-name UIDs (`posts`, `projects`) with no id component, which is a deliberate exception to the `collection/id` invariant. Register them in `COLLECTION_VIEW_RENDERERS` (`src/lib/render/renderers.ts`). The renderer is a plain Astro component that fetches all cards server-side and passes them to `<CollectionBrowser client:load />`. To link to a collection view from card content, use `[text](collection:posts)` — `CardStack.onDocumentClick` handles the `collection:` protocol and pushes `/card/posts`.
 
 ## Card credits (`meta:`) are one flat shape, for Metadata Menu
 
@@ -70,14 +70,14 @@ are banned in this schema, and both were tried and reverted:
 - **No unions in `values`.** It is always `string[]`. A link is written as an
   ordinary markdown link inside the string —
   `"[Libby Heaney](http://libbyheaney.co.uk/)"` — which is the native Obsidian
-  idiom. `parseMetaItem` (`src/lib/card-meta.ts`) unwraps a value that is
+  idiom. `parseMetaItem` (`src/lib/content/cards/card-meta.ts`) unwraps a value that is
   *exactly* one link; a value that merely contains one stays literal text, so
   surrounding words can't be silently dropped.
 - **No variant keys.** No `value`-vs-`values` pair where setting one implies the
   other is absent. Metadata Menu has no conditional fields, so it would render
   both as editable everywhere and guide authors no better than raw YAML.
 
-`resolveMetaRows` (`src/lib/card-meta.ts`) is the single decision point: it folds
+`resolveMetaRows` (`src/lib/content/cards/card-meta.ts`) is the single decision point: it folds
 the named shorthands `when` / `medium` / `roles` / `puzzle_type` / `difficulty`
 in at the front (a card must not express the same fact twice) and returns
 display rows. `GenericRenderer` takes the result, and is the only renderer that
@@ -89,7 +89,7 @@ rows because `difficulty` feeds three renderings, not one.
 
 ## Action links are resolved, never read raw
 
-`resolveActions` (`src/lib/card-actions.ts`) decides the masthead's "go do it"
+`resolveActions` (`src/lib/content/cards/card-actions.ts`) decides the masthead's "go do it"
 links. Most cards author them as `actions:` rows; puzzles instead carry
 `sudokupad_url` and `url` as named fields (both are load-bearing elsewhere), and
 those fold in as *Play* and *LMD* the same way `medium` folds
@@ -128,7 +128,7 @@ under-tagging.
 
 ## Internal links in card content use a protocol, never an absolute URL
 
-Body content links to the rest of the site through one of three protocols, all handled by `onDocumentClick` in `CardStack.svelte`. Each stays inside the card stack — an ordinary `https://pdyxs.wtf/...` or `/card/...` href is a full page load that discards the stack, and is treated as a data bug (guarded by `src/lib/content-links.test.ts`).
+Body content links to the rest of the site through one of three protocols, all handled by `onDocumentClick` in `CardStack.svelte`. Each stays inside the card stack — an ordinary `https://pdyxs.wtf/...` or `/card/...` href is a full page load that discards the stack, and is treated as a data bug (guarded by `src/lib/content/folders/content-links.test.ts`).
 
 | protocol | pushes | example |
 |---|---|---|
@@ -142,7 +142,7 @@ Body content links to the rest of the site through one of three protocols, all h
 
 YouTube and Vimeo embeds are never raw `<iframe>` — that's Jekyll-era markup the
 audit lens flags as `legacy-markup`. Put the URL alone in its own paragraph and
-`rehypeVideoEmbeds` (`src/lib/video-embeds.ts`) turns it into a responsive
+`rehypeVideoEmbeds` (`src/lib/render/video-embeds.ts`) turns it into a responsive
 `figure.video-embed`:
 
 ```
@@ -151,7 +151,7 @@ https://www.youtube.com/watch?v=u0nnn_4ZKGs
 
 Only a paragraph containing *nothing but* the autolinked URL is rewritten, so a
 video referenced mid-sentence, or a link with its own label, stays an ordinary
-external link. `parseEmbedUrl` (`src/lib/embeds.ts`) is the single decision
+external link. `parseEmbedUrl` (`src/lib/render/embeds.ts`) is the single decision
 point for what counts as an embed and accepts every shape the migrated content
 carries (`/embed/<id>`, `watch?v=`, `youtu.be/`, `vimeo.com/<id>`,
 `player.vimeo.com/video/<id>`).
@@ -187,11 +187,12 @@ The general rule underneath both: **a remote `image:` is not automatically an
 *nothing*. It used to render any `http` string as an `<img>`, so an embed URL
 (which serves an HTML page) painted a broken image with no error anywhere.
 
-New CSS contract: `.video-embed`, `.generic-embed` (global.css). New tokens: none.
+New CSS contract: `.video-embed` (`src/styles/base.css`), `.generic-embed`
+(`src/styles/generic-card.css`). New tokens: none.
 
 ## A gallery never repeats what the body already shows
 
-With no `images:` frontmatter, `resolveGalleryImages` (`src/lib/images.ts`)
+With no `images:` frontmatter, `resolveGalleryImages` (`src/lib/render/images.ts`)
 sweeps the card's own folder — so a card whose prose walks through a worked
 example image by image (the puzzle "Plans of a Medic") would show every one of
 those images a second time as a gallery strip. The sweep therefore skips any
@@ -226,7 +227,7 @@ strand a padded file with nothing in the frontmatter to explain it. An explicit
 `0` is worth writing rather than deleting the key: it records "I looked at this
 one and it needs nothing".
 
-Decisions are pure in `src/lib/image-padding.ts`; `scripts/pad-card-images.mjs`
+Decisions are pure in `src/lib/render/image-padding.ts`; `scripts/pad-card-images.mjs`
 is the fs + sharp shell. The border colour is sampled from the original's own
 four corners (`chooseBackground`), not hardcoded white — a dark or transparent
 source would otherwise get a white frame that reads as damage.
@@ -287,8 +288,8 @@ so a click in one card of the stack can't open another card's viewer.
 nothing.
 
 Which images those are is one decision, `INLINE_BODY_IMAGE_SELECTOR`
-(`src/lib/inline-images.ts`): `:is(p, li) > img`, since Astro's markdown wraps a
-lone image in a paragraph. `global.css` writes the same selector out by hand
+(`src/lib/render/inline-images.ts`): `:is(p, li) > img`, since Astro's markdown wraps a
+lone image in a paragraph. `src/styles/base.css` writes the same selector out by hand
 (CSS can't import it) to cap the height at `--inline-image-max-height` and set
 the zoom cursor. **Change one, change both.**
 

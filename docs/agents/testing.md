@@ -34,6 +34,14 @@ providing happy-dom DOM globals.
 **Never rename that file to `happy-dom`** — the name is hardcoded in Vitest to
 use `viteEnvironment: "client"`.
 
+It also pays a second, smaller cost: being a plain Vite config, it reads no
+`tsconfig.json` `compilerOptions.paths`, so the repo's `@stack/*` / `@content/*`
+/ … aliases are restated by hand in its `resolve.alias`. A new alias declared
+only in `tsconfig.json` resolves everywhere except here, and fails in whichever
+island test happens to import through it. See
+[workflow.md](workflow.md) for the alias list and the relative-import closure it
+does not cover.
+
 The `island` project pays the exact opposite cost, and it is the rule that keeps
 the split honest: **an `*.island.test.ts` must not import a `.astro` file.**
 There is no Astro plugin in that project to transform one. Island components

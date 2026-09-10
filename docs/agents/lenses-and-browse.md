@@ -2,7 +2,7 @@
 
 ## The default browse lens is Most\* Interesting, and it is uncapped
 
-`DEFAULT_BROWSE_LENS_ID` (`src/lib/lens-registry.ts`) is **`interesting`**, not
+`DEFAULT_BROWSE_LENS_ID` (`src/lib/browse/lenses/lens-registry.ts`) is **`interesting`**, not
 `newest`. Everything that "falls through to browse" lands there: every
 `collection:` and `tag:` link, the front page's *See more →*, a filter toggled
 on a lens that can't accept it, and an unresolvable old URL
@@ -21,7 +21,7 @@ reveal instead, never by truncation.
 Two things are unique to it:
 
 - **`sortKey: ranking`** is the only non-field sort. `sortCardsForBrowse`
-  delegates to `rankCards` (`src/lib/ranking.ts`) — the same comparator the home
+  delegates to `rankCards` (`src/lib/browse/results/ranking.ts`) — the same comparator the home
   page's day-seeded slots and the Unseen lens use. Don't write a second ordering.
 - **`note:`** is a lens-level footnote (*"\*an attempt at that, anyway"*),
   rendered by `deriveLensChrome` beside the title in card mode and hidden on a
@@ -81,7 +81,7 @@ carries the resize. Three consequences worth stating:
   (every lens but home declares 960px). That is what Back between them already
   did, and one vocabulary was the ask.
 - **The churn is held, not re-admitted.** `data-stack-resizing` (owned by
-  `holdWhileAssemblyResizes`, named in `src/lib/stack-motion.ts`) goes on the
+  `holdWhileAssemblyResizes`, named in `src/lib/stack/layout/stack-motion.ts`) goes on the
   incoming `.stack-card` and shows the #119/#123 skeleton in place of the
   results list, empty message and count for as long as the resize runs. It used
   to be a **second** attribute alongside `data-filters-pending` — a second,
@@ -154,7 +154,7 @@ signature a popstate deliberately clears.
 
 ## The ranking comparator is a chain, not a score
 
-`compareCards` (`src/lib/ranking.ts`) is what "Most\* Interesting" sorts by. Six
+`compareCards` (`src/lib/browse/results/ranking.ts`) is what "Most\* Interesting" sorts by. Six
 rungs, each consulted only on a genuine tie above it, so any card's position is
 explainable by naming the rung that placed it:
 
@@ -183,7 +183,7 @@ same-folder cards — which is exactly what boosting a folder produces.
 
 ## One seen concept, keyed two ways
 
-`src/lib/card-view-state.ts` records exactly one thing: **did the visitor open
+`src/lib/stack/state/card-view-state.ts` records exactly one thing: **did the visitor open
 this card?** There is no "displayed" state — a card appearing as an excerpt
 leaves no trace at all. (It used to: `markDisplayed` removed the card from the
 unseen tier, re-rolling the day-seeded home pick, so the tier existed mainly to
@@ -217,7 +217,7 @@ invariant as every other card-stack mutation.
 ## Home slots are the ranking chain, day-seeded
 
 A home filter slot is **the top `pool` cards its filter leaves, with the calendar
-day picking between them** (`selectSlotCard`, `src/lib/slot-selection.ts`). The
+day picking between them** (`selectSlotCard`, `src/lib/browse/home/slot-selection.ts`). The
 ordering is `rankCards` — the site's one comparator, not a second selection rule
 — so authored `priority` decides what is eligible and the day decides which of
 those you get. `pool` is declared per slot in `src/content/what/home.lens.yaml`;
@@ -226,7 +226,7 @@ those you get. `pool` is declared per slot in `src/content/what/home.lens.yaml`;
 ## A lens names itself; the page header names the site
 
 Two strings, two owners, both decided in `deriveLensChrome`
-(`src/lib/lens-chrome.ts`):
+(`src/lib/browse/lenses/lens-chrome.ts`):
 
 - **The page-mode subtitle is the SITE's**, authored as `subtitle:` on the home
   lens (`src/content/what/home.lens.yaml`) and identical on every lens page. It
@@ -258,7 +258,7 @@ a pile band's label, which reads the fragment cache rather than the DOM.
 
 Newest and Oldest are timelines, not grids: `display: strip` plus `limit: 30`
 in the lens `config` (`src/content/when/*.lens.yaml`), decided by `isStripLens`
-(`src/lib/strip-lens.ts`) and applied by `BrowseResults`'s `layout` prop, which
+(`src/lib/browse/lenses/strip-lens.ts`) and applied by `BrowseResults`'s `layout` prop, which
 swaps the wrapping grid for a `CardStrip` — the same component as "Cards about
 this" and the series run.
 
@@ -343,7 +343,7 @@ the server must render and what is honestly true of a browser that has never
 been here — so Unseen prerenders the full pool and Seen prerenders nothing.
 
 Because empty is the *common* state at launch, the message is decided from the
-**reason**, by `historyEmptyMessage` (`src/lib/history-lens.ts`), with
+**reason**, by `historyEmptyMessage` (`src/lib/browse/lenses/history-lens.ts`), with
 `anyHistory` / `anyUnread` read from the **unfiltered** pool: "you haven't
 opened anything yet" and "you have read everything" are claims about the site,
 and a filter excluding your history is a different thing entirely. `BrowseResults`
@@ -401,7 +401,7 @@ full pool to apply a cap that is a display rule.
 **The fetch starts before hydration, and `<link rel=preload>` was rejected for that
 job.** An `is:inline` script in `Base.astro`'s `<head>` sets
 `window.__cardsPool = fetch('/cards.json').then(r => r.json())`, and
-`src/lib/card-pool.client.ts` **adopts** that promise, falling back to its own `fetch`
+`src/lib/browse/results/card-pool.client.ts` **adopts** that promise, falling back to its own `fetch`
 only where there isn't one (a fragment injected into a host document that predates the
 script, a test, an island rendered outside a page). A preload link's cache-match rules
 — `as` and `crossorigin` must agree exactly with the later fetch — fail **silently**,
@@ -456,7 +456,7 @@ falls back to `humaniseSegment`, so a fetching card page's non-blocking path is
 paint-then-swap (`Seethrough` → `SeeThrough Studios`), which is precisely the bug class
 #119/#123/#125 exist to prevent, on the site's most cold-entered surface (search
 results, RSS, social previews, Jekyll redirects). `narrowTagDisplay`
-(`src/lib/tag-display.ts`) is the decision — the union of the previews' own `tags` plus
+(`src/lib/content/tags/tag-display.ts`) is the decision — the union of the previews' own `tags` plus
 each card's `collapsedContainer`, which is exactly the set `BrowseCard` resolves out of
 the map. It keeps `tagDisplay` as a `CardStrip` prop and narrows the *data*; resolving
 chips server-side would fork `CardStrip`/`BrowseCard`'s contract by call site.
@@ -479,7 +479,7 @@ strip and an order of magnitude low for the biggest closures.
 no notion of any particular visitor, so it can only ever emit ONE representative per
 collapsed folder. Whether a visitor should see one entry or two is a question about
 THEIR read history, which exists only in their browser. So this is a second,
-client-side expansion pass, `expandCollapsedSeries` (`src/lib/collapsed-series.ts`),
+client-side expansion pass, `expandCollapsedSeries` (`src/lib/browse/results/collapsed-series.ts`),
 run wherever a browse-family body consumes the shared pool.
 
 The rule: the representative is always kept, and its own read state — as far as
@@ -530,7 +530,7 @@ groups by publish status, not read state, and has no isSeen concept to begin wit
 `BrowseResults` renders a leading slice of a **grid** and asks for the next step
 from an `IntersectionObserver` sentinel with a deliberately generous
 `REVEAL_ROOT_MARGIN`, so the reader never arrives at an end. Decisions are pure
-in `src/lib/progressive-reveal.ts`; the observer and the fallback button are the
+in `src/lib/browse/results/progressive-reveal.ts`; the observer and the fallback button are the
 thin applier. On by default for every grid lens (`revealSettings()` — a lens
 opts out with `reveal: false` or resizes the step with `reveal: <n>`); a short
 result set costs nothing, since with nothing held back neither the sentinel nor
