@@ -15,8 +15,9 @@
  *
  * IMPORTANT: this script must not import lens-registry.ts (or anything that
  * does), or it would depend on the very file it generates. It reads YAML with
- * js-yaml, and the one project module it does import — src/lib/home-slots.ts —
- * is a deliberate leaf for exactly that reason (see its header).
+ * js-yaml, and the two project modules it does import — src/lib/home-slots.ts
+ * and src/lib/lens-body-keys.ts —
+ * are deliberate leaves for exactly that reason (see their headers).
  *
  * Run automatically before `npm run dev`/`build` via the "pre*" lifecycle
  * scripts, ordered BEFORE generate-stack-manifest.mjs (manifest enumeration
@@ -29,6 +30,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { load as parseYaml } from 'js-yaml';
 import { parseHomeSlots } from '../src/lib/home-slots.ts';
+import { LENS_BODY_KEYS, isLensBodyKey } from '../src/lib/lens-body-keys.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(__dirname, '../src/content');
@@ -44,6 +46,22 @@ const DIMENSIONS = ['who', 'what', 'when', 'where', 'why'];
 // Keys emitted onto a declaration, in a stable order. `order` is intentionally
 // absent: it drives sorting here, then is dropped (it isn't a registry field).
 const DECL_KEYS = ['id', 'dimension', 'label', 'subtitle', 'note', 'icon', 'component', 'width', 'acceptsFilters', 'presentation', 'devOnly', 'config'];
+
+/**
+ * A lens's `component` key. Declared -> must be a registered bespoke body;
+ * absent -> the lens id, which falls through to DEFAULT_BODY_LOADER.
+ */
+function resolveDeclaredComponent(declared, id, rel) {
+  if (typeof declared !== 'string') return id;
+  if (!isLensBodyKey(declared)) {
+    throw new Error(
+      `lens: ${rel} declares component "${declared}", which has no body loader. ` +
+        `Registered bodies: ${LENS_BODY_KEYS.join(', ')}. ` +
+        `Omit \`component:\` to use the shared browse-lens body.`,
+    );
+  }
+  return declared;
+}
 
 async function walk(dir) {
   const out = [];
@@ -88,7 +106,15 @@ async function collectLenses() {
       label: parsed.label,
       // component defaults to the id — most lenses have no bespoke loader and
       // fall through to the default browse body (see lens-components.ts).
-      component: typeof parsed.component === 'string' ? parsed.component : id,
+      //
+      // A DECLARED component must name a real bespoke loader. This is the last
+      // point that can tell "the author wrote `component: histroy`" apart from
+      // "the author wrote nothing and the lens is called `newest`", because the
+      // default below collapses the two — so the check belongs here, beside
+      // parseHomeSlots, which is here for the same reason (issue #174).
+      // Unregistered, it would silently render the default browse body, which
+      // looks plausible enough that nobody would notice.
+      component: resolveDeclaredComponent(parsed.component, id, rel),
       // order is generator-only: it sorts the output, then is dropped.
       order: typeof parsed.order === 'number' ? parsed.order : Number.POSITIVE_INFINITY,
     };

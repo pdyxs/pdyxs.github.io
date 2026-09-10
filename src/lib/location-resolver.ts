@@ -9,7 +9,7 @@
 // fragment-partial counterparts) call resolveLocation() so the two routes
 // make this decision the same way, in one place.
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
-import { COLLECTION_RENDERERS, NAV_RENDERERS, COLLECTION_VIEW_RENDERERS } from './renderers';
+import { COLLECTION_RENDERERS, NAV_RENDERERS, COLLECTION_VIEW_RENDERERS, GENERIC_RENDERERS } from './renderers';
 import GenericRenderer from '../components/card-renderers/GenericRenderer.astro';
 import { getLensDefinition } from './lens-registry';
 import type { LensDefinition } from './lens-registry';
@@ -76,19 +76,45 @@ export function resolveLocation(path: string): LocationResolution {
 /**
  * Maps a cascaded renderer name (frontmatter override, else nearest-ancestor
  * `_config.yaml`, else 'card' — see resolveFolderCascade in folder-config.ts
- * and getAllCards in cards.ts) to its component. Renderer names with no
- * dedicated component ('post', 'story', 'card') fall back to GenericRenderer.
+ * and getAllCards in cards.ts) to its component.
+ *
+ * A name must be REGISTERED in COLLECTION_RENDERERS or DECLARED GENERIC in
+ * GENERIC_RENDERERS; anything else throws, which fails the build. The
+ * unconditional `?? GenericRenderer` this replaces could not tell a folder
+ * that wants the generic card apart from a typo, and rendered a plausible card
+ * for both (issue #174).
  */
 export function resolveCardRenderer(rendererName: string): AstroComponentFactory {
-  return COLLECTION_RENDERERS[rendererName] ?? GenericRenderer;
+  const registered = COLLECTION_RENDERERS[rendererName] as AstroComponentFactory | undefined;
+  if (registered) return registered;
+  if (GENERIC_RENDERERS.has(rendererName)) return GenericRenderer;
+  throw new Error(
+    `renderer: "${rendererName}" is neither registered nor declared generic. ` +
+      `Register it in COLLECTION_RENDERERS, or add it to GENERIC_RENDERERS ` +
+      `(src/lib/renderers.ts) if GenericRenderer already expresses it.`,
+  );
 }
 
 /**
  * Maps a cascaded nav-renderer name (frontmatter `navRenderer` override, else
  * nearest-ancestor `_config.yaml` `navRenderer` — see resolveFolderCascade) to
- * its component. Returns null when no name is declared or the name has no
- * registered component, meaning "plain card shell, no nav renderer".
+ * its component.
+ *
+ * Returns null when NO name is declared, meaning "plain card shell, no nav
+ * renderer" — that is the ordinary case for almost every card. A DECLARED name
+ * with no registered component THROWS: unlike `renderer` there is no generic
+ * nav shell to fall back to, so the old `?? null` silently served the plain
+ * shell and the series run simply never appeared (issue #174).
  */
 export function resolveNavRenderer(navRendererName: string | undefined): AstroComponentFactory | null {
-  return navRendererName ? NAV_RENDERERS[navRendererName] ?? null : null;
+  if (!navRendererName) return null;
+  const registered = NAV_RENDERERS[navRendererName] as AstroComponentFactory | undefined;
+  if (!registered) {
+    throw new Error(
+      `navRenderer: "${navRendererName}" is not registered. ` +
+        `Registered: ${Object.keys(NAV_RENDERERS).join(', ') || '(none)'}. ` +
+        `Add it to NAV_RENDERERS in src/lib/renderers.ts, or remove the declaration.`,
+    );
+  }
+  return registered;
 }

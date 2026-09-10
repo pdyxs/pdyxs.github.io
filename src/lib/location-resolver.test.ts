@@ -57,11 +57,18 @@ describe('resolveCardRenderer', () => {
     }
   });
 
-  it('falls back to GenericRenderer for a renderer name with no dedicated component', () => {
+  it('falls back to GenericRenderer for a renderer name declared generic', () => {
     expect(resolveCardRenderer('post')).toBe(GenericRenderer);
     expect(resolveCardRenderer('story')).toBe(GenericRenderer);
     expect(resolveCardRenderer('card')).toBe(GenericRenderer);
     expect(resolveCardRenderer('work')).toBe(GenericRenderer);
+    expect(resolveCardRenderer('puzzle')).toBe(GenericRenderer);
+  });
+
+  // Issue #174: this used to return GenericRenderer, so a typo rendered a
+  // plausible card and nothing anywhere said the declared renderer was missing.
+  it('throws for a renderer name that is neither registered nor declared generic', () => {
+    expect(() => resolveCardRenderer('gneric')).toThrow(/neither registered nor declared generic/);
   });
 });
 
@@ -74,7 +81,9 @@ describe('resolveNavRenderer', () => {
     expect(resolveNavRenderer(undefined)).toBeNull();
   });
 
-  it('returns null for a nav-renderer name with no registered component', () => {
-    expect(resolveNavRenderer('nope')).toBeNull();
+  // Issue #174: this used to return null, which serves the plain card shell —
+  // so a mistyped `navRenderer:` silently dropped the series run.
+  it('throws for a declared nav-renderer name with no registered component', () => {
+    expect(() => resolveNavRenderer('nope')).toThrow(/not registered/);
   });
 });

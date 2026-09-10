@@ -21,7 +21,8 @@ export type AuditFindingType =
   | 'unresolved-local-image'
   | 'orphaned-old-url'
   | 'inert-derivation-control'
-  | 'not-inspected';
+  | 'not-inspected'
+  | 'awaiting-code';
 
 /**
  * A card as the audit sees it: resolved metadata plus the raw material the
@@ -47,6 +48,13 @@ export interface AuditCard {
    * someone ticks it.
    */
   inspected?: boolean;
+  /**
+   * Frontmatter `awaitsCode` — this card is ready but must wait for a CODE
+   * promotion rather than the daily content run (publishing-pipeline.md §4.2).
+   * Surfaced so a held card is visible on the worklist, not only in the
+   * Actions log.
+   */
+  awaitsCode?: boolean;
   /**
    * Asset filenames that exist alongside the card, relative to its own
    * directory (e.g. "game-jam-1.jpg", "shots/wide.png"). Used to decide whether
@@ -283,6 +291,14 @@ const FINDING_SPECS: readonly FindingSpec[] = [
     label: 'Not yet inspected',
     hint: 'Nobody has read this card end to end yet. Tick `inspected` in Obsidian once you have.',
     detect: card => (card.inspected === true ? undefined : []),
+  },
+  {
+    type: 'awaiting-code',
+    label: 'Waiting on a code promotion',
+    hint: 'Inspected and ready, but held until the code it needs ships. The promotion script clears the flag as it promotes — see docs/plans/publishing-pipeline.md.',
+    // Only meaningful alongside `inspected: true`: the card is otherwise held
+    // by the inspected gate anyway, and reporting it twice would say nothing.
+    detect: card => (card.awaitsCode === true && card.inspected === true ? [] : undefined),
   },
 ];
 

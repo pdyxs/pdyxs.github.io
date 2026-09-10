@@ -62,6 +62,7 @@ const auditInput: AuditCard[] = await Promise.all(
       images: e.data.images,
       body: e.body,
       inspected: e.data.inspected,
+      awaitsCode: e.data.awaitsCode,
       localAssets: localAssetFilenames(e.id),
       orphanedOldUrls: orphanedByUid.get(e.id),
       // Needs the same cascade + generator run resolveCard() does, which is why

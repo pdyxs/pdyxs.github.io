@@ -170,6 +170,28 @@ const content = defineCollection({
         // `why:uninspected` filter (src/lib/uninspected-facet.ts), and the
         // `not-inspected` finding on the dev-only audit lens (src/lib/audit.ts).
         inspected: z.boolean().optional(),
+        // Publish TRIGGER, not a gate — it selects which promotion run a card
+        // rides, and only means anything once `inspected: true` (see
+        // docs/plans/publishing-pipeline.md §4.2, issue #170).
+        //
+        //   awaitsCode: true   -> cross with the next CODE promotion
+        //   absent             -> cross with the next daily CONTENT run
+        //
+        // For a card that depends on code which has not shipped yet: ticking it
+        // `inspected: true` alone would publish it on the next daily content
+        // run, ahead of the feature it needs. `inspected` structurally cannot
+        // say "ready, but not yet" — hence a second, orthogonal flag.
+        //
+        // A boolean rather than `awaitsFeature: <name>` BECAUSE code crosses
+        // wholesale, so `main` only ever holds one code state and naming the
+        // feature would distinguish nothing. THAT STOPS BEING TRUE if partial
+        // code promotion is ever reintroduced.
+        //
+        // Frontmatter-only; it does not cascade (like `headerMedia`) — a hold
+        // belongs to a card, not to a folder shape. NOTHING READS IT AT RENDER
+        // TIME: only the promotion script, which CONSUMES it (stripping the key
+        // on `dev` as it promotes), and the `awaiting-code` audit finding.
+        awaitsCode: z.boolean().optional(),
         renderer: z.string().optional(),
         // Nav renderer name (owns the card shell + custom navigation, e.g.
         // series prev/next). Cascades via _config.yaml like `renderer`; keyed

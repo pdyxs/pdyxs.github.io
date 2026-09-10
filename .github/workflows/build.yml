@@ -13,7 +13,10 @@ name: Build
 on:
   push:
     branches:
-      - astro-rebuild
+      # `main` is the deploy branch (map #157, issue #176). It is authored by
+      # nothing but promotion commits — see .github/workflows/promote.yml — so
+      # a push here IS a publish. Work lands on `dev`, which deploys nothing.
+      - main
   schedule:
     # Daily rebuild, 18:00 UTC (~4-5am Melbourne). Now that `deploy` exists,
     # this keeps the live site in sync with any `scheduled` card crossing its
