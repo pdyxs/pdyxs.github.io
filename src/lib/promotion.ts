@@ -92,6 +92,45 @@ export function parseNameStatus(raw: string): DiffEntry[] {
 const CONTENT_NEVER = ['src/content/.trash/', 'src/content/.obsidian/'];
 
 /**
+ * Generated files that live outside src/content but are a function OF it, and
+ * so cross on a content run rather than waiting for a code promotion.
+ *
+ * The test is not "is it generated" — most generated files are code-derived
+ * and correctly promote as code (lenses.generated.ts from *.lens.yaml,
+ * lens-icons from the SVGs, dither from constants). It is
+ * **content-derived AND seeded by its own committed copy**:
+ *
+ *   - the two manifests: `assignCodes` NEVER prunes and never reassigns, so
+ *     the committed file is the authoritative record of which short code
+ *     belongs to which uid. Let main's copy lag and main's own prebuild hands
+ *     out ITS next free code to a newly promoted card — a code dev already
+ *     spent on something else. Short codes ride in shared stack URLs
+ *     (`?to=8l`), so the same link would then mean different things on
+ *     preview and production.
+ *   - vimeo-posters: incremental by the same logic — an id already in the map
+ *     is never re-fetched — so a lagging copy makes the deploy build depend on
+ *     a live Vimeo round trip it should not need.
+ *
+ * `redirects.generated.ts` deliberately is NOT here: it is re-derived wholesale
+ * every run and only keeps its existing file as a FAILURE fallback, so main's
+ * own prebuild is authoritative and promoting it would say nothing.
+ *
+ * Crossing these while cards are still withheld is correct, not a leak: main's
+ * prebuild refreshes titles wholesale and drops the field for any card absent
+ * from its tree, so a withheld card contributes a reserved code and no title.
+ */
+const CONTENT_DERIVED_PATHS: readonly string[] = [
+  'src/data/stack-manifest.json',
+  'src/data/tag-manifest.json',
+  'src/data/vimeo-posters.generated.ts',
+];
+
+/** Whether a path is a generated file that travels with content. */
+export function isContentDerivedPath(path: string): boolean {
+  return CONTENT_DERIVED_PATHS.includes(path);
+}
+
+/**
  * The nearest ancestor directory of `path` that is a card, or undefined.
  *
  * `cardDirs` must be the UNION of dev's and main's card directories: a deleted
@@ -163,7 +202,9 @@ export function planPromotion(input: PromotionInput): PromotionPlan {
 
     let include: boolean;
 
-    if (isStructurePath(path)) {
+    if (isContentDerivedPath(path)) {
+      include = true;
+    } else if (isStructurePath(path)) {
       include = promoteCode;
     } else {
       const owner = ownerCardDir(path, allCardDirs);

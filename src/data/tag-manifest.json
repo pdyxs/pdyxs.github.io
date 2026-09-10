@@ -2066,5 +2066,17 @@
   {
     "uid": "why:viewable",
     "code": "8k"
+  },
+  {
+    "uid": "what:art/art-heist-exhibition",
+    "code": "8l"
+  },
+  {
+    "uid": "what:games/digital/escape-from-flatland",
+    "code": "8m"
+  },
+  {
+    "uid": "what:games/digital/flatland-2",
+    "code": "8n"
   }
 ]
