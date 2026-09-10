@@ -15,11 +15,11 @@
 
   NO ANIMATION, on purpose. The palette is two colours with no grey, so the
   conventional pale-grey shimmer is unrepresentable; softening one with `opacity`
-  is a bug per CLAUDE.md; and a moving gradient over a dithered surface is exactly
-  the re-rasterisation the fixed dither grid exists to prevent. A
-  prefers-reduced-motion visitor would have to be served the static state anyway —
-  so the static state is the only one, and the note above the tiles is what says
-  "results are coming".
+  is a bug per docs/agents/styling.md; and a moving gradient over a dithered
+  surface is exactly the re-rasterisation the fixed dither grid exists to
+  prevent. A prefers-reduced-motion visitor would have to be served the static
+  state anyway — so the static state is the only one, and the note above the
+  tiles is what says "results are coming".
 -->
 <script lang="ts">
   import { skeletonTiles, skeletonTileCount, poolFailureMessage } from '@browse/results/browse-skeleton';
@@ -237,8 +237,9 @@
      - NO DOT TRACK. computeStripDots emits one dot per card, so a track drawn
        now would be drawn for the wrong run — a count we do not have yet stated
        as a picture, which then visibly re-lays-out. The dots are the strip's
-       best feature (see "a capped lens browses as a strip" in CLAUDE.md)
-       precisely because they are honest about the size of the run.
+       best feature (see "a capped lens browses as a strip" in
+       docs/agents/lenses-and-browse.md) precisely because they are honest about
+       the size of the run.
      - NO TERMINAL TILE. stripTerminal states the TRUE match count, so before
        hydration it can only advertise the unfiltered total: a "See all 268 →"
        about to become "See all 17 →". A wrong number is worse than no number.
@@ -288,7 +289,8 @@
   }
 
   /* An ordinary flat control: paper at rest, the L2 dither on hover, per the
-     selected/flat surface table in CLAUDE.md. Same shape as .fp-reveal-more. */
+     selected/flat surface table in docs/agents/styling.md. Same shape as
+     .fp-reveal-more. */
   .fp-pool-retry {
     font-family: var(--font-ui);
     font-size: 0.9rem;

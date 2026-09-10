@@ -6,7 +6,8 @@
  * gallery and the card strips all still run. This is deliberately a slot rather
  * than a card renderer: a dedicated renderer starts as "the one thing this card
  * does differently" and then silently lacks everything GenericRenderer grows
- * afterwards (see the WorkRenderer note in CLAUDE.md / renderers.ts).
+ * afterwards (see the WorkRenderer note in docs/agents/card-rendering.md /
+ * renderers.ts).
  *
  * Registration is in HEADER_MEDIA_RENDERERS (src/lib/render/renderers.ts). An
  * unregistered name is not an error — the card falls back to its ordinary

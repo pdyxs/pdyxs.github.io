@@ -205,7 +205,7 @@
                `.fp-slot-stack` also carries the small-tier row split that
                reproduces the two cards sitting side by side, which is why the
                wrapper exists even when one side hasn't resolved a card. See
-               CLAUDE.md's home-slots section. -->
+               docs/agents/lenses-and-browse.md's home-slots section. -->
           <div
             class="fp-slot-stack"
             style:--stack-direction-small={slot.stackDirection?.small}
@@ -466,11 +466,11 @@
   }
 
   /* An ordinary flat control: paper at rest, the L2 dither on hover, per the
-     selected/flat surface table in CLAUDE.md. The same rule BrowseSkeleton
-     carries for the same class — duplicated rather than shared because a
-     .svelte component's styles ship with its own island (the islands exception
-     to "anything in a fragment is styled in global.css"), and these two islands
-     are never both on screen. */
+     selected/flat surface table in docs/agents/styling.md. The same rule
+     BrowseSkeleton carries for the same class — duplicated rather than shared
+     because scoped styles are fine wherever their component lands
+     (`cssCodeSplit: false`), and these two islands are never both on
+     screen. */
   .fp-pool-retry {
     font-family: var(--font-ui);
     font-size: 0.9rem;

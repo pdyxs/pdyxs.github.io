@@ -26,8 +26,9 @@ function fakeBundle(): CardPoolBundle {
 describe('toSharedAsset', () => {
   it('picks exactly the six shared keys', () => {
     // Key EQUALITY, not inclusion: a field later added to the bundle must not
-    // be able to join the client asset silently. See CLAUDE.md, "The client
-    // payload is an explicit pick, never a spread".
+    // be able to join the client asset silently. See
+    // docs/agents/content-model.md, "The client payload is an explicit pick,
+    // never a spread".
     expect(Object.keys(toSharedAsset(fakeBundle())).sort()).toEqual([
       'cardBackedValues',
       'cards',

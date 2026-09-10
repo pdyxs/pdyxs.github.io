@@ -2,7 +2,7 @@
 //
 // Kept separate from the route so the filtering/ordering rule is testable
 // without spinning up an Astro request — see the "Pure logic and
-// testability" convention in CLAUDE.md.
+// testability" convention in docs/agents/testing.md.
 
 import type { CardMeta } from '@content/cards/cards';
 

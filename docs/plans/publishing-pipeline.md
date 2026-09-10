@@ -138,7 +138,7 @@ pathspec into the code one. Still one primitive (§5). A card needs **both**
 - **It is consumed.** The promotion script removes `awaitsCode` from the card on `dev`
   in the same run that promotes it. Left set it lies, and every *future* edit to that
   card would silently wait for an arbitrary future code push. **The trap:** that clear
-  is a machine edit to card frontmatter, so CLAUDE.md's machine-edits-set-`inspected: false`
+  is a machine edit to card frontmatter, so docs/agents/workflow.md's machine-edits-set-`inspected: false`
   rule would immediately withhold the card just promoted, forever. It needs the same
   explicit exemption `backfill-inspected.mjs` has (§9).
 - **Frontmatter-only; it does not cascade**, like `headerMedia` — a hold belongs to a
@@ -347,7 +347,7 @@ wholesale and human-triggered with a diff attached.
 
 **Scripted as one `workflow_dispatch`** taking a card uid, doing both halves in one run,
 and refusing if the card is not currently on `main`. It sets `inspected: false` on `dev`
-as a machine edit — the one case where CLAUDE.md's machine-edits rule **agrees** with
+as a machine edit — the one case where docs/agents/workflow.md's machine-edits rule **agrees** with
 what is wanted rather than fighting it.
 
 ### Two verbs, and the test is where the state lives
@@ -391,12 +391,12 @@ Keeping these apart is how you avoid `status: unlisted` cards nobody can explain
    without deploying.
 7. **The rollback workflow** (§7), and rename the evacuation comment in `build.yml`.
 8. **Caddy `X-Robots-Tag` + `/robots.txt`** for preview and build (§2).
-9. **CLAUDE.md** (§9).
+9. **The agent docs** (§9).
 
-## 9. What changes in CLAUDE.md
+## 9. What changes in the agent docs
 
-`CLAUDE.md`'s "`inspected` is a permanent editorial flag, not a pre-MVP sweep" section
-(and the schema comment in `src/content.config.ts`) must be updated, because this map
+`docs/agents/workflow.md`'s "`inspected` is a permanent editorial flag, not a pre-MVP
+sweep" section (and the schema comment in `src/content.config.ts`) must be updated, because this map
 changes what the flag *is* — a rule future sessions must not violate.
 
 - **`inspected` is now a publish gate, not only an editorial flag.** `inspected: true`

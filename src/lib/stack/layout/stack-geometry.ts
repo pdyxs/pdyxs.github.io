@@ -29,8 +29,8 @@
 //
 // Nothing here uses `transform` — offsets are `left`/`top`. A transform on an
 // ancestor of a dithered surface re-anchors its `background-attachment: fixed`
-// grid and brings the shimmer back (see CLAUDE.md § dither), which #98
-// confirmed holds for motion and not just at rest.
+// grid and brings the shimmer back (see docs/agents/styling.md § dither),
+// which #98 confirmed holds for motion and not just at rest.
 //
 // This module is all decision and no effect: plain numbers in, plain numbers
 // out, no DOM, no store, no IO. `geometryFor` is the one function that knows

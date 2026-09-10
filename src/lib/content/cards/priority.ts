@@ -13,7 +13,8 @@
 //   - the `priority` on every `<value>.tag.yaml` for a tag the card carries
 //
 // Negative values push a card down. Nothing about the name signals any of this,
-// which is why it is stated here, in CLAUDE.md and in the schema comment.
+// which is why it is stated here, in docs/agents/content-model.md and in the
+// schema comment.
 //
 // The magnitude convention — hundreds to move a folder as a block, ones to sort
 // within it — is the author's, not the code's: nothing here enforces a scale.

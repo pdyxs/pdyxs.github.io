@@ -65,11 +65,11 @@ async function resolveThumb(card: CardMeta): Promise<Thumb> {
 /**
  * Serialise one card into the browse-card payload.
  *
- * The field list is an explicit pick, never a spread of the card (see CLAUDE.md).
- * A spread skips excess-property checking, so build-time-only fields
- * (`visibility`, `image`) ship to the browser despite the type not
- * declaring them — and every field later added to CardMeta joins them. What
- * crosses the wire stays a decision.
+ * The field list is an explicit pick, never a spread of the card (see
+ * docs/agents/content-model.md). A spread skips excess-property checking, so
+ * build-time-only fields (`visibility`, `image`) ship to the browser despite
+ * the type not declaring them — and every field later added to CardMeta joins
+ * them. What crosses the wire stays a decision.
  */
 export async function serialiseBrowseCard(card: CardMeta): Promise<SerialisedCardFull> {
   const { thumb, thumbSrcset, thumbKind } = await resolveThumb(card);

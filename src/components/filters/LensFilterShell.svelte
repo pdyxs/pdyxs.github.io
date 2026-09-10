@@ -206,10 +206,11 @@
 ></button>
 
 <style>
-  /* The islands exception (CLAUDE.md): a .svelte component's styles ship with
-     its own island and hydrate wherever it lands, so these live here rather
-     than in global.css. Duplicated from BrowseSkeleton for the same reason
-     home's copy is — the two are never co-resident. */
+  /* Scoped is fine here: `cssCodeSplit: false` merges every page's CSS into one
+     bundle every page links, so a component's own rules are available wherever
+     its markup can land, fragment included (docs/agents/styling.md). Duplicated
+     from BrowseSkeleton for the same reason home's copy is — the two are
+     never co-resident. */
   .lens-filter-pool-failure {
     display: flex;
     align-items: baseline;

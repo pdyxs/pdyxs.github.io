@@ -8,7 +8,7 @@
 //
 // Consumers (OG/Twitter meta, JSON-LD, RSS, browse-card subtitles) all read
 // `CardMeta.description`, which getAllCards() populates through this function
-// — see the "decisions are pure, effects are thin" rule in CLAUDE.md.
+// — see "Pure logic and testability" in docs/agents/testing.md.
 
 /** Default excerpt length in characters, before word-boundary trimming. */
 export const EXCERPT_MAX_LENGTH = 160;

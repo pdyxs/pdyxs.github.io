@@ -145,7 +145,7 @@ describe("CardStackCard", () => {
     // ── Spine + sentinel (issue #108) ──────────────────────────────────────
     //
     // The spine is server-rendered markup, not something the island creates:
-    // "Fragments are HTML; the stack is state" (CLAUDE.md), and
+    // "Fragments are HTML; the stack is state" (docs/agents/stack-state.md), and
     // CardStack.fragments.test.ts guards CardStack.svelte against building
     // nodes. Both branches of this shell must carry it — the nav-renderer one
     // owns only the header/body pair, so the spine lives outside the branch

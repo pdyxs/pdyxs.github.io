@@ -164,7 +164,8 @@ describe('promotion rehearsal', () => {
     const onDev = git('show', 'dev:src/content/what/posts/feature/index.md');
     expect(onDev).not.toContain('awaitsCode');
     // ...and NOT re-flagged as uninspected, which would withhold the card that
-    // was just promoted, forever. This is the exemption CLAUDE.md must state.
+    // was just promoted, forever. This is the exemption docs/agents/workflow.md
+    // states.
     expect(onDev).toContain('inspected: true');
   });
 

@@ -9,8 +9,8 @@
  * tab, and nothing else does.
  *
  * Internal navigation goes through the `card:` / `collection:` / `tag:`
- * protocols (see CLAUDE.md), which stay inside the stack and must never be
- * given a target.
+ * protocols (see docs/agents/card-rendering.md), which stay inside the stack
+ * and must never be given a target.
  */
 
 const SITE_HOSTS = new Set(['pdyxs.wtf', 'www.pdyxs.wtf']);

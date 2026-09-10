@@ -67,7 +67,7 @@
 
 /* Desktop: the fan layout occupies the edges (behind/ahead cards, piles), and
    the sticky header's quick-nav buttons are already reachable while
-   scrolling — see the CSS-first-responsive rule in CLAUDE.md. */
+   scrolling — see the CSS-first-responsive rule in docs/agents/styling.md. */
 @media (min-width: 681px) {
   .stack-card--active .series-floating-btn {
     display: none;

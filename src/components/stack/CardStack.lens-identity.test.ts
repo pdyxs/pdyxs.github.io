@@ -6,7 +6,8 @@
 // key/uid/slot split and slot allocation), stack-codec.test.ts (the URL
 // round-trip, short codes and the pre-#100 link). What is left is that the two
 // islands actually route through them, and mounting an island is not available
-// in this project (vitest resolves Svelte to its server build — see CLAUDE.md).
+// in this project (vitest resolves Svelte to its server build — see
+// docs/agents/testing.md).
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

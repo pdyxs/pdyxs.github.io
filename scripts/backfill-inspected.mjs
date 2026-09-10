@@ -7,11 +7,11 @@
 // `inspected: false` into every card that lacks it.
 //
 // An ongoing tool, not a one-off: `inspected` is a permanent part of the
-// editorial workflow (see CLAUDE.md, "An automated edit to a card re-flags it
-// `inspected: false`") — it just isn't the mechanism that RESETS the flag on
-// an automated edit (that happens inline, in the edit itself), only the one
-// that gives a card its checkbox in the first place. Run it whenever a card
-// somehow lacks the key — a hand-authored card whose Templater scaffold left
+// editorial workflow (see docs/agents/workflow.md, "`inspected` is a permanent
+// editorial flag") — it just isn't the mechanism that RESETS the flag on an
+// automated edit (that happens inline, in the edit itself), only the one that
+// gives a card its checkbox in the first place. Run it whenever a card somehow
+// lacks the key — a hand-authored card whose Templater scaffold left
 // `inspected` commented out and uncommented later, say.
 //
 // Deliberately NOT wired into predev/prebuild: it mutates authored content,

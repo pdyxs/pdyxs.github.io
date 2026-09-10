@@ -205,12 +205,12 @@ function commitMessage(opts, plan) {
  * ago — and worse, every FUTURE edit to that card would silently wait for an
  * arbitrary future code push.
  *
- * THE TRAP: this is a machine edit to card frontmatter, and CLAUDE.md's
- * standing rule says a machine edit sets `inspected: false`. Doing that here
- * would withhold the card that was just promoted, and withhold it again on
- * every later run — forever. So this carries the same explicit exemption
- * scripts/backfill-inspected.mjs has: it is pipeline bookkeeping ABOUT a card,
- * not a change to its content.
+ * THE TRAP: this is a machine edit to card frontmatter, and the standing rule in
+ * docs/agents/workflow.md says a machine edit sets `inspected: false`. Doing
+ * that here would withhold the card that was just promoted, and withhold it
+ * again on every later run — forever. So this carries the same explicit
+ * exemption scripts/backfill-inspected.mjs has: it is pipeline bookkeeping
+ * ABOUT a card, not a change to its content.
  */
 function consumeAwaitsCode(ref, cardDirs) {
   git(['checkout', ref]);

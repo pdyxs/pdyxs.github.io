@@ -106,8 +106,8 @@ export type FolderCascade = {
    * that accumulates rather than nearest-wins, because a boost on `what` and a
    * boost on `what/puzzles` are two separate statements and the deeper one is
    * not a correction of the shallower. See priority.ts for the whole rule
-   * (frontmatter and `.tag.yaml` declarations add on top of this) and CLAUDE.md
-   * for why the name is kept anyway.
+   * (frontmatter and `.tag.yaml` declarations add on top of this) and
+   * docs/agents/content-model.md for why the name is kept anyway.
    *
    * Absent when no ancestor declares one, so a caller can tell "nothing said"
    * from a deliberate `priority: 0`.

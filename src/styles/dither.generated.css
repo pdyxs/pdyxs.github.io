@@ -10,7 +10,7 @@
    scrolling element never re-rasterises the pattern. Caveat: a transform /
    filter / backdrop-filter / will-change / contain:paint / perspective on any
    ANCESTOR re-anchors the background to that ancestor and silently restores the
-   shimmer. See CLAUDE.md. */
+   shimmer. See docs/agents/styling.md. */
 :root {
   --dither-0: var(--color-bg);
   --dither-1: radial-gradient(circle at 0.5px 0.5px, var(--color-text) 0.564px, #0000 0.584px) 0 0/4px 4px fixed, var(--color-bg);

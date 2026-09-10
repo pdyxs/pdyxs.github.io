@@ -121,7 +121,7 @@
    its grid area, the spine can never make a card taller than its content.
    (`size` alone: `layout`/`paint` containment would create a containing block
    for `background-attachment: fixed` and re-anchor every dither inside the
-   card — see CLAUDE.md § dither.) */
+   card — see docs/agents/styling.md § dither.) */
 .stack-card > .stack-card-spine {
   grid-column: 1;
   grid-row: 1 / -1;

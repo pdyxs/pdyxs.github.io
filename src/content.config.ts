@@ -97,7 +97,7 @@ const content = defineCollection({
         // value, and the value on every `<tag>.tag.yaml` for a tag this card
         // carries. (A folder counts once, as an ancestor — never a second time
         // as a filter value.) Nothing in the name says so; see
-        // src/lib/content/cards/priority.ts and CLAUDE.md.
+        // src/lib/content/cards/priority.ts and docs/agents/content-model.md.
         //
         // Convention, not enforced: hundreds move a folder as a block, ones
         // sort within it.
@@ -165,8 +165,8 @@ const content = defineCollection({
         //
         // Not a one-off: any automated edit to a card's frontmatter or body —
         // a script, a generator, an AI agent — must reset this to `false` as
-        // part of that edit (see CLAUDE.md, "An automated edit to a card
-        // re-flags it `inspected: false`"). It also drives the dev-only
+        // part of that edit (see docs/agents/workflow.md,
+        // "`inspected` is a permanent editorial flag"). It also drives the dev-only
         // `why:uninspected` filter (src/lib/content/tags/uninspected-facet.ts), and the
         // `not-inspected` finding on the dev-only audit lens (src/lib/site/audit.ts).
         inspected: z.boolean().optional(),
@@ -302,7 +302,7 @@ const content = defineCollection({
         // compact position strip shown above the content instead), or 'none'.
         // Normally set per-folder in _config.yaml, where it cascades
         // nearest-wins like `renderer`. Independent of `navRenderer` — see
-        // CLAUDE.md's nav-renderer section.
+        // docs/agents/card-rendering.md's nav-renderer section.
         seriesPreview: z.enum(['strip', 'dots', 'none']).optional(),
     }),
 });

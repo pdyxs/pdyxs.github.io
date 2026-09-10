@@ -8,10 +8,10 @@
 //
 // **This is not virtualisation.** Reveal only ever appends; nothing is removed
 // on scroll. Windowing would want `contain: paint` / `will-change: transform`
-// on the scroll container, and per CLAUDE.md either of those re-anchors every
-// dithered surface inside it and brings the shimmer back. Thumbnails are
-// already `loading="lazy"`, so what reveal buys is DOM weight and fetch pacing,
-// not first-paint bytes.
+// on the scroll container, and per docs/agents/styling.md either of those
+// re-anchors every dithered surface inside it and brings the shimmer back.
+// Thumbnails are already `loading="lazy"`, so what reveal buys is DOM weight
+// and fetch pacing, not first-paint bytes.
 //
 // Pure: the decisions live here, the observer and the button live in
 // BrowseResults.svelte.

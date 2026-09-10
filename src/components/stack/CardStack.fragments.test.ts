@@ -10,7 +10,7 @@
 // because mounting is not available in this project: vitest.config.ts wraps
 // Astro's vite config, which resolves everything through the "ssr" environment,
 // where Svelte's server build throws lifecycle_function_unavailable from
-// mount(). See CLAUDE.md and CardStack.cold-load.test.ts.
+// mount(). See docs/agents/testing.md and CardStack.cold-load.test.ts.
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

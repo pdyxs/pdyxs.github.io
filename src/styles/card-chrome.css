@@ -12,7 +12,7 @@
 
    `clip-path` is safe where `transform` is not: it creates no containing block,
    so the `background-attachment: fixed` dither inside the body stays anchored
-   to the viewport and does not shimmer (CLAUDE.md § dither). */
+   to the viewport and does not shimmer (docs/agents/styling.md § dither). */
 @keyframes stack-card-reveal {
   from { clip-path: inset(0 0 100% 0); }
   to   { clip-path: inset(0 0 0 0); }

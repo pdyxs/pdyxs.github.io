@@ -27,9 +27,12 @@ pure decisions / thin effects, single source of truth) live in
   `#card-stack`. → [stack-state.md](docs/agents/stack-state.md)
 - **Layout is reactive.** Mutate the store; `$derived`/`$effect` redraw. Never
   call the geometry from a handler. → [stack-layout.md](docs/agents/stack-layout.md)
-- **Anything that can ship inside a card fragment is styled in `global.css`**,
-  not a scoped `<style>` — and `cssCodeSplit: false` stays set in
-  `astro.config.mjs`. → [styling.md](docs/agents/styling.md)
+- **`cssCodeSplit: false` stays set in `astro.config.mjs`** — it is what makes
+  a component's scoped `<style>` available wherever its markup lands, a card
+  fragment included. What still belongs in a shared sheet is what is not about
+  the component: rules qualified on stack position. `global.css` is an import
+  index, and its source order is load-bearing.
+  → [styling.md](docs/agents/styling.md)
 - **Every colour and spacing value is a `:root` custom property.** The palette
   is two colours; there is no grey, and an `opacity` used to soften a colour is
   a bug. → [styling.md](docs/agents/styling.md)

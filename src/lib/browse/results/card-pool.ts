@@ -91,19 +91,20 @@ export interface SharedCardPoolAsset {
 }
 
 // Module-level memo. This is the DELIBERATE OPPOSITE of the #102 SSR-isolation
-// rule (see CLAUDE.md, "Svelte store is the authoritative card-stack state"):
-// there, module-level state was a hazard because `astro build` prerenders every
-// page in one process, so one page's per-VISITOR state leaked into the next.
-// Here the pipeline is a pure function of the content tree — identical for
-// every page, holding no visitor state and no per-location identity — so the
-// prerenderer's one-process-ness is the asset rather than the hazard. Nothing
-// in this pipeline was memoised before; `getAllCards()` re-ran per route.
+// rule (see docs/agents/stack-state.md, "Svelte store is the authoritative
+// card-stack state"): there, module-level state was a hazard because `astro
+// build` prerenders every page in one process, so one page's per-VISITOR state
+// leaked into the next. Here the pipeline is a pure function of the content
+// tree — identical for every page, holding no visitor state and no
+// per-location identity — so the prerenderer's one-process-ness is the asset
+// rather than the hazard. Nothing in this pipeline was memoised before;
+// `getAllCards()` re-ran per route.
 //
 // The PROMISE is cached, not the resolved value, so concurrent callers share
 // one build rather than racing two.
 //
 // Dev staleness is accepted: the dev-reload plugin already restarts the process
-// for content-layer changes (see CLAUDE.md, "Content hot-reload").
+// for content-layer changes (see docs/agents/workflow.md, "Content hot-reload").
 let poolPromise: Promise<CardPoolBundle> | null = null;
 
 async function build(): Promise<CardPoolBundle> {
@@ -201,10 +202,10 @@ export function buildCardPool(): Promise<CardPoolBundle> {
 }
 
 /**
- * The client payload: an EXPLICIT six-key pick, never a spread (CLAUDE.md,
- * "The client payload is an explicit pick, never a spread"). A spread would
- * skip excess-property checking, so every field later added to the bundle
- * would join the shared asset silently.
+ * The client payload: an EXPLICIT six-key pick, never a spread
+ * (docs/agents/content-model.md, "The client payload is an explicit pick, never
+ * a spread"). A spread would skip excess-property checking, so every field
+ * later added to the bundle would join the shared asset silently.
  *
  * `cardBackedValues` crosses the wire as an array — a `Set` does not serialise.
  */

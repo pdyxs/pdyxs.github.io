@@ -72,7 +72,7 @@ describe('parseHomeSlots', () => {
 
   // .strict() is load-bearing: zod STRIPS unknown keys silently, so without it
   // `spann: 4` would be a slot that quietly ignores its own layout — the same
-  // hazard CLAUDE.md records for `priorty:` and `imagePadding:`.
+  // hazard docs/agents/content-model.md records for `priorty:` and `imagePadding:`.
   it('rejects a typo\'d key rather than stripping it', () => {
     expect(() => parseHomeSlots({ slots: [{ uid: 'a', spann: 4 }] })).toThrow(/spann/);
   });

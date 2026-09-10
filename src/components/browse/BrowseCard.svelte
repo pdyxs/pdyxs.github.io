@@ -157,9 +157,10 @@
   }
 
   /* "You are here": the page inverted, same as any other selected control —
-     see the --color-selected-* table in CLAUDE.md. The text stroke has to be
-     restated because it is inherited and paper-coloured, which fattens glyphs
-     on an inverted surface instead of clearing dots behind them. */
+     see the --color-selected-* table in docs/agents/styling.md. The text
+     stroke has to be restated because it is inherited and paper-coloured,
+     which fattens glyphs on an inverted surface instead of clearing dots
+     behind them. */
   .browse-card-item--current,
   .browse-card-item--current:hover {
     background: var(--color-selected-bg);

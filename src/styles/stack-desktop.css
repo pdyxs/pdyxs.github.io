@@ -40,8 +40,9 @@
 
      Nothing below uses `transform`, at rest or in motion. A transform on an
      ancestor of a dithered surface re-anchors its `background-attachment:
-     fixed` grid and the shimmer comes back (CLAUDE.md § dither). `clip-path`
-     is safe where a transform is not — it creates no containing block. */
+     fixed` grid and the shimmer comes back (docs/agents/styling.md § dither).
+     `clip-path` is safe where a transform is not — it creates no containing
+     block. */
 
   #card-stack {
     position: relative;
@@ -588,8 +589,8 @@
   /* THE MIRROR. The stroke is always the SURFACE's own colour, which is what
      keeps it invisible until a dither shows through. Left paper on an inverted
      band it would fatten the paper glyphs instead of clearing dots behind them
-     — see the --color-selected-* section of CLAUDE.md. Both halves flip
-     together or neither should. */
+     — see the --color-selected-* section of docs/agents/styling.md. Both
+     halves flip together or neither should. */
   .stack-pile-band:hover .stack-pile-band-text,
   .stack-pile-band:focus-visible .stack-pile-band-text {
     -webkit-text-stroke-color: var(--color-selected-bg);

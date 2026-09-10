@@ -14,9 +14,9 @@ import { fileURLToPath } from 'node:url';
 // class structurally impossible rather than something to keep auditing for.
 // This is a source-text guard, not a build assertion, because the payoff only
 // shows up in Rollup's chunk graph — see astro.config.mjs's own comment for
-// the full reasoning, and CLAUDE.md's "Anything that ships in a card
-// fragment is styled in global.css" note for the wider pattern this closes a
-// gap in.
+// the full reasoning, and docs/agents/styling.md's "A card fragment's CSS:
+// scoped is fine, because cssCodeSplit: false" section for the wider pattern
+// this closes a gap in.
 describe('astro.config.mjs', () => {
   it('keeps Vite CSS code-splitting disabled', () => {
     const configPath = fileURLToPath(new URL('../astro.config.mjs', import.meta.url));

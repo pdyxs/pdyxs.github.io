@@ -126,9 +126,9 @@ const stackDirectionSchema = z.union([
 /**
  * One authored slot.
  *
- * `.strict()` is load-bearing, for the reason CLAUDE.md already records twice
- * (`priorty:`, `imagePadding:`): zod STRIPS unknown keys silently, so `spann: 4`
- * would be a slot that quietly ignores its own layout.
+ * `.strict()` is load-bearing, for the reason docs/agents/content-model.md
+ * already records twice (`priorty:`, `imagePadding:`): zod STRIPS unknown keys
+ * silently, so `spann: 4` would be a slot that quietly ignores its own layout.
  *
  * There is no `type:` key. `uid:` and `filter:` already say which kind a slot
  * is; `type:` is authoring noise that can contradict the keys beneath it. It is

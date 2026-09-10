@@ -3,8 +3,8 @@
 // The network is the injected seam (`load`), so every stack flow's *fragment
 // side* — which locations get fetched, how often, and what is rendered while a
 // fetch is in flight — is assertable here without a browser and without
-// mounting the island (which is impossible in this project; see CLAUDE.md and
-// CardStack.cold-load.test.ts).
+// mounting the island (which is impossible in this project; see
+// docs/agents/testing.md and CardStack.cold-load.test.ts).
 //
 // What is NOT covered here is the stack side of those flows: which entries end
 // up in the store, and in what order. That lives in CardStack.svelte by

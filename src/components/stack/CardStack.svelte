@@ -476,7 +476,7 @@
   }
 
   // The only caller. Reactive rather than called from the navigation handlers,
-  // for the same reason the layout is (see the CLAUDE.md invariant): the store
+  // for the same reason the layout is (see docs/agents/stack-state.md): the store
   // is what moved, and every handler that mutates it would otherwise have to
   // remember to scroll afterwards — which is exactly how there came to be four
   // of them.
@@ -1038,12 +1038,12 @@
           // below), `clickedLink` is an ordinary in-stack card-link — the card
           // it lives on stays visible after the push (a behind card is a CROP,
           // never removed — see the desktop-vs-mobile collapse note in
-          // CLAUDE.md), so it would otherwise still carry this name into the
-          // new snapshot alongside `newCard` and the browser aborts the whole
-          // transition as "duplicate view-transition-name". Clearing it here,
-          // inside the same synchronous callback and before the new snapshot
-          // is captured, is what makes this pairing 1-old/1-new like every
-          // other named transition on the site.
+          // docs/agents/stack-layout.md), so it would otherwise still carry
+          // this name into the new snapshot alongside `newCard` and the browser
+          // aborts the whole transition as "duplicate view-transition-name".
+          // Clearing it here, inside the same synchronous callback and before
+          // the new snapshot is captured, is what makes this pairing
+          // 1-old/1-new like every other named transition on the site.
           if (clickedLink) (clickedLink as HTMLElement).style.viewTransitionName = '';
         }
         if (homepage) homepage.hidden = true;
@@ -1279,9 +1279,9 @@
       }
       // MUST be replaceBody, never a bare cache write: `StackFragment` reads
       // its html prop once, so once a location is mounted the cache no longer
-      // reaches its DOM (see CLAUDE.md § Svelte islands). A `seed` here would
-      // cache the real fragment and leave the card showing its skeleton for
-      // the rest of the session.
+      // reaches its DOM (see docs/agents/stack-state.md § Svelte islands). A
+      // `seed` here would cache the real fragment and leave the card showing
+      // its skeleton for the rest of the session.
       fragments.replaceBody(location.slot, html, elFor(location.slot));
       applyLensTitle(location.slot);
     }));
@@ -1310,10 +1310,11 @@
       homepage.hidden = true;
     }
 
-    // Arriving at a card IS reading it (#92, and see CLAUDE.md). Every other
-    // markRead call sits on a client-side navigation, so a visitor who lands
-    // straight on /card/... from search, a shared link, RSS or an old-URL
-    // redirect used to record nothing at all.
+    // Arriving at a card IS reading it (#92, and see
+    // docs/agents/stack-state.md). Every other markRead call sits on a
+    // client-side navigation, so a visitor who lands straight on /card/... from
+    // search, a shared link, RSS or an old-URL redirect used to record nothing
+    // at all.
     //
     // Only the SSR-active location, and only when it's a card: the from/to
     // entries initFromUrl restores below arrive collapsed, which is the same

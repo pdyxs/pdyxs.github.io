@@ -10,8 +10,9 @@
 // belongs here. Nothing in this file duplicates content-links.test.ts.
 //
 // Kept side-effect-free (no IO, no astro:content, no filesystem) so it's unit
-// tested against plain data — see "decisions are pure, effects are thin" in
-// CLAUDE.md. AuditLensBody.astro is the thin gatherer/renderer around it.
+// tested against plain data — see "Pure logic and testability" in
+// docs/agents/testing.md. AuditLensBody.astro is the thin gatherer/renderer
+// around it.
 
 export type AuditFindingType =
   | 'dead-image-host'
@@ -44,8 +45,8 @@ export interface AuditCard {
   /**
    * Frontmatter `inspected` — has a human read this card end to end since its
    * last change? Absent counts as false, so a brand-new card, or one an
-   * automated edit reset (see CLAUDE.md), shows up on the worklist until
-   * someone ticks it.
+   * automated edit reset (see docs/agents/workflow.md), shows up on the
+   * worklist until someone ticks it.
    */
   inspected?: boolean;
   /**
@@ -281,11 +282,11 @@ const FINDING_SPECS: readonly FindingSpec[] = [
   // The ongoing read-through worklist. Unlike every other finding here it
   // detects nothing about the content itself: it reports a human judgement
   // recorded in frontmatter, kept current by automated edits resetting it
-  // (see CLAUDE.md). It sits below the mechanical findings — during the
-  // initial pre-launch sweep it catches nearly every card and would bury
-  // them. See also src/lib/content/tags/uninspected-facet.ts, the dev-only
-  // `why:uninspected` filter that reads the same flag for combining with
-  // other dimensions while browsing.
+  // (see docs/agents/workflow.md). It sits below the mechanical findings —
+  // during the initial pre-launch sweep it catches nearly every card and would
+  // bury them. See also src/lib/content/tags/uninspected-facet.ts, the dev-only
+  // `why:uninspected` filter that reads the same flag for combining with other
+  // dimensions while browsing.
   {
     type: 'not-inspected',
     label: 'Not yet inspected',

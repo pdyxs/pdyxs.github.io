@@ -197,7 +197,7 @@
 
   /* Only ever rendered when IntersectionObserver is missing. Styled as an
      ordinary flat control: paper at rest, the L2 dither on hover, per the
-     selected/flat surface table in CLAUDE.md. */
+     selected/flat surface table in docs/agents/styling.md. */
   .fp-reveal-more {
     font-family: var(--font-ui);
     font-size: 0.9rem;

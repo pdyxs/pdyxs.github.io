@@ -1,6 +1,6 @@
-// Client-side read-aware expansion of a collapsed series (CLAUDE.md: "Card
-// resolution happens once" family of docs; the build-time half is
-// `collapsedSeriesMembers` in collapse.ts).
+// Client-side read-aware expansion of a collapsed series
+// (docs/agents/lenses-and-browse.md: "A collapsed series can show two entries";
+// the build-time half is `collapsedSeriesMembers` in collapse.ts).
 //
 // `collapseCollections` runs once, at build time, on the server — it has no
 // notion of any particular visitor, so it can only ever emit ONE entry per
