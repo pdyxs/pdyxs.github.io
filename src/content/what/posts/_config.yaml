@@ -3,7 +3,7 @@ name: Posts
 description: >
   Photos and short notes shared on Instagram.
 # Cards here are dated things: the date is a publication date, so it shows in
-# the card header worded as such. See resolveDateline in src/lib/card-date.ts.
+# the card header worded as such. See resolveDateline in src/lib/content/cards/card-date.ts.
 dateLabel: Published
 group: Writing
 priority: -10

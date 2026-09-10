@@ -11,7 +11,7 @@ picker built out of the vault itself:
 
 An ordinary `/card/...` or `https://pdyxs.wtf/...` href is a full page load that
 discards the card stack, and is treated as a data bug — see
-`src/lib/content-links.test.ts`.
+`src/lib/content/folders/content-links.test.ts`.
 
 ## Using it
 

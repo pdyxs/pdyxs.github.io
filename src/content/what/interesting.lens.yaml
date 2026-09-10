@@ -1,6 +1,6 @@
 # Lens definition — id "interesting", dimension "what" (issue #81, decided in
 # #68). THE default browse lens: see DEFAULT_BROWSE_LENS_ID and ARCHIVE_LENS_ID
-# in src/lib/lens-registry.ts.
+# in src/lib/browse/lenses/lens-registry.ts.
 #
 # This is the lens that closes the bug the whole launch effort started from —
 # ~279 of 285 cards were unreachable by browsing. The fix was not a bigger cap.
@@ -25,7 +25,7 @@ icon: interesting
 order: 1
 width: 960px
 config:
-  # The site-wide comparator chain (src/lib/ranking.ts) — the SAME ordering the
+  # The site-wide comparator chain (src/lib/browse/results/ranking.ts) — the SAME ordering the
   # home page's day-seeded slots and the Unseen lens use, not a second one.
   # Rungs 1 and 3 (filter-match count, seen-ness) are only knowable in the
   # browser, so the server renders rungs 2/4/5/6 and BrowseLensBrowser re-sorts
@@ -33,4 +33,4 @@ config:
   sortKey: ranking
   # NO `limit`. Deliberately, and it is the entire point of the lens — a capped
   # archive is the bug. The long list is paced by progressive reveal instead
-  # (src/lib/progressive-reveal.ts), which appends rather than windows.
+  # (src/lib/browse/results/progressive-reveal.ts), which appends rather than windows.

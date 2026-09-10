@@ -3,7 +3,7 @@ dateLabel: Published
 # A puzzle card is its grid image, and the grids are square (or taller). At the
 # site's default 680px that image dominates the viewport on desktop, so puzzles
 # declare a narrower card and the full-bleed image follows it down. Cascades to
-# every series folder below (see FolderCascade.width in src/lib/folder-config.ts).
+# every series folder below (see FolderCascade.width in src/lib/content/folders/folder-config.ts).
 width: 520px
 name: Puzzles
 description: >
@@ -19,9 +19,9 @@ cardDescriptionParts:
 # hard they are rather than by when they were published — a solver picking one
 # is choosing a difficulty, and the publication date of a puzzle says nothing.
 # `difficulty` is the authored LMD string ("Level 3 (Medium)"); parseDifficultyLevel
-# reads the rating out of it (src/lib/difficulty.ts) and an unreadable one sorts
+# reads the rating out of it (src/lib/content/cards/difficulty.ts) and an unreadable one sorts
 # last. Cascades to the series folders below, nearest-wins — unlike `priority`,
-# which sums. See src/lib/folder-sort.ts.
+# which sums. See src/lib/content/folders/folder-sort.ts.
 sort: difficulty asc
 
 # Puzzle cards are their grid image, and it is already the masthead — the
@@ -31,7 +31,7 @@ gallery: false
 # wherever I happened to be on its publication date, which says nothing about a
 # puzzle — they're made anywhere, over months. `generated/location` suppresses
 # whatever that derivation would have produced, without this file having to know
-# what the travel log currently says (see src/lib/exclude-tags.ts).
+# what the travel log currently says (see src/lib/content/tags/exclude-tags.ts).
 excludeTags:
   - generated/location
 group: Projects

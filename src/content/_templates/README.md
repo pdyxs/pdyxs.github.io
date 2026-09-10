@@ -4,7 +4,7 @@ Card-scaffold templates for the content vault. Templater's template folder is
 set to `_templates` (`.obsidian/plugins/templater-obsidian/data.json`).
 
 `_templates` is excluded from the content collection because
-`CONTENT_GLOB_PATTERN` (`src/lib/content-glob.ts`) only matches under the five
+`CONTENT_GLOB_PATTERN` (`src/lib/content/folders/content-glob.ts`) only matches under the five
 dimension roots, so nothing here can become a card.
 
 ## What's here
@@ -50,10 +50,10 @@ produces no diff.
 ## How they're derived
 
 - Generator (thin applier, filesystem I/O): `scripts/generate-card-templates.mjs`
-- Decisions (pure, unit-tested): `src/lib/templater-scaffold.ts` +
-  `src/lib/templater-scaffold.test.ts`
+- Decisions (pure, unit-tested): `src/lib/site/templater-scaffold.ts` +
+  `src/lib/site/templater-scaffold.test.ts`
 - Folder config is read through `resolveFolderCascade`
-  (`src/lib/folder-config.ts`), the same cascade the site itself uses.
+  (`src/lib/content/folders/folder-config.ts`), the same cascade the site itself uses.
 
 The suggested field list comes from the content schema
 (`src/content.config.ts`) alone: every template offers the `common` fields, and

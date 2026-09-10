@@ -1,10 +1,10 @@
 # Lens definition — id is the file stem ("home"), dimension is the parent
-# folder ("what"). See src/lib/lens-registry.ts for how these are assembled.
+# folder ("what"). See src/lib/browse/lenses/lens-registry.ts for how these are assembled.
 label: A bit of everything
 # The SITE's subtitle, shown under the "pdyxs.wtf" heading on every lens page.
 # Authored here rather than in code, and deliberately NOT the lens's label: the
 # page header says what the site is, while the lens names itself in its card
-# header (see src/lib/lens-chrome.ts).
+# header (see src/lib/browse/lenses/lens-chrome.ts).
 subtitle: Paul Sztajer — games, puzzles and writing
 icon: scatter
 component: home
@@ -20,7 +20,7 @@ width: 1100px
 # tier. `span` and `rows` take a scalar shorthand or a {small, large} mapping;
 # the mobile tier is fixed (12 columns, 1 row) and is not authorable.
 #
-# Validated and normalised by parseHomeSlots (src/lib/home-slots.ts) at
+# Validated and normalised by parseHomeSlots (src/lib/browse/home/home-slots.ts) at
 # generation time, and baked into src/data/lenses.generated.ts in its
 # normalised form — so what that file shows is what actually renders.
 config:
