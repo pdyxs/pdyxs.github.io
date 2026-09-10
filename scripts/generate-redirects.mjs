@@ -26,15 +26,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import { load as parseYaml } from 'js-yaml';
-import { uidFromContentPath } from '../src/lib/content-uid.ts';
-import { isVaultInfrastructurePath } from '../src/lib/content-glob.ts';
-import { resolveFolderCascade, makeFileReader } from '../src/lib/folder-config.ts';
-import { computeStatusVisibility, resolveStatus } from '../src/lib/status-visibility.ts';
+import { uidFromContentPath } from '../src/lib/content/folders/content-uid.ts';
+import { isVaultInfrastructurePath } from '../src/lib/content/folders/content-glob.ts';
+import { resolveFolderCascade, makeFileReader } from '../src/lib/content/folders/folder-config.ts';
+import { computeStatusVisibility, resolveStatus } from '../src/lib/content/cards/status-visibility.ts';
 import {
   enumerateOldUrls,
   buildRedirectMap,
   STATIC_PAGE_REDIRECTS,
-} from '../src/lib/redirect-map.ts';
+} from '../src/lib/site/redirect-map.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');

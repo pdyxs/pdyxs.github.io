@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
-import type { FilterState } from '../dimensions';
-import { emptyFilterState } from '../dimensions';
+import type { FilterState } from '@dimensions';
+import { emptyFilterState } from '@dimensions';
 
 /**
  * Single source of truth for the active lens's filter selections. Astro's

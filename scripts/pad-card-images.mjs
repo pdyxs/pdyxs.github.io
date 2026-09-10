@@ -32,14 +32,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import sharp from 'sharp';
-import { isVaultInfrastructurePath } from '../src/lib/content-glob.ts';
+import { isVaultInfrastructurePath } from '../src/lib/content/folders/content-glob.ts';
 import {
   ORIGINAL_DIR,
   planImagePadding,
   resolvePadPixels,
   chooseBackground,
   summarise,
-} from '../src/lib/image-padding.ts';
+} from '../src/lib/render/image-padding.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(__dirname, '../src/content');

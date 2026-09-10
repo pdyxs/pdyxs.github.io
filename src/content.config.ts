@@ -1,15 +1,15 @@
 import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
-import { ACTION_KINDS } from "./lib/card-actions";
-import { CONTENT_GLOB_PATTERN } from "./lib/content-glob";
-import { normaliseAuthoredTags } from "./lib/five-w";
+import { ACTION_KINDS } from "@content/cards/card-actions";
+import { CONTENT_GLOB_PATTERN } from "@content/folders/content-glob";
+import { normaliseAuthoredTags } from "@content/tags/five-w";
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
 // A "go do it" link in a card's masthead band. `text` is however the author
 // wants it worded; `kind` is what it *is* — see ACTION_KINDS in
-// src/lib/card-actions.ts for the five values and the rulings between them.
+// src/lib/content/cards/card-actions.ts for the five values and the rulings between them.
 // The `why:*` filter generators read `kind` and never the label, so an
 // unkinded action renders normally but contributes no affordance tag.
 const action = z.object({
@@ -75,7 +75,7 @@ const content = defineCollection({
         // normalised to the canonical `where:work/seethrough` here — this
         // transform is one of the two boundaries between the two forms (the
         // other is the `_config.yaml` cascade in resolveFolderCascade). See
-        // normaliseAuthoredTag in src/lib/five-w.ts for why.
+        // normaliseAuthoredTag in src/lib/content/tags/five-w.ts for why.
         // Obsidian's Properties panel writes a bare `tags:` (YAML null) when
         // every item is cleared from a List property, rather than `tags: []`
         // or removing the key — `.nullable()` absorbs that; `.default([])`
@@ -97,13 +97,13 @@ const content = defineCollection({
         // value, and the value on every `<tag>.tag.yaml` for a tag this card
         // carries. (A folder counts once, as an ancestor — never a second time
         // as a filter value.) Nothing in the name says so; see
-        // src/lib/priority.ts and CLAUDE.md.
+        // src/lib/content/cards/priority.ts and CLAUDE.md.
         //
         // Convention, not enforced: hundreds move a folder as a block, ones
         // sort within it.
         //
         // Zod strips unknown keys, so `priorty:` would be silently ignored —
-        // src/lib/priority-frontmatter.test.ts fails the build instead.
+        // src/lib/content/cards/priority-frontmatter.test.ts fails the build instead.
         priority: z.number().optional(),
         // ── generated-tag overrides ──
         // Derivation control. `location:`/`era:` used to live here as "derive
@@ -128,7 +128,7 @@ const content = defineCollection({
         // BUILD ERROR in either field.
         //
         // Tags this card should NOT carry, in two forms (see
-        // src/lib/exclude-tags.ts). Also settable per-folder via _config.yaml,
+        // src/lib/content/tags/exclude-tags.ts). Also settable per-folder via _config.yaml,
         // where — unlike `location`/`era` above — it ACCUMULATES rather than
         // nearest-wins: an exclusion is a statement about one tag, so a card
         // naming its own has not withdrawn its folder's.
@@ -167,8 +167,8 @@ const content = defineCollection({
         // a script, a generator, an AI agent — must reset this to `false` as
         // part of that edit (see CLAUDE.md, "An automated edit to a card
         // re-flags it `inspected: false`"). It also drives the dev-only
-        // `why:uninspected` filter (src/lib/uninspected-facet.ts), and the
-        // `not-inspected` finding on the dev-only audit lens (src/lib/audit.ts).
+        // `why:uninspected` filter (src/lib/content/tags/uninspected-facet.ts), and the
+        // `not-inspected` finding on the dev-only audit lens (src/lib/site/audit.ts).
         inspected: z.boolean().optional(),
         // Publish TRIGGER, not a gate — it selects which promotion run a card
         // rides, and only means anything once `inspected: true` (see
@@ -195,14 +195,14 @@ const content = defineCollection({
         renderer: z.string().optional(),
         // Nav renderer name (owns the card shell + custom navigation, e.g.
         // series prev/next). Cascades via _config.yaml like `renderer`; keyed
-        // by name in NAV_RENDERERS (src/lib/renderers.ts). Undeclared → plain
+        // by name in NAV_RENDERERS (src/lib/render/renderers.ts). Undeclared → plain
         // card shell (no nav renderer).
         navRenderer: z.string().optional(),
         // Publish-lifecycle status. Absent means "published" (existing content
         // is untouched). Cascades via _config.yaml nearest-wins, like
         // `renderer` (folder default is "published"). See
-        // computeStatusVisibility (src/lib/status-visibility.ts) for the pure
-        // rules and getAllCards() (src/lib/cards.ts) for how frontmatter and
+        // computeStatusVisibility (src/lib/content/cards/status-visibility.ts) for the pure
+        // rules and getAllCards() (src/lib/content/cards/cards.ts) for how frontmatter and
         // the folder cascade are resolved together. All five values are
         // enforced: `published` (listed + reachable), `unlisted` (reachable
         // only), `draft`/`archived` (neither), `scheduled` (neither until its
@@ -211,7 +211,7 @@ const content = defineCollection({
         // production build.
         status: z.enum(['draft', 'published', 'scheduled', 'unlisted', 'archived']).optional(),
         // bare filename → resolved against the entry's own directory via
-        // resolveLocalImage() (src/lib/images.ts); full URL → rendered as-is.
+        // resolveLocalImage() (src/lib/render/images.ts); full URL → rendered as-is.
         // Not image(): this field is shared with posts/puzzles, which store
         // plenty of legacy remote URLs that image() would eagerly (and
         // fatally) try to resolve as local assets.
@@ -238,7 +238,7 @@ const content = defineCollection({
         // dateLabel dateline). Auto-migrated story chapters often carry a
         // `date` that is an artificial weekly publish cadence with no relation
         // to when the trip actually happened; `storyDate` is what a series'
-        // date bar (see computeSeriesDateBar in src/lib/series.ts) reads.
+        // date bar (see computeSeriesDateBar in src/lib/content/cards/series.ts) reads.
         storyDate: z.coerce.date().optional(),
         icon: z.string().optional(),
         map: z.string().optional(),
@@ -258,7 +258,7 @@ const content = defineCollection({
         // by `npm run pad:images`, which rewrites the file on disk from the
         // unpadded original it keeps at <card>/_original/ — nothing reads this
         // field at runtime. Remove it (or set 0) and the next run puts the
-        // original back. See src/lib/image-padding.ts.
+        // original back. See src/lib/render/image-padding.ts.
         //
         // Declared in the puzzles section, though it works on any card: the
         // logic-masters exports are cropped flush to their content, so this is
@@ -274,10 +274,10 @@ const content = defineCollection({
         // show, and says how to word it. Normally set per-folder in
         // _config.yaml, where it cascades nearest-wins like `renderer`; the
         // reserved value "none" suppresses an inherited label. See
-        // resolveDateline in src/lib/card-date.ts.
+        // resolveDateline in src/lib/content/cards/card-date.ts.
         dateLabel: z.string().optional(),
         // Names a custom island to render *instead of* this card's header
-        // image — see HEADER_MEDIA_RENDERERS in src/lib/renderers.ts. Only the
+        // image — see HEADER_MEDIA_RENDERERS in src/lib/render/renderers.ts. Only the
         // media at the top of the card is replaced; the masthead, body,
         // gallery and card strips are unaffected. Frontmatter-only and
         // deliberately non-cascading: a bespoke header belongs to one card.
@@ -310,7 +310,7 @@ const content = defineCollection({
 // ─── Export ───────────────────────────────────────────────────────────────────
 //
 // The `tag` collection retired (see decisions/DEC-006-tag-registry) in favour
-// of a build-time tag registry (src/lib/tag-registry.ts) that aggregates
+// of a build-time tag registry (src/lib/content/tags/tag-registry.ts) that aggregates
 // container `_config.yaml` identities, `<name>.tag.yaml` declarations, card
 // titles, and tags actually used on content — read from the filesystem
 // rather than a content collection, since the content glob above is

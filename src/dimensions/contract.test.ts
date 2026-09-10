@@ -7,12 +7,12 @@
 // Vitest sets import.meta.env.DEV, so the dev-only status dimension is present
 // in the registry here even though production never sees it.
 import { describe, expect, it } from 'vitest';
-import { DIMENSIONS, dimensionById, hasAnySelection, toggleValue } from './registry';
-import { filterStateFromParams, filterStateToParams, stripFilterParams } from './params';
-import { encodeParam, decodeParam } from '../lib/param-codecs';
-import { isValidFilterValue } from '../lib/five-w';
-import type { CardMeta } from '../lib/cards';
-import type { Dimension, DimensionId, DimensionSelection, NodeContext } from './types';
+import { DIMENSIONS, dimensionById, hasAnySelection, toggleValue } from '@dimensions/registry';
+import { filterStateFromParams, filterStateToParams, stripFilterParams } from '@dimensions/params';
+import { encodeParam, decodeParam } from '@stack/state/param-codecs';
+import { isValidFilterValue } from '@content/tags/five-w';
+import type { CardMeta } from '@content/cards/cards';
+import type { Dimension, DimensionId, DimensionSelection, NodeContext } from '@dimensions/types';
 import { fakeCardMeta } from '../test/fixtures';
 
 interface Fixture {

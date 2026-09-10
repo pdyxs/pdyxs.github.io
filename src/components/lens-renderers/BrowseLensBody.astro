@@ -8,7 +8,7 @@
 // `config` is the whole of it since slice 8 of docs/plans/shared-card-pool.md:
 // the cards, their labels and the card-backed value set are byte-identical on
 // every lens, so the island fetches them from /cards.json instead.
-import BrowseLensBrowser from './BrowseLensBrowser.svelte';
+import BrowseLensBrowser from '@components/lens-renderers/BrowseLensBrowser.svelte';
 
 interface Props {
   config?: Record<string, unknown>;

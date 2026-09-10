@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { HeaderMediaProps } from '../../lib/header-media';
+  import type { HeaderMediaProps } from '@render/header-media';
   import { SvelteMap } from 'svelte/reactivity';
 
   // `images` is every colocated image in the card folder, filename-sorted,

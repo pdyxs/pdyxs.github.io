@@ -1,6 +1,6 @@
 ---
 // Dev-only content-audit dashboard (issue #72) — the thin renderer around the
-// pure auditCards() decision in src/lib/audit.ts. All of the logic lives there;
+// pure auditCards() decision in src/lib/site/audit.ts. All of the logic lives there;
 // this file only gathers the raw material and prints the result.
 //
 // Plain Astro, no island: the audit is a static server-rendered worklist with
@@ -20,20 +20,20 @@
 // LensStackCard passes card data to nobody now. The builder is memoised, so
 // this is a map lookup, not a second pipeline run.
 import { getCollection } from 'astro:content';
-import { makeFileReader, resolveFolderCascade } from '../../lib/folder-config';
+import { makeFileReader, resolveFolderCascade } from '@content/folders/folder-config';
 import {
   getAllCards,
   inertDerivationControls,
   resolveCardTitle,
-} from '../../lib/cards';
-import { generatorFrontmatterKeys } from '../../lib/filter-generators';
-import { localAssetFilenames } from '../../lib/images';
-import { serialiseBrowseCards } from '../../lib/browse-card';
-import { buildCardPool } from '../../lib/card-pool';
-import { auditCards, auditedCardCount, type AuditCard } from '../../lib/audit';
-import { ORPHANED_OLD_URLS } from '../../data/redirects.generated';
-import type { BrowseCardData } from '../../lib/browse-helpers';
-import BrowseCard from '../BrowseCard.svelte';
+} from '@content/cards/cards';
+import { generatorFrontmatterKeys } from '@content/tags/filter-generators';
+import { localAssetFilenames } from '@render/images';
+import { serialiseBrowseCards } from '@browse/results/browse-card';
+import { buildCardPool } from '@browse/results/card-pool';
+import { auditCards, auditedCardCount, type AuditCard } from '@site/audit';
+import { ORPHANED_OLD_URLS } from '@data/redirects.generated';
+import type { BrowseCardData } from '@browse/results/browse-helpers';
+import BrowseCard from '@components/browse/BrowseCard.svelte';
 
 const { tagDisplay } = await buildCardPool();
 

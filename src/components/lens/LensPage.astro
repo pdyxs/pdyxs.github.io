@@ -1,0 +1,35 @@
+---
+// Full-page cold load for a lens location, in page-mode chrome. Shared by the
+// `/` shortcut (index.astro → name="home") and the `/lens/[name]` route so the
+// two addresses render byte-identical output — `/` is just a prettier alias
+// for `/lens/home`.
+//
+// A cold-loaded lens is the sole/root stack entry, so it presents in page mode
+// (presentationMode in stack-layout.ts). CardStack.svelte takes over on the
+// client, toggling chrome as the stack grows/shrinks.
+import Base from '../../layouts/Base.astro';
+import StackNav from '@components/stack/StackNav.astro';
+import LensStackCard from '@components/lens/LensStackCard.astro';
+import { getLensDefinition } from '@browse/lenses/lens-registry';
+import { deriveLensChrome } from '@browse/lenses/lens-chrome';
+
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+const lens = getLensDefinition(name);
+const chrome = lens ? deriveLensChrome(lens, { }) : null;
+// The <title> tracks the lens's card title (home → "pdyxs.wtf").
+const title = chrome?.cardTitle ?? '';
+// A lens is a browsing surface, not a dated article — the site subtitle is the
+// closest thing it has to a description, and og:image falls back to the site
+// default (no lens has an image of its own).
+const description = chrome?.pageSubtitle || undefined;
+---
+<Base {title} {description} ogType="website">
+  <div id="homepage" hidden></div>
+  <StackNav activeUid={`lens/${name}`} initialWidth={lens?.width}>
+    <LensStackCard {name} presentation="page" />
+  </StackNav>
+</Base>

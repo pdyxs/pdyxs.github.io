@@ -13,11 +13,11 @@
 // break that quietly.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount } from 'svelte';
-import HistoryLensBrowser from './HistoryLensBrowser.svelte';
-import { lensFilterStore } from '../../stores/lens-filter-store';
-import { emptyFilterState } from '../../dimensions';
-import { markRead } from '../../lib/card-view-state';
-import { poolFailureMessage } from '../../lib/browse-skeleton';
+import HistoryLensBrowser from '@components/lens-renderers/HistoryLensBrowser.svelte';
+import { lensFilterStore } from '@stores/lens-filter-store';
+import { emptyFilterState } from '@dimensions';
+import { markRead } from '@stack/state/card-view-state';
+import { poolFailureMessage } from '@browse/results/browse-skeleton';
 import {
   fakeCard,
   fakePool,

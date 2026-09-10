@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { seedStackState, pushToStack, removeFromStack, activateCard, replaceActiveSlot, rekeyEntry } from './card-stack-store';
-import { activeEntry, cardEntry, lensEntry } from '../lib/stack-layout';
-import { geometryFor, STACK_GEOMETRY } from '../lib/stack-geometry';
-import type { StackState } from '../lib/stack-layout';
+import { seedStackState, pushToStack, removeFromStack, activateCard, replaceActiveSlot, rekeyEntry } from '@stores/card-stack-store';
+import { activeEntry, cardEntry, lensEntry } from '@stack/layout/stack-layout';
+import { geometryFor, STACK_GEOMETRY } from '@stack/layout/stack-geometry';
+import type { StackState } from '@stack/layout/stack-layout';
 
 const emptyState: StackState = { entries: [], activeSlot: null };
 

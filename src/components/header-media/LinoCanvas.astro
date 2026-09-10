@@ -6,8 +6,8 @@
 // site, so a Svelte component pulled out of HEADER_MEDIA_RENDERERS at runtime
 // fails with NoMatchingImport. Registry entries are therefore Astro
 // components (as in COLLECTION_RENDERERS), each importing its own island.
-import type { HeaderMediaProps } from '../../lib/header-media';
-import LinoCanvas from './LinoCanvas.svelte';
+import type { HeaderMediaProps } from '@render/header-media';
+import LinoCanvas from '@components/header-media/LinoCanvas.svelte';
 
 const { entryId, images } = Astro.props as HeaderMediaProps;
 ---

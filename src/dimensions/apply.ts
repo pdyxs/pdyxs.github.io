@@ -1,6 +1,6 @@
 // Filter evaluation — one fold over the dimension registry.
-import type { CardMeta } from '../lib/cards';
-import { cardOwnValues } from '../lib/card-identity';
+import type { CardMeta } from '../lib/content/cards/cards';
+import { cardOwnValues } from '../lib/content/cards/card-identity';
 import { DIMENSIONS } from './registry';
 import type { FilterState, MatchContext } from './types';
 

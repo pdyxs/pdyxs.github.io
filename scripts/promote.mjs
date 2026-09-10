@@ -29,7 +29,7 @@ import {
   parseNameStatus,
   planPromotion,
   nestedCardDirs,
-} from '../src/lib/promotion.ts';
+} from '../src/lib/site/promotion.ts';
 
 const CONTENT_ROOT = 'src/content';
 const CARD_FILE = 'index.md';

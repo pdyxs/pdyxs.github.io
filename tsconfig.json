@@ -2,5 +2,21 @@
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
   "//": "svelte-check-types is excluded on purpose: it holds a `declare module '*.astro'` shim for svelte-check only. Pulled in here it would shadow Astro's real component types. See svelte-check-types/astro-modules.d.ts.",
-  "exclude": ["dist", "svelte-check-types"]
+  "exclude": ["dist", "svelte-check-types"],
+  "//paths": "Two import idioms live in this repo, by necessity. Anything resolved by Vite (Astro, both vitest projects, svelte-check) uses these aliases. Anything reachable from `scripts/*.mjs` — which run under plain Node type-stripping (engines floor 22.18) and therefore honour neither tsconfig paths nor extensionless specifiers — keeps RELATIVE imports with an explicit `.ts` extension, transitively. Adding an alias import to a module in that closure breaks the generators at runtime, not at build. vitest.island.config.ts is a plain Vite config and does not read this block: mirror any change there in its `resolve.alias`.",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@stack/*": ["src/lib/stack/*"],
+      "@content/*": ["src/lib/content/*"],
+      "@browse/*": ["src/lib/browse/*"],
+      "@render/*": ["src/lib/render/*"],
+      "@site/*": ["src/lib/site/*"],
+      "@components/*": ["src/components/*"],
+      "@stores/*": ["src/stores/*"],
+      "@dimensions": ["src/dimensions/index.ts"],
+      "@dimensions/*": ["src/dimensions/*"],
+      "@data/*": ["src/data/*"]
+    }
+  }
 }

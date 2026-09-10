@@ -1,26 +1,26 @@
 ---
 import type { RenderResult } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
-import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages, cardLocalImages, isRemoteImageUrl, isRemoteVideoUrl } from '../../lib/images';
-import { parseEmbedUrl, EMBED_IFRAME_ALLOW } from '../../lib/embeds';
-import { resolveHeaderMedia } from '../../lib/renderers';
-import type { HeaderMediaImage } from '../../lib/header-media';
-import { displayFor, narrowTagDisplay } from '../../lib/tag-display';
-import { computeCardTagDisplay } from '../../lib/card-tag-display';
-import type { TagDisplay } from '../../lib/tag-display';
-import type { BrowseCardData } from '../../lib/browse-helpers';
-import { resolveMetaRows } from '../../lib/card-meta';
-import { resolveActions } from '../../lib/card-actions';
-import { bodyHasInlineImage } from '../../lib/inline-images';
-import { resolveDateline } from '../../lib/card-date';
-import type { SeriesDateBar as SeriesDateBarModel } from '../../lib/series';
-import type { RawMetaRow } from '../../lib/card-meta';
-import type { Action } from '../../lib/card-actions';
-import ImageGallery from '../ImageGallery.svelte';
-import InlineImageViewer from '../InlineImageViewer.svelte';
-import CardStrip from '../CardStrip.svelte';
-import SeriesDateBar from '../SeriesDateBar.astro';
-import SeriesDotStrip from '../SeriesDotStrip.astro';
+import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages, cardLocalImages, isRemoteImageUrl, isRemoteVideoUrl } from '@render/images';
+import { parseEmbedUrl, EMBED_IFRAME_ALLOW } from '@render/embeds';
+import { resolveHeaderMedia } from '@render/renderers';
+import type { HeaderMediaImage } from '@render/header-media';
+import { displayFor, narrowTagDisplay } from '@content/tags/tag-display';
+import { computeCardTagDisplay } from '@content/cards/card-tag-display';
+import type { TagDisplay } from '@content/tags/tag-display';
+import type { BrowseCardData } from '@browse/results/browse-helpers';
+import { resolveMetaRows } from '@content/cards/card-meta';
+import { resolveActions } from '@content/cards/card-actions';
+import { bodyHasInlineImage } from '@render/inline-images';
+import { resolveDateline } from '@content/cards/card-date';
+import type { SeriesDateBar as SeriesDateBarModel } from '@content/cards/series';
+import type { RawMetaRow } from '@content/cards/card-meta';
+import type { Action } from '@content/cards/card-actions';
+import ImageGallery from '@components/media/ImageGallery.svelte';
+import InlineImageViewer from '@components/media/InlineImageViewer.svelte';
+import CardStrip from '@components/browse/CardStrip.svelte';
+import SeriesDateBar from '@components/card-renderers/SeriesDateBar.astro';
+import SeriesDotStrip from '@components/card-renderers/SeriesDotStrip.astro';
 
 interface Quote {
   quote: string;
@@ -98,7 +98,7 @@ const localVideo = entry && !localImage ? resolveLocalVideo(entry.id, data?.imag
 // A remote header `image:` is not automatically an <img>. The legacy Jekyll
 // content puts YouTube/Vimeo URLs in this field, and it also carries direct
 // video URLs — so the same three-way resolution the gallery does (parseEmbedUrl
-// / isRemoteVideoUrl / isRemoteImageUrl, all in src/lib/images.ts) has to
+// / isRemoteVideoUrl / isRemoteImageUrl, all in src/lib/render/images.ts) has to
 // happen here too. Rendering any http string as an <img> painted a broken
 // image for every one of them, silently: an embed URL serves an HTML page.
 //
@@ -203,7 +203,7 @@ const galleryImages = await Promise.all(
         ) : (
           <>
             {/* The same responsive figure the body form emits (embedFigure,
-                src/lib/video-embeds.ts) — a live iframe, not the gallery's
+                src/lib/render/video-embeds.ts) — a live iframe, not the gallery's
                 poster facade. The masthead is the card's primary media and
                 there is no poster big enough for it: embedPosterUrl serves
                 mqdefault at 320x180, which is a thumbnail. youtube-nocookie

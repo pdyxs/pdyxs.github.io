@@ -9,8 +9,8 @@
 // (`what:art`, or a bare `science` for the null dimension), and that string is
 // self-describing — the presence of a colon tells decode which key shape to
 // re-emit — so splitting the sigil per dimension would buy nothing.
-import { DIMENSIONS } from './registry';
-import type { CodecContext, ParamCodec, ParamPair } from '../lib/url-params';
+import { DIMENSIONS } from '@dimensions/registry';
+import type { CodecContext, ParamCodec, ParamPair } from '@stack/state/url-params';
 
 const NULL_DIMENSION_KEY = 'filter';
 const KEY_PREFIX = 'filter.';

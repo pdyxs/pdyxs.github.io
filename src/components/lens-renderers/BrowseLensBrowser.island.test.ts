@@ -13,11 +13,11 @@
 // clicking `.fp-pool-retry` has to produce a *second* fetch and then a grid.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount } from 'svelte';
-import BrowseLensBrowser from './BrowseLensBrowser.svelte';
-import { lensFilterStore } from '../../stores/lens-filter-store';
-import { emptyFilterState } from '../../dimensions';
-import { poolFailureMessage } from '../../lib/browse-skeleton';
-import { markRead } from '../../lib/card-view-state';
+import BrowseLensBrowser from '@components/lens-renderers/BrowseLensBrowser.svelte';
+import { lensFilterStore } from '@stores/lens-filter-store';
+import { emptyFilterState } from '@dimensions';
+import { poolFailureMessage } from '@browse/results/browse-skeleton';
+import { markRead } from '@stack/state/card-view-state';
 import {
   fakeCard,
   fakePool,

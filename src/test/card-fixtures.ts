@@ -1,12 +1,12 @@
 // Shared CardMeta fixtures for the discovery-surface tests.
 //
-// buildFeedItems (src/lib/rss.ts) and buildSitemapEntries (src/lib/sitemap.ts)
+// buildFeedItems (src/lib/site/rss.ts) and buildSitemapEntries (src/lib/site/sitemap.ts)
 // must agree card-for-card on which cards are publicly discoverable — both
 // read the SAME `visibility.listed` predicate. Keeping one fixture set here is
 // what makes a drift between them a test failure rather than a silent
 // production bug (a draft leaking into the sitemap, say).
 
-import type { CardMeta } from '../lib/cards';
+import type { CardMeta } from '@content/cards/cards';
 
 export function card(overrides: Partial<CardMeta> = {}): CardMeta {
   return {

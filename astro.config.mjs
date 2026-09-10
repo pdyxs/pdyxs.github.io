@@ -2,8 +2,8 @@
 import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
 import { REDIRECTS } from './src/data/redirects.generated.ts';
-import { rehypeExternalLinks } from './src/lib/external-links.ts';
-import { rehypeVideoEmbeds } from './src/lib/video-embeds.ts';
+import { rehypeExternalLinks } from './src/lib/render/external-links.ts';
+import { rehypeVideoEmbeds } from './src/lib/render/video-embeds.ts';
 import { devReloadPlugin } from './scripts/dev-reload-plugin.mjs';
 
 // https://astro.build/config

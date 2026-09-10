@@ -10,10 +10,10 @@
 // drawn by shared components, because Svelte's scoping inflates selector
 // specificity and a per-dimension component would have to restate every
 // --color-selected-* rule (see CLAUDE.md, "Selected states").
-import type { CardMeta } from '../lib/cards';
-import type { TagNode } from '../lib/browse-helpers';
-import type { TagDisplay } from '../lib/tag-display';
-import type { FiveWDimension } from '../lib/five-w';
+import type { CardMeta } from '../lib/content/cards/cards';
+import type { TagNode } from '../lib/browse/results/browse-helpers';
+import type { TagDisplay } from '../lib/content/tags/tag-display';
+import type { FiveWDimension } from '../lib/content/tags/five-w';
 import type { DimensionId } from './id';
 
 /** One `[key, value]` URL param pair. Matches stack-codec's ParamPairs. */

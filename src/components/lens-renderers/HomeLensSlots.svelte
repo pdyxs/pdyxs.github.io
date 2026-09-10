@@ -1,23 +1,23 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
-  import { resolveFrontPageSlots, buildBrowseUrl } from '../../lib/frontpage';
-  import type { FrontPageConfig, ResolvedSlot } from '../../lib/frontpage';
-  import type { TagDisplay } from '../../lib/tag-display';
-  import { lensFilterStore } from '../../stores/lens-filter-store';
-  import { applyFilters } from '../../dimensions';
-  import { BROWSE_CARD_VARIANTS } from '../../lib/browse-card-variants';
-  import { poolFailureMessage } from '../../lib/browse-skeleton';
-  import { getViewState } from '../../lib/card-view-state';
-  import { expandCollapsedSeries } from '../../lib/collapsed-series';
+  import { resolveFrontPageSlots, buildBrowseUrl } from '@browse/home/frontpage';
+  import type { FrontPageConfig, ResolvedSlot } from '@browse/home/frontpage';
+  import type { TagDisplay } from '@content/tags/tag-display';
+  import { lensFilterStore } from '@stores/lens-filter-store';
+  import { applyFilters } from '@dimensions';
+  import { BROWSE_CARD_VARIANTS } from '@browse/results/browse-card-variants';
+  import { poolFailureMessage } from '@browse/results/browse-skeleton';
+  import { getViewState } from '@stack/state/card-view-state';
+  import { expandCollapsedSeries } from '@browse/results/collapsed-series';
   import {
     loadCardPool,
     failureReason,
     type CardPoolFailureReason,
-  } from '../../lib/card-pool.client';
-  import type { SharedCardPoolAsset } from '../../lib/card-pool';
-  import type { CardMeta } from '../../lib/cards';
-  import BrowseCard from '../BrowseCard.svelte';
+  } from '@browse/results/card-pool.client';
+  import type { SharedCardPoolAsset } from '@browse/results/card-pool';
+  import type { CardMeta } from '@content/cards/cards';
+  import BrowseCard from '@components/browse/BrowseCard.svelte';
 
   interface Props {
     config: FrontPageConfig;
@@ -268,11 +268,148 @@
 {/if}
 
 <style>
-  /* .fp-slot-grid, .fp-slot, .fp-slot--rail, .fp-slot-label and .fp-see-more
-     live in global.css: they render inside the home lens FRAGMENT, and a
-     scoped rule does not exist on whatever page a fragment lands in (#131).
-     What stays here is the placeholder, which exists only between mount and
-     the pool arriving. */
+  /* The whole slot grid is scoped here, placeholder included. It renders
+     inside the home lens FRAGMENT — injected into whatever page the visitor is
+     already on — which used to be the reason `.fp-slot-grid`, `.fp-slot`,
+     `.fp-slot--rail`, `.fp-slot-label` and `.fp-see-more` had to be global
+     (#131). `cssCodeSplit: false` (astro.config.mjs, guarded by
+     src/config.test.ts) retires that reason: every page links one merged CSS
+     bundle, so a scoped rule exists wherever its component's markup can land.
+     Nothing in this grid is qualified on stack position, so nothing here had
+     to stay behind.
+
+     ── The 12-column grid (issues #131, #132) ────────────────────────────
+     `.fp-slot-label` and `.fp-see-more` came here verbatim from the deleted
+     FilterSlot.svelte, by way of global.css.
+
+     One flat 12-column grid; every slot is a direct child, in config order.
+     `side: right` is `span N / -1` — end at the last line, start N columns back —
+     and main-track slots auto-place from the left and flow into the gap beside
+     it. Deliberately NO `grid-auto-flow: dense`: dense backfills a hole with a
+     LATER slot, unpredictably, which is the one thing that silently breaks
+     config order — the whole ask. A hole "reads as a bug, but i'll just not do
+     that" (#132), and it is visible, which a reordering is not. */
+
+  .fp-slot-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--fp-slot-gap);
+    /* FilterBar draws a border-bottom and adds no space under it, so every lens
+       body owns its own top inset — browse gets one incidentally, from
+       .fp-result-count's margin sitting above the list. Home has no control row,
+       so the first slot row would butt straight against that line. Same value as
+       the gap: the space above the first row reads as the row rhythm rather than
+       as a second, unrelated number. */
+    padding-top: var(--fp-slot-gap);
+  }
+
+  /* Mobile: every slot is a full-width row, in config order, for free — no
+     `order` computation and no second layout model. `side` and `rows` are
+     ignored here, and there is deliberately no --slot-span-mobile: a slot that
+     could be half-width at 500px would re-litigate the crop-vs-reflow line the
+     card stack owns at 681px. */
+  .fp-slot {
+    grid-column: span 12;
+    grid-row: span 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-width: 0;
+  }
+
+  /* A `stackUid:` slot's second card, in the SAME cell as the first (see the
+     template above) — never a second grid item, so the pair never
+     depends on how tall the row-track they share with other slots ends up
+     being. `--stack-direction-small`/`-large` and `--stack-split` come from
+     home.lens.yaml's `stackDirection`/`stackSplit` (home-slots.ts), the same
+     way `--slot-span-*` carries `span:` — this block makes no layout DECISION
+     for a stack, it only wires the two custom properties to the CSS that
+     consumes them. Mobile ignores both and is always column, matching every
+     other per-tier field the mobile tier ignores. */
+  .fp-slot-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .fp-slot-stack > .fp-slot-card-list {
+    min-width: 0;
+  }
+
+  @media (min-width: 681px) {
+    .fp-slot {
+      grid-column: span var(--slot-span-small);
+      grid-row: span var(--slot-rows-small);
+    }
+    .fp-slot--rail { grid-column: span var(--slot-span-small) / -1; }
+
+    .fp-slot-stack {
+      flex-direction: var(--stack-direction-small);
+    }
+    /* A no-op in `column` direction (flex-grow only redistributes space along
+       the main axis, and a column stack has none to redistribute — see the
+       home-slots.ts stackSplit doc comment). Matched on the placeholder too, so
+       loading and resolved states don't visibly reflow into different
+       proportions. */
+    .fp-slot-stack > .fp-slot-card-list:first-child,
+    .fp-slot-stack > .fp-slot-placeholder:first-child { flex: var(--stack-split) 1 0; }
+    .fp-slot-stack > .fp-slot-card-list:last-child,
+    .fp-slot-stack > .fp-slot-placeholder:last-child { flex: 1 1 0; }
+  }
+
+  /* The small/large line. A literal by necessity, and in exactly one @media
+     block: a custom property cannot be read in a media condition, there is no
+     PostCSS or Sass here, and container queries — the one escape that would
+     work — are ruled out by the dither invariant, since `container-type:
+     inline-size` implies layout containment and so makes the element a
+     containing block for the fixed dither. A slot grid is full of dithered
+     cards.
+
+     It is also a PLACEHOLDER VALUE: "i'll only know this when i actually make
+     real content" (#132). Tuning it later is a one-line edit precisely because
+     nothing else reads it. */
+  @media (min-width: 1000px) {
+    .fp-slot {
+      grid-column: span var(--slot-span-large);
+      grid-row: span var(--slot-rows-large);
+    }
+    .fp-slot--rail { grid-column: span var(--slot-span-large) / -1; }
+
+    .fp-slot-stack {
+      flex-direction: var(--stack-direction-large);
+    }
+    .fp-slot-stack > .fp-slot-card-list:first-child,
+    .fp-slot-stack > .fp-slot-placeholder:first-child { flex: var(--stack-split) 1 0; }
+    .fp-slot-stack > .fp-slot-card-list:last-child,
+    .fp-slot-stack > .fp-slot-placeholder:last-child { flex: 1 1 0; }
+  }
+
+  .fp-slot-label {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .fp-see-more {
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    align-self: flex-end;
+    padding-right: var(--space-lg);
+  }
+
+  .fp-see-more:hover {
+    color: var(--color-text);
+    text-decoration: underline;
+  }
+
+  /* ── The placeholder interior, which exists only between mount and the pool
+     arriving ─────────────────────────────────────────────────────────────── */
 
   /* Static dither, no animation — the palette has no grey to shimmer in,
      softening a colour with `opacity` is a bug, and a moving gradient over the
@@ -351,7 +488,7 @@
   }
 
   /* The list wrapper exists only because BrowseCard renders an <li>. The
-     card's own bottom margin (global.css's `li { margin-bottom: var(--space-xs) }`,
+     card's own bottom margin (src/styles/base.css's `li { margin-bottom: var(--space-xs) }`,
      which BrowseCard doesn't reset) is taken back here: the placeholder it
      replaces has none, and a slot that grew by it at hydration would be the
      document-height change this whole arrangement exists to avoid. */

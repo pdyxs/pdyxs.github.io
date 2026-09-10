@@ -1,4 +1,4 @@
-import { buildCardPool, toSharedAsset } from '../lib/card-pool';
+import { buildCardPool, toSharedAsset } from '@browse/results/card-pool';
 
 /**
  * /cards.json — the site's card pool, shipped once per visitor instead of once

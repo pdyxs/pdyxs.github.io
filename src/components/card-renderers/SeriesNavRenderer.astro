@@ -23,10 +23,10 @@
 // that genuinely nests (a card-backed tag, a related-card preview); the
 // `card:` protocol is for markdown prose links only. Both are intercepted
 // by CardStack.svelte's delegated click handler.
-import CardHeader from '../CardHeader.astro';
-import { getSeriesSiblings } from '../../lib/series';
-import type { StoryEntry } from '../../lib/series';
-import type { StatusValue } from '../../lib/status-visibility';
+import CardHeader from '@components/stack/CardHeader.astro';
+import { getSeriesSiblings } from '@content/cards/series';
+import type { StoryEntry } from '@content/cards/series';
+import type { StatusValue } from '@content/cards/status-visibility';
 
 interface Props {
   entry: StoryEntry | undefined;
@@ -80,7 +80,8 @@ const siblings = entry
 
 {/* Mobile-only edge arrows: the same prev/next links as the header pair,
     pinned to the viewport for one-thumb reach while reading a long chapter.
-    Rendered unconditionally; hidden at desktop by a media query in global.css. */}
+    Rendered unconditionally; hidden at desktop by a media query in
+    src/styles/series.css. */}
 {siblings && (siblings.prev || siblings.next) && (
   <div class="series-floating-nav" aria-hidden="true">
     {siblings.prev && (
@@ -92,13 +93,73 @@ const siblings = entry
   </div>
 )}
 
-{/* No scoped <style>. `.series-quicknav*` and `.series-floating-*` both live
-    in global.css, for two independent reasons:
+{/* `.series-floating-*` is NOT here: it lives in src/styles/series.css,
+    because the floating pair needs `.stack-card--active` gating, which a
+    scoped rule cannot express — every series card in the stack renders its
+    own copy of this markup, and `position: fixed` ignores DOM ancestry, so
+    un-gated a piled card behind the active one floats its own arrows. The
+    un-gated base rules stay beside their gated overrides: Astro's scoping
+    adds a `[data-astro-cid-*]` attribute, which would raise
+    `.series-floating-btn` to (0,2,0) and tie it with
+    `.stack-card--active .series-floating-btn` — a tie whose winner is then
+    decided by bundle order.
 
-    - this markup ships inside a card FRAGMENT, injected into a page that
-      never rendered this component at build time — so Astro never bundled a
-      scoped rule into that page's CSS and the nav landed unstyled;
-    - the floating pair additionally needs `.stack-card--active` gating, which
-      a scoped rule cannot express: every series card in the stack renders its
-      own copy of this markup, and `position: fixed` ignores DOM ancestry, so
-      un-gated a piled card behind the active one floats its own arrows. */}
+    The header pair below IS scoped. It ships inside a card fragment, but
+    `cssCodeSplit: false` (astro.config.mjs, guarded by src/config.test.ts)
+    merges every page's CSS into one bundle every page links, so a scoped
+    rule is available wherever its component's markup can land. */}
+<style>
+  .series-quicknav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    /* Auto margin absorbs the header's justify-content: space-between gap on
+       this side only, so the title hugs the left edge and this + the close
+       button hug the right, together — "a slot just before the ×" rather
+       than floating wherever space-between happens to land a 3rd flex item. */
+    margin-left: auto;
+    /* The shared 4px --dither-text-stroke default is sized for 1.1rem header
+       titles; at this nav's small glyph size it reads as a solid blob rather
+       than a chevron. */
+    --dither-text-stroke: 3px;
+  }
+
+  .series-position {
+    font-size: 0.85em;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Child combinator, not a bare class: the link variant also carries
+     `.card-link`, whose `display: block` (src/styles/stack.css) would
+     otherwise be the tie to beat. Astro's scoping already wins that tie, but
+     naming the parent states the rule rather than relying on it. */
+  .series-quicknav > .series-quicknav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--color-text);
+    text-decoration: none;
+    line-height: 1;
+  }
+
+  /* State rules restate the same parent as the base rule above, and that is
+     load-bearing. Astro's scoping appends `[data-astro-cid-*]` to EVERY
+     compound in a selector, so the two-compound base rule gains (0,2,0) while
+     a bare `a.series-quicknav-btn:hover` gains only (0,1,0) — the base then
+     outranks the hover it used to lose to, and the glyph stays ink-on-ink on
+     an inverted surface. Naming the parent here keeps hover exactly one
+     pseudo-class above the base, which is the relationship it had as a global
+     rule. */
+  .series-quicknav > a.series-quicknav-btn:hover {
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+    -webkit-text-stroke-color: var(--color-selected-bg);
+  }
+
+  .series-quicknav-btn--disabled {
+    color: var(--color-text-muted);
+  }
+</style>

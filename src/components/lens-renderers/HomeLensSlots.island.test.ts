@@ -15,12 +15,12 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mount, unmount } from 'svelte';
 import { vi } from 'vitest';
-import HomeLensSlots from './HomeLensSlots.svelte';
-import { lensFilterStore } from '../../stores/lens-filter-store';
-import { emptyFilterState } from '../../dimensions';
-import { poolFailureMessage } from '../../lib/browse-skeleton';
-import { BROWSE_CARD_VARIANTS } from '../../lib/browse-card-variants';
-import { markRead } from '../../lib/card-view-state';
+import HomeLensSlots from '@components/lens-renderers/HomeLensSlots.svelte';
+import { lensFilterStore } from '@stores/lens-filter-store';
+import { emptyFilterState } from '@dimensions';
+import { poolFailureMessage } from '@browse/results/browse-skeleton';
+import { BROWSE_CARD_VARIANTS } from '@browse/results/browse-card-variants';
+import { markRead } from '@stack/state/card-view-state';
 import {
   fakeCard,
   fakePool,
@@ -28,7 +28,7 @@ import {
   readyLoader,
   flakyLoader,
 } from '../../test/fake-card-pool';
-import type { FrontPageConfig } from '../../lib/frontpage';
+import type { FrontPageConfig } from '@browse/home/frontpage';
 
 const CONFIG: FrontPageConfig = {
   slots: [

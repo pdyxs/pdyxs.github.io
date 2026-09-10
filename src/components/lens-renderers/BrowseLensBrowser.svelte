@@ -1,28 +1,28 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { lensFilterStore } from '../../stores/lens-filter-store';
+  import { lensFilterStore } from '@stores/lens-filter-store';
   import {
     applyFilters,
     countSelectedValueMatches,
     filterStateToParams,
     makeMatchContext,
-  } from '../../dimensions';
-  import type { FilterState } from '../../dimensions';
-  import { isRankingLens, sortCardsForBrowse, limitCardsForBrowse } from '../../lib/browse-helpers';
-  import type { CardMeta } from '../../lib/cards';
-  import { getViewState } from '../../lib/card-view-state';
-  import { expandCollapsedSeries } from '../../lib/collapsed-series';
-  import { isStripLens, stripTerminal } from '../../lib/strip-lens';
-  import { archiveLensId } from '../../lib/lens-registry';
-  import { revealSettings } from '../../lib/progressive-reveal';
+  } from '@dimensions';
+  import type { FilterState } from '@dimensions';
+  import { isRankingLens, sortCardsForBrowse, limitCardsForBrowse } from '@browse/results/browse-helpers';
+  import type { CardMeta } from '@content/cards/cards';
+  import { getViewState } from '@stack/state/card-view-state';
+  import { expandCollapsedSeries } from '@browse/results/collapsed-series';
+  import { isStripLens, stripTerminal } from '@browse/lenses/strip-lens';
+  import { archiveLensId } from '@browse/lenses/lens-registry';
+  import { revealSettings } from '@browse/results/progressive-reveal';
   import {
     loadCardPool,
     failureReason,
     type CardPoolFailureReason,
-  } from '../../lib/card-pool.client';
-  import type { SharedCardPoolAsset } from '../../lib/card-pool';
-  import BrowseResults from '../BrowseResults.svelte';
-  import BrowseSkeleton from '../BrowseSkeleton.svelte';
+  } from '@browse/results/card-pool.client';
+  import type { SharedCardPoolAsset } from '@browse/results/card-pool';
+  import BrowseResults from '@components/browse/BrowseResults.svelte';
+  import BrowseSkeleton from '@components/browse/BrowseSkeleton.svelte';
 
   interface Props {
     config?: Record<string, unknown>;

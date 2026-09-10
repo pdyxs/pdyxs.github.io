@@ -6,11 +6,11 @@
 //
 // It offers no nodes. Its values are only ever selected by clicking a tag on a
 // card, never from the dimension bar, so the panel has nothing to render for it.
-import type { CardMeta } from '../lib/cards';
-import type { TagNode } from '../lib/browse-helpers';
-import type { TagDisplay } from '../lib/tag-display';
-import { displayFor } from '../lib/tag-display';
-import { isValidDimensionlessValue } from '../lib/five-w';
+import type { CardMeta } from '../lib/content/cards/cards';
+import type { TagNode } from '../lib/browse/results/browse-helpers';
+import type { TagDisplay } from '../lib/content/tags/tag-display';
+import { displayFor } from '../lib/content/tags/tag-display';
+import { isValidDimensionlessValue } from '../lib/content/tags/five-w';
 import type { Dimension, ParamPair } from './types';
 
 const PARAM_KEY = 'filter';

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { getContainerRenderer } from '@astrojs/svelte';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
-import GenericRenderer from './GenericRenderer.astro';
+import GenericRenderer from '@components/card-renderers/GenericRenderer.astro';
 import { fakeEntry, fakeCardMeta } from '../../test/fixtures';
 
 async function makeContainer() {

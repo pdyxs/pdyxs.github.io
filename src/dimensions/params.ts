@@ -3,9 +3,9 @@
 // This is the *active location's* readable query string. The stack codec sits
 // above it, compacting these same pairs into short-code tokens for inactive
 // entries; the two are layers, not rivals (see the amendment on DEC-002).
-import { FIVE_W_DIMENSIONS } from '../lib/five-w';
-import type { FiveWDimension } from '../lib/five-w';
-import { DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
+import { FIVE_W_DIMENSIONS } from '../lib/content/tags/five-w';
+import type { FiveWDimension } from '../lib/content/tags/five-w';
+import { DEFAULT_BROWSE_LENS_ID } from '../lib/browse/lenses/lens-registry';
 import { DIMENSIONS, dimensionById } from './registry';
 import type { FilterState } from './types';
 
