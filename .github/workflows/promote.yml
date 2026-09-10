@@ -14,10 +14,11 @@ name: Promote
 
 on:
   schedule:
-    # 17:30 UTC, half an hour ahead of build.yml's 18:00 daily rebuild, so a
-    # promotion and the rebuild that publishes a `scheduled` card crossing its
-    # date land in one window rather than a day apart.
-    - cron: "30 17 * * *"
+    # 18:00 UTC (~4-5am Melbourne). THE site's only daily run: build.yml's own
+    # cron was folded in here, because the two were doing one job between them
+    # and paying for two. A scheduled run promotes whatever is ready and then
+    # deploys ONLY if something actually changed — see the deploy job's `if`.
+    - cron: "0 18 * * *"
   workflow_dispatch:
     inputs:
       code:
@@ -39,13 +40,33 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       moved: ${{ steps.promote.outputs.moved }}
+      crossed: ${{ steps.pending.outputs.crossed }}
     steps:
+      # Promotion MUST run on `main`, and this is a hard stop rather than a
+      # note. The deploy below is a workflow_call, and a called workflow runs
+      # in the CALLER's branch context — so from any other ref the github-pages
+      # environment rejects the deployment while the promotion itself has
+      # already pushed. That half-success leaves production silently stale,
+      # which is the exact failure mode this pipeline exists to remove.
+      # `on: schedule` always runs on the default branch, which IS `main`.
+      - name: Refuse to promote from anywhere but main
+        if: github.ref_name != 'main'
+        run: |
+          echo "::error::promote must run on main (got '${{ github.ref_name }}'). Re-dispatch with --ref main."
+          exit 1
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           # Full history and both branches: the promotion diffs `main` against
           # `dev` and commits to both (content to `main`, the `awaitsCode`
           # consumption back to `dev`).
+          #
+          # NOTE the deliberate split: this workflow FILE comes from `main`
+          # (where it was promoted to), while the script it runs comes from the
+          # `dev` tree checked out here. The script is the tool, not the
+          # artifact — so promotion logic takes effect without having to
+          # promote itself first.
           fetch-depth: 0
           ref: dev
 
@@ -111,6 +132,20 @@ jobs:
       # `dev` is pushed too, and only the awaitsCode consumption ever changes
       # it. Pushing `main` is what triggers build.yml, whose main-only
       # assertion is the last gate before deploy.
+      # The one thing that can make yesterday's build wrong while main's tree is
+      # unchanged: a `status: scheduled` card whose date has passed. Windowed
+      # against the last successful deployment, so a card that crossed before
+      # it is already live and does not trigger another rebuild.
+      - name: Any scheduled card crossed since the last deploy?
+        id: pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          since=$(gh api "repos/${{ github.repository }}/deployments?environment=github-pages&per_page=1" \
+            --jq '.[0].created_at // empty')
+          echo "last deploy: ${since:-<none>}"
+          node scripts/pending-publish.mjs --ref main ${since:+--since "$since"}
+
       - name: Push
         run: git push origin main dev
 
@@ -121,7 +156,9 @@ jobs:
   # Actions tab, which is why promotion lives here and not on the server.
   deploy:
     needs: promote
-    if: needs.promote.outputs.moved == 'true'
+    # Deploy ONLY on real change: main actually moved, or a scheduled card
+    # crossed its date. A quiet day costs the promote job alone and no build.
+    if: needs.promote.outputs.moved == 'true' || needs.promote.outputs.crossed == 'true'
     permissions:
       contents: read
       pages: write

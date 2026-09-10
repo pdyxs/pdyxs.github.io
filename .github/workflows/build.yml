@@ -17,11 +17,11 @@ on:
       # nothing but promotion commits — see .github/workflows/promote.yml — so
       # a push here IS a publish. Work lands on `dev`, which deploys nothing.
       - main
-  schedule:
-    # Daily rebuild, 18:00 UTC (~4-5am Melbourne). Now that `deploy` exists,
-    # this keeps the live site in sync with any `scheduled` card crossing its
-    # publish date without a human having to push.
-    - cron: "0 18 * * *"
+  # NO SCHEDULE. The daily rebuild moved into promote.yml, which runs once at
+  # 18:00 UTC and deploys only if something actually changed — main moved, or a
+  # `status: scheduled` card crossed its date (scripts/pending-publish.mjs).
+  # Unconditional here, it rebuilt and redeployed 685 pages every day for a
+  # transition that, with zero scheduled cards, could not happen.
   workflow_dispatch:
   # Called by promote.yml after it pushes `main`. A push made with the default
   # GITHUB_TOKEN deliberately does NOT trigger workflows (GitHub's recursion
@@ -51,20 +51,15 @@ jobs:
       # the context of the branch it builds.
       ref: ${{ steps.target.outputs.ref }}
     steps:
-      # THREE ways in, and only one of them agrees with github.ref:
-      #   - called by promote.yml -> inputs.ref ('main'), context is `dev`
-      #   - schedule              -> always the DEFAULT branch (`dev`), and the
-      #                              daily rebuild exists to publish a
-      #                              `scheduled` card crossing its date, which
-      #                              is a fact about production, so: `main`
+      # A called run builds `main` while executing in the caller's context, so
+      # github.ref is not the answer:
+      #   - called by promote.yml -> inputs.ref ('main')
       #   - push / dispatch       -> the ref itself
       - name: Resolve build target
         id: target
         run: |
           if [ -n "${{ inputs.ref }}" ]; then
             target="${{ inputs.ref }}"
-          elif [ "${{ github.event_name }}" = "schedule" ]; then
-            target="main"
           else
             target="${{ github.ref_name }}"
           fi
