@@ -1,5 +1,5 @@
 # Lens definition — id "newest", dimension "when". The default browse lens
-# (see DEFAULT_BROWSE_LENS_ID in src/lib/lens-registry.ts).
+# (see DEFAULT_BROWSE_LENS_ID in src/lib/browse/lenses/lens-registry.ts).
 label: Newest
 icon: timeline
 order: 0
@@ -12,7 +12,7 @@ config:
   sortKey: date
   sortDirection: desc
   # A timeline, not the archive: one scrolling row reading outward from now,
-  # with a dot per card on the strip's track. See src/lib/strip-lens.ts.
+  # with a dot per card on the strip's track. See src/lib/browse/lenses/strip-lens.ts.
   display: strip
   # Hard cap, and the reason the strip works at all: computeStripDots places
   # one dot per card proportionally, so at 154 cards on a ~600px track that is

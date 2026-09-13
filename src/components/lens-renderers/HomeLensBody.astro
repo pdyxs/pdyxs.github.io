@@ -9,8 +9,8 @@
 // The slot LAYOUT is this config and renders server-side from it alone; the
 // cards that fill the slots come from /cards.json (issue #133's placeholder
 // interiors are what stand in until they land).
-import HomeLensSlots from './HomeLensSlots.svelte';
-import type { FrontPageConfig } from '../../lib/frontpage';
+import HomeLensSlots from '@components/lens-renderers/HomeLensSlots.svelte';
+import type { FrontPageConfig } from '@browse/home/frontpage';
 
 interface Props {
   config: FrontPageConfig;

@@ -1,6 +1,6 @@
 import rss from '@astrojs/rss';
-import { getAllCards } from '../lib/cards';
-import { buildFeedItems } from '../lib/rss';
+import { getAllCards } from '@content/cards/cards';
+import { buildFeedItems } from '@site/rss';
 
 export async function GET(context) {
   const cards = await getAllCards();

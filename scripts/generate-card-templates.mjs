@@ -34,13 +34,13 @@
 import { readdir, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveFolderCascade, makeFileReader } from '../src/lib/folder-config.ts';
+import { resolveFolderCascade, makeFileReader } from '../src/lib/content/folders/folder-config.ts';
 import {
   parseSchemaFields,
   renderCardTemplate,
   templateFileName,
-} from '../src/lib/templater-scaffold.ts';
-import { generatorFrontmatterKeys } from '../src/lib/filter-generators.ts';
+} from '../src/lib/site/templater-scaffold.ts';
+import { generatorFrontmatterKeys } from '../src/lib/content/tags/filter-generators.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');

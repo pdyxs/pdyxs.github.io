@@ -8,12 +8,12 @@
 // Kept in src/test/ rather than beside one component because all three
 // browse-family bodies (#150, slice 5 of docs/plans/shared-card-pool.md) read
 // the same six-key asset and must agree about what one looks like.
-import { createCardPoolLoader, CardPoolError } from '../lib/card-pool.client';
-import type { CardPoolFailureReason } from '../lib/card-pool.client';
-import type { SharedCardPoolAsset } from '../lib/card-pool';
-import type { SerialisedCardFull } from '../lib/frontpage';
-import { DEFAULT_PRIORITY } from '../lib/priority';
-import { DEFAULT_FOLDER_SORT } from '../lib/folder-sort';
+import { createCardPoolLoader, CardPoolError } from '@browse/results/card-pool.client';
+import type { CardPoolFailureReason } from '@browse/results/card-pool.client';
+import type { SharedCardPoolAsset } from '@browse/results/card-pool';
+import type { SerialisedCardFull } from '@browse/home/frontpage';
+import { DEFAULT_PRIORITY } from '@content/cards/priority';
+import { DEFAULT_FOLDER_SORT } from '@content/folders/folder-sort';
 
 export function fakeCard(
   uid: string,

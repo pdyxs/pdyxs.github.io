@@ -5,7 +5,7 @@
 // only from lib/five-w, itself a leaf) keeps that a straight line instead of a
 // cycle: browse-helpers -> dimensions/id -> lib/five-w, with nothing pointing
 // back.
-import type { FiveWDimension } from '../lib/five-w';
+import type { FiveWDimension } from '../lib/content/tags/five-w';
 
 /**
  * Every registered dimension's id: the five 5 W axes, the null dimension (bare

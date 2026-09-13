@@ -4,8 +4,8 @@
 // fetches this instead of the full page + stripping it client-side.
 export const partial = true;
 
-import { LENS_REGISTRY, isLensVisible } from '../../../lib/lens-registry';
-import LensStackCard from '../../../components/LensStackCard.astro';
+import { LENS_REGISTRY, isLensVisible } from '@browse/lenses/lens-registry';
+import LensStackCard from '@components/lens/LensStackCard.astro';
 
 export async function getStaticPaths() {
   // See src/pages/lens/[name].astro: a devOnly lens is excluded from static

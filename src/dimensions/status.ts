@@ -13,11 +13,11 @@
 // append-only forever, so a code assigned during a dev run could never be
 // withdrawn once a build shipped it — the same reasoning that bars devOnly
 // lenses. Its params ride the raw codec fallback instead: correct, just longer.
-import type { CardMeta } from '../lib/cards';
-import type { TagNode } from '../lib/browse-helpers';
-import type { TagDisplay } from '../lib/tag-display';
-import { STATUS_VALUES, isStatusValue } from '../lib/status-visibility';
-import type { StatusValue } from '../lib/status-visibility';
+import type { CardMeta } from '../lib/content/cards/cards';
+import type { TagNode } from '../lib/browse/results/browse-helpers';
+import type { TagDisplay } from '../lib/content/tags/tag-display';
+import { STATUS_VALUES, isStatusValue } from '../lib/content/cards/status-visibility';
+import type { StatusValue } from '../lib/content/cards/status-visibility';
 import type { Dimension, NodeContext, ParamPair } from './types';
 
 const PARAM_KEY = 'filter.status';

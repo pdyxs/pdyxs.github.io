@@ -2,7 +2,7 @@
 //
 // Every station folds over this list instead of enumerating kinds by hand —
 // which is what the four repeated facet lists in the old filters.ts cost.
-import { FIVE_W_DIMENSIONS } from '../lib/five-w';
+import { FIVE_W_DIMENSIONS } from '../lib/content/tags/five-w';
 import { makeFiveWDimension } from './five-w';
 import { nullDimension } from './null-dimension';
 import { statusDimension } from './status';

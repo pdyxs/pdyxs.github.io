@@ -4,12 +4,12 @@
 // from FIVE_W_DIMENSIONS rather than hand-registered. That is also what keeps
 // the dimension bar at exactly five buttons by construction, with no
 // "renders as a bar button" opt-in flag to keep in sync.
-import type { CardMeta } from '../lib/cards';
-import type { TagNode } from '../lib/browse-helpers';
-import { buildTagHierarchy } from '../lib/browse-helpers';
-import type { TagDisplay } from '../lib/tag-display';
-import { displayFor } from '../lib/tag-display';
-import { isValidFilterValue, type FiveWDimension } from '../lib/five-w';
+import type { CardMeta } from '../lib/content/cards/cards';
+import type { TagNode } from '../lib/browse/results/browse-helpers';
+import { buildTagHierarchy } from '../lib/browse/results/browse-helpers';
+import type { TagDisplay } from '../lib/content/tags/tag-display';
+import { displayFor } from '../lib/content/tags/tag-display';
+import { isValidFilterValue, type FiveWDimension } from '../lib/content/tags/five-w';
 import type { Dimension, MatchContext, NodeContext, ParamPair } from './types';
 
 const PARAM_PREFIX = 'filter.';

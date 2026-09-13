@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { StackState, LocationEntry } from '../lib/stack-layout';
+import type { StackState, LocationEntry } from '@stack/layout/stack-layout';
 
 export const stackStore = writable<StackState>(seedStackState(null));
 

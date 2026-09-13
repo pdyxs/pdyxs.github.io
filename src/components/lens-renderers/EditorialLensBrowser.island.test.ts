@@ -12,10 +12,10 @@
 // this file.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount } from 'svelte';
-import EditorialLensBrowser from './EditorialLensBrowser.svelte';
-import { lensFilterStore } from '../../stores/lens-filter-store';
-import { emptyFilterState } from '../../dimensions';
-import { poolFailureMessage } from '../../lib/browse-skeleton';
+import EditorialLensBrowser from '@components/lens-renderers/EditorialLensBrowser.svelte';
+import { lensFilterStore } from '@stores/lens-filter-store';
+import { emptyFilterState } from '@dimensions';
+import { poolFailureMessage } from '@browse/results/browse-skeleton';
 import {
   fakeCard,
   fakePool,

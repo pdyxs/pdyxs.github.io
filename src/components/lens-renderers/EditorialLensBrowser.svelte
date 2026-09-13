@@ -1,17 +1,17 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { lensFilterStore } from '../../stores/lens-filter-store';
-  import { applyFilters } from '../../dimensions';
-  import type { FilterState } from '../../dimensions';
-  import { groupCardsByStatus } from '../../lib/status-groups';
+  import { lensFilterStore } from '@stores/lens-filter-store';
+  import { applyFilters } from '@dimensions';
+  import type { FilterState } from '@dimensions';
+  import { groupCardsByStatus } from '@content/cards/status-groups';
   import {
     loadCardPool,
     failureReason,
     type CardPoolFailureReason,
-  } from '../../lib/card-pool.client';
-  import type { SharedCardPoolAsset } from '../../lib/card-pool';
-  import BrowseCard from '../BrowseCard.svelte';
-  import BrowseSkeleton from '../BrowseSkeleton.svelte';
+  } from '@browse/results/card-pool.client';
+  import type { SharedCardPoolAsset } from '@browse/results/card-pool';
+  import BrowseCard from '@components/browse/BrowseCard.svelte';
+  import BrowseSkeleton from '@components/browse/BrowseSkeleton.svelte';
 
   interface Props {
     config?: Record<string, unknown>;
@@ -25,7 +25,7 @@
   // The dev-only "what's in flight" dashboard (issue #53): filters the pool
   // by the shared lensFilterStore (same as BrowseLensBrowser.svelte — see its
   // comments), then groups the result by declared status via the pure
-  // groupCardsByStatus (src/lib/status-groups.ts).
+  // groupCardsByStatus (src/lib/content/cards/status-groups.ts).
   //
   // Cut over to the shared card pool in slice 5 of
   // docs/plans/shared-card-pool.md (#150) along with the other two browse-family

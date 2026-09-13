@@ -5,7 +5,7 @@
 // lazy-load boundary is one level up: lens-components.ts dynamically imports
 // *this file*, not EditorialLensBrowser.svelte directly. Mirrors
 // BrowseLensBody.astro's shape, including its slice-8 prop list.
-import EditorialLensBrowser from './EditorialLensBrowser.svelte';
+import EditorialLensBrowser from '@components/lens-renderers/EditorialLensBrowser.svelte';
 
 interface Props {
   config?: Record<string, unknown>;

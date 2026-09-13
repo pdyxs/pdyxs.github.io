@@ -32,7 +32,7 @@
 
 import { spawn } from 'node:child_process';
 import path from 'node:path';
-import { planDevReload, mergePlans, GENERATOR_SCRIPTS } from '../src/lib/dev-reload.ts';
+import { planDevReload, mergePlans, GENERATOR_SCRIPTS } from '../src/lib/site/dev-reload.ts';
 
 const DEBOUNCE_MS = 300;
 
@@ -53,7 +53,7 @@ export function devReloadPlugin() {
     apply: 'serve',
     configureServer(server) {
       const root = server.config.root;
-      /** @type {import('../src/lib/dev-reload.ts').ReloadPlan[]} */
+      /** @type {import('../src/lib/site/dev-reload.ts').ReloadPlan[]} */
       let pending = [];
       let timer = null;
       let running = false;

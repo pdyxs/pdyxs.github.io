@@ -9,14 +9,14 @@
 // build — see CONTEXT for issue #23.
 export const partial = true;
 
-import { getAllCards } from '../../../lib/cards';
-import type { ResolvedCard } from '../../../lib/cards';
-import type { BrowseCardData } from '../../../lib/browse-helpers';
-import { getTagRegistry, flattenTagDisplay } from '../../../lib/tag-registry';
-import type { TagDisplay } from '../../../lib/tag-display';
-import { computeRelatedCardsIndex, computeSubjectCardsIndex } from '../../../lib/card-identity';
-import { serialiseBrowseCards } from '../../../lib/browse-card';
-import CardStackCard from '../../../components/CardStackCard.astro';
+import { getAllCards } from '@content/cards/cards';
+import type { ResolvedCard } from '@content/cards/cards';
+import type { BrowseCardData } from '@browse/results/browse-helpers';
+import { getTagRegistry, flattenTagDisplay } from '@content/tags/tag-registry';
+import type { TagDisplay } from '@content/tags/tag-display';
+import { computeRelatedCardsIndex, computeSubjectCardsIndex } from '@content/cards/card-identity';
+import { serialiseBrowseCards } from '@browse/results/browse-card';
+import CardStackCard from '@components/stack/CardStackCard.astro';
 
 export async function getStaticPaths() {
   const cards = await getAllCards();

@@ -1,26 +1,26 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { lensFilterStore } from '../../stores/lens-filter-store';
-  import { applyFilters, countSelectedValueMatches, makeMatchContext } from '../../dimensions';
-  import type { FilterState } from '../../dimensions';
-  import type { CardMeta } from '../../lib/cards';
-  import { hasBeenRead, mostRecentReadAt } from '../../lib/card-view-state';
+  import { lensFilterStore } from '@stores/lens-filter-store';
+  import { applyFilters, countSelectedValueMatches, makeMatchContext } from '@dimensions';
+  import type { FilterState } from '@dimensions';
+  import type { CardMeta } from '@content/cards/cards';
+  import { hasBeenRead, mostRecentReadAt } from '@stack/state/card-view-state';
   import {
     historyEmptyMessage,
     historyMode,
     selectHistoryCards,
     type ReadHistory,
-  } from '../../lib/history-lens';
-  import { expandCollapsedSeries } from '../../lib/collapsed-series';
-  import { revealSettings } from '../../lib/progressive-reveal';
+  } from '@browse/lenses/history-lens';
+  import { expandCollapsedSeries } from '@browse/results/collapsed-series';
+  import { revealSettings } from '@browse/results/progressive-reveal';
   import {
     loadCardPool,
     failureReason,
     type CardPoolFailureReason,
-  } from '../../lib/card-pool.client';
-  import type { SharedCardPoolAsset } from '../../lib/card-pool';
-  import BrowseResults from '../BrowseResults.svelte';
-  import BrowseSkeleton from '../BrowseSkeleton.svelte';
+  } from '@browse/results/card-pool.client';
+  import type { SharedCardPoolAsset } from '@browse/results/card-pool';
+  import BrowseResults from '@components/browse/BrowseResults.svelte';
+  import BrowseSkeleton from '@components/browse/BrowseSkeleton.svelte';
 
   interface Props {
     config?: Record<string, unknown>;
@@ -34,7 +34,7 @@
   // The shared body for both history lenses — Seen and Unseen (issue #84).
   // Which one it is comes from `config.readState`; everything else is the same
   // filter/render path the browse family uses. All the deciding is in
-  // src/lib/history-lens.ts, including the ruling on a card that was read and
+  // src/lib/browse/lenses/history-lens.ts, including the ruling on a card that was read and
   // then edited; this component only reads localStorage and renders.
   const mode = $derived(historyMode(config));
 

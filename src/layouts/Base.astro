@@ -1,10 +1,10 @@
 ---
 import '../styles/global.css';
-import ThemeToggle from '../components/ThemeToggle.astro';
-import { STACK_GEOMETRY } from '../lib/stack-geometry';
-import { fanReservationTable } from '../lib/stack-reservation';
-import { fanSkeletonTable } from '../lib/stack-skeleton';
-import { ENTRY_SEP } from '../lib/stack-codec';
+import ThemeToggle from '@components/site/ThemeToggle.astro';
+import { STACK_GEOMETRY } from '@stack/layout/stack-geometry';
+import { fanReservationTable } from '@stack/layout/stack-reservation';
+import { fanSkeletonTable } from '@stack/layout/stack-skeleton';
+import { ENTRY_SEP } from '@stack/state/stack-codec';
 import {
   buildArticleJsonLd,
   buildSiteJsonLd,
@@ -13,7 +13,7 @@ import {
   resolveOgImage,
   SITE_NAME,
   SITE_URL,
-} from '../lib/seo';
+} from '@site/seo';
 
 interface Props {
   title?: string;
@@ -29,7 +29,7 @@ interface Props {
 const { title = SITE_NAME, description, image, ogType = 'website', date } = Astro.props as Props;
 const pageTitle = title === SITE_NAME ? title : `${title} — ${SITE_NAME}`;
 
-// Thin applier: every decision below is made by pure functions in src/lib/seo.ts.
+// Thin applier: every decision below is made by pure functions in src/lib/site/seo.ts.
 // Astro.site is configured in astro.config.mjs, so SITE_URL is only a
 // type-narrowing fallback — but it must be the same one /sitemap.xml uses, or a
 // page's canonical and its sitemap <loc> could disagree.
@@ -153,7 +153,7 @@ const jsonLd = [
 
         The script below computes NO geometry. `stackReservation` is a table
         built at build time by calling `computeGeometry` itself (see
-        src/lib/stack-reservation.ts), so the slots-vs-rows rule — the one
+        src/lib/stack/layout/stack-reservation.ts), so the slots-vs-rows rule — the one
         already got wrong once, because a piled card shares its slot's `left`
         but keeps climbing in `top` — has exactly one implementation. All the
         script does is count entries and read a row out of the table.

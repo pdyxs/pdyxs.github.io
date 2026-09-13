@@ -5,10 +5,10 @@
 // boundary is one level up: lens-components.ts dynamically imports *this file*.
 //
 // Both lenses share this one body; `config.readState` is what tells them apart
-// (see historyMode in src/lib/history-lens.ts) — and since slice 8 of
+// (see historyMode in src/lib/browse/lenses/history-lens.ts) — and since slice 8 of
 // docs/plans/shared-card-pool.md that config is the only prop, the cards
 // themselves coming from /cards.json.
-import HistoryLensBrowser from './HistoryLensBrowser.svelte';
+import HistoryLensBrowser from '@components/lens-renderers/HistoryLensBrowser.svelte';
 
 interface Props {
   config?: Record<string, unknown>;

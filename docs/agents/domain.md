@@ -17,7 +17,8 @@ and none should be created — the vault is the single source of truth.
   model, front page. Open Questions live here under their own section.
 - **`dev/prds/`, `dev/milestones/`, `dev/plans/`** — grilled PRDs, milestones, plans.
 
-The repo's own `CLAUDE.md` covers *implementation* invariants (selector contracts, CSS tokens,
+The repo's own `CLAUDE.md` and the docs it indexes under `docs/agents/` cover *implementation*
+invariants (selector contracts, CSS tokens,
 store ownership). The vault covers *domain and design* intent. Read both; they don't overlap.
 
 ## Use the glossary's vocabulary

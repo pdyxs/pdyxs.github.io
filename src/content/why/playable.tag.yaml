@@ -1,7 +1,7 @@
 # Derived, not authored: a card lands here when it has an action with
 # `kind: play` — which includes every puzzle, since resolveActions folds
 # `sudokupad_url` into exactly that. Override per card with
-# `playable: always` / `playable: never`. See src/lib/why-tags.ts.
+# `playable: always` / `playable: never`. See src/lib/content/tags/why-tags.ts.
 name: Play something
 order: 0
 description: >

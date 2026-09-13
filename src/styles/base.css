@@ -1,0 +1,133 @@
+/* ── Reset ─────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+html {
+  font-size: var(--font-size-base);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  line-height: 1.7;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0 0 var(--space-sm);
+}
+
+p { margin: 0 0 var(--space-md); }
+p:last-child { margin-bottom: 0; }
+
+a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+ul, ol { padding-left: 1.4em; margin: 0 0 var(--space-md); }
+li { margin-bottom: var(--space-xs); }
+
+img { max-width: 100%; height: auto; display: block; }
+
+/* Body-flow images only: a masthead image (.generic-image) is the card's top
+   edge and sizes to the card, and a gallery thumbnail sizes to its strip. This
+   is the image someone wrote into their markdown.
+
+   The selector is a contract shared with INLINE_BODY_IMAGE_SELECTOR in
+   src/lib/render/inline-images.ts, which decides which clicks InlineImageViewer opens
+   full-screen — capped here, expandable there. Change one, change both. */
+.stack-card-body-inner :is(p, li) > img {
+  max-height: var(--inline-image-max-height);
+  /* `object-fit`, not `width: auto`, to hold the aspect ratio. Astro's markdown
+     images are `loading="lazy"` and carry width/height attributes; those attrs
+     are what reserves the box before the file arrives. `width: auto` discards
+     them — an unloaded image has no intrinsic width, so the box collapses to
+     zero and the page jumps as each one pops in. Clamping the height and
+     letting the image letterbox inside the reserved width keeps the space. */
+  object-fit: contain;
+  cursor: zoom-in;
+}
+
+strong { font-weight: 700; }
+
+/* ── Video embeds ──────────────────────────────────────────────── */
+
+/* Emitted by rehypeVideoEmbeds (src/lib/render/video-embeds.ts) in place of a
+   paragraph holding nothing but a bare YouTube/Vimeo link. Replaces the Jekyll
+   markup, which hardcoded 560×315 inside a Bootstrap `col-xs-12` wrapper and
+   overflowed a narrow card. `.video-embed` is a CSS contract — renaming it is
+   a plugin change too. */
+.video-embed {
+  margin: 0 0 var(--space-md);
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: var(--border-width) solid var(--color-border);
+}
+
+.video-embed iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── Code ──────────────────────────────────────────────────────── */
+
+/* Syntax highlighting is disabled in astro.config.mjs, so these are bare
+   `<pre><code>` and the surface is ours: ink on an L2 dither, the same tone a
+   hover fill uses. No hex, no theme override needed — --dither-N is already
+   theme-aware. */
+code, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+/* Inline code only. The `pre >` descendant is excluded so a block doesn't get
+   the inline padding and border on top of the block's own. */
+:not(pre) > code {
+  background: var(--dither-2);
+  border: 1px solid var(--color-border-light);
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  background: var(--dither-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  margin: 0 0 var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  line-height: 1.5;
+  /* Real code keeps its horizontal scroll rather than being wrapped into
+     ambiguity; the untagged case below opts out. */
+  overflow-x: auto;
+}
+
+pre:last-child { margin-bottom: 0; }
+
+/* A fence with no language is prose someone reached for a code block to quote —
+   a tooltip string, a snippet of dialogue — not code whose line breaks carry
+   meaning. Wrap it. Astro emits no class on `<code>` in that case, so the
+   absence of the attribute is the signal. Continuation lines get a hanging
+   indent so a wrap still reads as a wrap. */
+pre > code:not([class]) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  display: block;
+  text-indent: -2ch;
+  padding-left: 2ch;
+}
+

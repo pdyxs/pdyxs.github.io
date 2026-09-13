@@ -1,10 +1,10 @@
 ---
 // Full-page cold load for a lens location. Adding a lens is a registry data
-// entry (src/lib/lens-registry.ts) — this route file never changes. Rendering
+// entry (src/lib/browse/lenses/lens-registry.ts) — this route file never changes. Rendering
 // is delegated to LensPage.astro, shared with the `/` shortcut so `/` and
 // `/lens/home` render identical output.
-import { LENS_REGISTRY, isLensVisible } from '../../lib/lens-registry';
-import LensPage from '../../components/LensPage.astro';
+import { LENS_REGISTRY, isLensVisible } from '@browse/lenses/lens-registry';
+import LensPage from '@components/lens/LensPage.astro';
 
 export async function getStaticPaths() {
   // A devOnly lens (e.g. the editorial dashboard, issue #53) is excluded here

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { isValidFilterValue } from '../lib/five-w';
-import { applyFilters, countSelectedValueMatches, filterStateToParams, filterStateFromParams, filterUrlForTagValue, stripFilterParams } from './index';
-import type { FilterState } from './index';
+import { isValidFilterValue } from '@content/tags/five-w';
+import { applyFilters, countSelectedValueMatches, filterStateToParams, filterStateFromParams, filterUrlForTagValue, stripFilterParams } from '@dimensions';
+import type { FilterState } from '@dimensions';
 import { fakeCardMeta } from '../test/fixtures';
-import { DEFAULT_BROWSE_LENS_ID } from '../lib/lens-registry';
+import { DEFAULT_BROWSE_LENS_ID } from '@browse/lenses/lens-registry';
 
 // ---------------------------------------------------------------------------
 // isValidFilterValue

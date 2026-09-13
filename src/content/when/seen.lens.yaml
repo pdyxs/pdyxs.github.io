@@ -10,7 +10,7 @@
 # lives in localStorage, so this server-renders empty and fills in on
 # hydration. Neither Seen nor Unseen is a link target, and an empty Seen lens
 # is the CORRECT rendering for a first-time visitor rather than a failure —
-# see historyEmptyMessage in src/lib/history-lens.ts for what it says instead.
+# see historyEmptyMessage in src/lib/browse/lenses/history-lens.ts for what it says instead.
 label: Seen
 icon: seen
 component: history

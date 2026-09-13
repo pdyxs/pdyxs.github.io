@@ -18,7 +18,7 @@
 
 import { execFileSync } from 'node:child_process';
 import matter from 'gray-matter';
-import { resolveStatus } from '../src/lib/status-visibility.ts';
+import { resolveStatus } from '../src/lib/content/cards/status-visibility.ts';
 
 const CONTENT_ROOT = 'src/content';
 

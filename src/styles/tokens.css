@@ -1,0 +1,182 @@
+/* ── Custom properties ─────────────────────────────────────────── */
+
+/* Two colours, and only two: ink and paper. Every other greyscale token below
+   derives from them, so the dark block only has to restate those two (plus the
+   border, which is ink at a different semantic). Anything that used to be a
+   grey is now either pure, or a dither built from the same two colours. */
+:root {
+  --color-bg:         #ffffff;
+  --color-text:       #000000;
+  --color-border:     #000000;
+  /* Paper, named for the role it plays where a background is inverted:
+     `color: var(--color-surface)` is knockout text sitting on --color-text.
+     It no longer lifts above --color-bg (that lift is a dither now), but the
+     two readings are worth keeping distinct at the call sites. */
+  --color-surface:      var(--color-bg);
+  /* Hairline (1px) internal dividers, as opposed to a --border-width frame.
+     Same colour as --color-border; the distinction is width and intent. */
+  --color-border-light: var(--color-border);
+  /* De-emphasis is expressed by size and weight at the call sites, not by
+     value — muted text is the same pure ink as body text. */
+  --color-text-muted:   var(--color-text);
+  --color-bg-stripes:   var(--color-text);
+  /* Hover steps the dither up one notch rather than being a fixed level:
+       flat/paper surface  → --color-bg-hover        (L2)
+       already-L2 surface  → --color-bg-hover-strong (L4)
+     Both are only ever used as a `background`, so they can hold full dither
+     values; --dither-N is theme-aware, so the dark block needs no override. */
+  --color-bg-hover:        var(--dither-2);
+  --color-bg-hover-strong: var(--dither-4);
+  /* A selected control is the page inverted — it sits at the ink end of the
+     same ramp (--dither-16 IS var(--color-text)), so it needs the mirror of
+     every flat-surface rule, not just swapped text and background:
+
+       flat surface      ink on paper   L0  → hover L2   (ink dots appear)
+       selected surface  paper on ink   L16 → hover L14  (paper dots appear)
+
+     --dither-14 is built from paper dots on ink, so the hover delta is
+     identical in both directions. -fg is for anything drawn ON the inverted
+     surface (text, counts, glyphs, internal dividers); -bg doubles as the
+     border colour and, critically, as the text-stroke colour — the stroke is
+     always the surface's OWN colour, which is what keeps it invisible until a
+     dither shows through. Painting it in paper here would fatten paper glyphs
+     instead of clearing dots behind them. */
+  --color-selected-bg:       var(--color-text);   /* = --dither-16 */
+  --color-selected-fg:       var(--color-bg);     /* = --dither-0  */
+  --color-selected-bg-hover: var(--dither-14);
+  --color-overlay:    rgba(0, 0, 0, 0.85);
+  /* Emphasis for an OR-matched browse-card tag (monochrome: fill + strong
+     border). The fill is a dither, so it needs no dark override. */
+  --color-tag-active-bg:     var(--dither-3);
+  --color-tag-active-border: var(--color-border);
+
+  /* Dev-only status badge (issue #51) — one bg/border pair per non-published
+     StatusValue. Text stays var(--color-text) (see .status-badge), so only
+     the tint needs a per-status pair, same pattern as --color-tag-active-*.
+     These are the only chromatic values in the palette and are exempt from the
+     monochrome rule: the markup is import.meta.env.DEV-gated in both renderers
+     (CardHeader.astro, BrowseCard.svelte) so it never reaches a production
+     build. "archived" was the one greyscale pair, so it joins the system. */
+  --status-draft-bg:         #fdecea;
+  --status-draft-border:     #c0392b;
+  --status-scheduled-bg:     #e8f0fe;
+  --status-scheduled-border: #1a56db;
+  --status-unlisted-bg:      #fef6e0;
+  --status-unlisted-border:  #b7791f;
+  --status-archived-bg:      var(--dither-2);
+  --status-archived-border:  var(--color-border);
+
+  --font-body:    'Montserrat', system-ui, sans-serif;
+  --font-ui:      'Montserrat', system-ui, sans-serif;
+  --font-heading: 'Saira Stencil', system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+
+  --font-size-base: 18px;
+  --radius:       0px;          /* sharp corners suit e-ink */
+  --radius-sm:    4px;
+  --border-width: 2px;
+
+  --space-xs:     0.375rem;
+  --space-sm:     0.75rem;
+  --space-md:     1.25rem;
+  --space-lg:     2rem;
+  --space-xl:     3.5rem;
+
+  /* The home slot grid's gutter. One number: the rail's gutter and the row
+     rhythm are the same gap (see .fp-slot-grid). */
+  --fp-slot-gap:  var(--space-md);
+
+  --max-width:    680px;
+  /* The card-stack occlusion geometry's two lengths. Both are RESTATED from
+     STACK_GEOMETRY (src/lib/stack/layout/stack-geometry.ts), which is the source of truth —
+     the applier writes them onto #card-stack from that const on every layout
+     pass. These are the pre-hydration values, so the first paint of a
+     server-rendered stack is not laid out against zero. */
+  --spine-width:   40px;
+  --stack-stagger:  8px;
+  /* How much of the stack ABOVE the active card stays on screen when a
+     navigation scrolls to it (issue #110). Read back by the island through
+     getComputedStyle — it is the one breakpoint-varying value the applier
+     needs, and declaring it here keeps the breakpoint in CSS where the
+     CSS-first-responsive rule requires it.
+
+     It is not decoration. It is the scroll affordance (a header flush to the
+     viewport top makes the stack above it invisible, so nothing says it is
+     there), and it is what keeps the sticky header UNSTUCK on arrival — flush,
+     the 1px `.card-header-sentinel` is already off-screen and the header lands
+     pre-compacted, which reads as a scrolled state you never scrolled to.
+
+     MOBILE value. What sits above the active card here is a full collapsed
+     header, so the peek has to be a visible slice of one rather than a hairline;
+     the desktop block cuts it down to the staircase's own scale. */
+  --stack-scroll-peek: 28px;
+  /* DEBUG KNOB. Multiplies every stack duration below, so the whole transition
+     can be slowed down as one and watched. Ships at 1 — the durations here are
+     the real ones. The two JS slack timeouts that pair with them scale by this
+     too (`motionScale()` in CardStack.svelte); nothing else reads it. */
+  --stack-motion-scale: 1;
+  /* One card sliding to a new slot. Zeroed under reduced motion below. */
+  --stack-motion-ms: calc(480ms * var(--stack-motion-scale));
+  /* The clip reveal of a body whose content has just arrived. */
+  --stack-reveal-ms: calc(480ms * var(--stack-motion-scale));
+  /* The body expand/collapse (the grid 0fr <-> 1fr trick). */
+  --stack-body-ms: calc(450ms * var(--stack-motion-scale));
+  /* The View Transition that morphs a link into the pushed card, and the
+     crossfade a series/lens replace runs instead. */
+  --stack-vt-ms: calc(450ms * var(--stack-motion-scale));
+  /* The compact/full swap of the sticky active header. Short on purpose: it is
+     a response to scrolling, and anything slower trails the scroll it answers.
+     It keeps its RATIO to the rest (~0.56 of a card move) rather than a fixed
+     ms, so the whole set stays one piece of timing. */
+  --stack-stuck-ms: calc(270ms * var(--stack-motion-scale));
+  /* Ceiling for an image the body renders inline. Landscape diagrams are
+     unaffected (they hit the 100% width cap first); it exists for tall portrait
+     images — a worked example photographed in portrait would otherwise run
+     several screens deep inside a card. */
+  --inline-image-max-height: 24rem;
+}
+
+/* Dark is a straight inversion: swap ink and paper and everything else follows.
+   Every greyscale token in :root is defined in terms of --color-text /
+   --color-bg / --dither-N, so restating those two colours re-derives the lot —
+   there is deliberately nothing else to override here. */
+html[data-theme="dark"] {
+  --color-bg:     #000000;
+  --color-text:   #ffffff;
+  --color-border: #ffffff;
+
+  --status-draft-bg:         #3a2323;
+  --status-draft-border:     #e07a6c;
+  --status-scheduled-bg:     #1f2b40;
+  --status-scheduled-border: #6d97f5;
+  --status-unlisted-bg:      #3a3320;
+  --status-unlisted-border:  #e0b84f;
+}
+
+/* ── Assembly resize hold (issue #126) ──────────────────────────── */
+/* `data-stack-resizing` is set by CardStack's `holdWhileAssemblyResizes` for
+   as long as `.card-stack-inner`'s `width` transition is running, and cleared
+   when it finishes (see src/lib/stack/layout/stack-motion.ts). A lens change animates that
+   real box, and the incoming grid is laid out against it — uncovered, it would
+   hold two columns from 680px to ~930px and then reflow to three as the width
+   settles, which is the churn #126 measured and named.
+
+   This used to be ORed together with a `data-filters-pending` guard that
+   covered a different hole — a server-rendered results grid the client was
+   about to re-sort. #144 (following the shared-card-pool map, #136) removed
+   that guard: no lens fragment server-renders a results grid any more, so
+   there was nothing left for it to hide. This half survives unchanged — the
+   box still resizes, and the incoming grid still needs holding while it does. */
+.stack-card[data-stack-resizing] .fp-browse-list,
+.stack-card[data-stack-resizing] .fp-browse-empty,
+.stack-card[data-stack-resizing] .fp-result-count {
+  display: none;
+}
+
+/* ...and the skeleton stands in its place, for the same reason issue #119
+   originally drew one: hiding the results without drawing anything left a
+   stretch of empty space below an already-populated filter bar. */
+.stack-card[data-stack-resizing] .fp-skeleton--grid {
+  display: block;
+}
+

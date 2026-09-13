@@ -1,10 +1,10 @@
 // The dimension registry as a UrlParamProvider — the filter slice of a
 // location's URL, owned end to end (issue #76, DEC-008).
-import type { ParamPair, UrlParamProvider } from '../lib/url-params';
-import { DIMENSIONS } from './registry';
-import { filterStateFromParams, filterStateToParams } from './params';
-import { filterCodec } from './codec';
-import type { FilterState } from './types';
+import type { ParamPair, UrlParamProvider } from '@stack/state/url-params';
+import { DIMENSIONS } from '@dimensions/registry';
+import { filterStateFromParams, filterStateToParams } from '@dimensions/params';
+import { filterCodec } from '@dimensions/codec';
+import type { FilterState } from '@dimensions/types';
 
 export const filterParamProvider: UrlParamProvider<FilterState> = {
   id: 'filters',

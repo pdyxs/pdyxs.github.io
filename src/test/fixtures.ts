@@ -1,6 +1,6 @@
-import type { CardMeta } from '../lib/cards';
-import { DEFAULT_PRIORITY } from '../lib/priority';
-import { DEFAULT_FOLDER_SORT } from '../lib/folder-sort';
+import type { CardMeta } from '@content/cards/cards';
+import { DEFAULT_PRIORITY } from '@content/cards/priority';
+import { DEFAULT_FOLDER_SORT } from '@content/folders/folder-sort';
 
 interface Action {
   text: string;

@@ -1,17 +1,17 @@
 import type { APIContext } from 'astro';
-import { getAllCards } from '../lib/cards';
-import { buildSitemapEntries, renderSitemap } from '../lib/sitemap';
-import { SITE_URL } from '../lib/seo';
-import { LENS_REGISTRY, isLensVisible } from '../lib/lens-registry';
+import { getAllCards } from '@content/cards/cards';
+import { buildSitemapEntries, renderSitemap } from '@site/sitemap';
+import { SITE_URL } from '@site/seo';
+import { LENS_REGISTRY, isLensVisible } from '@browse/lenses/lens-registry';
 
 /**
- * /sitemap.xml — thin applier over buildSitemapEntries (src/lib/sitemap.ts).
+ * /sitemap.xml — thin applier over buildSitemapEntries (src/lib/site/sitemap.ts).
  *
  * The entry list is decided by the SAME `visibility.listed` predicate
  * buildFeedItems uses, not by @astrojs/sitemap's page enumeration: an
  * `unlisted` card has a real (reachable) URL and would be enumerated, but must
  * never be advertised. Keeping both discovery surfaces on one predicate is
- * asserted in src/lib/sitemap.test.ts.
+ * asserted in src/lib/site/sitemap.test.ts.
  */
 export async function GET(context: APIContext) {
   const cards = await getAllCards();

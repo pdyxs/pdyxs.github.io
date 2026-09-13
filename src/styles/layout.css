@@ -1,0 +1,171 @@
+/* ── Layout ────────────────────────────────────────────────────── */
+
+.site-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+}
+
+/* ── Project list ──────────────────────────────────────────────── */
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.project-list:last-child { margin-bottom: 0; }
+
+.project-item {
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.project-item .project-title {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: var(--space-xs);
+}
+
+.project-item .project-desc {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.project-item .project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+/* ── Post list ─────────────────────────────────────────────────── */
+
+.post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.post-list:last-child { margin-bottom: 0; }
+
+.post-item {
+  display: flex;
+  gap: var(--space-md);
+  align-items: baseline;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.post-item time {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Tag pill ──────────────────────────────────────────────────── */
+
+.tag {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* ── Section heading within accordion body ─────────────────────── */
+
+.section-heading {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--color-text);
+  margin: 0 0 var(--space-md);
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding-bottom: var(--space-xs);
+}
+
+.section-heading:not(:first-child) {
+  margin-top: var(--space-xl);
+}
+
+/* ── Site header ───────────────────────────────────────────────── */
+
+.site-header {
+  padding: var(--space-xl) var(--space-md) var(--space-lg);
+  max-width: var(--max-width);
+  margin: 0 auto;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.site-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 400;
+  color: var(--color-text);
+  margin: 0 0 var(--space-xs);
+}
+
+.site-tagline {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  font-family: var(--font-ui);
+}
+
+/* ── View Transitions ──────────────────────────────────────────── */
+
+/* There is no `panel-card-replace` group any more (issue #126). A lens change
+   is not a crossfade of two snapshots: it animates the real `.card-stack-inner`
+   box, which is what Back has always done and what a view transition painting
+   over the top of it made invisible. See `replaceSlot` in CardStack.svelte. */
+
+::view-transition-group(panel-card-open),
+::view-transition-group(panel-card-close) {
+  z-index: 1;
+  animation-duration: var(--stack-vt-ms);
+  animation-timing-function: ease-in-out;
+}
+
+::view-transition-old(panel-card-open),
+::view-transition-new(panel-card-open),
+::view-transition-old(panel-card-close),
+::view-transition-new(panel-card-close) {
+  animation-duration: var(--stack-vt-ms);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--stack-vt-ms);
+}
+
+/* Home → card morph: the page-mode title and divider slide into the pushed
+   card's header (issue #24). Names are injected/cleared by CardStack.svelte. */
+::view-transition-group(home-title),
+::view-transition-group(home-divider) {
+  z-index: 1;
+  animation-duration: var(--stack-vt-ms);
+  animation-timing-function: ease-in-out;
+}
+
