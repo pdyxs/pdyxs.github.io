@@ -241,6 +241,25 @@ const jsonLd = [
         }
       })();
     </script>
+
+    <script>
+        let frame = 0;
+        let last: PointerEvent | null = null;
+
+        document.addEventListener('pointermove', (e) => {
+            console.log("test");
+            last = e;
+            if (frame) return;
+            frame = requestAnimationFrame(() => {
+                frame = 0;
+                if (!last) return;
+                const hx = 360 * last.clientX / window.innerWidth;
+                const hy = 360 * last.clientY / window.innerHeight;
+                document.documentElement.style.setProperty("--color-light", `lch(90% 75% ${hx})`);
+                document.documentElement.style.setProperty("--color-dark", `lch(5% 50% ${hy})`);
+            });
+        }, { passive: true } );
+    </script>
   </head>
   <body>
     <div class="site-wrapper">
