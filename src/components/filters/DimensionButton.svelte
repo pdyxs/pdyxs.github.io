@@ -144,7 +144,7 @@
   }
 
   .browse-dim-label {
-    padding: var(--space-xs) var(--space-md);
+    padding: var(--space-xs) 0;
     display: flex;
     flex-grow: 1;
     justify-content: center;
