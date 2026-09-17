@@ -2078,5 +2078,13 @@
   {
     "uid": "what:games/digital/flatland-2",
     "code": "8n"
+  },
+  {
+    "uid": "what:stories/the-web",
+    "code": "8o"
+  },
+  {
+    "uid": "what:stories/the-web/the-advantages-of-truth",
+    "code": "8p"
   }
 ]
