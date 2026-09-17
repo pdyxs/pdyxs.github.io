@@ -5,9 +5,12 @@
    border, which is ink at a different semantic). Anything that used to be a
    grey is now either pure, or a dither built from the same two colours. */
 :root {
-  --color-bg:         #ffffff;
-  --color-text:       #000000;
-  --color-border:     #000000;
+  --color-light: #ffffff;
+  --color-dark: #000000;
+
+  --color-bg:         var(--color-light);
+  --color-text:       var(--color-dark);
+  --color-border:     var(--color-text);
   /* Paper, named for the role it plays where a background is inverted:
      `color: var(--color-surface)` is knockout text sitting on --color-text.
      It no longer lifts above --color-bg (that lift is a dither now), but the
@@ -141,9 +144,8 @@
    --color-bg / --dither-N, so restating those two colours re-derives the lot —
    there is deliberately nothing else to override here. */
 html[data-theme="dark"] {
-  --color-bg:     #000000;
-  --color-text:   #ffffff;
-  --color-border: #ffffff;
+  --color-bg:     var(--color-dark);
+  --color-text:   var(--color-light);
 
   --status-draft-bg:         #3a2323;
   --status-draft-border:     #e07a6c;
@@ -179,4 +181,3 @@ html[data-theme="dark"] {
 .stack-card[data-stack-resizing] .fp-skeleton--grid {
   display: block;
 }
-
