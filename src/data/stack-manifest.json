@@ -1769,7 +1769,11 @@
   },
   {
     "uid": "what/games/digital/the-neighbourhood",
-    "code": "5K",
-    "title": "The Neighbourhood (game)"
+    "code": "5K"
+  },
+  {
+    "uid": "what/toys/star-navigation",
+    "code": "5L",
+    "title": "Star Navigation"
   }
 ]
