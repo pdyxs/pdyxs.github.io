@@ -17,6 +17,7 @@
   const STAR_RADIUS = 0.15;
   const PLANET_RADIUS = 0.05;
   const PLANET_HIT_RADIUS = 0.3;
+  // (the coarse-pointer radius is a CSS rule at the bottom — it is layout)
   const ORBIT_RADIUS = 0.02;
   // dither level of the ghost planets shown at the intercept moment
   const PREVIEW_LEVEL = 8;
@@ -33,11 +34,17 @@
   const CONE_ANGLE = 40;
   const CONE_LENGTH = 15;
   // Planning a move: how a sideways drag shapes the fly-by (see flyby.ts),
-  // and how many px of drag span the whole range before the move is off.
-  const FLYBY = { farCone: CONE_ANGLE, closeCone: 90, maxTurn: 120 };
-  const DRAG_RANGE_PX = 120;
+  // what fraction of the box's width spans the whole range before the move
+  // is off, and how much a finger may wobble on touch-down and still be a tap.
+  const FLYBY = { farCone: 60, closeCone: 30, maxTurn: 90 };
+  const DRAG_RANGE = 0.3;
+  const TOUCH_DEAD_PX = 8;
   // seconds of orbit time per wall-clock second while travelling
   const TIME_SCALE = 1;
+  // Under prefers-reduced-motion the reveal and the trip still happen — where
+  // things end up along an orbit is the point of them, not decoration — but
+  // they run this many times faster, and without easing.
+  const REDUCED_SPEEDUP = 5;
   // The dotted route from the ship to a visitable intercept point
   const ROUTE_LEVEL = 8;
   const ROUTE_DASH = 0.08;
@@ -65,6 +72,9 @@
   // Positions are read by both the visible and the hit layer, so compute them
   // once here rather than in each {@const}.
   const positions = $derived(system.planets.map((p) => p.positionAt(baseTime)));
+  const hitOrder = system.planets
+    .map((_, i) => i)
+    .sort((a, b) => system.planets[b].ra - system.planets[a].ra);
 
   // For each planet, where and when the ship (leaving now) would meet it, and
   // whether that point is inside the view cone — i.e. whether the planet can
@@ -117,6 +127,7 @@
   const reducedMotion = () =>
     typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const linear = (t: number) => t;
 
   function startPreview(i: number) {
     if (travel) return;
@@ -125,12 +136,14 @@
     if (target === null) { preview = null; return; }
     preview = { at: target.at, route: target.visitable ? target.meet : null };
 
-    if (reducedMotion()) { previewProgress = 1; return; }
+    const reduced = reducedMotion();
+    const duration = reduced ? PREVIEW_MS / REDUCED_SPEEDUP : PREVIEW_MS;
+    const ease = reduced ? linear : easeInOut;
 
     const startedAt = performance.now();
     const step = (now: number) => {
-      const t = Math.min(1, (now - startedAt) / PREVIEW_MS);
-      previewProgress = easeInOut(t);
+      const t = Math.min(1, (now - startedAt) / duration);
+      previewProgress = ease(t);
       previewFrame = t < 1 ? requestAnimationFrame(step) : null;
     };
     previewProgress = 0;
@@ -151,10 +164,11 @@
 
   // Planning a move: pointer held down on a visitable planet. The pointer is
   // captured, so the hover preview stays up while the user drags sideways
-  // to shape the fly-by. `offset` is the drag as a fraction of DRAG_RANGE_PX;
-  // past ±1 the move is off (the ghost ship and cone vanish) until the
-  // pointer comes back into range.
-  let plan = $state<{ i: number; originX: number; offset: number } | null>(null);
+  // to shape the fly-by. `offset` is the drag as a fraction of the range
+  // (DRAG_RANGE of the box's width, measured on pointer-down; `dead` px of
+  // wobble round the origin count as no drag); past ±1 the move is off (the
+  // ghost ship and cone vanish) until the pointer comes back into range.
+  let plan = $state<{ i: number; originX: number; range: number; dead: number; offset: number } | null>(null);
 
   // The pose the ship would arrive in, or null when nothing is planned or
   // the drag is out of range. The ghost ship and its cone draw from this.
@@ -168,15 +182,32 @@
     return { at: target.at, x: target.meet.x, y: target.meet.y, ...result };
   });
 
+  // The ghost ship and its cone ride the tip of the route line, so on a
+  // touch (where the press starts the preview) they arrive with it.
+  const ghostShip = $derived(
+    planned && routeEnd ? { ...planned, x: routeEnd.x, y: routeEnd.y } : null
+  );
+
   function beginPlan(e: PointerEvent, i: number) {
     if (travel || !intercepts[i]?.visitable) return;
-    (e.currentTarget as Element).setPointerCapture(e.pointerId);
-    plan = { i, originX: e.clientX, offset: 0 };
+    const target = e.currentTarget as Element;
+    target.setPointerCapture(e.pointerId);
+    const box = target.closest('svg')!.getBoundingClientRect().width;
+    plan = {
+      i,
+      originX: e.clientX,
+      range: box * DRAG_RANGE,
+      dead: e.pointerType === 'mouse' ? 0 : TOUCH_DEAD_PX,
+      offset: 0,
+    };
+    // A touch has no hover: this is the first the planet has heard of it.
+    if (!preview) startPreview(i);
   }
 
   function dragPlan(e: PointerEvent) {
     if (!plan) return;
-    plan.offset = (e.clientX - plan.originX) / DRAG_RANGE_PX;
+    const dx = e.clientX - plan.originX;
+    plan.offset = Math.abs(dx) < plan.dead ? 0 : dx / plan.range;
   }
 
   function commitPlan() {
@@ -203,12 +234,12 @@
     travel = { from: { x: ship.x, y: ship.y }, fromTime: baseTime, to };
     ship.heading = headingBetween(ship, to);
 
-    if (reducedMotion()) { arrive(); return; }
+    const rate = TIME_SCALE * (reducedMotion() ? REDUCED_SPEEDUP : 1);
 
     let last = performance.now();
     const step = (now: number) => {
       const t = travel!;
-      baseTime = Math.min(t.to.at, baseTime + ((now - last) / 1000) * TIME_SCALE);
+      baseTime = Math.min(t.to.at, baseTime + ((now - last) / 1000) * rate);
       last = now;
       const progress = (baseTime - t.fromTime) / (t.to.at - t.fromTime);
       ship.x = t.from.x + (t.to.x - t.from.x) * progress;
@@ -242,11 +273,11 @@
   <!-- Same frame as the ship path: apex on the nose, opening along the
        heading. While a move is being planned the cone shown is the one the
        ship would have after the fly-by, from where it would be. -->
-  {#if planned}
+  {#if ghostShip}
     <DitherLayer level={CONE_LEVEL}>
       <path
-        transform="translate({planned.x} {planned.y}) rotate({planned.heading})"
-        d={conePath(planned.coneAngle, CONE_LENGTH)} />
+        transform="translate({ghostShip.x} {ghostShip.y}) rotate({ghostShip.heading})"
+        d={conePath(ghostShip.coneAngle, CONE_LENGTH)} />
     </DitherLayer>
   {:else if !plan}
     <DitherLayer level={CONE_LEVEL}>
@@ -276,9 +307,9 @@
       {#each previewPositions as p}
         <circle cx={p.x} cy={p.y} r={PLANET_RADIUS} />
       {/each}
-      {#if planned}
+      {#if ghostShip}
         <path
-          transform="translate({planned.x} {planned.y}) rotate({planned.heading}) scale({SHIP_SCALE})"
+          transform="translate({ghostShip.x} {ghostShip.y}) rotate({ghostShip.heading}) scale({SHIP_SCALE})"
           d={SHIP_PATH} />
       {/if}
     </DitherLayer>
@@ -302,9 +333,12 @@
       d={SHIP_PATH} />
   </DitherLayer>
 
+  <!-- Outer orbits first so, where enlarged hit circles overlap, the inner
+       planet stays on top. -->
   <HitLayer>
-    {#each positions as p, i}
-      <circle role="presentation"
+    {#each hitOrder as i}
+      {@const p = positions[i]}
+      <circle role="presentation" class="planet-hit"
         cx={p.x} cy={p.y} r={PLANET_HIT_RADIUS}
         style:cursor={intercepts[i]?.visitable ? 'pointer' : 'default'}
         onpointerenter={() => startPreview(i)}
@@ -318,4 +352,11 @@
 </DitherSvg>
 
 <style>
+  /* Fingers need bigger targets. `r` is a CSS geometry property, in viewBox
+     units here, and overrides the attribute. */
+  @media (pointer: coarse) {
+    .planet-hit {
+      r: 0.55;
+    }
+  }
 </style>

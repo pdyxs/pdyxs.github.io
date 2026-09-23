@@ -27,7 +27,11 @@
 </svg>
 
 <style>
-  /* Invisible (opacity keeps hit testing; visibility would not). */
+  /* Invisible (opacity keeps hit testing; visibility would not).
+
+     A touch on a hit shape belongs to the shape, not the page: no panning,
+     no long-press selection or callout. Touches that land on no shape pass
+     through the svg (pointer-events: none) and scroll as normal. */
   .hit {
     position: absolute;
     inset: 0;
@@ -35,6 +39,10 @@
     height: 100%;
     opacity: 0;
     pointer-events: none;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
   .hit > g {
     pointer-events: visiblePainted;
