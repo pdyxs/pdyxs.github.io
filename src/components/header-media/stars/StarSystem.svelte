@@ -59,9 +59,12 @@
     ]
   }
 
-  // Ship pose in viewBox units. `heading` is degrees clockwise from
-  // straight up (the way the path points at heading 0).
-  let ship = $state({ x: 0, y: 4, heading: 0 });
+  // Where the ship starts, and what `reset()` puts it back to. Heading is
+  // degrees clockwise from straight up (the way the ship path points at 0).
+  const SHIP_START = { x: 0, y: 4, heading: 0 };
+
+  // Ship pose in viewBox units.
+  let ship = $state({ ...SHIP_START });
   // Full angle of the ship's view cone; a fly-by resets it.
   let coneAngle = $state(CONE_ANGLE);
 
@@ -265,9 +268,32 @@
     travelFrame = null;
   }
 
+  // Nothing here is recoverable once the ship has flown — there is no history
+  // to step back through — so the way out is the way back to the start. The
+  // button offering it only exists once something has actually moved.
+  const moved = $derived(
+    baseTime !== 0
+    || ship.x !== SHIP_START.x
+    || ship.y !== SHIP_START.y
+    || ship.heading !== SHIP_START.heading,
+  );
+
+  function reset() {
+    cancelPreviewLoop();
+    cancelTravelLoop();
+    travel = null;
+    plan = null;
+    preview = null;
+    previewProgress = 0;
+    baseTime = 0;
+    coneAngle = CONE_ANGLE;
+    ship = { ...SHIP_START };
+  }
+
   onDestroy(() => { cancelPreviewLoop(); cancelTravelLoop(); });
 </script>
 
+<div class="star-system">
 <DitherSvg viewBox="-5 -5 10 10">
 
   <!-- Same frame as the ship path: apex on the nose, opening along the
@@ -351,7 +377,42 @@
   </HitLayer>
 </DitherSvg>
 
+<!-- A real <button>, not an SVG shape in a HitLayer: the hit layers are
+     aria-hidden decoration, and this is the one control here that a keyboard
+     or a screen reader has to be able to reach. It is a sibling of the
+     dithered box, never an ancestor — a transform or filter on an ancestor
+     re-anchors the dither grid (docs/agents/styling.md). -->
+{#if moved}
+  <button class="star-reset" type="button" onclick={reset}>Reset</button>
+{/if}
+</div>
+
 <style>
+  .star-system {
+    position: relative;
+  }
+
+  /* Bottom right, inside the square the media occupies. Ink on paper with a
+     dither on hover, like every other control on the site. */
+  .star-reset {
+    position: absolute;
+    right: var(--space-sm);
+    bottom: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .star-reset:hover {
+    background: var(--color-bg-hover);
+  }
+
   /* Fingers need bigger targets. `r` is a CSS geometry property, in viewBox
      units here, and overrides the attribute. */
   @media (pointer: coarse) {

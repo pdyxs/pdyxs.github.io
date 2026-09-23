@@ -6,6 +6,6 @@
 export type HeaderPreview = { light: string; dark: string; hash: string };
 
 export const HEADER_PREVIEWS: Record<string, HeaderPreview> = {
-  "what/art/lino-printing": {"light":"/previews/what/art/lino-printing/light.png","dark":"/previews/what/art/lino-printing/dark.png","hash":"5a1e1b9b6246aaa2"},
-  "what/toys/star-navigation": {"light":"/previews/what/toys/star-navigation/light.png","dark":"/previews/what/toys/star-navigation/dark.png","hash":"5a1e1b9b6246aaa2"},
+  "what/art/lino-printing": {"light":"/previews/what/art/lino-printing/light.png","dark":"/previews/what/art/lino-printing/dark.png","hash":"a98206dfd82b2568"},
+  "what/toys/star-navigation": {"light":"/previews/what/toys/star-navigation/light.png","dark":"/previews/what/toys/star-navigation/dark.png","hash":"a98206dfd82b2568"},
 };
