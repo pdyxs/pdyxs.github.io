@@ -32,6 +32,10 @@ export type SerialisedCard = {
   thumbSrcset?: string;
   /** 'video' when `thumb` is a video URL to render with `<video>` rather than `<img>`; absent (image) otherwise. */
   thumbKind?: 'video';
+  /** Dark-theme counterpart of `thumb`, on header-media cards only: their
+   * still is generated per theme, and BrowseCard picks between the two off
+   * `data-theme`. Absent for an ordinary image, which is used in both. */
+  thumbDark?: string;
   /** Present only on a collapsed-folder representative: member count, for the count badge. */
   collapsed?: { count: number };
   /** The collapsed folder this card is a part of (see CardMeta.collapsedContainer).

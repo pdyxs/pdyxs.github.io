@@ -204,6 +204,45 @@ A folder can drop the strip entirely with `gallery: false` in its
 frontmatter). `what/puzzles` does: a puzzle card *is* its grid image, which is
 already the masthead, so the gallery had nothing to add.
 
+## A header-media card's thumbnail is a screenshot, generated and committed
+
+A `headerMedia:` island (`HEADER_MEDIA_RENDERERS`, see
+`src/lib/render/header-media.ts`) replaces the masthead `<img>` with a
+component — so the card has no image, and a listing or a share card has
+nothing to show. The still is therefore *generated*: `npm run
+generate:header-previews` drives a headless Chromium over the dev-only capture
+route (`src/pages/preview/[theme]/[...path].astro`) and screenshots it.
+
+It has to be a screenshot. The surface is an SVG luminance mask over CSS
+dither tiles, sized from a measured `clientWidth` — nothing exists until a
+browser has run the component, so there is no server render to capture and
+nothing for satori/resvg to rasterise.
+
+Two stills per card, `light` and `dark`, written to
+`public/previews/<uid>/<theme>.png` and indexed in
+`src/data/header-previews.generated.ts`. The theme pair exists because the
+palette is a straight ink/paper inversion: one still in the wrong theme reads
+as a hole in the page. Both `<img>`s are in the browse card and CSS picks,
+keyed on `html[data-theme]` — always resolved to light or dark before paint by
+`Base.astro`, so no `prefers-color-scheme` query is needed. A share image is
+always the light one: a scraper has no theme.
+
+Three things follow:
+
+- **The stills are committed, and the build never regenerates them.** Re-run
+  the generator yourself after changing a header-media component, or the
+  committed picture is of the old one. The run is incremental — each entry
+  carries a hash of the whole `src/components/header-media/` tree plus the
+  capture route, so an unchanged card launches no browser. `--force`
+  re-shoots everything, `--card <uid>` limits it to one.
+- **The preview is a *fallback*.** `resolveThumb` reaches it only after
+  `image:` has failed to resolve, so a card with both a header image and a
+  header-media island keeps showing the image.
+- **It is a still of a thing that moves.** The generator captures with
+  `reducedMotion: 'reduce'`, which is how a component is asked to skip to its
+  settled state. A component whose idle frame is uninformative needs either a
+  setup hook on the capture route or an animated format — neither exists yet.
+
 ## Header-image padding is authored, and the original is kept
 
 Some source images are cropped flush to their content — every logic-masters

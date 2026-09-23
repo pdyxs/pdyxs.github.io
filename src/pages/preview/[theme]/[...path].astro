@@ -1,0 +1,112 @@
+---
+/**
+ * Capture route: one card's header media, alone, on a bare page.
+ *
+ * `scripts/generate-header-previews.mjs` screenshots this to produce the still
+ * a card shows in browse and in a share card, because a header-media island
+ * has no image to show — it is a hydrated component whose surface (an SVG
+ * luminance mask over CSS dither tiles) only exists once a browser has run it.
+ *
+ * DEV-ONLY: getStaticPaths returns nothing in a production build, so the route
+ * is never emitted to the built site. The generator runs its own `astro dev`.
+ *
+ * The theme is a path segment rather than a query string because the route is
+ * static, and `data-theme` is set here rather than by Base.astro's pre-paint
+ * script — this page has no Base, no chrome and no toggle, so nothing else
+ * would set it.
+ *
+ * The box is a fixed pixel size: the dither is a 4px tile anchored to the
+ * viewport (docs/agents/styling.md), so the capture size is part of what the
+ * still looks like, not just its resolution.
+ */
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import { resolveHeaderMedia } from '@render/renderers';
+import { cardLocalImages } from '@render/images';
+import type { HeaderMediaImage } from '@render/header-media';
+import '../../../styles/global.css';
+
+/** Edge of the square the media is captured in, in CSS pixels. */
+export const PREVIEW_SIZE = 720;
+
+export async function getStaticPaths() {
+  if (!import.meta.env.DEV) return [];
+  const entries = await getCollection('content');
+  const withMedia = entries.filter(e => typeof (e.data as { headerMedia?: unknown }).headerMedia === 'string');
+  return withMedia.flatMap(entry =>
+    ['light', 'dark'].map(theme => ({
+      params: { theme, path: entry.id },
+      props: { entryId: entry.id, name: (entry.data as { headerMedia?: string }).headerMedia! },
+    })),
+  );
+}
+
+const { theme } = Astro.params as { theme: string };
+const { entryId, name } = Astro.props as { entryId: string; name: string };
+
+// Throws on an unregistered name, which is what we want here: a preview that
+// silently captured an empty box would be worse than a failed generation.
+const HeaderMedia = resolveHeaderMedia(name)!;
+
+const images: HeaderMediaImage[] = await Promise.all(
+  cardLocalImages(entryId).map(async ({ filename, image }) => {
+    const optimised = await getImage({ src: image, width: 1600 });
+    return {
+      filename,
+      src: optimised.src,
+      width: optimised.attributes.width as number,
+      height: optimised.attributes.height as number,
+    };
+  }),
+);
+---
+
+<html lang="en" data-theme={theme === 'dark' ? 'dark' : 'light'}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{entryId} — {name} ({theme})</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <!-- The generator screenshots this element, and waits for
+         [data-preview-ready] before it does. -->
+    <div id="preview" data-preview-media={name} style={`width:${PREVIEW_SIZE}px;height:${PREVIEW_SIZE}px`}>
+      <HeaderMedia entryId={entryId} images={images} />
+    </div>
+  </body>
+</html>
+
+<style define:vars={{ size: `${PREVIEW_SIZE}px` }}>
+  /* No page chrome, no scrollbars, no margin: the element's box is the frame. */
+  :global(html), :global(body) {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: var(--color-bg);
+  }
+
+  #preview {
+    width: var(--size);
+    height: var(--size);
+    position: relative;
+  }
+
+  /* The route only runs under `astro dev`, so the dev toolbar is always
+     present and floats over the bottom of the frame. */
+  :global(astro-dev-toolbar) {
+    display: none;
+  }
+</style>
+
+<script>
+  // The island is mounted by `client:load`, but "mounted" is not "painted":
+  // DitherSvg sizes its mask from a measured clientWidth, so the first frame
+  // after hydration still has an empty mask. Two rAFs puts us after the frame
+  // that paints with a real width, and the flag is what the generator waits on
+  // rather than a sleep.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.documentElement.setAttribute('data-preview-ready', '');
+    });
+  });
+</script>

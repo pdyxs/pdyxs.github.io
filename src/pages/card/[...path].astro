@@ -8,6 +8,7 @@ import type { TagDisplay } from '@content/tags/tag-display';
 import { computeRelatedCardsIndex, computeSubjectCardsIndex } from '@content/cards/card-identity';
 import { serialiseBrowseCards } from '@browse/results/browse-card';
 import { resolveLocalImage, isRemoteImageUrl } from '@render/images';
+import { HEADER_PREVIEWS } from '@data/header-previews.generated';
 import Base from '../../layouts/Base.astro';
 import StackNav from '@components/stack/StackNav.astro';
 import CardStackCard from '@components/stack/CardStackCard.astro';
@@ -65,6 +66,12 @@ if (localImage) {
   ogImage = (await getImage({ src: localImage, width: 1200, format: 'jpeg' })).src;
 } else if (image && isRemoteImageUrl(image)) {
   ogImage = image;
+} else {
+  // A header-media card has no `image:` to resolve, so its share image is the
+  // still generated from the island (scripts/generate-header-previews.mjs).
+  // Always the light one: a scraper has no theme, and the card it renders
+  // sits in someone else's UI.
+  ogImage = HEADER_PREVIEWS[card.uid]?.light;
 }
 ---
 
