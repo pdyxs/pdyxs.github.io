@@ -51,14 +51,18 @@ if (ahead !== '0') {
   );
 }
 
-const unpromoted = run('git', ['log', '--oneline', 'origin/main..origin/dev']).trimEnd();
+// Trees, not ancestry. Every promotion records `dev` as a parent (`-s ours`),
+// content-only ones included, so `git log origin/main..origin/dev` goes empty
+// the moment ANY promotion runs — while the code it left behind is still
+// unpromoted. Only the diff of the two trees says what has not crossed.
+const unpromoted = run('git', ['diff', '--stat', 'origin/main', 'origin/dev']).trimEnd();
 if (!unpromoted) {
   console.log('promote: origin/main is already level with origin/dev — nothing to promote.');
   process.exit(0);
 }
 
 // 3. What is about to cross, computed locally and for free.
-console.log(`\nUnpromoted commits on dev:\n${unpromoted}\n`);
+console.log(`\nWhere origin/dev differs from origin/main:\n${unpromoted}\n`);
 execSync(
   `node scripts/promote.mjs --dry-run --from origin/dev --to origin/main${MODE === 'code' ? ' --code' : ''}`,
   { stdio: 'inherit' },

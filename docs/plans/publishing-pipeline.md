@@ -180,8 +180,10 @@ git merge --no-commit --no-ff -s ours dev     # ancestry bookkeeping ONLY
 ```
 
 `-s ours` records `dev` as a second parent while producing a tree identical to `main`'s.
-No content is merged, so **no conflict is possible, ever**. Its only job is keeping
-`git log main..dev` — "what has not been promoted" — honest.
+No content is merged, so **no conflict is possible, ever**. Its only job is recording
+the ancestry. It does **not** keep `git log main..dev` meaningful: a content-only run
+makes `dev` an ancestor of `main` while code is still waiting, so the log empties early.
+"What has not been promoted" is the tree diff, `git diff main dev`.
 
 The tree is then asserted from scratch, both halves through one primitive:
 
@@ -341,7 +343,7 @@ commit is itself a publish event.
 its own, because code is never in the daily pathspec. The asymmetry is **accepted, not
 mechanised**: revert code today, promote code three weeks later from a `dev` that was
 never fixed, and the bug returns silently. Mitigation is visibility — the promotion
-workflow's dispatch prints `git log main..dev` for code, so a reverted commit sits in the
+workflow's dispatch prints `git diff --stat main dev`, so a reverted change sits in the
 list of what is about to ship. Not a flag; a code promotion is already deliberate,
 wholesale and human-triggered with a diff attached.
 

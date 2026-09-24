@@ -155,8 +155,9 @@ function main() {
   const startingRef = git(['rev-parse', '--abbrev-ref', 'HEAD']).trim();
   git(['checkout', to]);
   try {
-    // Ancestry bookkeeping ONLY: -s ours produces a tree identical to `to`'s,
-    // so `git log to..from` stays an honest "what has not been promoted".
+    // Ancestry bookkeeping ONLY: -s ours produces a tree identical to `to`'s.
+    // It makes `from` an ancestor of `to` even when code is left behind, so
+    // `git log to..from` does NOT say what is unpromoted — `git diff to from` does.
     git(['merge', '--no-commit', '--no-ff', '-s', 'ours', from]);
 
     // xargs-free and argv-limit-free: stage in chunks rather than one exec.
