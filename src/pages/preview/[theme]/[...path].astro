@@ -61,7 +61,7 @@ const images: HeaderMediaImage[] = await Promise.all(
 );
 ---
 
-<html lang="en" data-theme={theme === 'dark' ? 'dark' : 'light'}>
+<html lang="en" data-theme={theme === 'dark' ? 'dark' : 'light'} data-preview-frame>
   <head>
     <meta charset="utf-8" />
     <title>{entryId} — {name} ({theme})</title>
@@ -77,8 +77,10 @@ const images: HeaderMediaImage[] = await Promise.all(
 </html>
 
 <style define:vars={{ size: `${PREVIEW_SIZE}px` }}>
-  /* No page chrome, no scrollbars, no margin: the element's box is the frame. */
-  :global(html), :global(body) {
+  /* No page chrome, no scrollbars, no margin: the element's box is the frame.
+     Qualified on this route's own <html>: with cssCodeSplit off, a bare
+     html/body rule here lands in the one shared sheet and locks every page. */
+  :global(html[data-preview-frame]), :global(html[data-preview-frame] body) {
     margin: 0;
     padding: 0;
     overflow: hidden;
