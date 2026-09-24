@@ -97,13 +97,17 @@ jobs:
       # `main` is durable, but promoting code later from a `dev` that was never
       # fixed brings the bug back silently. A code promotion is deliberate,
       # wholesale and human-triggered — this is the natural place to catch it.
+      #
+      # A tree diff, not `git log main..dev`: every promotion records `dev` as a
+      # parent, content-only ones too, so the log goes empty while code is
+      # still waiting.
       - name: What has not been promoted
         run: |
-          echo "### Unpromoted commits on dev" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Where dev differs from main" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          git log --oneline main..dev >> "$GITHUB_STEP_SUMMARY" || true
+          git diff --stat main dev >> "$GITHUB_STEP_SUMMARY" || true
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          git log --oneline main..dev || true
+          git diff --stat main dev || true
 
       - name: Plan
         # pipefail, or `tee` supplies the exit status and a failed plan reports

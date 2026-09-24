@@ -12,11 +12,12 @@
 
 import { getImage } from 'astro:assets';
 import { resolveLocalImage, resolveLocalVideo, isRemoteImageUrl, isRemoteVideoUrl } from '@render/images';
+import { HEADER_PREVIEWS } from '@data/header-previews.generated';
 import { parseEmbedUrl, embedPosterUrl } from '@render/embeds';
 import type { CardMeta } from '@content/cards/cards';
 import type { SerialisedCardFull } from '@browse/home/frontpage';
 
-type Thumb = { thumb?: string; thumbSrcset?: string; thumbKind?: 'video' };
+type Thumb = { thumb?: string; thumbSrcset?: string; thumbKind?: 'video'; thumbDark?: string };
 
 /**
  * Resolve a card's header `image` to a thumbnail.
@@ -59,6 +60,12 @@ async function resolveThumb(card: CardMeta): Promise<Thumb> {
     const poster = embedPosterUrl(embed);
     if (poster) return { thumb: poster };
   }
+  // Last: a card whose header is an island has no `image:` to resolve, so it
+  // would have no preview at all. The generated still stands in for it — both
+  // themes, since the still is ink-on-paper and the wrong one reads as a hole
+  // in the page (see scripts/generate-header-previews.mjs).
+  const preview = HEADER_PREVIEWS[card.uid];
+  if (preview) return { thumb: preview.light, thumbDark: preview.dark };
   return {};
 }
 
@@ -72,7 +79,7 @@ async function resolveThumb(card: CardMeta): Promise<Thumb> {
  * them. What crosses the wire stays a decision.
  */
 export async function serialiseBrowseCard(card: CardMeta): Promise<SerialisedCardFull> {
-  const { thumb, thumbSrcset, thumbKind } = await resolveThumb(card);
+  const { thumb, thumbSrcset, thumbKind, thumbDark } = await resolveThumb(card);
   return {
     uid: card.uid,
     title: card.title,
@@ -99,6 +106,7 @@ export async function serialiseBrowseCard(card: CardMeta): Promise<SerialisedCar
     thumb,
     thumbSrcset,
     thumbKind,
+    thumbDark,
   };
 }
 

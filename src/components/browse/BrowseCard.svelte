@@ -82,6 +82,7 @@
     {:else if v.thumb && card.thumb}
       <img
         class="browse-card-thumb"
+        class:browse-card-thumb-light={card.thumbDark}
         src={card.thumb}
         srcset={card.thumbSrcset}
         sizes="(max-width: 700px) 100vw, 300px"
@@ -89,6 +90,20 @@
         loading="lazy"
         onerror={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
       />
+      {#if card.thumbDark}
+        <!-- Header-media stills are ink-on-paper, so each theme gets its own.
+             Both are in the markup and CSS picks; `data-theme` is always set
+             (Base.astro resolves system to light/dark pre-paint), so this
+             needs no prefers-color-scheme query of its own. -->
+        <img
+          class="browse-card-thumb browse-card-thumb-dark"
+          src={card.thumbDark}
+          sizes="(max-width: 700px) 100vw, 300px"
+          alt=""
+          loading="lazy"
+          onerror={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
+        />
+      {/if}
     {/if}
     <div class="browse-card-content">
     <div class="browse-card-header">
@@ -209,6 +224,21 @@
     aspect-ratio: 16 / 9;
     object-fit: cover;
     background: var(--color-bg-stripes);
+  }
+
+  /* A header-media card ships a still per theme (see thumbDark). Only one is
+     ever displayed; `data-theme` is always resolved to light or dark on <html>
+     before paint, so these two rules cover every case. */
+  .browse-card-thumb-dark {
+    display: none;
+  }
+
+  :global(html[data-theme='dark']) .browse-card-thumb-light {
+    display: none;
+  }
+
+  :global(html[data-theme='dark']) .browse-card-thumb-dark {
+    display: block;
   }
 
   /* The interior is what the placeholder holds space for (issue #133): the

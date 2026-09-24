@@ -1,6 +1,7 @@
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import SeriesNavRenderer from '@components/card-renderers/SeriesNavRenderer.astro';
 import LinoCanvas from '@components/header-media/LinoCanvas.astro';
+import StarSystem from '@components/header-media/stars/StarSystem.astro';
 
 // Keyed by renderer *name* (the cascaded _config.yaml / frontmatter `renderer`
 // value), not collection name. Only renderers with a dedicated component are
@@ -63,7 +64,8 @@ export const NAV_RENDERERS: Record<string, AstroComponentFactory> = {
 // mounted `client:load` dies with NoMatchingImport. Each entry is a thin
 // wrapper that statically imports its own island — see LinoCanvas.astro.
 export const HEADER_MEDIA_RENDERERS: Record<string, AstroComponentFactory> = {
-  'lino-canvas': LinoCanvas,
+    'lino-canvas': LinoCanvas,
+    'star-system': StarSystem
 };
 
 /**

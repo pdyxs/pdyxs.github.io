@@ -210,13 +210,17 @@ describe('promotion rehearsal', () => {
     expect(mainContent('src/content/what/posts/seed/index.md')).toContain('v3');
   });
 
-  it('keeps `git log main..dev` honest, so what is unpromoted is knowable', () => {
+  it('leaves code unpromoted that `git log main..dev` cannot see — only the tree diff can', () => {
+    write('src/lib/code.ts', 'export const v = 2;\n');
     write('src/content/what/posts/seed/index.md', card({ inspected: true, body: 'edited' }));
-    commitAll('edit seed');
+    commitAll('code and content together');
     promote();
 
-    // -s ours records dev as a parent, so a promoted commit leaves the list.
+    // -s ours records dev as a parent even on a content-only run, so the log
+    // empties while the code change is still waiting. The dispatch asks the
+    // tree, not the log, for exactly this reason.
     expect(git('log', '--oneline', 'main..dev').trim()).toBe('');
+    expect(git('diff', '--name-only', 'main', 'dev').trim()).toBe('src/lib/code.ts');
   });
 
   it('promotes nothing, and says so, when dev and main agree', () => {
