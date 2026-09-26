@@ -8,7 +8,7 @@
 // project, rendering the real wrappers through the container.
 import { describe, it, expect } from 'vitest';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import { getContainerRenderer } from '@astrojs/svelte';
+import { getContainerRenderer } from '@astrojs/svelte/container-renderer';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
 import LinoCanvas from '@components/header-media/LinoCanvas.astro';
 import StarSystem from '@components/header-media/stars/StarSystem.astro';

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
-import { getContainerRenderer } from '@astrojs/svelte';
+import { getContainerRenderer } from '@astrojs/svelte/container-renderer';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
 import IndexPage from '../../pages/index.astro';
 import LensNamePage from '../../pages/lens/[name].astro';

@@ -30,9 +30,10 @@
     "generate:header-previews": "node scripts/generate-header-previews.mjs"
   },
   "dependencies": {
-    "@astrojs/rss": "^4.0.18",
-    "@astrojs/svelte": "^8.0.5",
-    "astro": "^6.1.4",
+    "@astrojs/markdown-remark": "^7.3.1",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/svelte": "^9.0.1",
+    "astro": "^7.3.5",
     "svelte": "^5.55.4"
   },
   "devDependencies": {

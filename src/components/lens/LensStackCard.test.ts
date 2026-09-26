@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import { getContainerRenderer } from '@astrojs/svelte';
+import { getContainerRenderer } from '@astrojs/svelte/container-renderer';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
 import LensStackCard from '@components/lens/LensStackCard.astro';
 import { DEFAULT_BROWSE_LENS_ID } from '@browse/lenses/lens-registry';

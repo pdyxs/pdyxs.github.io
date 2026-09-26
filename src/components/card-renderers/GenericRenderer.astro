@@ -330,9 +330,10 @@ const galleryImages = await Promise.all(
               <blockquote class="generic-quote">{q.quote}</blockquote>
               {(q.by || q.in) && (
                 <p class="generic-quote-attribution">
-                  {q.by}
-                  {q.by && q.in && ', '}
-                  {q.in && <a href={q.in.url} target="_blank" rel="noopener noreferrer">{q.in.text}</a>}
+                  {/* One line: Astro 7's compiler keeps the newline between
+                      adjacent expressions as a space, which put one before the
+                      comma ("Name , Source"). */}
+                  {q.by}{q.by && q.in && ', '}{q.in && <a href={q.in.url} target="_blank" rel="noopener noreferrer">{q.in.text}</a>}
                 </p>
               )}
             </li>

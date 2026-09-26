@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
+import { unified } from '@astrojs/markdown-remark';
 import { REDIRECTS } from './src/data/redirects.generated.ts';
 import { rehypeExternalLinks } from './src/lib/render/external-links.ts';
 import { rehypeVideoEmbeds } from './src/lib/render/video-embeds.ts';
@@ -15,7 +16,23 @@ export default defineConfig({
   // hand-edited. In a static build Astro emits one meta-refresh HTML page per
   // entry, which is the only redirect mechanism GitHub Pages offers.
   redirects: REDIRECTS,
+  // Astro 7 changed the default to 'jsx', which strips whitespace between
+  // inline elements (`<b>a</b> <i>b</i>` renders "ab"). Pinned to the v6
+  // HTML-aware compression so the upgrade changes no rendered output; moving
+  // to 'jsx' means auditing every inline boundary first.
+  compressHTML: true,
   markdown: {
+    // Astro 7's default processor is Sätteri, which does not run remark/rehype
+    // plugins. The two below are rehype plugins, so the unified pipeline stays
+    // until they are ported.
+    processor: unified({
+      // Order matters: rehypeVideoEmbeds replaces a bare-video-link paragraph
+      // with a figure, so the anchor is gone before rehypeExternalLinks (which
+      // opens off-site links in a new tab, decided in one place instead of the
+      // per-link `{:target="_blank"}` annotations the Jekyll content carried)
+      // could give it a target.
+      rehypePlugins: [rehypeVideoEmbeds, rehypeExternalLinks],
+    }),
     // Shiki is off: its themes hardcode hex colours (the default `github-dark`
     // painted every code block #24292e in both themes), and the palette here is
     // two colours — ink and paper — with no room for syntax hues. Astro then
@@ -23,12 +40,6 @@ export default defineConfig({
     // case lands as `<code>` with no class, which is the hook the wrap rule
     // uses to tell prose-in-a-fence from real code.
     syntaxHighlight: false,
-    // Order matters: rehypeVideoEmbeds replaces a bare-video-link paragraph
-    // with a figure, so the anchor is gone before rehypeExternalLinks (which
-    // opens off-site links in a new tab, decided in one place instead of the
-    // per-link `{:target="_blank"}` annotations the Jekyll content carried)
-    // could give it a target.
-    rehypePlugins: [rehypeVideoEmbeds, rehypeExternalLinks],
   },
   vite: {
     server: {
