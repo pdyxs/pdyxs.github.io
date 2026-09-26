@@ -40,14 +40,14 @@
     "@astrojs/check": "^0.9.9",
     "@types/js-yaml": "^4.0.9",
     "@types/picomatch": "^4.0.3",
-    "@vitest/ui": "^4.1.4",
+    "@vitest/ui": "^4.1.11",
     "gray-matter": "^4.0.3",
     "happy-dom": "^20.8.9",
     "playwright-core": "^1.63.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.4",
     "svelte-check": "^4.7.4",
     "svgo": "^4.0.2",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.11"
   }
 }
