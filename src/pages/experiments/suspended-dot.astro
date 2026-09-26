@@ -1,0 +1,593 @@
+---
+import Base from '../../layouts/Base.astro';
+
+// Throwaway /experiments route: the suspended dot. The full stop in pdyxs.wtf
+// hangs from five threads tied to the letters around it (s top, s bottom, x
+// foot, w top, w foot). When the header goes away — opening a card from home —
+// the whole title rises, grows and drifts to the centre as one piece; the dot's only
+// difference is that it STOPS at the top edge (with a small settle), half
+// off-screen, while the letters carry on out of view and the threads pay out.
+// That hanging dot is the mark you click for global tools.
+// The favicon is the same rig in a square frame.
+//
+// The card open is SIMULATED (a mock home list and a mock card), not wired
+// into CardStack.svelte: on the real site the header's exit is a view
+// transition that morphs the title into the card header, which this idea
+// would replace.
+//
+// Springs are hand-rolled (a damped spring is ten lines, and the target moves
+// every frame with the scroll, which is what animation libraries fight).
+// Thread sag is solved from each thread's rest length, not simulated.
+
+const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
+---
+
+<Base title="Suspended dot">
+  <div class="sd">
+    <header class="sd-header">
+      <h1 class="site-title sd-title">
+        pdy<span data-l="x">x</span><span data-l="s">s</span><span class="sd-slot">.</span><span data-l="w">w</span>tf
+      </h1>
+      <p class="site-tagline">Paul Sztajer — games, puzzles and writing</p>
+    </header>
+
+    <main class="sd-body">
+      {/* Home: a list of cards to open. */}
+      <section class="sd-home">
+        <p>
+          Open a card. The header leaves upwards; the dot lags behind, swings to
+          the centre and hangs from the top edge. Close the card to bring it
+          back. Click the hanging dot for the (placeholder) tools.
+        </p>
+        <ul class="sd-list">
+          {['Summoning Fog', 'Lino Tiles', 'Who I am', 'This website', 'Gotta Go'].map((t) => (
+            <li><button type="button" class="sd-open" data-title={t}>{t}</button></li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Card: stands in for an opened card. */}
+      <article class="sd-card" hidden>
+        <div class="sd-card-header">
+          <span class="sd-card-title"></span>
+          <button type="button" class="sd-close" aria-label="Close card">✕</button>
+        </div>
+        {PARAGRAPHS.map((i) => (
+          <p>
+            Card body paragraph {i + 1}. The dot keeps hanging while you read;
+            it only drops back into the title when the header returns.
+          </p>
+        ))}
+      </article>
+
+      <section class="sd-fav">
+        <h2>Favicon</h2>
+        <p>The same five threads, holding the dot in a square frame. Drawn in the current palette; this page’s tab uses the 32px one.</p>
+        <div class="sd-fav-rows">
+          <div class="sd-fav-row" data-variant="full"><span class="sd-fav-label">full</span></div>
+          <div class="sd-fav-row" data-variant="simple"><span class="sd-fav-label">simple</span></div>
+        </div>
+      </section>
+    </main>
+
+    {/* ── The overlay: dot, threads, hit target ── */}
+    <svg class="sd-overlay" aria-hidden="true">
+      <g class="sd-threads">
+        <path></path><path></path><path></path><path></path><path></path>
+      </g>
+      <rect class="sd-dot"></rect>
+      <g class="sd-debug"></g>
+    </svg>
+    <button type="button" class="sd-hit" aria-label="Tools" aria-expanded="false"></button>
+
+    {/* ── Placeholder tools tray, pulled down from off-screen ── */}
+    <div class="sd-tray" role="region" aria-label="Tools">
+      <span>Tools arrive here: theme, palette, this card’s colours…</span>
+    </div>
+
+    <fieldset class="sd-controls">
+      <legend>tune</legend>
+      <label>title <input type="range" class="sd-in-title" min="24" max="112" value="48" /> <output></output></label>
+      <label>grow to <input type="range" class="sd-in-hang" min="100" max="500" step="25" value="300" /> <output></output></label>
+      <label>settle <input type="range" class="sd-in-swing" min="15" max="100" value="40" /> <output></output></label>
+      <label><input type="checkbox" class="sd-in-debug" /> anchors + hit area</label>
+    </fieldset>
+  </div>
+</Base>
+
+<style>
+  /* The header leaves upwards: a negative top margin as tall as itself,
+     animated, so the page content rides up with it (margin, not a transform —
+     nothing that holds dither may be transformed). */
+  .sd-header {
+    padding: var(--space-xl) 0 var(--space-lg);
+    border-bottom: var(--border-width) solid var(--color-border);
+    transition:
+      margin-top 420ms cubic-bezier(0.5, 0, 0.75, 0),
+      transform 420ms cubic-bezier(0.5, 0, 0.75, 0);
+  }
+  /* Rises out AND drifts so the dot's slot lands on the centre line: one shared
+     motion for the whole title. translateX is safe here only because nothing
+     in the header is dithered (styling.md). */
+  .sd[data-mode='card'] .sd-header {
+    margin-top: calc(-1 * var(--sd-header-h, 12rem));
+    transform: translateX(var(--sd-dx, 0px));
+  }
+  .sd[data-mode='page'] .sd-header { transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1); }
+
+  /* The title line grows as it rises, scaled about the dot's slot so the dot
+     stays put within it — that growth is what brings the dot to its hanging
+     size. Only the h1 scales, so the tagline still clears the top. Safe to
+     transform: nothing in it is dithered. */
+  .sd-title {
+    transform-origin: var(--sd-ox, 50%) var(--sd-oy, 50%);
+    transition: transform 420ms cubic-bezier(0.5, 0, 0.75, 0);
+  }
+  .sd[data-mode='card'] .sd-title { transform: scale(var(--sd-scale, 1)); }
+  .sd[data-mode='page'] .sd-title { transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1); }
+
+  .sd-list { list-style: none; padding: 0; display: grid; gap: var(--space-sm); }
+  .sd-open {
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    padding: var(--space-md);
+    cursor: pointer;
+  }
+  .sd-open:hover { background: var(--color-bg-hover); }
+
+  .sd-card { border: var(--border-width) solid var(--color-border); margin-top: var(--space-lg); }
+  .sd-card[hidden], .sd-home[hidden] { display: none; }
+  .sd-card p { padding: 0 var(--space-md); }
+  .sd-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    background: var(--dither-4);
+    border-bottom: var(--border-width) solid var(--color-border);
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+  }
+  .sd-card-title { background: var(--color-bg); padding: 0 var(--space-xs); }
+  .sd-close {
+    font: inherit;
+    font-size: 1rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    cursor: pointer;
+  }
+  /* The period keeps its advance and kerning, but is drawn by the overlay. */
+  .sd-slot { color: transparent; }
+  .sd-body { max-width: var(--max-width); padding-bottom: 40vh; }
+
+  .sd-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 900;
+    overflow: visible;
+  }
+  /* At rest in the title, the overlay lives in the document so it scrolls
+     natively with the text (a rAF redraw would trail the scroll by a frame).
+     Only a transition, or hanging, puts it back on the viewport. */
+  .sd[data-overlay='doc'] .sd-overlay,
+  .sd[data-overlay='doc'] .sd-hit { position: absolute; }
+  .sd-threads path {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .sd-dot { fill: var(--color-text); }
+  .sd-debug circle { fill: none; stroke: var(--color-text); stroke-width: 1; }
+
+  .sd-hit {
+    position: fixed;
+    z-index: 901;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .sd[data-debug] .sd-hit { outline: 1px dashed var(--color-text); }
+
+  /* Pulled down from above the viewport. `top`, not a transform: a tray may
+     one day hold dithered controls (styling.md). */
+  .sd-tray {
+    position: fixed;
+    left: 50%;
+    width: min(28rem, calc(100vw - 2 * var(--space-md)));
+    margin-left: calc(min(28rem, calc(100vw - 2 * var(--space-md))) / -2);
+    top: -8rem;
+    z-index: 800;
+    padding: var(--space-lg) var(--space-md) var(--space-md);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    border-top: none;
+    font-size: 0.9rem;
+    text-align: center;
+    transition: top 320ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+  .sd[data-tray] .sd-tray { top: 0; }
+
+  .sd-controls {
+    position: fixed;
+    left: var(--space-sm);
+    bottom: var(--space-sm);
+    z-index: 950;
+    display: grid;
+    gap: 2px;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    font-size: 0.75rem;
+  }
+  .sd-controls label { display: flex; align-items: center; gap: var(--space-xs); }
+  .sd-controls input[type='range'] { width: 7rem; }
+  .sd-controls output { font-family: var(--font-mono); min-width: 2.5em; }
+
+  .sd-fav { margin-top: var(--space-xl); }
+  .sd-fav-rows { display: grid; gap: var(--space-md); }
+  .sd-fav-row { display: flex; align-items: flex-end; gap: var(--space-lg); }
+  .sd-fav-label { width: 4em; font-size: 0.8rem; }
+  .sd-fav-row :global(figure) { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; }
+  .sd-fav-row :global(svg) { display: block; image-rendering: pixelated; }
+</style>
+
+<script>
+  // ── Pure bits ──────────────────────────────────────────────────────
+
+  type V = { x: number; y: number };
+  type Spring = { x: number; v: number };
+
+  /** One damped-spring step (unit mass). zeta < 1 overshoots and settles. */
+  function step(s: Spring, target: number, k: number, zeta: number, dt: number) {
+    const c = 2 * zeta * Math.sqrt(k);
+    s.v += (k * (target - s.x) - c * s.v) * dt;
+    s.x += s.v * dt;
+  }
+
+  /**
+   * A thread from a to b whose rest length is `len`, hanging under gravity:
+   * a quadratic curve with the parabola's sag for that much slack, nudged
+   * against the dot's velocity so it trails when the dot swings.
+   */
+  function threadPath(a: V, b: V, len: number, drag: V): string {
+    const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const sag = len > d ? Math.sqrt((3 * d * (len - d)) / 8) : 0;
+    const mx = (a.x + b.x) / 2 - drag.x * 0.02;
+    const my = (a.y + b.y) / 2 + 2 * sag - drag.y * 0.02;
+    return `M${a.x.toFixed(1)} ${a.y.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
+  }
+
+  /** Where each thread meets the dot, as fractions of its square. */
+  const DOT_ATTACH: V[] = [
+    { x: 0, y: 0 }, // 1 → s top
+    { x: 1, y: 0 }, // 2 → w top
+    { x: 0, y: 0.7 }, // 3 → s bottom
+    { x: 0.4, y: 1 }, // 4 → x foot
+    { x: 1, y: 1 }, // 5 → w foot
+  ];
+  /** Rest length as a multiple of the at-rest distance: the lower three sag. */
+  const SLACK = [1.04, 1.04, 1.12, 1.3, 1.22];
+
+  // ── Page ───────────────────────────────────────────────────────────
+
+  const root = document.querySelector<HTMLElement>('.sd')!;
+  const title = root.querySelector<HTMLElement>('.sd-title')!;
+  const slot = root.querySelector<HTMLElement>('.sd-slot')!;
+  const letter = (l: string) => root.querySelector<HTMLElement>(`[data-l="${l}"]`)!;
+  const paths = [...root.querySelectorAll<SVGPathElement>('.sd-threads path')];
+  const dotEl = root.querySelector<SVGRectElement>('.sd-dot')!;
+  const debugG = root.querySelector<SVGGElement>('.sd-debug')!;
+  const hit = root.querySelector<HTMLButtonElement>('.sd-hit')!;
+  const inTitle = root.querySelector<HTMLInputElement>('.sd-in-title')!;
+  const inHang = root.querySelector<HTMLInputElement>('.sd-in-hang')!;
+  const inSwing = root.querySelector<HTMLInputElement>('.sd-in-swing')!;
+  const inDebug = root.querySelector<HTMLInputElement>('.sd-in-debug')!;
+
+  document.querySelectorAll<HTMLElement>('palette-picker').forEach((el) => (el.style.display = 'none'));
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  /**
+   * The rig, measured from the laid-out title: each anchor's offset from the
+   * dot's centre. The anchors are the real letters, so they move rigidly with
+   * the title; only the dot ever leaves them.
+   */
+  let rig: { dot: number; slotW: number; slotDelta: V; anchors: V[] } | null = null;
+
+  /** How much the title is currently scaled, read off the live slot box. */
+  function liveScale(): number {
+    return slot.getBoundingClientRect().width / rig!.slotW;
+  }
+
+  /** The dot slot's centre in viewport coords, read live (the header moves and grows). */
+  function realSlot(): V {
+    const r = slot.getBoundingClientRect();
+    const k = r.width / rig!.slotW;
+    return { x: r.left + rig!.slotDelta.x * k, y: r.top + rig!.slotDelta.y * k };
+  }
+
+  function measure() {
+    const px = parseFloat(getComputedStyle(title).fontSize);
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = `400 ${px}px "Saira Stencil"`;
+    const ink = (ch: string, el: HTMLElement) => {
+      const m = ctx.measureText(ch);
+      const r = el.getBoundingClientRect();
+      const baseline = r.top + m.fontBoundingBoxAscent + (r.height - m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+      return {
+        left: r.left - m.actualBoundingBoxLeft,
+        right: r.left + m.actualBoundingBoxRight,
+        top: baseline - m.actualBoundingBoxAscent,
+        bottom: baseline + m.actualBoundingBoxDescent,
+      };
+    };
+    const dotBox = ink('.', slot);
+    const size = dotBox.right - dotBox.left;
+    const centre = { x: (dotBox.left + dotBox.right) / 2, y: (dotBox.top + dotBox.bottom) / 2 };
+    const s = ink('s', letter('s'));
+    const x = ink('x', letter('x'));
+    const w = ink('w', letter('w'));
+    const sw = s.right - s.left;
+    const ww = w.right - w.left;
+    const anchors: V[] = [
+      { x: s.right - 0.05 * sw, y: s.top + 0.06 * (s.bottom - s.top) }, // s top tip
+      { x: w.left + 0.04 * ww, y: w.top }, // w top
+      { x: s.left + 0.72 * sw, y: s.bottom }, // s bottom tip
+      { x: x.right - 0.02 * (x.right - x.left), y: x.bottom }, // x foot
+      { x: w.left + 0.86 * ww, y: w.bottom }, // w foot
+    ].map((a) => ({ x: a.x - centre.x, y: a.y - centre.y }));
+    const sr = slot.getBoundingClientRect();
+    rig = { dot: size, slotW: sr.width, slotDelta: { x: centre.x - sr.left, y: centre.y - sr.top }, anchors };
+  }
+
+  /** Where the dot stops: its centre on the top edge, so half of it shows. */
+  const HANG_Y = 0;
+
+  // The dot's centre. x is always the title's, and so is its size (it grows
+  // with the title); only y springs, and only once the dot has stopped.
+  const D = { x: 0, y: { x: 0, v: 0 }, size: 0 };
+  /** True from the moment the rising title carries the dot to the top edge. */
+  let stopped = false;
+  let prevY: number | null = null;
+  /** Keep ticking until this time, while the header's own transition runs. */
+  let busyUntil = 0;
+  let frame = 0;
+  let last = 0;
+  const hanging = () => stopped;
+
+  function tick(now: number) {
+    frame = 0;
+    if (!rig) return;
+    const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+    last = now;
+    const real = realSlot();
+    const vy = prevY === null ? 0 : (real.y - prevY) / dt;
+    prevY = real.y;
+    const zeta = +inSwing.value / 100;
+
+    // The one special thing: carried up with the title, the dot stops at the
+    // edge — caught, like a weight at the end of its string — and dips a
+    // little before settling. A dip rather than an overshoot: only half the
+    // dot is on screen, so any upward bounce would hide it.
+    if (!stopped && root.dataset.mode === 'card' && real.y <= HANG_Y) {
+      stopped = true;
+      D.y.x = HANG_Y;
+      D.y.v = reduced.matches ? 0 : Math.min(260, Math.abs(vy) * 0.15);
+    } else if (stopped && real.y > HANG_Y) {
+      stopped = false; // the returning title has come back down past it
+    }
+
+    D.x = real.x;
+    D.size = rig.dot * liveScale();
+    if (stopped) {
+      if (reduced.matches) { D.y.x = HANG_Y; D.y.v = 0; }
+      else for (let t = dt; t > 0; t -= 1 / 240) step(D.y, HANG_Y, 220, zeta, Math.min(t, 1 / 240));
+    } else {
+      D.y.x = real.y;
+      D.y.v = 0;
+    }
+
+    const moving = Math.abs(D.y.v) > 0.02 || (stopped && Math.abs(D.y.x - HANG_Y) > 0.05);
+    const busy = moving || now < busyUntil;
+    // Settled in the title: hand the overlay to the document and stop. Any
+    // motion (or hanging) puts it back on the viewport first.
+    setAnchored(!stopped && !busy);
+    draw();
+    if (busy) frame = requestAnimationFrame(tick);
+    else prevY = null;
+  }
+
+  /** At rest in the title: drawn into the document, so scrolling never moves it. */
+  let anchored = false;
+  const overlay = root.querySelector<SVGSVGElement>('.sd-overlay')!;
+
+  function setAnchored(on: boolean) {
+    if (on === anchored) return;
+    anchored = on;
+    if (on) root.setAttribute('data-overlay', 'doc');
+    else root.removeAttribute('data-overlay');
+  }
+
+  function draw() {
+    const r = rig!;
+    // Everything below is computed in viewport coords; shift into whatever
+    // box the overlay is positioned against (the viewport, or the document).
+    const o = overlay.getBoundingClientRect();
+    const hb = (hit.offsetParent as HTMLElement | null)?.getBoundingClientRect() ?? { left: 0, top: 0 };
+    const real = realSlot();
+    const k = liveScale();
+    const size = D.size;
+    const dx = D.x - size / 2;
+    const dy = D.y.x - size / 2;
+    dotEl.setAttribute('x', (dx - o.left).toFixed(1));
+    dotEl.setAttribute('y', (dy - o.top).toFixed(1));
+    dotEl.setAttribute('width', size.toFixed(1));
+    dotEl.setAttribute('height', size.toFixed(1));
+    const drag = { x: 0, y: D.y.v };
+    r.anchors.forEach((a, i) => {
+      const A = { x: real.x + a.x * k - o.left, y: real.y + a.y * k - o.top };
+      const B = { x: dx + DOT_ATTACH[i].x * size - o.left, y: dy + DOT_ATTACH[i].y * size - o.top };
+      // Threads pay out as the letters leave the stopped dot, keeping the same
+      // proportion of slack, so the lower three still hang in loops.
+      const len = Math.hypot(B.x - A.x, B.y - A.y) * SLACK[i];
+      paths[i].setAttribute('d', threadPath(A, B, len, drag));
+    });
+    paths.forEach((p) => p.style.setProperty('stroke-width', String(Math.max(1.2, size / 8))));
+
+    // Hit target: never under 44px, centred on the visible part of the dot.
+    const hitSize = Math.max(44, size * 1.6);
+    const visibleTop = Math.max(0, dy);
+    const cy = stopped ? (visibleTop + dy + size) / 2 : D.y.x;
+    hit.style.width = hit.style.height = `${hitSize}px`;
+    hit.style.left = `${D.x - hitSize / 2 - hb.left}px`;
+    hit.style.top = `${Math.max(0, cy - hitSize / 2) - hb.top}px`;
+
+    if (root.hasAttribute('data-debug')) {
+      debugG.innerHTML = r.anchors
+        .map((a) => `<circle cx="${real.x + a.x * k - o.left}" cy="${real.y + a.y * k - o.top}" r="3"></circle>`)
+        .join('');
+    } else debugG.innerHTML = '';
+  }
+
+  const wake = () => { if (!frame) frame = requestAnimationFrame(tick); };
+
+  function relayout() {
+    title.style.fontSize = `${inTitle.value}px`;
+    // Measure in page mode only: in card mode the header is off the top.
+    if (root.dataset.mode !== 'card') {
+      measure();
+      root.style.setProperty('--sd-header-h', `${header.offsetHeight}px`);
+    }
+    wake();
+  }
+
+  // ── Mode: page (header showing) ↔ card (header gone) ──
+  const header = root.querySelector<HTMLElement>('.sd-header')!;
+  const home = root.querySelector<HTMLElement>('.sd-home')!;
+  const card = root.querySelector<HTMLElement>('.sd-card')!;
+  const cardTitle = root.querySelector<HTMLElement>('.sd-card-title')!;
+
+  function setMode(mode: 'page' | 'card', titleText = '') {
+    scrollTo(0, 0);
+    if (mode === 'card') {
+      root.style.setProperty('--sd-header-h', `${header.offsetHeight}px`);
+      // How far the title drifts so the dot's slot ends on the centre line,
+      // and the point it grows about: the dot's own centre.
+      const real = realSlot();
+      const tr = title.getBoundingClientRect();
+      root.style.setProperty('--sd-dx', `${innerWidth / 2 - real.x}px`);
+      root.style.setProperty('--sd-ox', `${real.x - tr.left}px`);
+      root.style.setProperty('--sd-oy', `${real.y - tr.top}px`);
+      root.style.setProperty('--sd-scale', String(+inHang.value / 100));
+    }
+    root.dataset.mode = mode;
+    if (mode === 'card') {
+      cardTitle.textContent = titleText;
+      home.hidden = true;
+      card.hidden = false;
+    } else {
+      home.hidden = false;
+      card.hidden = true;
+      root.removeAttribute('data-tray');
+      hit.setAttribute('aria-expanded', 'false');
+    }
+    busyUntil = performance.now() + 500;
+    wake();
+  }
+  root.querySelectorAll<HTMLButtonElement>('.sd-open').forEach((b) =>
+    b.addEventListener('click', () => setMode('card', b.dataset.title)),
+  );
+  root.querySelector('.sd-close')!.addEventListener('click', () => setMode('page'));
+
+  // ── Controls ──
+  const show = (input: HTMLInputElement, fmt: (v: string) => string) => {
+    const out = input.parentElement!.querySelector('output')!;
+    const upd = () => (out.value = fmt(input.value));
+    input.addEventListener('input', upd);
+    upd();
+  };
+  show(inTitle, (v) => `${v}px`);
+  show(inHang, (v) => `×${(+v / 100).toFixed(2)}`);
+  show(inSwing, (v) => `ζ ${(+v / 100).toFixed(2)}`);
+  inTitle.addEventListener('input', relayout);
+  inHang.addEventListener('input', wake);
+  inSwing.addEventListener('input', wake);
+  inDebug.addEventListener('change', () => {
+    root.toggleAttribute('data-debug', inDebug.checked);
+    draw();
+  });
+
+  hit.addEventListener('click', () => {
+    const open = root.toggleAttribute('data-tray');
+    hit.setAttribute('aria-expanded', String(open));
+  });
+
+  // Scrolling never animates the dot: at rest it scrolls with the document,
+  // and hanging it is pinned to the viewport. Only mid-transition does a
+  // scroll need a redraw, and the running tick already covers that.
+  root.dataset.mode = 'page';
+  addEventListener('resize', relayout);
+
+  // ── Favicon: the rig in a square frame ──
+  function favicon(size: number, variant: 'full' | 'simple', ink: string, paper: string): string {
+    // Drawn on a 32-unit grid, from the sketch: dot about half the frame,
+    // threads to the top edge (×2), the left edge, and the bottom corners.
+    const sw = variant === 'simple' ? 3 : size <= 32 ? 2 : 1.4;
+    const threads =
+      variant === 'simple'
+        ? ['M9 9 L9 0', 'M23 9 L28 0', 'M9 21 L0 21', 'M15 23 L3 32', 'M23 23 L32 30']
+        : ['M8.5 8 L8.5 0', 'M23.5 8 Q26 4 28 0', 'M8.5 22 L0 22', 'M15 23.5 Q13 30 1 30', 'M23.5 23.5 Q25 28 32 29'];
+    const dot = variant === 'simple' ? '<rect x="9" y="9" width="14" height="14"/>' : '<rect x="8.5" y="8" width="15" height="15.5"/>';
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32">`
+      + `<rect width="32" height="32" fill="${paper}"/>`
+      + `<g fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linecap="square">${threads.map((d) => `<path d="${d}"/>`).join('')}</g>`
+      + `<g fill="${ink}">${dot}</g>`
+      + `<rect x="0.75" y="0.75" width="30.5" height="30.5" fill="none" stroke="${ink}" stroke-width="1.5"/>`
+      + `</svg>`;
+  }
+
+  function renderFavicons() {
+    const cs = getComputedStyle(document.body);
+    const ink = cs.color;
+    const paper = cs.backgroundColor;
+    root.querySelectorAll<HTMLElement>('.sd-fav-row').forEach((row) => {
+      const v = row.dataset.variant as 'full' | 'simple';
+      row.querySelectorAll('figure').forEach((f) => f.remove());
+      for (const s of [16, 32, 64, 180]) {
+        const fig = document.createElement('figure');
+        fig.innerHTML = `${favicon(s, v, ink, paper)}<figcaption>${s}px</figcaption>`;
+        row.appendChild(fig);
+      }
+    });
+    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.type = 'image/svg+xml';
+    link.href = `data:image/svg+xml,${encodeURIComponent(favicon(32, 'full', ink, paper))}`;
+  }
+
+  // Palette or theme changes recolour the favicon.
+  new MutationObserver(() => requestAnimationFrame(renderFavicons)).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['style', 'data-theme'],
+  });
+
+  document.fonts.ready.then(() => {
+    relayout();
+    renderFavicons();
+  });
+</script>
