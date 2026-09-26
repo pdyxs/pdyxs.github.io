@@ -75,6 +75,11 @@
   --font-mono:    ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
 
   --font-size-base: 18px;
+  /* Card body text (.card-prose). Mobile values; stack-desktop.css restores
+     the base size and leading, and turns hyphenation off, above 681px. */
+  --font-size-prose:   16px;
+  --line-height-prose: 1.6;
+  --hyphens-prose:     auto;
   --radius:       0px;          /* sharp corners suit e-ink */
   --radius-sm:    4px;
   --border-width: 2px;

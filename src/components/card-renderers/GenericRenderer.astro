@@ -304,10 +304,12 @@ const galleryImages = await Promise.all(
       </p>
     )}
 
+    {/* .card-prose is what the reading typography (base.css) keys on — the
+        markdown only, not the card UI that shares .stack-card-body-inner. */}
     {Content
-      ? <Content />
+      ? <div class="card-prose"><Content /></div>
       : data.description
-        ? <p>{data.description}</p>
+        ? <div class="card-prose"><p>{data.description}</p></div>
         : null}
 
     {galleryImages.length > 0 && <ImageGallery images={galleryImages} client:load />}

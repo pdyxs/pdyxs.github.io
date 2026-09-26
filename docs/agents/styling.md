@@ -169,6 +169,17 @@ The stroke is the trap. `-webkit-text-stroke` is inherited and paper-coloured by
 
 These are applied as per-component rules rather than one shared class because Svelte's scoping inflates selector specificity — a global `.is-selected` loses to a component's own scoped base rule. The tokens are the contract; the rules live with the component.
 
+## Card prose is `.card-prose`, and its type is tokenised
+
+`GenericRenderer` wraps the markdown body in `.card-prose`; the reading rules in
+`base.css` key on that, not on `.stack-card-body-inner`, which also holds card UI
+(tag strips, credits, lens content). Size, leading and hyphenation are tokens —
+`--font-size-prose`, `--line-height-prose`, `--hyphens-prose` — set for mobile in
+`tokens.css` (16px / 1.6 / `auto`) and restored in the desktop `:root` block of
+`stack-desktop.css` (base size / 1.7 / `manual`). `text-wrap: pretty` and
+`overflow-wrap: break-word` apply at every width; without the latter, a run with
+no break opportunity is clipped by `.stack-card-body`'s `overflow: hidden`.
+
 ## Code blocks are monochrome, and an untagged fence wraps
 
 `markdown.syntaxHighlight` is `false` in `astro.config.mjs`. Shiki's themes hardcode hex (the default `github-dark` painted every block `#24292e` in *both* themes), and a two-colour palette has nowhere to put syntax hues. Astro therefore emits bare `<pre><code>` and `src/styles/base.css` owns the surface: ink on `--dither-2`, with the `.dither-text` paper stroke so the dots don't read through the mono glyphs.

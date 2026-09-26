@@ -49,7 +49,10 @@
 
   let wiggleEl: HTMLDivElement;
 
-  function handleMouseMove(event: MouseEvent) {
+  // Desktop-only: a tap fires a compatibility mousemove at the touch point,
+  // so listen for pointer events and ignore anything that isn't a mouse.
+  function handlePointerMove(event: PointerEvent) {
+    if (event.pointerType !== 'mouse') return;
     const r = wiggleEl.getBoundingClientRect();
     dM[0] = -((event.clientX - r.left)/r.width - 0.5);
     dM[1] = -((event.clientY - r.top)/r.height - 0.5);
@@ -111,7 +114,7 @@
 
 <div class="container"
     bind:this={wiggleEl}
-    onmousemove={handleMouseMove}
+    onpointermove={handlePointerMove}
     role="img">
     <div class="lino-wiggle"
         style:--dx={dM[0]}

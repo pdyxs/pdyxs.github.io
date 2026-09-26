@@ -62,6 +62,40 @@ img { max-width: 100%; height: auto; display: block; }
   cursor: zoom-in;
 }
 
+/* Card prose: the markdown body of a card (GenericRenderer's .card-prose).
+   Size and leading come from tokens, smaller on mobile, where 18px Montserrat
+   left ~33 characters a line. Everything else inherits, so a component's own
+   size inside the prose still wins.
+     - hyphens (mobile only, via the token) + the 6·3·3 limit: short lines
+       rag badly without hyphenation; the limit stops breaks like "a-bout".
+       Needs <html lang>.
+     - text-wrap: pretty: whole-paragraph breaking, mainly no lone last word.
+       Ignored where unsupported.
+     - overflow-wrap: break-word: a run with no break opportunity
+       ("sailing/kayaking/…") otherwise overflows and is clipped by
+       .stack-card-body's overflow: hidden. */
+.card-prose {
+  font-size: var(--font-size-prose);
+  line-height: var(--line-height-prose);
+  -webkit-hyphens: var(--hyphens-prose);
+  hyphens: var(--hyphens-prose);
+  -webkit-hyphenate-limit-before: 3;
+  -webkit-hyphenate-limit-after: 3;
+  hyphenate-limit-chars: 6 3 3;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+/* Headings are set, not flowed: no hyphenation, and balance their lines. */
+.card-prose :is(h1, h2, h3, h4) {
+  hyphens: manual;
+  text-wrap: balance;
+}
+
+/* The wrapper makes the prose's last paragraph a :last-child, which zeroes
+   its margin; put that gap back when something follows the prose. */
+.card-prose:not(:last-child) { margin-bottom: var(--space-md); }
+
 strong { font-weight: 700; }
 
 /* ── Video embeds ──────────────────────────────────────────────── */

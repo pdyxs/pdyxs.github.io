@@ -7,6 +7,10 @@
        bands is enough to read as "the stack continues up and to the left"
        while still leaving the sentinel on screen. */
     --stack-scroll-peek: 24px;
+
+    --font-size-prose:   var(--font-size-base);
+    --line-height-prose: 1.7;
+    --hyphens-prose:     manual;
   }
 
   .site-main {
