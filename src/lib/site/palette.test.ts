@@ -5,6 +5,8 @@ import {
   axis,
   contrastRatio,
   findSystem,
+  hueBump,
+  warpedHue,
   formatOklch,
   hslToOklch,
   parseOklch,
@@ -94,6 +96,50 @@ describe.each(PALETTE_SYSTEMS)('system $id', (system) => {
 
   it('a full hue turn along x comes back to where the sweep started', () => {
     expect(system.pick({ x: 1, y: 0.5 })).toEqual(system.pick({ x: 0.12, y: 0.5 }));
+  });
+});
+
+describe('hue shaping', () => {
+  const bands = [
+    { centre: 150, halfWidth: 45, stretch: 1.5 },
+    { centre: 80, halfWidth: 35, stretch: -0.6 },
+    { centre: 215, halfWidth: 40, stretch: -0.6 },
+  ];
+  const share = (b: typeof bands, from: number, to: number) => {
+    let n = 0;
+    for (let i = 0; i < 1000; i++) {
+      const h = warpedHue(265, i / 1000, b) % 360;
+      if (h >= from && h < to) n++;
+    }
+    return n / 1000;
+  };
+
+  it('bumps 1 at the centre, 0 outside the band, across the 0/360 seam', () => {
+    expect(hueBump(150, 150, 75)).toBe(1);
+    expect(hueBump(250, 150, 75)).toBe(0);
+    expect(hueBump(350, 10, 40)).toBeCloseTo(0.5, 5);
+  });
+
+  it('warps a full sweep from h0 once round, monotonically', () => {
+    expect(warpedHue(265, 0, bands)).toBeCloseTo(265, 5);
+    expect(warpedHue(265, 1, bands)).toBeCloseTo(625, 5);
+    let prev = -Infinity;
+    for (let i = 0; i <= 100; i++) {
+      const h = warpedHue(265, i / 100, bands);
+      expect(h).toBeGreaterThan(prev);
+      prev = h;
+    }
+  });
+
+  it('with no bands it is the even sweep', () => {
+    expect(warpedHue(265, 0.25, [])).toBeCloseTo(355, 1);
+  });
+
+  it('green grows at the expense of khaki and slate, not purple', () => {
+    expect(share(bands, 120, 170)).toBeGreaterThan(share([], 120, 170) * 1.8);
+    expect(share(bands, 70, 120)).toBeLessThan(share([], 70, 120));
+    expect(share(bands, 200, 250)).toBeLessThan(share([], 200, 250));
+    expect(share(bands, 280, 350)).toBeCloseTo(share([], 280, 350), 1);
   });
 });
 

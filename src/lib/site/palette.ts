@@ -206,14 +206,90 @@ export interface PaletteSystem {
   pick: (p: Point) => Palette;
 }
 
-/** x drives the light colour, y the dark one, each with its own ramp + hue. */
-function independent(space: Space, light: Target, dark: Target) {
+/**
+ * Reshapes the dark end's hue sweep. Dark greens can hold very little chroma
+ * (green carries most of the luminance, so a green at L 0.3 is barely
+ * coloured), and green spans only ~30° of an even hue sweep, so it shows up as
+ * a thin, murky band. Shaping lifts one band's lightness, where there is more
+ * chroma to be had, and re-divides the screen between hues: a band with
+ * positive `stretch` gets more screen per degree, a negative one gets less.
+ * The space has to come from somewhere, so compressing the dull stretches
+ * (khaki, slate) is what lets green grow without squashing the vivid purples.
+ */
+export interface HueBand {
+  centre: number; // degrees
+  halfWidth: number; // degrees either side where the effect eases to nothing
+  stretch: number; // extra screen per degree at the centre; negative compresses
+}
+
+export interface HueShaping {
+  lift?: { centre: number; halfWidth: number; amount: number }; // added to target L
+  bands: HueBand[];
+}
+
+/** A raised-cosine bump: 1 at `centre`, easing to 0 at ±`halfWidth` degrees. */
+export function hueBump(h: number, centre: number, halfWidth: number): number {
+  const d = Math.abs((((h - centre) % 360) + 540) % 360 - 180);
+  return d >= halfWidth ? 0 : 0.5 * (1 + Math.cos((Math.PI * d) / halfWidth));
+}
+
+/** Screen per degree at hue `h`; never below a floor, so no hue vanishes. */
+function hueWeight(h: number, bands: HueBand[]): number {
+  let w = 1;
+  for (const b of bands) w += b.stretch * hueBump(h, b.centre, b.halfWidth);
+  return Math.max(0.15, w);
+}
+
+const WARP_STEPS = 720;
+const warpTables = new Map<string, Float64Array>();
+
+/**
+ * Sweep fraction `u` (0..1) → hue, starting at `h0` and going once round the
+ * circle, spending hueWeight(h) screen per degree. The inverse of the
+ * cumulative weight, via a cached table.
+ */
+export function warpedHue(h0: number, u: number, bands: HueBand[]): number {
+  const key = `${h0}|${JSON.stringify(bands)}`;
+  let cdf = warpTables.get(key);
+  if (!cdf) {
+    cdf = new Float64Array(WARP_STEPS + 1);
+    for (let i = 1; i <= WARP_STEPS; i++) {
+      cdf[i] = cdf[i - 1] + hueWeight(h0 + (360 * (i - 0.5)) / WARP_STEPS, bands);
+    }
+    for (let i = 1; i <= WARP_STEPS; i++) cdf[i] /= cdf[WARP_STEPS];
+    warpTables.set(key, cdf);
+  }
+  const target = clamp01(u);
+  let lo = 0;
+  let hi = WARP_STEPS;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (cdf[mid] < target) lo = mid;
+    else hi = mid;
+  }
+  const span = cdf[hi] - cdf[lo];
+  const frac = span > 0 ? (target - cdf[lo]) / span : 0;
+  return h0 + (360 * (lo + frac)) / WARP_STEPS;
+}
+
+/**
+ * x drives the light colour, y the dark one, each with its own ramp + hue.
+ * `darkShaping` optionally reshapes the dark sweep (see HueShaping).
+ */
+function independent(space: Space, light: Target, dark: Target, darkShaping?: HueShaping) {
   return ({ x, y }: Point): Palette => {
     const ax = axis(x);
     const ay = axis(y);
+    let darkHue = dark.h + ay.turn;
+    let darkTarget = dark;
+    if (darkShaping) {
+      darkHue = warpedHue(dark.h, ay.turn / 360, darkShaping.bands);
+      const lift = darkShaping.lift;
+      if (lift) darkTarget = { ...dark, L: dark.L + lift.amount * hueBump(darkHue, lift.centre, lift.halfWidth) };
+    }
     return {
       light: rampColour(space, 'light', light, ax.t, light.h + ax.turn),
-      dark: rampColour(space, 'dark', dark, ay.t, dark.h + ay.turn),
+      dark: rampColour(space, 'dark', darkTarget, ay.t, darkHue),
     };
   };
 }
@@ -235,10 +311,24 @@ function linked(space: Space, light: Target, dark: Target) {
 
 const SOFT_LIGHT: Target = { L: 0.95, C: 0.04, h: 90 };
 const SOFT_DARK: Target = { L: 0.3, C: 0.2, h: 265 };
+const GREEN_SHAPING: HueShaping = {
+  lift: { centre: 150, halfWidth: 75, amount: 0.08 },
+  bands: [
+    { centre: 150, halfWidth: 45, stretch: 1.5 }, // green: more
+    { centre: 80, halfWidth: 35, stretch: -0.6 }, // khaki/olive: less
+    { centre: 215, halfWidth: 40, stretch: -0.6 }, // slate teal: less
+  ],
+};
 const VIVID_LIGHT: Target = { L: 0.88, C: 0.12, h: 90 };
 const VIVID_DARK: Target = { L: 0.3, C: 0.14, h: 265 };
 
 export const PALETTE_SYSTEMS: PaletteSystem[] = [
+  {
+    id: 'oklch-greens',
+    label: 'OKLCH greens · x light, y dark',
+    describe: 'As OKLCH, but the dark greens are lifted in lightness and given more of the sweep.',
+    pick: independent('oklch', SOFT_LIGHT, SOFT_DARK, GREEN_SHAPING),
+  },
   {
     id: 'oklch',
     label: 'OKLCH · x light, y dark',
