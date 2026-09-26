@@ -137,6 +137,14 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 
 The palette is **two colours**: ink (`--color-text`) and paper (`--color-bg`), pure black and pure white, swapped by `data-theme`. Everything greyscale derives from those two — `--color-surface`, `--color-border-light` and `--color-text-muted` are aliases, and every other tone is a `--dither-N` level built from the same two colours. There is no grey. De-emphasis is expressed by size and weight, never by a faded value; **an `opacity` used to soften a colour is a bug**, because it renders as the grey the palette doesn't have.
 
+Black and white are the **defaults**, not constants: the palette picker
+(`PalettePicker.astro`, maths in `src/lib/site/palette.ts`) lets a visitor
+replace the pair. It writes `--color-{light,dark}-{srgb,p3}` onto `<html>`, each
+an `oklch()` string already fitted to that gamut, and `tokens.css` selects the P3
+pair under `@media (color-gamut: p3)`. Everything downstream, dithers included,
+follows because it only ever references the two tokens, which is why no call
+site may name a colour directly.
+
 ## The dither is one fixed, viewport-anchored grid — never give it a transformed ancestor
 
 Every `--dither-N` is a stack of `radial-gradient(circle at 0.5px 0.5px, … 0.564px, #0000 0.584px) 0 0/4px 4px **fixed**` layers — sub-pixel dots in 1px cells. `gen-dither.mjs` picked `TILE = 4` so those cells land on the device pixel grid (`// 4px/4 = 1px cells, pixel-aligned`), and `fixed` anchors the grid to the **viewport** rather than to each element's own box.

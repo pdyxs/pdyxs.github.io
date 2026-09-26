@@ -1,0 +1,335 @@
+---
+// The palette picker: drag the swatch anywhere on the page and the point you
+// drop it at picks the two site colours (--color-light / --color-dark). The
+// mapping from point → palette is a PaletteSystem in src/lib/site/palette.ts.
+//
+// A self-contained custom element, so any number of instances wire themselves
+// up wherever their markup lands (including a fragment injected after load).
+// It currently always targets the page; see styling.md before scoping one to
+// a card — the derived tokens and dithers resolve on :root.
+import { PALETTE_SYSTEMS } from '@site/palette';
+
+const dev = import.meta.env.DEV;
+---
+
+<palette-picker class="palette-picker">
+  <span class="palette-picker-home">
+    <button
+      type="button"
+      class="palette-picker-swatch"
+      aria-label="Colour scheme: drag across the page to pick colours"
+      title="Drag to pick colours"
+    ></button>
+  </span>
+  <button type="button" class="palette-picker-reset" aria-label="Reset colours" title="Reset colours" hidden>
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" aria-hidden="true">
+      <line x1="5" y1="5" x2="19" y2="19" />
+      <line x1="19" y1="5" x2="5" y2="19" />
+    </svg>
+  </button>
+  {dev && (
+    <div class="palette-picker-dev">
+      <select class="palette-picker-system" aria-label="Colour system">
+        {PALETTE_SYSTEMS.map((s) => (
+          <option value={s.id} title={s.describe}>{s.label}</option>
+        ))}
+      </select>
+      <label class="palette-picker-derive" title="Dark mode: derive a deeper background from the dark colour, or use it as-is">
+        <input type="checkbox" class="palette-picker-derive-input" checked />
+        derived dark
+      </label>
+      <output class="palette-picker-readout"></output>
+    </div>
+  )}
+</palette-picker>
+
+<style>
+  .palette-picker {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-ui);
+    font-size: 0.75rem;
+  }
+
+  /* Holds the swatch's place while it is dragged out of the row. */
+  .palette-picker-home {
+    display: block;
+    width: var(--palette-swatch-size);
+    height: var(--palette-swatch-size);
+  }
+
+  /* The swatch IS the display of the current colours: paper over ink, split
+     on the diagonal. Tokens, not the raw pair, so it follows the theme too. */
+  .palette-picker-swatch {
+    width: var(--palette-swatch-size);
+    height: var(--palette-swatch-size);
+    padding: 0;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-bg) 50%, var(--color-text) 50%);
+    cursor: grab;
+    touch-action: none;
+  }
+
+  /* While dragging the swatch rides the pointer. left/top, never a transform —
+     nothing dithered sits inside it, but keep the habit (styling.md). */
+  .palette-picker-swatch[data-dragging] {
+    position: fixed;
+    cursor: grabbing;
+    z-index: 1000;
+  }
+
+  .palette-picker-reset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: var(--border-width) solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .palette-picker-reset[hidden] {
+    display: none;
+  }
+  .palette-picker-reset:hover {
+    background: var(--color-bg-hover);
+  }
+
+  .palette-picker-dev {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 2px var(--space-xs);
+    border: var(--border-width) solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+  .palette-picker-system {
+    font: inherit;
+    color: inherit;
+    background: var(--color-bg);
+    border: none;
+  }
+  .palette-picker-derive {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .palette-picker-readout {
+    font-family: var(--font-mono);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  import {
+    PALETTE_STORAGE_KEY,
+    contrastRatio,
+    findSystem,
+    isDefault,
+    parsePalette,
+    type Palette,
+    type Point,
+  } from '@site/palette';
+
+  const SYSTEM_KEY = 'palette-system';
+  // Dev-only comparison: "shared" turns off the derived dark-mode background
+  // (tokens.css) so the picked dark colour is used as-is.
+  const DARK_MODE_KEY = 'palette-dark-mode';
+  const DRAG_THRESHOLD = 4; // px before a press counts as a drag
+
+  const store = {
+    get(key: string) {
+      try { return localStorage.getItem(key); } catch { return null; }
+    },
+    set(key: string, value: string | null) {
+      try {
+        if (value === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, value);
+      } catch { /* storage unavailable: the palette just won't persist */ }
+    },
+  };
+
+  class PalettePicker extends HTMLElement {
+    #target = document.documentElement;
+    #swatch!: HTMLButtonElement;
+    #reset!: HTMLButtonElement;
+    #systemSelect: HTMLSelectElement | null = null;
+    #readout: HTMLOutputElement | null = null;
+    /** Where the last drag dropped, so switching system can re-pick it. */
+    #lastPoint: Point | null = null;
+    #drag: { id: number; startX: number; startY: number; moved: boolean; before: Palette | null } | null = null;
+    #frame = 0;
+    #pending: PointerEvent | null = null;
+
+    connectedCallback() {
+      this.#swatch = this.querySelector('.palette-picker-swatch')!;
+      this.#reset = this.querySelector('.palette-picker-reset')!;
+      this.#systemSelect = this.querySelector('.palette-picker-system');
+      this.#readout = this.querySelector('.palette-picker-readout');
+
+      if (this.#systemSelect) {
+        this.#systemSelect.value = findSystem(store.get(SYSTEM_KEY)).id;
+        this.#systemSelect.addEventListener('change', this.#onSystemChange);
+      }
+      const derive = this.querySelector<HTMLInputElement>('.palette-picker-derive-input');
+      if (derive) {
+        derive.checked = store.get(DARK_MODE_KEY) !== 'shared';
+        this.#applyDarkMode(derive.checked);
+        derive.addEventListener('change', () => {
+          store.set(DARK_MODE_KEY, derive.checked ? null : 'shared');
+          this.#applyDarkMode(derive.checked);
+        });
+      }
+      this.#swatch.addEventListener('pointerdown', this.#onDown);
+      this.#swatch.addEventListener('pointermove', this.#onMove);
+      this.#swatch.addEventListener('pointerup', this.#onUp);
+      this.#swatch.addEventListener('pointercancel', this.#onCancel);
+      this.#reset.addEventListener('click', this.#onReset);
+      window.addEventListener('storage', this.#onStorage);
+      window.addEventListener('keydown', this.#onKey);
+
+      this.#render(parsePalette(store.get(PALETTE_STORAGE_KEY)));
+    }
+
+    disconnectedCallback() {
+      window.removeEventListener('storage', this.#onStorage);
+      window.removeEventListener('keydown', this.#onKey);
+      cancelAnimationFrame(this.#frame);
+    }
+
+    // ── Effects ────────────────────────────────────────────────────
+
+    /** Apply a palette (null = defaults) to the target and reflect it here. */
+    #render(p: Palette | null) {
+      const style = this.#target.style;
+      for (const end of ['light', 'dark'] as const) {
+        for (const gamut of ['srgb', 'p3'] as const) {
+          const prop = `--color-${end}-${gamut}`;
+          if (p) style.setProperty(prop, p[end][gamut]);
+          else style.removeProperty(prop);
+        }
+      }
+      this.#reset.hidden = !p;
+      if (this.#readout) {
+        this.#readout.value = p
+          ? `${p.light.p3} / ${p.dark.p3} · ${contrastRatio(p.light.srgb, p.dark.srgb).toFixed(1)}:1`
+          : 'default';
+      }
+    }
+
+    #applyDarkMode(derived: boolean) {
+      if (derived) this.#target.removeAttribute('data-palette-dark');
+      else this.#target.setAttribute('data-palette-dark', 'shared');
+    }
+
+    #commit(p: Palette | null) {
+      const keep = p && !isDefault(p) ? p : null;
+      store.set(PALETTE_STORAGE_KEY, keep ? JSON.stringify(keep) : null);
+      this.#render(keep);
+    }
+
+    #current(): Palette | null {
+      return parsePalette(store.get(PALETTE_STORAGE_KEY));
+    }
+
+    #system() {
+      return findSystem(this.#systemSelect?.value ?? store.get(SYSTEM_KEY));
+    }
+
+    #pointFrom(e: PointerEvent): Point {
+      return { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight };
+    }
+
+    #placeSwatch(e: PointerEvent | null) {
+      const s = this.#swatch.style;
+      if (!e) {
+        this.#swatch.removeAttribute('data-dragging');
+        s.removeProperty('left');
+        s.removeProperty('top');
+        return;
+      }
+      const half = this.#swatch.offsetWidth / 2;
+      this.#swatch.setAttribute('data-dragging', '');
+      s.left = `${e.clientX - half}px`;
+      s.top = `${e.clientY - half}px`;
+    }
+
+    // ── Handlers ───────────────────────────────────────────────────
+
+    #onDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      this.#swatch.setPointerCapture(e.pointerId);
+      this.#drag = { id: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false, before: this.#current() };
+    };
+
+    #onMove = (e: PointerEvent) => {
+      const d = this.#drag;
+      if (!d || e.pointerId !== d.id) return;
+      if (!d.moved && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < DRAG_THRESHOLD) return;
+      d.moved = true;
+      this.#pending = e;
+      if (this.#frame) return;
+      this.#frame = requestAnimationFrame(() => {
+        this.#frame = 0;
+        const ev = this.#pending;
+        if (!ev || !this.#drag) return;
+        this.#placeSwatch(ev);
+        this.#lastPoint = this.#pointFrom(ev);
+        this.#render(this.#system().pick(this.#lastPoint));
+      });
+    };
+
+    #onUp = (e: PointerEvent) => {
+      const d = this.#drag;
+      if (!d || e.pointerId !== d.id) return;
+      this.#drag = null;
+      this.#placeSwatch(null);
+      if (!d.moved) return;
+      this.#lastPoint = this.#pointFrom(e);
+      this.#commit(this.#system().pick(this.#lastPoint));
+    };
+
+    #onCancel = () => {
+      const d = this.#drag;
+      if (!d) return;
+      this.#drag = null;
+      this.#placeSwatch(null);
+      this.#render(d.before);
+    };
+
+    #onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && this.#drag) {
+        this.#swatch.releasePointerCapture(this.#drag.id);
+        this.#onCancel();
+      }
+    };
+
+    #onReset = () => {
+      this.#lastPoint = null;
+      this.#commit(null);
+    };
+
+    #onSystemChange = () => {
+      const system = this.#system();
+      store.set(SYSTEM_KEY, system.id);
+      if (this.#lastPoint) this.#commit(system.pick(this.#lastPoint));
+    };
+
+    /** Another tab picked or reset: follow it. */
+    #onStorage = (e: StorageEvent) => {
+      if (e.key === PALETTE_STORAGE_KEY) this.#render(parsePalette(e.newValue));
+    };
+  }
+
+  if (!customElements.get('palette-picker')) customElements.define('palette-picker', PalettePicker);
+</script>

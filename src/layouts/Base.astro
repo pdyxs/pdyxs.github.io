@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import ThemeToggle from '@components/site/ThemeToggle.astro';
+import PalettePicker from '@components/site/PalettePicker.astro';
 import { STACK_GEOMETRY } from '@stack/layout/stack-geometry';
 import { fanReservationTable } from '@stack/layout/stack-reservation';
 import { fanSkeletonTable } from '@stack/layout/stack-skeleton';
@@ -143,6 +144,20 @@ const jsonLd = [
         }
       })();
     </script>
+    <script is:inline>
+      (function () {
+        try {
+          var p = JSON.parse(localStorage.getItem('palette'));
+          if (p && p.light && p.dark && p.light.srgb) {
+            var st = document.documentElement.style;
+            ['light', 'dark'].forEach(function (end) {
+              st.setProperty('--color-' + end + '-srgb', p[end].srgb);
+              st.setProperty('--color-' + end + '-p3', p[end].p3);
+            });
+          }
+        } catch (e) {}
+      })();
+    </script>
     {/* Pre-paint fan reservation for a cold-loaded stack (issue #101).
 
         A deep link renders only its ACTIVE location server-side; the from/to
@@ -242,26 +257,9 @@ const jsonLd = [
       })();
     </script>
 
-    <script>
-        let frame = 0;
-        let last: PointerEvent | null = null;
-
-        document.addEventListener('pointermove', (e) => {
-            console.log("test");
-            last = e;
-            if (frame) return;
-            frame = requestAnimationFrame(() => {
-                frame = 0;
-                if (!last) return;
-                const hx = 360 * last.clientX / window.innerWidth;
-                const hy = 360 * last.clientY / window.innerHeight;
-                document.documentElement.style.setProperty("--color-light", `lch(90% 75% ${hx})`);
-                document.documentElement.style.setProperty("--color-dark", `lch(5% 50% ${hy})`);
-            });
-        }, { passive: true } );
-    </script>
   </head>
   <body>
+    <PalettePicker />
     <div class="site-wrapper">
       <slot />
       <footer class="site-footer">
