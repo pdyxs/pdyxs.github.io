@@ -35,9 +35,6 @@
 .stack-card-spine-title,
 /* The lens footnote shares the header's dithered surface (see .lens-note). */
 .lens-note,
-/* The header's close button sits on the same dithered surface as the title
-   beside it. */
-.stack-card-close,
 /* Surfaces whose background becomes a dither on hover (--color-bg-hover).
    The stroke is inert until that dither appears, so applying it at rest is
    free. Class names are matched from here rather than each component's
@@ -60,7 +57,6 @@ pre,
 }
 
 /* Smaller UI text needs a lighter stroke than the 1.1rem header titles. */
-.stack-card-close,
 .stack-card-spine-title,
 .card-listing-item,
 .browse-card-item,
@@ -83,6 +79,9 @@ pre,
 .card-header-title {
   background: none;
   padding: 0;
+  /* Wider than the 4px default: at 4px the header dither still crowded the
+     title's glyphs. */
+  --dither-text-stroke: 6px;
 }
 
 /* A lens's footnote (LensDefinition.note — only Most* Interesting has one).

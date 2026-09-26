@@ -23,6 +23,7 @@ import type { TagDisplay } from '@content/tags/tag-display';
 import { resolveSeriesCards } from '@render/series-cards';
 import { computeSeriesDateBar } from '@content/cards/series';
 import CardHeader from '@components/stack/CardHeader.astro';
+import { SOLO_BUTTON, CLOSE_BUTTON } from '@render/header-icons';
 
 interface Props {
   /** The resolved card to render — produced by resolveCard() in the route's getStaticPaths(). */
@@ -122,7 +123,8 @@ const seriesDateBar = card.dateBar && entry?.data?.series
         status={card.status}
         date={card.date}
       >
-        <button class="stack-card-close" aria-label="Close">×</button>
+        <Fragment set:html={SOLO_BUTTON} />
+        <Fragment set:html={CLOSE_BUTTON} />
       </CardHeader>
       <div class="body-wrapper open">
         <div class="stack-card-body">

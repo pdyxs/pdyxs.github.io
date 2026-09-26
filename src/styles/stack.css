@@ -195,27 +195,75 @@
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
-.stack-card-close {
+/* The header's icon buttons. The SVG (src/lib/render/header-icons.ts) is 1em
+   square, so font-size sets the icon size; the box is 11/16 of it. Stroke
+   widths are in the icon's 16-unit grid. */
+.stack-card-close,
+.stack-card-solo {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.5rem;
-  font-weight: 300;
-  font-family: var(--font-ui);
+  font-size: 1.3rem;
   line-height: 1;
   padding: 0;
   color: var(--color-text);
-  /* Fixed box, glyph centred inside it: the hover weight jump below (300 to
-     700) widens the glyph's own ink, which otherwise reflows this flex
-     item's width and shoves the quicknav beside it sideways. The box stays
-     put; only the glyph inside it gets bolder. */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.5em;
+  width: 1.1em;
+  --icon-box-stroke: 0.8;
+  --icon-mark-stroke: 0.9;
+  /* Added to each ink stroke for the paper halo behind it: the SVG form of the
+     text halo in card-chrome.css, so the icon reads over the header dither. */
+  --icon-halo: 3;
 }
 
-.stack-card-close:hover { font-weight: 700; }
+.stack-card-close:hover,
+.stack-card-solo:hover {
+  --icon-box-stroke: 1.3;
+  --icon-mark-stroke: 1.5;
+}
+
+.header-icon {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke-linecap: round;
+}
+
+/* The halo fills the box too, so the dither never reads through the icon. */
+.header-icon-halo {
+  stroke: var(--color-bg);
+  fill: var(--color-bg);
+  stroke-width: calc(var(--icon-box-stroke) + var(--icon-halo));
+}
+
+.header-icon-ink {
+  stroke: currentColor;
+}
+
+.header-icon-box {
+  stroke-width: var(--icon-box-stroke);
+}
+
+.header-icon-mark {
+  stroke-width: var(--icon-mark-stroke);
+}
+
+.header-icon-mark circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* Solo and close read as one pair of header controls, pushed right together.
+   The header is space-between, which would otherwise spread solo into the
+   middle; an auto margin takes the free space first. The negative end margin
+   halves the flex gap between the pair — each glyph's own box already spaces
+   them. Both margins live on solo so they vanish with it when it is hidden. */
+.card-header > .stack-card-solo {
+  margin-inline-start: auto;
+  margin-inline-end: calc(-0.5 * var(--space-sm));
+}
 
 .card-link {
   cursor: pointer;
@@ -279,7 +327,9 @@
   grid-template-rows: 0fr;
 }
 
-.stack-card--collapsed .stack-card-close { display: none; }
+.stack-card--collapsed .stack-card-close,
+.stack-card--collapsed .stack-card-solo,
+#card-stack[data-single] .stack-card-solo { display: none; }
 
 .stack-card--collapsed {
   cursor: pointer;

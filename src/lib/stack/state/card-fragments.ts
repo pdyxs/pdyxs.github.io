@@ -38,6 +38,7 @@
 // change, exactly as it did before.
 
 import { extractLocationWidth } from '@stack/layout/location-width';
+import { SOLO_BUTTON, CLOSE_BUTTON } from '@render/header-icons';
 import { locationKind } from '@stack/layout/stack-layout';
 import { SITE_TITLE, siteSubtitle } from '@browse/lenses/lens-chrome';
 
@@ -147,7 +148,7 @@ export function buildPlaceholderHtml(slot: string, title: string): string {
     `<div class="card-header-sentinel"></div>` +
     `<div class="card-header">` +
     `<span class="card-header-title"><b>${escapeHtml(title)}</b></span>` +
-    `<button class="stack-card-close" aria-label="Close">×</button>` +
+    SOLO_BUTTON + CLOSE_BUTTON +
     `</div>` +
     `<div class="body-wrapper"><div class="stack-card-body"><div class="stack-card-body-inner"></div></div></div>` +
     `</div>`;
