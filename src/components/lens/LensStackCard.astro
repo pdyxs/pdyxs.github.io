@@ -34,6 +34,7 @@ import { emptyFilterState } from '@dimensions';
 import type { FilterState } from '@dimensions';
 import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '@browse/lenses/lens-components';
 import LensFilterShell from '@components/filters/LensFilterShell.svelte';
+import { SOLO_BUTTON, CLOSE_BUTTON } from '@render/header-icons';
 
 interface Props {
   name: string;
@@ -97,7 +98,7 @@ if (lens) {
           disclaimer. */}
       <span class="card-header-title"><b>{chrome.cardTitle}</b></span>
       {chrome.note && <small class="lens-note">{chrome.note}</small>}
-      {!isHome && <button class="stack-card-close" aria-label="Close">×</button>}
+      {!isHome && <Fragment set:html={SOLO_BUTTON + CLOSE_BUTTON} />}
     </div>
     <div class="body-wrapper open">
       <div class="stack-card-body">

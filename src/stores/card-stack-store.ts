@@ -39,6 +39,15 @@ export function removeFromStack(state: StackState, slot: string): StackState {
   return { entries: newEntries, activeSlot: newActiveSlot };
 }
 
+/**
+ * Keeps only the entry occupying `slot`, making it the sole, active card.
+ * An unknown slot leaves the state unchanged.
+ */
+export function soloCard(state: StackState, slot: string): StackState {
+  const entry = state.entries.find(e => e.slot === slot);
+  return entry ? { entries: [entry], activeSlot: entry.slot } : state;
+}
+
 /** Makes the entry occupying `slot` the active one. */
 export function activateCard(state: StackState, slot: string): StackState {
   return { ...state, activeSlot: slot };

@@ -30,23 +30,24 @@
     "generate:header-previews": "node scripts/generate-header-previews.mjs"
   },
   "dependencies": {
-    "@astrojs/rss": "^4.0.18",
-    "@astrojs/svelte": "^8.0.5",
-    "astro": "^6.1.4",
+    "@astrojs/markdown-remark": "^7.3.1",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/svelte": "^9.0.1",
+    "astro": "^7.3.5",
     "svelte": "^5.55.4"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@types/js-yaml": "^4.0.9",
     "@types/picomatch": "^4.0.3",
-    "@vitest/ui": "^4.1.4",
+    "@vitest/ui": "^4.1.11",
     "gray-matter": "^4.0.3",
     "happy-dom": "^20.8.9",
     "playwright-core": "^1.63.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.4",
     "svelte-check": "^4.7.4",
     "svgo": "^4.0.2",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.11"
   }
 }

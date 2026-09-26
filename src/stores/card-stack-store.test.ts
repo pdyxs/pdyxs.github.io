@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { seedStackState, pushToStack, removeFromStack, activateCard, replaceActiveSlot, rekeyEntry } from '@stores/card-stack-store';
+import { seedStackState, pushToStack, removeFromStack, soloCard, activateCard, replaceActiveSlot, rekeyEntry } from '@stores/card-stack-store';
 import { activeEntry, cardEntry, lensEntry } from '@stack/layout/stack-layout';
 import { geometryFor, STACK_GEOMETRY } from '@stack/layout/stack-geometry';
 import type { StackState } from '@stack/layout/stack-layout';
@@ -19,6 +19,23 @@ describe('pushToStack', () => {
     expect(result.entries).toHaveLength(2);
     expect(result.entries[1]).toEqual({ key: 'b', uid: 'b', slot: 'b' });
     expect(result.activeSlot).toBe('b');
+  });
+});
+
+describe('soloCard', () => {
+  it('keeps only the soloed entry and activates it', () => {
+    const state: StackState = {
+      entries: [cardEntry('a'), cardEntry('b'), cardEntry('c')],
+      activeSlot: 'c',
+    };
+    const result = soloCard(state, 'b');
+    expect(result.entries).toEqual([{ key: 'b', uid: 'b', slot: 'b' }]);
+    expect(result.activeSlot).toBe('b');
+  });
+
+  it('leaves the state unchanged for an unknown slot', () => {
+    const state: StackState = { entries: [cardEntry('a')], activeSlot: 'a' };
+    expect(soloCard(state, 'zzz')).toBe(state);
   });
 });
 

@@ -28,6 +28,7 @@ import CardHeader from '@components/stack/CardHeader.astro';
 import { getSeriesSiblings } from '@content/cards/series';
 import type { StoryEntry } from '@content/cards/series';
 import type { StatusValue } from '@content/cards/status-visibility';
+import { SOLO_BUTTON, CLOSE_BUTTON } from '@render/header-icons';
 
 interface Props {
   entry: StoryEntry | undefined;
@@ -68,7 +69,8 @@ const siblings = entry
       )}
     </nav>
   )}
-  <button class="stack-card-close" aria-label="Close">×</button>
+  <Fragment set:html={SOLO_BUTTON} />
+  <Fragment set:html={CLOSE_BUTTON} />
 </CardHeader>
 
 <div class="body-wrapper open">
@@ -123,6 +125,14 @@ const siblings = entry
        titles; at this nav's small glyph size it reads as a solid blob rather
        than a chevron. */
     --dither-text-stroke: 3px;
+  }
+
+  /* The quicknav's auto margin already carries the right-hand group; a second
+     one on solo would split the free space and float solo between them.
+     :global because the button is set:html markup (src/lib/render/header-icons.ts)
+     and carries no scope attribute. */
+  .series-quicknav + :global(.stack-card-solo) {
+    margin-inline-start: 0;
   }
 
   .series-position {

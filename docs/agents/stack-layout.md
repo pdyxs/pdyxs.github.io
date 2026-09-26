@@ -410,6 +410,8 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`
 - `data-role="behind|active|ahead"` and `data-piled` (written by the applier)
+- `.stack-card-solo` and `#card-stack[data-single]` (the applier sets `data-single`
+  while the stack holds one entry; CSS hides the solo button off it)
 - `data-stack-resizing` (issue #126 — written by `holdWhileAssemblyResizes` onto
   the incoming `.stack-card` for the length of the assembly's width transition;
   the name lives in `src/lib/stack/layout/stack-motion.ts`)

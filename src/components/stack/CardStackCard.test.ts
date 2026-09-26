@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
-import { getContainerRenderer } from "@astrojs/svelte";
+import { getContainerRenderer } from "@astrojs/svelte/container-renderer";
 import svelteServerRenderer from "@astrojs/svelte/server.js";
 import CardStackCard from "@components/stack/CardStackCard.astro";
 import type { ResolvedCard } from "@content/cards/cards";

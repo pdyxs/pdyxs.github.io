@@ -2,7 +2,7 @@
   import { onMount, tick, untrack, flushSync } from 'svelte';
   import type { Snippet } from 'svelte';
   import { get } from 'svelte/store';
-  import { stackStore, seedStackState, pushToStack, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '@stores/card-stack-store';
+  import { stackStore, seedStackState, pushToStack, soloCard as soloCardFn, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '@stores/card-stack-store';
   import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry, planPush } from '@stack/layout/stack-layout';
   import type { LocationEntry, StackState } from '@stack/layout/stack-layout';
   import { geometryFor, scrollTargetFor, STACK_GEOMETRY } from '@stack/layout/stack-geometry';
@@ -263,6 +263,8 @@
     // reaches further up/down than it does sideways.
     stackEl?.style.setProperty('--behind-rows', String(geometry.behindRows));
     stackEl?.style.setProperty('--ahead-rows', String(geometry.aheadRows));
+    // A lone card has nothing to solo against; CSS hides the button off this.
+    stackEl?.toggleAttribute('data-single', $stackStore.entries.length === 1);
     // The two settled lengths CSS needs, sourced from the same const the
     // placement was computed with rather than restated in the stylesheet.
     stackEl?.style.setProperty('--spine-width', `${STACK_GEOMETRY.collapsedWidth}px`);
@@ -1162,6 +1164,18 @@
     }
   }
 
+  // Make `slot` the only card in the stack. The dropped entries' params go
+  // with them, as they do when closeCard trims the stack.
+  function soloCard(slot: string) {
+    const state = get(stackStore);
+    const next = soloCardFn(state, slot);
+    if (next === state) return;
+    const kept = next.entries[0].key;
+    for (const e of state.entries) if (e.key !== kept) cardParams.delete(e.key);
+    stackStore.set(next);
+    updateUrl();
+  }
+
   /**
    * Drop the pre-paint fan skeleton (issue #122).
    *
@@ -1347,6 +1361,13 @@
 
     function onStackClick(e: MouseEvent) {
       const target = e.target as Element;
+
+      const soloBtn = target.closest('.stack-card-solo');
+      if (soloBtn) {
+        const card = soloBtn.closest<HTMLElement>('.stack-card');
+        if (card?.dataset.uid) soloCard(card.dataset.uid);
+        return;
+      }
 
       const closeBtn = target.closest('.stack-card-close');
       if (closeBtn) {
