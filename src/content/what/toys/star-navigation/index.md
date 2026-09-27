@@ -1,7 +1,6 @@
 ---
 title: Star System Navigation
 description: A mechanic for flying through a solar system
-status: unlisted
 date: 2026-09-23
 tags: []
 inspected: true
