@@ -1,0 +1,551 @@
+---
+import Base from '../../layouts/Base.astro';
+import { PALETTE_SYSTEMS } from '@site/palette';
+
+// Throwaway /experiments route: toy-feel options for the palette picker's look
+// and feel. Every variant drives the real maths (src/lib/site/palette.ts) and
+// writes the real stored palette, so a pick here persists across the site. The
+// production picker is hidden on this page so only one handle is live.
+
+const VARIANTS = [
+  {
+    id: 'rulers',
+    label: 'Rulers',
+    blurb:
+      'While you drag, the top and left edges become colour rulers: the light colour’s sweep along the top, the dark one’s down the side, with markers tracking you. Explains the axes without words.',
+  },
+  {
+    id: 'dither',
+    label: 'Dither chip',
+    blurb:
+      'The handle is a chip of the dither itself, so it previews the palette the way the site actually draws it. No guides: the page is the only feedback.',
+  },
+  {
+    id: 'tether',
+    label: 'Ink well',
+    blurb:
+      'Pull a drop of ink out of the well in the corner. A line tethers it home, which hints that the corner is “no colour”, and it springs back when you let go.',
+  },
+  {
+    id: 'crosshair',
+    label: 'Crosshair',
+    blurb:
+      'The handle vanishes and the pointer becomes a full-screen crosshair, like a plotter picking a coordinate. Nothing covers the spot you are choosing.',
+  },
+  {
+    id: 'title',
+    label: 'The dot in the title',
+    blurb:
+      'The easter egg: the “.” in pdyxs.wtf is the handle. Grab it and drag. It flies back into the name when you let go.',
+  },
+] as const;
+---
+
+<Base title="Palette picker toys">
+  <div class="ppx" data-ppx-variant="rulers">
+    {/* ── Handles (only the active variant's is shown) ── */}
+    <div class="ppx-home">
+      <button type="button" class="ppx-handle ppx-handle--rulers" data-for="rulers" aria-label="Drag to pick colours"></button>
+      <button type="button" class="ppx-handle ppx-handle--dither" data-for="dither" aria-label="Drag to pick colours"></button>
+      <span class="ppx-well" data-for-show="tether">
+        <button type="button" class="ppx-handle ppx-handle--drop" data-for="tether" aria-label="Drag to pick colours"></button>
+      </span>
+      <button type="button" class="ppx-handle ppx-handle--cross" data-for="crosshair" aria-label="Drag to pick colours"></button>
+    </div>
+
+    {/* ── Overlays: fixed, never intercept the pointer ── */}
+    <div class="ppx-ruler ppx-ruler--x" aria-hidden="true"><span class="ppx-ruler-mark"></span></div>
+    <div class="ppx-ruler ppx-ruler--y" aria-hidden="true"><span class="ppx-ruler-mark"></span></div>
+    <div class="ppx-cross ppx-cross--h" aria-hidden="true"></div>
+    <div class="ppx-cross ppx-cross--v" aria-hidden="true"></div>
+    <svg class="ppx-tether" aria-hidden="true"><line class="ppx-tether-line" x1="0" y1="0" x2="0" y2="0"></line></svg>
+    <span class="ppx-pin" aria-hidden="true" hidden></span>
+    <span class="ppx-float" aria-hidden="true" hidden></span>
+
+    <main class="wrap">
+      <h1 class="ppx-title">pdyxs<button type="button" class="ppx-dot" data-for="title" aria-label="Drag to pick colours"></button>wtf</h1>
+      <p class="lede">
+        Palette picker toys. Pick a variant, then drag its handle (top-left
+        corner, or the dot in the title) across the page. Dragging back into the
+        corner is always the reset.
+      </p>
+
+      <fieldset class="ppx-bar">
+        <legend>Variant</legend>
+        {VARIANTS.map((v, i) => (
+          <label class="ppx-choice">
+            <input type="radio" name="ppx-variant" value={v.id} checked={i === 0} />
+            {v.label}
+          </label>
+        ))}
+        <span class="ppx-bar-sep"></span>
+        <select class="ppx-system" aria-label="Colour system">
+          {PALETTE_SYSTEMS.map((s) => <option value={s.id} title={s.describe}>{s.label}</option>)}
+        </select>
+        <label class="ppx-choice"><input type="checkbox" class="ppx-pin-toggle" /> drop pin</label>
+        <button type="button" class="ppx-reset">reset</button>
+      </fieldset>
+
+      {VARIANTS.map((v, i) => (
+        <p class="ppx-blurb" data-blurb={v.id} hidden={i !== 0}>{v.blurb}</p>
+      ))}
+
+      {/* ── Sample surfaces, so there is something to recolour ── */}
+      <section class="ppx-sample">
+        <h2>Sample</h2>
+        <p>
+          Body text in ink on paper, a <a href="#">link</a>, and the dither ramp
+          below: every level is built from the same two colours, so it is where a
+          palette shows its character.
+        </p>
+        <div class="ppx-ramp">
+          {Array.from({ length: 17 }, (_, n) => (
+            <span style={`background: var(--dither-${n})`} title={`--dither-${n}`}></span>
+          ))}
+        </div>
+        <div class="ppx-buttons">
+          <span class="ppx-btn">Who</span>
+          <span class="ppx-btn ppx-btn--selected">What</span>
+          <span class="ppx-btn">When</span>
+        </div>
+        <div class="ppx-card">
+          <div class="ppx-card-header"><span>A card header</span></div>
+          <p>A card body sits on paper. Its header strip is dithered, like the stack’s.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</Base>
+
+<style>
+  .wrap { max-width: 48rem; margin: 0 auto; padding: var(--space-xl) var(--space-md); }
+  .lede { max-width: 40rem; }
+
+  .ppx-title {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    font-size: 4rem;
+    margin: 0 0 var(--space-md);
+  }
+
+  /* ── Variant bar ── */
+  .ppx-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-md);
+    border: var(--border-width) solid var(--color-border);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-lg) 0 var(--space-sm);
+    font-size: 0.9rem;
+  }
+  .ppx-bar legend { padding: 0 var(--space-xs); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  .ppx-choice { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .ppx-bar-sep { flex: 1; }
+  .ppx-system {
+    font: inherit;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+  }
+  .ppx-reset {
+    font: inherit;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    padding: 2px var(--space-sm);
+    cursor: pointer;
+  }
+  .ppx-reset:hover { background: var(--color-bg-hover); }
+  .ppx-blurb { font-size: 0.9rem; min-height: 3em; }
+
+  /* ── Sample surfaces ── */
+  .ppx-sample { margin-top: var(--space-xl); }
+  .ppx-ramp { display: grid; grid-template-columns: repeat(17, 1fr); height: 3rem; border: var(--border-width) solid var(--color-border); }
+  .ppx-buttons { display: flex; gap: var(--space-sm); margin: var(--space-lg) 0; }
+  .ppx-btn {
+    flex: 1;
+    text-align: center;
+    padding: var(--space-sm);
+    border: var(--border-width) solid var(--color-border);
+  }
+  .ppx-btn--selected { background: var(--color-selected-bg); color: var(--color-selected-fg); }
+  .ppx-card { border: var(--border-width) solid var(--color-border); }
+  .ppx-card p { padding: 0 var(--space-md); }
+  .ppx-card-header {
+    padding: var(--space-md);
+    background: var(--dither-4);
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    border-bottom: var(--border-width) solid var(--color-border);
+  }
+  .ppx-card-header span { background: var(--color-bg); padding: 0 var(--space-xs); }
+
+  /* ── Handles ── */
+  .ppx-home {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    z-index: 50;
+  }
+  .ppx-handle {
+    display: none;
+    width: var(--palette-swatch-size);
+    height: var(--palette-swatch-size);
+    padding: 0;
+    border: var(--border-width) solid var(--color-border);
+    cursor: grab;
+    touch-action: none;
+  }
+  .ppx[data-ppx-variant='rulers'] .ppx-handle--rulers,
+  .ppx[data-ppx-variant='dither'] .ppx-handle--dither,
+  .ppx[data-ppx-variant='tether'] .ppx-handle--drop,
+  .ppx[data-ppx-variant='crosshair'] .ppx-handle--cross {
+    display: block;
+  }
+  .ppx-handle--rulers { background: linear-gradient(135deg, var(--color-bg) 50%, var(--color-text) 50%); }
+  .ppx-handle--dither { background: var(--dither-8); }
+  .ppx-handle--cross {
+    background:
+      linear-gradient(var(--color-text), var(--color-text)) center / 2px 60% no-repeat,
+      linear-gradient(var(--color-text), var(--color-text)) center / 60% 2px no-repeat,
+      var(--color-bg);
+  }
+
+  /* The well: an open-topped square, the drop sitting in it. */
+  .ppx-well {
+    display: none;
+    width: calc(var(--palette-swatch-size) + 8px);
+    height: calc(var(--palette-swatch-size) + 8px);
+    border: var(--border-width) solid var(--color-border);
+    border-top-color: transparent;
+    align-items: center;
+    justify-content: center;
+    background: var(--dither-2);
+  }
+  .ppx[data-ppx-variant='tether'] .ppx-well { display: flex; }
+  .ppx-handle--drop {
+    width: calc(var(--palette-swatch-size) - 8px);
+    height: calc(var(--palette-swatch-size) - 8px);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    background: var(--color-text);
+  }
+
+  /* The title's dot: a square of ink, like the stencil face's full stop. */
+  .ppx-dot {
+    /* A button does not inherit font-size, and the em sizes below need the
+       title's. */
+    font: inherit;
+    display: inline-block;
+    width: 0.16em;
+    height: 0.16em;
+    margin: 0 0.05em;
+    padding: 0;
+    border: none;
+    background: var(--color-text);
+    vertical-align: baseline;
+    touch-action: none;
+  }
+  .ppx[data-ppx-variant='title'] .ppx-dot { cursor: grab; }
+
+  /* ── The floater: what rides the pointer while dragging ── */
+  .ppx-float {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    width: var(--palette-swatch-size);
+    height: var(--palette-swatch-size);
+    border: var(--border-width) solid var(--color-border);
+  }
+  .ppx-float[hidden] { display: none; }
+  .ppx[data-ppx-variant='rulers'] .ppx-float { background: linear-gradient(135deg, var(--color-bg) 50%, var(--color-text) 50%); }
+  .ppx[data-ppx-variant='dither'] .ppx-float { background: var(--dither-8); }
+  .ppx[data-ppx-variant='tether'] .ppx-float {
+    width: calc(var(--palette-swatch-size) - 8px);
+    height: calc(var(--palette-swatch-size) - 8px);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    background: var(--color-text);
+  }
+  .ppx[data-ppx-variant='crosshair'] .ppx-float { display: none; }
+  .ppx[data-ppx-variant='title'] .ppx-float {
+    width: 0.64rem; /* the title dot: 0.16em of 4rem */
+    height: 0.64rem;
+    border: none;
+    background: var(--color-text);
+  }
+  /* Springs home with a little overshoot. left/top, never a transform. */
+  .ppx-float[data-returning] {
+    transition: left 380ms cubic-bezier(0.34, 1.56, 0.64, 1), top 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* ── Rulers ── */
+  .ppx-ruler {
+    position: fixed;
+    z-index: 900;
+    pointer-events: none;
+    display: none;
+    border: var(--border-width) solid var(--color-border);
+  }
+  .ppx-ruler--x { top: 0; left: 0; right: 0; height: 22px; border-top: none; }
+  .ppx-ruler--y { top: 0; left: 0; bottom: 0; width: 22px; border-left: none; }
+  .ppx[data-dragging][data-ppx-variant='rulers'] .ppx-ruler { display: block; }
+  .ppx-ruler-mark {
+    position: absolute;
+    background: var(--color-text);
+    outline: var(--border-width) solid var(--color-bg);
+  }
+  .ppx-ruler--x .ppx-ruler-mark { top: 0; bottom: 0; width: 3px; margin-left: -1.5px; }
+  .ppx-ruler--y .ppx-ruler-mark { left: 0; right: 0; height: 3px; margin-top: -1.5px; }
+
+  /* ── Crosshair ── */
+  .ppx-cross {
+    position: fixed;
+    z-index: 900;
+    pointer-events: none;
+    display: none;
+    background: var(--color-text);
+  }
+  .ppx-cross--h { left: 0; right: 0; height: 1px; }
+  .ppx-cross--v { top: 0; bottom: 0; width: 1px; }
+  .ppx[data-dragging][data-ppx-variant='crosshair'] .ppx-cross { display: block; }
+  .ppx[data-dragging][data-ppx-variant='crosshair'] { cursor: none; }
+
+  /* ── Tether ── */
+  .ppx-tether {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 950;
+    pointer-events: none;
+    display: none;
+    overflow: visible;
+  }
+  .ppx-tether-line { stroke: var(--color-text); stroke-width: var(--border-width); }
+  .ppx[data-tethered][data-ppx-variant='tether'] .ppx-tether { display: block; }
+
+  /* ── Drop pin: marks the picked point on the viewport plane ── */
+  .ppx-pin {
+    position: fixed;
+    z-index: 40;
+    pointer-events: none;
+    width: 11px;
+    height: 11px;
+    margin: -5px 0 0 -5px;
+    background:
+      linear-gradient(var(--color-text), var(--color-text)) center / 2px 100% no-repeat,
+      linear-gradient(var(--color-text), var(--color-text)) center / 100% 2px no-repeat;
+  }
+  .ppx-pin[hidden] { display: none; }
+</style>
+
+<script>
+  import { PALETTE_STORAGE_KEY, findSystem, isDefault, parsePalette, type Palette, type Point } from '@site/palette';
+
+  const POINT_KEY = 'palette-point-experiment';
+  const PIN_KEY = 'palette-pin-experiment';
+  const VARIANT_KEY = 'palette-variant-experiment';
+
+  const store = {
+    get(k: string) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k: string, v: string | null) {
+      try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* no storage */ }
+    },
+  };
+
+  const root = document.querySelector<HTMLElement>('.ppx')!;
+  const float = root.querySelector<HTMLElement>('.ppx-float')!;
+  const pin = root.querySelector<HTMLElement>('.ppx-pin')!;
+  const pinToggle = root.querySelector<HTMLInputElement>('.ppx-pin-toggle')!;
+  const rulerX = root.querySelector<HTMLElement>('.ppx-ruler--x')!;
+  const rulerY = root.querySelector<HTMLElement>('.ppx-ruler--y')!;
+  const crossH = root.querySelector<HTMLElement>('.ppx-cross--h')!;
+  const crossV = root.querySelector<HTMLElement>('.ppx-cross--v')!;
+  const line = root.querySelector<SVGLineElement>('.ppx-tether-line')!;
+
+  // Only one picker on the page: the production one is hidden here.
+  document.querySelectorAll<HTMLElement>('palette-picker').forEach((el) => (el.style.display = 'none'));
+
+  const variant = () => root.dataset.ppxVariant!;
+  const system = () => findSystem(store.get('palette-system'));
+
+  // ── Palette effects (same props as PalettePicker) ──
+  function render(p: Palette | null) {
+    const s = document.documentElement.style;
+    for (const end of ['light', 'dark'] as const) {
+      for (const g of ['srgb', 'p3'] as const) {
+        if (p) s.setProperty(`--color-${end}-${g}`, p[end][g]);
+        else s.removeProperty(`--color-${end}-${g}`);
+      }
+    }
+  }
+  function commit(pt: Point | null) {
+    const p = pt ? system().pick(pt) : null;
+    const keep = p && !isDefault(p) ? p : null;
+    store.set(PALETTE_STORAGE_KEY, keep ? JSON.stringify(keep) : null);
+    store.set(POINT_KEY, keep && pt ? JSON.stringify(pt) : null);
+    render(keep);
+    renderPin();
+  }
+  function renderPin() {
+    let pt: Point | null = null;
+    try { pt = JSON.parse(store.get(POINT_KEY) ?? 'null'); } catch { /* none */ }
+    const show = pinToggle.checked && !!pt;
+    pin.hidden = !show;
+    if (show && pt) {
+      pin.style.left = `${pt.x * 100}%`;
+      pin.style.top = `${pt.y * 100}%`;
+    }
+  }
+
+  // ── Variant-specific guides ──
+  function paintRulers(pt: Point) {
+    const sys = system();
+    const stops = (f: (t: number) => string) =>
+      Array.from({ length: 49 }, (_, i) => `${f(i / 48)} ${((i / 48) * 100).toFixed(2)}%`).join(', ');
+    // Same gamut the page is using, or a P3 screen sees a duller ruler than page.
+    const g = matchMedia('(color-gamut: p3)').matches ? 'p3' : 'srgb';
+    rulerX.style.background = `linear-gradient(to right, ${stops((t) => sys.pick({ x: t, y: pt.y }).light[g])})`;
+    rulerY.style.background = `linear-gradient(to bottom, ${stops((t) => sys.pick({ x: pt.x, y: t }).dark[g])})`;
+    (rulerX.firstElementChild as HTMLElement).style.left = `${pt.x * 100}%`;
+    (rulerY.firstElementChild as HTMLElement).style.top = `${pt.y * 100}%`;
+  }
+
+  function homeCentre(handle: HTMLElement) {
+    const r = handle.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  function placeFloat(x: number, y: number) {
+    const half = float.offsetWidth / 2;
+    float.style.left = `${x - half}px`;
+    float.style.top = `${y - half}px`;
+  }
+
+  function drawTether(from: { x: number; y: number }, to: { x: number; y: number }) {
+    line.setAttribute('x1', String(from.x));
+    line.setAttribute('y1', String(from.y));
+    line.setAttribute('x2', String(to.x));
+    line.setAttribute('y2', String(to.y));
+  }
+
+  // ── Drag engine ──
+  let drag: { handle: HTMLElement; id: number; sx: number; sy: number; moved: boolean; before: string | null } | null = null;
+  let frame = 0;
+  let pending: PointerEvent | null = null;
+
+  function frameMove() {
+    frame = 0;
+    const e = pending;
+    if (!e || !drag) return;
+    const pt = { x: Math.min(1, Math.max(0, e.clientX / innerWidth)), y: Math.min(1, Math.max(0, e.clientY / innerHeight)) };
+    placeFloat(e.clientX, e.clientY);
+    render(system().pick(pt));
+    if (variant() === 'rulers') paintRulers(pt);
+    if (variant() === 'crosshair') {
+      crossH.style.top = `${e.clientY}px`;
+      crossV.style.left = `${e.clientX}px`;
+    }
+    if (variant() === 'tether') drawTether(homeCentre(drag.handle), { x: e.clientX, y: e.clientY });
+  }
+
+  function onDown(e: PointerEvent) {
+    const handle = e.currentTarget as HTMLElement;
+    if (e.button !== 0 || handle.dataset.for !== variant()) return;
+    e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
+    drag = { handle, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false, before: store.get(PALETTE_STORAGE_KEY) };
+  }
+
+  function onMove(e: PointerEvent) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.moved) {
+      if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
+      drag.moved = true;
+      float.removeAttribute('data-returning');
+      float.hidden = false;
+      drag.handle.style.visibility = 'hidden';
+      root.setAttribute('data-dragging', '');
+      root.setAttribute('data-tethered', '');
+    }
+    pending = e;
+    if (!frame) frame = requestAnimationFrame(frameMove);
+  }
+
+  /** Spring the floater home, then show the real handle again. */
+  function flyHome(handle: HTMLElement) {
+    const home = homeCentre(handle);
+    float.setAttribute('data-returning', '');
+    placeFloat(home.x, home.y);
+    const start = performance.now();
+    const follow = () => {
+      if (variant() === 'tether') {
+        const r = float.getBoundingClientRect();
+        drawTether(homeCentre(handle), { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+      }
+      if (performance.now() - start < 420) requestAnimationFrame(follow);
+      else {
+        float.hidden = true;
+        float.removeAttribute('data-returning');
+        handle.style.visibility = '';
+        root.removeAttribute('data-tethered');
+      }
+    };
+    requestAnimationFrame(follow);
+  }
+
+  function finish(e: PointerEvent, cancelled: boolean) {
+    const d = drag;
+    if (!d || e.pointerId !== d.id) return;
+    drag = null;
+    cancelAnimationFrame(frame);
+    frame = 0;
+    root.removeAttribute('data-dragging');
+    if (!d.moved) return;
+    if (cancelled) {
+      render(parsePalette(d.before));
+      flyHome(d.handle);
+      return;
+    }
+    commit({ x: Math.min(1, Math.max(0, e.clientX / innerWidth)), y: Math.min(1, Math.max(0, e.clientY / innerHeight)) });
+    flyHome(d.handle);
+  }
+
+  root.querySelectorAll<HTMLElement>('[data-for]').forEach((h) => {
+    h.addEventListener('pointerdown', onDown);
+    h.addEventListener('pointermove', onMove);
+    h.addEventListener('pointerup', (e) => finish(e, false));
+    h.addEventListener('pointercancel', (e) => finish(e, true));
+  });
+
+  // ── Controls ──
+  function setVariant(id: string) {
+    root.dataset.ppxVariant = id;
+    store.set(VARIANT_KEY, id);
+    root.querySelectorAll<HTMLElement>('[data-blurb]').forEach((b) => (b.hidden = b.dataset.blurb !== id));
+    const radio = root.querySelector<HTMLInputElement>(`input[name="ppx-variant"][value="${id}"]`);
+    if (radio) radio.checked = true;
+  }
+  root.querySelectorAll<HTMLInputElement>('input[name="ppx-variant"]').forEach((r) =>
+    r.addEventListener('change', () => setVariant(r.value)),
+  );
+  pinToggle.checked = store.get(PIN_KEY) === 'on';
+  pinToggle.addEventListener('change', () => {
+    store.set(PIN_KEY, pinToggle.checked ? 'on' : null);
+    renderPin();
+  });
+  root.querySelector('.ppx-reset')!.addEventListener('click', () => commit(null));
+
+  // Switching system re-picks at the last drop point, so they compare like for like.
+  const systemSelect = root.querySelector<HTMLSelectElement>('.ppx-system')!;
+  systemSelect.value = system().id;
+  systemSelect.addEventListener('change', () => {
+    store.set('palette-system', systemSelect.value);
+    let pt: Point | null = null;
+    try { pt = JSON.parse(store.get(POINT_KEY) ?? 'null'); } catch { /* none */ }
+    if (pt) commit(pt);
+  });
+
+  setVariant(store.get(VARIANT_KEY) ?? 'rulers');
+  renderPin();
+</script>

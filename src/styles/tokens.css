@@ -3,10 +3,14 @@
 /* Two colours, and only two: ink and paper. Every other greyscale token below
    derives from them, so the dark block only has to restate those two (plus the
    border, which is ink at a different semantic). Anything that used to be a
-   grey is now either pure, or a dither built from the same two colours. */
+   grey is now either pure, or a dither built from the same two colours.
+
+   The pair defaults to white and black. The palette picker (PalettePicker.astro)
+   overrides them by writing --color-{light,dark}-{srgb,p3} onto <html>: the same
+   oklch() colour fitted to each gamut, chosen between just below. */
 :root {
-  --color-light: #ffffff;
-  --color-dark: #000000;
+  --color-light: var(--color-light-srgb, #ffffff);
+  --color-dark:  var(--color-dark-srgb, #000000);
 
   --color-bg:         var(--color-light);
   --color-text:       var(--color-dark);
@@ -83,6 +87,16 @@
   --radius:       0px;          /* sharp corners suit e-ink */
   --radius-sm:    4px;
   --border-width: 2px;
+  /* Dark mode's background, as factors of the picked dark colour's OKLCH
+     lightness and chroma (see the @supports block after the dark theme).
+     Keep -c ≤ -l: picked darks sit on the gamut edge, so a chroma factor above
+     the lightness factor pushes every hue out of gamut and the browser clips it.
+     At -c = -l the background has the most colour that darkness can hold; for
+     more, raise both together (0.8/0.8 = a lighter, more colourful dark). */
+  --palette-dark-bg-l: 0.8;
+  --palette-dark-bg-c: 0.8;
+  /* The palette picker's drag handle (PalettePicker.astro). */
+  --palette-swatch-size: 28px;
 
   --space-xs:     0.375rem;
   --space-sm:     0.75rem;
@@ -144,6 +158,15 @@
   --inline-image-max-height: 24rem;
 }
 
+/* A wide-gamut screen takes the P3 fit of the picked palette: the same
+   lightness and hue, with the chroma sRGB could not hold. */
+@media (color-gamut: p3) {
+  :root {
+    --color-light: var(--color-light-p3, #ffffff);
+    --color-dark:  var(--color-dark-p3, #000000);
+  }
+}
+
 /* Dark is a straight inversion: swap ink and paper and everything else follows.
    Every greyscale token in :root is defined in terms of --color-text /
    --color-bg / --dither-N, so restating those two colours re-derives the lot —
@@ -158,6 +181,25 @@ html[data-theme="dark"] {
   --status-scheduled-border: #6d97f5;
   --status-unlisted-bg:      #3a3320;
   --status-unlisted-border:  #e0b84f;
+}
+
+/* The dark colour is text in light mode but the whole page in dark mode, and
+   one value cannot do both: what reads as coloured ink is too light and too loud
+   as a full-screen background (large areas look more saturated than small ones).
+   So dark mode derives its background from the picked colour instead of using it
+   as-is. Hue is kept — it is the colour's identity across modes. Lightness is
+   scaled (multiplied, so the default black stays exactly black); chroma is
+   scaled by no more than lightness, which near black keeps an in-gamut colour
+   in gamut, since available chroma shrinks roughly in step with L.
+
+   Guarded by @supports: without relative colour syntax the declaration would
+   be invalid at computed-value time and the page would lose its background,
+   rather than falling back. `data-palette-dark="shared"` is the picker's dev
+   toggle for comparing against the underived colour. */
+@supports (color: oklch(from red l c h)) {
+  html[data-theme="dark"]:not([data-palette-dark="shared"]) {
+    --color-bg: oklch(from var(--color-dark) calc(l * var(--palette-dark-bg-l)) calc(c * var(--palette-dark-bg-c)) h);
+  }
 }
 
 /* ── Assembly resize hold (issue #126) ──────────────────────────── */
