@@ -1,7 +1,6 @@
 ---
 import '../styles/global.css';
 import ThemeToggle from '@components/site/ThemeToggle.astro';
-import PalettePicker from '@components/site/PalettePicker.astro';
 import { STACK_GEOMETRY } from '@stack/layout/stack-geometry';
 import { fanReservationTable } from '@stack/layout/stack-reservation';
 import { fanSkeletonTable } from '@stack/layout/stack-skeleton';
@@ -144,20 +143,6 @@ const jsonLd = [
         }
       })();
     </script>
-    <script is:inline>
-      (function () {
-        try {
-          var p = JSON.parse(localStorage.getItem('palette'));
-          if (p && p.light && p.dark && p.light.srgb) {
-            var st = document.documentElement.style;
-            ['light', 'dark'].forEach(function (end) {
-              st.setProperty('--color-' + end + '-srgb', p[end].srgb);
-              st.setProperty('--color-' + end + '-p3', p[end].p3);
-            });
-          }
-        } catch (e) {}
-      })();
-    </script>
     {/* Pre-paint fan reservation for a cold-loaded stack (issue #101).
 
         A deep link renders only its ACTIVE location server-side; the from/to
@@ -256,10 +241,8 @@ const jsonLd = [
         }
       })();
     </script>
-
   </head>
   <body>
-    <PalettePicker />
     <div class="site-wrapper">
       <slot />
       <footer class="site-footer">
