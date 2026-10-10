@@ -1,0 +1,337 @@
+---
+import Base from '../../layouts/Base.astro';
+
+// Throwaway /experiments route: the strand editor for the suspended-dot mark.
+// The title fills most of the screen so the five threads can be shaped
+// precisely, in both poses:
+//
+//   title    — the dot in its slot.
+//   hanging  — the dot stopped at the top edge (the line), the letters above
+//              it where they would be off-screen (the dithered band).
+//
+// Edits save to the same browser storage the /experiments/suspended-dot page
+// reads, so switching tabs shows them in motion. The box at the bottom is the
+// whole rig, to paste into src/data/mark-rig.ts.
+---
+
+<Base title="Mark editor">
+  <div class="me" data-pose="title">
+    <div class="me-offscreen" aria-hidden="true"></div>
+    <div class="me-edge" aria-hidden="true"></div>
+
+    <div class="me-stage">
+      <h1 class="me-title">
+        pdy<span data-l="x">x</span><span data-l="s">s</span><span class="me-slot">.</span><span data-l="w">w</span>tf
+      </h1>
+    </div>
+
+    <svg class="me-overlay" aria-hidden="true">
+      <g class="me-threads"><path></path><path></path><path></path><path></path><path></path></g>
+      <rect class="me-dot"></rect>
+      <g class="me-handles"></g>
+    </svg>
+
+    <fieldset class="me-panel">
+      <legend>strands</legend>
+      <div class="me-row">
+        <label><input type="radio" name="me-pose" value="title" checked /> title</label>
+        <label><input type="radio" name="me-pose" value="hanging" /> hanging</label>
+        <a href="/experiments/suspended-dot">see it move →</a>
+      </div>
+      <label>width <input type="range" class="me-in-width" min="5" max="60" /> <output></output></label>
+      <label class="me-sep">letters above dot <input type="range" class="me-in-sep" min="10" max="150" value="60" /> <output></output></label>
+      <div class="me-row me-show">
+        show
+        <label><input type="checkbox" data-show="a" checked /> ● anchors</label>
+        <label><input type="checkbox" data-show="b" checked /> ○ on dot</label>
+        <label><input type="checkbox" data-show="c" checked /> ■ curves</label>
+      </div>
+      <p class="me-help">Drag to shape. Hold Space to hide every handle.</p>
+      <textarea class="me-export" readonly rows="5" aria-label="Rig config for src/data/mark-rig.ts"></textarea>
+      <button type="button" class="me-reset">reset to file</button>
+    </fieldset>
+  </div>
+</Base>
+
+<style>
+  .me { position: relative; min-height: 100vh; }
+
+  /* The title fills most of the screen: "pdyxs.wtf" is ~4.4em wide. */
+  /* Above the off-screen band, so the letters stay visible over it. */
+  .me-stage {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    padding-top: 30vh;
+  }
+  .me-title {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    font-size: min(20vw, 38vh);
+    line-height: 1;
+    margin: 0;
+    white-space: nowrap;
+  }
+  /* The period keeps its advance and kerning; the overlay draws the dot. */
+  .me-slot { color: transparent; }
+
+  /* Hanging pose: everything above the edge would be off-screen. */
+  .me-offscreen,
+  .me-edge { position: absolute; left: 0; right: 0; display: none; }
+  .me-offscreen { top: 0; height: var(--me-edge-y, 0px); background: var(--dither-2); }
+  .me-edge { top: var(--me-edge-y, 0px); height: 0; border-top: 1px dashed var(--color-text); }
+  .me[data-pose='hanging'] .me-offscreen,
+  .me[data-pose='hanging'] .me-edge { display: block; }
+
+  .me-overlay {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .me-threads path { fill: none; stroke: var(--color-text); stroke-linecap: round; }
+  .me-dot { fill: var(--color-text); }
+  .me-handles :global(.me-handle) {
+    pointer-events: all;
+    cursor: grab;
+    fill: var(--color-bg);
+    stroke: var(--color-text);
+    stroke-width: 2;
+  }
+  .me-handles :global(.me-handle--anchor) { fill: var(--color-text); }
+  /* Show toggles, and Space to peek at the bare strands. */
+  .me[data-hide-a] .me-handles :global([data-h='a']),
+  .me[data-hide-b] .me-handles :global([data-h='b']),
+  .me[data-hide-c] .me-handles :global(:is([data-h='c1'], [data-h='c2'], .me-arm)),
+  .me[data-peek] .me-handles { display: none; }
+  .me-handles :global(.me-handle:hover) { stroke-width: 3; }
+  .me-handles :global(.me-arm) { stroke: var(--color-text); stroke-width: 1; stroke-dasharray: 4 4; fill: none; }
+
+  .me-panel {
+    position: fixed;
+    right: var(--space-sm);
+    top: var(--space-sm);
+    z-index: 10;
+    display: grid;
+    gap: 4px;
+    width: min(22rem, calc(100vw - 2 * var(--space-sm)));
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    font-size: 0.75rem;
+  }
+  .me-panel label { display: flex; align-items: center; gap: var(--space-xs); }
+  .me-panel input[type='range'] { flex: 1; }
+  .me-panel output { font-family: var(--font-mono); min-width: 4.5em; }
+  .me-row { display: flex; gap: var(--space-md); align-items: center; }
+  .me-row a { margin-left: auto; }
+  .me-sep { display: none !important; }
+  .me[data-pose='hanging'] .me-sep { display: flex !important; }
+  .me-help { margin: 0; }
+  .me-show { gap: var(--space-sm); }
+  .me-export {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    width: 100%;
+  }
+  .me-reset {
+    justify-self: start;
+    font: inherit;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  import { MARK_RIG, type MarkRig } from '@data/mark-rig';
+  import { poseThreads, threadPathData, toChord, RIG_STORAGE_KEY, type V, type ThreadGeometry } from '@site/mark-geometry';
+
+  const root = document.querySelector<HTMLElement>('.me')!;
+  const title = root.querySelector<HTMLElement>('.me-title')!;
+  const slot = root.querySelector<HTMLElement>('.me-slot')!;
+  const overlay = root.querySelector<SVGSVGElement>('.me-overlay')!;
+  const paths = [...root.querySelectorAll<SVGPathElement>('.me-threads path')];
+  const dotEl = root.querySelector<SVGRectElement>('.me-dot')!;
+  const handles = root.querySelector<SVGGElement>('.me-handles')!;
+  const inWidth = root.querySelector<HTMLInputElement>('.me-in-width')!;
+  const inSep = root.querySelector<HTMLInputElement>('.me-in-sep')!;
+  const exportBox = root.querySelector<HTMLTextAreaElement>('.me-export')!;
+
+  document.querySelectorAll<HTMLElement>('palette-picker').forEach((el) => (el.style.display = 'none'));
+
+  // ── The rig being edited ──
+  function loadRig(): MarkRig {
+    try {
+      const raw = localStorage.getItem(RIG_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch { /* fall back to the file */ }
+    return structuredClone(MARK_RIG);
+  }
+  let rig = loadRig();
+
+  const round = (_: string, v: unknown) => (typeof v === 'number' ? Math.round(v * 1e4) / 1e4 : v);
+  function save() {
+    const json = JSON.stringify(rig, round, 2);
+    try { localStorage.setItem(RIG_STORAGE_KEY, json); } catch { /* not persisted */ }
+    exportBox.value = json;
+  }
+
+  // ── Measuring the title (overlay coords = the .me box) ──
+  let m: { slot: V; size: number; em: number } | null = null;
+
+  function measure() {
+    const px = parseFloat(getComputedStyle(title).fontSize);
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = `400 ${px}px "Saira Stencil"`;
+    const t = ctx.measureText('.');
+    const r = slot.getBoundingClientRect();
+    const o = overlay.getBoundingClientRect();
+    const baseline = r.top + t.fontBoundingBoxAscent + (r.height - t.fontBoundingBoxAscent - t.fontBoundingBoxDescent) / 2;
+    const left = r.left - t.actualBoundingBoxLeft;
+    const right = r.left + t.actualBoundingBoxRight;
+    const top = baseline - t.actualBoundingBoxAscent;
+    const bottom = baseline + t.actualBoundingBoxDescent;
+    m = {
+      slot: { x: (left + right) / 2 - o.left, y: (top + bottom) / 2 - o.top },
+      size: right - left,
+      em: px,
+    };
+  }
+
+  const hanging = () => root.dataset.pose === 'hanging';
+
+  /** The dot's top-left: in its slot, or stopped `sep` em below it. */
+  function dotTopLeft(): V {
+    const { slot: s, size, em } = m!;
+    const drop = hanging() ? (+inSep.value / 100) * em : 0;
+    return { x: s.x - size / 2, y: s.y + drop - size / 2 };
+  }
+
+  let geometry: ThreadGeometry[] = [];
+
+  function draw() {
+    if (!m) return;
+    const d = dotTopLeft();
+    geometry = poseThreads(rig, { slot: m.slot, dot: d, size: m.size, em: m.em, p: hanging() ? 1 : 0 });
+    geometry.forEach((g, i) => paths[i].setAttribute('d', threadPathData(g)));
+    paths.forEach((p) => p.style.setProperty('stroke-width', String(Math.max(1.2, rig.width * m!.em))));
+    dotEl.setAttribute('x', d.x.toFixed(1));
+    dotEl.setAttribute('y', d.y.toFixed(1));
+    dotEl.setAttribute('width', m.size.toFixed(1));
+    dotEl.setAttribute('height', m.size.toFixed(1));
+    // The screen's top edge runs through the stopped dot's centre.
+    root.style.setProperty('--me-edge-y', `${d.y + m.size / 2}px`);
+
+    const f = (v: V) => `${v.x.toFixed(1)}`;
+    const g2 = (v: V) => `${v.y.toFixed(1)}`;
+    handles.innerHTML = geometry
+      .map((g, i) =>
+        `<path class="me-arm" d="M${f(g.A)} ${g2(g.A)} L${f(g.c1)} ${g2(g.c1)} M${f(g.B)} ${g2(g.B)} L${f(g.c2)} ${g2(g.c2)}"/>`
+        + `<rect class="me-handle" data-h="c1" data-i="${i}" x="${g.c1.x - 6}" y="${g.c1.y - 6}" width="12" height="12"/>`
+        + `<rect class="me-handle" data-h="c2" data-i="${i}" x="${g.c2.x - 6}" y="${g.c2.y - 6}" width="12" height="12"/>`
+        + `<circle class="me-handle me-handle--anchor" data-h="a" data-i="${i}" cx="${f(g.A)}" cy="${g2(g.A)}" r="8"/>`
+        + `<circle class="me-handle" data-h="b" data-i="${i}" cx="${f(g.B)}" cy="${g2(g.B)}" r="5"/>`)
+      .join('');
+  }
+
+  // ── Dragging ──
+  let dragging: { h: string; i: number } | null = null;
+
+  overlay.addEventListener('pointerdown', (e) => {
+    const el = (e.target as Element).closest<SVGElement>('.me-handle');
+    if (!el) return;
+    e.preventDefault();
+    dragging = { h: el.dataset.h!, i: +el.dataset.i! };
+  });
+
+  addEventListener('pointermove', (e) => {
+    if (!dragging || !m) return;
+    const o = overlay.getBoundingClientRect();
+    const P = { x: e.clientX - o.left, y: e.clientY - o.top };
+    const t = rig.threads[dragging.i];
+    const g = geometry[dragging.i];
+    const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+    if (dragging.h === 'a') {
+      t.anchor = { x: (P.x - m.slot.x) / m.em, y: (P.y - m.slot.y) / m.em };
+    } else if (dragging.h === 'b') {
+      const d = dotTopLeft();
+      t.attach = { x: clamp01((P.x - d.x) / m.size), y: clamp01((P.y - d.y) / m.size) };
+    } else {
+      const k = dragging.h === 'c1' ? 0 : 1;
+      if (hanging()) t.hang[k] = { x: (P.x - g.B.x) / m.em, y: (P.y - g.B.y) / m.em };
+      else t.rest[k] = toChord(g.A, g.B, P);
+    }
+    draw();
+    save();
+  });
+
+  addEventListener('pointerup', () => (dragging = null));
+
+  // ── Controls ──
+  const show = (input: HTMLInputElement, fmt: (v: string) => string) => {
+    const out = input.parentElement!.querySelector('output')!;
+    const upd = () => (out.value = fmt(input.value));
+    input.addEventListener('input', upd);
+    upd();
+  };
+  inWidth.value = String(Math.round(rig.width * 1000));
+  show(inWidth, (v) => `${(+v / 1000).toFixed(3)}em`);
+  show(inSep, (v) => `${(+v / 100).toFixed(2)}em`);
+  inWidth.addEventListener('input', () => {
+    rig.width = +inWidth.value / 1000;
+    draw();
+    save();
+  });
+  inSep.addEventListener('input', draw);
+
+  root.querySelectorAll<HTMLInputElement>('[data-show]').forEach((box) => {
+    const attr = `data-hide-${box.dataset.show}`;
+    box.addEventListener('change', () => root.toggleAttribute(attr, !box.checked));
+  });
+  // Hold Space to see the strands with no handles at all.
+  // Space always peeks — even with a toggle focused, where it would otherwise
+  // flip the checkbox (that happens on keyup, so both are cancelled) — except
+  // in the text box.
+  const inText = (e: KeyboardEvent) => (e.target as HTMLElement).matches('textarea');
+  addEventListener('keydown', (e) => {
+    if (e.code !== 'Space' || inText(e)) return;
+    e.preventDefault();
+    root.setAttribute('data-peek', '');
+  });
+  addEventListener('keyup', (e) => {
+    if (e.code !== 'Space' || inText(e)) return;
+    e.preventDefault();
+    root.removeAttribute('data-peek');
+  });
+  root.querySelectorAll<HTMLInputElement>('input[name="me-pose"]').forEach((r) =>
+    r.addEventListener('change', () => {
+      root.dataset.pose = r.value;
+      draw();
+    }),
+  );
+  root.querySelector('.me-reset')!.addEventListener('click', () => {
+    try { localStorage.removeItem(RIG_STORAGE_KEY); } catch { /* nothing stored */ }
+    rig = structuredClone(MARK_RIG);
+    inWidth.value = String(Math.round(rig.width * 1000));
+    inWidth.dispatchEvent(new Event('input'));
+  });
+
+  function relayout() {
+    measure();
+    draw();
+  }
+  addEventListener('resize', relayout);
+  document.fonts.ready.then(() => {
+    relayout();
+    exportBox.value = JSON.stringify(rig, round, 2);
+  });
+</script>

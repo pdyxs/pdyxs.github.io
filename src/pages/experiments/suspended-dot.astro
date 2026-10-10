@@ -62,10 +62,13 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
 
       <section class="sd-fav">
         <h2>Favicon</h2>
-        <p>The same five threads, holding the dot in a square frame. Drawn in the current palette; this page’s tab uses the 32px one.</p>
+        <p>
+          <code>public/favicon.svg</code>, hand-editable: the same five threads holding
+          the dot in a square frame. Shown here recoloured to the current palette
+          (this page’s tab too). Reload after editing the file.
+        </p>
         <div class="sd-fav-rows">
-          <div class="sd-fav-row" data-variant="full"><span class="sd-fav-label">full</span></div>
-          <div class="sd-fav-row" data-variant="simple"><span class="sd-fav-label">simple</span></div>
+          <div class="sd-fav-row"></div>
         </div>
       </section>
     </main>
@@ -87,10 +90,11 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
 
     <fieldset class="sd-controls">
       <legend>tune</legend>
-      <label>title <input type="range" class="sd-in-title" min="24" max="112" value="48" /> <output></output></label>
+      <label>title <input type="range" class="sd-in-title" min="24" max="240" value="48" /> <output></output></label>
       <label>grow to <input type="range" class="sd-in-hang" min="100" max="500" step="25" value="300" /> <output></output></label>
       <label>settle <input type="range" class="sd-in-swing" min="15" max="100" value="40" /> <output></output></label>
-      <label><input type="checkbox" class="sd-in-debug" /> anchors + hit area</label>
+      <label><input type="checkbox" class="sd-in-debug" /> hit area</label>
+      <a href="/experiments/mark-editor">edit strands →</a>
     </fieldset>
   </div>
 </Base>
@@ -186,8 +190,6 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     stroke-linecap: round;
   }
   .sd-dot { fill: var(--color-text); }
-  .sd-debug circle { fill: none; stroke: var(--color-text); stroke-width: 1; }
-
   .sd-hit {
     position: fixed;
     z-index: 901;
@@ -233,16 +235,18 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   .sd-controls label { display: flex; align-items: center; gap: var(--space-xs); }
   .sd-controls input[type='range'] { width: 7rem; }
   .sd-controls output { font-family: var(--font-mono); min-width: 2.5em; }
-
   .sd-fav { margin-top: var(--space-xl); }
   .sd-fav-rows { display: grid; gap: var(--space-md); }
   .sd-fav-row { display: flex; align-items: flex-end; gap: var(--space-lg); }
   .sd-fav-label { width: 4em; font-size: 0.8rem; }
   .sd-fav-row :global(figure) { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; }
-  .sd-fav-row :global(svg) { display: block; image-rendering: pixelated; }
+  .sd-fav-row :global(img) { display: block; }
 </style>
 
 <script>
+  import { MARK_RIG, type MarkRig } from '@data/mark-rig';
+  import { poseThreads, threadPathData, RIG_STORAGE_KEY, type ThreadGeometry } from '@site/mark-geometry';
+
   // ── Pure bits ──────────────────────────────────────────────────────
 
   type V = { x: number; y: number };
@@ -255,36 +259,13 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     s.x += s.v * dt;
   }
 
-  /**
-   * A thread from a to b whose rest length is `len`, hanging under gravity:
-   * a quadratic curve with the parabola's sag for that much slack, nudged
-   * against the dot's velocity so it trails when the dot swings.
-   */
-  function threadPath(a: V, b: V, len: number, drag: V): string {
-    const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    const sag = len > d ? Math.sqrt((3 * d * (len - d)) / 8) : 0;
-    const mx = (a.x + b.x) / 2 - drag.x * 0.02;
-    const my = (a.y + b.y) / 2 + 2 * sag - drag.y * 0.02;
-    return `M${a.x.toFixed(1)} ${a.y.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
-  }
-
-  /** Where each thread meets the dot, as fractions of its square. */
-  const DOT_ATTACH: V[] = [
-    { x: 0, y: 0 }, // 1 → s top
-    { x: 1, y: 0 }, // 2 → w top
-    { x: 0, y: 0.7 }, // 3 → s bottom
-    { x: 0.4, y: 1 }, // 4 → x foot
-    { x: 1, y: 1 }, // 5 → w foot
-  ];
-  /** Rest length as a multiple of the at-rest distance: the lower three sag. */
-  const SLACK = [1.04, 1.04, 1.12, 1.3, 1.22];
+  const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
   // ── Page ───────────────────────────────────────────────────────────
 
   const root = document.querySelector<HTMLElement>('.sd')!;
   const title = root.querySelector<HTMLElement>('.sd-title')!;
   const slot = root.querySelector<HTMLElement>('.sd-slot')!;
-  const letter = (l: string) => root.querySelector<HTMLElement>(`[data-l="${l}"]`)!;
   const paths = [...root.querySelectorAll<SVGPathElement>('.sd-threads path')];
   const dotEl = root.querySelector<SVGRectElement>('.sd-dot')!;
   const debugG = root.querySelector<SVGGElement>('.sd-debug')!;
@@ -299,11 +280,11 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
   /**
-   * The rig, measured from the laid-out title: each anchor's offset from the
-   * dot's centre. The anchors are the real letters, so they move rigidly with
-   * the title; only the dot ever leaves them.
+   * What the page measures from the laid-out title: the dot's size, the
+   * slot's box, and the font size that the authored rig's em units scale by.
+   * The threads themselves are authored (src/data/mark-rig.ts), not measured.
    */
-  let rig: { dot: number; slotW: number; slotDelta: V; anchors: V[] } | null = null;
+  let rig: { dot: number; px: number; slotW: number; slotDelta: V } | null = null;
 
   /** How much the title is currently scaled, read off the live slot box. */
   function liveScale(): number {
@@ -335,20 +316,8 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     const dotBox = ink('.', slot);
     const size = dotBox.right - dotBox.left;
     const centre = { x: (dotBox.left + dotBox.right) / 2, y: (dotBox.top + dotBox.bottom) / 2 };
-    const s = ink('s', letter('s'));
-    const x = ink('x', letter('x'));
-    const w = ink('w', letter('w'));
-    const sw = s.right - s.left;
-    const ww = w.right - w.left;
-    const anchors: V[] = [
-      { x: s.right - 0.05 * sw, y: s.top + 0.06 * (s.bottom - s.top) }, // s top tip
-      { x: w.left + 0.04 * ww, y: w.top }, // w top
-      { x: s.left + 0.72 * sw, y: s.bottom }, // s bottom tip
-      { x: x.right - 0.02 * (x.right - x.left), y: x.bottom }, // x foot
-      { x: w.left + 0.86 * ww, y: w.bottom }, // w foot
-    ].map((a) => ({ x: a.x - centre.x, y: a.y - centre.y }));
     const sr = slot.getBoundingClientRect();
-    rig = { dot: size, slotW: sr.width, slotDelta: { x: centre.x - sr.left, y: centre.y - sr.top }, anchors };
+    rig = { dot: size, px, slotW: sr.width, slotDelta: { x: centre.x - sr.left, y: centre.y - sr.top } };
   }
 
   /** Where the dot stops: its centre on the top edge, so half of it shows. */
@@ -434,16 +403,16 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     dotEl.setAttribute('y', (dy - o.top).toFixed(1));
     dotEl.setAttribute('width', size.toFixed(1));
     dotEl.setAttribute('height', size.toFixed(1));
-    const drag = { x: 0, y: D.y.v };
-    r.anchors.forEach((a, i) => {
-      const A = { x: real.x + a.x * k - o.left, y: real.y + a.y * k - o.top };
-      const B = { x: dx + DOT_ATTACH[i].x * size - o.left, y: dy + DOT_ATTACH[i].y * size - o.top };
-      // Threads pay out as the letters leave the stopped dot, keeping the same
-      // proportion of slack, so the lower three still hang in loops.
-      const len = Math.hypot(B.x - A.x, B.y - A.y) * SLACK[i];
-      paths[i].setAttribute('d', threadPath(A, B, len, drag));
-    });
-    paths.forEach((p) => p.style.setProperty('stroke-width', String(Math.max(1.2, size / 8))));
+    const shift = (v: V) => ({ x: v.x - o.left, y: v.y - o.top });
+    poseThreads(cfg, {
+      slot: shift(realSlot()),
+      dot: shift({ x: D.x - size / 2, y: D.y.x - size / 2 }),
+      size,
+      em: r.px * k,
+      p: poseBlend(),
+    }).forEach((g: ThreadGeometry, i) => paths[i].setAttribute('d', threadPathData(g)));
+    const em = r.px * k;
+    paths.forEach((p) => p.style.setProperty('stroke-width', String(Math.max(1.2, cfg.width * em))));
 
     // Hit target: never under 44px, centred on the visible part of the dot.
     const hitSize = Math.max(44, size * 1.6);
@@ -453,11 +422,27 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     hit.style.left = `${D.x - hitSize / 2 - hb.left}px`;
     hit.style.top = `${Math.max(0, cy - hitSize / 2) - hb.top}px`;
 
-    if (root.hasAttribute('data-debug')) {
-      debugG.innerHTML = r.anchors
-        .map((a) => `<circle cx="${real.x + a.x * k - o.left}" cy="${real.y + a.y * k - o.top}" r="3"></circle>`)
-        .join('');
-    } else debugG.innerHTML = '';
+  }
+
+  // ── The authored rig, posed ──
+
+  /** The authored rig: in-progress edits from the editor page, else the file. */
+  const cfg: MarkRig = (() => {
+    try {
+      const raw = localStorage.getItem(RIG_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch { /* fall back to the file */ }
+    return MARK_RIG;
+  })();
+
+  /**
+   * How far into the hanging pose the rig is: 0 when the dot stops, 1 once the
+   * departing title has reached where it ends up (set when the card opens).
+   */
+  let hangSeparation = 1;
+  function poseBlend(): number {
+    if (!stopped) return 0;
+    return clamp01((HANG_Y - realSlot().y) / hangSeparation);
   }
 
   const wake = () => { if (!frame) frame = requestAnimationFrame(tick); };
@@ -490,6 +475,8 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
       root.style.setProperty('--sd-ox', `${real.x - tr.left}px`);
       root.style.setProperty('--sd-oy', `${real.y - tr.top}px`);
       root.style.setProperty('--sd-scale', String(+inHang.value / 100));
+      // The header rises by its own height, so that is where the slot ends up.
+      hangSeparation = Math.max(1, header.offsetHeight - real.y + HANG_Y);
     }
     root.dataset.mode = mode;
     if (mode === 'card') {
@@ -539,37 +526,25 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   root.dataset.mode = 'page';
   addEventListener('resize', relayout);
 
-  // ── Favicon: the rig in a square frame ──
-  function favicon(size: number, variant: 'full' | 'simple', ink: string, paper: string): string {
-    // Drawn on a 32-unit grid, from the sketch: dot about half the frame,
-    // threads to the top edge (×2), the left edge, and the bottom corners.
-    const sw = variant === 'simple' ? 3 : size <= 32 ? 2 : 1.4;
-    const threads =
-      variant === 'simple'
-        ? ['M9 9 L9 0', 'M23 9 L28 0', 'M9 21 L0 21', 'M15 23 L3 32', 'M23 23 L32 30']
-        : ['M8.5 8 L8.5 0', 'M23.5 8 Q26 4 28 0', 'M8.5 22 L0 22', 'M15 23.5 Q13 30 1 30', 'M23.5 23.5 Q25 28 32 29'];
-    const dot = variant === 'simple' ? '<rect x="9" y="9" width="14" height="14"/>' : '<rect x="8.5" y="8" width="15" height="15.5"/>';
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32">`
-      + `<rect width="32" height="32" fill="${paper}"/>`
-      + `<g fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linecap="square">${threads.map((d) => `<path d="${d}"/>`).join('')}</g>`
-      + `<g fill="${ink}">${dot}</g>`
-      + `<rect x="0.75" y="0.75" width="30.5" height="30.5" fill="none" stroke="${ink}" stroke-width="1.5"/>`
-      + `</svg>`;
-  }
+  // ── Favicon: public/favicon.svg, recoloured to the palette ──
+  let faviconSource: Promise<string> | undefined;
+  const loadFavicon = () =>
+    (faviconSource ??= fetch('/favicon.svg', { cache: 'no-store' }).then((r) => r.text()));
 
-  function renderFavicons() {
+  async function renderFavicons() {
+    const source = await loadFavicon();
     const cs = getComputedStyle(document.body);
     const ink = cs.color;
     const paper = cs.backgroundColor;
-    root.querySelectorAll<HTMLElement>('.sd-fav-row').forEach((row) => {
-      const v = row.dataset.variant as 'full' | 'simple';
-      row.querySelectorAll('figure').forEach((f) => f.remove());
-      for (const s of [16, 32, 64, 180]) {
-        const fig = document.createElement('figure');
-        fig.innerHTML = `${favicon(s, v, ink, paper)}<figcaption>${s}px</figcaption>`;
-        row.appendChild(fig);
-      }
-    });
+    // Override the file's own colours (and its dark-mode block) with the palette.
+    const override = `<style>.paper{fill:${paper}!important}.ink{fill:${ink}!important}`
+      + `.thread,.frame{stroke:${ink}!important}</style>`;
+    const svg = source.replace(/<\/svg>\s*$/, `${override}</svg>`);
+    const src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+    const row = root.querySelector<HTMLElement>('.sd-fav-row')!;
+    row.innerHTML = [16, 32, 64, 180]
+      .map((s) => `<figure><img src="${src}" width="${s}" height="${s}" alt=""><figcaption>${s}px</figcaption></figure>`)
+      .join('');
     let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
     if (!link) {
       link = document.createElement('link');
@@ -577,7 +552,7 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
       document.head.appendChild(link);
     }
     link.type = 'image/svg+xml';
-    link.href = `data:image/svg+xml,${encodeURIComponent(favicon(32, 'full', ink, paper))}`;
+    link.href = src;
   }
 
   // Palette or theme changes recolour the favicon.
