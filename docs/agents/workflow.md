@@ -159,9 +159,11 @@ committed images.
 
 ## Experiments live on dev-only routes
 
-`/experiment` should create throwaway pages under `src/pages/experiments/` with synthetic fixtures (e.g. 10 fake cards for an overflow experiment). Don't prototype by mutating production components and reverting.
+`/experiment` should create throwaway pages under `src/experiments/` with synthetic fixtures (e.g. 10 fake cards for an overflow experiment). Don't prototype by mutating production components and reverting.
 
-Note: Astro excludes directories starting with `_` from routing, so `_experiments` does **not** work — use `experiments` (no underscore).
+They are served at `/experiments/<name>` (index at `/experiments`, which lists them with the first `//` comment of each page's frontmatter as its blurb) by `scripts/experiments-integration.mjs`, which injects the routes **only under `astro dev`** — nothing in `src/experiments/` reaches a production build. The folder is scanned at server start, so a *new* experiment needs `systemctl --user restart astro-preview.service`; edits to existing ones hot-reload.
+
+They sit outside `src/pages/` on purpose: a file in `pages/` is always built, and Astro excludes `_`-prefixed directories from routing, so neither `pages/experiments` nor `pages/_experiments` can be dev-only.
 
 ## Plans must name the selectors and CSS variables they touch
 

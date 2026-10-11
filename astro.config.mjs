@@ -6,11 +6,12 @@ import { REDIRECTS } from './src/data/redirects.generated.ts';
 import { rehypeExternalLinks } from './src/lib/render/external-links.ts';
 import { rehypeVideoEmbeds } from './src/lib/render/video-embeds.ts';
 import { devReloadPlugin } from './scripts/dev-reload-plugin.mjs';
+import { experimentsIntegration } from './scripts/experiments-integration.mjs';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://pdyxs.wtf',
-  integrations: [svelte()],
+  integrations: [svelte(), experimentsIntegration()],
   // Old Jekyll permalinks (issue #70). The map is generated from the retired
   // site on `master` by scripts/generate-redirects.mjs (a prebuild step), never
   // hand-edited. In a static build Astro emits one meta-refresh HTML page per

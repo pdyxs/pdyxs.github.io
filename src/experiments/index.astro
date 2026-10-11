@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+
+// /experiments: an index of the throwaway pages in this folder. Registered only
+// under `astro dev` (scripts/experiments-integration.mjs).
+
+// The first `//` comment line in a page's frontmatter is its blurb.
+const pages = import.meta.glob('./*.astro', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+
+const experiments = Object.entries(pages)
+  .filter(([path]) => path !== './index.astro')
+  .map(([path, source]) => ({
+    slug: path.replace(/^\.\//, '').replace(/\.astro$/, ''),
+    blurb: source.match(/^\/\/ (.+)$/m)?.[1] ?? '',
+  }))
+  .sort((a, b) => a.slug.localeCompare(b.slug));
+---
+
+<Base title="Experiments">
+  <main class="experiments">
+    <h1>Experiments</h1>
+    <p>Dev-only throwaway pages from <code>src/experiments/</code>.</p>
+    <ul>
+      {experiments.map(({ slug, blurb }) => (
+        <li>
+          <a href={`/experiments/${slug}`}>{slug}</a>
+          {blurb && <span>{blurb}</span>}
+        </li>
+      ))}
+    </ul>
+  </main>
+</Base>
+
+<style>
+  .experiments {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: var(--space-lg) var(--space-md);
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-md);
+  }
+  li {
+    display: grid;
+    gap: var(--space-xs);
+  }
+</style>

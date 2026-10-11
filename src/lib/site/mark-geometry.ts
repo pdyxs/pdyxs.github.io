@@ -68,3 +68,73 @@ export function threadPathData(g: ThreadGeometry): string {
 
 /** Browser-storage key for in-progress rig edits, shared by both pages. */
 export const RIG_STORAGE_KEY = 'mark-rig-experiment';
+
+// ── Tools: baubles hung from the threads' far ends ───────────────────
+
+/** Pull a thread straight: k = 0 leaves its slack, k = 1 puts both control points on the chord. */
+export function tauten(g: ThreadGeometry, k: number): ThreadGeometry {
+  return {
+    ...g,
+    c1: lerp(g.c1, lerp(g.A, g.B, 1 / 3), k),
+    c2: lerp(g.c2, lerp(g.A, g.B, 2 / 3), k),
+  };
+}
+
+/**
+ * Where a tool hangs from. In the title that is the thread's anchor, on the
+ * letters. Once the title has left the screen the anchor is off it, so the tool
+ * hangs from where the taut thread crosses the top edge (`topY`) instead.
+ */
+export function toolPivot(g: ThreadGeometry, hanging: boolean, topY: number): V {
+  if (!hanging || g.A.y >= topY || g.B.y === g.A.y) return g.A;
+  const t = Math.min(1, Math.max(0, (topY - g.A.y) / (g.B.y - g.A.y)));
+  return { x: g.A.x + (g.B.x - g.A.x) * t, y: topY };
+}
+
+/**
+ * A bauble on a string, in polar coordinates about its pivot: `r` is the string
+ * paid out, `theta` its angle from straight down. The string extends and
+ * retracts as a spring on `r`; the swing is a damped pendulum.
+ */
+export interface Bauble {
+  r: number;
+  rv: number;
+  theta: number;
+  omega: number;
+}
+
+const GRAVITY = 2200; // px/s²
+const SWING_DAMPING = 1.1; // 1/s
+
+/** How the string pays out or draws in: a spring on its length. */
+export interface StringSpring {
+  stiffness: number; // 1/s²
+  damping: number; // 1/s
+}
+
+/** Falling out: fast, and the string overshoots a little as it catches. */
+export const DROP: StringSpring = { stiffness: 900, damping: 32 };
+/** Reeled up: slower, and critically damped so it never runs past nothing. */
+export const REEL: StringSpring = { stiffness: 130, damping: 2 * Math.sqrt(130) };
+
+/** One step toward `len` px of string; pure, so a caller can sub-step it. */
+export function stepBauble(b: Bauble, len: number, dt: number, spring: StringSpring = DROP): Bauble {
+  const reach = Math.max(len, b.r, 1);
+  const rv = b.rv + (spring.stiffness * (len - b.r) - spring.damping * b.rv) * dt;
+  const omega = b.omega + (-(GRAVITY / reach) * Math.sin(b.theta) - SWING_DAMPING * b.omega) * dt;
+  return { r: b.r + rv * dt, rv, theta: b.theta + omega * dt, omega };
+}
+
+export function baublePos(pivot: V, b: Bauble): V {
+  return { x: pivot.x + b.r * Math.sin(b.theta), y: pivot.y + b.r * Math.cos(b.theta) };
+}
+
+/** The bauble state that puts it at `p` with no motion (a drag holds it there). */
+export function baubleAt(pivot: V, p: V): Bauble {
+  return { r: Math.hypot(p.x - pivot.x, p.y - pivot.y), rv: 0, theta: Math.atan2(p.x - pivot.x, p.y - pivot.y), omega: 0 };
+}
+
+/** True while a bauble still has motion worth animating. */
+export function baubleMoving(b: Bauble, len: number): boolean {
+  return Math.abs(b.omega) > 0.02 || Math.abs(b.theta) > 0.002 || Math.abs(b.rv) > 0.5 || Math.abs(b.r - len) > 0.2;
+}

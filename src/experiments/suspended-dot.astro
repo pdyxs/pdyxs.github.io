@@ -1,5 +1,5 @@
 ---
-import Base from '../../layouts/Base.astro';
+import Base from '../layouts/Base.astro';
 
 // Throwaway /experiments route: the suspended dot. The full stop in pdyxs.wtf
 // hangs from five threads tied to the letters around it (s top, s bottom, x
@@ -7,7 +7,8 @@ import Base from '../../layouts/Base.astro';
 // the whole title rises, grows and drifts to the centre as one piece; the dot's only
 // difference is that it STOPS at the top edge (with a small settle), half
 // off-screen, while the letters carry on out of view and the threads pay out.
-// That hanging dot is the mark you click for global tools.
+// That hanging dot is the mark you click for global tools: it pulls the
+// threads taut and tools drop from their far ends on strings of their own.
 // The favicon is the same rig in a square frame.
 //
 // The card open is SIMULATED (a mock home list and a mock card), not wired
@@ -20,15 +21,22 @@ import Base from '../../layouts/Base.astro';
 // Thread sag is solved from each thread's rest length, not simulated.
 
 const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
+
+// Clicking the dot pulls the threads taut and drops tools from their far ends.
+// Each tool hangs from one thread (an index into MARK_RIG.threads): from its
+// anchor on the letters in the title, from where the thread leaves the top edge
+// everywhere else. Only the colour picker so far.
+const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page to pick them', length: 80 }];
 ---
 
 <Base title="Suspended dot">
   <div class="sd">
+    <div class="sd-frame">
     <header class="sd-header">
-      <h1 class="site-title sd-title">
+      <h1 class="page-title sd-title">
         pdy<span data-l="x">x</span><span data-l="s">s</span><span class="sd-slot">.</span><span data-l="w">w</span>tf
       </h1>
-      <p class="site-tagline">Paul Sztajer — games, puzzles and writing</p>
+      <p class="page-subtitle">Paul Sztajer — games, puzzles and writing</p>
     </header>
 
     <main class="sd-body">
@@ -37,7 +45,7 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
         <p>
           Open a card. The header leaves upwards; the dot lags behind, swings to
           the centre and hangs from the top edge. Close the card to bring it
-          back. Click the hanging dot for the (placeholder) tools.
+          back. Click the dot, in the title or hanging, to pull the threads taut and drop the tools; drag the colour bauble across the page to pick colours.
         </p>
         <ul class="sd-list">
           {['Summoning Fog', 'Lino Tiles', 'Who I am', 'This website', 'Gotta Go'].map((t) => (
@@ -72,25 +80,33 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
         </div>
       </section>
     </main>
+    </div>
 
     {/* ── The overlay: dot, threads, hit target ── */}
     <svg class="sd-overlay" aria-hidden="true">
       <g class="sd-threads">
         <path></path><path></path><path></path><path></path><path></path>
       </g>
+      <g class="sd-tools">
+        {TOOLS.map((t) => (
+          <g class="sd-tool" data-tool={t.id} data-thread={t.thread} data-length={t.length}>
+            <line class="sd-tool-string"></line>
+            <g class="sd-bauble" role="button" tabindex="0" aria-label={t.label}>
+              <title>{t.label}</title>
+              <circle class="sd-bauble-hit" r="22"></circle>
+              <circle class="sd-bauble-body" r="12"></circle>
+              <circle class="sd-bauble-core" r="4.7"></circle>
+            </g>
+          </g>
+        ))}
+      </g>
       <rect class="sd-dot"></rect>
       <g class="sd-debug"></g>
     </svg>
     <button type="button" class="sd-hit" aria-label="Tools" aria-expanded="false"></button>
 
-    {/* ── Placeholder tools tray, pulled down from off-screen ── */}
-    <div class="sd-tray" role="region" aria-label="Tools">
-      <span>Tools arrive here: theme, palette, this card’s colours…</span>
-    </div>
-
     <fieldset class="sd-controls">
       <legend>tune</legend>
-      <label>title <input type="range" class="sd-in-title" min="24" max="240" value="48" /> <output></output></label>
       <label>grow to <input type="range" class="sd-in-hang" min="100" max="500" step="25" value="300" /> <output></output></label>
       <label>settle <input type="range" class="sd-in-swing" min="15" max="100" value="40" /> <output></output></label>
       <label><input type="checkbox" class="sd-in-debug" /> hit area</label>
@@ -103,8 +119,13 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   /* The header leaves upwards: a negative top margin as tall as itself,
      animated, so the page content rides up with it (margin, not a transform —
      nothing that holds dither may be transformed). */
+  /* The page-mode card: on the real site the front page is a ~1100px box,
+     centred, whose header carries the md inline padding. The title's size comes
+     from the real .page-title rule (clamp of 3rem, which is 54px at 18px root),
+     not from anything here. */
+  .sd-frame { width: min(1100px, 100%); margin: 0 auto; }
   .sd-header {
-    padding: var(--space-xl) 0 var(--space-lg);
+    padding: var(--space-xl) var(--space-md) var(--space-lg);
     border-bottom: var(--border-width) solid var(--color-border);
     transition:
       margin-top 420ms cubic-bezier(0.5, 0, 0.75, 0),
@@ -167,7 +188,7 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   }
   /* The period keeps its advance and kerning, but is drawn by the overlay. */
   .sd-slot { color: transparent; }
-  .sd-body { max-width: var(--max-width); padding-bottom: 40vh; }
+  .sd-body { max-width: var(--max-width); padding: 0 var(--space-md) 40vh; }
 
   .sd-overlay {
     position: fixed;
@@ -201,24 +222,19 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   }
   .sd[data-debug] .sd-hit { outline: 1px dashed var(--color-text); }
 
-  /* Pulled down from above the viewport. `top`, not a transform: a tray may
-     one day hold dithered controls (styling.md). */
-  .sd-tray {
-    position: fixed;
-    left: 50%;
-    width: min(28rem, calc(100vw - 2 * var(--space-md)));
-    margin-left: calc(min(28rem, calc(100vw - 2 * var(--space-md))) / -2);
-    top: -8rem;
-    z-index: 800;
-    padding: var(--space-lg) var(--space-md) var(--space-md);
-    background: var(--color-bg);
-    border: var(--border-width) solid var(--color-border);
-    border-top: none;
-    font-size: 0.9rem;
-    text-align: center;
-    transition: top 320ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* Tools: a bauble on a string, from the threads' far ends. */
+  .sd-tool:not([data-open]) { display: none; }
+  .sd-tool-string {
+    stroke: var(--color-text);
+    stroke-width: 1.5;
+    stroke-linecap: round;
   }
-  .sd[data-tray] .sd-tray { top: 0; }
+  .sd-bauble { pointer-events: auto; cursor: grab; touch-action: none; }
+  .sd-bauble[data-dragging] { cursor: grabbing; }
+  .sd-bauble-hit { fill: transparent; }
+  .sd-bauble-body { fill: var(--color-bg); stroke: var(--color-text); stroke-width: 2.5; }
+  .sd-bauble-core { fill: var(--color-text); }
+  .sd-bauble:focus-visible .sd-bauble-body { stroke-width: 4; }
 
   .sd-controls {
     position: fixed;
@@ -245,7 +261,22 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
 
 <script>
   import { MARK_RIG, type MarkRig } from '@data/mark-rig';
-  import { poseThreads, threadPathData, RIG_STORAGE_KEY, type ThreadGeometry } from '@site/mark-geometry';
+  import {
+    poseThreads,
+    threadPathData,
+    tauten,
+    toolPivot,
+    stepBauble,
+    DROP,
+    REEL,
+    baublePos,
+    baubleAt,
+    baubleMoving,
+    RIG_STORAGE_KEY,
+    type Bauble,
+    type ThreadGeometry,
+  } from '@site/mark-geometry';
+  import { PALETTE_STORAGE_KEY, findSystem, isDefault, parsePalette, type Palette } from '@site/palette';
 
   // ── Pure bits ──────────────────────────────────────────────────────
 
@@ -270,7 +301,6 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   const dotEl = root.querySelector<SVGRectElement>('.sd-dot')!;
   const debugG = root.querySelector<SVGGElement>('.sd-debug')!;
   const hit = root.querySelector<HTMLButtonElement>('.sd-hit')!;
-  const inTitle = root.querySelector<HTMLInputElement>('.sd-in-title')!;
   const inHang = root.querySelector<HTMLInputElement>('.sd-in-hang')!;
   const inSwing = root.querySelector<HTMLInputElement>('.sd-in-swing')!;
   const inDebug = root.querySelector<HTMLInputElement>('.sd-in-debug')!;
@@ -278,6 +308,133 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   document.querySelectorAll<HTMLElement>('palette-picker').forEach((el) => (el.style.display = 'none'));
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  // ── Tools ──────────────────────────────────────────────────────────
+
+  interface Tool {
+    id: string;
+    thread: number;
+    /** String length when dropped, px. */
+    length: number;
+    el: SVGGElement;
+    string: SVGLineElement;
+    bauble: SVGGElement;
+    b: Bauble;
+    /** Its size, 0..1: grows out of the letters, shrinks back into them. */
+    s: Spring;
+    /** Where it hangs from, in overlay coords; set by draw(). */
+    pivot: V;
+    /** The pointer (viewport coords) while the bauble is being dragged. */
+    pointer: V | null;
+  }
+  const tools: Tool[] = [...root.querySelectorAll<SVGGElement>('.sd-tool')].map((el) => ({
+    id: el.dataset.tool!,
+    thread: +el.dataset.thread!,
+    length: +el.dataset.length!,
+    el,
+    string: el.querySelector('.sd-tool-string')!,
+    bauble: el.querySelector('.sd-bauble')!,
+    b: { r: 0, rv: 0, theta: 0, omega: 0 },
+    s: { x: 0, v: 0 },
+    pivot: { x: 0, y: 0 },
+    pointer: null,
+  }));
+  /**
+   * Opening and closing are both a pull on the strings, like a pull trigger:
+   * the threads that carry a tool snap taut ('pull'), then relax ('release'),
+   * and it is on the release that the tool moves: it falls out when opening and
+   * is reeled up when closing. `want` is the state being moved to.
+   */
+  type Phase = 'rest' | 'pull' | 'release';
+  let phase: Phase = 'rest';
+  let want = false;
+  /** Whether the baubles' strings are paid out (set when the release begins). */
+  let toolsOut = false;
+  /** How taut the tool-bearing threads are, 0..1 (a spring: they snap, then settle). */
+  const taut: Spring = { x: 0, v: 0 };
+  const toolLen = (t: Tool) => (toolsOut ? t.length : 0);
+  const carriesTool = (thread: number) => tools.some((t) => t.thread === thread);
+  /** Pulled this taut, the release begins. */
+  const PULLED = 0.96;
+
+  function setTools(open: boolean) {
+    if (open === want) return;
+    want = open;
+    hit.setAttribute('aria-expanded', String(open));
+    for (const t of tools) {
+      if (open && !t.el.hasAttribute('data-open')) {
+        t.el.setAttribute('data-open', '');
+        // Nothing paid out yet; a little sideways kick so it swings as it falls.
+        t.b = { r: 0, rv: 0, theta: 0, omega: reduced.matches ? 0 : 0.9 };
+        t.s = { x: reduced.matches ? 1 : 0, v: 0 };
+      }
+    }
+    if (reduced.matches) {
+      toolsOut = open;
+      phase = 'rest';
+    } else {
+      phase = 'pull';
+    }
+    wake();
+  }
+
+  // The colour picker: dragging its bauble across the page picks the palette
+  // exactly as the production PalettePicker's swatch does (same maths, same
+  // storage), so a pick persists across the site. The few lines that apply a
+  // palette to :root are duplicated from PalettePicker.astro; they get shared
+  // when the mark leaves the experiment.
+  const PALETTE_SYSTEM_KEY = 'palette-system';
+  const stored = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
+  function applyPalette(p: Palette | null) {
+    const style = document.documentElement.style;
+    for (const end of ['light', 'dark'] as const) {
+      for (const gamut of ['srgb', 'p3'] as const) {
+        const prop = `--color-${end}-${gamut}`;
+        if (p) style.setProperty(prop, p[end][gamut]);
+        else style.removeProperty(prop);
+      }
+    }
+  }
+  function commitPalette(p: Palette | null) {
+    const keep = p && !isDefault(p) ? p : null;
+    try {
+      if (keep) localStorage.setItem(PALETTE_STORAGE_KEY, JSON.stringify(keep));
+      else localStorage.removeItem(PALETTE_STORAGE_KEY);
+    } catch { /* storage unavailable: the palette just won't persist */ }
+    applyPalette(keep);
+  }
+  const pickAt = (e: PointerEvent) =>
+    findSystem(stored(PALETTE_SYSTEM_KEY)).pick({ x: e.clientX / innerWidth, y: e.clientY / innerHeight });
+
+  for (const tool of tools) {
+    let drag: { id: number; before: Palette | null } | null = null;
+    tool.bauble.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      tool.bauble.setPointerCapture(e.pointerId);
+      tool.bauble.setAttribute('data-dragging', '');
+      drag = { id: e.pointerId, before: parsePalette(stored(PALETTE_STORAGE_KEY)) };
+      tool.pointer = { x: e.clientX, y: e.clientY };
+      wake();
+    });
+    tool.bauble.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      tool.pointer = { x: e.clientX, y: e.clientY };
+      applyPalette(pickAt(e));
+      wake();
+    });
+    const end = (e: PointerEvent, cancelled: boolean) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      if (cancelled) applyPalette(drag.before);
+      else commitPalette(pickAt(e));
+      drag = null;
+      tool.pointer = null;
+      tool.bauble.removeAttribute('data-dragging');
+      wake(); // released: it swings back to hang from its string
+    };
+    tool.bauble.addEventListener('pointerup', (e) => end(e, false));
+    tool.bauble.addEventListener('pointercancel', (e) => end(e, true));
+  }
 
   /**
    * What the page measures from the laid-out title: the dot's size, the
@@ -334,6 +491,8 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   let frame = 0;
   let last = 0;
   const hanging = () => stopped;
+  /** Where the hanging dot rests: pulled a little way down while the strings are taut. */
+  const hangTarget = () => HANG_Y + clamp01(taut.x) * D.size * 0.3;
 
   function tick(now: number) {
     frame = 0;
@@ -361,14 +520,46 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     D.size = rig.dot * liveScale();
     if (stopped) {
       if (reduced.matches) { D.y.x = HANG_Y; D.y.v = 0; }
-      else for (let t = dt; t > 0; t -= 1 / 240) step(D.y, HANG_Y, 220, zeta, Math.min(t, 1 / 240));
+      else for (let t = dt; t > 0; t -= 1 / 240) step(D.y, hangTarget(), 220, zeta, Math.min(t, 1 / 240));
     } else {
       D.y.x = real.y;
       D.y.v = 0;
     }
 
-    const moving = Math.abs(D.y.v) > 0.02 || (stopped && Math.abs(D.y.x - HANG_Y) > 0.05);
-    const busy = moving || now < busyUntil;
+    // The tools: a pull on the strings, then the tool moves as they relax.
+    if (phase === 'pull' && taut.x >= PULLED) {
+      phase = 'release';
+      toolsOut = want;
+    }
+    const tautTarget = phase === 'pull' ? 1 : 0;
+    const reel = want ? DROP : REEL;
+    for (let t = dt; t > 0; t -= 1 / 240) {
+      const h = Math.min(t, 1 / 240);
+      if (reduced.matches) {
+        taut.x = 0;
+        taut.v = 0;
+        for (const tool of tools) {
+          if (!tool.pointer) tool.b = { r: toolLen(tool), rv: 0, theta: 0, omega: 0 };
+          tool.s.x = toolsOut ? 1 : 0;
+        }
+      } else {
+        step(taut, tautTarget, 500, 0.85, h);
+        for (const tool of tools) {
+          if (!tool.pointer) tool.b = stepBauble(tool.b, toolLen(tool), h, reel);
+          // Critically damped (a size past 1 would pop), and slower going back in.
+          step(tool.s, toolsOut ? 1 : 0, toolsOut ? 300 : 110, 1, h);
+        }
+      }
+    }
+    if (phase === 'release' && Math.abs(taut.x) < 0.002 && Math.abs(taut.v) < 0.02) phase = 'rest';
+    for (const tool of tools) {
+      // Fully reeled up: nothing left to draw.
+      if (!toolsOut && phase !== 'pull' && !tool.pointer && Math.abs(tool.b.r) < 1 && tool.s.x < 0.01) tool.el.removeAttribute('data-open');
+    }
+    const toolsBusy = phase !== 'rest' || tools.some((t) => t.pointer || baubleMoving(t.b, toolLen(t)) || Math.abs(t.s.x - (toolsOut ? 1 : 0)) > 0.005);
+
+    const moving = Math.abs(D.y.v) > 0.02 || (stopped && Math.abs(D.y.x - hangTarget()) > 0.05);
+    const busy = moving || toolsBusy || now < busyUntil;
     // Settled in the title: hand the overlay to the document and stop. Any
     // motion (or hanging) puts it back on the viewport first.
     setAnchored(!stopped && !busy);
@@ -404,13 +595,15 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     dotEl.setAttribute('width', size.toFixed(1));
     dotEl.setAttribute('height', size.toFixed(1));
     const shift = (v: V) => ({ x: v.x - o.left, y: v.y - o.top });
-    poseThreads(cfg, {
+    const geoms = poseThreads(cfg, {
       slot: shift(realSlot()),
       dot: shift({ x: D.x - size / 2, y: D.y.x - size / 2 }),
       size,
       em: r.px * k,
       p: poseBlend(),
-    }).forEach((g: ThreadGeometry, i) => paths[i].setAttribute('d', threadPathData(g)));
+    }).map((g, i) => (carriesTool(i) ? tauten(g, clamp01(taut.x)) : g));
+    geoms.forEach((g: ThreadGeometry, i) => paths[i].setAttribute('d', threadPathData(g)));
+    drawTools(geoms, o);
     const em = r.px * k;
     paths.forEach((p) => p.style.setProperty('stroke-width', String(Math.max(1.2, cfg.width * em))));
 
@@ -422,6 +615,25 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     hit.style.left = `${D.x - hitSize / 2 - hb.left}px`;
     hit.style.top = `${Math.max(0, cy - hitSize / 2) - hb.top}px`;
 
+  }
+
+  /** Hang each open tool from its thread's pivot and draw its string and bauble. */
+  function drawTools(geoms: ThreadGeometry[], o: DOMRect) {
+    for (const tool of tools) {
+      if (!tool.el.hasAttribute('data-open')) continue;
+      tool.pivot = toolPivot(geoms[tool.thread], stopped, -o.top);
+      // While dragged, the bauble goes where the pointer is and the string follows.
+      if (tool.pointer) tool.b = baubleAt(tool.pivot, { x: tool.pointer.x - o.left, y: tool.pointer.y - o.top });
+      const p = baublePos(tool.pivot, tool.b);
+      tool.string.setAttribute('x1', tool.pivot.x.toFixed(1));
+      tool.string.setAttribute('y1', tool.pivot.y.toFixed(1));
+      tool.string.setAttribute('x2', p.x.toFixed(1));
+      tool.string.setAttribute('y2', p.y.toFixed(1));
+      // It grows out of the letters as it falls (and shrinks back as it is reeled
+      // up), so it never pops in over a much smaller thing. Held full-size while dragged.
+      const scale = tool.pointer ? 1 : clamp01(tool.s.x);
+      tool.bauble.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) scale(${scale.toFixed(3)})`);
+    }
   }
 
   // ── The authored rig, posed ──
@@ -447,12 +659,18 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
 
   const wake = () => { if (!frame) frame = requestAnimationFrame(tick); };
 
+  /**
+   * The header's height, rounded up. It leaves by exactly this much, so a
+   * rounded-down (offsetHeight) value leaves its bottom border poking into the
+   * top row of pixels.
+   */
+  const headerHeight = () => Math.ceil(header.getBoundingClientRect().height);
+
   function relayout() {
-    title.style.fontSize = `${inTitle.value}px`;
     // Measure in page mode only: in card mode the header is off the top.
     if (root.dataset.mode !== 'card') {
       measure();
-      root.style.setProperty('--sd-header-h', `${header.offsetHeight}px`);
+      root.style.setProperty('--sd-header-h', `${headerHeight()}px`);
     }
     wake();
   }
@@ -464,9 +682,10 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
   const cardTitle = root.querySelector<HTMLElement>('.sd-card-title')!;
 
   function setMode(mode: 'page' | 'card', titleText = '') {
+    setTools(false);
     scrollTo(0, 0);
     if (mode === 'card') {
-      root.style.setProperty('--sd-header-h', `${header.offsetHeight}px`);
+      root.style.setProperty('--sd-header-h', `${headerHeight()}px`);
       // How far the title drifts so the dot's slot ends on the centre line,
       // and the point it grows about: the dot's own centre.
       const real = realSlot();
@@ -476,7 +695,7 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
       root.style.setProperty('--sd-oy', `${real.y - tr.top}px`);
       root.style.setProperty('--sd-scale', String(+inHang.value / 100));
       // The header rises by its own height, so that is where the slot ends up.
-      hangSeparation = Math.max(1, header.offsetHeight - real.y + HANG_Y);
+      hangSeparation = Math.max(1, headerHeight() - real.y + HANG_Y);
     }
     root.dataset.mode = mode;
     if (mode === 'card') {
@@ -486,8 +705,6 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     } else {
       home.hidden = false;
       card.hidden = true;
-      root.removeAttribute('data-tray');
-      hit.setAttribute('aria-expanded', 'false');
     }
     busyUntil = performance.now() + 500;
     wake();
@@ -504,10 +721,8 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     input.addEventListener('input', upd);
     upd();
   };
-  show(inTitle, (v) => `${v}px`);
   show(inHang, (v) => `×${(+v / 100).toFixed(2)}`);
   show(inSwing, (v) => `ζ ${(+v / 100).toFixed(2)}`);
-  inTitle.addEventListener('input', relayout);
   inHang.addEventListener('input', wake);
   inSwing.addEventListener('input', wake);
   inDebug.addEventListener('change', () => {
@@ -515,9 +730,9 @@ const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
     draw();
   });
 
-  hit.addEventListener('click', () => {
-    const open = root.toggleAttribute('data-tray');
-    hit.setAttribute('aria-expanded', String(open));
+  hit.addEventListener('click', () => setTools(!want));
+  addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setTools(false);
   });
 
   // Scrolling never animates the dot: at rest it scrolls with the document,
