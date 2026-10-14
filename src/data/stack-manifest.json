@@ -1775,5 +1775,10 @@
     "uid": "what/toys/star-navigation",
     "code": "5L",
     "title": "Star System Navigation"
+  },
+  {
+    "uid": "what/games/digital/star-nav",
+    "code": "5M",
+    "title": "Star Nav"
   }
 ]

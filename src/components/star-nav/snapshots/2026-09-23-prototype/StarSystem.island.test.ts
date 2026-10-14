@@ -10,7 +10,7 @@
 // clear.
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
-import StarSystem from '@components/header-media/stars/StarSystem.svelte';
+import StarSystem from '@components/star-nav/snapshots/2026-09-23-prototype/StarSystem.svelte';
 
 const SHIP_PATH = 'M -1 3 l 0 -2 l 1 -1 l 1 1 l 0 2';
 
