@@ -5,12 +5,14 @@ import { unified } from '@astrojs/markdown-remark';
 import { REDIRECTS } from './src/data/redirects.generated.ts';
 import { rehypeExternalLinks } from './src/lib/render/external-links.ts';
 import { rehypeVideoEmbeds } from './src/lib/render/video-embeds.ts';
+import { particularsEditor } from './src/lib/particulars/editor/integration.ts';
 import { devReloadPlugin } from './scripts/dev-reload-plugin.mjs';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://pdyxs.wtf',
-  integrations: [svelte()],
+  // The Particulars editor adds its route and write endpoint only under `astro dev`.
+  integrations: [svelte(), particularsEditor()],
   // Old Jekyll permalinks (issue #70). The map is generated from the retired
   // site on `master` by scripts/generate-redirects.mjs (a prebuild step), never
   // hand-edited. In a static build Astro emits one meta-refresh HTML page per

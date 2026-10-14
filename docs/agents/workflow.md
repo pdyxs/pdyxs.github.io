@@ -163,6 +163,17 @@ committed images.
 
 Note: Astro excludes directories starting with `_` from routing, so `_experiments` does **not** work — use `experiments` (no underscore).
 
+## The Particulars editor is dev-only by construction
+
+`/dev/particulars` edits a card's `index.json` through a form and writes it back
+to the content vault. It is added by the `particularsEditor()` integration
+(`src/lib/particulars/editor/integration.ts`), which injects the route
+(`src/dev-pages/`, deliberately outside `src/pages`) and the `/__particulars/*`
+endpoint **only when the Astro command is `dev`** — a build contains neither.
+The endpoint writes nothing but `index.json` inside a card folder under a
+content root (`paths.ts`), and only a scenario that passes `validate()`. Scenario
+edits are pure reducers in `editor/edit.ts`; the form never builds a scenario.
+
 ## Plans must name the selectors and CSS variables they touch
 
 Given the selector contract ([stack-layout.md](stack-layout.md)) and the CSS custom property convention ([styling.md](styling.md)), a plan file should explicitly list any new class names it adds to the JS contract and any new CSS variables it introduces. Reviewers and future sessions should see this without re-reading the diff.

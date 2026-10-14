@@ -1,0 +1,12 @@
+---
+// Dev-only: injected by the particularsEditor integration under `astro dev`
+// (src/lib/particulars/editor/integration.ts). It lives outside src/pages so a
+// production build never discovers it.
+import Base from '../layouts/Base.astro';
+import Editor from '../components/header-media/particulars/editor/Editor.svelte';
+---
+<Base title="Particulars editor">
+  <main>
+    <Editor client:only="svelte" />
+  </main>
+</Base>
