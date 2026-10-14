@@ -21,6 +21,12 @@ it is on any other branch. Long-running features go in worktrees with their own
 previews — `site-worktree new <id>`, see
 [workflow.md → Feature worktrees](docs/agents/workflow.md#feature-worktrees).
 
+**Work on an in-flight worktree feature happens in its worktree, not here.**
+Before changing code for a request, run `site-worktree list`; if the request is
+about one of those features (a tweak, a bug, more tuning), `cd` to its path and
+work and commit there. This applies to every session whose cwd is this checkout,
+Matrix rooms included.
+
 ## Invariants that apply everywhere
 
 Load-bearing. Violating one is a refactor, not a local change; each is stated in
