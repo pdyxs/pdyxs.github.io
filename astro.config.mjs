@@ -44,6 +44,14 @@ export default defineConfig({
     syntaxHighlight: false,
   },
   vite: {
+    // Dev pre-bundles these at startup. planck is imported only by the
+    // Particulars island, which Vite's dev scan never reaches, so without this
+    // it is discovered lazily in the browser and the island's import fails with
+    // 504 "Outdated Optimize Dep": the toy never hydrates (issue #188, and
+    // config.test.ts).
+    optimizeDeps: {
+      include: ['planck'],
+    },
     server: {
       allowedHosts: ['preview.pdyxs.wtf'],
       // The glob loader reads a changed file on the watcher event, with no

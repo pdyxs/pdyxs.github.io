@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 // Any stack location can be pushed onto, or arrive behind, any other, and a
@@ -22,5 +22,28 @@ describe('astro.config.mjs', () => {
     const configPath = fileURLToPath(new URL('../astro.config.mjs', import.meta.url));
     const source = readFileSync(configPath, 'utf-8');
     expect(source).toMatch(/cssCodeSplit:\s*false/);
+  });
+
+  // Issue #188. A bare npm import that only an island reaches is invisible to
+  // Vite's dev dependency scan (which crawls pages' server-side imports), so
+  // dev discovers it lazily, in the browser, after the page has loaded. The
+  // lazy re-optimise answers the island's import with 504 "Outdated Optimize
+  // Dep"; the island never hydrates, and the SSR markup (the level furniture)
+  // sits there inert, on first arrival and on refresh alike. `include` makes
+  // dev pre-bundle it at startup. The sim is the one client-side code with such
+  // an import (planck), so every bare package it imports must be listed.
+  it('pre-bundles every npm package the Particulars sim imports client-side', () => {
+    const configPath = fileURLToPath(new URL('../astro.config.mjs', import.meta.url));
+    const source = readFileSync(configPath, 'utf-8');
+    const simDir = new URL('./lib/particulars/sim/', import.meta.url);
+    const packages = new Set<string>();
+    for (const file of readdirSync(simDir)) {
+      if (!file.endsWith('.ts') || file.endsWith('.test.ts')) continue;
+      const text = readFileSync(new URL(file, simDir), 'utf-8');
+      for (const m of text.matchAll(/from\s+'([^.'][^']*)'/g)) packages.add(m[1]);
+    }
+    expect([...packages]).toContain('planck');
+    const include = source.match(/optimizeDeps:\s*{[^}]*include:\s*\[([^\]]*)\]/)?.[1] ?? '';
+    for (const pkg of packages) expect(include, pkg).toContain(`'${pkg}'`);
   });
 });
