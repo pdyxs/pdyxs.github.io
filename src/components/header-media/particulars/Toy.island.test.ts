@@ -105,3 +105,45 @@ describe('Toy particles', () => {
   });
 });
 
+
+describe('Toy forces', () => {
+  const FORCES: Scenario = {
+    ...SCENARIO,
+    forces: { em: true, gravity: false },
+    blackHoles: [{ x: 4, y: 1, mass: 10 }],
+  };
+  let second: ReturnType<typeof mount>;
+  let box: HTMLElement;
+
+  beforeEach(() => {
+    box = document.createElement('div');
+    document.body.appendChild(box);
+    second = mount(Toy as any, { target: box, props: { entryId: 'x', scenario: FORCES } });
+    flushSync();
+  });
+  afterEach(() => {
+    unmount(second);
+    box.remove();
+  });
+
+  it('shows all four forces and whether each is on', () => {
+    const items = [...box.querySelectorAll('.forces [data-force]')].map((e) => [
+      e.getAttribute('data-force'),
+      e.getAttribute('data-on'),
+      e.textContent,
+    ]);
+    expect(items).toEqual([
+      ['strong', 'false', 'strong off'],
+      ['weak', 'false', 'weak off'],
+      ['em', 'true', 'EM on'],
+      ['gravity', 'false', 'gravity off'],
+    ]);
+  });
+
+  it('draws black holes, marked dormant while gravity is off', () => {
+    const hole = box.querySelector('circle.black-hole')!;
+    expect(hole.getAttribute('cx')).toBe('4');
+    expect(Number(hole.getAttribute('r'))).toBeCloseTo(Math.sqrt(10 / Math.PI), 5);
+    expect(hole.getAttribute('data-active')).toBe('false');
+  });
+});

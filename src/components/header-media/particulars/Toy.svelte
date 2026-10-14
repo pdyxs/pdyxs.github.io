@@ -3,14 +3,14 @@
   // never touches a planck body; DOM events become the plain `Inputs` that
   // steer() consumes.
   import { onMount } from 'svelte';
-  import type { Scenario } from '../../../lib/particulars/scenario/types';
+  import type { ForceName, Scenario } from '../../../lib/particulars/scenario/types';
   import { World } from '../../../lib/particulars/sim/world';
   import { stepsDue } from '../../../lib/particulars/sim/clock';
   import { steer, isSteerKey } from '../../../lib/particulars/input/steer';
   import type { Vec } from '../../../lib/particulars/input/steer';
   import { clientToWorld, hitsPlayer } from '../../../lib/particulars/input/pointer';
   import { glyphFor } from './glyph';
-  import { FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_MARGIN } from '../../../lib/particulars/constants';
+  import { FIXED_DT, FORCE_LABEL_SPACING, MAX_STEPS_PER_FRAME, VIEW_MARGIN } from '../../../lib/particulars/constants';
 
   let { scenario, entryId }: { scenario: Scenario; entryId: string } = $props();
 
@@ -24,6 +24,14 @@
     width: snapshot.walls.width + VIEW_MARGIN * 2,
     height: snapshot.walls.height + VIEW_MARGIN * 2,
   });
+
+  // The readout's wording is view business; whether a force is on comes from the Snapshot.
+  const FORCE_LABELS: { name: ForceName; label: string }[] = [
+    { name: 'strong', label: 'strong' },
+    { name: 'weak', label: 'weak' },
+    { name: 'em', label: 'EM' },
+    { name: 'gravity', label: 'gravity' },
+  ];
 
   let svg: SVGSVGElement;
   // Held input, in world units. Plain data, not reactive: only the loop reads it.
@@ -115,6 +123,9 @@
     width={snapshot.walls.width}
     height={snapshot.walls.height}
   />
+  {#each snapshot.blackHoles as h, i (i)}
+    <circle class="black-hole" data-active={snapshot.forces.gravity} cx={h.x} cy={h.y} r={h.radius} />
+  {/each}
   {#each snapshot.particles as p (p.id)}
     {@const glyph = glyphFor(p.type)}
     <g
@@ -136,6 +147,16 @@
     </g>
   {/each}
   <circle class="player" cx={snapshot.player.x} cy={snapshot.player.y} r={snapshot.player.radius} />
+  <g class="forces" aria-label="Forces">
+    {#each FORCE_LABELS as f, i (f.name)}
+      <text
+        x={-snapshot.walls.width / 2 + 0.4 + i * FORCE_LABEL_SPACING}
+        y={-snapshot.walls.height / 2 + 0.9}
+        data-force={f.name}
+        data-on={snapshot.forces[f.name]}>{f.label} {snapshot.forces[f.name] ? 'on' : 'off'}</text
+      >
+    {/each}
+  </g>
 </svg>
 
 <style>
@@ -150,6 +171,22 @@
     fill: none;
     stroke: var(--color-text);
     stroke-width: 0.15;
+  }
+  .forces text {
+    font-size: 0.6px;
+    fill: var(--color-text);
+  }
+  .forces text[data-on='false'] {
+    text-decoration: line-through;
+  }
+  /* A black hole is an outline while dormant and solid once gravity pulls. */
+  .black-hole {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-width: 0.1;
+  }
+  .black-hole[data-active='true'] {
+    fill: var(--color-text);
   }
   .player {
     fill: var(--color-text);

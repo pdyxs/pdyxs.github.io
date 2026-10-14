@@ -1,4 +1,4 @@
-import { PARTICLE_COLOURS, PARTICLE_TYPES } from './types';
+import { FORCE_NAMES, PARTICLE_COLOURS, PARTICLE_TYPES } from './types';
 import type { Scenario, ValidationResult } from './types';
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
@@ -84,6 +84,26 @@ function checkCycles(formations: Record<string, unknown>, errors: string[]): voi
   }
 }
 
+function checkForces(forces: unknown, errors: string[]): void {
+  if (!isObject(forces)) return void errors.push('forces must be an object');
+  for (const [name, on] of Object.entries(forces)) {
+    if (!(FORCE_NAMES as readonly string[]).includes(name)) {
+      errors.push(`forces.${name} is not a force (use ${FORCE_NAMES.join(', ')})`);
+    } else if (typeof on !== 'boolean') errors.push(`forces.${name} must be true or false`);
+  }
+}
+
+function checkBlackHoles(holes: unknown, errors: string[]): void {
+  if (!Array.isArray(holes)) return void errors.push('blackHoles must be an array');
+  holes.forEach((h, i) => {
+    const at = `blackHoles[${i}]`;
+    if (!isObject(h)) return void errors.push(`${at} must be an object`);
+    if (!isFiniteNumber(h.x)) errors.push(`${at}.x must be a number`);
+    if (!isFiniteNumber(h.y)) errors.push(`${at}.y must be a number`);
+    if (!isPositive(h.mass)) errors.push(`${at}.mass must be a positive number`);
+  });
+}
+
 function checkWaves(waves: unknown, formations: Record<string, unknown>, errors: string[]): Set<string> {
   const ids = new Set<string>();
   if (!Array.isArray(waves)) {
@@ -166,6 +186,8 @@ export function validate(json: unknown): ValidationResult {
       checkCycles(formations, errors);
     }
   }
+  if (json.forces !== undefined) checkForces(json.forces, errors);
+  if (json.blackHoles !== undefined) checkBlackHoles(json.blackHoles, errors);
   const waveIds = json.waves !== undefined ? checkWaves(json.waves, formations, errors) : new Set<string>();
   if (json.triggers !== undefined) checkTriggers(json.triggers, waveIds, errors);
 
@@ -175,6 +197,9 @@ export function validate(json: unknown): ValidationResult {
     if (Math.abs(p.x) + p.radius > w.width / 2 || Math.abs(p.y) + p.radius > w.height / 2) {
       errors.push('player must lie fully inside the walls');
     }
+    (json.blackHoles as Scenario['blackHoles'] ?? []).forEach((h, i) => {
+      if (Math.abs(h.x) > w.width / 2 || Math.abs(h.y) > w.height / 2) errors.push(`blackHoles[${i}] must lie inside the walls`);
+    });
   }
 
   return errors.length > 0 ? { ok: false, errors } : { ok: true, scenario: json as unknown as Scenario };

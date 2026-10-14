@@ -121,3 +121,61 @@ describe('World waves', () => {
     expect(counts).toEqual([0, 1, 1, 2, 2, 3, 3]);
   });
 });
+
+describe('World forces', () => {
+  const pairScenario = (forces: Scenario['forces'], right: object): Scenario => ({
+    ...SCENARIO,
+    forces,
+    waves: [{
+      id: 'w',
+      entries: [
+        { spawn: { type: 'electron' }, position: { x: -2, y: 0 } },
+        { spawn: { type: 'electron', ...right }, position: { x: 2, y: 0 } },
+      ],
+    }],
+    triggers: [{ kind: 'time', at: 0, actions: [{ kind: 'spawn', wave: 'w' }] }],
+  });
+  const gap = (snap: ReturnType<World['snapshot']>) => snap.particles[1].x - snap.particles[0].x;
+
+  it('with EM on, an electron and a positron accelerate together', () => {
+    const snap = run(new World(pairScenario({ em: true }, { parity: -1 })), NONE, 30);
+    expect(gap(snap)).toBeLessThan(3.9);
+    expect(snap.particles[0].x).toBeGreaterThan(-2);
+    expect(snap.particles[1].x).toBeLessThan(2);
+  });
+
+  it('with EM off they do not move', () => {
+    const snap = run(new World(pairScenario({ em: false }, { parity: -1 })), NONE, 30);
+    expect(gap(snap)).toBe(4);
+  });
+
+  it('with EM on, two electrons push apart', () => {
+    const snap = run(new World(pairScenario({ em: true }, {})), NONE, 30);
+    expect(gap(snap)).toBeGreaterThan(4.1);
+  });
+
+  const holeScenario = (forces: Scenario['forces']): Scenario => ({
+    ...SCENARIO,
+    forces,
+    blackHoles: [{ x: 0, y: 0, mass: 10 }],
+    waves: [{ id: 'w', entries: [{ spawn: 'electronNeutrino', position: { x: 5, y: 0 } }] }],
+    triggers: [{ kind: 'time', at: 0, actions: [{ kind: 'spawn', wave: 'w' }] }],
+  });
+
+  it('a black hole is inert until gravity is on', () => {
+    expect(run(new World(holeScenario({ gravity: false })), NONE, 60).particles[0].x).toBe(5);
+    expect(run(new World(holeScenario(undefined)), NONE, 60).particles[0].x).toBe(5);
+  });
+
+  it('with gravity on, a black hole pulls a particle toward it', () => {
+    const snap = run(new World(holeScenario({ gravity: true })), NONE, 60);
+    expect(snap.particles[0].x).toBeLessThan(4.5);
+    expect(snap.particles[0].y).toBeCloseTo(0, 5);
+  });
+
+  it('the snapshot reports the switches and the black holes as plain data', () => {
+    const snap = new World(holeScenario({ em: true })).snapshot();
+    expect(snap.forces).toEqual({ strong: false, weak: false, em: true, gravity: false });
+    expect(snap.blackHoles).toEqual([{ x: 0, y: 0, mass: 10, radius: Math.sqrt(10 / Math.PI) }]);
+  });
+});

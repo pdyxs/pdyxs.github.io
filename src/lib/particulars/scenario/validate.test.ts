@@ -135,3 +135,37 @@ describe('validate formations, waves and triggers', () => {
   });
 });
 
+
+describe('validate forces and black holes', () => {
+  const errorsOf = (extra: object) => {
+    const r = validate({ ...GOOD, ...extra });
+    return r.ok ? [] : r.errors;
+  };
+
+  it('accepts force switches and black holes', () => {
+    const extra = { forces: { em: true, gravity: false }, blackHoles: [{ x: 3, y: -2, mass: 10 }] };
+    expect(validate({ ...GOOD, ...extra })).toEqual({ ok: true, scenario: { ...GOOD, ...extra } });
+  });
+
+  it('rejects a non-object forces, unknown force names and non-boolean switches', () => {
+    expect(errorsOf({ forces: [] })).toEqual(['forces must be an object']);
+    expect(errorsOf({ forces: { magnetism: true, em: 1 } })).toEqual([
+      'forces.magnetism is not a force (use strong, weak, em, gravity)',
+      'forces.em must be true or false',
+    ]);
+  });
+
+  it('checks each black hole', () => {
+    expect(errorsOf({ blackHoles: {} })).toEqual(['blackHoles must be an array']);
+    expect(errorsOf({ blackHoles: [{ x: 'a', y: 0, mass: 0 }, 3] })).toEqual([
+      'blackHoles[0].x must be a number',
+      'blackHoles[0].mass must be a positive number',
+      'blackHoles[1] must be an object',
+    ]);
+  });
+
+  it('keeps a black hole inside the walls, and allows one while gravity is off', () => {
+    expect(errorsOf({ blackHoles: [{ x: 11, y: 0, mass: 1 }] })).toEqual(['blackHoles[0] must lie inside the walls']);
+    expect(errorsOf({ forces: { gravity: false }, blackHoles: [{ x: 1, y: 1, mass: 1 }] })).toEqual([]);
+  });
+});

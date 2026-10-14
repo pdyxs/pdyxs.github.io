@@ -77,11 +77,27 @@ export interface SpawnSpec {
   telegraph: number;
 }
 
+/** The four fundamental forces. A scenario switches each on or off. */
+export const FORCE_NAMES = ['strong', 'weak', 'em', 'gravity'] as const;
+export type ForceName = (typeof FORCE_NAMES)[number];
+/** Fully resolved switches: what the sim and the view both read. */
+export type ForceSwitches = Record<ForceName, boolean>;
+
+/** A gravity source. Inert until the gravity switch is on. */
+export interface BlackHoleDef {
+  x: number;
+  y: number;
+  mass: number;
+}
+
 /** Plain-data scenario, as authored in a card's index.json. World units, y down. */
 export interface Scenario {
   /** The walled box, centred on the origin. */
   walls: { width: number; height: number };
   player: { x: number; y: number; radius: number };
+  /** Which forces are on. Omitted forces are off. */
+  forces?: Partial<ForceSwitches>;
+  blackHoles?: BlackHoleDef[];
   formations?: Record<string, Formation>;
   waves?: Wave[];
   triggers?: Trigger[];

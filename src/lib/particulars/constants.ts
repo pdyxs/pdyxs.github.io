@@ -26,3 +26,28 @@ export const PARTICLE_RADIUS = 0.35;
 export const PARTICLE_DENSITY = 1;
 export const PARTICLE_RESTITUTION = 1;
 export const PARTICLE_FRICTION = 0;
+
+/**
+ * Forces. Unity's values (EM 500, colour 500, gravity 2000) were force * fixedDt
+ * on bodies of differing mass; these are accelerations (uniform mass), re-felt
+ * for planck against the 20-unit steer thrust.
+ */
+/** EM acceleration = EM_STRENGTH * q1 * q2 / d, charges in thirds of e. */
+export const EM_STRENGTH = 2;
+/** Strong acceleration, constant with distance; doubled between same colours. */
+export const COLOUR_STRENGTH = 5;
+/** Gravity acceleration = GRAVITY_STRENGTH * blackHoleMass / d^2. */
+export const GRAVITY_STRENGTH = 5;
+/** Distances below this are treated as this, so 1/d and 1/d^2 stay finite. */
+export const MIN_FORCE_DISTANCE = 0.25;
+/** Black hole radius = sqrt(mass / (BLACK_HOLE_DENSITY * pi)), as in Unity. */
+export const BLACK_HOLE_DENSITY = 1;
+/** Charge per particle type, in thirds of e (a down quark is -1). Parity flips the sign. */
+export const CHARGE_BY_TYPE = {
+  up: 2, down: -1, strange: -1, charm: 2, top: 2, bottom: -1,
+  electron: -3, muon: -3, tau: -3,
+  electronNeutrino: 0, muonNeutrino: 0, tauNeutrino: 0,
+} as const;
+
+/** Horizontal spacing of the forces readout, world units. */
+export const FORCE_LABEL_SPACING = 3.2;

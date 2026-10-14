@@ -6,8 +6,11 @@ import type { ScheduleState } from './scheduler';
 import type { Vec } from '../input/steer';
 import type { Snapshot } from './snapshot';
 
-import { telegraphTicks, thrustFor, wallSlabs } from './decisions';
+import { forces } from './forces';
+import { resolveSwitches } from '../scenario/switches';
+import { blackHoleRadius, telegraphTicks, thrustFor, wallSlabs } from './decisions';
 import {
+  BLACK_HOLE_DENSITY,
   FIXED_DT,
   PARTICLE_DENSITY,
   PARTICLE_FRICTION,
@@ -108,6 +111,13 @@ export class World {
       }
     }
     const f = thrustFor(steerVec, STEER_FORCE);
+    const snap = this.snapshot();
+    const accel = forces(snap, snap.forces);
+    this.spawned.forEach((s, i) => {
+      if (!s.live) return;
+      const m = s.body.getMass();
+      s.body.applyForceToCenter(new Vec2(accel[i].x * m, accel[i].y * m), true);
+    });
     this.player.applyForceToCenter(new Vec2(f.x, f.y), true);
     this.world.step(FIXED_DT, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
     this.tick++;
@@ -120,6 +130,11 @@ export class World {
       tick: this.tick,
       walls: { ...this.walls },
       player: { x: p.x, y: p.y, radius: shape.getRadius() },
+      forces: resolveSwitches(this.scenario.forces),
+      blackHoles: (this.scenario.blackHoles ?? []).map((h) => ({
+        ...h,
+        radius: blackHoleRadius(h.mass, BLACK_HOLE_DENSITY),
+      })),
       particles: this.spawned.map((s) => {
         const pos = s.body.getPosition();
         return { id: s.id, ...s.particle, x: pos.x, y: pos.y, radius: PARTICLE_RADIUS, live: s.live };

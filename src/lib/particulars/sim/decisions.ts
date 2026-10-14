@@ -24,3 +24,8 @@ export function wallSlabs(
 export function telegraphTicks(seconds: number, dt: number): number {
   return Math.max(0, Math.round(seconds / dt));
 }
+
+/** Pure: a black hole's drawn radius, so its area is proportional to its mass. */
+export function blackHoleRadius(mass: number, density: number): number {
+  return Math.sqrt(mass / (density * Math.PI));
+}
