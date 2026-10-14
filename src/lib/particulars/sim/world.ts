@@ -223,9 +223,9 @@ export class World {
     return out;
   }
 
-  /** Advance exactly one fixed step under the given steer vector. */
-  step(steerVec: Vec, intents: Intent[] = []): void {
-    const due = dueSpawns(this.scenario, this.tick * FIXED_DT, this.schedule);
+  /** Advance exactly one fixed step under the given steer vector; `buttons` are page buttons pressed since the last. */
+  step(steerVec: Vec, intents: Intent[] = [], buttons: string[] = []): void {
+    const due = dueSpawns(this.scenario, this.tick * FIXED_DT, this.schedule, buttons);
     this.schedule = due.state;
     for (const spec of due.spawns) this.spawn(spec);
     for (const s of this.spawned) {

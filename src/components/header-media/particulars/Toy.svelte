@@ -11,6 +11,8 @@
   import { clientToWorld, pressKind } from '../../../lib/particulars/input/pointer';
   import { intentFor, inputEventForKey } from '../../../lib/particulars/input/bindings';
   import type { InputEvent, Intent } from '../../../lib/particulars/input/bindings';
+  import { listenCommands } from '../../../lib/particulars/input/command';
+  import { installPageButtons } from './page-buttons';
   import { glyphFor } from './glyph';
   import { FIXED_DT, FORCE_LABEL_SPACING, MAX_STEPS_PER_FRAME, VIEW_MARGIN } from '../../../lib/particulars/constants';
 
@@ -41,6 +43,8 @@
   const heldPointers = new Map<number, Vec>();
   // Intents fired since the last step. The bindings table decides what each input means.
   let pending: Intent[] = [];
+  // Page buttons pressed since the last step (Commands addressed to this card's uid).
+  let pressedButtons: string[] = [];
 
   function fire(event: InputEvent) {
     const intent = intentFor(event, world.snapshot().forces);
@@ -104,8 +108,9 @@
       acc = due.remainder;
       for (let i = 0; i < due.steps; i++) {
         const s = world.snapshot().player;
-        world.step(steer({ pointers: [...heldPointers.values()], keys: [...heldKeys] }, s), pending);
+        world.step(steer({ pointers: [...heldPointers.values()], keys: [...heldKeys] }, s), pending, pressedButtons);
         pending = [];
+        pressedButtons = [];
       }
       if (due.steps > 0) snapshot = world.snapshot();
       raf = requestAnimationFrame(frame);
@@ -115,7 +120,11 @@
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     window.addEventListener('blur', releaseAll);
+    const stopCommands = listenCommands(window, entryId, (c) => pressedButtons.push(c.button));
+    const releasePageButtons = installPageButtons();
     return () => {
+      stopCommands();
+      releasePageButtons();
       cancelAnimationFrame(raf);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);

@@ -70,7 +70,13 @@ export interface TimeTrigger {
   repeats?: number;
   actions: Action[];
 }
-export type Trigger = TimeTrigger;
+/** Fires each time a page button named `button` is pressed (a Command into the toy). */
+export interface PageButtonTrigger {
+  kind: 'page-button';
+  button: string;
+  actions: Action[];
+}
+export type Trigger = TimeTrigger | PageButtonTrigger;
 
 /** One particle to put in the world. Position and velocity are absolute. */
 export interface SpawnSpec {

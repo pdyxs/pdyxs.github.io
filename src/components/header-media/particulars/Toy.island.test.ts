@@ -3,6 +3,7 @@ import { describe, it, beforeEach, afterEach, expect } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import Toy from './Toy.svelte';
 import type { Scenario } from '../../../lib/particulars/scenario/types';
+import { dispatchCommand } from '../../../lib/particulars/input/command';
 
 const SCENARIO: Scenario = { walls: { width: 20, height: 10 }, player: { x: 0, y: 0, radius: 0.5 } };
 
@@ -177,5 +178,63 @@ describe('Toy action', () => {
     await wait(100);
     expect(typeOf(box)).toBe('up');
     done();
+  });
+});
+
+describe('Toy page commands', () => {
+  const BTN: Scenario = {
+    ...SCENARIO,
+    waves: [{ id: 'w', entries: [{ spawn: 'tau', position: { x: 5, y: 2 } }] }],
+    triggers: [{ kind: 'page-button', button: 'go', actions: [{ kind: 'spawn', wave: 'w' }] }],
+  };
+  const UID = 'what/toys/particulars';
+  const mountToy = (uid: string) => {
+    const box = document.createElement('div');
+    document.body.appendChild(box);
+    const c = mount(Toy as any, { target: box, props: { entryId: uid, scenario: BTN } });
+    flushSync();
+    return { box, done: () => { unmount(c); box.remove(); } };
+  };
+  const taus = (box: HTMLElement) => box.querySelectorAll('.particle[data-type="tau"]').length;
+
+  it('a command for its card uid spawns; a command for another uid is ignored', async () => {
+    const a = mountToy(UID);
+    const b = mountToy('what/toys/other');
+    dispatchCommand(window, { uid: UID, button: 'go' });
+    await wait(100);
+    expect(taus(a.box)).toBe(1);
+    expect(taus(b.box)).toBe(0);
+    a.done();
+    b.done();
+  });
+
+  it('commands before mount or after unmount are harmless', async () => {
+    expect(() => dispatchCommand(window, { uid: UID, button: 'go' })).not.toThrow();
+    const a = mountToy(UID);
+    await wait(100);
+    expect(taus(a.box)).toBe(0);
+    a.done();
+    expect(() => dispatchCommand(window, { uid: UID, button: 'go' })).not.toThrow();
+  });
+
+  it('a prose button with data-particulars-button presses it for its own card', async () => {
+    const card = document.createElement('article');
+    card.setAttribute('data-uid', UID);
+    card.innerHTML = '<button data-particulars-button="go">Go</button>';
+    document.body.appendChild(card);
+    const other = document.createElement('article');
+    other.setAttribute('data-uid', 'what/toys/other');
+    other.innerHTML = '<button data-particulars-button="go">Go</button>';
+    document.body.appendChild(other);
+    const a = mountToy(UID);
+    card.querySelector('button')!.click();
+    await wait(100);
+    expect(taus(a.box)).toBe(1);
+    other.querySelector('button')!.click();
+    await wait(100);
+    expect(taus(a.box)).toBe(1);
+    a.done();
+    card.remove();
+    other.remove();
   });
 });

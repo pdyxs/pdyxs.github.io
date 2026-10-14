@@ -144,12 +144,15 @@ function checkTriggers(triggers: unknown, waveIds: Set<string>, errors: string[]
   triggers.forEach((t, i) => {
     const at = `triggers[${i}]`;
     if (!isObject(t)) return void errors.push(`${at} must be an object`);
-    if (t.kind !== 'time') return void errors.push(`${at}.kind must be time`);
-    if (!isNonNegative(t.at)) errors.push(`${at}.at must be zero or more seconds`);
-    if (t.every !== undefined && !isPositive(t.every)) errors.push(`${at}.every must be a positive number`);
-    if (t.repeats !== undefined && !(Number.isInteger(t.repeats) && (t.repeats as number) >= 0)) {
-      errors.push(`${at}.repeats must be a non-negative integer`);
-    }
+    if (t.kind === 'page-button') {
+      if (typeof t.button !== 'string' || t.button === '') errors.push(`${at}.button must be a non-empty string`);
+    } else if (t.kind === 'time') {
+      if (!isNonNegative(t.at)) errors.push(`${at}.at must be zero or more seconds`);
+      if (t.every !== undefined && !isPositive(t.every)) errors.push(`${at}.every must be a positive number`);
+      if (t.repeats !== undefined && !(Number.isInteger(t.repeats) && (t.repeats as number) >= 0)) {
+        errors.push(`${at}.repeats must be a non-negative integer`);
+      }
+    } else return void errors.push(`${at}.kind must be time or page-button`);
     if (!Array.isArray(t.actions)) return void errors.push(`${at}.actions must be an array`);
     t.actions.forEach((a, j) => {
       const aa = `${at}.actions[${j}]`;

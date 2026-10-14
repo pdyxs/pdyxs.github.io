@@ -51,3 +51,24 @@ describe('dueSpawns', () => {
     expect(count(s, [0.1 + 0.2])).toEqual([1]);
   });
 });
+
+describe('dueSpawns page-button triggers', () => {
+  const s = scenario([
+    { kind: 'page-button', button: 'go', actions: [{ kind: 'spawn', wave: 'w' }] },
+    { kind: 'time', at: 0, actions: [] },
+  ]);
+
+  it('spawns nothing until the button is pressed, and each press spawns once', () => {
+    const idle = dueSpawns(s, 5, initialSchedule());
+    expect(idle.spawns).toEqual([]);
+    const press = dueSpawns(s, 5, idle.state, ['go']);
+    expect(press.spawns.map((x) => x.particle.type)).toEqual(['electron', 'up']);
+    const next = dueSpawns(s, 6, press.state);
+    expect(next.spawns).toEqual([]);
+    expect(dueSpawns(s, 7, next.state, ['go', 'go']).spawns).toHaveLength(4);
+  });
+
+  it('ignores a button no trigger names', () => {
+    expect(dueSpawns(s, 1, initialSchedule(), ['nope']).spawns).toEqual([]);
+  });
+});

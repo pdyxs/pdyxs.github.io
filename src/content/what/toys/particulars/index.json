@@ -26,9 +26,12 @@
         { "spawn": "pair", "position": { "x": -9, "y": 0 }, "velocity": { "magnitude": 2.5, "angle": 0 }, "telegraph": 1 },
         { "spawn": "quarks", "position": { "x": 9, "y": -3 }, "angle": 90, "velocity": { "magnitude": 2, "angle": 180 }, "telegraph": 1.5 }
       ]
-    }
+    },
+    { "id": "one-electron", "entries": [{ "spawn": "electron", "position": { "x": 0, "y": -4 }, "velocity": { "magnitude": 2, "angle": 90 }, "telegraph": 0.5 }] }
   ],
   "triggers": [
+    { "kind": "page-button", "button": "formation", "actions": [{ "kind": "spawn", "wave": "ring-in" }] },
+    { "kind": "page-button", "button": "electron", "actions": [{ "kind": "spawn", "wave": "one-electron" }] },
     { "kind": "time", "at": 1, "every": 6, "repeats": 5, "actions": [{ "kind": "spawn", "wave": "ring-in" }] }
   ]
 }

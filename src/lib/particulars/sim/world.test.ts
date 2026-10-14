@@ -179,3 +179,23 @@ describe('World forces', () => {
     expect(snap.blackHoles).toEqual([{ x: 0, y: 0, mass: 10, radius: Math.sqrt(10 / Math.PI) }]);
   });
 });
+
+describe('World page buttons', () => {
+  const BUTTON: Scenario = {
+    ...SCENARIO,
+    waves: [{ id: 'w', entries: [{ spawn: 'electron', position: { x: 5, y: 2 } }] }],
+    triggers: [{ kind: 'page-button', button: 'go', actions: [{ kind: 'spawn', wave: 'w' }] }],
+  };
+
+  it('spawns when the named button is pressed in a step, and not otherwise', () => {
+    const world = new World(BUTTON);
+    run(world, NONE, 5);
+    expect(world.snapshot().particles).toEqual([]);
+    world.step(NONE, [], ['other']);
+    expect(world.snapshot().particles).toEqual([]);
+    world.step(NONE, [], ['go']);
+    expect(world.snapshot().particles).toHaveLength(1);
+    run(world, NONE, 5);
+    expect(world.snapshot().particles).toHaveLength(1);
+  });
+});

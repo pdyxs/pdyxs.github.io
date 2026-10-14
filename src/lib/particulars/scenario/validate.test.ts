@@ -110,7 +110,7 @@ describe('validate formations, waves and triggers', () => {
     });
     expect(errs).toEqual([
       'waves[1].id "a" is already used',
-      'triggers[0].kind must be time',
+      'triggers[0].kind must be time or page-button',
       'triggers[1].at must be zero or more seconds',
       'triggers[1].every must be a positive number',
       'triggers[1].repeats must be a non-negative integer',
@@ -176,5 +176,20 @@ describe('validate player particle', () => {
     const bad = validate({ ...GOOD, player: { ...GOOD.player, particle: { type: 'quark' } } });
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.errors[0]).toMatch(/^player\.particle\.type must be one of/);
+  });
+});
+
+describe('validate page-button triggers', () => {
+  const base = { ...GOOD, waves: [{ id: 'w', entries: [{ spawn: 'electron' }] }] };
+  it('accepts a named button spawning a known wave', () => {
+    const t = [{ kind: 'page-button', button: 'go', actions: [{ kind: 'spawn', wave: 'w' }] }];
+    expect(validate({ ...base, triggers: t }).ok).toBe(true);
+  });
+  it('rejects a missing button name and an unknown wave', () => {
+    const r = validate({ ...base, triggers: [{ kind: 'page-button', actions: [{ kind: 'spawn', wave: 'x' }] }] });
+    expect(r).toEqual({
+      ok: false,
+      errors: ['triggers[0].button must be a non-empty string', 'triggers[0].actions[0].wave: no wave "x"'],
+    });
   });
 });
