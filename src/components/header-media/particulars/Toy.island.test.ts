@@ -61,3 +61,47 @@ describe('Toy', () => {
     svg.dispatchEvent(new PointerEvent('pointerup', { pointerId: 2, bubbles: true }));
   });
 });
+
+describe('Toy particles', () => {
+  const WAVES: Scenario = {
+    ...SCENARIO,
+    waves: [
+      {
+        id: 'w',
+        entries: [
+          { spawn: { type: 'up', colour: 'red', parity: -1 }, position: { x: 5, y: 2 }, telegraph: 0.3 },
+          { spawn: 'tau', position: { x: -5, y: -2 } },
+        ],
+      },
+    ],
+    triggers: [{ kind: 'time', at: 0, actions: [{ kind: 'spawn', wave: 'w' }] }],
+  };
+  let second: ReturnType<typeof mount>;
+  let box: HTMLElement;
+
+  beforeEach(() => {
+    box = document.createElement('div');
+    document.body.appendChild(box);
+    second = mount(Toy as any, { target: box, props: { entryId: 'x', scenario: WAVES } });
+    flushSync();
+  });
+  afterEach(() => {
+    unmount(second);
+    box.remove();
+  });
+
+  it('draws spawned particles with their type, colour and parity, telegraphing then live', async () => {
+    await wait(100);
+    const up = box.querySelector('.particle[data-type="up"]')!;
+    expect(up.getAttribute('data-colour')).toBe('red');
+    expect(up.getAttribute('data-parity')).toBe('-1');
+    expect(up.getAttribute('data-live')).toBe('false');
+    expect(up.querySelector('.telegraph')).not.toBeNull();
+    expect(box.querySelector('.particle[data-type="tau"]')).not.toBeNull();
+    await wait(600);
+    const later = box.querySelector('.particle[data-type="up"]')!;
+    expect(later.getAttribute('data-live')).toBe('true');
+    expect(later.querySelector('.telegraph')).toBeNull();
+  });
+});
+

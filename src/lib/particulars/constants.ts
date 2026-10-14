@@ -20,3 +20,9 @@ export const PLAYER_FRICTION = 0;
 export const WALL_THICKNESS = 2;
 /** Margin around the box inside the SVG viewBox, world units. */
 export const VIEW_MARGIN = 0.5;
+
+/** Non-player particles. One size for all 12 types for now. */
+export const PARTICLE_RADIUS = 0.35;
+export const PARTICLE_DENSITY = 1;
+export const PARTICLE_RESTITUTION = 1;
+export const PARTICLE_FRICTION = 0;

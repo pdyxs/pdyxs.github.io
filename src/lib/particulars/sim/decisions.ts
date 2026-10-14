@@ -19,3 +19,8 @@ export function wallSlabs(
     { cx: width / 2 + t, cy: 0, hw: t, hh: height / 2 },
   ];
 }
+
+/** Pure: how many fixed steps a telegraph of `seconds` lasts. */
+export function telegraphTicks(seconds: number, dt: number): number {
+  return Math.max(0, Math.round(seconds / dt));
+}

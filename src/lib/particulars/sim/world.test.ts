@@ -63,3 +63,61 @@ describe('World', () => {
     expect(JSON.parse(JSON.stringify(before))).toEqual(before);
   });
 });
+
+describe('World waves', () => {
+  const WAVES: Scenario = {
+    ...SCENARIO,
+    waves: [{ id: 'w', entries: [{ spawn: 'electron', position: { x: 5, y: 2 }, telegraph: 1 }] }],
+    triggers: [{ kind: 'time', at: 0.5, actions: [{ kind: 'spawn', wave: 'w' }] }],
+  };
+  const TICKS_PER_SECOND = 60;
+
+  it('a scheduled wave appears on time, flagged not live while it telegraphs', () => {
+    const world = new World(WAVES);
+    run(world, NONE, 0.5 * TICKS_PER_SECOND);
+    expect(world.snapshot().particles).toEqual([]);
+    run(world, NONE, 2);
+    const [p] = world.snapshot().particles;
+    expect(p).toMatchObject({ type: 'electron', colour: 'white', parity: 1, x: 5, y: 2, live: false });
+  });
+
+  it('goes live once the telegraph has run, and not a step before', () => {
+    const world = new World(WAVES);
+    run(world, NONE, 31); // spawned on the 31st step (tick 30)
+    run(world, NONE, 59);
+    expect(world.snapshot().particles[0].live).toBe(false);
+    run(world, NONE, 1);
+    expect(world.snapshot().particles[0].live).toBe(true);
+  });
+
+  const ON_PLAYER: Scenario = {
+    ...SCENARIO,
+    waves: [{ id: 'w', entries: [{ spawn: 'electron', position: { x: 0.2, y: 0 }, velocity: { x: 3, y: 0 }, telegraph: 1 }] }],
+    triggers: [{ kind: 'time', at: 0, actions: [{ kind: 'spawn', wave: 'w' }] }],
+  };
+
+  it('a telegraphing particle neither moves nor collides, even overlapping the player', () => {
+    const world = new World(ON_PLAYER);
+    const snap = run(world, NONE, 59);
+    expect(snap.particles[0]).toMatchObject({ x: 0.2, y: 0, live: false });
+    expect(snap.player).toMatchObject({ x: 0, y: 0 });
+  });
+
+  it('once live it moves with its velocity and collides with the player', () => {
+    const world = new World(ON_PLAYER);
+    const snap = run(world, NONE, 90);
+    expect(snap.particles[0].live).toBe(true);
+    expect(snap.particles[0].x).toBeGreaterThan(0.2);
+    expect(Math.abs(snap.player.x)).toBeGreaterThan(0.001);
+  });
+
+  it('a repeating trigger spawns a fresh wave on schedule', () => {
+    const world = new World({
+      ...SCENARIO,
+      waves: [{ id: 'w', entries: [{ spawn: 'up', position: { x: 8, y: 3 } }] }],
+      triggers: [{ kind: 'time', at: 1, every: 1, repeats: 2, actions: [{ kind: 'spawn', wave: 'w' }] }],
+    });
+    const counts = [60, 1, 59, 1, 59, 1, 120].map((n) => run(world, NONE, n).particles.length);
+    expect(counts).toEqual([0, 1, 1, 2, 2, 3, 3]);
+  });
+});

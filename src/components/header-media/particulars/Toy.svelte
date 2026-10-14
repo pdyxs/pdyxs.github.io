@@ -9,6 +9,7 @@
   import { steer, isSteerKey } from '../../../lib/particulars/input/steer';
   import type { Vec } from '../../../lib/particulars/input/steer';
   import { clientToWorld, hitsPlayer } from '../../../lib/particulars/input/pointer';
+  import { glyphFor } from './glyph';
   import { FIXED_DT, MAX_STEPS_PER_FRAME, VIEW_MARGIN } from '../../../lib/particulars/constants';
 
   let { scenario, entryId }: { scenario: Scenario; entryId: string } = $props();
@@ -114,6 +115,26 @@
     width={snapshot.walls.width}
     height={snapshot.walls.height}
   />
+  {#each snapshot.particles as p (p.id)}
+    {@const glyph = glyphFor(p.type)}
+    <g
+      class="particle"
+      data-type={p.type}
+      data-colour={p.colour}
+      data-parity={p.parity}
+      data-live={p.live}
+      transform="translate({p.x} {p.y})"
+    >
+      {#if !p.live}
+        <circle class="telegraph" r={p.radius * 1.6} />
+      {/if}
+      {#if glyph.kind === 'circle'}
+        <circle class="shape" r={p.radius} />
+      {:else}
+        <polygon class="shape" points={glyph.points(p.radius)} />
+      {/if}
+    </g>
+  {/each}
   <circle class="player" cx={snapshot.player.x} cy={snapshot.player.y} r={snapshot.player.radius} />
 </svg>
 
@@ -132,5 +153,35 @@
   }
   .player {
     fill: var(--color-text);
+  }
+  /* Parity: matter is solid, antimatter is an outline. Colour (strong force) is
+     the outline's dash pattern, because the palette has no spare hues. */
+  .particle .shape {
+    stroke: var(--color-text);
+    stroke-width: 0.1;
+    fill: var(--color-text);
+  }
+  .particle[data-parity='-1'] .shape {
+    fill: none;
+  }
+  .particle[data-colour='red'] .shape {
+    stroke-dasharray: 0.25 0.12;
+  }
+  .particle[data-colour='green'] .shape {
+    stroke-dasharray: 0.04 0.1;
+    stroke-linecap: round;
+  }
+  .particle[data-colour='blue'] .shape {
+    stroke-dasharray: 0.3 0.1 0.04 0.1;
+  }
+  .telegraph {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-width: 0.06;
+    stroke-dasharray: 0.15 0.15;
+  }
+  .particle[data-live='false'] .shape {
+    stroke-dasharray: none;
+    fill: none;
   }
 </style>
