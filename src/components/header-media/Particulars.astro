@@ -1,0 +1,16 @@
+---
+// Thin wrapper: the registry entry, and nothing else (see LinoCanvas.astro for
+// why it must statically import its island). It also owns the one build-time
+// step: pick the card's index.json out of the glob, validate it once, and hand
+// the island a plain scenario. An invalid scenario throws here, so it fails
+// the build / SSR render rather than mounting a broken toy.
+import type { HeaderMediaProps } from '@render/header-media';
+import { scenarioFor } from '../../lib/particulars/scenario/select';
+import Toy from './particulars/Toy.svelte';
+
+const files = import.meta.glob('/src/content/**/index.json', { eager: true, import: 'default' });
+
+const { entryId } = Astro.props as HeaderMediaProps;
+const scenario = scenarioFor(files, entryId);
+---
+<Toy {entryId} {scenario} client:load />

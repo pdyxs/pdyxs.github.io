@@ -1,6 +1,7 @@
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import SeriesNavRenderer from '@components/card-renderers/SeriesNavRenderer.astro';
 import LinoCanvas from '@components/header-media/LinoCanvas.astro';
+import Particulars from '@components/header-media/Particulars.astro';
 import StarSystemPrototype from '@components/star-nav/snapshots/2026-09-23-prototype/StarSystem.astro';
 import StarNav from '@components/star-nav/StarSystem.astro';
 
@@ -70,6 +71,8 @@ export const HEADER_MEDIA_RENDERERS: Record<string, AstroComponentFactory> = {
     'star-system': StarSystemPrototype,
     // Living: the star-nav project's current build. See src/components/star-nav/.
     'star-nav': StarNav,
+    // Particulars: steerable physics toy; scenario is index.json beside the card.
+    particulars: Particulars,
 };
 
 /**
