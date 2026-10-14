@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { expand } from './expand';
+import { expand, formationFrames } from './expand';
 import type { Formation } from './types';
 
 const LIB: Record<string, Formation> = {};
@@ -95,5 +95,25 @@ describe('expand', () => {
   it('every particle carries the entry telegraph duration', () => {
     const lib: Record<string, Formation> = { row: { kind: 'line', count: 2, distance: 1, contents: ['up'] } };
     expect(expand({ spawn: 'row', telegraph: 1.5 }, lib).map((s) => s.telegraph)).toEqual([1.5, 1.5]);
+  });
+});
+
+describe('formationFrames', () => {
+  it('names every formation an entry places, with its centre and the angle stacked above it', () => {
+    const lib: Record<string, Formation> = {
+      outer: { kind: 'line', count: 2, distance: 4, angle: 90, contents: ['inner'] },
+      inner: { kind: 'line', count: 3, distance: 1, contents: ['up'] },
+    };
+    const frames = formationFrames({ spawn: 'outer', position: { x: 1, y: 1 }, angle: 10 }, lib);
+    expect(frames.map((f) => f.name)).toEqual(['outer', 'inner', 'inner']);
+    expect(frames[0].frame).toEqual({ x: 1, y: 1, angle: 10 });
+    // outer runs down +y (10 + 90 = 100 degrees); its slots sit 2 either side of the centre
+    expect(frames[1].frame.angle).toBe(100);
+    expect(frames[1].frame.x).toBeCloseTo(1 + 2 * Math.cos((100 * Math.PI) / 180) * -1, 6);
+    expect(frames[1].frame.y).toBeCloseTo(1 + 2 * Math.sin((100 * Math.PI) / 180) * -1, 6);
+  });
+
+  it('a particle spawn places no formation', () => {
+    expect(formationFrames({ spawn: 'electron' }, {})).toEqual([]);
   });
 });

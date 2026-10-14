@@ -66,3 +66,28 @@ export function expand(entry: WaveEntry, library: Library): SpawnSpec[] {
   const telegraph = entry.telegraph ?? 0;
   return place(entry.spawn, frame, library).map((s) => ({ ...s, vx: v.x, vy: v.y, telegraph }));
 }
+
+const MAX_NESTING = 8;
+
+/**
+ * Pure: every formation an entry places, in placement order, with the frame it
+ * is placed in (its centre, and the angle stacked from everything above it, not
+ * its own). This walks the same slot geometry `expand` does, so a handle drawn
+ * from it sits where the particles do.
+ */
+export function formationFrames(entry: WaveEntry, library: Library): { name: string; frame: Frame }[] {
+  const out: { name: string; frame: Frame }[] = [];
+  const visit = (ref: Ref, frame: Frame, depth: number) => {
+    if (typeof ref !== 'string' || !(ref in library) || depth > MAX_NESTING) return;
+    const f = library[ref];
+    out.push({ name: ref, frame });
+    const angle = frame.angle + (f.angle ?? 0);
+    for (let i = 0; i < (f.count ?? 1); i++) {
+      const o = rotate(slotOffset(f, i), angle);
+      visit(f.contents[i % f.contents.length], { x: frame.x + o.x, y: frame.y + o.y, angle }, depth + 1);
+    }
+  };
+  const p = entry.position ?? { x: 0, y: 0 };
+  visit(entry.spawn, { x: p.x, y: p.y, angle: entry.angle ?? 0 }, 0);
+  return out;
+}

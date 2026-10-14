@@ -5,10 +5,13 @@
   // only for scenarios that validate.
   import { onMount } from 'svelte';
   import Toy from '../Toy.svelte';
+  import LevelView from './LevelView.svelte';
   import { createScenarioStore } from '../../../../lib/particulars/editor/store';
   import type { Edit, Path } from '../../../../lib/particulars/editor/edit';
   import { triggersForWave } from '../../../../lib/particulars/editor/waves';
   import { BLANK_SCENARIO } from '../../../../lib/particulars/editor/new-card';
+  import type { Selection } from '../../../../lib/particulars/editor/selection';
+  import { isolateWaves } from '../../../../lib/particulars/sim/isolate';
   import { validate } from '../../../../lib/particulars/scenario/validate';
   import { FORCE_NAMES, PARTICLE_TYPES } from '../../../../lib/particulars/scenario/types';
   import type { Scenario } from '../../../../lib/particulars/scenario/types';
@@ -25,6 +28,16 @@
   let status = $state('');
   let newDir = $state('what/toys/');
   let newTitle = $state('');
+  // Level view state: what is selected for handle editing, and which waves are ticked to run.
+  let selection = $state<Selection>(null);
+  let runChoice = $state<string[]>([]);
+  // `waves: null` plays the whole scenario; `n` restarts a run that is pressed again.
+  let running = $state<{ waves: string[] | null; n: number } | null>(null);
+  const MAX_RUN_WAVES = 2;
+  function chooseRun(id: string, on: boolean) {
+    runChoice = on ? [...runChoice.filter((w) => w !== id), id] : runChoice.filter((w) => w !== id);
+  }
+  const startRun = (waves: string[] | null) => (running = { waves, n: (running?.n ?? 0) + 1 });
 
   const result = $derived(validate(scenario));
   const errors = $derived(result.ok ? [] : result.errors);
@@ -52,6 +65,9 @@
       return;
     }
     current = dir;
+    selection = null;
+    running = null;
+    runChoice = [];
     store.replace(r.body);
     status = `Opened ${dir}`;
   }
@@ -205,6 +221,7 @@
           {#each scenario.barriers ?? [] as b, i (i)}
             <div class="row">
               {@render json(`Barrier ${i + 1}`, ['barriers', i], b)}
+              <button type="button" data-select={`barrier-${i}`} onclick={() => (selection = { kind: 'wall', index: i })}>Select</button>
               <button type="button" onclick={() => edit({ kind: 'remove', path: ['barriers', i] })}>Remove</button>
             </div>
           {/each}
@@ -229,6 +246,7 @@
               <legend>{w.id}</legend>
               <div class="row">
                 <label>Id <input data-field={`waves.${wi}.id`} value={w.id} onchange={(e) => edit({ kind: 'rename-wave', from: w.id, to: e.currentTarget.value })} /></label>
+                <label class="inline"><input type="checkbox" data-run-wave={w.id} checked={runChoice.includes(w.id)} disabled={!runChoice.includes(w.id) && runChoice.length >= MAX_RUN_WAVES} onchange={(e) => chooseRun(w.id, e.currentTarget.checked)} /> run</label>
                 <button type="button" disabled={wi === 0} onclick={() => edit({ kind: 'move', path: ['waves'], from: wi, to: wi - 1 })}>Up</button>
                 <button type="button" disabled={wi === waves.length - 1} onclick={() => edit({ kind: 'move', path: ['waves'], from: wi, to: wi + 1 })}>Down</button>
                 <button type="button" onclick={() => edit({ kind: 'remove', path: ['waves', wi] })}>Remove wave</button>
@@ -256,6 +274,7 @@
                   {@render num('angle', ['waves', wi, 'entries', ei, 'angle'], entry.angle, true)}
                   {@render num('telegraph', ['waves', wi, 'entries', ei, 'telegraph'], entry.telegraph, true)}
                   {@render json('velocity', ['waves', wi, 'entries', ei, 'velocity'], entry.velocity ?? { magnitude: 0 })}
+                  <button type="button" data-select={`entry-${wi}-${ei}`} data-selected={selection?.kind === 'entry' && selection.wave === wi && selection.entry === ei} onclick={() => (selection = { kind: 'entry', wave: wi, entry: ei })}>Select</button>
                   <button type="button" onclick={() => edit({ kind: 'remove', path: ['waves', wi, 'entries', ei] })}>Remove entry</button>
                 </div>
               {/each}
@@ -282,9 +301,18 @@
 
       <div class="preview">
         {#if result.ok}
-          {#key JSON.stringify(result.scenario)}
-            <Toy entryId={current} scenario={result.scenario} />
-          {/key}
+          <div class="run-bar">
+            <button type="button" class="run-waves" disabled={runChoice.length === 0} onclick={() => startRun(runChoice)}>Run {runChoice.length === 1 ? 'wave' : 'waves'} in isolation</button>
+            <button type="button" class="play-all" onclick={() => startRun(null)}>Play whole level</button>
+            {#if running}<button type="button" class="stop-run" onclick={() => (running = null)}>Stop</button>{/if}
+          </div>
+          {#if running}
+            {#key running.n}
+              <Toy entryId={current} scenario={running.waves ? isolateWaves(result.scenario, running.waves) : result.scenario} />
+            {/key}
+          {:else}
+            <LevelView entryId={current} {scenario} {selection} onedit={edit} onselect={(s) => (selection = s)} />
+          {/if}
         {:else}
           <p>Fix the errors to resume the preview.</p>
         {/if}
@@ -306,6 +334,12 @@
   .preview {
     position: sticky;
     top: var(--space-sm);
+  }
+  .run-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-block-end: var(--space-sm);
   }
   .row {
     display: flex;
