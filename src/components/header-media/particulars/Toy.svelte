@@ -14,6 +14,7 @@
   import { listenCommands } from '../../../lib/particulars/input/command';
   import { installPageButtons } from './page-buttons';
   import { glyphFor } from './glyph';
+  import { arcPath } from './wall-path';
   import { FIXED_DT, FORCE_LABEL_SPACING, MAX_STEPS_PER_FRAME, VIEW_MARGIN } from '../../../lib/particulars/constants';
 
   let { scenario, entryId }: { scenario: Scenario; entryId: string } = $props();
@@ -152,6 +153,21 @@
     width={snapshot.walls.width}
     height={snapshot.walls.height}
   />
+  {#each snapshot.barriers as w, i (i)}
+    {#if w.shape === 'rect'}
+      <rect
+        class="barrier"
+        data-mode={w.mode}
+        x={w.x - w.width / 2}
+        y={w.y - w.height / 2}
+        width={w.width}
+        height={w.height}
+        transform="rotate({w.angle ?? 0} {w.x} {w.y})"
+      />
+    {:else}
+      <path class="barrier" data-mode={w.mode} d={arcPath(w)} />
+    {/if}
+  {/each}
   {#each snapshot.blackHoles as h, i (i)}
     <circle class="black-hole" data-active={snapshot.forces.gravity} cx={h.x} cy={h.y} r={h.radius} />
   {/each}
@@ -215,6 +231,26 @@
     fill: none;
     stroke: var(--color-text);
     stroke-width: 0.15;
+  }
+  /* Wall mode is the outline: all is solid, positive long dashes, negative dots, destroy fine and heavy. */
+  .barrier {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-width: 0.12;
+  }
+  .barrier[data-mode='all'] {
+    fill: var(--color-text);
+  }
+  .barrier[data-mode='positive'] {
+    stroke-dasharray: 0.4 0.15;
+  }
+  .barrier[data-mode='negative'] {
+    stroke-dasharray: 0.04 0.12;
+    stroke-linecap: round;
+  }
+  .barrier[data-mode='destroy'] {
+    stroke-width: 0.22;
+    stroke-dasharray: 0.1 0.1;
   }
   .forces text {
     font-size: 0.6px;

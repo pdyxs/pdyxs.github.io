@@ -1,7 +1,8 @@
 import { World as PlanckWorld, Circle, Box, Vec2 } from 'planck';
 import type { Body } from 'planck';
+import { wallPieces, wallResponse } from './walls';
 import { resolveParticle } from '../scenario/expand';
-import type { Scenario, ParticleSpec, SpawnSpec } from '../scenario/types';
+import type { Scenario, ParticleSpec, SpawnSpec, WallMode } from '../scenario/types';
 import { dueSpawns, initialSchedule } from './scheduler';
 import type { ScheduleState } from './scheduler';
 import type { Vec } from '../input/steer';
@@ -16,6 +17,7 @@ import type { Outcome, Participant } from './interactions';
 import type { WorldEvent } from './events';
 import {
   BLACK_HOLE_DENSITY,
+  CHARGE_BY_TYPE,
   FIXED_DT,
   W_CLEARANCE,
   PARTICLE_DENSITY,
@@ -67,6 +69,8 @@ export class World {
   private playerAlive = true;
   /** Pairs that touched this step, collected by the contact listener and decided after the step. */
   private touches: [number, number][] = [];
+  /** Ids that touched a destroy wall this step. */
+  private destroyed: number[] = [];
   private tick = 0;
   private readonly scenario: Scenario;
   private schedule: ScheduleState = initialSchedule();
@@ -84,6 +88,13 @@ export class World {
       ground.createFixture(new Box(s.hw, s.hh, new Vec2(s.cx, s.cy), 0));
     }
 
+    for (const wall of scenario.barriers ?? []) {
+      for (const p of wallPieces(wall)) {
+        const f = ground.createFixture(new Box(p.hw, p.hh, new Vec2(p.cx, p.cy), p.angle), { isSensor: wall.mode === 'destroy' });
+        f.setUserData(wall.mode);
+      }
+    }
+
     this.player = this.world.createBody({
       type: 'dynamic',
       position: new Vec2(scenario.player.x, scenario.player.y),
@@ -96,6 +107,18 @@ export class World {
       const a = c.getFixtureA().getBody().getUserData();
       const b = c.getFixtureB().getBody().getUserData();
       if (typeof a === 'number' && typeof b === 'number') this.touches.push([a, b]);
+      else if (typeof a === 'number' && c.getFixtureB().getUserData() === 'destroy') this.destroyed.push(a);
+      else if (typeof b === 'number' && c.getFixtureA().getUserData() === 'destroy') this.destroyed.push(b);
+    });
+    // Only block/pass walls reach here (destroy walls are sensors): a pass wall switches its contact off.
+    this.world.on('pre-solve', (c) => {
+      const [fa, fb] = [c.getFixtureA(), c.getFixtureB()];
+      const [mode, id] = typeof fa.getBody().getUserData() === 'number'
+        ? [fb.getUserData(), fa.getBody().getUserData()]
+        : [fa.getUserData(), fb.getBody().getUserData()];
+      if (typeof mode === 'string' && typeof id === 'number') {
+        c.setEnabled(wallResponse(mode as WallMode, this.chargeOf(id)) === 'block');
+      }
     });
     this.player.createFixture(new Circle(scenario.player.radius), {
       density: PLAYER_DENSITY,
@@ -182,6 +205,23 @@ export class World {
     }
   }
 
+  private chargeOf(id: number): number {
+    const p = id === PLAYER_ID ? this.playerSpec : this.spawned.find((s) => s.id === id)?.particle;
+    return p ? CHARGE_BY_TYPE[p.type] * p.parity : 0;
+  }
+
+  /** Kill whatever touched a destroy wall this step. */
+  private resolveDestroyed(): void {
+    const ids = new Set(this.destroyed);
+    this.destroyed = [];
+    for (const id of ids) {
+      const p = this.participants().find((x) => x.id === id);
+      if (!p) continue;
+      this.remove(id);
+      this.events.push({ tick: this.tick, kind: 'destroyed', particle: spec(p), isPlayer: id === PLAYER_ID });
+    }
+  }
+
   private remove(id: number): void {
     if (id === PLAYER_ID) {
       this.playerAlive = false;
@@ -252,6 +292,7 @@ export class World {
     this.world.step(FIXED_DT, VELOCITY_ITERATIONS, POSITION_ITERATIONS);
     this.tick++;
     this.playerAge++;
+    this.resolveDestroyed();
     this.resolveTouches(steerVec);
     for (const s of this.spawned) if (s.live) s.age++;
     this.decayDue(steerVec);
@@ -269,6 +310,7 @@ export class World {
         ...h,
         radius: blackHoleRadius(h.mass, BLACK_HOLE_DENSITY),
       })),
+      barriers: (this.scenario.barriers ?? []).map((b) => ({ ...b })),
       particles: this.spawned.map((s) => {
         const pos = s.body.getPosition();
         return { id: s.id, ...s.particle, x: pos.x, y: pos.y, radius: PARTICLE_RADIUS, live: s.live };

@@ -1,4 +1,4 @@
-import { BOSON_TYPES, FORCE_NAMES, PARTICLE_COLOURS, PARTICLE_TYPES } from './types';
+import { BOSON_TYPES, FORCE_NAMES, PARTICLE_COLOURS, PARTICLE_TYPES, WALL_MODES } from './types';
 import type { Scenario, ValidationResult } from './types';
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
@@ -104,6 +104,34 @@ function checkBlackHoles(holes: unknown, errors: string[]): void {
   });
 }
 
+function checkBarriers(barriers: unknown, errors: string[]): void {
+  if (!Array.isArray(barriers)) return void errors.push('barriers must be an array');
+  barriers.forEach((w, i) => {
+    const at = `barriers[${i}]`;
+    if (!isObject(w)) return void errors.push(`${at} must be an object`);
+    if (w.shape !== 'rect' && w.shape !== 'arc') return void errors.push(`${at}.shape must be rect or arc`);
+    if (!(WALL_MODES as readonly string[]).includes(w.mode as string)) {
+      errors.push(`${at}.mode must be one of ${WALL_MODES.join(', ')}`);
+    }
+    if (!isFiniteNumber(w.x)) errors.push(`${at}.x must be a number`);
+    if (!isFiniteNumber(w.y)) errors.push(`${at}.y must be a number`);
+    if (w.shape === 'rect') {
+      if (!isPositive(w.width)) errors.push(`${at}.width must be a positive number`);
+      if (!isPositive(w.height)) errors.push(`${at}.height must be a positive number`);
+      if (w.angle !== undefined && !isFiniteNumber(w.angle)) errors.push(`${at}.angle must be a number`);
+      return;
+    }
+    if (!isPositive(w.radius)) errors.push(`${at}.radius must be a positive number`);
+    else if (!(isPositive(w.thickness) && w.thickness < w.radius)) {
+      errors.push(`${at}.thickness must be positive and less than the radius`);
+    }
+    if (w.start !== undefined && !isFiniteNumber(w.start)) errors.push(`${at}.start must be a number`);
+    if (w.sweep !== undefined && !(isFiniteNumber(w.sweep) && w.sweep > 0 && w.sweep <= 360)) {
+      errors.push(`${at}.sweep must be greater than 0 and at most 360`);
+    }
+  });
+}
+
 function checkWaves(waves: unknown, formations: Record<string, unknown>, errors: string[]): Set<string> {
   const ids = new Set<string>();
   if (!Array.isArray(waves)) {
@@ -195,6 +223,7 @@ export function validate(json: unknown): ValidationResult {
   }
   if (json.forces !== undefined) checkForces(json.forces, errors);
   if (json.blackHoles !== undefined) checkBlackHoles(json.blackHoles, errors);
+  if (json.barriers !== undefined) checkBarriers(json.barriers, errors);
   const waveIds = json.waves !== undefined ? checkWaves(json.waves, formations, errors) : new Set<string>();
   if (json.triggers !== undefined) checkTriggers(json.triggers, waveIds, errors);
 

@@ -6,4 +6,8 @@ import type { ParticleSpec } from '../scenario/types';
  */
 export type WorldEvent =
   | { tick: number; kind: 'annihilated'; a: ParticleSpec; b: ParticleSpec; playerDied: boolean }
-  | { tick: number; kind: 'absorbed' | 'decayed' | 'changed'; from: ParticleSpec; to: ParticleSpec; isPlayer: boolean };
+  | { tick: number; kind: 'absorbed' | 'decayed' | 'changed'; from: ParticleSpec; to: ParticleSpec; isPlayer: boolean }
+  | DestroyedEvent;
+
+/** A wall in destroy mode killed a particle (or the player). */
+export type DestroyedEvent = { tick: number; kind: 'destroyed'; particle: ParticleSpec; isPlayer: boolean };

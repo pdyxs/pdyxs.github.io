@@ -18,6 +18,8 @@ export const PLAYER_FRICTION = 0;
 
 /** Wall slab thickness, world units. */
 export const WALL_THICKNESS = 2;
+/** An arc wall is built from one collision box per this many degrees of sweep. */
+export const ARC_PIECE_DEGREES = 15;
 /** Margin around the box inside the SVG viewBox, world units. */
 export const VIEW_MARGIN = 0.5;
 

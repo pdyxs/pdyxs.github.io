@@ -193,3 +193,33 @@ describe('validate page-button triggers', () => {
     });
   });
 });
+
+describe('validate barriers', () => {
+  const errorsOf = (barriers: unknown) => {
+    const r = validate({ ...GOOD, barriers });
+    return r.ok ? [] : r.errors;
+  };
+
+  it('accepts rect and arc walls in every mode', () => {
+    const barriers = [
+      { shape: 'rect', mode: 'all', x: 0, y: 2, width: 4, height: 0.5, angle: 30 },
+      { shape: 'arc', mode: 'destroy', x: 0, y: 0, radius: 3, thickness: 0.5, start: 0, sweep: 180 },
+      { shape: 'rect', mode: 'positive', x: 1, y: 1, width: 1, height: 1 },
+      { shape: 'arc', mode: 'negative', x: 0, y: 0, radius: 2, thickness: 0.3 },
+    ];
+    expect(validate({ ...GOOD, barriers })).toEqual({ ok: true, scenario: { ...GOOD, barriers } });
+  });
+
+  it('names a bad shape, mode and dimensions', () => {
+    expect(errorsOf([{ shape: 'blob', mode: 'all' }])).toEqual(['barriers[0].shape must be rect or arc']);
+    expect(errorsOf([{ shape: 'rect', mode: 'sticky', x: 0, y: 0, width: 0, height: 1 }])).toEqual([
+      'barriers[0].mode must be one of all, positive, negative, destroy',
+      'barriers[0].width must be a positive number',
+    ]);
+    expect(errorsOf([{ shape: 'arc', mode: 'all', x: 0, y: 0, radius: 1, thickness: 2, sweep: 400 }])).toEqual([
+      'barriers[0].thickness must be positive and less than the radius',
+      'barriers[0].sweep must be greater than 0 and at most 360',
+    ]);
+    expect(errorsOf({})).toEqual(['barriers must be an array']);
+  });
+});

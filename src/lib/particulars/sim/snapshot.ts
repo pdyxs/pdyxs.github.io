@@ -1,4 +1,4 @@
-import type { ForceSwitches, ParticleColour, ParticleKind, Parity } from '../scenario/types';
+import type { WallDef, ForceSwitches, ParticleColour, ParticleKind, Parity } from '../scenario/types';
 
 /** One non-player particle. `live` is false while it is still telegraphing its arrival. */
 export interface ParticleSnapshot {
@@ -28,6 +28,8 @@ export interface Snapshot {
   player: { x: number; y: number; radius: number; type: ParticleKind; colour: ParticleColour; parity: Parity; alive: boolean };
   particles: ParticleSnapshot[];
   blackHoles: BlackHoleSnapshot[];
+  /** Interior walls, as authored: static for the whole run. */
+  barriers: WallDef[];
   /** Which forces the scenario has switched on. */
   forces: ForceSwitches;
 }

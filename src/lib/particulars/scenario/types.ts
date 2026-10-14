@@ -101,6 +101,16 @@ export interface BlackHoleDef {
   mass: number;
 }
 
+/** Which particles a wall stops. `destroy` stops none and kills what touches it. */
+export const WALL_MODES = ['all', 'positive', 'negative', 'destroy'] as const;
+export type WallMode = (typeof WALL_MODES)[number];
+
+/** Static layout inside the box, present from the start. World units, y down, angles in degrees. */
+export type WallDef =
+  | { shape: 'rect'; mode: WallMode; x: number; y: number; width: number; height: number; angle?: number }
+  /** A band of `thickness` around (x, y), from `start` sweeping `sweep` degrees (default 360 is a ring). */
+  | { shape: 'arc'; mode: WallMode; x: number; y: number; radius: number; thickness: number; start?: number; sweep?: number };
+
 /** Plain-data scenario, as authored in a card's index.json. World units, y down. */
 export interface Scenario {
   /** The walled box, centred on the origin. */
@@ -110,6 +120,8 @@ export interface Scenario {
   /** Which forces are on. Omitted forces are off. */
   forces?: Partial<ForceSwitches>;
   blackHoles?: BlackHoleDef[];
+  /** Interior walls; the outer box is `walls` and always blocks everything. */
+  barriers?: WallDef[];
   formations?: Record<string, Formation>;
   waves?: Wave[];
   triggers?: Trigger[];
