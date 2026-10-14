@@ -1,4 +1,4 @@
-import type { ParticleType } from '../../../lib/particulars/scenario/types';
+import type { ParticleKind } from '../../../lib/particulars/scenario/types';
 
 /**
  * Minimal distinct shapes for the 12 types: triangles and squares for the light
@@ -6,7 +6,7 @@ import type { ParticleType } from '../../../lib/particulars/scenario/types';
  * rounder polygons for the charged leptons, stars for the neutrinos.
  */
 type Spec = { sides: number; rotation: number; star?: boolean } | { circle: true };
-const SPECS: Record<ParticleType, Spec> = {
+const SPECS: Record<ParticleKind, Spec> = {
   up: { sides: 3, rotation: -90 },
   down: { sides: 3, rotation: 90 },
   strange: { sides: 4, rotation: 0 },
@@ -19,12 +19,13 @@ const SPECS: Record<ParticleType, Spec> = {
   electronNeutrino: { sides: 4, rotation: 0, star: true },
   muonNeutrino: { sides: 5, rotation: -90, star: true },
   tauNeutrino: { sides: 6, rotation: 0, star: true },
+  W: { sides: 3, rotation: 90, star: true },
 };
 
 export type Glyph = { kind: 'circle' } | { kind: 'polygon'; points: (radius: number) => string };
 
 /** Pure: the outline to draw for a particle type, scalable to any radius. */
-export function glyphFor(type: ParticleType): Glyph {
+export function glyphFor(type: ParticleKind): Glyph {
   const spec = SPECS[type];
   if ('circle' in spec) return { kind: 'circle' };
   const { sides, rotation, star } = spec;

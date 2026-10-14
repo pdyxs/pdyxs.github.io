@@ -10,7 +10,8 @@ interface Frame {
 }
 type Placed = { particle: ParticleSpec; x: number; y: number };
 
-function resolveParticle(ref: Ref): ParticleSpec {
+/** Pure: an authored particle with colour and parity defaulted. */
+export function resolveParticle(ref: Ref): ParticleSpec {
   // A string reaching here is a built-in type name; validate() has vouched for it.
   const def = (typeof ref === 'string' ? { type: ref } : ref) as ParticleDef;
   return { type: def.type, colour: def.colour ?? 'white', parity: def.parity ?? 1 };

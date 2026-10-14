@@ -29,3 +29,15 @@ export function telegraphTicks(seconds: number, dt: number): number {
 export function blackHoleRadius(mass: number, density: number): number {
   return Math.sqrt(mass / (density * Math.PI));
 }
+
+/**
+ * Pure: the unit direction a W leaves an emitter in: opposite the steering if
+ * any, else opposite the motion, else to the left (Unity: `change()`).
+ */
+export function bosonDirection(steerVec: Vec, velocity: Vec): Vec {
+  for (const v of [steerVec, velocity]) {
+    const len = Math.hypot(v.x, v.y);
+    if (len > 1e-9) return { x: -v.x / len, y: -v.y / len };
+  }
+  return { x: -1, y: 0 };
+}

@@ -47,7 +47,21 @@ export const CHARGE_BY_TYPE = {
   up: 2, down: -1, strange: -1, charm: 2, top: 2, bottom: -1,
   electron: -3, muon: -3, tau: -3,
   electronNeutrino: 0, muonNeutrino: 0, tauNeutrino: 0,
+  W: 3,
 } as const;
 
 /** Horizontal spacing of the forces readout, world units. */
 export const FORCE_LABEL_SPACING = 3.2;
+
+/**
+ * Seconds a type lives before the weak force decays it. Types absent here are
+ * stable. Each decay steps down a generation and sheds a W (Unity: decayTimes).
+ */
+export const DECAY_TIME_BY_TYPE = {
+  top: 4, bottom: 6, charm: 6, strange: 8, muon: 6, tau: 4,
+} as const;
+/** Speed a W leaves an emitting particle at, and the recoil the emitter takes opposite it. */
+export const W_SPEED = 4;
+export const W_RECOIL = 1;
+/** Gap between an emitter and the W it sheds, so the W starts clear of it. */
+export const W_CLEARANCE = 0.05;

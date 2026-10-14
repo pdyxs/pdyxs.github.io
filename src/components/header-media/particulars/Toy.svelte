@@ -8,7 +8,9 @@
   import { stepsDue } from '../../../lib/particulars/sim/clock';
   import { steer, isSteerKey } from '../../../lib/particulars/input/steer';
   import type { Vec } from '../../../lib/particulars/input/steer';
-  import { clientToWorld, hitsPlayer } from '../../../lib/particulars/input/pointer';
+  import { clientToWorld, pressKind } from '../../../lib/particulars/input/pointer';
+  import { intentFor, inputEventForKey } from '../../../lib/particulars/input/bindings';
+  import type { InputEvent, Intent } from '../../../lib/particulars/input/bindings';
   import { glyphFor } from './glyph';
   import { FIXED_DT, FORCE_LABEL_SPACING, MAX_STEPS_PER_FRAME, VIEW_MARGIN } from '../../../lib/particulars/constants';
 
@@ -37,6 +39,13 @@
   // Held input, in world units. Plain data, not reactive: only the loop reads it.
   const heldKeys = new Set<string>();
   const heldPointers = new Map<number, Vec>();
+  // Intents fired since the last step. The bindings table decides what each input means.
+  let pending: Intent[] = [];
+
+  function fire(event: InputEvent) {
+    const intent = intentFor(event, world.snapshot().forces);
+    if (intent) pending.push(intent);
+  }
 
   function worldPoint(e: PointerEvent): Vec {
     const r = svg.getBoundingClientRect();
@@ -45,8 +54,11 @@
 
   function onPointerDown(e: PointerEvent) {
     const p = worldPoint(e);
-    // A press on the player is the action (a later issue), never steering.
-    if (hitsPlayer(p, snapshot.player)) return;
+    // A press on the player is the action, never steering.
+    if (pressKind(p, snapshot.player) === 'tap-self') {
+      fire('tap-self');
+      return;
+    }
     heldPointers.set(e.pointerId, p);
     svg.setPointerCapture?.(e.pointerId);
   }
@@ -62,7 +74,14 @@
     return !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
   }
   function onKeyDown(e: KeyboardEvent) {
-    if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target) || !isSteerKey(e.key)) return;
+    if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return;
+    const event = inputEventForKey(e.key);
+    if (event) {
+      if (!e.repeat) fire(event);
+      e.preventDefault();
+      return;
+    }
+    if (!isSteerKey(e.key)) return;
     heldKeys.add(e.key);
     e.preventDefault();
   }
@@ -85,7 +104,8 @@
       acc = due.remainder;
       for (let i = 0; i < due.steps; i++) {
         const s = world.snapshot().player;
-        world.step(steer({ pointers: [...heldPointers.values()], keys: [...heldKeys] }, s));
+        world.step(steer({ pointers: [...heldPointers.values()], keys: [...heldKeys] }, s), pending);
+        pending = [];
       }
       if (due.steps > 0) snapshot = world.snapshot();
       raf = requestAnimationFrame(frame);
@@ -110,7 +130,7 @@
   data-entry={entryId}
   viewBox="{view.x} {view.y} {view.width} {view.height}"
   role="img"
-  aria-label="A particle in a walled box. Steer it with the arrow keys, WASD, or by holding a pointer."
+  aria-label="A particle in a walled box. Steer it with the arrow keys, WASD, or by holding a pointer. Space, or a tap on the particle, uses its action."
   onpointerdown={onPointerDown}
   onpointermove={onPointerMove}
   onpointerup={onPointerUp}
@@ -146,7 +166,22 @@
       {/if}
     </g>
   {/each}
-  <circle class="player" cx={snapshot.player.x} cy={snapshot.player.y} r={snapshot.player.radius} />
+  {#if snapshot.player.alive}
+    {@const glyph = glyphFor(snapshot.player.type)}
+    <g
+      class="player"
+      data-type={snapshot.player.type}
+      data-colour={snapshot.player.colour}
+      data-parity={snapshot.player.parity}
+      transform="translate({snapshot.player.x} {snapshot.player.y})"
+    >
+      {#if glyph.kind === 'circle'}
+        <circle class="shape" r={snapshot.player.radius} />
+      {:else}
+        <polygon class="shape" points={glyph.points(snapshot.player.radius)} />
+      {/if}
+    </g>
+  {/if}
   <g class="forces" aria-label="Forces">
     {#each FORCE_LABELS as f, i (f.name)}
       <text
@@ -188,8 +223,13 @@
   .black-hole[data-active='true'] {
     fill: var(--color-text);
   }
-  .player {
+  .player .shape {
     fill: var(--color-text);
+    stroke: var(--color-text);
+    stroke-width: 0.1;
+  }
+  .player[data-parity='-1'] .shape {
+    fill: none;
   }
   /* Parity: matter is solid, antimatter is an outline. Colour (strong force) is
      the outline's dash pattern, because the palette has no spare hues. */

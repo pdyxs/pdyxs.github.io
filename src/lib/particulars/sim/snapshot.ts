@@ -1,9 +1,9 @@
-import type { ForceSwitches, ParticleColour, ParticleType, Parity } from '../scenario/types';
+import type { ForceSwitches, ParticleColour, ParticleKind, Parity } from '../scenario/types';
 
 /** One non-player particle. `live` is false while it is still telegraphing its arrival. */
 export interface ParticleSnapshot {
   id: number;
-  type: ParticleType;
+  type: ParticleKind;
   colour: ParticleColour;
   parity: Parity;
   x: number;
@@ -24,7 +24,8 @@ export interface BlackHoleSnapshot {
 export interface Snapshot {
   tick: number;
   walls: { width: number; height: number };
-  player: { x: number; y: number; radius: number };
+  /** `alive` goes false when the player is annihilated; the body then stays where it died. */
+  player: { x: number; y: number; radius: number; type: ParticleKind; colour: ParticleColour; parity: Parity; alive: boolean };
   particles: ParticleSnapshot[];
   blackHoles: BlackHoleSnapshot[];
   /** Which forces the scenario has switched on. */

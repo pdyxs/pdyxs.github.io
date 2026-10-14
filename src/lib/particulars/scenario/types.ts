@@ -5,6 +5,11 @@ export const PARTICLE_TYPES = [
   'electronNeutrino', 'muonNeutrino', 'tauNeutrino',
 ] as const;
 export type ParticleType = (typeof PARTICLE_TYPES)[number];
+/** Force carriers. Only the W exists: it carries the weak force's charge changes. */
+export const BOSON_TYPES = ['W'] as const;
+export type BosonType = (typeof BOSON_TYPES)[number];
+/** Everything a particle can be: the 12 built-ins plus the bosons. */
+export type ParticleKind = ParticleType | BosonType;
 
 /** Strong-force colour. `white` is colourless. */
 export const PARTICLE_COLOURS = ['white', 'red', 'green', 'blue'] as const;
@@ -15,13 +20,13 @@ export type Parity = 1 | -1;
 
 /** A fully resolved particle: what the sim and the view both read. */
 export interface ParticleSpec {
-  type: ParticleType;
+  type: ParticleKind;
   colour: ParticleColour;
   parity: Parity;
 }
 
 /** As authored: colour and parity default to white / +1. */
-export type ParticleDef = { type: ParticleType; colour?: ParticleColour; parity?: Parity };
+export type ParticleDef = { type: ParticleKind; colour?: ParticleColour; parity?: Parity };
 
 /**
  * What a formation slot or wave entry points at: a formation name, a built-in
@@ -94,7 +99,8 @@ export interface BlackHoleDef {
 export interface Scenario {
   /** The walled box, centred on the origin. */
   walls: { width: number; height: number };
-  player: { x: number; y: number; radius: number };
+  /** `particle` is what the player is; omitted, it is a down quark. */
+  player: { x: number; y: number; radius: number; particle?: ParticleDef };
   /** Which forces are on. Omitted forces are off. */
   forces?: Partial<ForceSwitches>;
   blackHoles?: BlackHoleDef[];

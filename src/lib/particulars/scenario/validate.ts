@@ -1,4 +1,4 @@
-import { FORCE_NAMES, PARTICLE_COLOURS, PARTICLE_TYPES } from './types';
+import { BOSON_TYPES, FORCE_NAMES, PARTICLE_COLOURS, PARTICLE_TYPES } from './types';
 import type { Scenario, ValidationResult } from './types';
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
@@ -8,7 +8,7 @@ const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Num
 
 const isNonNegative = (v: unknown): v is number => isFiniteNumber(v) && v >= 0;
 const isPositiveInt = (v: unknown): v is number => Number.isInteger(v) && (v as number) > 0;
-const isParticleType = (v: unknown) => (PARTICLE_TYPES as readonly string[]).includes(v as string);
+const isParticleType = (v: unknown) => ([...PARTICLE_TYPES, ...BOSON_TYPES] as readonly string[]).includes(v as string);
 
 /** Checks a formation slot or wave target; pushes problems and returns nothing. */
 function checkRef(ref: unknown, at: string, formations: Record<string, unknown>, errors: string[]): void {
@@ -22,7 +22,7 @@ function checkRef(ref: unknown, at: string, formations: Record<string, unknown>,
     errors.push(`${at} must be a formation name, a particle type or a particle object`);
     return;
   }
-  if (!isParticleType(ref.type)) errors.push(`${at}.type must be one of ${PARTICLE_TYPES.join(', ')}`);
+  if (!isParticleType(ref.type)) errors.push(`${at}.type must be one of ${[...PARTICLE_TYPES, ...BOSON_TYPES].join(', ')}`);
   if (ref.colour !== undefined && !(PARTICLE_COLOURS as readonly string[]).includes(ref.colour as string)) {
     errors.push(`${at}.colour must be one of ${PARTICLE_COLOURS.join(', ')}`);
   }
@@ -176,6 +176,10 @@ export function validate(json: unknown): ValidationResult {
     if (!isFiniteNumber(player.x)) errors.push('player.x must be a number');
     if (!isFiniteNumber(player.y)) errors.push('player.y must be a number');
     if (!isPositive(player.radius)) errors.push('player.radius must be a positive number');
+    if (player.particle !== undefined) {
+      if (isObject(player.particle)) checkRef(player.particle, 'player.particle', {}, errors);
+      else errors.push('player.particle must be a particle object');
+    }
   }
 
   const formations = isObject(json.formations) ? json.formations : {};

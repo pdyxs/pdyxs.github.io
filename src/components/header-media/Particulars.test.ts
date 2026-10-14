@@ -26,7 +26,7 @@ describe('Particulars wrapper', () => {
     expect(island.getAttribute('client')).toBe('load');
     const svg = island.querySelector('svg.particulars')!;
     expect(svg.getAttribute('viewBox')).toBe('-12.5 -6.5 25 13');
-    expect(svg.querySelector('circle.player')!.getAttribute('r')).toBe('0.6');
+    expect(svg.querySelector('g.player')!.getAttribute('data-type')).toBe('down');
   });
 
   it('fails the render, readably, for a card with no scenario', async () => {

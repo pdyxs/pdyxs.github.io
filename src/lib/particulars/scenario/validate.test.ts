@@ -169,3 +169,12 @@ describe('validate forces and black holes', () => {
     expect(errorsOf({ forces: { gravity: false }, blackHoles: [{ x: 1, y: 1, mass: 1 }] })).toEqual([]);
   });
 });
+
+describe('validate player particle', () => {
+  it('accepts a chosen particle and rejects a bad one by path', () => {
+    expect(validate({ ...GOOD, player: { ...GOOD.player, particle: { type: 'top' } } }).ok).toBe(true);
+    const bad = validate({ ...GOOD, player: { ...GOOD.player, particle: { type: 'quark' } } });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.errors[0]).toMatch(/^player\.particle\.type must be one of/);
+  });
+});

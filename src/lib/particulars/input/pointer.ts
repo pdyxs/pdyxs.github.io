@@ -16,3 +16,8 @@ export function clientToWorld(
 export function hitsPlayer(point: Vec, player: { x: number; y: number; radius: number }): boolean {
   return Math.hypot(point.x - player.x, point.y - player.y) <= player.radius;
 }
+
+/** Pure: a press on the player is the action's `tap-self`; anywhere else steers. No timing involved. */
+export function pressKind(point: Vec, player: { x: number; y: number; radius: number }): 'tap-self' | 'steer' {
+  return hitsPlayer(point, player) ? 'tap-self' : 'steer';
+}

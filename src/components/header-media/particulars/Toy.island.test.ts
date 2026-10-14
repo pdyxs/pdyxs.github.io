@@ -20,16 +20,17 @@ afterEach(() => {
   target.remove();
 });
 
-const player = () => target.querySelector('circle.player')!;
-const cx = () => Number(player().getAttribute('cx'));
-const cy = () => Number(player().getAttribute('cy'));
+const player = () => target.querySelector('g.player')!;
+const at = () => player().getAttribute('transform')!.match(/translate\(([-\d.e]+) ([-\d.e]+)\)/)!;
+const cx = () => Number(at()[1]);
+const cy = () => Number(at()[2]);
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 describe('Toy', () => {
   it('draws the walls and the player from the snapshot', () => {
     expect(target.querySelector('svg.particulars')!.getAttribute('viewBox')).toBe('-10.5 -5.5 21 11');
     expect(cx()).toBe(0);
-    expect(player().getAttribute('r')).toBe('0.5');
+    expect(player().getAttribute('data-type')).toBe('down');
   });
 
   it('a held key moves the particle, and releasing it lets it settle', async () => {
@@ -145,5 +146,36 @@ describe('Toy forces', () => {
     expect(hole.getAttribute('cx')).toBe('4');
     expect(Number(hole.getAttribute('r'))).toBeCloseTo(Math.sqrt(10 / Math.PI), 5);
     expect(hole.getAttribute('data-active')).toBe('false');
+  });
+});
+
+describe('Toy action', () => {
+  const WEAK: Scenario = { ...SCENARIO, forces: { weak: true } };
+  const mountWeak = () => {
+    const box = document.createElement('div');
+    document.body.appendChild(box);
+    const c = mount(Toy as any, { target: box, props: { entryId: 'x', scenario: WEAK } });
+    flushSync();
+    return { box, done: () => { unmount(c); box.remove(); } };
+  };
+  const typeOf = (box: HTMLElement) => box.querySelector('g.player')!.getAttribute('data-type');
+
+  it('Space fires the scenario action: a weak-force player changes', async () => {
+    const { box, done } = mountWeak();
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+    await wait(100);
+    expect(typeOf(box)).toBe('up');
+    done();
+  });
+
+  it('a tap on the particle fires the same action and does not steer', async () => {
+    const { box, done } = mountWeak();
+    const svg = box.querySelector('svg')!;
+    svg.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 210, height: 110, right: 210, bottom: 110, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    svg.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, clientX: 105, clientY: 55, bubbles: true }));
+    await wait(100);
+    expect(typeOf(box)).toBe('up');
+    done();
   });
 });
