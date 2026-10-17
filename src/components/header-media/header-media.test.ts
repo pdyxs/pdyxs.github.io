@@ -11,7 +11,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { getContainerRenderer } from '@astrojs/svelte/container-renderer';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
 import LinoCanvas from '@components/header-media/LinoCanvas.astro';
-import StarSystem from '@components/header-media/stars/StarSystem.astro';
+import StarSystem from '@components/star-nav/snapshots/2026-09-23-prototype/StarSystem.astro';
 import { resolveHeaderMedia } from '@render/renderers';
 import type { HeaderMediaImage } from '@render/header-media';
 
@@ -35,6 +35,7 @@ describe('header-media wrappers', () => {
   it('registers both islands by their headerMedia names', () => {
     expect(resolveHeaderMedia('lino-canvas')).toBe(LinoCanvas);
     expect(resolveHeaderMedia('star-system')).toBe(StarSystem);
+    expect(resolveHeaderMedia('star-nav')).toBeDefined();
   });
 
   it('LinoCanvas server-renders inside an island that hydrates on load', async () => {

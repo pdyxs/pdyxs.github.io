@@ -111,9 +111,10 @@ load with a lens behind it in `from=` renders that lens's filter panel too
 `FilterBar`/`DimensionButton`/`BrowseResults` and the rest are only ever used
 from lens pages: raw `<button>`s, an error banner, no CSS at all. Neither
 direction broke on a cold load of the page that *does* own the component
-(that request's own `<head>` links its own CSS) or in `astro dev` (Vite
-serves every imported component's CSS regardless of page), which is why this
-shipped invisibly both times.
+(that request's own `<head>` links its own CSS) or in `astro dev` *for
+Svelte islands* (Vite serves an island's CSS once its module loads), which is
+why this shipped invisibly both times. `.astro` components are not covered by
+that: see the dev-server paragraph below.
 
 **The fix is `cssCodeSplit: false` in `astro.config.mjs`'s `vite.build`**, not
 a per-component rule. Any location can be pushed onto, or sit behind, any
@@ -130,6 +131,15 @@ quietly reverted. The site's total CSS is small enough (~105KB across two
 chunks) that paying it on every page beats re-litigating which components are
 "safe" to leave scoped-and-hoped; revisit if that budget grows enough to
 matter.
+
+**`astro dev` has the same gap for `.astro` components, and closes it in
+`adoptDevStyles`.** Dev links a component's CSS (`<style data-vite-dev-id>`) into
+the `<head>` of the page that rendered it, and `cssCodeSplit` does not apply, so
+a card pushed from a lens arrived with no series date bar or dot strip styling
+until a reload. `card-fragments.ts` copies the fetched document's dev style tags
+into the live `<head>` (dev only, deduplicated by dev id). The build never
+needed it. If a card looks unstyled in dev but fine on `build.pdyxs.wtf`, this
+is the first place to look.
 
 ## All semantic colors and spacing go through CSS custom properties
 

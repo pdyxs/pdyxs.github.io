@@ -163,7 +163,74 @@ committed images.
 
 Note: Astro excludes directories starting with `_` from routing, so `_experiments` does **not** work — use `experiments` (no underscore).
 
+## The build server (`build.pdyxs.wtf`)
+
+`build.pdyxs.wtf` serves the **real production build** (`astro build` output in
+`dist/`, via `astro preview` on port 4322), not the dev server. Use it to tell
+a dev-server-only artefact from a real bug: CSS code-splitting, fragment
+styling and anything else `astro dev` papers over behave as they will live.
+
+Two user systemd units:
+
+- `astro-build.service` runs `npm run build` and stamps `dist/build-info.txt`
+  with the UTC time and short commit. `astro-build.timer` fires it periodically.
+- `astro-build-preview.service` serves `dist/`.
+
+To refresh it with the latest code of this checkout:
+
+```
+systemctl --user start astro-build.service           # rebuild dist/
+systemctl --user restart astro-build-preview.service # serve it
+cat dist/build-info.txt                              # confirm the commit
+```
+
+The build reads the working tree, so commit (or at least save) first. A feature
+worktree has no build server of its own; its preview is `astro dev` only.
+
 ## Plans must name the selectors and CSS variables they touch
 
 Given the selector contract ([stack-layout.md](stack-layout.md)) and the CSS custom property convention ([styling.md](styling.md)), a plan file should explicitly list any new class names it adds to the JS contract and any new CSS variables it introduces. Reviewers and future sessions should see this without re-reading the diff.
 
+
+## Feature worktrees
+
+**This checkout (`~/dev/pdyxs-astro`) stays on `dev`, always.** It is the content
+vault, the source of `preview.pdyxs.wtf`, and where small fixes and ordinary
+features land. Content auto-sync skips every tick while it is on any other
+branch, so checking out a feature branch here silently stops content commits.
+
+Substantial work with design unknowns — the kind that is hand-tuned for weeks
+after it is first built (the palette and mark, Particulars) — goes in a
+worktree instead, via `site-worktree` (`~/server-project/scripts/`):
+
+```
+site-worktree new <id>     # ~/dev/pdyxs-astro.wt/<id> on feature/<id>, preview at https://<id>.preview.pdyxs.wtf
+site-worktree list         # every worktree, its branch and preview URL
+site-worktree rm <id>      # stop the preview, remove the worktree (branch kept)
+```
+
+`new` reuses `feature/<id>` if it exists, local or remote. Work on the feature
+from a session started in the worktree directory.
+
+A worktree feature ships with **a sample piece of content** that demonstrates
+it, so its preview has something to show. It lives in the worktree's own
+`src/content` (the content vault Obsidian opens is the main checkout's, not
+the worktree's). It may be throwaway; if an agent wrote it, it carries
+`inspected: false` like any other automated content edit.
+
+The worktree preview runs `astro dev` only. The production build is checked at
+merge.
+
+### Merging a worktree feature
+
+Only when Paul says so.
+
+1. In the worktree, merge `dev` in (it has moved on, including content) and
+   resolve conflicts there, never in the main checkout.
+2. `npm test` and `npm run build` in the worktree. The build is the first
+   production-fidelity check this feature gets, so a failure here is expected
+   to be possible, not a formality.
+3. Decide the sample content: delete it if it was throwaway, otherwise keep it
+   as real content with `status: draft`.
+4. In the main checkout (on `dev`): `git merge --no-ff feature/<id>` and push.
+5. `site-worktree rm <id>`, then delete `feature/<id>` locally and on `origin`.

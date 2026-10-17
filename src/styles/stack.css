@@ -294,8 +294,11 @@
   grid-template-rows: 1fr;
 }
 
+/* `clip`, never `hidden` (issue #115): `hidden` makes this a scroll container,
+   which re-parents every `position: sticky` descendant (the lens filter bar) to
+   a box that never scrolls. `clip` still crops the collapsed 0fr row. */
 .stack-card-body {
-  overflow: hidden;
+  overflow: clip;
   min-height: 0;
 }
 

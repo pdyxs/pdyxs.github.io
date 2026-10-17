@@ -56,7 +56,7 @@ jobs:
           exit 1
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Full history and both branches: the promotion diffs `main` against
           # `dev` and commits to both (content to `main`, the `awaitsCode`
@@ -71,7 +71,7 @@ jobs:
           ref: dev
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           # The floor declared in package.json `engines` — scripts/*.mjs import
           # .ts modules directly, and unflagged type stripping arrived in 22.18.

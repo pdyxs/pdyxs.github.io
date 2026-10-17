@@ -104,7 +104,7 @@ export function expandCollapsedSeries<T extends SeriesMember>(
       if (members.some(isRead)) {
         readUids.add(card.uid);
         const next = firstUnreadMember(card, seriesMembers, isRead);
-        if (next) out.push(next);
+        if (next && next.uid !== card.uid) out.push(next);
       }
     } else if (isRead(card)) {
       readUids.add(card.uid);

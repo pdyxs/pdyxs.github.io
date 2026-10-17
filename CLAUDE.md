@@ -14,6 +14,23 @@ content database. Markdown and the content YAML hot-reload on their own
 (`scripts/dev-reload-plugin.mjs`) — see [docs/agents/workflow.md](docs/agents/workflow.md)
 for what still needs a manual `npm run generate:*`.
 
+`build.pdyxs.wtf` serves the production build; refresh steps are in
+[workflow.md → The build server](docs/agents/workflow.md#the-build-server-buildpdyxswtf).
+Check there when something looks wrong in dev only.
+
+## This checkout stays on `dev`
+
+It is the content vault and `preview.pdyxs.wtf`; content auto-sync stops while
+it is on any other branch. Long-running features go in worktrees with their own
+previews — `site-worktree new <id>`, see
+[workflow.md → Feature worktrees](docs/agents/workflow.md#feature-worktrees).
+
+**Work on an in-flight worktree feature happens in its worktree, not here.**
+Before changing code for a request, run `site-worktree list`; if the request is
+about one of those features (a tweak, a bug, more tuning), `cd` to its path and
+work and commit there. This applies to every session whose cwd is this checkout,
+Matrix rooms included.
+
 ## Invariants that apply everywhere
 
 Load-bearing. Violating one is a refactor, not a local change; each is stated in
@@ -70,7 +87,7 @@ pure decisions / thin effects, single source of truth) live in
 | lenses, the ranking chain, seen/unseen, home slots, the shared card pool, strip and history lenses, progressive reveal | [docs/agents/lenses-and-browse.md](docs/agents/lenses-and-browse.md) |
 | a renderer, nav renderer, collection view, card credits (`meta:`), actions, galleries, the lightbox, video embeds, header-image padding | [docs/agents/card-rendering.md](docs/agents/card-rendering.md) |
 | writing or running tests, the two vitest projects, happy-dom gaps | [docs/agents/testing.md](docs/agents/testing.md) |
-| authoring content, the Obsidian vault, Templater scaffolds, `inspected`, dev hot-reload, experiment routes, plan docs | [docs/agents/workflow.md](docs/agents/workflow.md) |
+| authoring content, the Obsidian vault, Templater scaffolds, `inspected`, dev hot-reload, experiment routes, plan docs, feature worktrees and merging them | [docs/agents/workflow.md](docs/agents/workflow.md) |
 | issues, triage labels, the glossary and decision records | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md), [docs/agents/triage-labels.md](docs/agents/triage-labels.md), [docs/agents/domain.md](docs/agents/domain.md) |
 
 The issue tracker is GitHub Issues on `pdyxs/pdyxs.github.io`, via `gh`. Domain
