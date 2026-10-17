@@ -3,7 +3,7 @@
   import type { Snippet } from 'svelte';
   import { get } from 'svelte/store';
   import { stackStore, seedStackState, pushToStack, soloCard as soloCardFn, activateCard as activateCardFn, replaceActiveSlot, rekeyEntry } from '@stores/card-stack-store';
-  import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, slotForKey, entryForSlot, activeEntry, planPush } from '@stack/layout/stack-layout';
+  import { cardEntry, lensEntry, locationKind, presentationMode, withFreeSlot, planReplace, slotForKey, entryForSlot, activeEntry, planPush } from '@stack/layout/stack-layout';
   import type { LocationEntry, StackState } from '@stack/layout/stack-layout';
   import { geometryFor, scrollTargetFor, STACK_GEOMETRY } from '@stack/layout/stack-geometry';
   import { scrollBehaviourFor, scrollSettleAction, transitionWillFire, widthTransitionOf, SCROLL_SETTLE_TIMEOUT_MS, STACK_RESIZING_ATTR } from '@stack/layout/stack-motion';
@@ -861,16 +861,30 @@
     // different thing in that position, so it gets its own DOM node and its own
     // cache slot. Reusing the handle would hit the outgoing fragment in the
     // cache and never fetch.
-    const incoming = withFreeSlot(
-      state.entries,
+    const plan = planReplace(
+      state,
+      pendingPushes,
       isLensUid(uid) ? lensEntry(lensNameForKey(uid)!, identity) : cardEntry(uid),
     );
+    if (plan.kind === 'ignore') return;
+    const incoming = plan.entry;
 
     // A carried filter selection is part of the incoming lens's identity now,
     // so only genuine side params still route through paramsAfterSlotReplace.
     cardParams = paramsAfterSlotReplace(cardParams, activeEntry(state)?.key ?? null, incoming.key, other);
 
     // Fetch by uid, cache under the handle the DOM node will carry.
+    // Reserved until the replace settles (#114), released in `finally` below.
+    pendingPushes = [...pendingPushes, incoming];
+    try {
+      await commitReplace(incoming, uid);
+    } finally {
+      pendingPushes = pendingPushes.filter(e => e !== incoming);
+    }
+  }
+
+  /** The replace itself, once `planReplace` has settled that there is one. */
+  async function commitReplace(incoming: LocationEntry, uid: string) {
     const ok = await fragments.ensure(incoming.slot, uid);
     if (!ok) return;
 
