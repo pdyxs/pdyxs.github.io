@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { DOT_ZETA, TITLE_EXIT_SCALE } from '@site/mark/motion';
 
 // Throwaway /experiments route: the suspended dot. The full stop in pdyxs.wtf
 // hangs from five threads tied to the letters around it (s top, s bottom, x
@@ -107,8 +108,8 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
 
     <fieldset class="sd-controls">
       <legend>tune</legend>
-      <label>grow to <input type="range" class="sd-in-hang" min="100" max="500" step="25" value="300" /> <output></output></label>
-      <label>settle <input type="range" class="sd-in-swing" min="15" max="100" value="40" /> <output></output></label>
+      <label>grow to <input type="range" class="sd-in-hang" min="100" max="500" step="25" value={TITLE_EXIT_SCALE * 100} /> <output></output></label>
+      <label>settle <input type="range" class="sd-in-swing" min="15" max="100" value={Math.round(DOT_ZETA * 100)} /> <output></output></label>
       <label><input type="checkbox" class="sd-in-debug" /> hit area</label>
       <a href="/experiments/mark-editor">edit strands →</a>
     </fieldset>
@@ -275,22 +276,29 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     RIG_STORAGE_KEY,
     type Bauble,
     type ThreadGeometry,
-  } from '@site/mark-geometry';
+  } from '@site/mark/geometry';
+  import {
+    type Spring,
+    type ToolsState,
+    DOT_AT_REST,
+    TOOLS_CLOSED,
+    clamp01,
+    stepDot,
+    dotMoving,
+    hangSeparation as separationFor,
+    poseBlend as blendFor,
+    setWant,
+    stepTools,
+    tautness,
+    stepToolSize,
+    toolReeledIn,
+    subStep,
+  } from '@site/mark/motion';
   import { PALETTE_STORAGE_KEY, findSystem, isDefault, parsePalette, type Palette } from '@site/palette';
 
-  // ── Pure bits ──────────────────────────────────────────────────────
-
+  // The motion itself (springs, the catch, the pull, the pose blend) is pure,
+  // in src/lib/site/mark/motion.ts; this script reads the page and draws.
   type V = { x: number; y: number };
-  type Spring = { x: number; v: number };
-
-  /** One damped-spring step (unit mass). zeta < 1 overshoots and settles. */
-  function step(s: Spring, target: number, k: number, zeta: number, dt: number) {
-    const c = 2 * zeta * Math.sqrt(k);
-    s.v += (k * (target - s.x) - c * s.v) * dt;
-    s.x += s.v * dt;
-  }
-
-  const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
   // ── Page ───────────────────────────────────────────────────────────
 
@@ -339,27 +347,15 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     pivot: { x: 0, y: 0 },
     pointer: null,
   }));
-  /**
-   * Opening and closing are both a pull on the strings, like a pull trigger:
-   * the threads that carry a tool snap taut ('pull'), then relax ('release'),
-   * and it is on the release that the tool moves: it falls out when opening and
-   * is reeled up when closing. `want` is the state being moved to.
-   */
-  type Phase = 'rest' | 'pull' | 'release';
-  let phase: Phase = 'rest';
-  let want = false;
-  /** Whether the baubles' strings are paid out (set when the release begins). */
-  let toolsOut = false;
-  /** How taut the tool-bearing threads are, 0..1 (a spring: they snap, then settle). */
-  const taut: Spring = { x: 0, v: 0 };
-  const toolLen = (t: Tool) => (toolsOut ? t.length : 0);
+  /** The pull → release → rest machine (motion.ts). */
+  let ts: ToolsState = TOOLS_CLOSED;
+  const toolLen = (t: Tool) => (ts.toolsOut ? t.length : 0);
   const carriesTool = (thread: number) => tools.some((t) => t.thread === thread);
-  /** Pulled this taut, the release begins. */
-  const PULLED = 0.96;
 
   function setTools(open: boolean) {
-    if (open === want) return;
-    want = open;
+    const next = setWant(ts, open, reduced.matches);
+    if (next === ts) return;
+    ts = next;
     hit.setAttribute('aria-expanded', String(open));
     for (const t of tools) {
       if (open && !t.el.hasAttribute('data-open')) {
@@ -368,12 +364,6 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
         t.b = { r: 0, rv: 0, theta: 0, omega: reduced.matches ? 0 : 0.9 };
         t.s = { x: reduced.matches ? 1 : 0, v: 0 };
       }
-    }
-    if (reduced.matches) {
-      toolsOut = open;
-      phase = 'rest';
-    } else {
-      phase = 'pull';
     }
     wake();
   }
@@ -477,22 +467,16 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     rig = { dot: size, px, slotW: sr.width, slotDelta: { x: centre.x - sr.left, y: centre.y - sr.top } };
   }
 
-  /** Where the dot stops: its centre on the top edge, so half of it shows. */
-  const HANG_Y = 0;
-
   // The dot's centre. x is always the title's, and so is its size (it grows
-  // with the title); only y springs, and only once the dot has stopped.
-  const D = { x: 0, y: { x: 0, v: 0 }, size: 0 };
-  /** True from the moment the rising title carries the dot to the top edge. */
-  let stopped = false;
+  // with the title); only y springs, and only once the dot has stopped
+  // (`dot.stopped`, motion.ts's catch at the edge).
+  const D = { x: 0, size: 0 };
+  let dot = DOT_AT_REST;
   let prevY: number | null = null;
   /** Keep ticking until this time, while the header's own transition runs. */
   let busyUntil = 0;
   let frame = 0;
   let last = 0;
-  const hanging = () => stopped;
-  /** Where the hanging dot rests: pulled a little way down while the strings are taut. */
-  const hangTarget = () => HANG_Y + clamp01(taut.x) * D.size * 0.3;
 
   function tick(now: number) {
     frame = 0;
@@ -504,65 +488,40 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     prevY = real.y;
     const zeta = +inSwing.value / 100;
 
-    // The one special thing: carried up with the title, the dot stops at the
-    // edge — caught, like a weight at the end of its string — and dips a
-    // little before settling. A dip rather than an overshoot: only half the
-    // dot is on screen, so any upward bounce would hide it.
-    if (!stopped && root.dataset.mode === 'card' && real.y <= HANG_Y) {
-      stopped = true;
-      D.y.x = HANG_Y;
-      D.y.v = reduced.matches ? 0 : Math.min(260, Math.abs(vy) * 0.15);
-    } else if (stopped && real.y > HANG_Y) {
-      stopped = false; // the returning title has come back down past it
-    }
-
+    // Carried up with the title, the dot is caught at the edge and settles
+    // there (motion.ts). It hangs from the strings' pull of the last frame.
     D.x = real.x;
     D.size = rig.dot * liveScale();
-    if (stopped) {
-      if (reduced.matches) { D.y.x = HANG_Y; D.y.v = 0; }
-      else for (let t = dt; t > 0; t -= 1 / 240) step(D.y, hangTarget(), 220, zeta, Math.min(t, 1 / 240));
-    } else {
-      D.y.x = real.y;
-      D.y.v = 0;
-    }
+    dot = stepDot(dot, {
+      slotY: real.y,
+      slotVy: vy,
+      mode: root.dataset.mode === 'card' ? 'card' : 'page',
+      size: D.size,
+      taut: ts.taut.x,
+      dt,
+      reduced: reduced.matches,
+      zeta,
+    });
 
     // The tools: a pull on the strings, then the tool moves as they relax.
-    if (phase === 'pull' && taut.x >= PULLED) {
-      phase = 'release';
-      toolsOut = want;
-    }
-    const tautTarget = phase === 'pull' ? 1 : 0;
-    const reel = want ? DROP : REEL;
-    for (let t = dt; t > 0; t -= 1 / 240) {
-      const h = Math.min(t, 1 / 240);
-      if (reduced.matches) {
-        taut.x = 0;
-        taut.v = 0;
-        for (const tool of tools) {
-          if (!tool.pointer) tool.b = { r: toolLen(tool), rv: 0, theta: 0, omega: 0 };
-          tool.s.x = toolsOut ? 1 : 0;
-        }
-      } else {
-        step(taut, tautTarget, 500, 0.85, h);
-        for (const tool of tools) {
-          if (!tool.pointer) tool.b = stepBauble(tool.b, toolLen(tool), h, reel);
-          // Critically damped (a size past 1 would pop), and slower going back in.
-          step(tool.s, toolsOut ? 1 : 0, toolsOut ? 300 : 110, 1, h);
-        }
-      }
-    }
-    if (phase === 'release' && Math.abs(taut.x) < 0.002 && Math.abs(taut.v) < 0.02) phase = 'rest';
+    ts = stepTools(ts, dt, reduced.matches);
+    const reel = ts.want ? DROP : REEL;
     for (const tool of tools) {
-      // Fully reeled up: nothing left to draw.
-      if (!toolsOut && phase !== 'pull' && !tool.pointer && Math.abs(tool.b.r) < 1 && tool.s.x < 0.01) tool.el.removeAttribute('data-open');
+      if (!tool.pointer) {
+        tool.b = reduced.matches
+          ? { r: toolLen(tool), rv: 0, theta: 0, omega: 0 }
+          : subStep(tool.b, dt, (b, h) => stepBauble(b, toolLen(tool), h, reel));
+      }
+      tool.s = stepToolSize(tool.s, ts.toolsOut, dt, reduced.matches);
+      if (toolReeledIn(ts, tool.b.r, tool.s.x, !!tool.pointer)) tool.el.removeAttribute('data-open');
     }
-    const toolsBusy = phase !== 'rest' || tools.some((t) => t.pointer || baubleMoving(t.b, toolLen(t)) || Math.abs(t.s.x - (toolsOut ? 1 : 0)) > 0.005);
+    const toolsBusy = ts.phase !== 'rest' || tools.some((t) => t.pointer || baubleMoving(t.b, toolLen(t)) || Math.abs(t.s.x - (ts.toolsOut ? 1 : 0)) > 0.005);
 
-    const moving = Math.abs(D.y.v) > 0.02 || (stopped && Math.abs(D.y.x - hangTarget()) > 0.05);
+    const moving = dotMoving(dot, D.size, ts.taut.x);
     const busy = moving || toolsBusy || now < busyUntil;
     // Settled in the title: hand the overlay to the document and stop. Any
     // motion (or hanging) puts it back on the viewport first.
-    setAnchored(!stopped && !busy);
+    setAnchored(!dot.stopped && !busy);
     draw();
     if (busy) frame = requestAnimationFrame(tick);
     else prevY = null;
@@ -589,7 +548,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     const k = liveScale();
     const size = D.size;
     const dx = D.x - size / 2;
-    const dy = D.y.x - size / 2;
+    const dy = dot.y.x - size / 2;
     dotEl.setAttribute('x', (dx - o.left).toFixed(1));
     dotEl.setAttribute('y', (dy - o.top).toFixed(1));
     dotEl.setAttribute('width', size.toFixed(1));
@@ -597,11 +556,11 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     const shift = (v: V) => ({ x: v.x - o.left, y: v.y - o.top });
     const geoms = poseThreads(cfg, {
       slot: shift(realSlot()),
-      dot: shift({ x: D.x - size / 2, y: D.y.x - size / 2 }),
+      dot: shift({ x: D.x - size / 2, y: dot.y.x - size / 2 }),
       size,
       em: r.px * k,
       p: poseBlend(),
-    }).map((g, i) => (carriesTool(i) ? tauten(g, clamp01(taut.x)) : g));
+    }).map((g, i) => (carriesTool(i) ? tauten(g, tautness(ts)) : g));
     geoms.forEach((g: ThreadGeometry, i) => paths[i].setAttribute('d', threadPathData(g)));
     drawTools(geoms, o);
     const em = r.px * k;
@@ -610,7 +569,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     // Hit target: never under 44px, centred on the visible part of the dot.
     const hitSize = Math.max(44, size * 1.6);
     const visibleTop = Math.max(0, dy);
-    const cy = stopped ? (visibleTop + dy + size) / 2 : D.y.x;
+    const cy = dot.stopped ? (visibleTop + dy + size) / 2 : dot.y.x;
     hit.style.width = hit.style.height = `${hitSize}px`;
     hit.style.left = `${D.x - hitSize / 2 - hb.left}px`;
     hit.style.top = `${Math.max(0, cy - hitSize / 2) - hb.top}px`;
@@ -621,7 +580,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
   function drawTools(geoms: ThreadGeometry[], o: DOMRect) {
     for (const tool of tools) {
       if (!tool.el.hasAttribute('data-open')) continue;
-      tool.pivot = toolPivot(geoms[tool.thread], stopped, -o.top);
+      tool.pivot = toolPivot(geoms[tool.thread], dot.stopped, -o.top);
       // While dragged, the bauble goes where the pointer is and the string follows.
       if (tool.pointer) tool.b = baubleAt(tool.pivot, { x: tool.pointer.x - o.left, y: tool.pointer.y - o.top });
       const p = baublePos(tool.pivot, tool.b);
@@ -647,15 +606,9 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     return MARK_RIG;
   })();
 
-  /**
-   * How far into the hanging pose the rig is: 0 when the dot stops, 1 once the
-   * departing title has reached where it ends up (set when the card opens).
-   */
+  /** poseBlend's denominator: how far the departing title ends up past the edge (set when the card opens). */
   let hangSeparation = 1;
-  function poseBlend(): number {
-    if (!stopped) return 0;
-    return clamp01((HANG_Y - realSlot().y) / hangSeparation);
-  }
+  const poseBlend = () => blendFor(dot.stopped, realSlot().y, hangSeparation);
 
   const wake = () => { if (!frame) frame = requestAnimationFrame(tick); };
 
@@ -694,8 +647,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
       root.style.setProperty('--sd-ox', `${real.x - tr.left}px`);
       root.style.setProperty('--sd-oy', `${real.y - tr.top}px`);
       root.style.setProperty('--sd-scale', String(+inHang.value / 100));
-      // The header rises by its own height, so that is where the slot ends up.
-      hangSeparation = Math.max(1, headerHeight() - real.y + HANG_Y);
+      hangSeparation = separationFor(headerHeight(), real.y);
     }
     root.dataset.mode = mode;
     if (mode === 'card') {
@@ -730,7 +682,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     draw();
   });
 
-  hit.addEventListener('click', () => setTools(!want));
+  hit.addEventListener('click', () => setTools(!ts.want));
   addEventListener('keydown', (e) => {
     if (e.key === 'Escape') setTools(false);
   });

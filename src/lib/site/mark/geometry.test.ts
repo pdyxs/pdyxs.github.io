@@ -14,7 +14,7 @@ import {
   baubleAt,
   baubleMoving,
   type Bauble,
-} from '@site/mark-geometry';
+} from '@site/mark/geometry';
 import { MARK_RIG } from '@data/mark-rig';
 
 describe('chord frame', () => {
