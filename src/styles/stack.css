@@ -424,6 +424,27 @@
     min-height: 100dvh;
   }
 
+  /* A header-media island (Star Nav) fills the area below the header: the full
+     viewport minus the header, so the card's body, credits and gallery start
+     exactly at the fold. `--viewport-header-h` is the unstuck header's height
+     from its own tokens (two block paddings, its two borders, one title line at
+     the heading size and body line-height); a title that wraps makes the header
+     taller and the media shorter, never taller, so nothing is cut off. The
+     island's square box becomes this box and fits the drawing inside it. No
+     transform or filter on any of it (styling.md, dither grid). */
+  #card-stack .stack-card--active[data-surface="viewport"]:is([data-surface-on="mobile"], [data-surface-on="both"]) {
+    --viewport-header-h: calc(var(--space-md) * 2 + var(--border-width) * 2 + 1.1rem * 1.7);
+  }
+
+  #card-stack .stack-card--active[data-surface="viewport"]:is([data-surface-on="mobile"], [data-surface-on="both"]) .star-system {
+    height: calc(100dvh - var(--viewport-header-h));
+  }
+
+  #card-stack .stack-card--active[data-surface="viewport"]:is([data-surface-on="mobile"], [data-surface-on="both"]) .star-system .dither-svg {
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
   /* Site chrome outside #card-stack: the footer (with the theme toggle) and the
      pre-paint skeleton layer. */
   body:has(#card-stack .stack-card--active[data-surface="viewport"]:is([data-surface-on="mobile"], [data-surface-on="both"])) :is(.site-footer, .stack-skeleton) {

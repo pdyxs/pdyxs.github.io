@@ -86,6 +86,50 @@ function pointer(el: Element, type: string, init: PointerEventInit = {}) {
 
 const START = 'translate(0 4) rotate(0)';
 
+// ── Sizing ──────────────────────────────────────────────────────────────────
+// The drawing adopts whatever box its container gives it. happy-dom does no
+// layout, so a fake box is dropped onto the measured element: `size()` mounts a
+// fresh island whose `.dither-svg` reports the given clientWidth/clientHeight.
+function mountSized(width: number, height: number) {
+  const proto = HTMLElement.prototype;
+  const w = Object.getOwnPropertyDescriptor(proto, 'clientWidth');
+  const h = Object.getOwnPropertyDescriptor(proto, 'clientHeight');
+  Object.defineProperty(proto, 'clientWidth', { configurable: true, get() { return this.classList.contains('dither-svg') ? width : 0; } });
+  Object.defineProperty(proto, 'clientHeight', { configurable: true, get() { return this.classList.contains('dither-svg') ? height : 0; } });
+  const host = document.createElement('div');
+  document.body.appendChild(host);
+  const c = mount(StarSystem as any, { target: host, props: { entryId: 'what/toys/star-navigation', images: [] } });
+  flushSync();
+  const read = () => {
+    const mask = host.querySelector('mask')!;
+    return {
+      maskWidth: Number(mask.getAttribute('width')),
+      maskHeight: Number(mask.getAttribute('height')),
+      transform: mask.querySelector('g')!.getAttribute('transform'),
+    };
+  };
+  const result = read();
+  unmount(c);
+  host.remove();
+  if (w) Object.defineProperty(proto, 'clientWidth', w); else delete (proto as any).clientWidth;
+  if (h) Object.defineProperty(proto, 'clientHeight', h); else delete (proto as any).clientHeight;
+  return result;
+}
+
+describe('StarSystem sizing', () => {
+  it('a square box draws the viewBox across its full width, as before', () => {
+    expect(mountSized(300, 300)).toEqual({ maskWidth: 300, maskHeight: 300, transform: 'translate(0 0) scale(30) translate(5 5)' });
+  });
+
+  it('a tall box (390x780) is filled by the mask and the system is centred at the width-fitted scale', () => {
+    expect(mountSized(390, 780)).toEqual({ maskWidth: 390, maskHeight: 780, transform: 'translate(0 195) scale(39) translate(5 5)' });
+  });
+
+  it('a wide box fits to its height, so nothing is cropped either way', () => {
+    expect(mountSized(800, 400)).toEqual({ maskWidth: 800, maskHeight: 400, transform: 'translate(200 0) scale(40) translate(5 5)' });
+  });
+});
+
 describe('StarSystem', () => {
   it('draws four planets with hit targets, the ship at its start, and no reset', () => {
     expect(hits()).toHaveLength(4);

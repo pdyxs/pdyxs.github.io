@@ -5,6 +5,7 @@ import { getContext, setContext } from 'svelte';
 export type DitherSvgContext = {
   readonly viewBox: string;
   readonly width: number;
+  readonly height: number;
   readonly transform: string;
 };
 

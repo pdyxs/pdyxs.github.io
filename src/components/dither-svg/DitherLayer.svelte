@@ -32,7 +32,7 @@
 <div class="layer" style:background="var(--dither-{level})" style:mask="url(#{maskId})"></div>
 
 <svg class="mask-holder" width="0" height="0" aria-hidden="true">
-  <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width={ctx.width} height={ctx.width}>
+  <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width={ctx.width} height={ctx.height}>
     <g transform={ctx.transform} fill="#fff" stroke="#fff" stroke-width="0">
       {@render children()}
     </g>

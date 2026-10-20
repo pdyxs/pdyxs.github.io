@@ -20,6 +20,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { setDitherSvgContext } from './context';
+  import { fitTransform } from './fit';
 
   type Props = {
     /** As on <svg>: "minX minY width height". Width and height must match. */
@@ -33,19 +34,22 @@
     return { x, y, size };
   });
 
+  // The box is measured on both axes: it is square by default, but a container
+  // may give it any shape (see the `.fill` hook below) and the viewBox then
+  // fits inside it.
   let width = $state(0);
-  const transform = $derived(
-    `scale(${width / view.size}) translate(${-view.x} ${-view.y})`
-  );
+  let height = $state(0);
+  const transform = $derived(fitTransform({ width, height }, view));
 
   setDitherSvgContext({
     get viewBox() { return viewBox; },
     get width() { return width; },
+    get height() { return height; },
     get transform() { return transform; },
   });
 </script>
 
-<div class="dither-svg" bind:clientWidth={width}>
+<div class="dither-svg" bind:clientWidth={width} bind:clientHeight={height}>
   {@render children()}
 </div>
 
