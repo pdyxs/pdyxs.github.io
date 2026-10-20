@@ -400,3 +400,33 @@
   display: contents;
 }
 
+
+/* ── Mobile viewport mode (issue #190) ───────────────────────────
+   A card with `surface: viewport` whose `surfaceOn` is mobile or both takes the
+   whole browser viewport at <=680px; the desktop block (>=681px) never reads
+   the attributes, so above that nothing changes. The only input is the DOM
+   contract CardStackCard.astro renders (`data-surface`, `data-surface-on`).
+
+   Hiding, not fixing: `position: fixed` would be clipped by / re-parented to
+   any ancestor with a containing-block-establishing property, so the card
+   stays in normal flow and just becomes viewport-tall. The header stays in
+   the card, so the existing close button is the exit. */
+@media (max-width: 680px) {
+  #card-stack:has(.stack-card--active[data-surface="viewport"]:is([data-surface-on="mobile"], [data-surface-on="both"])) {
+    padding: 0;
+  }
+
+  #card-stack:has(.stack-card--active[data-surface="viewport"]:is([data-surface-on="mobile"], [data-surface-on="both"])) .stack-card:not(.stack-card--active) {
+    display: none;
+  }
+
+  #card-stack .stack-card--active[data-surface="viewport"]:is([data-surface-on="mobile"], [data-surface-on="both"]) {
+    min-height: 100dvh;
+  }
+
+  /* Site chrome outside #card-stack: the footer (with the theme toggle) and the
+     pre-paint skeleton layer. */
+  body:has(#card-stack .stack-card--active[data-surface="viewport"]:is([data-surface-on="mobile"], [data-surface-on="both"])) :is(.site-footer, .stack-skeleton) {
+    display: none;
+  }
+}

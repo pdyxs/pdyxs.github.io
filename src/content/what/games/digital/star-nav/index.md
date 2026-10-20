@@ -6,5 +6,7 @@ tags: []
 status: draft
 inspected: false
 headerMedia: star-nav
+surface: viewport
+surfaceOn: mobile
 ---
 Work in progress. This card runs the living build of the star system navigation mechanic; the original toy is frozen at [the original toy](card:what/toys/star-navigation).
