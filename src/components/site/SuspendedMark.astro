@@ -2,9 +2,9 @@
 // The suspended mark: the full stop in the site title, drawn as a dot hanging
 // from five threads tied to the letters around it (src/data/mark-rig.ts).
 // Mounted once, in Base.astro, outside #card-stack. The build plan is
-// docs/plans/suspended-mark.md; /experiments/suspended-dot is its tuning bench.
+// docs/agents/mark.md; /experiments/suspended-dot is its tuning bench.
 //
-// What it does so far (slice 6): in page mode it draws over the title's
+// In page mode it draws over the title's
 // `.page-title-mark` slot, and clicking the dot pulls the threads taut and lets
 // them go. When the page header leaves (page → card) the title rises, grows
 // and drifts to the centre line, and the dot is caught at the top edge and
@@ -23,13 +23,13 @@
 // state attribute on <html> (see the CSS), and on the one close that has no
 // transition animates the live title's transform (see `#returnLive`).
 //
-// Clicking the dot opens the tools (slice 7): the threads that carry one pull
+// Clicking the dot opens the tools: the threads that carry one pull
 // taut, and on the release each tool drops on a string of its own. Every tool
 // is drawn the same way, from its config (src/data/mark-tools.ts, the `tools`
 // prop); what a tool DOES is its behaviour, looked up by key in the registry
 // (src/lib/site/mark-tools/index.ts). This file knows nothing else about any
 // tool, and mark/boundary.test.ts keeps it that way. With no tools configured
-// the click is still the slice-4 tug, and the hit button stays decorative.
+// the click is only a tug, and the hit button stays decorative.
 //
 // A self-contained custom element, so it wires itself up wherever its markup
 // lands. The motion and the posing are pure, in src/lib/site/mark/; this file
@@ -83,8 +83,8 @@ const n = (v: number) => +v.toFixed(2);
     </g>
     <rect class="site-mark-dot" x={n(hang.dot.x)} y={n(hang.dot.y)} width={n(hang.dot.size)} height={n(hang.dot.size)}></rect>
   </svg>
-  {/* The "Tools" button when there are tools to open. With none (production
-      until the palette lands) a click only tugs the threads, so it stays
+  {/* The "Tools" button when there are tools to open. With none (a bench, or
+      an empty MARK_TOOLS) a click only tugs the threads, so it stays
       decorative: out of the tab order and hidden from assistive tech. Before
       the overlay in source order, so Tab runs dot → tools (z-index, not
       source order, puts it on top). */}

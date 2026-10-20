@@ -1,5 +1,11 @@
 # The suspended mark — build plan
 
+**Status: built.** All eleven slices shipped on `feature/palette-and-mark`:
+1 `e9fc2a7`, 2 `edd6362`, 3 `2531950`, 4 `21e2ef6`, 5 `318b503`, 6 `9b4cd45`,
+7 `1cc9cb4`, 8 `134f8d1`, 9 `14f5b8d`, 10 `0c82f4a`, 11 (docs) the commit after.
+What holds now is [docs/agents/mark.md](../agents/mark.md); the body below is
+the historical record, with a few "superseded" notes where it no longer matches.
+
 Takes `/experiments/suspended-dot` to production: the full stop in `pdyxs.wtf`
 hangs from five threads; when the page header leaves, the title rises, grows
 and drifts to centre while the dot stops at the top edge and hangs there;
@@ -95,7 +101,9 @@ other snapshot and leave on their own.
 ### The overlay renders live through the VT
 
 The overlay gets `view-transition-name: site-mark`, set by the mark just before
-the VT and cleared on `finished`, per the stack-state.md naming rules. That
+the VT and cleared on `finished`, per the stack-state.md naming rules
+(superseded in slice 5: the name comes from a CSS rule gated on
+`html[data-mark-vt]`, below, not from `element.style`). That
 comes with `::view-transition-old(site-mark) { display: none }` and
 `::view-transition-new(site-mark) { animation: none }`. The new-state pseudo
 renders live, so the rAF-drawn dot keeps moving over the frozen root. **Spike
@@ -262,7 +270,9 @@ export interface ToolBehaviour {
 ```
 
 - `palette.ts`: pick on move, commit on end, revert on cancel. It uses
-  `palette-dom.ts` and emits `changed` on commit.
+  `palette-dom.ts` and emits `changed` on commit. (Superseded in slice 8: it
+  has no `subscribe`; a commit is signalled by palette-dom's
+  `onPaletteChange`, which the revert subscribes to.)
 - `palette-revert.ts`: `shown = palette is not default`, and `press`
   clears it.
 - `index.ts`: the registry `{ palette, 'palette-revert' }`. Adding a tool
@@ -563,7 +573,10 @@ Each slice ships green.
 11. **Docs.** Add a mark section to `card-rendering.md`, covering tools, how to
     add one, and the config file. Update the VT-names list in
     `stack-state.md`, and add the selectors above to the stable selector
-    contract in `stack-layout.md`.
+    contract in `stack-layout.md`. **Built:** the section became its own doc,
+    [docs/agents/mark.md](../agents/mark.md), with a row in CLAUDE.md's
+    routing table: the mark is page chrome, not card rendering, and covers the
+    presentation contract, the exit, the hang and the tools as well.
 
 Later: ThemeToggle as the second tool, which needs a `theme` behaviour, an
 icon and a config entry.

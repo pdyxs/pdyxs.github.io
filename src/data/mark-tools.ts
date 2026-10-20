@@ -14,7 +14,8 @@
 //   3. Add an entry below. Order is drop order and Tab order. If the tool has
 //      a keyboard path a label can't carry, say how in `description`.
 //   `mark/tools.test.ts` checks the entries: unique ids, a thread in range for
-//   every top-level tool, and an icon and a behaviour that exist.
+//   every top-level tool and none on a child, positive sizes, an icon and a
+//   behaviour that exist, and a label. More in docs/agents/mark.md.
 //
 // To tune one, change its numbers here: `string` is how far it drops, px;
 // `radius` is the bauble's body, px (the hit target never drops below

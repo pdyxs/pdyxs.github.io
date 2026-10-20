@@ -153,6 +153,13 @@ colour system every pick uses (`palette-system` in storage, read by
 (`palette-dark-mode` → `html[data-palette-dark="shared"]`, applied before paint
 by a dev-only head script in `Base.astro` and never shipped).
 
+The suspended mark's tokens are in `tokens.css` too: `--z-mark` (the overlay;
+its hit button is one above), `--mark-hit-min` (the smallest hit target, dot and
+baubles), `--page-title-size` (`.page-title`'s font-size, a token so the hang can
+be sized with no title), and `--mark-hang-em` / `--mark-hang-size` (the hanging
+rig's em and dot, derived from it). The last two have TS twins pinned by
+`mark/hang.test.ts`; see [mark.md](mark.md).
+
 ## The dither is one fixed, viewport-anchored grid — never give it a transformed ancestor
 
 Every `--dither-N` is a stack of `radial-gradient(circle at 0.5px 0.5px, … 0.564px, #0000 0.584px) 0 0/4px 4px **fixed**` layers — sub-pixel dots in 1px cells. `gen-dither.mjs` picked `TILE = 4` so those cells land on the device pixel grid (`// 4px/4 = 1px cells, pixel-aligned`), and `fixed` anchors the grid to the **viewport** rather than to each element's own box.
@@ -167,6 +174,7 @@ Two consequences worth knowing:
 
 - **All levels share one grid**, so adjacent surfaces at different levels line up dot-for-dot.
 - **View Transitions** are unaffected either way: they snapshot the element to a bitmap and transform *that*, so a dithered header scales as an image. It can look soft mid-morph; it does not shimmer.
+- **The suspended mark keeps clear of it** by being a sibling of the page, never an ancestor: its transforms are on SVG children of its own overlay, on VT pseudos, and (the trim close) on the live `.page-title` / `.page-subtitle`, which hold no dither. Anything new it moves must keep to that ([mark.md](mark.md)).
 
 `background-attachment: fixed` is a known scroll-performance cost (the background repaints rather than being translated by the compositor) and is unreliable on iOS Safari, where it may degrade to `scroll`. Treat the no-shimmer guarantee as solid on desktop and best-effort on iOS.
 

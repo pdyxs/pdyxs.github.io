@@ -69,6 +69,7 @@ pure decisions / thin effects, single source of truth) live in
 | cards, folder cascade, `_config.yaml`, priority, sort, tags, `excludeTags`, generators, affiliations, the `why` dimension, difficulty, redirects | [docs/agents/content-model.md](docs/agents/content-model.md) |
 | lenses, the ranking chain, seen/unseen, home slots, the shared card pool, strip and history lenses, progressive reveal | [docs/agents/lenses-and-browse.md](docs/agents/lenses-and-browse.md) |
 | a renderer, nav renderer, collection view, card credits (`meta:`), actions, galleries, the lightbox, video embeds, header-image padding | [docs/agents/card-rendering.md](docs/agents/card-rendering.md) |
+| the suspended mark: the dot and its threads, `site:presentation`, the title's exit and return, the hang, mark tools and how to add one, the mark benches | [docs/agents/mark.md](docs/agents/mark.md) |
 | writing or running tests, the two vitest projects, happy-dom gaps | [docs/agents/testing.md](docs/agents/testing.md) |
 | authoring content, the Obsidian vault, Templater scaffolds, `inspected`, dev hot-reload, experiment routes, plan docs | [docs/agents/workflow.md](docs/agents/workflow.md) |
 | issues, triage labels, the glossary and decision records | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md), [docs/agents/triage-labels.md](docs/agents/triage-labels.md), [docs/agents/domain.md](docs/agents/domain.md) |
