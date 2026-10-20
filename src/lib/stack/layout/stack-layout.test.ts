@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cardEntry, lensEntry, allocateSlot, withFreeSlot, slotForKey, keyForSlot, locationKind, presentationMode, planPush } from '@stack/layout/stack-layout';
+import { cardEntry, lensEntry, allocateSlot, withFreeSlot, slotForKey, keyForSlot, locationKind, presentationMode, planPush, planReplace } from '@stack/layout/stack-layout';
 import type { StackState } from '@stack/layout/stack-layout';
 
 describe('locationKind', () => {
@@ -139,5 +139,25 @@ describe('planPush', () => {
     const first = lensEntry('interesting');
     expect(planPush(stack([first]), [], lensEntry('interesting')))
       .toEqual({ kind: 'activate', slot: 'lens/interesting' });
+  });
+});
+
+describe('planReplace (#114)', () => {
+  const stack = (entries: ReturnType<typeof cardEntry>[]): StackState =>
+    ({ entries, activeSlot: entries.at(-1)?.slot ?? null });
+
+  it('replaces with a fresh handle even when the location is already stacked', () => {
+    const plan = planReplace(stack([cardEntry('a/one')]), [], cardEntry('a/one'));
+    expect(plan).toEqual({ kind: 'replace', entry: { ...cardEntry('a/one'), slot: 'a/one#2' } });
+  });
+
+  it('ignores a location a replace or push is already delivering', () => {
+    expect(planReplace(stack([cardEntry('a/one')]), [lensEntry('x')], lensEntry('x')))
+      .toEqual({ kind: 'ignore' });
+  });
+
+  it('avoids slots reserved by in-flight work', () => {
+    const plan = planReplace(stack([cardEntry('a/one')]), [lensEntry('x', [['filter.what', 'art']])], lensEntry('x'));
+    expect(plan).toEqual({ kind: 'replace', entry: lensEntry('x', [], 'lens/x#2') });
   });
 });
