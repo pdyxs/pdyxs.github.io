@@ -158,7 +158,21 @@
     drillPath = [];
   }
 
+  let bar: HTMLElement;
+
   onMount(() => {
+    // Publish the owning card's header height so the sticky bar can sit below it
+    // (issue #115). Only this bar's own style is written; the stack is not touched.
+    // A page-mode lens has its `.card-header` display:none, which measures 0.
+    const header = bar.closest('.stack-card')?.querySelector(':scope > .card-header');
+    let observer: ResizeObserver | undefined;
+    if (header && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => {
+        bar.style.setProperty('--card-header-stuck-height', `${header.getBoundingClientRect().height}px`);
+      });
+      observer.observe(header);
+    }
+
     function onDocumentClick(e: MouseEvent) {
       const target = e.target as Element;
       // `.browse-dim-panel` is portaled to <body> (see DimensionPanel), so it
@@ -171,11 +185,14 @@
       }
     }
     document.addEventListener('click', onDocumentClick, { capture: true });
-    return () => document.removeEventListener('click', onDocumentClick, { capture: true });
+    return () => {
+      observer?.disconnect();
+      document.removeEventListener('click', onDocumentClick, { capture: true });
+    };
   });
 </script>
 
-<div class="fp-dimension-controls" role="toolbar" aria-label="5W dimension filters">
+<div class="fp-dimension-controls" role="toolbar" bind:this={bar} aria-label="5W dimension filters">
   {#each FIVE_W_DIMENSIONS as dim}
     {@const isActive = dimensionIsActive(dim)}
     {@const isOpen = openDimension === dim}
@@ -232,7 +249,10 @@
     border-bottom: var(--border-width) solid var(--color-border);
     background: var(--color-bg);
     position: sticky;
-    top: 0;
+    /* Clears the stuck active header (z-index 11, card-header.css). Its height
+       is content-driven — a title can wrap — so the script measures it rather
+       than the CSS guessing; 0px is the page-mode / pre-hydration value. */
+    top: var(--card-header-stuck-height, 0px);
     z-index: 10;
   }
 
