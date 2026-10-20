@@ -209,7 +209,11 @@ site-worktree list         # every worktree, its branch and preview URL
 site-worktree rm <id>      # stop the preview, remove the worktree (branch kept)
 ```
 
-`new` reuses `feature/<id>` if it exists, local or remote. Work on the feature
+`new` reuses `feature/<id>` if it exists, local or remote. Every day
+`worktree-sync` (`~/server-project/scripts/`) merges `dev` into each worktree and
+pushes; Claude resolves conflicts, and only a genuine either/or reaches the Build
+room. It skips a worktree with any uncommitted file, so leaving work uncommitted
+is how to keep it out of the way. Work on the feature
 from a session started in the worktree directory.
 
 A worktree feature ships with **a sample piece of content** that demonstrates
