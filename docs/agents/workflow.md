@@ -163,6 +163,30 @@ committed images.
 
 Note: Astro excludes directories starting with `_` from routing, so `_experiments` does **not** work — use `experiments` (no underscore).
 
+## The build server (`build.pdyxs.wtf`)
+
+`build.pdyxs.wtf` serves the **real production build** (`astro build` output in
+`dist/`, via `astro preview` on port 4322), not the dev server. Use it to tell
+a dev-server-only artefact from a real bug: CSS code-splitting, fragment
+styling and anything else `astro dev` papers over behave as they will live.
+
+Two user systemd units:
+
+- `astro-build.service` runs `npm run build` and stamps `dist/build-info.txt`
+  with the UTC time and short commit. `astro-build.timer` fires it periodically.
+- `astro-build-preview.service` serves `dist/`.
+
+To refresh it with the latest code of this checkout:
+
+```
+systemctl --user start astro-build.service           # rebuild dist/
+systemctl --user restart astro-build-preview.service # serve it
+cat dist/build-info.txt                              # confirm the commit
+```
+
+The build reads the working tree, so commit (or at least save) first. A feature
+worktree has no build server of its own; its preview is `astro dev` only.
+
 ## Plans must name the selectors and CSS variables they touch
 
 Given the selector contract ([stack-layout.md](stack-layout.md)) and the CSS custom property convention ([styling.md](styling.md)), a plan file should explicitly list any new class names it adds to the JS contract and any new CSS variables it introduces. Reviewers and future sessions should see this without re-reading the diff.
@@ -185,7 +209,11 @@ site-worktree list         # every worktree, its branch and preview URL
 site-worktree rm <id>      # stop the preview, remove the worktree (branch kept)
 ```
 
-`new` reuses `feature/<id>` if it exists, local or remote. Work on the feature
+`new` reuses `feature/<id>` if it exists, local or remote. Every day
+`worktree-sync` (`~/server-project/scripts/`) merges `dev` into each worktree and
+pushes; Claude resolves conflicts, and only a genuine either/or reaches the Build
+room. It skips a worktree with any uncommitted file, so leaving work uncommitted
+is how to keep it out of the way. Work on the feature
 from a session started in the worktree directory.
 
 A worktree feature ships with **a sample piece of content** that demonstrates

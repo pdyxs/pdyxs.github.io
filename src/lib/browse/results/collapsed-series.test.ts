@@ -88,4 +88,12 @@ describe('expandCollapsedSeries', () => {
     const { cards: out } = expandCollapsedSeries(cards, seriesMembers(), isRead);
     expect(out.map(c => c.uid)).toEqual(['before', REP, 'series/01-middle', 'after']);
   });
+
+  it('never emits a duplicate uid when a later member is read but the representative is not (#179)', () => {
+    const isRead = (m: Card) => m.uid === 'series/02-end';
+    const { cards: out } = expandCollapsedSeries([card(REP)], seriesMembers(), isRead);
+    const uids = out.map(c => c.uid);
+    expect(new Set(uids).size).toBe(uids.length);
+    expect(uids).toEqual([REP]);
+  });
 });

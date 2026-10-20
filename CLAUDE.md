@@ -14,6 +14,10 @@ content database. Markdown and the content YAML hot-reload on their own
 (`scripts/dev-reload-plugin.mjs`) — see [docs/agents/workflow.md](docs/agents/workflow.md)
 for what still needs a manual `npm run generate:*`.
 
+`build.pdyxs.wtf` serves the production build; refresh steps are in
+[workflow.md → The build server](docs/agents/workflow.md#the-build-server-buildpdyxswtf).
+Check there when something looks wrong in dev only.
+
 ## This checkout stays on `dev`
 
 It is the content vault and `preview.pdyxs.wtf`; content auto-sync stops while

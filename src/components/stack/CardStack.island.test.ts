@@ -339,6 +339,33 @@ describe('delegated click → push', () => {
     expect(activeEntry(get(stackStore))?.key).toBe('lens/interesting');
   });
 
+  it('replaces the slot ONCE for a double-clicked [data-replace-slot] (#114)', async () => {
+    // Same stale-snapshot shape as #112: `replaceSlot` reads the stack, allocates
+    // a handle, then AWAITS the fragment before it mutates. Two clicks inside
+    // that window both allocated the same handle and both replaced.
+    mountStack({ activeUid: 'lens/newest', activeHtml: fragment('lens/newest', { hash: null }) });
+    await settle();
+    const before = history.length;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
+    fetchMock.mockClear();
+
+    const tile = document.createElement('button');
+    tile.dataset.replaceSlot = 'lens/interesting';
+    tile.dataset.replaceParams = '';
+    document.querySelector('.stack-card-body-inner')!.appendChild(tile);
+
+    tile.click();
+    tile.click();
+    await settle();
+
+    const state = get(stackStore);
+    expect(state.entries.map(e => e.key)).toEqual(['lens/interesting']);
+    expect(state.activeSlot).toBe('lens/interesting');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(history.length).toBe(before + 1);
+    expect(document.querySelectorAll('[data-uid="lens/interesting"]')).toHaveLength(1);
+  });
+
   it('activates a collapsed card when it is clicked', async () => {
     mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
     await settle();
