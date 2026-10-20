@@ -218,7 +218,7 @@ export const MARK_TOOLS: ToolConfig[] = [
       {
         id: 'palette-revert',
         behaviour: 'palette-revert',
-        string: 28,                // hangs from the palette bauble
+        string: 34,                // hangs from the palette bauble (slice 9: 28 → 34, see there)
         radius: 8,
         icon: 'cross',
         label: 'Revert colours',
@@ -286,7 +286,9 @@ The mark side, generically:
 - **Where it hangs:** a top-level tool from `toolPivot` on its (tautened)
   thread; a child from the bottom of its parent's body as drawn
   (`childPivot`), so it rides the parent's swing and drag. A child hangs only
-  while its parent does (`visibleTools`).
+  while its parent does (`visibleTools`). Slice 9: a tool's swing feels its
+  pivot's acceleration (`trackPivot` → `stepBauble`'s `pivotAccel`, a
+  pseudo-force), so a carried child trails and swings instead of hanging rigid.
 - **`shown()`** is read on open and again on each `subscribe` callback while
   open (subscriptions are held only while open). A change drops or reels in
   that tool alone, with no pull.
@@ -294,7 +296,9 @@ The mark side, generically:
   time. Press: `click` → `press()`. Drag: pointer capture, the bauble follows
   the pointer (`baubleAt`), `dragStart/Move/End`; pointercancel or Escape
   (wherever focus is) cancels; let go, it swings back on its string.
-- **Keys:** Enter/Space on a press bauble presses; a bauble's keydown goes to
+- **Keys:** Tab runs dot → tools in `focusOrder` (slice 9 moved `.site-mark-hit`
+  before `.site-mark-overlay` in source order; before that, Tab from the dot
+  skipped the tools). Enter/Space on a press bauble presses; a bauble's keydown goes to
   `key()` first, and Escape it doesn't take closes the tools.
 - **Closing:** a dot click, Escape, or any `site:presentation` change; any
   drag is cancelled, and focus inside the tools returns to the dot.
@@ -426,6 +430,10 @@ Event (slice 8): `site:theme` on `document`, detail `{ theme: 'light' | 'dark' }
 (`THEME_CHANGE_EVENT`, `ThemeChangeDetail` in `theme.ts`), after every
 `html[data-theme]` change.
 
+Slice 9 adds no selectors, custom properties or tokens. It changes source
+order inside `site-mark`: `.site-mark-hit` now comes before
+`.site-mark-overlay` (after `.site-mark-hang`), for Tab order.
+
 Slice 8 also writes `link[rel="icon"]`'s `href` (a data URI of the recoloured
 `favicon.svg`) and adds no selectors beyond `.site-mark-tool-desc`, no custom
 properties and no `:root` tokens: the palette's own four
@@ -523,7 +531,21 @@ Each slice ships green.
    under [Palette effect layer](#palette-effect-layer-srclibsitepalette-domts).
    The floating picker stays mounted alongside until slice 10.
 9. **Revert.** Add the `palette-revert` child behaviour, which drops when a
-   palette is set and reels up when one is cleared.
+   palette is set and reels up when one is cleared. **Built:**
+   `mark-tools/palette-revert.ts` (`press`; `shown` = a stored palette that
+   isn't the default; `subscribe` = `onPaletteChange`, so the mark's picks,
+   the floating picker's and other tabs' all reach it; `press` commits null),
+   configured as the palette's child: string 34, radius 8, `cross`. 28 put the
+   two centres 40px apart, so the two 44px (`--mark-hit-min`) targets overlapped
+   by 4px and the revert, drawn on top, took presses meant for the palette;
+   34 makes them 46px apart and they meet with 2px between. Pressing it moves
+   focus to the palette bauble through `focusFallback`. Two framework changes:
+   the hit button now precedes the overlay in source order, so Tab runs
+   dot → palette → revert; and the carried swing (`trackPivot`, below the
+   Bauble physics in `geometry.ts`: the pivot's velocity low-passed over
+   `PIVOT_SMOOTHING` 60ms, differentiated, clamped to `PIVOT_ACCEL_MAX` = ¾g so
+   a short string never swings over the top). It applies to every tool, a
+   top-level one included, and the track restarts whenever the loop wakes.
 10. **Retire the floating picker.** Remove `<PalettePicker />` from Base. Its
     dev system/derive controls stay on `/experiments/palette-picker`.
 11. **Docs.** Add a mark section to `card-rendering.md`, covering tools, how to

@@ -7,12 +7,14 @@
 
 import type { ToolBehaviour } from './types';
 import { palette } from './palette';
+import { paletteRevert } from './palette-revert';
 
 export type { ToolBehaviour, ViewportPoint } from './types';
 
 /** The behaviours every page has. */
 export const BUILT_IN: Readonly<Record<string, ToolBehaviour>> = {
   palette,
+  'palette-revert': paletteRevert,
 };
 
 const registry = new Map<string, ToolBehaviour>(Object.entries(BUILT_IN));

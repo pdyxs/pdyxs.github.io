@@ -13,6 +13,8 @@ import {
   baublePos,
   baubleAt,
   baubleMoving,
+  trackPivot,
+  PIVOT_ACCEL_MAX,
   type Bauble,
 } from '@site/mark/geometry';
 import { MARK_RIG } from '@data/mark-rig';
@@ -143,5 +145,72 @@ describe('stepBauble', () => {
     const out = settleTime({ r: 0, rv: 0, theta: 0, omega: 0 }, 130, DROP);
     const up = settleTime({ r: 130, rv: 0, theta: 0, omega: 0 }, 0, REEL);
     expect(out).toBeLessThan(up);
+  });
+
+  it('with a still pivot, a pivot acceleration of zero changes nothing', () => {
+    const b = baubleAt({ x: 0, y: 0 }, { x: 40, y: 100 });
+    expect(stepBauble(b, 130, 1 / 240, DROP, { x: 0, y: 0 })).toEqual(stepBauble(b, 130, 1 / 240));
+  });
+
+  it('a pivot accelerating right swings a hanging bauble back, to the left', () => {
+    const b = stepBauble({ r: 30, rv: 0, theta: 0, omega: 0 }, 30, 1 / 240, DROP, { x: 3000, y: 0 });
+    expect(b.omega).toBeLessThan(0);
+    expect(b.theta).toBeLessThan(0);
+    expect(b.r).toBe(30);
+  });
+
+  it('held at a steady acceleration it settles at the angle of the felt gravity', () => {
+    // Pivot accelerating right at a: it trails at atan(a / g) behind (to the left).
+    const a = 1100;
+    let b: Bauble = { r: 30, rv: 0, theta: 0, omega: 0 };
+    for (let t = 0; t < 10; t += 1 / 240) b = stepBauble(b, 30, 1 / 240, DROP, { x: a, y: 0 });
+    expect(b.theta).toBeCloseTo(-Math.atan(a / 2200), 2);
+  });
+
+  it('a pivot falling freely leaves the swing weightless', () => {
+    const b = baubleAt({ x: 0, y: 0 }, { x: 20, y: 25 });
+    const after = stepBauble(b, b.r, 1 / 240, DROP, { x: 0, y: 2200 });
+    expect(after.omega).toBeCloseTo(0, 10);
+  });
+});
+
+describe('trackPivot', () => {
+  const dt = 1 / 60;
+
+  it('starts still', () => {
+    expect(trackPivot(null, { x: 5, y: 6 }, dt)).toEqual({ p: { x: 5, y: 6 }, v: { x: 0, y: 0 }, a: { x: 0, y: 0 } });
+  });
+
+  it('a pivot that stays put has no velocity and no acceleration', () => {
+    let tr = trackPivot(null, { x: 5, y: 6 }, dt);
+    for (let i = 0; i < 10; i++) tr = trackPivot(tr, { x: 5, y: 6 }, dt);
+    expect(tr.v).toEqual({ x: 0, y: 0 });
+    expect(tr.a).toEqual({ x: 0, y: 0 });
+  });
+
+  it('a pivot moving steadily settles to its velocity, and its acceleration to nothing', () => {
+    let tr = trackPivot(null, { x: 0, y: 0 }, dt);
+    for (let i = 1; i <= 60; i++) tr = trackPivot(tr, { x: i * 5, y: -i * 2 }, dt);
+    expect(tr.v.x).toBeCloseTo(300, 3);
+    expect(tr.v.y).toBeCloseTo(-120, 3);
+    expect(Math.hypot(tr.a.x, tr.a.y)).toBeLessThan(1e-3);
+  });
+
+  it('starting to move reads as an acceleration that way', () => {
+    let tr = trackPivot(null, { x: 0, y: 0 }, dt);
+    tr = trackPivot(tr, { x: 10, y: 0 }, dt);
+    expect(tr.a.x).toBeGreaterThan(0);
+    expect(tr.a.y).toBe(0);
+  });
+
+  it('a jump is clamped, not a fling', () => {
+    let tr = trackPivot(null, { x: 0, y: 0 }, dt);
+    tr = trackPivot(tr, { x: 0, y: 5000 }, dt);
+    expect(Math.hypot(tr.a.x, tr.a.y)).toBeCloseTo(PIVOT_ACCEL_MAX, 6);
+  });
+
+  it('no time passing starts it afresh', () => {
+    const tr = trackPivot(trackPivot(null, { x: 0, y: 0 }, dt), { x: 9, y: 9 }, 0);
+    expect(tr.a).toEqual({ x: 0, y: 0 });
   });
 });

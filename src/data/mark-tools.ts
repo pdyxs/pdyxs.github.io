@@ -52,5 +52,18 @@ export const MARK_TOOLS: ToolConfig[] = [
     icon: 'palette',
     label: 'Colours: drag across the page to pick them',
     description: 'Or use the arrow keys to move through the colours (Shift for bigger steps), Enter to keep them, Escape to put them back.',
+    children: [
+      {
+        id: 'palette-revert',
+        behaviour: 'palette-revert',
+        // Bauble centres 12 + 34 = 46px apart: the two --mark-hit-min (44px)
+        // targets meet without overlapping. Shorter and the revert's (on top)
+        // takes presses meant for the palette.
+        string: 34,
+        radius: 8,
+        icon: 'cross',
+        label: 'Revert colours',
+      },
+    ],
   },
 ];
