@@ -352,6 +352,7 @@ const n = (v: number) => +v.toFixed(2);
   import {
     DROP,
     REEL,
+    RETURN,
     baubleAt,
     baubleMoving,
     baublePos,
@@ -501,6 +502,8 @@ const n = (v: number) => +v.toFixed(2);
     /** The pointer, viewport coords, while the bauble is dragged, and which pointer. */
     pointer: V | null;
     dragId: number | null;
+    /** Swinging back after a drag let go of it or a tool it hangs from: it settles without bouncing (RETURN). */
+    returning: boolean;
   }
 
   /** A tool's config, as MarkTool.astro wrote it into the markup. Document order is depth-first. */
@@ -526,6 +529,7 @@ const n = (v: number) => +v.toFixed(2);
       track: null,
       pointer: null,
       dragId: null,
+      returning: false,
     };
   }
 
@@ -1215,6 +1219,7 @@ const n = (v: number) => +v.toFixed(2);
       if (t.el.hasAttribute('data-open')) return;
       t.el.setAttribute('data-open', '');
       t.b = { r: 0, rv: 0, theta: 0, omega: reduced ? 0 : DROP_KICK };
+      t.returning = false;
       t.s = { x: reduced ? 1 : 0, v: 0 };
       const kind = this.#behaviour(t)?.kind;
       if (kind) t.bauble.dataset.kind = kind;
@@ -1300,7 +1305,7 @@ const n = (v: number) => +v.toFixed(2);
         // Its pivot as last drawn: a carried pivot swings the bauble (stepBauble's pseudo-force).
         t.track = t.pivot ? trackPivot(t.track, t.pivot, dt) : null;
         if (!t.pointer) {
-          const spring = out ? DROP : REEL;
+          const spring = !out ? REEL : t.returning ? RETURN : DROP;
           const accel = t.track?.a;
           t.b = reduced ? { r: len, rv: 0, theta: 0, omega: 0 } : subStep(t.b, dt, (b, h) => stepBauble(b, len, h, spring, accel));
         }
@@ -1310,7 +1315,9 @@ const n = (v: number) => +v.toFixed(2);
           t.at = null;
           continue;
         }
-        if (t.pointer || baubleMoving(t.b, len) || Math.abs(t.s.x - (out ? 1 : 0)) > 0.005) busy = true;
+        const moving = baubleMoving(t.b, len);
+        if (!moving) t.returning = false;
+        if (t.pointer || moving || Math.abs(t.s.x - (out ? 1 : 0)) > 0.005) busy = true;
       }
       // Closed and every tool in: stop listening until the next open.
       if (!ts.want && ts.phase === 'rest' && !this.#tools.some((t) => t.el.hasAttribute('data-open'))) {
@@ -1339,6 +1346,8 @@ const n = (v: number) => +v.toFixed(2);
         el.setAttribute('data-dragging', '');
         t.dragId = e.pointerId;
         t.pointer = point(e);
+        // Carried by the drag, what hangs below swings freely again.
+        for (const x of this.#hangingFrom(t)) x.returning = false;
         b.dragStart?.(point(e));
         this.#wake();
       });
@@ -1388,7 +1397,15 @@ const n = (v: number) => +v.toFixed(2);
       t.bauble.removeAttribute('data-dragging');
       if (id !== null && t.bauble.hasPointerCapture(id)) t.bauble.releasePointerCapture(id);
       this.#behaviour(t)?.dragEnd?.(at, cancelled);
+      for (const x of [t, ...this.#hangingFrom(t)]) x.returning = true;
       this.#wake();
+    }
+
+    /** Every tool hanging below `t`, at any depth. */
+    #hangingFrom(t: Tool): Tool[] {
+      const below = new Set([t.id]);
+      // Document order is depth-first, so a parent is always seen before its children.
+      return this.#tools.filter((x) => x.parent !== null && below.has(x.parent) && below.add(x.id));
     }
   }
 

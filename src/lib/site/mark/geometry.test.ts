@@ -9,6 +9,7 @@ import {
   stepBauble,
   DROP,
   REEL,
+  RETURN,
   type StringSpring,
   baublePos,
   baubleAt,
@@ -145,6 +146,21 @@ describe('stepBauble', () => {
     const out = settleTime({ r: 0, rv: 0, theta: 0, omega: 0 }, 130, DROP);
     const up = settleTime({ r: 130, rv: 0, theta: 0, omega: 0 }, 0, REEL);
     expect(out).toBeLessThan(up);
+  });
+
+  it('let go of a drag, it comes back to hang without swinging past', () => {
+    for (const len of [34, 80]) {
+      // Dragged out to the side and up: the string slack, the swing wide.
+      const start = baubleAt({ x: 0, y: 0 }, { x: len, y: len * 0.3 });
+      let b = start;
+      let past = 0;
+      for (let t = 0; t < 2.5; t += 1 / 240) {
+        b = stepBauble(b, len, 1 / 240, RETURN);
+        past = Math.min(past, b.theta);
+      }
+      expect(-past).toBeLessThan(start.theta * 0.05);
+      expect(baubleMoving(b, len)).toBe(false);
+    }
   });
 
   it('with a still pivot, a pivot acceleration of zero changes nothing', () => {
