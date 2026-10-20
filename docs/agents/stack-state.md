@@ -58,6 +58,13 @@ on every step. Three things fixed that (issue #101), and they are independent:
    sets `--behind-slots` / `--behind-rows` / `--ahead-slots` / `--ahead-rows` on
    `<html>` before first paint. Without it the active card jumps 60px right and
    40px down (measured, three-slot fan at 1400px) when the island hydrates.
+   The same count settles the cold presentation: the route seeds
+   `html[data-cold-presentation]` (`page` on a lens page, `card` everywhere
+   else, a page with no stack included), and a URL with `from`/`to` entries
+   turns it to `card`, the answer `presentationMode` gives any stack deeper
+   than one (baked in at build time). The suspended mark draws its first paint
+   from it: hanging at the top in card mode, nothing in page mode
+   ([mark.md](mark.md)).
 
 Four things that bite:
 
@@ -290,7 +297,61 @@ Never set `view-transition-name` in HTML — it causes conflicts when multiple e
 
 1. Inject via JS (`element.style.viewTransitionName = '...'`) immediately before `startViewTransition()`
 2. Clear after `vt.finished` (`element.style.viewTransitionName = ''`)
-3. Use distinct names per direction: `panel-card-open` (link → card) and `panel-card-close` (card → link)
+3. Use distinct names per direction: `panel-card-open` (link → card) and `panel-card-close` (card → link) — or one name and a View Transition type, as `page-rule` does below
+
+Every name on the site, and who sets it:
+
+| name | set by | what |
+|---|---|---|
+| `panel-card-open` | CardStack | the clicked card-link → the pushed card (card mode) |
+| `panel-card-close` | nobody, today | its group rules are still in `layout.css`, but no close path names anything with it |
+| `page-rule` | CardStack | the page-mode lens's `.page-header-rule` ↔ the card's `.card-header`, both directions |
+| `page-title`, `page-subtitle` | the suspended mark, by CSS | the page-mode `.page-title` / `.page-subtitle`: old-only going to a card, new-only coming back |
+| `site-mark` | the suspended mark, by CSS | the mark's overlay, rendered live through the transition |
+
+The stack's group rules are in `layout.css`; the mark's three pseudo rules are in
+`SuspendedMark.astro`. `home-title` and `home-divider` are **retired**, with their
+`layout.css` rules: the title no longer morphs into the card's header title, it
+leaves and comes back on its own, and the line under it is `page-rule`.
+
+`page-rule` runs page → card on a push from any page-mode lens (the sole entry,
+`presentationMode` → `page`), and card → page when the last card closes down to
+home (`closeCard` → `applyHomeSeed`). One name for both directions, because the
+CSS needs the direction for another reason: only the header-side image is
+stretched to the morphing box, and the header is the *new* image going to a card
+but the *old* one coming back. So those two transitions are **typed** —
+`page-to-card` / `card-to-page`, matched with `:active-view-transition-type()` —
+through `typedViewTransitions()` (`src/lib/stack/layout/typed-view-transition.ts`),
+which falls back to `html[data-vt-type]` for the length of the transition where
+types aren't supported.
+
+On both page ↔ card transitions CardStack announces `site:presentation` with the
+transition (`{ to, vt }`), right after `startVT` returns: the browser captures the
+old state at its next rendering opportunity and only then runs the update, so a
+listener's names are still in time. The store changes inside the update, where the
+presentation `$effect` sees the value just announced and stays quiet (`announce`
+drops a repeat of the last value).
+
+**The mark's names are the one exception to "inject via `element.style`".** The
+mark writes no style into `#card-stack`: it sets `html[data-mark-vt]` for the
+length of the transition, and rules in `SuspendedMark.astro` do the naming. A
+selector names whatever is laid out at each capture, which is how the returning
+title gets its name on the NEW side with no hook into CardStack's update callback;
+and only the sole entry is ever `stack-card--page`, so the name can't be
+duplicated. The mechanism, the exit it drives and the reduced-motion variant are
+in [mark.md](mark.md).
+
+A name whose element is still in the DOM after the update (the closing card's header on a close)
+comes off **inside** the update callback, before the new snapshot: left on, it is a duplicate of the
+new side's name, and the browser aborts the whole transition.
+
+Closing a card back to home when home is still in the stack (`?from=` — the usual way back) is not a
+view transition at all: it trims the stack, and the stack's own motion carries home back into page
+mode. No name is involved. It announces `{ to: 'page', vt: null }`, and the mark answers it with a WAAPI
+animation of the **live** `.page-title` / `.page-subtitle` (`element.animate`, `transform` only,
+cancelled when it ends). That is the one thing outside CardStack that touches an element inside
+`#card-stack`, and it is not a stack mutation: it changes no structure, class, attribute or inline
+style, and it never moves layout. Anything more than that belongs in CardStack.
 
 Setting a name on a detached node before appending it inside the `startViewTransition()` callback works correctly — the VT captures the name from the post-callback DOM state.
 

@@ -147,13 +147,28 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 
 The palette is **two colours**: ink (`--color-text`) and paper (`--color-bg`), pure black and pure white, swapped by `data-theme`. Everything greyscale derives from those two — `--color-surface`, `--color-border-light` and `--color-text-muted` are aliases, and every other tone is a `--dither-N` level built from the same two colours. There is no grey. De-emphasis is expressed by size and weight, never by a faded value; **an `opacity` used to soften a colour is a bug**, because it renders as the grey the palette doesn't have.
 
-Black and white are the **defaults**, not constants: the palette picker
-(`PalettePicker.astro`, maths in `src/lib/site/palette.ts`) lets a visitor
-replace the pair. It writes `--color-{light,dark}-{srgb,p3}` onto `<html>`, each
+Black and white are the **defaults**, not constants: the mark's palette tool
+(drag the palette bauble that drops from the title's full stop; maths in
+`src/lib/site/palette.ts`, the shared applier in `src/lib/site/palette-dom.ts`)
+lets a visitor replace the pair, and its revert bauble puts the default back.
+It writes `--color-{light,dark}-{srgb,p3}` onto `<html>`, each
 an `oklch()` string already fitted to that gamut, and `tokens.css` selects the P3
 pair under `@media (color-gamut: p3)`. Everything downstream, dithers included,
 follows because it only ever references the two tokens, which is why no call
 site may name a colour directly.
+
+The dev-only palette controls live on `/experiments/palette-picker`: the
+colour system every pick uses (`palette-system` in storage, read by
+`palette-dom.ts` on every page) and the "derived dark" comparison
+(`palette-dark-mode` → `html[data-palette-dark="shared"]`, applied before paint
+by a dev-only head script in `Base.astro` and never shipped).
+
+The suspended mark's tokens are in `tokens.css` too: `--z-mark` (the overlay;
+its hit button is one above), `--mark-hit-min` (the smallest hit target, dot and
+baubles), `--page-title-size` (`.page-title`'s font-size, a token so the hang can
+be sized with no title), and `--mark-hang-em` / `--mark-hang-size` (the hanging
+rig's em and dot, derived from it). The last two have TS twins pinned by
+`mark/hang.test.ts`; see [mark.md](mark.md).
 
 ## The dither is one fixed, viewport-anchored grid — never give it a transformed ancestor
 
@@ -169,6 +184,7 @@ Two consequences worth knowing:
 
 - **All levels share one grid**, so adjacent surfaces at different levels line up dot-for-dot.
 - **View Transitions** are unaffected either way: they snapshot the element to a bitmap and transform *that*, so a dithered header scales as an image. It can look soft mid-morph; it does not shimmer.
+- **The suspended mark keeps clear of it** by being a sibling of the page, never an ancestor: its transforms are on SVG children of its own overlay, on VT pseudos, and (the trim close) on the live `.page-title` / `.page-subtitle`, which hold no dither. Anything new it moves must keep to that ([mark.md](mark.md)).
 
 `background-attachment: fixed` is a known scroll-performance cost (the background repaints rather than being translated by the compositor) and is unreliable on iOS Safari, where it may degrade to `scroll`. Treat the no-shimmer guarantee as solid on desktop and best-effort on iOS.
 

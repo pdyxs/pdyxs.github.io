@@ -60,6 +60,14 @@ export function poseThreads(rig: MarkRig, pose: Pose): ThreadGeometry[] {
   });
 }
 
+/** Threads are never drawn thinner than this, px. */
+export const MIN_STROKE = 1.2;
+
+/** A thread's stroke width, px, at `em` px per em. */
+export function threadStroke(rig: MarkRig, em: number): number {
+  return Math.max(MIN_STROKE, rig.width * em);
+}
+
 /** SVG path data for one thread. */
 export function threadPathData(g: ThreadGeometry): string {
   const f = (v: V) => `${v.x.toFixed(1)} ${v.y.toFixed(1)}`;
@@ -110,19 +118,79 @@ const SWING_DAMPING = 1.1; // 1/s
 export interface StringSpring {
   stiffness: number; // 1/s²
   damping: number; // 1/s
+  /**
+   * The swing's damping ratio, if this spring sets one: scaled to the
+   * pendulum's own frequency, √(g/r), so a short string settles as surely as a
+   * long one. Without it the swing is lightly damped (SWING_DAMPING).
+   */
+  swingZeta?: number;
 }
 
 /** Falling out: fast, and the string overshoots a little as it catches. */
 export const DROP: StringSpring = { stiffness: 900, damping: 32 };
 /** Reeled up: slower, and critically damped so it never runs past nothing. */
 export const REEL: StringSpring = { stiffness: 130, damping: 2 * Math.sqrt(130) };
+/**
+ * Let go of a drag: back to hanging, barely overshooting, so the bauble is
+ * where it was and easy to find again. Its string and its swing are both
+ * near-critically damped.
+ */
+export const RETURN: StringSpring = { stiffness: 260, damping: 2 * 0.9 * Math.sqrt(260), swingZeta: 0.85 };
 
-/** One step toward `len` px of string; pure, so a caller can sub-step it. */
-export function stepBauble(b: Bauble, len: number, dt: number, spring: StringSpring = DROP): Bauble {
+const STILL: V = { x: 0, y: 0 };
+
+/**
+ * One step toward `len` px of string; pure, so a caller can sub-step it.
+ * `pivotAccel` (px/s², y down) is how the pivot is accelerating: in the
+ * pivot's frame that is a pseudo-force, so a bauble whose pivot is carried
+ * (a child under a dragged parent) lags and swings rather than riding rigid.
+ * It turns the swing only; the string's length is the spring's alone.
+ */
+export function stepBauble(b: Bauble, len: number, dt: number, spring: StringSpring = DROP, pivotAccel: V = STILL): Bauble {
   const reach = Math.max(len, b.r, 1);
   const rv = b.rv + (spring.stiffness * (len - b.r) - spring.damping * b.rv) * dt;
-  const omega = b.omega + (-(GRAVITY / reach) * Math.sin(b.theta) - SWING_DAMPING * b.omega) * dt;
+  const sin = Math.sin(b.theta);
+  const cos = Math.cos(b.theta);
+  // Tangential component of gravity less the pivot's acceleration, over the arm.
+  const swing = (-GRAVITY * sin - pivotAccel.x * cos + pivotAccel.y * sin) / reach;
+  const damping = spring.swingZeta === undefined ? SWING_DAMPING : 2 * spring.swingZeta * Math.sqrt(GRAVITY / reach);
+  const omega = b.omega + (swing - damping * b.omega) * dt;
   return { r: b.r + rv * dt, rv, theta: b.theta + omega * dt, omega };
+}
+
+/** A pivot's motion, tracked frame to frame: where it is, its (smoothed) velocity, and its acceleration. */
+export interface PivotTrack {
+  p: V;
+  v: V;
+  a: V;
+}
+
+/** How long the pivot's velocity is smoothed over, s: pointer moves land unevenly between frames. */
+export const PIVOT_SMOOTHING = 0.06;
+/**
+ * The most acceleration a pivot passes on, px/s². Under gravity, so a
+ * carried bauble trails (at most atan(¾) ≈ 37° held, about twice that at the
+ * swing's peak) and never goes over the top; and a jump (a resize, a
+ * re-anchor) is a nudge, not a fling.
+ */
+export const PIVOT_ACCEL_MAX = GRAVITY * 0.75;
+
+/**
+ * The pivot's track after it moved to `p` over `dt`. With no track yet it
+ * starts still. The velocity is low-passed (PIVOT_SMOOTHING) before it is
+ * differentiated, and the acceleration is clamped (PIVOT_ACCEL_MAX).
+ */
+export function trackPivot(prev: PivotTrack | null, p: V, dt: number): PivotTrack {
+  if (!prev || !(dt > 0)) return { p, v: STILL, a: STILL };
+  const k = Math.min(1, dt / PIVOT_SMOOTHING);
+  const v = {
+    x: prev.v.x + ((p.x - prev.p.x) / dt - prev.v.x) * k,
+    y: prev.v.y + ((p.y - prev.p.y) / dt - prev.v.y) * k,
+  };
+  let a = { x: (v.x - prev.v.x) / dt, y: (v.y - prev.v.y) / dt };
+  const m = Math.hypot(a.x, a.y);
+  if (m > PIVOT_ACCEL_MAX) a = { x: (a.x / m) * PIVOT_ACCEL_MAX, y: (a.y / m) * PIVOT_ACCEL_MAX };
+  return { p, v, a };
 }
 
 export function baublePos(pivot: V, b: Bauble): V {

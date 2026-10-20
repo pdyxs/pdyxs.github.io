@@ -18,7 +18,7 @@
   }
 
   .stack-card--page > .page-header {
-    padding-inline: var(--space-md);
+    --page-header-inset-inline: var(--space-md);
   }
 
   .card-header,

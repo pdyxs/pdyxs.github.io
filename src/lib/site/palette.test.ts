@@ -9,6 +9,7 @@ import {
   warpedHue,
   formatOklch,
   hslToOklch,
+  locate,
   parseOklch,
   parsePalette,
   swatch,
@@ -164,5 +165,32 @@ describe('parsePalette', () => {
     expect(
       parsePalette(JSON.stringify({ light: { srgb: 'oklch(1 0 0)' }, dark: DEFAULT_PALETTE.dark })),
     ).toBeNull();
+  });
+});
+
+describe('locate', () => {
+  it.each(PALETTE_SYSTEMS.filter((s) => s.id !== 'hsl'))('inverts $id away from the deadzone', (system) => {
+    for (const p of [{ x: 0.3, y: 0.6 }, { x: 0.55, y: 0.2 }, { x: 0.8, y: 0.45 }]) {
+      const got = locate(system, system.pick(p));
+      expect(Math.abs(got.x - p.x)).toBeLessThan(0.01);
+      expect(Math.abs(got.y - p.y)).toBeLessThan(0.01);
+    }
+  });
+
+  it('lands the default palette in the deadzone, which picks the default again', () => {
+    for (const system of PALETTE_SYSTEMS) {
+      expect(system.pick(locate(system, DEFAULT_PALETTE))).toEqual(DEFAULT_PALETTE);
+    }
+  });
+
+  it('finds a point that picks (near enough) the same colours, in every system', () => {
+    for (const system of PALETTE_SYSTEMS) {
+      const want = system.pick({ x: 0.4, y: 0.7 });
+      const got = system.pick(locate(system, want));
+      for (const end of ['light', 'dark'] as const) {
+        const [a, b] = [parseOklch(want[end].srgb)!, parseOklch(got[end].srgb)!];
+        expect(Math.abs(a.L - b.L)).toBeLessThan(0.01);
+      }
+    }
   });
 });

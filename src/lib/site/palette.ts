@@ -3,7 +3,7 @@
  * that every token and every dither level on the site is built from.
  *
  * Pure decisions only — a point on the page goes in, two colours come out. The
- * picker (PalettePicker.astro) is the thin applier; the head init script in
+ * effect layer (palette-dom.ts) is the thin applier; the head init script in
  * Base.astro re-applies the stored result before first paint.
  *
  * A point is a pair of fractions of the viewport, x and y in [0, 1]. Each
@@ -364,6 +364,60 @@ export function findSystem(id: string | null | undefined): PaletteSystem {
 /** A point within the deadzone on both axes is the default palette. */
 export function isDefault(p: Palette): boolean {
   return p.light.srgb === DEFAULT_PALETTE.light.srgb && p.dark.srgb === DEFAULT_PALETTE.dark.srgb;
+}
+
+// ── Point ← palette ──────────────────────────────────────────────────
+
+/** A colour as an OKLab triple, for distances. */
+function oklab(s: string): Rgb | null {
+  const c = parseOklch(s);
+  if (!c) return null;
+  const hr = (c.h * Math.PI) / 180;
+  return [c.L, c.C * Math.cos(hr), c.C * Math.sin(hr)];
+}
+
+const LOCATE_GRID = 32;
+const LOCATE_REFINE = 4;
+
+/**
+ * The point that `system` maps to `target`, as near as it can find: the
+ * inverse of `pick`, by search, since the mappings have no closed-form
+ * inverse. A coarse grid, then a few rounds of finer grids about the best
+ * cell. Distance is in OKLab (sRGB strings), both colours summed. The default
+ * palette lands in the top-left deadzone. Where the sweep meets itself (hue
+ * wrap) either answer is returned; both pick the same palette.
+ */
+export function locate(system: PaletteSystem, target: Palette): Point {
+  const tl = oklab(target.light.srgb);
+  const td = oklab(target.dark.srgb);
+  if (!tl || !td) return { x: 0, y: 0 };
+  const dist = (a: Rgb | null, b: Rgb) =>
+    a ? Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) : Infinity;
+  const err = (p: Point) => {
+    const q = system.pick(p);
+    return dist(oklab(q.light.srgb), tl) + dist(oklab(q.dark.srgb), td);
+  };
+  let best: Point = { x: 0, y: 0 };
+  let bestErr = Infinity;
+  const consider = (p: Point) => {
+    const e = err(p);
+    if (e < bestErr) {
+      bestErr = e;
+      best = p;
+    }
+  };
+  for (let i = 0; i <= LOCATE_GRID; i++) {
+    for (let j = 0; j <= LOCATE_GRID; j++) consider({ x: i / LOCATE_GRID, y: j / LOCATE_GRID });
+  }
+  for (let step = 1 / LOCATE_GRID; step > 1e-4 && bestErr > 1e-6; step /= LOCATE_REFINE) {
+    const centre = best;
+    for (let i = -LOCATE_REFINE; i <= LOCATE_REFINE; i++) {
+      for (let j = -LOCATE_REFINE; j <= LOCATE_REFINE; j++) {
+        consider({ x: clamp01(centre.x + (i * step) / LOCATE_REFINE), y: clamp01(centre.y + (j * step) / LOCATE_REFINE) });
+      }
+    }
+  }
+  return best;
 }
 
 // ── Storage ──────────────────────────────────────────────────────────

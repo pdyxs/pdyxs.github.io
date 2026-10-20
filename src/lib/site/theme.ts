@@ -25,3 +25,16 @@ export function getActiveButton(preference: ThemePreference): ActiveButton {
   if (preference === 'dark') return 'dark';
   return 'system';
 }
+
+/**
+ * Fired on `document` after `html[data-theme]` changes: a ThemeToggle click,
+ * or the OS scheme changing while the preference is "system" (Base.astro's
+ * head script and ThemeToggle both listen for that). Detail: `{ theme }`, the
+ * resolved theme. The inline scripts that fire it can't import, so they spell
+ * the name out; theme.test.ts holds them to this constant.
+ */
+export const THEME_CHANGE_EVENT = 'site:theme';
+
+export interface ThemeChangeDetail {
+  theme: ResolvedTheme;
+}

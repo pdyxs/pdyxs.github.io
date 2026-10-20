@@ -5,7 +5,7 @@
    border, which is ink at a different semantic). Anything that used to be a
    grey is now either pure, or a dither built from the same two colours.
 
-   The pair defaults to white and black. The palette picker (PalettePicker.astro)
+   The pair defaults to white and black. The mark's palette tool (palette-dom.ts)
    overrides them by writing --color-{light,dark}-{srgb,p3} onto <html>: the same
    oklch() colour fitted to each gamut, chosen between just below. */
 :root {
@@ -95,8 +95,25 @@
      more, raise both together (0.8/0.8 = a lighter, more colourful dark). */
   --palette-dark-bg-l: 0.8;
   --palette-dark-bg-c: 0.8;
-  /* The palette picker's drag handle (PalettePicker.astro). */
+  /* The drag handles on /experiments/palette-picker. */
   --palette-swatch-size: 28px;
+  /* The suspended mark (SuspendedMark.astro). Its overlay sits above the page;
+     the hit target is one above that. The dot's hit target never shrinks
+     below the minimum, however small the dot is drawn. */
+  --z-mark: 900;
+  --mark-hit-min: 44px;
+  /* The page-mode title's font-size (.page-title, card-chrome.css). A token
+     because the hanging mark is sized from it, on pages with no title. */
+  --page-title-size: clamp(2rem, 5vw, 3rem);
+  /* The mark hanging at the top of the screen, after the title has left or
+     with no title at all (a cold-loaded card, a page with no stack). Its em is
+     the title's, grown by the exit (TITLE_EXIT_SCALE, mark/motion.ts), and the
+     dot is that em times the full stop's ink width (HANG_DOT_INK,
+     mark/hang.ts). The SSR pose is sized by these and the script reads them
+     back, so the two can't disagree; mark/hang.test.ts pins the two factors to
+     their TS twins. */
+  --mark-hang-em:   calc(var(--page-title-size) * 3);
+  --mark-hang-size: calc(var(--mark-hang-em) * 0.095);
 
   --space-xs:     0.375rem;
   --space-sm:     0.75rem;
@@ -194,8 +211,9 @@ html[data-theme="dark"] {
 
    Guarded by @supports: without relative colour syntax the declaration would
    be invalid at computed-value time and the page would lose its background,
-   rather than falling back. `data-palette-dark="shared"` is the picker's dev
-   toggle for comparing against the underived colour. */
+   rather than falling back. `data-palette-dark="shared"` is the dev-only
+   toggle on /experiments/palette-picker for comparing against the underived
+   colour; Base's dev-only head script applies it on every page. */
 @supports (color: oklch(from red l c h)) {
   html[data-theme="dark"]:not([data-palette-dark="shared"]) {
     --color-bg: oklch(from var(--color-dark) calc(l * var(--palette-dark-bg-l)) calc(c * var(--palette-dark-bg-c)) h);

@@ -217,9 +217,22 @@ pre,
   display: block;
   /* Mobile: no horizontal padding of our own — #card-stack's padding is
      the only horizontal inset content should get. Desktop restores the
-     original inline padding below. */
-  padding: var(--space-xl) 0 var(--space-lg);
-  border-bottom: var(--border-width) solid var(--color-border);
+     original inline padding (stack-desktop.css). The rule below reads the
+     same property, so it always spans the header's full box. */
+  --page-header-inset-inline: 0px;
+  padding: var(--space-xl) var(--page-header-inset-inline) 0;
+}
+
+/* The line under the title and subtitle. It used to be the header's
+   border-bottom; it is its own element so it can be named on its own and
+   morph into the next card's header (`page-rule`, CardStack.svelte). Same
+   pixels at rest: the header's bottom padding is now this margin-top, and the
+   negative inline margins take it out across the header's inline padding to
+   the edges the border used to run between. Its box is the line and nothing
+   else, so the morph starts from the line. */
+.page-header-rule {
+  margin: var(--space-lg) calc(-1 * var(--page-header-inset-inline, 0px)) 0;
+  border-top: var(--border-width) solid var(--color-border);
 }
 
 .stack-card--page > .card-header {
@@ -228,7 +241,7 @@ pre,
 
 .page-title {
   font-family: var(--font-heading);
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: var(--page-title-size);
   font-weight: 400;
   color: var(--color-text);
   margin: 0 0 var(--space-xs);

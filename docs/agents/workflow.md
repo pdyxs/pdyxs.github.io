@@ -103,7 +103,9 @@ src/lib/
 │   ├──        results/ the browse pool, ranking, cards, reveal
 │   └──        home/    the home lens's slot grid and day-seeded selection
 ├── render/             renderers and what a card body composes: images, embeds, actions
-└── site/               whole-site output: seo, sitemap, rss, redirects, promotion, audit
+└── site/               whole-site output: seo, sitemap, rss, redirects, promotion, audit, theme, palette
+    ├──        mark/    the suspended mark's pure decisions (see mark.md)
+    └──        mark-tools/ the mark's tool behaviours and their registry
 ```
 
 ```
@@ -116,7 +118,7 @@ src/components/
 ├── card-renderers/   registered in COLLECTION_RENDERERS / NAV_RENDERERS, plus the series pieces
 ├── lens-renderers/   registered in LENS_BODY_LOADERS
 ├── header-media/     bespoke masthead renderers
-└── site/             page chrome (ThemeToggle)
+└── site/             page chrome (ThemeToggle, SuspendedMark, MarkTool)
 ```
 
 **Two import idioms live here, and the split is forced rather than chosen.**

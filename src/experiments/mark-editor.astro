@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { HANG_DEPTH } from '@site/mark/hang';
 
 // Throwaway /experiments route: the strand editor for the suspended-dot mark.
 // The title fills most of the screen so the five threads can be shaped
@@ -14,7 +15,7 @@ import Base from '../layouts/Base.astro';
 // whole rig, to paste into src/data/mark-rig.ts.
 ---
 
-<Base title="Mark editor">
+<Base title="Mark editor" mark={false}>
   <div class="me" data-pose="title">
     <div class="me-offscreen" aria-hidden="true"></div>
     <div class="me-edge" aria-hidden="true"></div>
@@ -39,7 +40,7 @@ import Base from '../layouts/Base.astro';
         <a href="/experiments/suspended-dot">see it move →</a>
       </div>
       <label>width <input type="range" class="me-in-width" min="5" max="60" /> <output></output></label>
-      <label class="me-sep">letters above dot <input type="range" class="me-in-sep" min="10" max="150" value="60" /> <output></output></label>
+      <label class="me-sep">letters above dot <input type="range" class="me-in-sep" min="10" max="150" value={Math.round(HANG_DEPTH * 100)} /> <output></output></label>
       <div class="me-row me-show">
         show
         <label><input type="checkbox" data-show="a" checked /> ● anchors</label>
@@ -153,7 +154,7 @@ import Base from '../layouts/Base.astro';
 
 <script>
   import { MARK_RIG, type MarkRig } from '@data/mark-rig';
-  import { poseThreads, threadPathData, toChord, RIG_STORAGE_KEY, type V, type ThreadGeometry } from '@site/mark-geometry';
+  import { poseThreads, threadPathData, toChord, RIG_STORAGE_KEY, type V, type ThreadGeometry } from '@site/mark/geometry';
 
   const root = document.querySelector<HTMLElement>('.me')!;
   const title = root.querySelector<HTMLElement>('.me-title')!;
@@ -165,8 +166,6 @@ import Base from '../layouts/Base.astro';
   const inWidth = root.querySelector<HTMLInputElement>('.me-in-width')!;
   const inSep = root.querySelector<HTMLInputElement>('.me-in-sep')!;
   const exportBox = root.querySelector<HTMLTextAreaElement>('.me-export')!;
-
-  document.querySelectorAll<HTMLElement>('palette-picker').forEach((el) => (el.style.display = 'none'));
 
   // ── The rig being edited ──
   function loadRig(): MarkRig {

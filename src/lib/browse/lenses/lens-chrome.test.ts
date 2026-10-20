@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveLensChrome, lensChromeForKey, siteSubtitle, SITE_TITLE } from '@browse/lenses/lens-chrome';
+import { deriveLensChrome, lensChromeForKey, siteSubtitle, splitTitleMark, SITE_TITLE } from '@browse/lenses/lens-chrome';
 import { getLensDefinition } from '@browse/lenses/lens-registry';
 import type { FilterState } from '@dimensions';
 
@@ -102,5 +102,21 @@ describe('lensChromeForKey', () => {
   it('null for a card key and for an undeclared lens', () => {
     expect(lensChromeForKey('what/puzzles/foo')).toBeNull();
     expect(lensChromeForKey('lens/no-such-lens')).toBeNull();
+  });
+});
+
+describe('splitTitleMark', () => {
+  it('splits the site title around its full stop, losing nothing', () => {
+    const parts = splitTitleMark(SITE_TITLE)!;
+    expect(parts.mark).toBe('.');
+    expect(parts.before + parts.mark + parts.after).toBe(SITE_TITLE);
+  });
+
+  it('splits on the LAST full stop', () => {
+    expect(splitTitleMark('a.b.c')).toEqual({ before: 'a.b', mark: '.', after: 'c' });
+  });
+
+  it('is null for a title with no full stop', () => {
+    expect(splitTitleMark('pdyxs')).toBeNull();
   });
 });
