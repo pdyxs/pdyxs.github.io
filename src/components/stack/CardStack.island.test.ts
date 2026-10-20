@@ -544,32 +544,41 @@ describe('close', () => {
   });
 });
 
-describe('page ↔ card view-transition names', () => {
-  /** Who carries which name, as `.class:name`. */
-  const named = () =>
-    [...document.querySelectorAll<HTMLElement>('*')]
-      .filter(e => e.style.viewTransitionName)
-      .map(e => `${e.closest<HTMLElement>('[data-uid]')?.dataset.uid} .${e.classList[0]}:${e.style.viewTransitionName}`)
-      .sort();
+/** Who carries which name, as `.class:name`. */
+const named = () =>
+  [...document.querySelectorAll<HTMLElement>('*')]
+    .filter(e => e.style.viewTransitionName)
+    .map(e => `${e.closest<HTMLElement>('[data-uid]')?.dataset.uid} .${e.classList[0]}:${e.style.viewTransitionName}`)
+    .sort();
 
-  /**
-   * A `startViewTransition` that records the names on each side of the update
-   * and the direction marker. happy-dom has no `ViewTransition`, so this is
-   * the `html[data-vt-type]` fallback; the typed path is covered in
-   * typed-view-transition.test.ts.
-   */
-  function recordViewTransitions() {
-    const runs: { type?: string; old: string[]; new: string[] }[] = [];
-    (document as any).startViewTransition = (update: () => void) => {
-      const run = { type: document.documentElement.dataset.vtType, old: named(), new: [] as string[] };
+/**
+ * A `startViewTransition` that records the names on each side of the update
+ * and the direction marker. happy-dom has no `ViewTransition`, so this is
+ * the `html[data-vt-type]` fallback; the typed path is covered in
+ * typed-view-transition.test.ts.
+ *
+ * Like a browser, it captures the old state and runs the update LATER, not
+ * inside the call: anything the caller does right after it returns (the
+ * `site:presentation` announcement) lands before the capture.
+ */
+function recordViewTransitions() {
+  const runs: { type?: string; old: string[]; new: string[]; vt: ViewTransition; updated: boolean }[] = [];
+  (document as any).startViewTransition = (update: () => void) => {
+    const run = { type: document.documentElement.dataset.vtType, old: [] as string[], new: [] as string[], vt: null as unknown as ViewTransition, updated: false };
+    const done = Promise.resolve().then(() => {
+      run.old = named();
       update();
+      run.updated = true;
       run.new = named();
-      runs.push(run);
-      return { finished: Promise.resolve() };
-    };
-    return runs;
-  }
+    });
+    run.vt = { finished: done, ready: done, updateCallbackDone: done, skipTransition() {}, types: new Set() } as unknown as ViewTransition;
+    runs.push(run);
+    return run.vt;
+  };
+  return runs;
+}
 
+describe('page ↔ card view-transition names', () => {
   afterEach(() => { delete (document as any).startViewTransition; });
 
   it('page → card: the rule morphs into the card header, typed page-to-card', async () => {
@@ -584,11 +593,12 @@ describe('page ↔ card view-transition names', () => {
 
     expect(runs).toHaveLength(1);
     expect(runs[0].type).toBe('page-to-card');
-    expect(runs[0].old).toEqual(['lens/home .page-header-rule:page-rule', 'lens/home .page-title:home-title']);
-    // Home's names are still on here; in a browser its page header is
+    // Only the rule: the title and subtitle are the suspended mark's to name.
+    expect(runs[0].old).toEqual(['lens/home .page-header-rule:page-rule']);
+    // Home's rule keeps its name here; in a browser its page header is
     // display:none in the new state, so only the card's side is captured.
-    expect(runs[0].new).toContain(`${CARD_B} .card-header:page-rule`);
-    expect(runs[0].new).toContain(`${CARD_B} .card-header-title:home-title`);
+    expect(runs[0].new).toEqual(['lens/home .page-header-rule:page-rule', `${CARD_B} .card-header:page-rule`]);
+    expect([...runs[0].old, ...runs[0].new].join()).not.toContain('home-title');
     expect(named()).toEqual([]);
     expect(document.documentElement.dataset.vtType).toBeUndefined();
   });
@@ -687,6 +697,131 @@ describe('site:presentation', () => {
 
     expect(get(stackStore).entries).toHaveLength(2);
     expect(seen).toEqual([]);
+  });
+});
+
+describe('site:presentation around a page ↔ card view transition', () => {
+  /**
+   * Every presentation announced, in order, with whether the transition's
+   * update had run yet when it arrived (it must not have: a listener names its
+   * elements into the OLD snapshot) and the names set at that moment.
+   */
+  function listen(runs: ReturnType<typeof recordViewTransitions>) {
+    const seen: { to: string; vt: ViewTransition | null; beforeUpdate: boolean | null }[] = [];
+    const on = (e: CustomEvent<PresentationDetail>) => {
+      const run = e.detail.vt ? runs.find((r) => r.vt === e.detail.vt) : null;
+      seen.push({ to: e.detail.to, vt: e.detail.vt, beforeUpdate: run ? !run.updated : null });
+    };
+    document.addEventListener(PRESENTATION_EVENT, on);
+    return { seen, stop: () => document.removeEventListener(PRESENTATION_EVENT, on) };
+  }
+
+  /** Push a card from inside `uid`'s body. */
+  function pushFrom(uid: string, card: string) {
+    const link = document.createElement('a');
+    link.dataset.pushCard = card;
+    document.querySelector(`[data-uid="${uid}"] .stack-card-body-inner`)!.appendChild(link);
+    link.click();
+  }
+
+  /** Close `uid`, standing in for the body's collapse finishing (see 'close' above). */
+  async function closeLast(uid: string) {
+    const bodyWrapper = document.querySelector<HTMLElement>(`[data-uid="${uid}"] .body-wrapper`)!;
+    document.querySelector<HTMLElement>(`[data-uid="${uid}"] .stack-card-close`)!.click();
+    await tick();
+    const ended = new Event('transitionend');
+    Object.defineProperty(ended, 'propertyName', { value: 'grid-template-rows' });
+    bodyWrapper.dispatchEvent(ended);
+    await settle();
+  }
+
+  beforeEach(() => { document.documentElement.removeAttribute('data-presentation'); });
+  afterEach(() => { delete (document as any).startViewTransition; });
+
+  it("page → card announces 'card' once, with the transition, before its update runs", async () => {
+    const runs = recordViewTransitions();
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+    const { seen, stop } = listen(runs);
+    pushFrom('lens/home', CARD_B);
+    await settle();
+    stop();
+
+    expect(runs).toHaveLength(1);
+    expect(seen).toEqual([{ to: 'card', vt: runs[0].vt, beforeUpdate: true }]);
+    expect(currentPresentation()).toBe('card');
+    expect(named()).toEqual([]);
+  });
+
+  it('any page-mode lens leaves the same way, not only home', async () => {
+    const runs = recordViewTransitions();
+    mountStack({ activeUid: 'lens/newest', activeHtml: fragment('lens/newest', { hash: null }) });
+    await settle();
+    const { seen, stop } = listen(runs);
+    pushFrom('lens/newest', CARD_B);
+    await settle();
+    stop();
+
+    expect(runs).toHaveLength(1);
+    expect(runs[0].type).toBe('page-to-card');
+    expect(runs[0].old).toEqual(['lens/newest .page-header-rule:page-rule']);
+    expect(runs[0].new).toContain(`${CARD_B} .card-header:page-rule`);
+    expect(seen).toEqual([{ to: 'card', vt: runs[0].vt, beforeUpdate: true }]);
+    expect(named()).toEqual([]);
+  });
+
+  it("the deep-link close announces 'page' once, with the transition, before its update runs", async () => {
+    const runs = recordViewTransitions();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    const { seen, stop } = listen(runs);
+    await closeLast(CARD_A);
+    stop();
+
+    expect(get(stackStore).entries.map(e => e.key)).toEqual(['lens/home']);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].type).toBe('card-to-page');
+    expect(seen).toEqual([{ to: 'page', vt: runs[0].vt, beforeUpdate: true }]);
+    expect(currentPresentation()).toBe('page');
+    expect(named()).toEqual([]);
+  });
+
+  it("the trim close back onto home announces 'page' once, with no transition", async () => {
+    const runs = recordViewTransitions();
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+    pushFrom('lens/home', CARD_B);
+    await settle();
+    expect(get(stackStore).entries).toHaveLength(2);
+
+    const { seen, stop } = listen(runs);
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_B}"] .stack-card-close`)!.click();
+    await settle();
+    stop();
+
+    expect(get(stackStore).activeSlot).toBe('lens/home');
+    // The push's transition, and nothing new: a trim is no view transition.
+    expect(runs).toHaveLength(1);
+    expect(seen).toEqual([{ to: 'page', vt: null, beforeUpdate: null }]);
+    expect(named()).toEqual([]);
+  });
+
+  it('a round trip announces each change exactly once, and never names home-title', async () => {
+    const runs = recordViewTransitions();
+    const { seen, stop } = listen(runs);
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+    pushFrom('lens/home', CARD_B);
+    await settle();
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_B}"] .stack-card-close`)!.click();
+    await settle();
+    pushFrom('lens/home', CARD_C);
+    await settle();
+    stop();
+
+    expect(seen.map((d) => `${d.to}:${d.vt ? 'vt' : 'null'}`)).toEqual(['page:null', 'card:vt', 'page:null', 'card:vt']);
+    expect(runs.flatMap((r) => [...r.old, ...r.new]).join()).not.toContain('home-title');
+    expect(named()).toEqual([]);
   });
 });
 

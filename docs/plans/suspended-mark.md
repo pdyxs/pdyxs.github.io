@@ -105,18 +105,27 @@ trajectory's end.
 
 CardStack keeps owning the push and the VT. It gains one effect: a document
 event, `site:presentation`, with
-`{ to: 'page' | 'card', vt: ViewTransition | null }`. It fires just before
-`startViewTransition` on both page↔card paths, and once on mount with
-`vt: null` for the cold-load mode. (Slice 4 brought the event forward: a thin
-`$effect` after the layout effect announces the active entry's presentation on
-mount and on every change, always with `vt: null`. Slice 5 moves the page↔card
-announcements to just before the VT and fills in `vt`.) Each announcement is
+`{ to: 'page' | 'card', vt: ViewTransition | null }`. On both page↔card VT
+paths it fires right **after** `startViewTransition` returns (it needs the
+transition object), which is still before the old state is captured: the
+browser captures at its next rendering opportunity, and only then runs the
+update. It fires once on mount with `vt: null` for the cold-load mode, and
+with `vt: null` for every change that has no VT. (Slice 4 brought the event
+forward as a thin `$effect`; slice 5 has the VT paths announce for themselves
+and the effect drop a repeat of the last value announced, so each change is
+announced exactly once.) Each announcement is
 also written to `html[data-presentation]`, so a listener whose script runs
 after the first event reads the last value at startup. The page → card path is generalised from
 `wasHomePageMode` to "the sole entry is page mode", which covers question 3
 above. The mark reads title geometry before the VT starts, names the title
 and subtitle itself, and animates only VT pseudos on `document.documentElement`.
-It never writes to `#card-stack`.
+It never writes to `#card-stack`: the names come from a rule in
+`SuspendedMark.astro` gated on `html[data-mark-vt]`, which the mark sets on the
+announcement and removes on `finished` (slice 5: a selector names the
+returning title in the NEW state, which the mark has no hook into CardStack's
+update callback to do from script). Returning, the dot follows `titleExit`'s
+offset from the **live** slot, because the browser keeps placing a new-side
+snapshot on its element and the stack may still be moving the page card.
 
 **Not every page↔card change is a VT** (slice 3 found this). The usual close,
 back onto a home already in the stack (`?from=0` → `/`), only trims the stack
@@ -256,7 +265,11 @@ New selectors:
 | `.page-header-rule` | the line under the subtitle (replaces `.page-header`'s border-bottom) |
 
 State attributes: `site-mark[data-mode="page"|"card"]`,
-`site-mark[data-overlay="doc"]`, `.site-mark-tool[data-open]`,
+`site-mark[data-overlay="doc"]`, `site-mark[data-hang]` (slice 5: a title has
+left, so card mode shows the dot hanging; without it card mode is hidden),
+`html[data-mark-vt="title"|"mark"]` (slice 5: for the length of a page ↔ card
+VT, names the overlay and, for `title`, the page-mode title and subtitle;
+`mark` is reduced motion, the overlay only), `.site-mark-tool[data-open]`,
 `.site-mark-bauble[data-dragging]`, `html[data-mark-ready]`,
 `html[data-presentation="page"|"card"]` (the last `site:presentation`, written
 by `announcePresentation`).
@@ -264,8 +277,10 @@ by `announcePresentation`).
 View-transition names:
 
 - **new:** `site-mark`, `page-title`, `page-subtitle`, `page-rule`. The
-  title and subtitle names are set by the mark; `page-rule` is set by
-  CardStack.
+  overlay, title and subtitle names are the mark's (through
+  `html[data-mark-vt]`, not `element.style`); `page-rule` is set by
+  CardStack. Their pseudo rules are in `SuspendedMark.astro`, not
+  `layout.css`.
 - **types** (slice 3): `page-to-card` and `card-to-page` on the page ↔ card
   transitions, so CSS can tell which side of `page-rule` is the card header.
   Fallback marker where types are unsupported: `html[data-vt-type]`.
@@ -301,8 +316,10 @@ New `:root` custom properties (`tokens.css`):
 Motion constants (spring k/ζ, durations, `PULLED`, `DROP`/`REEL`) are TS
 constants in `mark/motion.ts`. Per-tool numbers live in `mark-tools.ts`.
 
-Dither check: the only transforms are on VT pseudos and on SVG children of
-the overlay. Nothing dithered sits under either.
+Dither check: the only transforms are on VT pseudos, on SVG children of
+the overlay, and (slice 5, the trim close) a WAAPI transform on the live
+`.page-title` and `.page-subtitle`, whose contents are text and a link.
+Nothing dithered sits under any of them.
 
 ---
 

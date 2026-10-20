@@ -18,9 +18,10 @@ export interface PresentationDetail {
   to: Presentation;
   /**
    * The View Transition the change runs inside, when there is one, so a
-   * listener can animate its own part of it. Always null for now: slice 5 of
-   * docs/plans/suspended-mark.md announces just before `startViewTransition`
-   * and passes the transition here.
+   * listener can animate its own part of it. Announced right after
+   * `startViewTransition` returns, before the old state is captured, so a
+   * listener can still name elements into it. Null for a change with no
+   * transition (the trim close back onto a page, a popstate, the mount).
    */
   vt: ViewTransition | null;
 }

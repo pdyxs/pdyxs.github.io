@@ -160,18 +160,12 @@
   animation-duration: var(--stack-vt-ms);
 }
 
-/* Home → card morph: the page-mode title slides into the pushed card's
-   header title (issue #24). Names are injected/cleared by CardStack.svelte. */
-::view-transition-group(home-title) {
-  z-index: 1;
-  animation-duration: var(--stack-vt-ms);
-  animation-timing-function: ease-in-out;
-}
-
 /* Page ↔ card: the line under the page title (.page-header-rule) grows into
    the card's .card-header, and shrinks back into it on a close to home. The
    default group morph does the growing, line box ↔ header box. No z-index:
-   the title (z-index 1 above) passes over it.
+   the title and subtitle pass over it. They leave (and come back) on their
+   own, named and animated by the suspended mark; their pseudo rules, and the
+   live `site-mark` overlay's, are with the mark in SuspendedMark.astro.
 
    Only the header's image is stretched to the box. By default an image keeps
    its aspect ratio, so while the box is still line-thin the header would spill

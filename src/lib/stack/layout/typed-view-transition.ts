@@ -19,10 +19,12 @@
 /** The directions the stack's page ↔ card transitions declare. */
 export type StackVtType = 'page-to-card' | 'card-to-page';
 
-/** The part of `ViewTransition` the stack uses. */
-export interface StackViewTransition {
-  finished: Promise<void>;
-}
+/**
+ * The transition itself. The stack only awaits `finished`, but it hands the
+ * whole object on to `site:presentation` listeners (the suspended mark), which
+ * need `ready` and `updateCallbackDone` to animate their own part of it.
+ */
+export type StackViewTransition = ViewTransition;
 
 /** Starts a view transition, optionally typed. */
 export type StartStackVT = (update: () => void, type?: StackVtType) => StackViewTransition;

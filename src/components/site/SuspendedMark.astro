@@ -4,13 +4,20 @@
 // Mounted once, in Base.astro, outside #card-stack. The build plan is
 // docs/plans/suspended-mark.md; /experiments/suspended-dot is its tuning bench.
 //
-// What it does so far (slice 4): in page mode it draws over the title's
+// What it does so far (slice 5): in page mode it draws over the title's
 // `.page-title-mark` slot, and clicking the dot pulls the threads taut and lets
-// them go. In card mode it hides; hanging from the top edge is slices 5 and 6.
+// them go. When the page header leaves (page → card) the title rises, grows
+// and drifts to the centre line, and the dot is caught at the top edge and
+// hangs there for as long as the stack is in card mode; the way back reverses
+// it. A cold load in card mode has no title to hang from and stays hidden
+// (slice 6).
 //
 // It learns the mode from `site:presentation` (src/lib/site/presentation-event.ts),
-// which CardStack.svelte announces. It never queries or mutates the stack
-// beyond reading the geometry of the one visible page-mode title slot.
+// which CardStack.svelte announces, with the View Transition when there is one.
+// It never mutates the stack. It reads the geometry of the one visible
+// page-mode title, names that title and subtitle for a transition through a
+// state attribute on <html> (see the CSS), and on the one close that has no
+// transition animates the live title's transform (see `#returnLive`).
 //
 // A self-contained custom element, like PalettePicker.astro. The motion and
 // the posing are pure, in src/lib/site/mark/; this file reads the page and
@@ -39,11 +46,13 @@ import { MARK_RIG } from '@data/mark-rig';
   /* No box of its own: the overlay and the hit target position themselves. */
   site-mark {
     display: contents;
-    /* Read back by the script: 0 means the tug doesn't animate. */
+    /* Read back by the script: 0 means nothing animates (the tug, the exit). */
     --site-mark-motion: 1;
   }
-  /* Card mode, and before any mode is known. Slices 5 and 6 hang the dot here. */
-  site-mark[data-mode='card'] {
+  /* Card mode with no title ever measured (a cold load of a card), and before
+     any mode is known: nothing to hang from yet. Slice 6 hangs the dot here
+     too. Once a title has left (`data-hang`), card mode shows the dot hanging. */
+  site-mark[data-mode='card']:not([data-hang]) {
     display: none;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -52,10 +61,11 @@ import { MARK_RIG } from '@data/mark-rig';
     }
   }
 
-  /* On the viewport by default. At rest in the title it lives in the document
-     instead (`data-overlay="doc"`), so it scrolls natively with the text: a
-     redraw on scroll would trail it by a frame. A sibling of the page, never an
-     ancestor of anything dithered (styling.md). */
+  /* On the viewport by default, which is where it hangs in card mode, so
+     scrolling a card never moves it. At rest in the title it lives in the
+     document instead (`data-overlay="doc"`), so it scrolls natively with the
+     text: a redraw on scroll would trail it by a frame. A sibling of the page,
+     never an ancestor of anything dithered (styling.md). */
   .site-mark-overlay {
     position: fixed;
     inset: 0;
@@ -118,14 +128,94 @@ import { MARK_RIG } from '@data/mark-rig';
   :global(html[data-mark-ready] .page-title-mark) {
     color: transparent;
   }
+
+  /* ── The page ↔ card View Transition ─────────────────────────────
+
+     The mark's three names. They are not written onto the elements: the mark
+     sets `html[data-mark-vt]` when CardStack announces a transition (before
+     the old state is captured) and removes it on `finished`, and these rules
+     do the naming. That is what lets the RETURNING title be named in the new
+     state: the mark has no hook inside CardStack's update callback, and by the
+     time `updateCallbackDone` settles the browser has already captured the new
+     state (the spec resolves it in the same step that captures). A selector
+     names whatever is laid out at each capture instead: the page-mode title is
+     on the old side going to a card and on the new side coming back, and on
+     neither side twice, because only the sole entry is ever `stack-card--page`.
+
+     `title`: the overlay, the title and the subtitle. `mark` (reduced motion):
+     the overlay only, so the title swaps with the root, at once. */
+  :global(html[data-mark-vt]) .site-mark-overlay {
+    view-transition-name: site-mark;
+  }
+  :global(html[data-mark-vt='title'] .stack-card--page > .page-header .page-title) {
+    view-transition-name: page-title;
+  }
+  :global(html[data-mark-vt='title'] .stack-card--page > .page-header .page-subtitle) {
+    view-transition-name: page-subtitle;
+  }
+</style>
+
+<style is:global>
+  /* The pseudos for the names above. With the mark, not with the stack's VT
+     rules in layout.css: these are the mark's names, set and animated by its
+     script, and CardStack never sees them. (cssCodeSplit is off, so this sheet
+     is on every page either way.)
+
+     The overlay renders live through the transition: no old image, and the new
+     one (a live view of the SVG the rAF loop is drawing) neither fades nor
+     moves. Above the title and subtitle, which on a return are new-only and so
+     would otherwise stack after it. */
+  ::view-transition-old(site-mark) {
+    display: none;
+  }
+  ::view-transition-new(site-mark),
+  ::view-transition-group(site-mark) {
+    animation: none;
+  }
+  ::view-transition-group(site-mark) {
+    z-index: 2;
+  }
+  /* The title and subtitle have one side only (old leaving, new returning), so
+     the UA gives them no group morph, only a fade on the image. No fade: the
+     script moves the image with keyframes sampled from titleExit. Over the
+     morphing rule (`page-rule`, layout.css), which has no z-index. */
+  ::view-transition-old(page-title),
+  ::view-transition-new(page-title),
+  ::view-transition-old(page-subtitle),
+  ::view-transition-new(page-subtitle) {
+    animation: none;
+  }
+  ::view-transition-group(page-title),
+  ::view-transition-group(page-subtitle) {
+    z-index: 1;
+  }
 </style>
 
 <script>
   import { MARK_RIG } from '@data/mark-rig';
   import { poseThreads, threadPathData, tauten, type V } from '@site/mark/geometry';
-  import { TOOLS_CLOSED, lapseTug, setWant, stepTools, tautness, type ToolsState } from '@site/mark/motion';
+  import {
+    DOT_AT_REST,
+    TITLE_EXIT_MS,
+    TOOLS_CLOSED,
+    dotMoving,
+    hangSeparation,
+    lapseTug,
+    poseBlend,
+    setWant,
+    stepDot,
+    stepTools,
+    tautness,
+    titleExit,
+    titleExitKeyframes,
+    type DotState,
+    type TitleStart,
+    type ToolsState,
+    type Viewport,
+  } from '@site/mark/motion';
+  import { caughtDot, exitTime, hangFrame, slotSource } from '@site/mark/exit';
   import { FALLBACK_DOT_INK, dotInSlot, inkBounds, inkEm, plausibleDotInk, type InkEm, type SlotDot } from '@site/mark/measure';
-  import { PRESENTATION_EVENT, currentPresentation, type Presentation } from '@site/presentation-event';
+  import { PRESENTATION_EVENT, currentPresentation, type Presentation, type PresentationDetail } from '@site/presentation-event';
 
   /** The one place the mark looks into the page: the page-mode title's full stop. */
   const SLOT_SELECTOR = '.stack-card--page .page-title-mark';
@@ -167,6 +257,40 @@ import { MARK_RIG } from '@data/mark-rig';
     return { ink, scanned: true };
   }
 
+  /** The dot measured off a slot at rest: its size and centre in the slot's box, the font size, the slot's width. */
+  type Measured = SlotDot & { em: number; slotW: number };
+
+  /**
+   * The title's exit (or return) in flight.
+   *  - `vt`: over a View Transition. Only the snapshots move, so the slot is
+   *    `titleExit` at the title snapshot's own clock.
+   *  - `live`: the trim close back onto a page, which has no transition. The
+   *    live title and subtitle are animated, and the slot is read off them.
+   *  - `instant`: a View Transition under reduced motion. Nothing animates;
+   *    the overlay is named only so the dot jumps to its end state live.
+   */
+  interface Run {
+    kind: 'vt' | 'live' | 'instant';
+    direction: 'leave' | 'return';
+    /** Where the title starts from at rest. A return measures it once the new state is laid out. */
+    start: TitleStart | null;
+    viewport: Viewport;
+    /** The title's animation, whose clock the dot samples; null until `ready`. */
+    clock: Animation | null;
+    anims: Animation[];
+    /** Whether the header has a subtitle to move, read while it is laid out. */
+    subtitle: boolean;
+  }
+
+  /** Whether the header `slot`'s title is in has a subtitle. */
+  const hasSubtitle = (slot: HTMLElement) => !!slot.closest('.page-header')?.querySelector('.page-subtitle');
+
+  /** The current layout viewport: the box the fixed overlay covers, scrollbar excluded. */
+  const viewportNow = (): Viewport => ({
+    width: document.documentElement.clientWidth,
+    height: document.documentElement.clientHeight,
+  });
+
   class SiteMark extends HTMLElement {
     #overlay!: SVGSVGElement;
     #paths: SVGPathElement[] = [];
@@ -176,10 +300,20 @@ import { MARK_RIG } from '@data/mark-rig';
     #probeBase!: HTMLElement;
 
     #mode: Presentation | null = null;
-    /** The title slot being drawn over, while in page mode. */
+    /** The page-mode title slot, while one is laid out. */
     #slot: HTMLElement | null = null;
-    /** The dot, measured off the slot: its size, and its centre within the slot's box. */
-    #measured: (SlotDot & { em: number }) | null = null;
+    /**
+     * The dot, measured off the slot at rest. Kept in card mode: the hanging
+     * dot is the title's, grown by the exit's scale.
+     */
+    #measured: Measured | null = null;
+    /** The last title start measured at rest. Card mode hangs from its END (`hangFrame`). */
+    #start: TitleStart | null = null;
+    /** poseBlend's denominator, for #start. */
+    #separation = 1;
+    #run: Run | null = null;
+    #state: DotState = DOT_AT_REST;
+    #prevY: number | null = null;
     #fontsReady = false;
     /** The pull → release → rest machine (motion.ts). With no tools yet, every pull is a tug. */
     #ts: ToolsState = TOOLS_CLOSED;
@@ -206,94 +340,306 @@ import { MARK_RIG } from '@data/mark-rig';
       });
       // The stack may have announced before this script ran.
       const now = currentPresentation();
-      if (now) this.#setMode(now);
+      if (now) this.#present({ to: now, vt: null });
     }
 
     disconnectedCallback() {
       document.removeEventListener(PRESENTATION_EVENT, this.#onPresentation);
       window.removeEventListener('resize', this.#onResize);
-      this.#detach();
+      this.#endRun();
+      this.#ro.disconnect();
+      cancelAnimationFrame(this.#frame);
+      this.#frame = 0;
+      this.#setReady(false);
     }
 
     // ── Mode ───────────────────────────────────────────────────────
 
-    #onPresentation = (e: CustomEvent<{ to: Presentation }>) => this.#setMode(e.detail.to);
+    #onPresentation = (e: CustomEvent<PresentationDetail>) => this.#present(e.detail);
     #onResize = () => this.#relayout();
+
+    /** Reduced motion is decided in CSS (`--site-mark-motion`), and read back here. */
+    #moves(): boolean {
+      return getComputedStyle(this).getPropertyValue('--site-mark-motion').trim() !== '0';
+    }
+
+    #present({ to, vt }: PresentationDetail) {
+      const from = this.#mode;
+      // A change while an exit is still running ends that exit first: its
+      // names and animations never outlive it.
+      this.#endRun();
+      if (to === from && !vt) return;
+      if (vt && !this.#moves()) return this.#instant(to, vt);
+      if (to === 'card') this.#toCard(vt);
+      else this.#toPage(vt, from === 'card');
+    }
 
     #setMode(mode: Presentation) {
       this.#mode = mode;
       this.dataset.mode = mode;
-      if (mode === 'page') {
-        // At rest in the title the overlay is document-positioned (see the CSS).
-        this.dataset.overlay = 'doc';
-        this.#attach();
-      } else {
-        delete this.dataset.overlay;
-        this.#detach();
-      }
     }
+
+    /** At rest in the title the overlay is document-positioned; anything else is on the viewport. */
+    #setAnchored(on: boolean) {
+      if (on) this.dataset.overlay = 'doc';
+      else delete this.dataset.overlay;
+    }
+
+    /** Page → card. With `vt`, the title leaves over it; without, it has already gone. */
+    #toCard(vt: ViewTransition | null) {
+      // Read the title before anything changes: the stack hasn't run the
+      // transition's update yet (it announces before the old capture), so
+      // the page-mode title is still laid out. With no transition the stack
+      // has already moved on, and the last start measured at rest stands in.
+      const slot = this.#findSlot();
+      if (slot && this.#fontsReady) this.#restMeasure(slot);
+      this.#ro.disconnect();
+      this.#slot = null;
+      this.#setMode('card');
+      this.#setAnchored(false);
+      const start = this.#start;
+      this.toggleAttribute('data-hang', !!start && !!this.#measured);
+      if (!start || !this.#measured) {
+        this.#stop();
+        this.#setReady(false);
+        return;
+      }
+      if (!vt || !slot) {
+        this.#state = caughtDot(this.#state);
+        this.#wake();
+        return;
+      }
+      const run: Run = { kind: 'vt', direction: 'leave', start, viewport: viewportNow(), clock: null, anims: [], subtitle: hasSubtitle(slot) };
+      this.#begin(run, vt);
+      // Hand the overlay to the viewport where the dot already is (t = 0),
+      // before the old state is captured.
+      this.#draw();
+      vt.ready
+        .then(() => this.#animateSnapshots(run, 'old'))
+        .catch(() => { /* skipped: `finished` still settles */ });
+    }
+
+    /**
+     * Card → page. With `vt`, the title comes back over it. Without one (the
+     * trim close back onto a page already in the stack), the live title does.
+     * `fromCard` is false for the first announcement, at load: nothing returns.
+     */
+    #toPage(vt: ViewTransition | null, fromCard: boolean) {
+      this.#setMode('page');
+      if (!vt) {
+        const slot = this.#findSlot();
+        if (fromCard && slot && this.#fontsReady && this.#moves()) return this.#returnLive(slot);
+        this.#setAnchored(true);
+        this.#attach();
+        return;
+      }
+      // On the viewport for the whole transition, already displayed (so the
+      // new state captures the overlay even after a cold card load, which
+      // never drew it), and caught at the edge for the title to come back to.
+      this.#setAnchored(false);
+      this.#state = caughtDot(this.#state);
+      const run: Run = { kind: 'vt', direction: 'return', start: null, viewport: viewportNow(), clock: null, anims: [], subtitle: false };
+      this.#begin(run, vt);
+      vt.updateCallbackDone
+        .then(() => {
+          // The new state is laid out: the title the dot is coming back to is
+          // there, at rest (only its snapshot will move).
+          if (this.#run !== run) return;
+          const slot = this.#findSlot();
+          if (!slot || !this.#fontsReady) return;
+          this.#follow(slot);
+          this.#restMeasure(slot);
+          run.start = this.#start;
+          run.subtitle = hasSubtitle(slot);
+          this.#setReady(true);
+        })
+        .catch(() => {});
+      vt.ready
+        .then(() => this.#animateSnapshots(run, 'new'))
+        .catch(() => {});
+    }
+
+    /**
+     * Reduced motion: the stack's transition still runs (at 0ms), but nothing
+     * here animates. Only the overlay is named, so it renders live, and the
+     * dot is put straight into its end state once the new state is laid out.
+     * The title is in the root snapshot and swaps with it.
+     */
+    #instant(to: Presentation, vt: ViewTransition) {
+      const run: Run = { kind: 'instant', direction: to === 'card' ? 'leave' : 'return', start: null, viewport: viewportNow(), clock: null, anims: [], subtitle: false };
+      // Going to a card, the title has to be measured now, while it is laid out.
+      if (to === 'card') {
+        const slot = this.#findSlot();
+        if (slot && this.#fontsReady) this.#restMeasure(slot);
+      }
+      this.#begin(run, vt);
+      vt.updateCallbackDone
+        .then(() => {
+          if (this.#run !== run) return;
+          if (to === 'card') this.#toCard(null);
+          else this.#toPage(null, false);
+          this.#state = to === 'card' ? caughtDot(this.#state) : DOT_AT_REST;
+          this.#draw();
+        })
+        .catch(() => {});
+    }
+
+    /**
+     * The trim close: card → page with no View Transition. The stack's own
+     * motion brings the page card back; the mark runs titleExit backwards on
+     * the LIVE title and subtitle, transforms only (nothing in the page header
+     * is dithered, so a transform there can't re-anchor the dither grid), and
+     * reads the slot off the live title each frame, so the stack's motion and
+     * any scroll are in it. The animation is cancelled when it ends: it changes
+     * no structure, class or style attribute in the stack.
+     */
+    #returnLive(slot: HTMLElement) {
+      this.#follow(slot);
+      // Measured at rest, before the first keyframe moves it.
+      this.#restMeasure(slot);
+      const start = this.#start!;
+      const header = slot.closest<HTMLElement>('.page-header');
+      const title = slot.closest<HTMLElement>('.page-title');
+      const subtitle = header?.querySelector<HTMLElement>('.page-subtitle') ?? null;
+      this.#setAnchored(false);
+      this.#state = caughtDot(this.#state);
+      const viewport = viewportNow();
+      const kf = titleExitKeyframes(start, viewport, { direction: 'return' });
+      const opts = { duration: TITLE_EXIT_MS, fill: 'both' as const };
+      const run: Run = { kind: 'live', direction: 'return', start, viewport, clock: null, anims: [], subtitle: !!subtitle };
+      if (title) run.clock = title.animate(kf.title, opts);
+      if (subtitle) run.anims.push(subtitle.animate(kf.subtitle, opts));
+      if (run.clock) run.anims.push(run.clock);
+      this.#run = run;
+      this.#setReady(true);
+      if (run.clock) run.clock.finished.then(() => this.#endRun(run), () => {});
+      else this.#endRun(run);
+      this.#wake();
+    }
+
+    /** Take on `run`, riding `vt`: the names go on now, and everything comes off with it. */
+    #begin(run: Run, vt: ViewTransition) {
+      this.#run = run;
+      document.documentElement.dataset.markVt = run.kind === 'instant' ? 'mark' : 'title';
+      vt.finished.finally(() => this.#endRun(run)).catch(() => {});
+      if (run.kind === 'vt') this.#wake();
+    }
+
+    /**
+     * Move the title and subtitle snapshots (the image, not the group: the
+     * group's transform is what places it, and a one-sided group has no
+     * animation of its own to override). Its clock is what the dot samples.
+     */
+    #animateSnapshots(run: Run, side: 'old' | 'new') {
+      if (this.#run !== run || !run.start) return;
+      const kf = titleExitKeyframes(run.start, run.viewport, { direction: run.direction });
+      const opts = { duration: TITLE_EXIT_MS, fill: 'both' as const };
+      const html = document.documentElement;
+      run.clock = html.animate(kf.title, { ...opts, pseudoElement: `::view-transition-${side}(page-title)` });
+      run.anims.push(run.clock);
+      if (run.subtitle) {
+        run.anims.push(html.animate(kf.subtitle, { ...opts, pseudoElement: `::view-transition-${side}(page-subtitle)` }));
+      }
+      this.#wake();
+    }
+
+    /**
+     * End the run in flight (`run`, if given, only if it is still the one).
+     * `fill: both` outlives the pseudo it targeted, and would apply its end
+     * transform to the next transition's same-named pseudo, so every animation
+     * is cancelled; and the names come off.
+     */
+    #endRun(run?: Run) {
+      const r = this.#run;
+      if (!r || (run && r !== run)) return;
+      this.#run = null;
+      for (const a of r.anims) a.cancel();
+      delete document.documentElement.dataset.markVt;
+      this.#prevY = null;
+      // Back in the title, at rest: follow the live slot again.
+      if (this.#mode === 'page') this.#attach();
+      this.#wake();
+    }
+
+    // ── Finding and measuring the title ────────────────────────────
 
     /** The page-mode title's slot, if one is laid out. Only ever one shows. */
     #findSlot(): HTMLElement | null {
       return [...document.querySelectorAll<HTMLElement>(SLOT_SELECTOR)].find((el) => el.getClientRects().length > 0) ?? null;
     }
 
+    /** Follow `slot`'s box: its own catches a font-size change, its header's the page's width. */
+    #follow(slot: HTMLElement) {
+      if (slot === this.#slot) return;
+      this.#ro.disconnect();
+      this.#slot = slot;
+      this.#ro.observe(slot);
+      const header = slot.closest('.page-header');
+      if (header) this.#ro.observe(header);
+    }
+
     /**
-     * Find the slot and follow its box. Announced from inside the stack's own
+     * Find the slot and follow it. Announced from inside the stack's own
      * update, the slot is normally there already; when it isn't (a fragment
      * still landing), look again for a few frames.
      */
     #attach(tries = 0) {
+      if (this.#mode !== 'page') return;
       const slot = this.#findSlot();
       if (!slot) {
         this.#setReady(false);
-        if (tries < SLOT_RETRIES) requestAnimationFrame(() => this.#mode === 'page' && this.#attach(tries + 1));
+        if (tries < SLOT_RETRIES) requestAnimationFrame(() => this.#attach(tries + 1));
         return;
       }
-      if (slot !== this.#slot) {
-        this.#ro.disconnect();
-        this.#slot = slot;
-        // The slot's own box catches a font-size change; the header's catches
-        // the title moving with the page's width (a resize of the stack, not
-        // of the window).
-        this.#ro.observe(slot);
-        const header = slot.closest('.page-header');
-        if (header) this.#ro.observe(header);
-      }
+      this.#follow(slot);
       this.#relayout();
     }
 
-    #detach() {
-      this.#ro.disconnect();
-      this.#slot = null;
-      this.#measured = null;
-      this.#ts = TOOLS_CLOSED;
-      cancelAnimationFrame(this.#frame);
-      this.#frame = 0;
-      this.#setReady(false);
+    /** An exit is moving the title (an `instant` run moves nothing). */
+    #exiting(): boolean {
+      return !!this.#run && this.#run.kind !== 'instant';
     }
-
-    /** While the mark is drawn, the title's own full stop is hidden (`html[data-mark-ready]`). */
-    #setReady(on: boolean) {
-      document.documentElement.toggleAttribute('data-mark-ready', on);
-    }
-
-    // ── Measuring ──────────────────────────────────────────────────
 
     #relayout() {
-      if (this.#mode !== 'page' || !this.#fontsReady) return;
+      // Mid-exit, the trajectory is fixed: it was measured when it began.
+      if (this.#exiting() || !this.#mode) return;
+      if (this.#mode === 'card') {
+        this.#draw();
+        return;
+      }
+      if (!this.#fontsReady) return;
       const slot = this.#slot;
       if (!slot || !slot.isConnected || slot.getClientRects().length === 0) {
         if (this.#findSlot()) this.#attach();
         else this.#setReady(false);
         return;
       }
-      this.#measured = this.#measure(slot);
+      this.#restMeasure(slot);
+      this.#state = DOT_AT_REST;
+      this.#setAnchored(true);
       this.#draw();
       this.#setReady(true);
     }
 
-    #measure(slot: HTMLElement): SlotDot & { em: number } {
+    /** Measure the dot in `slot` and the title's start, with the header at rest. */
+    #restMeasure(slot: HTMLElement) {
+      const m = this.#measure(slot);
+      this.#measured = m;
+      const r = slot.getBoundingClientRect();
+      const title = slot.closest<HTMLElement>('.page-title') ?? slot;
+      const tr = title.getBoundingClientRect();
+      const hr = (slot.closest<HTMLElement>('.page-header') ?? title).getBoundingClientRect();
+      this.#start = {
+        slot: { x: r.left + m.centre.x, y: r.top + m.centre.y },
+        titleOrigin: { x: tr.left, y: tr.top },
+        // Far enough up to take the whole header off the top: its height, or
+        // its bottom edge if something sits above it.
+        headerHeight: Math.ceil(Math.max(hr.height, hr.bottom)),
+      };
+      this.#separation = hangSeparation(this.#start.headerHeight, this.#start.slot.y);
+    }
+
+    #measure(slot: HTMLElement): Measured {
       const cs = getComputedStyle(slot);
       const px = parseFloat(cs.fontSize);
       // The baseline, from the engine's own layout of a full stop in this font.
@@ -304,21 +650,68 @@ import { MARK_RIG } from '@data/mark-rig';
       ps.fontStyle = cs.fontStyle;
       const baseline = this.#probeBase.getBoundingClientRect().bottom - this.#probeText.getBoundingClientRect().top;
       const { ink } = scanInk(cs);
-      return { ...dotInSlot(ink, px, baseline), em: px };
+      return { ...dotInSlot(ink, px, baseline), em: px, slotW: slot.getBoundingClientRect().width };
+    }
+
+    /** While the mark is drawn, the title's own full stop is hidden (`html[data-mark-ready]`). */
+    #setReady(on: boolean) {
+      document.documentElement.toggleAttribute('data-mark-ready', on);
+    }
+
+    // ── Where the slot is now ──────────────────────────────────────
+
+    /** The slot's centre (viewport coords) and how much the title has grown, from wherever it is now. */
+    #slotNow(): { c: V; k: number } | null {
+      const m = this.#measured;
+      if (!m || !this.#mode) return null;
+      const run = this.#run && this.#run.kind !== 'instant' ? this.#run : null;
+      const source = slotSource({
+        mode: this.#mode,
+        run: run ? (run.kind === 'live' ? 'live' : 'vt') : null,
+        direction: run?.direction,
+        runStart: !!run?.start,
+        hang: !!this.#start,
+        slot: !!this.#slot?.isConnected && this.#slot.getClientRects().length > 0,
+      });
+      if (source === 'exit' || source === 'tracked') {
+        const f = titleExit(run!.start!, run!.viewport, exitTime(run!.clock?.currentTime), { direction: run!.direction });
+        if (source === 'exit') return { c: f.title.slot, k: f.title.scale };
+        // The new element itself isn't transformed (its snapshot is), so its
+        // slot is where it is laid out now; the snapshot's keyframes move it
+        // from there by the trajectory's offset, and grow it about the slot.
+        const r = this.#slot!.getBoundingClientRect();
+        const o = f.title.offset;
+        return { c: { x: r.left + m.centre.x + o.x, y: r.top + m.centre.y + o.y }, k: f.title.scale };
+      }
+      if (source === 'hang') {
+        const f = hangFrame(this.#start!, viewportNow());
+        return { c: f.title.slot, k: f.title.scale };
+      }
+      if (source === 'live') {
+        // Transforms included: the trim close animates the live title.
+        const r = this.#slot!.getBoundingClientRect();
+        const k = m.slotW > 0 ? r.width / m.slotW : 1;
+        return { c: { x: r.left + m.centre.x * k, y: r.top + m.centre.y * k }, k };
+      }
+      return null;
     }
 
     // ── Drawing ────────────────────────────────────────────────────
 
-    #draw() {
+    #draw(): boolean {
       const m = this.#measured;
-      const slot = this.#slot;
-      if (!m || !slot) return;
+      const s = this.#slotNow();
+      if (!m || !s) return false;
       // In the overlay's own coordinates, whichever box it is positioned
       // against. The hit target shares that box.
-      const r = slot.getBoundingClientRect();
       const o = this.#overlay.getBoundingClientRect();
-      const centre: V = { x: r.left - o.left + m.centre.x, y: r.top - o.top + m.centre.y };
-      const size = m.size;
+      const shift = (v: V): V => ({ x: v.x - o.left, y: v.y - o.top });
+      const size = m.size * s.k;
+      const em = m.em * s.k;
+      const stopped = this.#state.stopped;
+      // Caught at the edge, the dot's height is its own; otherwise it is in the slot.
+      const y = stopped ? this.#state.y.x : s.c.y;
+      const centre = shift({ x: s.c.x, y });
       const corner: V = { x: centre.x - size / 2, y: centre.y - size / 2 };
       const f = (n: number) => n.toFixed(2);
       this.#dot.setAttribute('x', f(corner.x));
@@ -327,47 +720,89 @@ import { MARK_RIG } from '@data/mark-rig';
       this.#dot.setAttribute('height', f(size));
 
       const k = tautness(this.#ts);
-      const geoms = poseThreads(MARK_RIG, { slot: centre, dot: corner, size, em: m.em, p: 0 });
+      const p = poseBlend(stopped, s.c.y, this.#separation);
+      const geoms = poseThreads(MARK_RIG, { slot: shift(s.c), dot: corner, size, em, p });
       // No tools yet, so every thread takes the pull.
       geoms.forEach((g, i) => this.#paths[i]?.setAttribute('d', threadPathData(k > 0 ? tauten(g, k) : g)));
-      const stroke = String(Math.max(MIN_STROKE, MARK_RIG.width * m.em));
-      for (const p of this.#paths) p.style.setProperty('stroke-width', stroke);
+      const stroke = String(Math.max(MIN_STROKE, MARK_RIG.width * em));
+      for (const path of this.#paths) path.style.setProperty('stroke-width', stroke);
 
+      // Hanging, only the lower part of the dot is on screen: aim at that.
+      const top = Math.max(-o.top, centre.y - size / 2);
+      const hy = stopped ? (top + centre.y + size / 2) / 2 : centre.y;
       const hs = this.#hit.style;
       hs.setProperty('--site-mark-x', `${f(centre.x)}px`);
-      hs.setProperty('--site-mark-y', `${f(centre.y)}px`);
+      hs.setProperty('--site-mark-y', `${f(hy)}px`);
       hs.setProperty('--site-mark-size', `${f(size)}px`);
+      return true;
     }
 
-    // ── The tug ────────────────────────────────────────────────────
+    // ── The loop ───────────────────────────────────────────────────
 
-    /** Reduced motion is decided in CSS (`--site-mark-motion`), and read back here. */
-    #moves(): boolean {
-      return getComputedStyle(this).getPropertyValue('--site-mark-motion').trim() !== '0';
+    #wake() {
+      if (this.#frame) return;
+      this.#last = 0;
+      this.#frame = requestAnimationFrame(this.#tick);
     }
 
-    #onHit = (e: MouseEvent) => {
-      e.preventDefault();
-      // Reduced motion: the threads just don't move.
-      if (this.#mode !== 'page' || !this.#measured || !this.#moves()) return;
-      const next = setWant(this.#ts, true, false);
-      if (next === this.#ts) return;
-      this.#ts = next;
-      if (!this.#frame) {
-        this.#last = 0;
-        this.#frame = requestAnimationFrame(this.#tick);
-      }
-    };
+    #stop() {
+      cancelAnimationFrame(this.#frame);
+      this.#frame = 0;
+      this.#prevY = null;
+    }
 
-    /** Runs only while the threads are moving. */
+    /** Runs only while something moves: an exit, the dot settling, or a tug. */
     #tick = (now: number) => {
       this.#frame = 0;
       const dt = this.#last ? Math.min(0.05, (now - this.#last) / 1000) : 1 / 60;
       this.#last = now;
-      this.#ts = lapseTug(stepTools(this.#ts, dt, false));
-      if (this.#ts.phase === 'rest') this.#ts = TOOLS_CLOSED;
+      const m = this.#measured;
+      const s = this.#slotNow();
+      if (!m || !s || !this.#mode) {
+        // Nothing to draw yet (a return still waiting for its new title).
+        if (this.#run) this.#frame = requestAnimationFrame(this.#tick);
+        return;
+      }
+      const moves = this.#moves();
+      const size = m.size * s.k;
+      const vy = this.#prevY === null ? 0 : (s.c.y - this.#prevY) / dt;
+      this.#prevY = s.c.y;
+      // Carried up with the title, the dot is caught at the edge and settles
+      // there; carried back down, it lets go (motion.ts).
+      this.#state = stepDot(this.#state, {
+        slotY: s.c.y,
+        slotVy: vy,
+        mode: this.#mode,
+        size,
+        taut: this.#ts.taut.x,
+        dt,
+        reduced: !moves,
+      });
+      if (this.#ts.phase !== 'rest') {
+        this.#ts = lapseTug(stepTools(this.#ts, dt, false));
+        if (this.#ts.phase === 'rest') this.#ts = TOOLS_CLOSED;
+      }
+      const busy = !!this.#run || this.#ts.phase !== 'rest' || dotMoving(this.#state, size, this.#ts.taut.x);
+      // Settled in the title: hand the overlay to the document, where it
+      // scrolls with the text. Hanging, it stays on the viewport.
+      if (!busy && this.#mode === 'page' && !this.#state.stopped) this.#setAnchored(true);
       this.#draw();
-      if (this.#ts.phase !== 'rest') this.#frame = requestAnimationFrame(this.#tick);
+      this.#setReady(true);
+      if (busy) this.#frame = requestAnimationFrame(this.#tick);
+      else this.#prevY = null;
+    };
+
+    // ── The tug ────────────────────────────────────────────────────
+
+    #onHit = (e: MouseEvent) => {
+      e.preventDefault();
+      // Reduced motion: the threads just don't move. Mid-exit, nothing to pull.
+      if (!this.#measured || this.#exiting() || !this.#moves()) return;
+      if (this.#mode !== 'page' && !this.hasAttribute('data-hang')) return;
+      const next = setWant(this.#ts, true, false);
+      if (next === this.#ts) return;
+      this.#ts = next;
+      this.#wake();
     };
   }
 

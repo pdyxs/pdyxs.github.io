@@ -324,16 +324,31 @@
   // Announce the active entry's presentation to the rest of the page
   // (`site:presentation`, src/lib/site/presentation-event.ts): once on mount,
   // for the cold-load mode, and then on every page ↔ card change. The suspended
-  // mark listens; it never reads the stack to find out. AFTER the layout effect
-  // above, so `stack-card--page` is already toggled when a listener looks for
-  // the title. `vt` is null until slice 5 announces from inside the push and
-  // close transitions (docs/plans/suspended-mark.md).
+  // mark listens; it never reads the stack to find out.
+  //
+  // Two announcers, one value. The page ↔ card view transitions (`performPush`
+  // from page mode, `closeCard` to an empty stack) announce for themselves,
+  // with the transition, right after `startVT` returns: that is before the
+  // browser captures the old state, so a listener can still name its own
+  // elements into it. Every other change (the trim close back onto home, a
+  // popstate, the no-VT fallback) has no transition, and this effect announces
+  // it with `vt: null`. `announce` drops a repeat of the last value, which is
+  // what stops the effect re-announcing, from inside the transition's update,
+  // the change its VT path has just announced. AFTER the layout effect above,
+  // so `stack-card--page` is already toggled when a listener looks for the
+  // title.
+  let announced: Presentation | null = null;
+  function announce(to: Presentation, vt: ViewTransition | null) {
+    if (to === announced) return;
+    announced = to;
+    announcePresentation({ to, vt });
+  }
   const presentation = $derived.by((): Presentation => {
     const active = activeEntry($stackStore);
     return active ? presentationMode(locationKind(active.slot), $stackStore.entries.length) : 'card';
   });
   $effect(() => {
-    announcePresentation({ to: presentation, vt: null });
+    announce(presentation, null);
   });
 
   // Arms the geometry transitions one frame after the first layout pass.
@@ -972,13 +987,15 @@
     const uid = entry.uid;
     const slot = entry.slot;
 
-    // Pushing the first card while home is the sole page-mode entry: the home
-    // title + divider morph into the new card's header (issue #24). Detected
-    // before the store mutates.
-    const wasHomePageMode =
-      state.entries.length === 1 &&
-      state.entries[0].key === HOME_UID &&
-      state.activeSlot === state.entries[0].slot;
+    // Pushing the first card while a lens is the sole, page-mode entry (home,
+    // or any lens presenting as the front page): the line under its title
+    // morphs into the new card's header (issue #24), and the title itself
+    // leaves on its own, animated by the suspended mark. Detected before the
+    // store mutates.
+    const pageEntry = state.entries.length === 1 && state.activeSlot === state.entries[0].slot
+      ? state.entries[0]
+      : null;
+    const wasPageMode = pageEntry != null && presentationMode(locationKind(pageEntry.slot), 1) === 'page';
 
     const alreadyCached = fragments.has(slot);
 
@@ -1025,20 +1042,16 @@
 
     const homepage = document.getElementById('homepage');
 
-    if ((clickedLink || wasHomePageMode) && startVT) {
-      // Phase 1: seed the outgoing VT names. From home page mode we morph the
-      // page title into the new card's header title, and the rule under it
-      // into the header itself; otherwise the clicked panel link morphs into
-      // the card header position.
+    if ((clickedLink || wasPageMode) && startVT) {
+      // Phase 1: seed the outgoing VT names. From page mode the rule under the
+      // page title morphs into the new card's header (the title and subtitle
+      // are the mark's to name, below); otherwise the clicked panel link
+      // morphs into the card header position.
       skipBodyOpen.add(slot);
-      let homeTitle: HTMLElement | null = null;
-      let homeRule: HTMLElement | null = null;
-      if (wasHomePageMode) {
-        const homeEl = elFor(slotForKey(state, HOME_UID));
-        homeTitle = homeEl?.querySelector<HTMLElement>('.page-title') ?? null;
-        homeRule = homeEl?.querySelector<HTMLElement>('.page-header-rule') ?? null;
-        if (homeTitle) homeTitle.style.viewTransitionName = 'home-title';
-        if (homeRule) homeRule.style.viewTransitionName = 'page-rule';
+      let pageRule: HTMLElement | null = null;
+      if (wasPageMode) {
+        pageRule = elFor(pageEntry!.slot)?.querySelector<HTMLElement>('.page-header-rule') ?? null;
+        if (pageRule) pageRule.style.viewTransitionName = 'page-rule';
       } else if (clickedLink) {
         (clickedLink as HTMLElement).style.viewTransitionName = 'panel-card-open';
       }
@@ -1046,18 +1059,16 @@
       const vt = startVT(() => {
         flushSync(doUpdate);
         const newCard = elFor(slot);
-        if (wasHomePageMode) {
-          // Home's names can stay on until `finished`: with a card pushed it
-          // is no longer the sole entry, so it leaves page mode and its
-          // `.page-header` (title and rule) is display:none in the new state,
-          // which keeps both out of the new snapshot.
-          const t = newCard?.querySelector<HTMLElement>('.card-header-title');
+        if (wasPageMode) {
+          // The rule's name can stay on until `finished`: with a card pushed
+          // the lens is no longer the sole entry, so it leaves page mode and
+          // its `.page-header` is display:none in the new state, which keeps
+          // the rule out of the new snapshot.
           const d = newCard?.querySelector<HTMLElement>('.card-header');
-          if (t) t.style.viewTransitionName = 'home-title';
           if (d) d.style.viewTransitionName = 'page-rule';
         } else if (newCard) {
           newCard.style.viewTransitionName = 'panel-card-open';
-          // Hand the name off rather than sharing it: unlike the home-page-mode
+          // Hand the name off rather than sharing it: unlike the page-mode
           // branch above (masked out of the new snapshot by `homepage.hidden`
           // below), `clickedLink` is an ordinary in-stack card-link — the card
           // it lives on stays visible after the push (a behind card is a CROP,
@@ -1071,19 +1082,23 @@
           if (clickedLink) (clickedLink as HTMLElement).style.viewTransitionName = '';
         }
         if (homepage) homepage.hidden = true;
-      }, wasHomePageMode ? 'page-to-card' : undefined);
+      }, wasPageMode ? 'page-to-card' : undefined);
+      // The page → card change, announced with its transition. Synchronously,
+      // right after `startViewTransition` returns: the browser captures the
+      // old state at its next rendering opportunity, and only then runs the
+      // update, so a listener that names its elements now is in the old
+      // snapshot. The store changes inside the update, where the
+      // presentation effect sees this same value and stays quiet.
+      if (wasPageMode) announce('card', vt);
 
       await vt.finished;
       skipBodyOpen.delete(slot);
-      if (homeTitle) homeTitle.style.viewTransitionName = '';
-      if (homeRule) homeRule.style.viewTransitionName = '';
-      if (clickedLink && !wasHomePageMode) (clickedLink as HTMLElement).style.viewTransitionName = '';
+      if (pageRule) pageRule.style.viewTransitionName = '';
+      if (clickedLink && !wasPageMode) (clickedLink as HTMLElement).style.viewTransitionName = '';
       const vtCard = elFor(slot);
       if (vtCard) {
         vtCard.style.viewTransitionName = '';
-        const t = vtCard.querySelector<HTMLElement>('.card-header-title');
         const d = vtCard.querySelector<HTMLElement>('.card-header');
-        if (t) t.style.viewTransitionName = '';
         if (d) d.style.viewTransitionName = '';
       }
 
@@ -1190,6 +1205,8 @@
             ?.querySelector<HTMLElement>('.page-header-rule') ?? null;
           if (homeRule) homeRule.style.viewTransitionName = 'page-rule';
         }, 'card-to-page');
+        // Before the old state is captured, as on the push (performPush).
+        announce('page', vt);
         try {
           await vt.finished;
         } finally {
