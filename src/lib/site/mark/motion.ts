@@ -299,13 +299,13 @@ export function titleExit(start: TitleStart, viewport: Viewport, t: number, opts
   };
 }
 
-/** A WAAPI keyframe, as `Element.animate` takes it. */
-export interface MotionKeyframe {
+/** A WAAPI keyframe, as `Element.animate` takes it (a type, not an interface, so it is assignable to `Keyframe`). */
+export type MotionKeyframe = {
   offset: number;
   transform: string;
   transformOrigin?: string;
   easing: 'linear';
-}
+};
 
 /**
  * `titleExit` sampled into WAAPI keyframes, evenly in time and linear between

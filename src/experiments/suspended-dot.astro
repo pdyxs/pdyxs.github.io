@@ -38,6 +38,9 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
         pdy<span data-l="x">x</span><span data-l="s">s</span><span class="sd-slot">.</span><span data-l="w">w</span>tf
       </h1>
       <p class="page-subtitle">Paul Sztajer — games, puzzles and writing</p>
+      {/* The line under the subtitle, as its own element (prod: .page-header-rule):
+          on a card open it is what morphs into the card header. */}
+      <div class="sd-rule"></div>
     </header>
 
     <main class="sd-body">
@@ -111,6 +114,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
       <label>grow to <input type="range" class="sd-in-hang" min="100" max="500" step="25" value={TITLE_EXIT_SCALE * 100} /> <output></output></label>
       <label>settle <input type="range" class="sd-in-swing" min="15" max="100" value={Math.round(DOT_ZETA * 100)} /> <output></output></label>
       <label><input type="checkbox" class="sd-in-debug" /> hit area</label>
+      <label><input type="checkbox" class="sd-in-css" /> css exit (no VT)</label>
       <a href="/experiments/mark-editor">edit strands →</a>
     </fieldset>
   </div>
@@ -126,8 +130,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
      not from anything here. */
   .sd-frame { width: min(1100px, 100%); margin: 0 auto; }
   .sd-header {
-    padding: var(--space-xl) var(--space-md) var(--space-lg);
-    border-bottom: var(--border-width) solid var(--color-border);
+    padding: var(--space-xl) var(--space-md) 0;
     transition:
       margin-top 420ms cubic-bezier(0.5, 0, 0.75, 0),
       transform 420ms cubic-bezier(0.5, 0, 0.75, 0);
@@ -140,6 +143,17 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     transform: translateX(var(--sd-dx, 0px));
   }
   .sd[data-mode='page'] .sd-header { transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1); }
+  /* The rule carries the border the header used to: same box at rest (the
+     header's bottom padding is now its top margin, and it spans the header's
+     inline padding), but a box of its own, so it alone can be named. */
+  .sd-rule {
+    margin: var(--space-lg) calc(-1 * var(--space-md)) 0;
+    border-top: var(--border-width) solid var(--color-border);
+  }
+  /* A view-transition exit: the new state is laid out at once (the VT animates
+     the snapshots); a CSS transition here would move the live title under them. */
+  .sd[data-exit='vt'] .sd-header,
+  .sd[data-exit='vt'] .sd-title { transition: none; }
 
   /* The title line grows as it rises, scaled about the dot's slot so the dot
      stays put within it — that growth is what brings the dot to its hanging
@@ -151,6 +165,10 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
   }
   .sd[data-mode='card'] .sd-title { transform: scale(var(--sd-scale, 1)); }
   .sd[data-mode='page'] .sd-title { transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1); }
+  /* Reduced motion: no VT, and the header just swaps (after the rules above, which it overrides). */
+  @media (prefers-reduced-motion: reduce) {
+    .sd-header, .sd-title { transition: none; }
+  }
 
   .sd-list { list-style: none; padding: 0; display: grid; gap: var(--space-sm); }
   .sd-open {
@@ -260,6 +278,41 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
   .sd-fav-row :global(img) { display: block; }
 </style>
 
+<style is:global>
+  /* The VT spike. Names are set by the script just before startViewTransition
+     and cleared on finished. The overlay renders live through the transition:
+     no old image, and the new one (a live view of the SVG the rAF loop is
+     drawing) neither fades nor moves. Above the title groups, which on a close
+     are new-only and so would otherwise be stacked after it. */
+  ::view-transition-old(site-mark) { display: none; }
+  ::view-transition-new(site-mark),
+  ::view-transition-group(site-mark) { animation: none; }
+  ::view-transition-group(site-mark) { z-index: 2; }
+  /* The title and subtitle have one side only (old on open, new on close), so
+     the UA gives them no group morph, just a fade on the image. Kill the fade;
+     the script drives the image's transform with titleExit keyframes. */
+  ::view-transition-old(page-title),
+  ::view-transition-new(page-title),
+  ::view-transition-old(page-subtitle),
+  ::view-transition-new(page-subtitle) { animation: none; }
+  /* Departing (or returning) over the morphing rule, not under it. */
+  ::view-transition-group(page-title),
+  ::view-transition-group(page-subtitle) { z-index: 1; }
+  /* The rule ↔ card header: the default group morph, line box ↔ header box.
+     The header's image is stretched to the box (by default it keeps its aspect
+     and spills out below the box while the box is still line-thin), so it
+     reads as the line thickening into the header. The line's own image keeps
+     its aspect: stretched, it would be a solid bar. */
+  ::view-transition-group(page-rule) {
+    animation-duration: 420ms;
+    animation-timing-function: ease-in-out;
+  }
+  /* Which side is the header depends on the direction (prod could use VT
+     types, :active-view-transition-type(), instead of an attribute). */
+  html[data-sd-vt='leave']::view-transition-new(page-rule),
+  html[data-sd-vt='return']::view-transition-old(page-rule) { block-size: 100%; }
+</style>
+
 <script>
   import { MARK_RIG, type MarkRig } from '@data/mark-rig';
   import {
@@ -293,6 +346,11 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     stepToolSize,
     toolReeledIn,
     subStep,
+    titleExit,
+    titleExitKeyframes,
+    TITLE_EXIT_MS,
+    type TitleStart,
+    type Viewport,
   } from '@site/mark/motion';
   import { PALETTE_STORAGE_KEY, findSystem, isDefault, parsePalette, type Palette } from '@site/palette';
 
@@ -312,6 +370,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
   const inHang = root.querySelector<HTMLInputElement>('.sd-in-hang')!;
   const inSwing = root.querySelector<HTMLInputElement>('.sd-in-swing')!;
   const inDebug = root.querySelector<HTMLInputElement>('.sd-in-debug')!;
+  const inCss = root.querySelector<HTMLInputElement>('.sd-in-css')!;
 
   document.querySelectorAll<HTMLElement>('palette-picker').forEach((el) => (el.style.display = 'none'));
 
@@ -433,13 +492,38 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
    */
   let rig: { dot: number; px: number; slotW: number; slotDelta: V } | null = null;
 
+  /**
+   * A view-transition exit in flight. The live title is already where the new
+   * state puts it, and only its snapshot is moving, so nothing can be read off
+   * the DOM: the slot comes from titleExit, the same function the snapshot's
+   * keyframes were sampled from.
+   */
+  let vtRun: {
+    start: TitleStart;
+    viewport: Viewport;
+    direction: 'leave' | 'return';
+    scale: number;
+    /** The title snapshot's animation, once `ready`: its clock is the one to sample. */
+    anim: Animation | null;
+  } | null = null;
+
+  /** Where the title is in the running VT: elapsed time read off the snapshot's own animation. */
+  function vtFrame() {
+    const run = vtRun!;
+    // Until `ready` the snapshots haven't started moving either.
+    const t = run.anim ? Number(run.anim.currentTime ?? 0) : 0;
+    return titleExit(run.start, run.viewport, t, { direction: run.direction, scale: run.scale });
+  }
+
   /** How much the title is currently scaled, read off the live slot box. */
   function liveScale(): number {
+    if (vtRun) return vtFrame().title.scale;
     return slot.getBoundingClientRect().width / rig!.slotW;
   }
 
   /** The dot slot's centre in viewport coords, read live (the header moves and grows). */
   function realSlot(): V {
+    if (vtRun) return vtFrame().title.slot;
     const r = slot.getBoundingClientRect();
     const k = r.width / rig!.slotW;
     return { x: r.left + rig!.slotDelta.x * k, y: r.top + rig!.slotDelta.y * k };
@@ -518,7 +602,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     const toolsBusy = ts.phase !== 'rest' || tools.some((t) => t.pointer || baubleMoving(t.b, toolLen(t)) || Math.abs(t.s.x - (ts.toolsOut ? 1 : 0)) > 0.005);
 
     const moving = dotMoving(dot, D.size, ts.taut.x);
-    const busy = moving || toolsBusy || now < busyUntil;
+    const busy = moving || toolsBusy || now < busyUntil || !!vtRun;
     // Settled in the title: hand the overlay to the document and stop. Any
     // motion (or hanging) puts it back on the viewport first.
     setAnchored(!dot.stopped && !busy);
@@ -634,21 +718,35 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
   const card = root.querySelector<HTMLElement>('.sd-card')!;
   const cardTitle = root.querySelector<HTMLElement>('.sd-card-title')!;
 
-  function setMode(mode: 'page' | 'card', titleText = '') {
-    setTools(false);
-    scrollTo(0, 0);
-    if (mode === 'card') {
-      root.style.setProperty('--sd-header-h', `${headerHeight()}px`);
-      // How far the title drifts so the dot's slot ends on the centre line,
-      // and the point it grows about: the dot's own centre.
-      const real = realSlot();
-      const tr = title.getBoundingClientRect();
-      root.style.setProperty('--sd-dx', `${innerWidth / 2 - real.x}px`);
-      root.style.setProperty('--sd-ox', `${real.x - tr.left}px`);
-      root.style.setProperty('--sd-oy', `${real.y - tr.top}px`);
-      root.style.setProperty('--sd-scale', String(+inHang.value / 100));
-      hangSeparation = separationFor(headerHeight(), real.y);
-    }
+  const subtitle = header.querySelector<HTMLElement>('.page-subtitle')!;
+  const rule = header.querySelector<HTMLElement>('.sd-rule')!;
+  const cardHeader = card.querySelector<HTMLElement>('.sd-card-header')!;
+
+  /**
+   * Measured with the header at rest, before it leaves: where the slot and the
+   * title box start. The card mode's CSS end state (rise, drift, growth) is
+   * set from it too, so after a VT the live title sits exactly where
+   * titleExit's last frame put the snapshot.
+   */
+  let titleStart: TitleStart | null = null;
+
+  function prepareCard(): TitleStart {
+    const hh = headerHeight();
+    root.style.setProperty('--sd-header-h', `${hh}px`);
+    // How far the title drifts so the dot's slot ends on the centre line,
+    // and the point it grows about: the dot's own centre.
+    const real = realSlot();
+    const tr = title.getBoundingClientRect();
+    root.style.setProperty('--sd-dx', `${innerWidth / 2 - real.x}px`);
+    root.style.setProperty('--sd-ox', `${real.x - tr.left}px`);
+    root.style.setProperty('--sd-oy', `${real.y - tr.top}px`);
+    root.style.setProperty('--sd-scale', String(+inHang.value / 100));
+    hangSeparation = separationFor(hh, real.y);
+    return { slot: real, titleOrigin: { x: tr.left, y: tr.top }, headerHeight: hh };
+  }
+
+  /** Swap home ↔ card. With a VT running, this is the new state, laid out at once. */
+  function applyMode(mode: 'page' | 'card', titleText: string) {
     root.dataset.mode = mode;
     if (mode === 'card') {
       cardTitle.textContent = titleText;
@@ -658,7 +756,99 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
       home.hidden = false;
       card.hidden = true;
     }
+  }
+
+  function setMode(mode: 'page' | 'card', titleText = '') {
+    if (vtRun) return;
+    setTools(false);
+    scrollTo(0, 0);
+    if (mode === 'card') titleStart = prepareCard();
+    const useVT = !inCss.checked && !reduced.matches && titleStart && typeof document.startViewTransition === 'function';
+    if (useVT) return runVT(mode, titleText, titleStart!);
+    // The CSS path: the live header animates its margin, translate and scale.
+    // Reduced motion lands here too, with those transitions off (an instant swap).
+    applyMode(mode, titleText);
     busyUntil = performance.now() + 500;
+    wake();
+  }
+
+  const name = (el: HTMLElement | SVGElement, n: string) => (el.style.viewTransitionName = n);
+
+  /**
+   * page → card (or back) as a real View Transition. The title and subtitle
+   * leave as snapshots, moved by WAAPI keyframes sampled from titleExit; the
+   * rule morphs into the card header (the default group animation); and the
+   * overlay is named so its new image renders live, the rAF loop drawing the
+   * dot from the same titleExit as the snapshots.
+   */
+  function runVT(mode: 'page' | 'card', titleText: string, start: TitleStart) {
+    const direction = mode === 'card' ? 'leave' : 'return';
+    const viewport = { width: innerWidth, height: innerHeight };
+    const scale = +inHang.value / 100;
+    // The overlay must be on the viewport (not the document) for the whole VT.
+    setAnchored(false);
+    name(overlay, 'site-mark');
+    // Old state. On a close the title is off the top and not named: it is new-only.
+    if (direction === 'leave') {
+      name(title, 'page-title');
+      name(subtitle, 'page-subtitle');
+      name(rule, 'page-rule');
+    } else {
+      name(cardHeader, 'page-rule');
+    }
+    root.dataset.exit = 'vt';
+    document.documentElement.dataset.sdVt = direction;
+    vtRun = { start, viewport, direction, scale, anim: null };
+    const anims: Animation[] = [];
+
+    const vt = document.startViewTransition(() => {
+      // Every name is cleared off the old side, because the old elements are
+      // still in the DOM: a named title off the top would be captured as the
+      // new side (pairing it into a morph), and a second page-rule aborts the
+      // whole transition as a duplicate name.
+      name(title, '');
+      name(subtitle, '');
+      name(rule, '');
+      name(cardHeader, '');
+      applyMode(mode, titleText);
+      if (direction === 'leave') {
+        name(cardHeader, 'page-rule');
+      } else {
+        name(title, 'page-title');
+        name(subtitle, 'page-subtitle');
+        name(rule, 'page-rule');
+      }
+    });
+
+    vt.ready
+      .then(() => {
+        // The image, not the group: the group's transform is what places it
+        // (the UA sets it to the element's captured position), and a
+        // one-sided group has no animation to override. The image sits at
+        // 0,0 in it, at the element's border box, so the keyframes'
+        // transform-origin (slot − title box) is in the right frame.
+        const side = direction === 'leave' ? 'old' : 'new';
+        const kf = titleExitKeyframes(start, viewport, { direction, scale });
+        const opts = { duration: TITLE_EXIT_MS, fill: 'both' as const };
+        const html = document.documentElement;
+        const anim = html.animate(kf.title, { ...opts, pseudoElement: `::view-transition-${side}(page-title)` });
+        anims.push(anim, html.animate(kf.subtitle, { ...opts, pseudoElement: `::view-transition-${side}(page-subtitle)` }));
+        if (vtRun) vtRun.anim = anim;
+      })
+      .catch(() => { /* skipped: finished still settles below */ });
+
+    vt.finished.finally(() => {
+      for (const el of [overlay, title, subtitle, rule, cardHeader]) name(el, '');
+      // fill: 'both' outlives the pseudo it targeted: left alone, it would
+      // still be applying its end transform to the next VT's same-named pseudo.
+      for (const a of anims) a.cancel();
+      delete root.dataset.exit;
+      delete document.documentElement.dataset.sdVt;
+      vtRun = null;
+      // The live title is now where the last frame left the snapshot.
+      busyUntil = performance.now() + 100;
+      wake();
+    }).catch(() => { /* the update callback threw: names are cleared all the same */ });
     wake();
   }
   root.querySelectorAll<HTMLButtonElement>('.sd-open').forEach((b) =>
