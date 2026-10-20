@@ -406,6 +406,9 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `.stack-card`, `.stack-card--active`, `.stack-card--collapsed`, `.stack-card--page`
 - `.stack-card-spine`, `.stack-card-spine-inner`, `.stack-card-spine-title`
 - `.card-header`, `.card-header-sentinel`, `.card-header--stuck`
+- `.page-header-rule` (the line under the page-mode title and subtitle — its own element, not
+  `.page-header`'s border, so CardStack can name it `page-rule` and morph it into `.card-header`;
+  it spans the header's box through `--page-header-inset-inline`, which `site-footer.css` matches)
 - `.stack-card--revealing`, `#card-stack.stack-motion`
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`

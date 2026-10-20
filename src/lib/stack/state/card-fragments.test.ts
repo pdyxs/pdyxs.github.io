@@ -108,6 +108,18 @@ describe('the placeholder fragment', () => {
       .toBe('A Title');
   });
 
+  it('gives a lens the page-mode header, rule included', () => {
+    // Closing down to a lens restored from a placeholder flips it into page
+    // mode, and the rule is what the card → page view transition morphs into.
+    const el = document.createElement('div');
+    el.innerHTML = buildPlaceholderHtml('lens/newest', 'Newest');
+    expect(el.querySelector('.page-header .page-title')).not.toBeNull();
+    expect(el.querySelector('.page-header > .page-header-rule:last-child')).not.toBeNull();
+
+    el.innerHTML = buildPlaceholderHtml('what/x', 'A Title');
+    expect(el.querySelector('.page-header')).toBeNull();
+  });
+
   it('escapes a title so a quote or bracket cannot break out of the markup', () => {
     expect(escapeHtml('a "b" <c> & d')).toBe('a &quot;b&quot; &lt;c&gt; &amp; d');
     const html = buildPlaceholderHtml('u', '<script>x</script>');

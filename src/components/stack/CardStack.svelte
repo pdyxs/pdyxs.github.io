@@ -22,6 +22,7 @@
   import { placeholderTitle } from '@stack/state/card-title';
   import { lensChromeForKey } from '@browse/lenses/lens-chrome';
   import { waitForTransition } from '@stack/layout/transition-wait';
+  import { typedViewTransitions, type StartStackVT } from '@stack/layout/typed-view-transition';
   import StackFragment from '@components/stack/StackFragment.svelte';
   import {
     createCardFragments,
@@ -99,7 +100,7 @@
   // stack length and active index, never on the width itself.
   let innerEl = $state<HTMLElement | null>(null);
   let activeWidth = $state(0);
-  let startVT: ((cb: () => void) => { finished: Promise<void> }) | undefined;
+  let startVT: StartStackVT | undefined;
   // True while the stack is being RECONSTRUCTED rather than navigated — a cold
   // load or a popstate. Both splice entries in one fetch at a time, and every
   // splice ahead of the active card moves it down the page, so each one wants
@@ -1010,17 +1011,18 @@
 
     if ((clickedLink || wasHomePageMode) && startVT) {
       // Phase 1: seed the outgoing VT names. From home page mode we morph the
-      // page title/divider into the new card's header; otherwise the clicked
-      // panel link morphs into the card header position.
+      // page title into the new card's header title, and the rule under it
+      // into the header itself; otherwise the clicked panel link morphs into
+      // the card header position.
       skipBodyOpen.add(slot);
       let homeTitle: HTMLElement | null = null;
-      let homeDivider: HTMLElement | null = null;
+      let homeRule: HTMLElement | null = null;
       if (wasHomePageMode) {
         const homeEl = elFor(slotForKey(state, HOME_UID));
         homeTitle = homeEl?.querySelector<HTMLElement>('.page-title') ?? null;
-        homeDivider = homeEl?.querySelector<HTMLElement>('.page-header') ?? null;
+        homeRule = homeEl?.querySelector<HTMLElement>('.page-header-rule') ?? null;
         if (homeTitle) homeTitle.style.viewTransitionName = 'home-title';
-        if (homeDivider) homeDivider.style.viewTransitionName = 'home-divider';
+        if (homeRule) homeRule.style.viewTransitionName = 'page-rule';
       } else if (clickedLink) {
         (clickedLink as HTMLElement).style.viewTransitionName = 'panel-card-open';
       }
@@ -1029,10 +1031,14 @@
         flushSync(doUpdate);
         const newCard = elFor(slot);
         if (wasHomePageMode) {
+          // Home's names can stay on until `finished`: with a card pushed it
+          // is no longer the sole entry, so it leaves page mode and its
+          // `.page-header` (title and rule) is display:none in the new state,
+          // which keeps both out of the new snapshot.
           const t = newCard?.querySelector<HTMLElement>('.card-header-title');
           const d = newCard?.querySelector<HTMLElement>('.card-header');
           if (t) t.style.viewTransitionName = 'home-title';
-          if (d) d.style.viewTransitionName = 'home-divider';
+          if (d) d.style.viewTransitionName = 'page-rule';
         } else if (newCard) {
           newCard.style.viewTransitionName = 'panel-card-open';
           // Hand the name off rather than sharing it: unlike the home-page-mode
@@ -1049,12 +1055,12 @@
           if (clickedLink) (clickedLink as HTMLElement).style.viewTransitionName = '';
         }
         if (homepage) homepage.hidden = true;
-      });
+      }, wasHomePageMode ? 'page-to-card' : undefined);
 
       await vt.finished;
       skipBodyOpen.delete(slot);
       if (homeTitle) homeTitle.style.viewTransitionName = '';
-      if (homeDivider) homeDivider.style.viewTransitionName = '';
+      if (homeRule) homeRule.style.viewTransitionName = '';
       if (clickedLink && !wasHomePageMode) (clickedLink as HTMLElement).style.viewTransitionName = '';
       const vtCard = elFor(slot);
       if (vtCard) {
@@ -1151,8 +1157,29 @@
       // though it can't accept filters.
       history.pushState(null, '', '/');
       if (startVT) {
-        const vt = startVT(() => { flushSync(applyHomeSeed); });
-        await vt.finished;
+        // The reverse of page → card: the closing card's header (all that is
+        // left of it once the body has shut) shrinks back into home's rule.
+        // The header's name comes off inside the update, before the new
+        // snapshot, in case the element is still in the DOM: a second
+        // `page-rule` there aborts the whole transition as a duplicate.
+        const header = el?.querySelector<HTMLElement>('.card-header') ?? null;
+        // Asserted, not annotated: assigned only inside the callback, so TS
+        // would otherwise narrow it to `null` at the `finally` below.
+        let homeRule = null as HTMLElement | null;
+        if (header) header.style.viewTransitionName = 'page-rule';
+        const vt = startVT(() => {
+          if (header) header.style.viewTransitionName = '';
+          flushSync(applyHomeSeed);
+          homeRule = elFor(slotForKey(get(stackStore), HOME_UID))
+            ?.querySelector<HTMLElement>('.page-header-rule') ?? null;
+          if (homeRule) homeRule.style.viewTransitionName = 'page-rule';
+        }, 'card-to-page');
+        try {
+          await vt.finished;
+        } finally {
+          if (header) header.style.viewTransitionName = '';
+          if (homeRule) homeRule.style.viewTransitionName = '';
+        }
       } else {
         applyHomeSeed();
       }
@@ -1316,7 +1343,7 @@
     // inert markup.
     if (ssrSlot) fragments.adopt(ssrSlot, elFor(ssrSlot));
 
-    startVT = (document as any).startViewTransition?.bind(document);
+    startVT = typedViewTransitions();
     const homepage = document.getElementById('homepage');
 
     // If SSR-seeded card present, hide homepage

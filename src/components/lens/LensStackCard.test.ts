@@ -55,6 +55,9 @@ describe('LensStackCard', () => {
     expect(div.querySelector('.page-title')?.textContent).toContain('pdyxs.wtf');
     // The SITE's subtitle, not the lens's label (which is what it used to be).
     expect(div.querySelector('.page-subtitle')?.textContent).toBe(siteSubtitle());
+    // The line under them is an element of its own, last in the header: it is
+    // what the page → card view transition morphs into the card header.
+    expect(div.querySelector('.page-header > .page-header-rule:last-child')).not.toBeNull();
   });
 
   it('card presentation (default) does not carry the page class', async () => {

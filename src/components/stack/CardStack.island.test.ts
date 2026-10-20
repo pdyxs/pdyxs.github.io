@@ -41,6 +41,11 @@ function fragment(uid: string, { hash = `hash-${uid}`, title = uid }: { hash?: s
     // observer looks for the sentinel — so the fixture carries them too.
     `<div class="stack-card-spine"><div class="stack-card-spine-inner">` +
     `<span class="stack-card-spine-title">${title}</span></div></div>` +
+    // A lens shell carries its page-mode chrome too (LensStackCard.astro): the
+    // title and the rule are what the page ↔ card morph names.
+    (uid.startsWith('lens/')
+      ? `<header class="page-header"><h1 class="page-title">site</h1><div class="page-header-rule"></div></header>`
+      : '') +
     `<div class="card-header-sentinel"></div>` +
     `<div class="card-header"><span class="card-header-title">${title}</span>` +
     `<button class="stack-card-close" aria-label="Close">x</button></div>` +
@@ -535,6 +540,79 @@ describe('close', () => {
     expect(state.entries.map(e => e.key)).toEqual(['lens/home']);
     expect(state.activeSlot).toBe('lens/home');
     expect(window.location.pathname).toBe('/');
+  });
+});
+
+describe('page ↔ card view-transition names', () => {
+  /** Who carries which name, as `.class:name`. */
+  const named = () =>
+    [...document.querySelectorAll<HTMLElement>('*')]
+      .filter(e => e.style.viewTransitionName)
+      .map(e => `${e.closest<HTMLElement>('[data-uid]')?.dataset.uid} .${e.classList[0]}:${e.style.viewTransitionName}`)
+      .sort();
+
+  /**
+   * A `startViewTransition` that records the names on each side of the update
+   * and the direction marker. happy-dom has no `ViewTransition`, so this is
+   * the `html[data-vt-type]` fallback; the typed path is covered in
+   * typed-view-transition.test.ts.
+   */
+  function recordViewTransitions() {
+    const runs: { type?: string; old: string[]; new: string[] }[] = [];
+    (document as any).startViewTransition = (update: () => void) => {
+      const run = { type: document.documentElement.dataset.vtType, old: named(), new: [] as string[] };
+      update();
+      run.new = named();
+      runs.push(run);
+      return { finished: Promise.resolve() };
+    };
+    return runs;
+  }
+
+  afterEach(() => { delete (document as any).startViewTransition; });
+
+  it('page → card: the rule morphs into the card header, typed page-to-card', async () => {
+    const runs = recordViewTransitions();
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector('[data-uid="lens/home"] .stack-card-body-inner')!.appendChild(link);
+    link.click();
+    await settle();
+
+    expect(runs).toHaveLength(1);
+    expect(runs[0].type).toBe('page-to-card');
+    expect(runs[0].old).toEqual(['lens/home .page-header-rule:page-rule', 'lens/home .page-title:home-title']);
+    // Home's names are still on here; in a browser its page header is
+    // display:none in the new state, so only the card's side is captured.
+    expect(runs[0].new).toContain(`${CARD_B} .card-header:page-rule`);
+    expect(runs[0].new).toContain(`${CARD_B} .card-header-title:home-title`);
+    expect(named()).toEqual([]);
+    expect(document.documentElement.dataset.vtType).toBeUndefined();
+  });
+
+  it('card → page: closing the last card shrinks its header back into the rule', async () => {
+    const runs = recordViewTransitions();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const bodyWrapper = document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .body-wrapper`)!;
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .stack-card-close`)!.click();
+    await tick();
+    const ended = new Event('transitionend');
+    Object.defineProperty(ended, 'propertyName', { value: 'grid-template-rows' });
+    bodyWrapper.dispatchEvent(ended);
+    await settle();
+
+    expect(get(stackStore).entries.map(e => e.key)).toEqual(['lens/home']);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].type).toBe('card-to-page');
+    expect(runs[0].old).toEqual([`${CARD_A} .card-header:page-rule`]);
+    // Exactly one page-rule on the new side: the header's came off inside the update.
+    expect(runs[0].new).toEqual(['lens/home .page-header-rule:page-rule']);
+    expect(named()).toEqual([]);
+    expect(document.documentElement.dataset.vtType).toBeUndefined();
   });
 });
 

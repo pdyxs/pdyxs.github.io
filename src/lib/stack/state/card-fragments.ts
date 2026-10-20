@@ -138,6 +138,7 @@ export function buildPlaceholderHtml(slot: string, title: string): string {
     ? `<header class="page-header">` +
       `<h1 class="page-title"><a href="/" class="page-title-link">${escapeHtml(SITE_TITLE)}</a></h1>` +
       (siteSubtitle() ? `<p class="page-subtitle">${escapeHtml(siteSubtitle()!)}</p>` : '') +
+      `<div class="page-header-rule"></div>` +
       `</header>`
     : '';
   return `<div class="stack-card" data-uid="${escapeHtml(slot)}">` +

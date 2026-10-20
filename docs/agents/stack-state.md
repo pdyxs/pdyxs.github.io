@@ -292,6 +292,27 @@ Never set `view-transition-name` in HTML — it causes conflicts when multiple e
 2. Clear after `vt.finished` (`element.style.viewTransitionName = ''`)
 3. Use distinct names per direction: `panel-card-open` (link → card) and `panel-card-close` (card → link)
 
+The names in use (CardStack.svelte sets them; their group rules are in `layout.css`):
+
+- `panel-card-open` — the clicked card-link → the pushed card (card mode).
+- `home-title` — home's `.page-title` → the pushed card's `.card-header-title`, page → card only.
+- `page-rule` — home's `.page-header-rule` ↔ the card's `.card-header`, in both directions: page → card
+  on a push from home, and card → page when the last card closes down to home (`closeCard` →
+  `applyHomeSeed`). One name for both directions, because the CSS needs the direction for another
+  reason: only the header-side image is stretched to the morphing box, and the header is the *new*
+  image going to a card but the *old* one coming back. So those two transitions are **typed** —
+  `page-to-card` / `card-to-page`, matched with `:active-view-transition-type()` — through
+  `typedViewTransitions()` (`src/lib/stack/layout/typed-view-transition.ts`), which falls back to
+  `html[data-vt-type]` for the length of the transition where types aren't supported.
+
+A name whose element is still in the DOM after the update (the closing card's header on a close)
+comes off **inside** the update callback, before the new snapshot: left on, it is a duplicate of the
+new side's name, and the browser aborts the whole transition.
+
+Closing a card back to home when home is still in the stack (`?from=` — the usual way back) is not a
+view transition at all: it trims the stack, and the stack's own motion carries home back into page
+mode. No name is involved.
+
 Setting a name on a detached node before appending it inside the `startViewTransition()` callback works correctly — the VT captures the name from the post-callback DOM state.
 
 Clearing is mandatory, not advisory — leaving a name set after the transition will collide with the next one. Instant-fallback paths (when VT is unsupported or skipped) must not depend on the VT to open the body; the `.open` class transition handles that independently.

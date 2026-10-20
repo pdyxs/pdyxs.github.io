@@ -246,10 +246,20 @@ View-transition names:
 - **new:** `site-mark`, `page-title`, `page-subtitle`, `page-rule`. The
   title and subtitle names are set by the mark; `page-rule` is set by
   CardStack.
+- **types** (slice 3): `page-to-card` and `card-to-page` on the page ↔ card
+  transitions, so CSS can tell which side of `page-rule` is the card header.
+  Fallback marker where types are unsupported: `html[data-vt-type]`.
 - **retired:** `home-title` and `home-divider`, along with their
   `::view-transition-group` rules in `layout.css`.
 
 Event: `site:presentation` on `document`.
+
+A local custom property (slice 3), set on `.stack-card--page > .page-header`
+from the spacing tokens, the way `--body-inset-inline` is:
+
+- `--page-header-inset-inline`: the header's inline padding (`0px` mobile,
+  `--space-md` desktop), which `.page-header-rule` cancels with negative
+  margins so the line spans the box the border used to.
 
 New `:root` custom properties (`tokens.css`):
 
