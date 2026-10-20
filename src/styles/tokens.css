@@ -97,6 +97,11 @@
   --palette-dark-bg-c: 0.8;
   /* The palette picker's drag handle (PalettePicker.astro). */
   --palette-swatch-size: 28px;
+  /* The suspended mark (SuspendedMark.astro). Its overlay sits above the page;
+     the hit target is one above that. The dot's hit target never shrinks
+     below the minimum, however small the dot is drawn. */
+  --z-mark: 900;
+  --mark-hit-min: 44px;
 
   --space-xs:     0.375rem;
   --space-sm:     0.75rem;

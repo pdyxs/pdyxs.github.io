@@ -179,6 +179,17 @@ export function stepTools(s: ToolsState, dt: number, reduced: boolean): ToolsSta
   return { phase, want: s.want, toolsOut, taut };
 }
 
+/**
+ * A pull with nothing to drop: until there are tools (slice 7 of
+ * docs/plans/suspended-mark.md), a click is a tug. Once the release begins the
+ * want lapses, so the strings relax with no tools out and the next click pulls
+ * again. Returns `s` itself when there is nothing to lapse.
+ */
+export function lapseTug(s: ToolsState): ToolsState {
+  if (s.phase !== 'release' || (!s.want && !s.toolsOut)) return s;
+  return { ...s, want: false, toolsOut: false };
+}
+
 /** How far to straighten the tool-bearing threads (geometry's `tauten` k). */
 export const tautness = (s: ToolsState) => clamp01(s.taut.x);
 

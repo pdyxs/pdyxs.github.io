@@ -40,7 +40,7 @@
 import { extractLocationWidth } from '@stack/layout/location-width';
 import { SOLO_BUTTON, CLOSE_BUTTON } from '@render/header-icons';
 import { locationKind } from '@stack/layout/stack-layout';
-import { SITE_TITLE, siteSubtitle } from '@browse/lenses/lens-chrome';
+import { SITE_TITLE, siteSubtitle, splitTitleMark } from '@browse/lenses/lens-chrome';
 
 export { extractLocationWidth };
 
@@ -111,6 +111,13 @@ export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/** The page-mode title, its full stop wrapped as the mark's slot, as LensStackCard.astro renders it. */
+function titleHtml(title: string): string {
+  const parts = splitTitleMark(title);
+  if (!parts) return escapeHtml(title);
+  return `${escapeHtml(parts.before)}<span class="page-title-mark">${parts.mark}</span>${escapeHtml(parts.after)}`;
+}
+
 /**
  * A fragment-shaped stand-in for a location whose real HTML has not arrived:
  * the spine, the header (so the view transition has something to morph into)
@@ -136,7 +143,7 @@ export function escapeHtml(s: string): string {
 export function buildPlaceholderHtml(slot: string, title: string): string {
   const pageHeader = locationKind(slot) === 'lens'
     ? `<header class="page-header">` +
-      `<h1 class="page-title"><a href="/" class="page-title-link">${escapeHtml(SITE_TITLE)}</a></h1>` +
+      `<h1 class="page-title"><a href="/" class="page-title-link">${titleHtml(SITE_TITLE)}</a></h1>` +
       (siteSubtitle() ? `<p class="page-subtitle">${escapeHtml(siteSubtitle()!)}</p>` : '') +
       `<div class="page-header-rule"></div>` +
       `</header>`

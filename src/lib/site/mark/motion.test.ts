@@ -19,6 +19,7 @@ import {
   tautness,
   stepToolSize,
   toolReeledIn,
+  lapseTug,
   cubicBezier,
   EASE_LEAVE,
   EASE_RETURN,
@@ -218,6 +219,42 @@ describe('tools: pull → release → rest', () => {
     expect(toolReeledIn(rest, 0.5, 0.001, true)).toBe(false);
     expect(toolReeledIn({ ...rest, phase: 'pull' }, 0, 0, false)).toBe(false);
     expect(toolReeledIn({ ...rest, toolsOut: true }, 0, 0, false)).toBe(false);
+  });
+});
+
+describe('lapseTug: a pull with nothing to drop', () => {
+  /** Step the machine, lapsing the want as the mark does each frame. */
+  const tug = (s: ToolsState, frames: number, seen: ToolsState[] = []) => {
+    for (let i = 0; i < frames; i++) {
+      s = lapseTug(stepTools(s, FRAME, false));
+      seen.push(s);
+    }
+    return s;
+  };
+
+  it('leaves a state with nothing to lapse untouched, by identity', () => {
+    expect(lapseTug(TOOLS_CLOSED)).toBe(TOOLS_CLOSED);
+    const pulling = setWant(TOOLS_CLOSED, true, false);
+    expect(lapseTug(pulling)).toBe(pulling);
+  });
+
+  it('pulls taut, relaxes, and comes to rest closed', () => {
+    const seen: ToolsState[] = [];
+    const s = tug(setWant(TOOLS_CLOSED, true, false), 240, seen);
+    expect(Math.max(...seen.map(tautness))).toBeGreaterThanOrEqual(PULLED);
+    // Nothing is ever paid out, and the release never turns into a second pull.
+    expect(seen.every((x) => !x.toolsOut)).toBe(true);
+    const firstRelease = seen.findIndex((x) => x.phase === 'release');
+    expect(seen.slice(firstRelease).every((x) => x.phase !== 'pull')).toBe(true);
+    expect(s).toMatchObject({ phase: 'rest', want: false, toolsOut: false });
+    expect(tautness(s)).toBeLessThan(0.01);
+  });
+
+  it('a click during the release pulls again', () => {
+    const seen: ToolsState[] = [];
+    let s = tug(setWant(TOOLS_CLOSED, true, false), 240, seen);
+    s = seen.find((x) => x.phase === 'release')!;
+    expect(setWant(s, true, false).phase).toBe('pull');
   });
 });
 

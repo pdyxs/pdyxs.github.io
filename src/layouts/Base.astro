@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import ThemeToggle from '@components/site/ThemeToggle.astro';
 import PalettePicker from '@components/site/PalettePicker.astro';
+import SuspendedMark from '@components/site/SuspendedMark.astro';
 import { STACK_GEOMETRY } from '@stack/layout/stack-geometry';
 import { fanReservationTable } from '@stack/layout/stack-reservation';
 import { fanSkeletonTable } from '@stack/layout/stack-skeleton';
@@ -267,5 +268,8 @@ const jsonLd = [
         <span><a href="/">pdyxs.wtf</a> · <a href="/rss.xml">RSS</a></span>
       </footer>
     </div>
+    {/* Outside .site-wrapper (and so outside #card-stack): the mark is a
+        sibling of the page, never an ancestor of anything dithered. */}
+    <SuspendedMark />
   </body>
 </html>

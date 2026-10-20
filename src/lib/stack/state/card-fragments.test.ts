@@ -23,6 +23,7 @@ import {
   urlToUid,
   withSlotUid,
 } from '@stack/state/card-fragments';
+import { SITE_TITLE } from '@browse/lenses/lens-chrome';
 
 /** A rendered `.stack-card`, as the server would produce one. */
 function fragment(uid: string, opts: { title?: string; body?: string; width?: string; hash?: string } = {}) {
@@ -115,6 +116,9 @@ describe('the placeholder fragment', () => {
     el.innerHTML = buildPlaceholderHtml('lens/newest', 'Newest');
     expect(el.querySelector('.page-header .page-title')).not.toBeNull();
     expect(el.querySelector('.page-header > .page-header-rule:last-child')).not.toBeNull();
+    // The title carries the suspended mark's slot, exactly as LensStackCard renders it.
+    expect(el.querySelector('.page-title .page-title-mark')?.textContent).toBe('.');
+    expect(el.querySelector('.page-title')?.textContent).toBe(SITE_TITLE);
 
     el.innerHTML = buildPlaceholderHtml('what/x', 'A Title');
     expect(el.querySelector('.page-header')).toBeNull();

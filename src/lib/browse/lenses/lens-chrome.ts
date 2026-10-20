@@ -103,3 +103,23 @@ export function lensChromeForKey(key: string): LensChrome | null {
   for (const [k, v] of filtersForKey(key)) params.append(k, v);
   return deriveLensChrome(lens, filterStateFromParams(params));
 }
+
+/** The site title split around its full stop, which the suspended mark draws. */
+export interface TitleMarkParts {
+  before: string;
+  /** The full stop itself, always '.'. */
+  mark: string;
+  after: string;
+}
+
+/**
+ * Split a title on its LAST full stop, so the page-mode H1 can render it as
+ * `<span class="page-title-mark">.</span>`, the slot the suspended mark
+ * measures and draws over (SuspendedMark.astro). Null when there is no full
+ * stop, in which case the title renders as plain text and the mark has no slot.
+ */
+export function splitTitleMark(title: string): TitleMarkParts | null {
+  const i = title.lastIndexOf('.');
+  if (i === -1) return null;
+  return { before: title.slice(0, i), mark: '.', after: title.slice(i + 1) };
+}

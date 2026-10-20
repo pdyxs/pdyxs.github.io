@@ -30,6 +30,7 @@
     uidToFetchUrl,
     urlToUid,
   } from '@stack/state/card-fragments';
+  import { announcePresentation, type Presentation } from '@site/presentation-event';
 
   interface Props {
     activeUid?: string;
@@ -318,6 +319,21 @@
       // instead. During a VT push the open is deferred until vt.finished.
       if (bw) bw.classList.toggle('open', !skipBodyOpen.has(card.slot));
     }
+  });
+
+  // Announce the active entry's presentation to the rest of the page
+  // (`site:presentation`, src/lib/site/presentation-event.ts): once on mount,
+  // for the cold-load mode, and then on every page ↔ card change. The suspended
+  // mark listens; it never reads the stack to find out. AFTER the layout effect
+  // above, so `stack-card--page` is already toggled when a listener looks for
+  // the title. `vt` is null until slice 5 announces from inside the push and
+  // close transitions (docs/plans/suspended-mark.md).
+  const presentation = $derived.by((): Presentation => {
+    const active = activeEntry($stackStore);
+    return active ? presentationMode(locationKind(active.slot), $stackStore.entries.length) : 'card';
+  });
+  $effect(() => {
+    announcePresentation({ to: presentation, vt: null });
   });
 
   // Arms the geometry transitions one frame after the first layout pass.

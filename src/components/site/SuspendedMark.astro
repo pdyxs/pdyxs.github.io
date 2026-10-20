@@ -1,0 +1,375 @@
+---
+// The suspended mark: the full stop in the site title, drawn as a dot hanging
+// from five threads tied to the letters around it (src/data/mark-rig.ts).
+// Mounted once, in Base.astro, outside #card-stack. The build plan is
+// docs/plans/suspended-mark.md; /experiments/suspended-dot is its tuning bench.
+//
+// What it does so far (slice 4): in page mode it draws over the title's
+// `.page-title-mark` slot, and clicking the dot pulls the threads taut and lets
+// them go. In card mode it hides; hanging from the top edge is slices 5 and 6.
+//
+// It learns the mode from `site:presentation` (src/lib/site/presentation-event.ts),
+// which CardStack.svelte announces. It never queries or mutates the stack
+// beyond reading the geometry of the one visible page-mode title slot.
+//
+// A self-contained custom element, like PalettePicker.astro. The motion and
+// the posing are pure, in src/lib/site/mark/; this file reads the page and
+// writes the SVG.
+import { MARK_RIG } from '@data/mark-rig';
+---
+
+<site-mark data-mode="card">
+  <svg class="site-mark-overlay" aria-hidden="true" focusable="false">
+    <g class="site-mark-threads">
+      {MARK_RIG.threads.map(() => <path></path>)}
+    </g>
+    <rect class="site-mark-dot"></rect>
+  </svg>
+  {/* Decorative for now: nothing drops yet, so there is nothing for it to
+      open. When the tools land (slice 7) this becomes the real "Tools" button,
+      focusable, with aria-expanded and aria-controls on the tool group. */}
+  <button type="button" class="site-mark-hit" tabindex="-1" aria-hidden="true"></button>
+  {/* Lays out a full stop in the title's font so the engine itself says where
+      the baseline sits in the slot's box (an empty inline-block's bottom edge is
+      the baseline). See src/lib/site/mark/measure.ts. */}
+  <span class="site-mark-probe" aria-hidden="true"><span class="site-mark-probe-text">.<span class="site-mark-probe-base"></span></span></span>
+</site-mark>
+
+<style>
+  /* No box of its own: the overlay and the hit target position themselves. */
+  site-mark {
+    display: contents;
+    /* Read back by the script: 0 means the tug doesn't animate. */
+    --site-mark-motion: 1;
+  }
+  /* Card mode, and before any mode is known. Slices 5 and 6 hang the dot here. */
+  site-mark[data-mode='card'] {
+    display: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    site-mark {
+      --site-mark-motion: 0;
+    }
+  }
+
+  /* On the viewport by default. At rest in the title it lives in the document
+     instead (`data-overlay="doc"`), so it scrolls natively with the text: a
+     redraw on scroll would trail it by a frame. A sibling of the page, never an
+     ancestor of anything dithered (styling.md). */
+  .site-mark-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    z-index: var(--z-mark);
+  }
+  site-mark[data-overlay='doc'] .site-mark-overlay,
+  site-mark[data-overlay='doc'] .site-mark-hit {
+    position: absolute;
+  }
+
+  .site-mark-threads path {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-linecap: round;
+  }
+  .site-mark-dot {
+    fill: var(--color-text);
+  }
+
+  /* Centred on the dot, never smaller than --mark-hit-min. The script writes
+     the dot's centre and size; the sizing is decided here. */
+  .site-mark-hit {
+    --site-mark-hit-size: max(var(--mark-hit-min), calc(var(--site-mark-size, 0px) * 1.6));
+    position: fixed;
+    z-index: calc(var(--z-mark) + 1);
+    left: calc(var(--site-mark-x, 0px) - var(--site-mark-hit-size) / 2);
+    top: calc(var(--site-mark-y, 0px) - var(--site-mark-hit-size) / 2);
+    width: var(--site-mark-hit-size);
+    height: var(--site-mark-hit-size);
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  :global(html:not([data-mark-ready])) .site-mark-hit {
+    display: none;
+  }
+
+  .site-mark-probe {
+    position: absolute;
+    left: 0;
+    top: 0;
+    visibility: hidden;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .site-mark-probe-base {
+    display: inline-block;
+    width: 0;
+    height: 0;
+  }
+
+  /* The title's full stop keeps its advance and kerning, but once the mark has
+     drawn, the mark is what shows. Until then (and without JS) it is just text. */
+  :global(html[data-mark-ready] .page-title-mark) {
+    color: transparent;
+  }
+</style>
+
+<script>
+  import { MARK_RIG } from '@data/mark-rig';
+  import { poseThreads, threadPathData, tauten, type V } from '@site/mark/geometry';
+  import { TOOLS_CLOSED, lapseTug, setWant, stepTools, tautness, type ToolsState } from '@site/mark/motion';
+  import { FALLBACK_DOT_INK, dotInSlot, inkBounds, inkEm, plausibleDotInk, type InkEm, type SlotDot } from '@site/mark/measure';
+  import { PRESENTATION_EVENT, currentPresentation, type Presentation } from '@site/presentation-event';
+
+  /** The one place the mark looks into the page: the page-mode title's full stop. */
+  const SLOT_SELECTOR = '.stack-card--page .page-title-mark';
+  /** How many frames to keep looking for the slot after a switch to page mode. */
+  const SLOT_RETRIES = 10;
+  /** The size the full stop is drawn at to scan its ink, px. */
+  const SCAN_PX = 200;
+  /** Threads are never drawn thinner than this, px. */
+  const MIN_STROKE = 1.2;
+
+  /** Scanned ink boxes, per font (family, weight, style): one scan serves every size. */
+  const inkCache = new Map<string, InkEm>();
+
+  /**
+   * The full stop's ink in `cs`'s font, scanned from an offscreen canvas
+   * (measure.ts says why not measureText). Falls back to the Chromium-measured
+   * box when the font isn't usable in canvas or the scan isn't a full stop.
+   */
+  function scanInk(cs: CSSStyleDeclaration): { ink: InkEm; scanned: boolean } {
+    const key = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontFamily}`;
+    const hit = inkCache.get(key);
+    if (hit) return { ink: hit, scanned: true };
+    const font = `${cs.fontStyle} ${cs.fontWeight} ${SCAN_PX}px ${cs.fontFamily}`;
+    const side = SCAN_PX * 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = side;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx || !document.fonts.check(font, '.')) return { ink: FALLBACK_DOT_INK, scanned: false };
+    ctx.font = font;
+    ctx.textBaseline = 'alphabetic';
+    // Any opaque colour: only the alpha channel is read.
+    ctx.fillStyle = 'black';
+    const origin = { x: SCAN_PX / 2, y: SCAN_PX * 1.5 };
+    ctx.fillText('.', origin.x, origin.y);
+    const box = inkBounds(ctx.getImageData(0, 0, side, side).data, side, side);
+    const ink = box ? inkEm(box, origin, SCAN_PX) : null;
+    if (!ink || !plausibleDotInk(ink)) return { ink: FALLBACK_DOT_INK, scanned: false };
+    inkCache.set(key, ink);
+    return { ink, scanned: true };
+  }
+
+  class SiteMark extends HTMLElement {
+    #overlay!: SVGSVGElement;
+    #paths: SVGPathElement[] = [];
+    #dot!: SVGRectElement;
+    #hit!: HTMLButtonElement;
+    #probeText!: HTMLElement;
+    #probeBase!: HTMLElement;
+
+    #mode: Presentation | null = null;
+    /** The title slot being drawn over, while in page mode. */
+    #slot: HTMLElement | null = null;
+    /** The dot, measured off the slot: its size, and its centre within the slot's box. */
+    #measured: (SlotDot & { em: number }) | null = null;
+    #fontsReady = false;
+    /** The pull → release → rest machine (motion.ts). With no tools yet, every pull is a tug. */
+    #ts: ToolsState = TOOLS_CLOSED;
+    #frame = 0;
+    #last = 0;
+    #ro = new ResizeObserver(() => this.#relayout());
+
+    connectedCallback() {
+      this.#overlay = this.querySelector('.site-mark-overlay')!;
+      this.#paths = [...this.querySelectorAll<SVGPathElement>('.site-mark-threads path')];
+      this.#dot = this.querySelector('.site-mark-dot')!;
+      this.#hit = this.querySelector('.site-mark-hit')!;
+      this.#probeText = this.querySelector('.site-mark-probe-text')!;
+      this.#probeBase = this.querySelector('.site-mark-probe-base')!;
+
+      document.addEventListener(PRESENTATION_EVENT, this.#onPresentation);
+      window.addEventListener('resize', this.#onResize);
+      this.#hit.addEventListener('click', this.#onHit);
+      // Nothing is drawn until the title's real font is in: until then the
+      // title shows its own full stop, so there is nothing to flash.
+      document.fonts.ready.then(() => {
+        this.#fontsReady = true;
+        this.#relayout();
+      });
+      // The stack may have announced before this script ran.
+      const now = currentPresentation();
+      if (now) this.#setMode(now);
+    }
+
+    disconnectedCallback() {
+      document.removeEventListener(PRESENTATION_EVENT, this.#onPresentation);
+      window.removeEventListener('resize', this.#onResize);
+      this.#detach();
+    }
+
+    // ── Mode ───────────────────────────────────────────────────────
+
+    #onPresentation = (e: CustomEvent<{ to: Presentation }>) => this.#setMode(e.detail.to);
+    #onResize = () => this.#relayout();
+
+    #setMode(mode: Presentation) {
+      this.#mode = mode;
+      this.dataset.mode = mode;
+      if (mode === 'page') {
+        // At rest in the title the overlay is document-positioned (see the CSS).
+        this.dataset.overlay = 'doc';
+        this.#attach();
+      } else {
+        delete this.dataset.overlay;
+        this.#detach();
+      }
+    }
+
+    /** The page-mode title's slot, if one is laid out. Only ever one shows. */
+    #findSlot(): HTMLElement | null {
+      return [...document.querySelectorAll<HTMLElement>(SLOT_SELECTOR)].find((el) => el.getClientRects().length > 0) ?? null;
+    }
+
+    /**
+     * Find the slot and follow its box. Announced from inside the stack's own
+     * update, the slot is normally there already; when it isn't (a fragment
+     * still landing), look again for a few frames.
+     */
+    #attach(tries = 0) {
+      const slot = this.#findSlot();
+      if (!slot) {
+        this.#setReady(false);
+        if (tries < SLOT_RETRIES) requestAnimationFrame(() => this.#mode === 'page' && this.#attach(tries + 1));
+        return;
+      }
+      if (slot !== this.#slot) {
+        this.#ro.disconnect();
+        this.#slot = slot;
+        // The slot's own box catches a font-size change; the header's catches
+        // the title moving with the page's width (a resize of the stack, not
+        // of the window).
+        this.#ro.observe(slot);
+        const header = slot.closest('.page-header');
+        if (header) this.#ro.observe(header);
+      }
+      this.#relayout();
+    }
+
+    #detach() {
+      this.#ro.disconnect();
+      this.#slot = null;
+      this.#measured = null;
+      this.#ts = TOOLS_CLOSED;
+      cancelAnimationFrame(this.#frame);
+      this.#frame = 0;
+      this.#setReady(false);
+    }
+
+    /** While the mark is drawn, the title's own full stop is hidden (`html[data-mark-ready]`). */
+    #setReady(on: boolean) {
+      document.documentElement.toggleAttribute('data-mark-ready', on);
+    }
+
+    // ── Measuring ──────────────────────────────────────────────────
+
+    #relayout() {
+      if (this.#mode !== 'page' || !this.#fontsReady) return;
+      const slot = this.#slot;
+      if (!slot || !slot.isConnected || slot.getClientRects().length === 0) {
+        if (this.#findSlot()) this.#attach();
+        else this.#setReady(false);
+        return;
+      }
+      this.#measured = this.#measure(slot);
+      this.#draw();
+      this.#setReady(true);
+    }
+
+    #measure(slot: HTMLElement): SlotDot & { em: number } {
+      const cs = getComputedStyle(slot);
+      const px = parseFloat(cs.fontSize);
+      // The baseline, from the engine's own layout of a full stop in this font.
+      const ps = this.#probeText.style;
+      ps.fontFamily = cs.fontFamily;
+      ps.fontSize = cs.fontSize;
+      ps.fontWeight = cs.fontWeight;
+      ps.fontStyle = cs.fontStyle;
+      const baseline = this.#probeBase.getBoundingClientRect().bottom - this.#probeText.getBoundingClientRect().top;
+      const { ink } = scanInk(cs);
+      return { ...dotInSlot(ink, px, baseline), em: px };
+    }
+
+    // ── Drawing ────────────────────────────────────────────────────
+
+    #draw() {
+      const m = this.#measured;
+      const slot = this.#slot;
+      if (!m || !slot) return;
+      // In the overlay's own coordinates, whichever box it is positioned
+      // against. The hit target shares that box.
+      const r = slot.getBoundingClientRect();
+      const o = this.#overlay.getBoundingClientRect();
+      const centre: V = { x: r.left - o.left + m.centre.x, y: r.top - o.top + m.centre.y };
+      const size = m.size;
+      const corner: V = { x: centre.x - size / 2, y: centre.y - size / 2 };
+      const f = (n: number) => n.toFixed(2);
+      this.#dot.setAttribute('x', f(corner.x));
+      this.#dot.setAttribute('y', f(corner.y));
+      this.#dot.setAttribute('width', f(size));
+      this.#dot.setAttribute('height', f(size));
+
+      const k = tautness(this.#ts);
+      const geoms = poseThreads(MARK_RIG, { slot: centre, dot: corner, size, em: m.em, p: 0 });
+      // No tools yet, so every thread takes the pull.
+      geoms.forEach((g, i) => this.#paths[i]?.setAttribute('d', threadPathData(k > 0 ? tauten(g, k) : g)));
+      const stroke = String(Math.max(MIN_STROKE, MARK_RIG.width * m.em));
+      for (const p of this.#paths) p.style.setProperty('stroke-width', stroke);
+
+      const hs = this.#hit.style;
+      hs.setProperty('--site-mark-x', `${f(centre.x)}px`);
+      hs.setProperty('--site-mark-y', `${f(centre.y)}px`);
+      hs.setProperty('--site-mark-size', `${f(size)}px`);
+    }
+
+    // ── The tug ────────────────────────────────────────────────────
+
+    /** Reduced motion is decided in CSS (`--site-mark-motion`), and read back here. */
+    #moves(): boolean {
+      return getComputedStyle(this).getPropertyValue('--site-mark-motion').trim() !== '0';
+    }
+
+    #onHit = (e: MouseEvent) => {
+      e.preventDefault();
+      // Reduced motion: the threads just don't move.
+      if (this.#mode !== 'page' || !this.#measured || !this.#moves()) return;
+      const next = setWant(this.#ts, true, false);
+      if (next === this.#ts) return;
+      this.#ts = next;
+      if (!this.#frame) {
+        this.#last = 0;
+        this.#frame = requestAnimationFrame(this.#tick);
+      }
+    };
+
+    /** Runs only while the threads are moving. */
+    #tick = (now: number) => {
+      this.#frame = 0;
+      const dt = this.#last ? Math.min(0.05, (now - this.#last) / 1000) : 1 / 60;
+      this.#last = now;
+      this.#ts = lapseTug(stepTools(this.#ts, dt, false));
+      if (this.#ts.phase === 'rest') this.#ts = TOOLS_CLOSED;
+      this.#draw();
+      if (this.#ts.phase !== 'rest') this.#frame = requestAnimationFrame(this.#tick);
+    };
+  }
+
+  if (!customElements.get('site-mark')) customElements.define('site-mark', SiteMark);
+</script>

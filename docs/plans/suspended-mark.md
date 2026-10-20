@@ -52,7 +52,9 @@ overrides.
 |---|---|---|
 | `src/data/mark-rig.ts` | the five threads (exists) | data |
 | `src/lib/site/mark/geometry.ts` | `poseThreads`, `tauten`, `toolPivot`, bauble physics (moved from `mark-geometry.ts`) | pure |
-| `src/lib/site/mark/motion.ts` | `step` spring, the catch/settle at the edge, the pull → release → rest phase machine, `poseBlend`, `titleExit` | pure |
+| `src/lib/site/mark/motion.ts` | `step` spring, the catch/settle at the edge, the pull → release → rest phase machine (and `lapseTug`, the pull with no tools), `poseBlend`, `titleExit` | pure |
+| `src/lib/site/mark/measure.ts` | the full stop's ink box from a canvas pixel scan, in em; the plausibility check and Chromium-measured fallback; the dot within the slot | pure |
+| `src/lib/site/presentation-event.ts` | `site:presentation`: its detail type, `announcePresentation`, `currentPresentation` (reads `html[data-presentation]`) | shared |
 | `src/components/site/SuspendedMark.astro` | `<site-mark>` custom element: overlay SVG, hit button, rAF loop, SVG writes | effect |
 
 The mark knows threads, the dot, the pull, and that baubles hang from
@@ -105,11 +107,26 @@ CardStack keeps owning the push and the VT. It gains one effect: a document
 event, `site:presentation`, with
 `{ to: 'page' | 'card', vt: ViewTransition | null }`. It fires just before
 `startViewTransition` on both page↔card paths, and once on mount with
-`vt: null` for the cold-load mode. The page → card path is generalised from
+`vt: null` for the cold-load mode. (Slice 4 brought the event forward: a thin
+`$effect` after the layout effect announces the active entry's presentation on
+mount and on every change, always with `vt: null`. Slice 5 moves the page↔card
+announcements to just before the VT and fills in `vt`.) Each announcement is
+also written to `html[data-presentation]`, so a listener whose script runs
+after the first event reads the last value at startup. The page → card path is generalised from
 `wasHomePageMode` to "the sole entry is page mode", which covers question 3
 above. The mark reads title geometry before the VT starts, names the title
 and subtitle itself, and animates only VT pseudos on `document.documentElement`.
 It never writes to `#card-stack`.
+
+**Not every page↔card change is a VT** (slice 3 found this). The usual close,
+back onto a home already in the stack (`?from=0` → `/`), only trims the stack
+and lets the stack's own motion bring home back to page mode. That path
+announces `{ to: 'page', vt: null }`, and in response the mark runs
+`titleExit` in `'return'` on the **live** title and subtitle with WAAPI
+(`element.animate`, transforms only; nothing in the header is dithered). The
+dot reads the live slot, as the experiment's CSS path does. The stack's own
+motion is left alone. Decided 2026-10-20: option (a), over adding a VT to the
+trim close.
 
 ### Markup
 
@@ -229,7 +246,8 @@ New selectors:
 | `.site-mark-overlay` | fixed full-viewport SVG |
 | `.site-mark-threads` (5 × `path`) | the threads |
 | `.site-mark-dot` | the dot (`rect`) |
-| `.site-mark-hit` | the tools button, `aria-expanded`, `aria-controls` → tools |
+| `.site-mark-hit` | the tools button, `aria-expanded`, `aria-controls` → tools (until slice 7, decorative: `tabindex="-1"`, `aria-hidden`) |
+| `.site-mark-probe`, `.site-mark-probe-text`, `.site-mark-probe-base` | a hidden full stop laid out in the title's font, whose empty inline-block gives the engine's own baseline (measure.ts) |
 | `.site-mark-tools` | the tool group |
 | `.site-mark-tool[data-tool]` | one tool (children are nested `.site-mark-tool`s) |
 | `.site-mark-tool-string`, `.site-mark-bauble`, `.site-mark-bauble-hit`, `.site-mark-bauble-body` | tool parts |
@@ -239,7 +257,9 @@ New selectors:
 
 State attributes: `site-mark[data-mode="page"|"card"]`,
 `site-mark[data-overlay="doc"]`, `.site-mark-tool[data-open]`,
-`.site-mark-bauble[data-dragging]`, `html[data-mark-ready]`.
+`.site-mark-bauble[data-dragging]`, `html[data-mark-ready]`,
+`html[data-presentation="page"|"card"]` (the last `site:presentation`, written
+by `announcePresentation`).
 
 View-transition names:
 
@@ -252,7 +272,8 @@ View-transition names:
 - **retired:** `home-title` and `home-divider`, along with their
   `::view-transition-group` rules in `layout.css`.
 
-Event: `site:presentation` on `document`.
+Event: `site:presentation` on `document`, detail
+`{ to: 'page' | 'card', vt: ViewTransition | null }` (`PresentationDetail`).
 
 A local custom property (slice 3), set on `.stack-card--page > .page-header`
 from the spacing tokens, the way `--body-inset-inline` is:
@@ -260,6 +281,15 @@ from the spacing tokens, the way `--body-inset-inline` is:
 - `--page-header-inset-inline`: the header's inline padding (`0px` mobile,
   `--space-md` desktop), which `.page-header-rule` cancels with negative
   margins so the line spans the box the border used to.
+
+Local custom properties (slice 4), in `SuspendedMark.astro`:
+
+- `--site-mark-x`, `--site-mark-y`, `--site-mark-size` on `.site-mark-hit`:
+  the dot's centre (in the overlay's coordinates) and size, written by the
+  script; `--site-mark-hit-size` is derived from them and `--mark-hit-min`
+  in CSS.
+- `--site-mark-motion` on `site-mark`: `1`, or `0` under
+  `prefers-reduced-motion`, read back by the script (the tug doesn't run).
 
 New `:root` custom properties (`tokens.css`):
 

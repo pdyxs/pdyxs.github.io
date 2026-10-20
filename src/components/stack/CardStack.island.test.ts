@@ -29,6 +29,7 @@ import { deserialiseStack } from '@stack/state/stack-codec';
 import { manifestLookup } from '@stack/state/stack-manifest-client';
 import { tagManifestLookup } from '@content/tags/tag-manifest-client';
 import { clearViewState, hasBeenRead } from '@stack/state/card-view-state';
+import { PRESENTATION_EVENT, currentPresentation, type PresentationDetail } from '@site/presentation-event';
 
 const CARD_A = 'what/games/digital/numbeanies';
 const CARD_B = 'what/puzzles/fog';
@@ -613,6 +614,79 @@ describe('page ↔ card view-transition names', () => {
     expect(runs[0].new).toEqual(['lens/home .page-header-rule:page-rule']);
     expect(named()).toEqual([]);
     expect(document.documentElement.dataset.vtType).toBeUndefined();
+  });
+});
+
+describe('site:presentation', () => {
+  /** Every presentation announced, in order. */
+  function listen() {
+    const seen: PresentationDetail[] = [];
+    const on = (e: CustomEvent<PresentationDetail>) => seen.push(e.detail);
+    document.addEventListener(PRESENTATION_EVENT, on);
+    return { seen, stop: () => document.removeEventListener(PRESENTATION_EVENT, on) };
+  }
+
+  beforeEach(() => { document.documentElement.removeAttribute('data-presentation'); });
+
+  it("announces 'page' once on mount at home, and records it on <html>", async () => {
+    const { seen, stop } = listen();
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+    stop();
+
+    expect(seen).toEqual([{ to: 'page', vt: null }]);
+    // A listener that starts after the event went by reads it here instead.
+    expect(currentPresentation()).toBe('page');
+  });
+
+  it("announces 'card' after a push, and only once", async () => {
+    mountStack({ activeUid: 'lens/home', activeHtml: fragment('lens/home', { hash: null }) });
+    await settle();
+    const { seen, stop } = listen();
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector('[data-uid="lens/home"] .stack-card-body-inner')!.appendChild(link);
+    link.click();
+    await settle();
+    stop();
+
+    expect(get(stackStore).activeSlot).toBe(CARD_B);
+    expect(seen).toEqual([{ to: 'card', vt: null }]);
+    expect(currentPresentation()).toBe('card');
+  });
+
+  it("a cold-loaded card announces 'card' on mount, and 'page' once closed back to home", async () => {
+    const { seen, stop } = listen();
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    expect(seen).toEqual([{ to: 'card', vt: null }]);
+
+    const bodyWrapper = document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .body-wrapper`)!;
+    document.querySelector<HTMLElement>(`[data-uid="${CARD_A}"] .stack-card-close`)!.click();
+    await tick();
+    const ended = new Event('transitionend');
+    Object.defineProperty(ended, 'propertyName', { value: 'grid-template-rows' });
+    bodyWrapper.dispatchEvent(ended);
+    await settle();
+    stop();
+
+    expect(seen.map((d) => d.to)).toEqual(['card', 'page']);
+    expect(currentPresentation()).toBe('page');
+  });
+
+  it('says nothing for a change that keeps the presentation', async () => {
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+    const { seen, stop } = listen();
+    const link = document.createElement('a');
+    link.dataset.pushCard = CARD_B;
+    document.querySelector('.stack-card-body-inner')!.appendChild(link);
+    link.click();
+    await settle();
+    stop();
+
+    expect(get(stackStore).entries).toHaveLength(2);
+    expect(seen).toEqual([]);
   });
 });
 

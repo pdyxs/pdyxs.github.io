@@ -4,7 +4,7 @@ import { getContainerRenderer } from '@astrojs/svelte/container-renderer';
 import svelteServerRenderer from '@astrojs/svelte/server.js';
 import LensStackCard from '@components/lens/LensStackCard.astro';
 import { DEFAULT_BROWSE_LENS_ID } from '@browse/lenses/lens-registry';
-import { siteSubtitle } from '@browse/lenses/lens-chrome';
+import { siteSubtitle, SITE_TITLE } from '@browse/lenses/lens-chrome';
 
 async function makeContainer() {
   const renderers = [{ ...getContainerRenderer(), ssr: svelteServerRenderer }];
@@ -58,6 +58,21 @@ describe('LensStackCard', () => {
     // The line under them is an element of its own, last in the header: it is
     // what the page → card view transition morphs into the card header.
     expect(div.querySelector('.page-header > .page-header-rule:last-child')).not.toBeNull();
+  });
+
+  it("wraps the title's full stop as the suspended mark's slot, and the title reads the same", async () => {
+    const container = await makeContainer();
+    const html = await container.renderToString(LensStackCard, {
+      props: { name: 'home', presentation: 'page' },
+    });
+    const div = dom(html);
+
+    const marks = div.querySelectorAll('.page-title .page-title-mark');
+    expect(marks).toHaveLength(1);
+    expect(marks[0].textContent).toBe('.');
+    // Inside the link, so a click anywhere but the hit target still goes home.
+    expect(marks[0].closest('.page-title-link')).not.toBeNull();
+    expect(div.querySelector('.page-title')?.textContent).toBe(SITE_TITLE);
   });
 
   it('card presentation (default) does not carry the page class', async () => {
