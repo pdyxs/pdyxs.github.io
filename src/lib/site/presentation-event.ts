@@ -43,6 +43,22 @@ export function currentPresentation(doc: Document = document): Presentation | nu
   return v === 'page' || v === 'card' ? v : null;
 }
 
+/**
+ * On `<html>`: the presentation the page LOADS in, decided before paint and
+ * before any announcement. The route seeds it (Base.astro's `presentation`: a
+ * lens page is `page`, everything else, a page with no stack included, is
+ * `card`), and the stack's pre-paint script turns it to `card` when the URL
+ * carries `from`/`to` entries. The suspended mark draws its first paint from
+ * it, and starts from it when nothing has been announced.
+ */
+export const COLD_PRESENTATION_ATTR = 'data-cold-presentation';
+
+/** The presentation the page loaded in, or null on a page that doesn't say. */
+export function coldPresentation(doc: Document = document): Presentation | null {
+  const v = doc.documentElement.getAttribute(COLD_PRESENTATION_ATTR);
+  return v === 'page' || v === 'card' ? v : null;
+}
+
 declare global {
   interface DocumentEventMap {
     'site:presentation': CustomEvent<PresentationDetail>;

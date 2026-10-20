@@ -12,6 +12,7 @@ import StackNav from '@components/stack/StackNav.astro';
 import LensStackCard from '@components/lens/LensStackCard.astro';
 import { getLensDefinition } from '@browse/lenses/lens-registry';
 import { deriveLensChrome } from '@browse/lenses/lens-chrome';
+import { presentationMode } from '@stack/layout/stack-layout';
 
 interface Props {
   name: string;
@@ -26,10 +27,13 @@ const title = chrome?.cardTitle ?? '';
 // closest thing it has to a description, and og:image falls back to the site
 // default (no lens has an image of its own).
 const description = chrome?.pageSubtitle || undefined;
+// The sole entry, so page mode: one seed for the chrome and for Base (which
+// tells the suspended mark, before paint, that there is a title to sit in).
+const presentation = presentationMode('lens', 1);
 ---
-<Base {title} {description} ogType="website">
+<Base {title} {description} ogType="website" {presentation}>
   <div id="homepage" hidden></div>
   <StackNav activeUid={`lens/${name}`} initialWidth={lens?.width}>
-    <LensStackCard {name} presentation="page" />
+    <LensStackCard {name} {presentation} />
   </StackNav>
 </Base>

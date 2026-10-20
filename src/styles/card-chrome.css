@@ -241,7 +241,7 @@ pre,
 
 .page-title {
   font-family: var(--font-heading);
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: var(--page-title-size);
   font-weight: 400;
   color: var(--color-text);
   margin: 0 0 var(--space-xs);

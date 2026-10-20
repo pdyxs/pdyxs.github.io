@@ -151,12 +151,48 @@ trim close.
 
 ### No title on the page
 
-The overlay is SSR'd with `data-mode="card"` unless the page seeds page-mode
-chrome. In card mode, CSS alone places the dot hanging at top-centre at
-`--mark-hang-size`, before hydration. The threads are added at hydration in
-the `p = 1` pose. The hang pose is authored relative to the attach point, so
-it needs no title. `em` is derived from the hang size, so nothing has to be
-measured.
+**Built (slice 6).** The overlay is mounted first in `<body>`, so it is parsed
+before the page under it (the browser paints a partly parsed document, and at
+the end of a long card the mark arrived frames after the first paint).
+
+- **The hang's size has one source:** `--mark-hang-em` and `--mark-hang-size`
+  in `tokens.css`. The em is the page title's font-size (`--page-title-size`,
+  which `.page-title` now uses) × 3, the exit's growth; the dot is that em ×
+  0.095, the full stop's ink width. `TITLE_EXIT_SCALE` (motion.ts) and
+  `HANG_DOT_INK` (mark/hang.ts) are the same two factors as numbers, pinned to
+  the CSS by `hang.test.ts`. The script never computes the hang: it reads both
+  tokens back, resolved, off `.site-mark-hang-probe`.
+- **The hang pose needs no title.** The rig's hang control points are em
+  offsets from the attach points; the anchors, on letters that have left, sit
+  `HANG_DEPTH` (0.6) em above the dot, the separation the pose was authored at
+  in the mark editor. So the pose is the dot's centre plus em × fixed numbers
+  (`hangPose`, `hangMarkup` in `src/lib/site/mark/hang.ts`).
+- **The server draws it.** `.site-mark-hang` is a second SVG, the pose laid out
+  at build time in 1/1000 em about the dot's centre (viewBox), which CSS sizes
+  by `--mark-hang-em` and pins at the top-centre. Threads included: the stroke
+  is `vector-effect: non-scaling-stroke` at the script's width
+  (`max(1.2px, 0.012em)`). It shows on `html[data-cold-presentation='card']`
+  until `html[data-mark-ready]`, and without JS for good. The script's first
+  draw, in the same task as `data-mark-ready`, is the same picture (measured:
+  no pixel differs by more than half; the SSR copy sits ~0.16px right, where
+  Chromium snaps the SVG's box).
+- **Page or card before paint** is `html[data-cold-presentation]`: seeded by
+  the route (Base's `presentation`, `page` from LensPage via
+  `presentationMode('lens', 1)`), turned `card` by the stack's pre-paint script
+  when the URL carries `from`/`to` (`presentationMode('lens', 2)` at build
+  time). With no announcement yet, the mark starts from it; that is what makes
+  a page with no stack hang. A first announcement that differs from the seed is
+  a correction, not a return: a lens deep link announces `page` on mount before
+  restoring its fan, and no title comes back down for it.
+- **After an exit it is the same hang.** Card mode always hangs from the hang's
+  own slot (`slotSource` → `hang`, no title needed). The exit lands on it: the
+  dot's size and em ease from the title's grown ones onto the hang's as the
+  growth completes (`grownDot`, nothing in Chromium), and the anchors move from
+  the letters to `HANG_DEPTH` as the pose blends (`anchorSlot`), when the
+  letters are already off the screen. `hangFrame` and `data-hang` are retired.
+- **Known:** a lens deep link (`/lens/x?from=…`) still shows page chrome until
+  the stack restores its fan (the stack's, not the mark's), so for that moment
+  the title's real period and the hanging dot are both on screen.
 
 ---
 
@@ -257,6 +293,8 @@ New selectors:
 | `.site-mark-dot` | the dot (`rect`) |
 | `.site-mark-hit` | the tools button, `aria-expanded`, `aria-controls` → tools (until slice 7, decorative: `tabindex="-1"`, `aria-hidden`) |
 | `.site-mark-probe`, `.site-mark-probe-text`, `.site-mark-probe-base` | a hidden full stop laid out in the title's font, whose empty inline-block gives the engine's own baseline (measure.ts) |
+| `.site-mark-hang` (5 × `path` in `.site-mark-threads`, `rect.site-mark-dot`) | slice 6: the hanging pose as the server draws it, for the first paint in card mode |
+| `.site-mark-hang-probe` | slice 6: resolves `--mark-hang-size` (width) and `--mark-hang-em` (height) to px for the script |
 | `.site-mark-tools` | the tool group |
 | `.site-mark-tool[data-tool]` | one tool (children are nested `.site-mark-tool`s) |
 | `.site-mark-tool-string`, `.site-mark-bauble`, `.site-mark-bauble-hit`, `.site-mark-bauble-body` | tool parts |
@@ -265,14 +303,18 @@ New selectors:
 | `.page-header-rule` | the line under the subtitle (replaces `.page-header`'s border-bottom) |
 
 State attributes: `site-mark[data-mode="page"|"card"]`,
-`site-mark[data-overlay="doc"]`, `site-mark[data-hang]` (slice 5: a title has
-left, so card mode shows the dot hanging; without it card mode is hidden),
+`site-mark[data-overlay="doc"]`, (`site-mark[data-hang]`, slice 5, is retired
+in slice 6: card mode always hangs),
+`html[data-cold-presentation="page"|"card"]` (slice 6: the presentation the
+page loads in, before paint; Base seeds it from the route and the stack's
+pre-paint script turns it `card` for a `from`/`to` fan),
 `html[data-mark-vt="title"|"mark"]` (slice 5: for the length of a page ↔ card
 VT, names the overlay and, for `title`, the page-mode title and subtitle;
 `mark` is reduced motion, the overlay only), `.site-mark-tool[data-open]`,
 `.site-mark-bauble[data-dragging]`, `html[data-mark-ready]`,
 `html[data-presentation="page"|"card"]` (the last `site:presentation`, written
-by `announcePresentation`).
+by `announcePresentation`). `html[data-mark-ready]` now also retires the
+server's hanging pose.
 
 View-transition names:
 
@@ -306,10 +348,18 @@ Local custom properties (slice 4), in `SuspendedMark.astro`:
 - `--site-mark-motion` on `site-mark`: `1`, or `0` under
   `prefers-reduced-motion`, read back by the script (the tug doesn't run).
 
+Local custom properties (slice 6), inline on `.site-mark-hang` from the
+build: `--hang-x`, `--hang-y`, `--hang-w`, `--hang-h` (its box, em, about the
+dot's centre), `--hang-top` (`HANG_Y`), `--hang-stroke-em`, `--hang-stroke-min`.
+
 New `:root` custom properties (`tokens.css`):
 
-- `--mark-hang-size`: the dot's size when hanging (the experiment's ×3.00 of
-  title size, resolved to a length)
+- `--page-title-size` (slice 6): `.page-title`'s font-size,
+  `clamp(2rem, 5vw, 3rem)`, so the hang can be sized from it with no title
+- `--mark-hang-em` (slice 6): the hanging rig's em,
+  `--page-title-size × 3` (`TITLE_EXIT_SCALE`)
+- `--mark-hang-size`: the dot's size when hanging, `--mark-hang-em × 0.095`
+  (`HANG_DOT_INK`)
 - `--mark-hit-min: 44px`: the minimum hit target, for the dot and baubles
 - `--z-mark: 900`: the overlay; the hit button is `calc(var(--z-mark) + 1)`
 

@@ -60,6 +60,14 @@ export function poseThreads(rig: MarkRig, pose: Pose): ThreadGeometry[] {
   });
 }
 
+/** Threads are never drawn thinner than this, px. */
+export const MIN_STROKE = 1.2;
+
+/** A thread's stroke width, px, at `em` px per em. */
+export function threadStroke(rig: MarkRig, em: number): number {
+  return Math.max(MIN_STROKE, rig.width * em);
+}
+
 /** SVG path data for one thread. */
 export function threadPathData(g: ThreadGeometry): string {
   const f = (v: V) => `${v.x.toFixed(1)} ${v.y.toFixed(1)}`;

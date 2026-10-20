@@ -4,13 +4,17 @@
 // Mounted once, in Base.astro, outside #card-stack. The build plan is
 // docs/plans/suspended-mark.md; /experiments/suspended-dot is its tuning bench.
 //
-// What it does so far (slice 5): in page mode it draws over the title's
+// What it does so far (slice 6): in page mode it draws over the title's
 // `.page-title-mark` slot, and clicking the dot pulls the threads taut and lets
 // them go. When the page header leaves (page → card) the title rises, grows
 // and drifts to the centre line, and the dot is caught at the top edge and
 // hangs there for as long as the stack is in card mode; the way back reverses
-// it. A cold load in card mode has no title to hang from and stays hidden
-// (slice 6).
+// it. Where there is no title to leave (a cold load of a card, a deep link, a
+// page with no stack) the dot hangs from the start: the server draws that pose
+// (`.site-mark-hang`, laid out by src/lib/site/mark/hang.ts and sized in CSS)
+// so it is there before any script runs, and the script takes over drawing the
+// same picture. Both are sized by `--mark-hang-em` / `--mark-hang-size`
+// (tokens.css), and so is the hang after an exit.
 //
 // It learns the mode from `site:presentation` (src/lib/site/presentation-event.ts),
 // which CardStack.svelte announces, with the View Transition when there is one.
@@ -23,9 +27,44 @@
 // the posing are pure, in src/lib/site/mark/; this file reads the page and
 // writes the SVG.
 import { MARK_RIG } from '@data/mark-rig';
+import { MIN_STROKE } from '@site/mark/geometry';
+import { HANG_UNITS, hangMarkup } from '@site/mark/hang';
+import { HANG_Y } from '@site/mark/motion';
+
+// The hanging pose, in 1/HANG_UNITS em about the dot's resting centre. CSS
+// scales the viewBox by --mark-hang-em and puts that centre at the top-centre
+// of the screen, so nothing about it needs measuring.
+const hang = hangMarkup(MARK_RIG);
+const em = (n: number) => +(n / HANG_UNITS).toFixed(4);
+const hangStyle = [
+  `--hang-x: ${em(hang.box.x)}`,
+  `--hang-y: ${em(hang.box.y)}`,
+  `--hang-w: ${em(hang.box.width)}`,
+  `--hang-h: ${em(hang.box.height)}`,
+  `--hang-top: ${HANG_Y}px`,
+  `--hang-stroke-em: ${MARK_RIG.width}`,
+  `--hang-stroke-min: ${MIN_STROKE}px`,
+].join('; ');
+const n = (v: number) => +v.toFixed(2);
 ---
 
 <site-mark data-mode="card">
+  {/* The hanging pose as the server draws it, for the first paint of a page
+      that loads in card mode (html[data-cold-presentation="card"], Base.astro),
+      and for good without JS. Retired the moment the script draws the live
+      overlay (html[data-mark-ready]), which draws the same picture. */}
+  <svg
+    class="site-mark-hang"
+    viewBox={`${hang.box.x} ${hang.box.y} ${hang.box.width} ${hang.box.height}`}
+    style={hangStyle}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <g class="site-mark-threads">
+      {hang.paths.map((d) => <path d={d}></path>)}
+    </g>
+    <rect class="site-mark-dot" x={n(hang.dot.x)} y={n(hang.dot.y)} width={n(hang.dot.size)} height={n(hang.dot.size)}></rect>
+  </svg>
   <svg class="site-mark-overlay" aria-hidden="true" focusable="false">
     <g class="site-mark-threads">
       {MARK_RIG.threads.map(() => <path></path>)}
@@ -40,6 +79,9 @@ import { MARK_RIG } from '@data/mark-rig';
       the baseline sits in the slot's box (an empty inline-block's bottom edge is
       the baseline). See src/lib/site/mark/measure.ts. */}
   <span class="site-mark-probe" aria-hidden="true"><span class="site-mark-probe-text">.<span class="site-mark-probe-base"></span></span></span>
+  {/* Resolves the hang's two tokens to px for the script: width is
+      --mark-hang-size, height --mark-hang-em. */}
+  <span class="site-mark-hang-probe" aria-hidden="true"></span>
 </site-mark>
 
 <style>
@@ -48,12 +90,6 @@ import { MARK_RIG } from '@data/mark-rig';
     display: contents;
     /* Read back by the script: 0 means nothing animates (the tug, the exit). */
     --site-mark-motion: 1;
-  }
-  /* Card mode with no title ever measured (a cold load of a card), and before
-     any mode is known: nothing to hang from yet. Slice 6 hangs the dot here
-     too. Once a title has left (`data-hang`), card mode shows the dot hanging. */
-  site-mark[data-mode='card']:not([data-hang]) {
-    display: none;
   }
   @media (prefers-reduced-motion: reduce) {
     site-mark {
@@ -87,6 +123,43 @@ import { MARK_RIG } from '@data/mark-rig';
   }
   .site-mark-dot {
     fill: var(--color-text);
+  }
+
+  /* The server's hanging pose. Shown only on a page that loads in card mode,
+     and only until the script draws (html[data-mark-ready]): from then on the
+     live overlay draws the same pose, so there is nothing to swap visibly. On
+     a page that loads in page mode it never shows, so the dot can't flash at
+     the top before the title is measured. The viewBox's (0, 0) is the dot's
+     centre; this box puts it at the top-centre of the screen, scaled by the
+     hang's em. The stroke is in screen px (non-scaling), the width the
+     script draws: the rig's, in em, never under the minimum. */
+  .site-mark-hang {
+    display: none;
+    position: fixed;
+    left: calc(50% + var(--mark-hang-em) * var(--hang-x));
+    top: calc(var(--hang-top) + var(--mark-hang-em) * var(--hang-y));
+    width: calc(var(--mark-hang-em) * var(--hang-w));
+    height: calc(var(--mark-hang-em) * var(--hang-h));
+    overflow: visible;
+    pointer-events: none;
+    z-index: var(--z-mark);
+  }
+  :global(html[data-cold-presentation='card']:not([data-mark-ready])) .site-mark-hang {
+    display: block;
+  }
+  .site-mark-hang path {
+    stroke-width: max(var(--hang-stroke-min), calc(var(--mark-hang-em) * var(--hang-stroke-em)));
+    vector-effect: non-scaling-stroke;
+  }
+
+  .site-mark-hang-probe {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--mark-hang-size);
+    height: var(--mark-hang-em);
+    visibility: hidden;
+    pointer-events: none;
   }
 
   /* Centred on the dot, never smaller than --mark-hit-min. The script writes
@@ -193,7 +266,7 @@ import { MARK_RIG } from '@data/mark-rig';
 
 <script>
   import { MARK_RIG } from '@data/mark-rig';
-  import { poseThreads, threadPathData, tauten, type V } from '@site/mark/geometry';
+  import { poseThreads, threadPathData, threadStroke, tauten, type V } from '@site/mark/geometry';
   import {
     DOT_AT_REST,
     TITLE_EXIT_MS,
@@ -213,9 +286,10 @@ import { MARK_RIG } from '@data/mark-rig';
     type ToolsState,
     type Viewport,
   } from '@site/mark/motion';
-  import { caughtDot, exitTime, hangFrame, slotSource } from '@site/mark/exit';
+  import { caughtDot, exitTime, slotSource } from '@site/mark/exit';
+  import { HANG_DEPTH, anchorSlot, grownDot, hangSlot, type HangMetrics } from '@site/mark/hang';
   import { FALLBACK_DOT_INK, dotInSlot, inkBounds, inkEm, plausibleDotInk, type InkEm, type SlotDot } from '@site/mark/measure';
-  import { PRESENTATION_EVENT, currentPresentation, type Presentation, type PresentationDetail } from '@site/presentation-event';
+  import { PRESENTATION_EVENT, coldPresentation, currentPresentation, type Presentation, type PresentationDetail } from '@site/presentation-event';
 
   /** The one place the mark looks into the page: the page-mode title's full stop. */
   const SLOT_SELECTOR = '.stack-card--page .page-title-mark';
@@ -223,8 +297,6 @@ import { MARK_RIG } from '@data/mark-rig';
   const SLOT_RETRIES = 10;
   /** The size the full stop is drawn at to scan its ink, px. */
   const SCAN_PX = 200;
-  /** Threads are never drawn thinner than this, px. */
-  const MIN_STROKE = 1.2;
 
   /** Scanned ink boxes, per font (family, weight, style): one scan serves every size. */
   const inkCache = new Map<string, InkEm>();
@@ -298,17 +370,24 @@ import { MARK_RIG } from '@data/mark-rig';
     #hit!: HTMLButtonElement;
     #probeText!: HTMLElement;
     #probeBase!: HTMLElement;
+    #hangProbe!: HTMLElement;
 
     #mode: Presentation | null = null;
+    /**
+     * `#mode` is the load-time seed, not yet anything the stack announced. A
+     * first announcement that differs from it is a correction, not a change:
+     * a lens deep link's stack announces `page` on mount and only then
+     * restores the cards above it, and no title should come back down for it.
+     */
+    #seeded = false;
     /** The page-mode title slot, while one is laid out. */
     #slot: HTMLElement | null = null;
-    /**
-     * The dot, measured off the slot at rest. Kept in card mode: the hanging
-     * dot is the title's, grown by the exit's scale.
-     */
+    /** The dot, measured off the slot at rest: where an exit starts from. */
     #measured: Measured | null = null;
-    /** The last title start measured at rest. Card mode hangs from its END (`hangFrame`). */
+    /** The last title start measured at rest. */
     #start: TitleStart | null = null;
+    /** The hang's size and em, px, as the CSS tokens resolve now (`#readHang`). */
+    #hang: HangMetrics | null = null;
     /** poseBlend's denominator, for #start. */
     #separation = 1;
     #run: Run | null = null;
@@ -322,12 +401,15 @@ import { MARK_RIG } from '@data/mark-rig';
     #ro = new ResizeObserver(() => this.#relayout());
 
     connectedCallback() {
+      // The live overlay's, not the server's hanging copy (.site-mark-hang),
+      // which has the same parts and is only ever drawn by CSS.
       this.#overlay = this.querySelector('.site-mark-overlay')!;
-      this.#paths = [...this.querySelectorAll<SVGPathElement>('.site-mark-threads path')];
-      this.#dot = this.querySelector('.site-mark-dot')!;
+      this.#paths = [...this.#overlay.querySelectorAll<SVGPathElement>('.site-mark-threads path')];
+      this.#dot = this.#overlay.querySelector('.site-mark-dot')!;
       this.#hit = this.querySelector('.site-mark-hit')!;
       this.#probeText = this.querySelector('.site-mark-probe-text')!;
       this.#probeBase = this.querySelector('.site-mark-probe-base')!;
+      this.#hangProbe = this.querySelector('.site-mark-hang-probe')!;
 
       document.addEventListener(PRESENTATION_EVENT, this.#onPresentation);
       window.addEventListener('resize', this.#onResize);
@@ -338,9 +420,16 @@ import { MARK_RIG } from '@data/mark-rig';
         this.#fontsReady = true;
         this.#relayout();
       });
-      // The stack may have announced before this script ran.
+      // The stack may have announced before this script ran. If it hasn't
+      // (or there is no stack to), start in the mode the page loaded in, which
+      // is what the server and the pre-paint script drew: on a page with no
+      // stack that is card mode, hanging, for good.
       const now = currentPresentation();
-      if (now) this.#present({ to: now, vt: null });
+      if (now) return this.#present({ to: now, vt: null });
+      const cold = coldPresentation();
+      if (!cold) return;
+      this.#present({ to: cold, vt: null });
+      this.#seeded = true;
     }
 
     disconnectedCallback() {
@@ -364,7 +453,12 @@ import { MARK_RIG } from '@data/mark-rig';
     }
 
     #present({ to, vt }: PresentationDetail) {
-      const from = this.#mode;
+      const from = this.#seeded ? null : this.#mode;
+      if (this.#seeded && to === this.#mode && !vt) {
+        this.#seeded = false;
+        return;
+      }
+      this.#seeded = false;
       // A change while an exit is still running ends that exit first: its
       // names and animations never outlive it.
       this.#endRun();
@@ -385,27 +479,28 @@ import { MARK_RIG } from '@data/mark-rig';
       else delete this.dataset.overlay;
     }
 
-    /** Page → card. With `vt`, the title leaves over it; without, it has already gone. */
+    /**
+     * Page → card. With `vt`, the title leaves over it. Without one it has
+     * already gone, or there never was one (a cold load of a card, a page with
+     * no stack), and the dot just hangs: the same pose the server drew, which
+     * this draw replaces without a visible change.
+     */
     #toCard(vt: ViewTransition | null) {
       // Read the title before anything changes: the stack hasn't run the
       // transition's update yet (it announces before the old capture), so
-      // the page-mode title is still laid out. With no transition the stack
-      // has already moved on, and the last start measured at rest stands in.
+      // the page-mode title is still laid out.
       const slot = this.#findSlot();
       if (slot && this.#fontsReady) this.#restMeasure(slot);
       this.#ro.disconnect();
       this.#slot = null;
       this.#setMode('card');
       this.#setAnchored(false);
+      this.#readHang();
       const start = this.#start;
-      this.toggleAttribute('data-hang', !!start && !!this.#measured);
-      if (!start || !this.#measured) {
-        this.#stop();
-        this.#setReady(false);
-        return;
-      }
-      if (!vt || !slot) {
+      if (!vt || !slot || !start || !this.#measured) {
         this.#state = caughtDot(this.#state);
+        this.#draw();
+        this.#setReady(true);
         this.#wake();
         return;
       }
@@ -433,10 +528,11 @@ import { MARK_RIG } from '@data/mark-rig';
         this.#attach();
         return;
       }
-      // On the viewport for the whole transition, already displayed (so the
-      // new state captures the overlay even after a cold card load, which
-      // never drew it), and caught at the edge for the title to come back to.
+      // On the viewport for the whole transition, and caught at the edge for
+      // the title to come back to: until the new title is measured, the dot
+      // goes on hanging.
       this.#setAnchored(false);
+      this.#readHang();
       this.#state = caughtDot(this.#state);
       const run: Run = { kind: 'vt', direction: 'return', start: null, viewport: viewportNow(), clock: null, anims: [], subtitle: false };
       this.#begin(run, vt);
@@ -604,6 +700,8 @@ import { MARK_RIG } from '@data/mark-rig';
       // Mid-exit, the trajectory is fixed: it was measured when it began.
       if (this.#exiting() || !this.#mode) return;
       if (this.#mode === 'card') {
+        // The hang's tokens follow the viewport (the title's size is in vw).
+        this.#readHang();
         this.#draw();
         return;
       }
@@ -653,61 +751,73 @@ import { MARK_RIG } from '@data/mark-rig';
       return { ...dotInSlot(ink, px, baseline), em: px, slotW: slot.getBoundingClientRect().width };
     }
 
-    /** While the mark is drawn, the title's own full stop is hidden (`html[data-mark-ready]`). */
+    /** The hang's size and em, px: `--mark-hang-size` and `--mark-hang-em`, resolved by the browser. */
+    #readHang() {
+      const r = this.#hangProbe.getBoundingClientRect();
+      this.#hang = r.width > 0 && r.height > 0 ? { size: r.width, em: r.height } : null;
+    }
+
+    /**
+     * While the mark is drawn, the title's own full stop is hidden, and the
+     * server's hanging pose is retired (`html[data-mark-ready]`).
+     */
     #setReady(on: boolean) {
       document.documentElement.toggleAttribute('data-mark-ready', on);
     }
 
     // ── Where the slot is now ──────────────────────────────────────
 
-    /** The slot's centre (viewport coords) and how much the title has grown, from wherever it is now. */
-    #slotNow(): { c: V; k: number } | null {
+    /**
+     * Where the dot is drawn from now: the slot's centre (viewport coords),
+     * the dot's size and em there, and `poseBlend`'s denominator.
+     */
+    #now(): { c: V; size: number; em: number; separation: number } | null {
+      if (!this.#mode) return null;
       const m = this.#measured;
-      if (!m || !this.#mode) return null;
       const run = this.#run && this.#run.kind !== 'instant' ? this.#run : null;
       const source = slotSource({
         mode: this.#mode,
         run: run ? (run.kind === 'live' ? 'live' : 'vt') : null,
         direction: run?.direction,
-        runStart: !!run?.start,
-        hang: !!this.#start,
+        runStart: !!run?.start && !!m,
         slot: !!this.#slot?.isConnected && this.#slot.getClientRects().length > 0,
       });
+      const hang = this.#hang;
+      if (source === 'hang') {
+        // No title: the slot is the hang's own, HANG_DEPTH em above the edge.
+        if (!hang) return null;
+        return { c: hangSlot(viewportNow().width / 2, hang.em), ...hang, separation: HANG_DEPTH * hang.em };
+      }
+      if (source === 'none' || !m) return null;
+      /** The title's dot grown by `k`, landing on the hang's as it finishes growing. */
+      const grown = (k: number) => (hang ? grownDot(m, k, hang) : { size: m.size * k, em: m.em * k });
       if (source === 'exit' || source === 'tracked') {
         const f = titleExit(run!.start!, run!.viewport, exitTime(run!.clock?.currentTime), { direction: run!.direction });
-        if (source === 'exit') return { c: f.title.slot, k: f.title.scale };
+        const g = grown(f.title.scale);
+        if (source === 'exit') return { c: f.title.slot, ...g, separation: this.#separation };
         // The new element itself isn't transformed (its snapshot is), so its
         // slot is where it is laid out now; the snapshot's keyframes move it
         // from there by the trajectory's offset, and grow it about the slot.
         const r = this.#slot!.getBoundingClientRect();
         const o = f.title.offset;
-        return { c: { x: r.left + m.centre.x + o.x, y: r.top + m.centre.y + o.y }, k: f.title.scale };
+        return { c: { x: r.left + m.centre.x + o.x, y: r.top + m.centre.y + o.y }, ...g, separation: this.#separation };
       }
-      if (source === 'hang') {
-        const f = hangFrame(this.#start!, viewportNow());
-        return { c: f.title.slot, k: f.title.scale };
-      }
-      if (source === 'live') {
-        // Transforms included: the trim close animates the live title.
-        const r = this.#slot!.getBoundingClientRect();
-        const k = m.slotW > 0 ? r.width / m.slotW : 1;
-        return { c: { x: r.left + m.centre.x * k, y: r.top + m.centre.y * k }, k };
-      }
-      return null;
+      // `live`: transforms included, since the trim close animates the live title.
+      const r = this.#slot!.getBoundingClientRect();
+      const k = m.slotW > 0 ? r.width / m.slotW : 1;
+      return { c: { x: r.left + m.centre.x * k, y: r.top + m.centre.y * k }, ...grown(k), separation: this.#separation };
     }
 
     // ── Drawing ────────────────────────────────────────────────────
 
     #draw(): boolean {
-      const m = this.#measured;
-      const s = this.#slotNow();
-      if (!m || !s) return false;
+      const s = this.#now();
+      if (!s) return false;
       // In the overlay's own coordinates, whichever box it is positioned
       // against. The hit target shares that box.
       const o = this.#overlay.getBoundingClientRect();
       const shift = (v: V): V => ({ x: v.x - o.left, y: v.y - o.top });
-      const size = m.size * s.k;
-      const em = m.em * s.k;
+      const { size, em } = s;
       const stopped = this.#state.stopped;
       // Caught at the edge, the dot's height is its own; otherwise it is in the slot.
       const y = stopped ? this.#state.y.x : s.c.y;
@@ -720,11 +830,14 @@ import { MARK_RIG } from '@data/mark-rig';
       this.#dot.setAttribute('height', f(size));
 
       const k = tautness(this.#ts);
-      const p = poseBlend(stopped, s.c.y, this.#separation);
-      const geoms = poseThreads(MARK_RIG, { slot: shift(s.c), dot: corner, size, em, p });
+      const p = poseBlend(stopped, s.c.y, s.separation);
+      // The anchors leave the letters for the hang's own as the pose blends
+      // (hang.ts), so the end of an exit is the picture a cold load starts with.
+      const anchors = anchorSlot(s.c, em, p);
+      const geoms = poseThreads(MARK_RIG, { slot: shift(anchors), dot: corner, size, em, p });
       // No tools yet, so every thread takes the pull.
       geoms.forEach((g, i) => this.#paths[i]?.setAttribute('d', threadPathData(k > 0 ? tauten(g, k) : g)));
-      const stroke = String(Math.max(MIN_STROKE, MARK_RIG.width * em));
+      const stroke = String(threadStroke(MARK_RIG, em));
       for (const path of this.#paths) path.style.setProperty('stroke-width', stroke);
 
       // Hanging, only the lower part of the dot is on screen: aim at that.
@@ -745,26 +858,19 @@ import { MARK_RIG } from '@data/mark-rig';
       this.#frame = requestAnimationFrame(this.#tick);
     }
 
-    #stop() {
-      cancelAnimationFrame(this.#frame);
-      this.#frame = 0;
-      this.#prevY = null;
-    }
-
     /** Runs only while something moves: an exit, the dot settling, or a tug. */
     #tick = (now: number) => {
       this.#frame = 0;
       const dt = this.#last ? Math.min(0.05, (now - this.#last) / 1000) : 1 / 60;
       this.#last = now;
-      const m = this.#measured;
-      const s = this.#slotNow();
-      if (!m || !s || !this.#mode) {
+      const s = this.#now();
+      if (!s || !this.#mode) {
         // Nothing to draw yet (a return still waiting for its new title).
         if (this.#run) this.#frame = requestAnimationFrame(this.#tick);
         return;
       }
       const moves = this.#moves();
-      const size = m.size * s.k;
+      const size = s.size;
       const vy = this.#prevY === null ? 0 : (s.c.y - this.#prevY) / dt;
       this.#prevY = s.c.y;
       // Carried up with the title, the dot is caught at the edge and settles
@@ -797,8 +903,9 @@ import { MARK_RIG } from '@data/mark-rig';
     #onHit = (e: MouseEvent) => {
       e.preventDefault();
       // Reduced motion: the threads just don't move. Mid-exit, nothing to pull.
-      if (!this.#measured || this.#exiting() || !this.#moves()) return;
-      if (this.#mode !== 'page' && !this.hasAttribute('data-hang')) return;
+      // Hanging, there is always a dot; in the title, only once it is measured.
+      if (this.#exiting() || !this.#moves()) return;
+      if (this.#mode === 'page' ? !this.#measured : this.#mode !== 'card') return;
       const next = setWant(this.#ts, true, false);
       if (next === this.#ts) return;
       this.#ts = next;

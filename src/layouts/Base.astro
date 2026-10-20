@@ -7,6 +7,7 @@ import { STACK_GEOMETRY } from '@stack/layout/stack-geometry';
 import { fanReservationTable } from '@stack/layout/stack-reservation';
 import { fanSkeletonTable } from '@stack/layout/stack-skeleton';
 import { ENTRY_SEP } from '@stack/state/stack-codec';
+import { presentationMode } from '@stack/layout/stack-layout';
 import {
   buildArticleJsonLd,
   buildSiteJsonLd,
@@ -26,9 +27,21 @@ interface Props {
   ogType?: 'article' | 'website';
   /** Publish date of a dated card — drives article:published_time / datePublished. */
   date?: Date;
+  /**
+   * How the page presents as it loads, before any script: `page` where the
+   * route seeds page-mode chrome (LensPage), `card` everywhere else, a page
+   * with no stack included. Becomes `html[data-cold-presentation]`.
+   */
+  presentation?: 'page' | 'card';
+  /** Mount the suspended mark. Off only for the experiments that draw their own. */
+  mark?: boolean;
 }
 
-const { title = SITE_NAME, description, image, ogType = 'website', date } = Astro.props as Props;
+const { title = SITE_NAME, description, image, ogType = 'website', date, presentation = 'card', mark = true } = Astro.props as Props;
+// The presentation of any stack deeper than its one SSR'd location, which is
+// what a cold load with `from`/`to` entries is. Decided by the stack's own
+// rule (presentationMode), at build time, for the pre-paint script below.
+const FAN_PRESENTATION = presentationMode('lens', 2);
 const pageTitle = title === SITE_NAME ? title : `${title} — ${SITE_NAME}`;
 
 // Thin applier: every decision below is made by pure functions in src/lib/site/seo.ts.
@@ -67,7 +80,7 @@ const jsonLd = [
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-cold-presentation={presentation}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -215,10 +228,20 @@ const jsonLd = [
         StackNav.astro: `#card-stack` does not exist yet in <head>, and a script
         that waited for it would race the first paint it exists to beat.
 
+        ── The presentation (the suspended mark, slice 6) ──
+
+        The same count also settles whether the page loads in page or card
+        mode. The route seeds `html[data-cold-presentation]` (a lens page is
+        page mode, everything else card), but a URL with `from`/`to` entries is
+        a stack deeper than that one location, and a deeper stack is never page
+        mode. FAN_PRESENTATION is that rule's answer, from `presentationMode`
+        itself at build time. The mark's CSS reads the attribute to draw the
+        dot hanging before paint, or not, with no flash either way.
+
         This rationale lives in an Astro comment rather than inside the script
         because `is:inline` script bodies are emitted VERBATIM, comments and
         all, on every one of the site's ~590 pages. */}
-    <script is:inline define:vars={{ stackReservation, stackSkeleton, ENTRY_SEP }}>
+    <script is:inline define:vars={{ stackReservation, stackSkeleton, ENTRY_SEP, FAN_PRESENTATION }}>
       (function () {
         var usp = new URLSearchParams(window.location.search);
         var from = usp.get('from');
@@ -230,6 +253,7 @@ const jsonLd = [
         };
         var nb = count(from);
         var na = count(to);
+        if (nb + na > 0) document.documentElement.dataset.coldPresentation = FAN_PRESENTATION;
         var b = pick(stackReservation.behind, nb) || { slots: 0, rows: 0 };
         var a = pick(stackReservation.ahead, na) || { slots: 0, rows: 0 };
         var st = document.documentElement.style;
@@ -260,6 +284,13 @@ const jsonLd = [
 
   </head>
   <body>
+    {/* Outside .site-wrapper (and so outside #card-stack): the mark is a
+        sibling of the page, never an ancestor of anything dithered. FIRST, so
+        its server-drawn hanging pose is parsed before the page under it: the
+        browser paints a partly parsed document, and a mark at the end of a long
+        card arrived frames after the first paint. Its overlay is fixed and
+        z-indexed, so source order decides nothing else. */}
+    {mark && <SuspendedMark />}
     <PalettePicker />
     <div class="site-wrapper">
       <slot />
@@ -268,8 +299,5 @@ const jsonLd = [
         <span><a href="/">pdyxs.wtf</a> · <a href="/rss.xml">RSS</a></span>
       </footer>
     </div>
-    {/* Outside .site-wrapper (and so outside #card-stack): the mark is a
-        sibling of the page, never an ancestor of anything dithered. */}
-    <SuspendedMark />
   </body>
 </html>

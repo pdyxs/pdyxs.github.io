@@ -58,6 +58,12 @@ on every step. Three things fixed that (issue #101), and they are independent:
    sets `--behind-slots` / `--behind-rows` / `--ahead-slots` / `--ahead-rows` on
    `<html>` before first paint. Without it the active card jumps 60px right and
    40px down (measured, three-slot fan at 1400px) when the island hydrates.
+   The same count settles the cold presentation: the route seeds
+   `html[data-cold-presentation]` (`page` on a lens page, `card` everywhere
+   else, a page with no stack included), and a URL with `from`/`to` entries
+   turns it to `card`, the answer `presentationMode` gives any stack deeper
+   than one (baked in at build time). The suspended mark draws its first paint
+   from it: hanging at the top in card mode, nothing in page mode.
 
 Four things that bite:
 
