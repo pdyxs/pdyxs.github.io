@@ -274,4 +274,28 @@ describe("unregistered renderer names fail the render", () => {
             }),
         ).rejects.toThrow(/not registered/);
     });
+
+    // ── Viewport surface (Star Nav) ─────────────────────────────────────────
+
+    it("emits data-surface and data-surface-on when the card has a surface", async () => {
+        const container = await makeContainer();
+        const html = await container.renderToString(CardStackCard, {
+            props: { card: card({ surface: "viewport", surfaceOn: "both" }) },
+        });
+
+        const el = dom(html).querySelector(".stack-card");
+        expect(el?.getAttribute("data-surface")).toBe("viewport");
+        expect(el?.getAttribute("data-surface-on")).toBe("both");
+    });
+
+    it("emits neither surface attribute for an ordinary card", async () => {
+        const container = await makeContainer();
+        const html = await container.renderToString(CardStackCard, {
+            props: { card: card() },
+        });
+
+        const el = dom(html).querySelector(".stack-card");
+        expect(el?.hasAttribute("data-surface")).toBe(false);
+        expect(el?.hasAttribute("data-surface-on")).toBe(false);
+    });
 });

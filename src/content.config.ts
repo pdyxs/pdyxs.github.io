@@ -304,6 +304,19 @@ const content = defineCollection({
         // nearest-wins like `renderer`. Independent of `navRenderer` — see
         // docs/agents/card-rendering.md's nav-renderer section.
         seriesPreview: z.enum(['strip', 'dots', 'none']).optional(),
+        // A card that takes the whole browser viewport (Star Nav). Frontmatter-
+        // only and deliberately non-cascading (like `headerMedia`): a card
+        // claims the viewport, a folder never should — so `_config.yaml` never
+        // reads these. `surfaceOn` says where it applies and defaults to 'both'
+        // in resolveCard(); 'desktop' is accepted ahead of any behaviour so no
+        // content needs migrating later. Zod strips unknown keys silently,
+        // hence the enums and the guard below.
+        surface: z.enum(['viewport']).optional(),
+        surfaceOn: z.enum(['mobile', 'desktop', 'both']).optional(),
+    }).refine(d => d.surfaceOn === undefined || d.surface !== undefined, {
+        // Typo guard: `surfaceOn` alone would otherwise be silently inert.
+        message: '`surfaceOn` is set but `surface` is not — add `surface: viewport`, or remove `surfaceOn`.',
+        path: ['surfaceOn'],
     }),
 });
 

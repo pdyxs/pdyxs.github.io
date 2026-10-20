@@ -21,6 +21,9 @@ import { DEFAULT_FOLDER_SORT, resolveSortValue, type FolderSort } from '../folde
 import { withUninspectedTag } from '../tags/uninspected-facet';
 import type { StatusValue, StatusVisibility } from './status-visibility';
 
+/** Which viewports a `surface` card claims. */
+export type SurfaceOn = 'mobile' | 'desktop' | 'both';
+
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
 function effectiveTags(
   uid: string,
@@ -66,6 +69,9 @@ export type CardFrontmatter = {
   gallery?: boolean;
   dateBar?: boolean;
   seriesPreview?: 'strip' | 'dots' | 'none';
+  /** Frontmatter-only; see ResolvedCard.surface. */
+  surface?: 'viewport';
+  surfaceOn?: SurfaceOn;
   [key: string]: unknown;
 };
 
@@ -288,6 +294,14 @@ export type ResolvedCard = CardMeta & {
    * CardMeta for the same reason as `dateBar`.
    */
   seriesPreview?: 'strip' | 'dots' | 'none';
+  /**
+   * `'viewport'` when this card claims the whole browser viewport (frontmatter
+   * only; never cascaded — a card claims the viewport, a folder never should).
+   * Absent for an ordinary card. Kept off CardMeta: no listing acts on it.
+   */
+  surface?: 'viewport';
+  /** Where `surface` applies. Present iff `surface` is; defaults to 'both'. */
+  surfaceOn?: SurfaceOn;
 };
 
 
@@ -399,6 +413,7 @@ export function resolveCard(
     dateBar: data.dateBar ?? cascade.dateBar,
     seriesPreview: data.seriesPreview ?? (cascade.seriesPreview as ResolvedCard['seriesPreview']),
     collapsedContainer: cascade.collapsedContainer,
+    ...(data.surface ? { surface: data.surface, surfaceOn: data.surfaceOn ?? 'both' } : {}),
   } satisfies ResolvedCard;
 }
 

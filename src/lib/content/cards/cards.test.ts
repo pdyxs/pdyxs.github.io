@@ -152,6 +152,25 @@ describe('resolveCard', () => {
     });
   });
 
+  describe('surface', () => {
+    it('defaults surfaceOn to both when surface is set', () => {
+      const card = resolveFixture({ id: 'a/b', data: { surface: 'viewport' } });
+      expect(card.surface).toBe('viewport');
+      expect(card.surfaceOn).toBe('both');
+    });
+
+    it.each(['mobile', 'desktop'] as const)('passes surfaceOn: %s through unchanged', (surfaceOn) => {
+      const card = resolveFixture({ id: 'a/b', data: { surface: 'viewport', surfaceOn } });
+      expect(card.surfaceOn).toBe(surfaceOn);
+    });
+
+    it('resolves neither field without surface', () => {
+      const card = resolveFixture({ id: 'a/b' });
+      expect('surface' in card).toBe(false);
+      expect('surfaceOn' in card).toBe(false);
+    });
+  });
+
   describe('navRenderer', () => {
     it('prefers a frontmatter navRenderer over the cascade', () => {
       const card = resolveFixture({ id: 'a/b', data: { navRenderer: 'series' } }, { navRenderer: 'other' });
