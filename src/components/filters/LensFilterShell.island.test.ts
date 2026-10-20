@@ -35,11 +35,9 @@ function poolWithHierarchy(): SharedCardPoolAsset {
         {
           value: 'what:puzzles',
           dimensionId: 'what',
-          label: 'Puzzles',
           count: 1,
-          declared: true,
           children: [],
-        } as never,
+        },
       ],
     },
   };
