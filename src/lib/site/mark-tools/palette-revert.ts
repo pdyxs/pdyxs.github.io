@@ -3,7 +3,7 @@
 // with nothing left to revert it reels itself up.
 //
 // `subscribe` is palette-dom's change signal, so it hears every kept change:
-// the palette tool's commits, the floating PalettePicker's, and other tabs'.
+// the palette tool's commits, the palette-picker experiment's, and other tabs'.
 
 import { isDefault } from '@site/palette';
 import { commitPalette, onPaletteChange, storedPalette } from '@site/palette-dom';

@@ -3,7 +3,7 @@
  * that every token and every dither level on the site is built from.
  *
  * Pure decisions only — a point on the page goes in, two colours come out. The
- * picker (PalettePicker.astro) is the thin applier; the head init script in
+ * effect layer (palette-dom.ts) is the thin applier; the head init script in
  * Base.astro re-applies the stored result before first paint.
  *
  * A point is a pair of fractions of the viewport, x and y in [0, 1]. Each

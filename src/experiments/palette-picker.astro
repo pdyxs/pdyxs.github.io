@@ -4,8 +4,10 @@ import { PALETTE_SYSTEMS } from '@site/palette';
 
 // Throwaway /experiments route: toy-feel options for the palette picker's look
 // and feel. Every variant drives the real maths (src/lib/site/palette.ts) and
-// writes the real stored palette, so a pick here persists across the site. The
-// production picker is hidden on this page so only one handle is live.
+// writes the real stored palette, so a pick here persists across the site.
+// The bar holds the palette's dev controls: the colour system the whole site's
+// picks use (the mark's palette tool included), and the derived-dark toggle,
+// which Base's dev-only head script honours on every page.
 
 const VARIANTS = [
   {
@@ -82,8 +84,12 @@ const VARIANTS = [
         <select class="ppx-system" aria-label="Colour system">
           {PALETTE_SYSTEMS.map((s) => <option value={s.id} title={s.describe}>{s.label}</option>)}
         </select>
+        <label class="ppx-choice" title="Dark mode: derive a deeper background from the dark colour, or use it as-is">
+          <input type="checkbox" class="ppx-derive" checked /> derived dark
+        </label>
         <label class="ppx-choice"><input type="checkbox" class="ppx-pin-toggle" /> drop pin</label>
         <button type="button" class="ppx-reset">reset</button>
+        <output class="ppx-readout"></output>
       </fieldset>
 
       {VARIANTS.map((v, i) => (
@@ -157,6 +163,7 @@ const VARIANTS = [
     cursor: pointer;
   }
   .ppx-reset:hover { background: var(--color-bg-hover); }
+  .ppx-readout { font-family: var(--font-mono); font-size: 0.75rem; }
   .ppx-blurb { font-size: 0.9rem; min-height: 3em; }
 
   /* ── Sample surfaces ── */
@@ -340,11 +347,15 @@ const VARIANTS = [
 </style>
 
 <script>
-  import { PALETTE_STORAGE_KEY, findSystem, isDefault, parsePalette, type Palette, type Point } from '@site/palette';
+  import { contrastRatio, findSystem, type Palette, type Point } from '@site/palette';
+  import { applyPalette, commitPalette, currentSystem, onPaletteChange, storeSystem, storedPalette } from '@site/palette-dom';
 
   const POINT_KEY = 'palette-point-experiment';
   const PIN_KEY = 'palette-pin-experiment';
   const VARIANT_KEY = 'palette-variant-experiment';
+  // Read by Base's dev-only head script on every page (tokens.css's derived
+  // dark background is off while it is 'shared').
+  const DARK_MODE_KEY = 'palette-dark-mode';
 
   const store = {
     get(k: string) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -363,30 +374,29 @@ const VARIANTS = [
   const crossV = root.querySelector<HTMLElement>('.ppx-cross--v')!;
   const line = root.querySelector<SVGLineElement>('.ppx-tether-line')!;
 
-  // Only one picker on the page: the production one is hidden here.
-  document.querySelectorAll<HTMLElement>('palette-picker').forEach((el) => (el.style.display = 'none'));
-
   const variant = () => root.dataset.ppxVariant!;
-  const system = () => findSystem(store.get('palette-system'));
+  const system = currentSystem;
+  const readout = root.querySelector<HTMLOutputElement>('.ppx-readout')!;
 
-  // ── Palette effects (same props as PalettePicker) ──
-  function render(p: Palette | null) {
-    const s = document.documentElement.style;
-    for (const end of ['light', 'dark'] as const) {
-      for (const g of ['srgb', 'p3'] as const) {
-        if (p) s.setProperty(`--color-${end}-${g}`, p[end][g]);
-        else s.removeProperty(`--color-${end}-${g}`);
-      }
-    }
-  }
+  // ── Palette effects (palette-dom) ──
+  const render = applyPalette;
+  /** Keep the palette at `pt` (null = reset). The point is stored by the change listener below. */
   function commit(pt: Point | null) {
-    const p = pt ? system().pick(pt) : null;
-    const keep = p && !isDefault(p) ? p : null;
-    store.set(PALETTE_STORAGE_KEY, keep ? JSON.stringify(keep) : null);
-    store.set(POINT_KEY, keep && pt ? JSON.stringify(pt) : null);
-    render(keep);
-    renderPin();
+    commitPalette(pt ? system().pick(pt) : null, pt);
   }
+  function reflect(p: Palette | null) {
+    readout.value = p
+      ? `${p.light.p3} / ${p.dark.p3} · ${contrastRatio(p.light.srgb, p.dark.srgb).toFixed(1)}:1`
+      : 'default';
+  }
+  // Every kept change (a toy here, the mark's palette tool or revert, another
+  // tab): remember its point for the pin and for re-picking on a system change.
+  onPaletteChange(({ palette, point }) => {
+    if (!palette) store.set(POINT_KEY, null);
+    else if (point) store.set(POINT_KEY, JSON.stringify(point));
+    reflect(palette);
+    renderPin();
+  });
   function renderPin() {
     let pt: Point | null = null;
     try { pt = JSON.parse(store.get(POINT_KEY) ?? 'null'); } catch { /* none */ }
@@ -430,7 +440,7 @@ const VARIANTS = [
   }
 
   // ── Drag engine ──
-  let drag: { handle: HTMLElement; id: number; sx: number; sy: number; moved: boolean; before: string | null } | null = null;
+  let drag: { handle: HTMLElement; id: number; sx: number; sy: number; moved: boolean; before: Palette | null } | null = null;
   let frame = 0;
   let pending: PointerEvent | null = null;
 
@@ -454,7 +464,7 @@ const VARIANTS = [
     if (e.button !== 0 || handle.dataset.for !== variant()) return;
     e.preventDefault();
     handle.setPointerCapture(e.pointerId);
-    drag = { handle, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false, before: store.get(PALETTE_STORAGE_KEY) };
+    drag = { handle, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false, before: storedPalette() };
   }
 
   function onMove(e: PointerEvent) {
@@ -503,7 +513,7 @@ const VARIANTS = [
     root.removeAttribute('data-dragging');
     if (!d.moved) return;
     if (cancelled) {
-      render(parsePalette(d.before));
+      render(d.before);
       flyHome(d.handle);
       return;
     }
@@ -540,12 +550,21 @@ const VARIANTS = [
   const systemSelect = root.querySelector<HTMLSelectElement>('.ppx-system')!;
   systemSelect.value = system().id;
   systemSelect.addEventListener('change', () => {
-    store.set('palette-system', systemSelect.value);
+    storeSystem(findSystem(systemSelect.value).id);
     let pt: Point | null = null;
     try { pt = JSON.parse(store.get(POINT_KEY) ?? 'null'); } catch { /* none */ }
     if (pt) commit(pt);
   });
 
+  const derive = root.querySelector<HTMLInputElement>('.ppx-derive')!;
+  derive.checked = store.get(DARK_MODE_KEY) !== 'shared';
+  derive.addEventListener('change', () => {
+    store.set(DARK_MODE_KEY, derive.checked ? null : 'shared');
+    if (derive.checked) document.documentElement.removeAttribute('data-palette-dark');
+    else document.documentElement.setAttribute('data-palette-dark', 'shared');
+  });
+
   setVariant(store.get(VARIANT_KEY) ?? 'rulers');
+  reflect(storedPalette());
   renderPin();
 </script>

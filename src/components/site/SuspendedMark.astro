@@ -31,9 +31,9 @@
 // tool, and mark/boundary.test.ts keeps it that way. With no tools configured
 // the click is still the slice-4 tug, and the hit button stays decorative.
 //
-// A self-contained custom element, like PalettePicker.astro. The motion and
-// the posing are pure, in src/lib/site/mark/; this file reads the page and
-// writes the SVG.
+// A self-contained custom element, so it wires itself up wherever its markup
+// lands. The motion and the posing are pure, in src/lib/site/mark/; this file
+// reads the page and writes the SVG.
 import { MARK_RIG } from '@data/mark-rig';
 import { MARK_TOOLS, type ToolConfig } from '@data/mark-tools';
 import { MIN_STROKE } from '@site/mark/geometry';

@@ -1,7 +1,6 @@
 ---
 import '../styles/global.css';
 import ThemeToggle from '@components/site/ThemeToggle.astro';
-import PalettePicker from '@components/site/PalettePicker.astro';
 import SuspendedMark from '@components/site/SuspendedMark.astro';
 import { STACK_GEOMETRY } from '@stack/layout/stack-geometry';
 import { fanReservationTable } from '@stack/layout/stack-reservation';
@@ -174,6 +173,16 @@ const jsonLd = [
         } catch (e) {}
       })();
     </script>
+    {/* Dev only: the "derived dark" comparison toggle on /experiments/palette-picker
+        (tokens.css, after the dark theme). Stored, so it holds across the site
+        while comparing; never shipped. */}
+    {import.meta.env.DEV && (
+      <script is:inline>
+        try {
+          if (localStorage.getItem('palette-dark-mode') === 'shared') document.documentElement.setAttribute('data-palette-dark', 'shared');
+        } catch (e) {}
+      </script>
+    )}
     {/* Pre-paint fan reservation for a cold-loaded stack (issue #101).
 
         A deep link renders only its ACTIVE location server-side; the from/to
@@ -293,7 +302,6 @@ const jsonLd = [
         card arrived frames after the first paint. Its overlay is fixed and
         z-indexed, so source order decides nothing else. */}
     {mark && <SuspendedMark />}
-    <PalettePicker />
     <div class="site-wrapper">
       <slot />
       <footer class="site-footer">

@@ -5,7 +5,7 @@
    border, which is ink at a different semantic). Anything that used to be a
    grey is now either pure, or a dither built from the same two colours.
 
-   The pair defaults to white and black. The palette picker (PalettePicker.astro)
+   The pair defaults to white and black. The mark's palette tool (palette-dom.ts)
    overrides them by writing --color-{light,dark}-{srgb,p3} onto <html>: the same
    oklch() colour fitted to each gamut, chosen between just below. */
 :root {
@@ -95,7 +95,7 @@
      more, raise both together (0.8/0.8 = a lighter, more colourful dark). */
   --palette-dark-bg-l: 0.8;
   --palette-dark-bg-c: 0.8;
-  /* The palette picker's drag handle (PalettePicker.astro). */
+  /* The drag handles on /experiments/palette-picker. */
   --palette-swatch-size: 28px;
   /* The suspended mark (SuspendedMark.astro). Its overlay sits above the page;
      the hit target is one above that. The dot's hit target never shrinks
@@ -211,8 +211,9 @@ html[data-theme="dark"] {
 
    Guarded by @supports: without relative colour syntax the declaration would
    be invalid at computed-value time and the page would lose its background,
-   rather than falling back. `data-palette-dark="shared"` is the picker's dev
-   toggle for comparing against the underived colour. */
+   rather than falling back. `data-palette-dark="shared"` is the dev-only
+   toggle on /experiments/palette-picker for comparing against the underived
+   colour; Base's dev-only head script applies it on every page. */
 @supports (color: oklch(from red l c h)) {
   html[data-theme="dark"]:not([data-palette-dark="shared"]) {
     --color-bg: oklch(from var(--color-dark) calc(l * var(--palette-dark-bg-l)) calc(c * var(--palette-dark-bg-c)) h);

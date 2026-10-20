@@ -382,8 +382,6 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
   const inDebug = root.querySelector<HTMLInputElement>('.sd-in-debug')!;
   const inCss = root.querySelector<HTMLInputElement>('.sd-in-css')!;
 
-  document.querySelectorAll<HTMLElement>('palette-picker').forEach((el) => (el.style.display = 'none'));
-
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
   // ── Tools ──────────────────────────────────────────────────────────
@@ -438,7 +436,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
   }
 
   // The colour picker: dragging its bauble across the page picks the palette
-  // exactly as the production PalettePicker's swatch does, through the same
+  // exactly as the mark's palette tool does, through the same
   // effect layer (palette-dom.ts), so a pick persists across the site.
   const pickAt = (e: PointerEvent) => pickAtPoint({ x: e.clientX, y: e.clientY });
 

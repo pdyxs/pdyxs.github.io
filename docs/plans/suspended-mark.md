@@ -548,6 +548,18 @@ Each slice ships green.
    top-level one included, and the track restarts whenever the loop wakes.
 10. **Retire the floating picker.** Remove `<PalettePicker />` from Base. Its
     dev system/derive controls stay on `/experiments/palette-picker`.
+    **Built:** `PalettePicker.astro` is deleted, with its `.palette-picker*`
+    selectors and the `palette-picker` element; the experiment already had the
+    system `<select>` and a reset, and gained the "derived dark" toggle
+    (`.ppx-derive`) and the readout (`.ppx-readout`). Its toys now go through
+    palette-dom (`applyPalette`/`commitPalette`/`onPaletteChange`), so the
+    mark's revert and the favicon follow them and a mark pick moves its pin.
+    `palette-dark-mode` was only honoured by the picker's mount, after paint,
+    and only in dev; a dev-only (`import.meta.env.DEV`) inline head script in
+    Base now applies `data-palette-dark="shared"` before paint on every page.
+    `palette-system` needs nothing: palette-dom's `currentSystem()` reads it on
+    every page. `--palette-swatch-size` stays, for the experiment's handles.
+    The `palette-picker` hides in the suspended-dot and mark-editor benches went.
 11. **Docs.** Add a mark section to `card-rendering.md`, covering tools, how to
     add one, and the config file. Update the VT-names list in
     `stack-state.md`, and add the selectors above to the stable selector

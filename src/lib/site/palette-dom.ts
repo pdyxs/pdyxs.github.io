@@ -1,9 +1,9 @@
 /**
  * The palette's effect layer: everything that applies, stores, announces or
  * draws a palette. The decisions (point → palette, and back) are pure, in
- * palette.ts; this is the thin applier every picker shares — the floating
- * PalettePicker, the mark's palette tool (mark-tools/palette.ts) and the
- * suspended-dot bench.
+ * palette.ts; this is the thin applier every picker shares — the mark's
+ * palette tool (mark-tools/palette.ts), the /experiments/palette-picker toys
+ * and the suspended-dot bench.
  *
  * - `applyPalette` writes the four `--color-{light,dark}-{srgb,p3}` props on
  *   <html> (a live preview: nothing is stored or announced).
@@ -28,7 +28,7 @@ import {
 } from './palette';
 import { THEME_CHANGE_EVENT } from './theme';
 
-/** The system a pick uses (dev-only choice, PalettePicker's select). */
+/** The system a pick uses (dev-only choice, /experiments/palette-picker's select). */
 export const PALETTE_SYSTEM_KEY = 'palette-system';
 
 /** A point in viewport (client) px. */

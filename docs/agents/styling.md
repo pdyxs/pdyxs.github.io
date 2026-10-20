@@ -137,14 +137,21 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 
 The palette is **two colours**: ink (`--color-text`) and paper (`--color-bg`), pure black and pure white, swapped by `data-theme`. Everything greyscale derives from those two — `--color-surface`, `--color-border-light` and `--color-text-muted` are aliases, and every other tone is a `--dither-N` level built from the same two colours. There is no grey. De-emphasis is expressed by size and weight, never by a faded value; **an `opacity` used to soften a colour is a bug**, because it renders as the grey the palette doesn't have.
 
-Black and white are the **defaults**, not constants: the palette picker
-(`PalettePicker.astro`, and the mark's palette tool; maths in
+Black and white are the **defaults**, not constants: the mark's palette tool
+(drag the palette bauble that drops from the title's full stop; maths in
 `src/lib/site/palette.ts`, the shared applier in `src/lib/site/palette-dom.ts`)
-lets a visitor replace the pair. It writes `--color-{light,dark}-{srgb,p3}` onto `<html>`, each
+lets a visitor replace the pair, and its revert bauble puts the default back.
+It writes `--color-{light,dark}-{srgb,p3}` onto `<html>`, each
 an `oklch()` string already fitted to that gamut, and `tokens.css` selects the P3
 pair under `@media (color-gamut: p3)`. Everything downstream, dithers included,
 follows because it only ever references the two tokens, which is why no call
 site may name a colour directly.
+
+The dev-only palette controls live on `/experiments/palette-picker`: the
+colour system every pick uses (`palette-system` in storage, read by
+`palette-dom.ts` on every page) and the "derived dark" comparison
+(`palette-dark-mode` → `html[data-palette-dark="shared"]`, applied before paint
+by a dev-only head script in `Base.astro` and never shipped).
 
 ## The dither is one fixed, viewport-anchored grid — never give it a transformed ancestor
 

@@ -1,6 +1,6 @@
 // The palette tool: drag the bauble across the page and the point under it
-// picks the two site colours, live; let go to keep them. The same pick as
-// the floating PalettePicker, through the same effect layer (palette-dom.ts).
+// picks the two site colours, live; let go to keep them. The pick goes
+// through the palette's effect layer (palette-dom.ts).
 //
 // Keyboard, on the focused bauble: an arrow moves a virtual pick point and
 // applies the palette there (Shift: ten times the step). The point starts

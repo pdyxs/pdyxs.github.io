@@ -167,8 +167,6 @@ import { HANG_DEPTH } from '@site/mark/hang';
   const inSep = root.querySelector<HTMLInputElement>('.me-in-sep')!;
   const exportBox = root.querySelector<HTMLTextAreaElement>('.me-export')!;
 
-  document.querySelectorAll<HTMLElement>('palette-picker').forEach((el) => (el.style.display = 'none'));
-
   // ── The rig being edited ──
   function loadRig(): MarkRig {
     try {
