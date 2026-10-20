@@ -4,7 +4,9 @@
   import type { FiveWDimension } from '@content/tags/five-w';
   import { DIMENSIONS, filterStateToParams, selectedValues } from '@dimensions';
   import type { DimensionId, FilterState } from '@dimensions';
-  import type { TagNode, TagSection } from '@browse/results/browse-helpers';
+  import type { WireTagNode, TagSection } from '@browse/results/browse-helpers';
+  import type { TagDisplay } from '@content/tags/tag-display';
+  import { displayFor } from '@content/tags/tag-display';
   import { filterVisibleNodes, groupNodesIntoSections } from '@browse/results/browse-helpers';
   import { lensesForDimension, lensIdFromUid, activeLensIcon, isLensVisible } from '@browse/lenses/lens-registry';
   import { stackStore } from '@stores/card-stack-store';
@@ -13,7 +15,10 @@
   import DimensionPanel from '@components/filters/DimensionPanel.svelte';
 
   interface Props {
-    hierarchies: Record<string, TagNode[]>;
+    hierarchies: Record<string, WireTagNode[]>;
+    /** Where every node's name, `declared` and `group` come from — nodes carry
+     * only structure (see WireTagNode). */
+    tagDisplay?: Record<string, TagDisplay>;
     /** Per-dimension section order for the root-level panel (see
      * groupNodesIntoSections). Dimensions absent here fall back to the default
      * (alphabetical) group ordering. */
@@ -28,6 +33,7 @@
 
   let {
     hierarchies,
+    tagDisplay = {},
     groupOrder = {},
     filterState,
     poolState = 'ready',
@@ -46,16 +52,16 @@
     why: 'Why',
   };
 
-  function visibleNodesFor(dim: FiveWDimension): TagNode[] {
-    return filterVisibleNodes(hierarchies[dim] ?? [], activeSelectionsFor(dim));
+  function visibleNodesFor(dim: FiveWDimension): WireTagNode[] {
+    return filterVisibleNodes(hierarchies[dim] ?? [], activeSelectionsFor(dim), tagDisplay);
   }
 
   // Walks the current drillPath, returning the node it points at (`node`, the
   // header title source) and the level to render (`nodes`, that node's
   // children). An unresolved path stops early and shows the last good level.
-  function resolveDrill(dim: FiveWDimension, path: string[]): { node: TagNode | null; nodes: TagNode[] } {
+  function resolveDrill(dim: FiveWDimension, path: string[]): { node: WireTagNode | null; nodes: WireTagNode[] } {
     let nodes = [...guestNodesFor(dim), ...visibleNodesFor(dim)];
-    let node: TagNode | null = null;
+    let node: WireTagNode | null = null;
     for (const val of path) {
       const found = nodes.find(n => n.value === val);
       if (!found) break;
@@ -73,7 +79,7 @@
     // drill down. A level whose nodes are all ungrouped yields one section,
     // which renders as a flat list with no divider — i.e. unchanged.
     if (drillPath.length === 0) {
-      const sections = groupNodesIntoSections(visibleNodesFor(openDimension), order);
+      const sections = groupNodesIntoSections(visibleNodesFor(openDimension), order, tagDisplay);
       // A dimension that declares this panel as its placement (the dev-only
       // status dimension does) contributes its own section at the very top,
       // below the lens list and above this panel's own values. In production
@@ -81,25 +87,29 @@
       const guests = guestNodesFor(openDimension);
       return guests.length > 0 ? [{ nodes: guests }, ...sections] : sections;
     }
-    return groupNodesIntoSections(resolveDrill(openDimension, drillPath).nodes, order);
+    return groupNodesIntoSections(resolveDrill(openDimension, drillPath).nodes, order, tagDisplay);
   });
 
   // Display name of the drilled-into node, for the panel header (empty at root).
   const currentDrillTitle = $derived(
     openDimension && drillPath.length > 0
-      ? resolveDrill(openDimension, drillPath).node?.name ?? ''
+      ? displayName(resolveDrill(openDimension, drillPath).node)
       : ''
   );
+
+  function displayName(node: WireTagNode | null): string {
+    return node ? displayFor(node.value, tagDisplay).name : '';
+  }
 
   function dimensionIsActive(dim: FiveWDimension): boolean {
     return selectedValues(filterState, dim).length > 0;
   }
 
   /** Nodes contributed to this panel by other dimensions (see DimensionPlacement). */
-  function guestNodesFor(dim: FiveWDimension): TagNode[] {
+  function guestNodesFor(dim: FiveWDimension): WireTagNode[] {
     return DIMENSIONS
       .filter(d => d.placement?.panel === dim)
-      .flatMap(d => filterVisibleNodes(hierarchies[d.id] ?? [], activeSelectionsFor(dim)));
+      .flatMap(d => filterVisibleNodes(hierarchies[d.id] ?? [], activeSelectionsFor(dim), tagDisplay));
   }
 
   /** Highlighted values for this panel — this dimension's own selection plus
@@ -123,7 +133,7 @@
     }
   }
 
-  function drillInto(node: TagNode) {
+  function drillInto(node: WireTagNode) {
     if (node.children.length > 0) {
       drillPath = [...drillPath, node.value];
     } else {
@@ -137,7 +147,7 @@
 
   // Routes by the node's own dimension, so a guest node selects on its own
   // axis rather than the panel it happens to be rendered in.
-  function selectNode(node: TagNode) {
+  function selectNode(node: WireTagNode) {
     onFilterToggle(node.dimensionId, node.value);
     openDimension = null;
     drillPath = [];
@@ -222,6 +232,7 @@
           {drillPath}
           drillTitle={currentDrillTitle}
           sections={currentSections}
+          {tagDisplay}
           activeSelections={activeSelectionsFor(dim)}
           isDimensionActive={isActive}
           onSelectValue={selectNode}

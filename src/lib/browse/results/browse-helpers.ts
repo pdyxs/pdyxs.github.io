@@ -133,6 +133,32 @@ export type TagNode = {
 };
 
 /**
+ * What a TagNode looks like on the wire. The display fields (`name`, `label`,
+ * `description`, `declared`, `cardUid`, `group`, `order`) are deliberately
+ * absent: they ride in the same payload as `tagDisplay`, which is the single
+ * source for them — the client resolves through `displayFor(value, tagDisplay)`.
+ * `order` is consumed server-side by sortNodes, so it stays on TagNode.
+ */
+export type WireTagNode = {
+  dimensionId: DimensionId;
+  value: string;
+  count: number;
+  children: WireTagNode[];
+  drillOnly?: boolean;
+};
+
+/** Strips a built tree down to its wire shape (see WireTagNode). */
+export function toWireNodes(nodes: TagNode[]): WireTagNode[] {
+  return nodes.map(node => ({
+    dimensionId: node.dimensionId,
+    value: node.value,
+    count: node.count,
+    children: toWireNodes(node.children),
+    ...(node.drillOnly ? { drillOnly: true } : {}),
+  }));
+}
+
+/**
  * A run of tag nodes that render together in a dimension panel, separated from
  * adjacent sections by a divider (no heading is shown). `label` is the group
  * name — retained for identity/ordering only — and is undefined for the
@@ -140,7 +166,7 @@ export type TagNode = {
  */
 export type TagSection = {
   label?: string;
-  nodes: TagNode[];
+  nodes: WireTagNode[];
 };
 
 // ---------------------------------------------------------------------------
@@ -314,7 +340,7 @@ export function buildTagHierarchy(
  * For `what:projects/games`, returns `games`.
  * For `what:projects`, returns `projects`.
  */
-function tagLabel(tagValue: string): string {
+export function tagLabel(tagValue: string): string {
   const slashIdx = tagValue.lastIndexOf('/');
   if (slashIdx !== -1) return tagValue.slice(slashIdx + 1);
   const colonIdx = tagValue.indexOf(':');
@@ -413,11 +439,15 @@ export function buildAllDimensionHierarchies(
  * only ever contain visible descendants too (this also governs whether a
  * "drill in" affordance should show for that node).
  */
-export function filterVisibleNodes(nodes: TagNode[], activeValues: Set<string>): TagNode[] {
-  const result: TagNode[] = [];
+export function filterVisibleNodes(
+  nodes: WireTagNode[],
+  activeValues: Set<string>,
+  display: Record<string, TagDisplay> = {},
+): WireTagNode[] {
+  const result: WireTagNode[] = [];
   for (const node of nodes) {
-    if (!node.declared && !activeValues.has(node.value)) continue;
-    result.push({ ...node, children: filterVisibleNodes(node.children, activeValues) });
+    if (!displayFor(node.value, display).declared && !activeValues.has(node.value)) continue;
+    result.push({ ...node, children: filterVisibleNodes(node.children, activeValues, display) });
   }
   return result;
 }
@@ -442,16 +472,18 @@ export function filterVisibleNodes(nodes: TagNode[], activeValues: Set<string>):
  * as a flat list.
  */
 export function groupNodesIntoSections(
-  nodes: TagNode[],
+  nodes: WireTagNode[],
   groupOrder: string[] = [],
+  display: Record<string, TagDisplay> = {},
 ): TagSection[] {
-  const ungrouped: TagNode[] = [];
-  const byGroup = new Map<string, TagNode[]>();
+  const ungrouped: WireTagNode[] = [];
+  const byGroup = new Map<string, WireTagNode[]>();
   for (const node of nodes) {
-    if (node.group) {
-      const bucket = byGroup.get(node.group);
+    const group = displayFor(node.value, display).group;
+    if (group) {
+      const bucket = byGroup.get(group);
       if (bucket) bucket.push(node);
-      else byGroup.set(node.group, [node]);
+      else byGroup.set(group, [node]);
     } else {
       ungrouped.push(node);
     }

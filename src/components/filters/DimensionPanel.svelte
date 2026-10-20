@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { TagNode, TagSection } from '@browse/results/browse-helpers';
+  import type { WireTagNode, TagSection } from '@browse/results/browse-helpers';
+  import { tagLabel } from '@browse/results/browse-helpers';
+  import { displayFor } from '@content/tags/tag-display';
+  import type { TagDisplay } from '@content/tags/tag-display';
   import type { LensDefinition } from '@browse/lenses/lens-registry';
   import { lensUid } from '@browse/lenses/lens-registry';
   import LensIcon from '@components/filters/LensIcon.svelte';
@@ -14,12 +17,14 @@
      * a single unlabelled section renders as a flat list. Drilled-in levels
      * pass one unlabelled section. */
     sections: TagSection[];
+    /** Nodes carry only structure; their names resolve here, by value. */
+    tagDisplay?: Record<string, TagDisplay>;
     activeSelections: Set<string>;
     isDimensionActive: boolean;
     /** Receives the whole node, so the caller routes by node.dimensionId
      * rather than inferring the axis from the value's shape. */
-    onSelectValue: (node: TagNode) => void;
-    onDrillInto: (node: TagNode) => void;
+    onSelectValue: (node: WireTagNode) => void;
+    onDrillInto: (node: WireTagNode) => void;
     onDrillBack: () => void;
     onClear: () => void;
     /** Lenses filed under this dimension (src/lib/browse/lenses/lens-registry.ts) — listed
@@ -42,6 +47,7 @@
     drillPath,
     drillTitle,
     sections,
+    tagDisplay = {},
     activeSelections,
     isDimensionActive,
     onSelectValue,
@@ -54,10 +60,12 @@
     onSelectLens,
   }: Props = $props();
 
+  const nameOf = (node: WireTagNode) => displayFor(node.value, tagDisplay).name;
+
   // True when any descendant of `node` (children filtered to visible ones by
   // filterVisibleNodes) is an active selection — used to render the drill-in
   // arrow selected, so a collapsed parent signals a selection lives inside it.
-  function hasSelectedDescendant(node: TagNode): boolean {
+  function hasSelectedDescendant(node: WireTagNode): boolean {
     for (const child of node.children) {
       if (activeSelections.has(child.value) || hasSelectedDescendant(child)) return true;
     }
@@ -223,9 +231,9 @@
             <button
               class="browse-dim-item-btn"
               onclick={() => onDrillInto(node)}
-              aria-label="Explore {node.name}{childSelected ? ' (contains a selection)' : ''}"
+              aria-label="Explore {nameOf(node)}{childSelected ? ' (contains a selection)' : ''}"
             >
-              <span class="browse-dim-item-label">{node.name}</span>
+              <span class="browse-dim-item-label">{nameOf(node)}</span>
               <span class="browse-dim-drill-affordance" aria-hidden="true">›</span>
             </button>
           </li>
@@ -240,9 +248,9 @@
           <button
             class="browse-dim-item-btn"
             onclick={() => onSelectValue(node)}
-            aria-label="{node.name} ({node.count} cards)"
+            aria-label="{nameOf(node)} ({node.count} cards)"
           >
-            <span class="browse-dim-item-label">{node.name}</span>
+            <span class="browse-dim-item-label">{nameOf(node)}</span>
             <span class="browse-dim-item-count">({node.count})</span>
           </button>
           {#if node.children.length > 0}
@@ -251,7 +259,7 @@
               class="browse-dim-drill"
               class:browse-dim-drill--selected={childSelected}
               onclick={(e) => { e.stopPropagation(); onDrillInto(node); }}
-              aria-label="Explore subcategories of {node.label}{childSelected ? ' (contains a selection)' : ''}"
+              aria-label="Explore subcategories of {tagLabel(node.value)}{childSelected ? ' (contains a selection)' : ''}"
             >
               ›
             </button>
