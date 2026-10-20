@@ -1,0 +1,34 @@
+---
+// One tool of the suspended mark (SuspendedMark.astro), from its config
+// (src/data/mark-tools.ts): a string and a bauble, and its children nested
+// inside it. The mark's script positions everything; this is only the parts.
+// Styled by SuspendedMark.astro, which owns the overlay these sit in.
+import type { ToolConfig } from '@data/mark-tools';
+import { MARK_ICONS } from '@data/mark-icons';
+
+interface Props {
+  tool: ToolConfig;
+  /** The id of the tool this one hangs from; absent for a top-level tool. */
+  parent?: string;
+}
+
+const { tool, parent } = Astro.props;
+---
+
+<g
+  class="site-mark-tool"
+  data-tool={tool.id}
+  data-behaviour={tool.behaviour}
+  data-thread={parent === undefined ? tool.thread : undefined}
+  data-parent={parent}
+  data-string={tool.string}
+  data-radius={tool.radius}
+>
+  <line class="site-mark-tool-string"></line>
+  <g class="site-mark-bauble" role="button" tabindex="0" aria-label={tool.label} style={`--site-mark-tool-r: ${tool.radius}px`}>
+    <circle class="site-mark-bauble-hit" r={tool.radius}></circle>
+    <circle class="site-mark-bauble-body" r={tool.radius}></circle>
+    <g class="site-mark-icon" transform={`scale(${tool.radius})`} set:html={MARK_ICONS[tool.icon] ?? ''} />
+  </g>
+  {tool.children?.map((child) => <Astro.self tool={child} parent={tool.id} />)}
+</g>

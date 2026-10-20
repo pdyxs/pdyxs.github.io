@@ -23,13 +23,31 @@
 // state attribute on <html> (see the CSS), and on the one close that has no
 // transition animates the live title's transform (see `#returnLive`).
 //
+// Clicking the dot opens the tools (slice 7): the threads that carry one pull
+// taut, and on the release each tool drops on a string of its own. Every tool
+// is drawn the same way, from its config (src/data/mark-tools.ts, the `tools`
+// prop); what a tool DOES is its behaviour, looked up by key in the registry
+// (src/lib/site/mark-tools/index.ts). This file knows nothing else about any
+// tool, and mark/boundary.test.ts keeps it that way. With no tools configured
+// the click is still the slice-4 tug, and the hit button stays decorative.
+//
 // A self-contained custom element, like PalettePicker.astro. The motion and
 // the posing are pure, in src/lib/site/mark/; this file reads the page and
 // writes the SVG.
 import { MARK_RIG } from '@data/mark-rig';
+import { MARK_TOOLS, type ToolConfig } from '@data/mark-tools';
 import { MIN_STROKE } from '@site/mark/geometry';
 import { HANG_UNITS, hangMarkup } from '@site/mark/hang';
 import { HANG_Y } from '@site/mark/motion';
+import MarkTool from '@components/site/MarkTool.astro';
+
+interface Props {
+  /** The tools that drop from the dot. Production takes MARK_TOOLS; a dev bench passes its own. */
+  tools?: ToolConfig[];
+}
+
+const { tools = MARK_TOOLS } = Astro.props;
+const hasTools = tools.length > 0;
 
 // The hanging pose, in 1/HANG_UNITS em about the dot's resting centre. CSS
 // scales the viewBox by --mark-hang-em and puts that centre at the top-centre
@@ -65,16 +83,27 @@ const n = (v: number) => +v.toFixed(2);
     </g>
     <rect class="site-mark-dot" x={n(hang.dot.x)} y={n(hang.dot.y)} width={n(hang.dot.size)} height={n(hang.dot.size)}></rect>
   </svg>
-  <svg class="site-mark-overlay" aria-hidden="true" focusable="false">
-    <g class="site-mark-threads">
+  {/* With tools, the overlay holds their baubles, so only the threads and the
+      dot are hidden from assistive tech; with none, all of it is. */}
+  <svg class="site-mark-overlay" aria-hidden={hasTools ? undefined : 'true'} focusable="false">
+    <g class="site-mark-threads" aria-hidden={hasTools ? 'true' : undefined}>
       {MARK_RIG.threads.map(() => <path></path>)}
     </g>
-    <rect class="site-mark-dot"></rect>
+    <rect class="site-mark-dot" aria-hidden={hasTools ? 'true' : undefined}></rect>
+    {hasTools && (
+      <g class="site-mark-tools" id="site-mark-tools" role="group" aria-label="Tools">
+        {tools.map((tool) => <MarkTool tool={tool} />)}
+      </g>
+    )}
   </svg>
-  {/* Decorative for now: nothing drops yet, so there is nothing for it to
-      open. When the tools land (slice 7) this becomes the real "Tools" button,
-      focusable, with aria-expanded and aria-controls on the tool group. */}
-  <button type="button" class="site-mark-hit" tabindex="-1" aria-hidden="true"></button>
+  {/* The "Tools" button when there are tools to open. With none (production
+      until the palette lands) a click only tugs the threads, so it stays
+      decorative: out of the tab order and hidden from assistive tech. */}
+  {hasTools ? (
+    <button type="button" class="site-mark-hit" aria-label="Tools" aria-expanded="false" aria-controls="site-mark-tools"></button>
+  ) : (
+    <button type="button" class="site-mark-hit" tabindex="-1" aria-hidden="true"></button>
+  )}
   {/* Lays out a full stop in the title's font so the engine itself says where
       the baseline sits in the slot's box (an empty inline-block's bottom edge is
       the baseline). See src/lib/site/mark/measure.ts. */}
@@ -182,6 +211,58 @@ const n = (v: number) => +v.toFixed(2);
     display: none;
   }
 
+  .site-mark-hit:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+  }
+
+  /* ── Tools ──────────────────────────────────────────────────────
+     Their markup is MarkTool.astro's (and the icons' are set as HTML), so
+     these reach it from the overlay with :global. A tool is drawn only while
+     it hangs (`data-open`, set and cleared by the script); a child is nested
+     in its parent, so it can't show without it. Positions are the script's:
+     a transform on the bauble, the SVG child of a sibling of the page. */
+  .site-mark-overlay :global(.site-mark-tool:not([data-open])) {
+    display: none;
+  }
+  .site-mark-overlay :global(.site-mark-tool-string) {
+    stroke: var(--color-text);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .site-mark-overlay :global(.site-mark-bauble) {
+    pointer-events: auto;
+    cursor: pointer;
+    touch-action: none;
+    outline: none;
+  }
+  .site-mark-overlay :global(.site-mark-bauble[data-kind='drag']) {
+    cursor: grab;
+  }
+  .site-mark-overlay :global(.site-mark-bauble[data-dragging]) {
+    cursor: grabbing;
+  }
+  /* The hit target: the body, or --mark-hit-min across, whichever is bigger.
+     --site-mark-tool-r is the configured radius, inline from MarkTool. */
+  .site-mark-overlay :global(.site-mark-bauble-hit) {
+    r: max(calc(var(--mark-hit-min) / 2), var(--site-mark-tool-r));
+    fill: transparent;
+  }
+  .site-mark-overlay :global(.site-mark-bauble-body) {
+    fill: var(--color-bg);
+    stroke: var(--color-text);
+    stroke-width: 2.5;
+  }
+  .site-mark-overlay :global(.site-mark-bauble:focus-visible .site-mark-bauble-body) {
+    stroke-width: 4;
+  }
+  .site-mark-overlay :global(.site-mark-icon-ink) {
+    fill: var(--color-text);
+  }
+  .site-mark-overlay :global(.site-mark-icon-paper) {
+    fill: var(--color-bg);
+  }
+
   .site-mark-probe {
     position: absolute;
     left: 0;
@@ -266,9 +347,25 @@ const n = (v: number) => +v.toFixed(2);
 
 <script>
   import { MARK_RIG } from '@data/mark-rig';
-  import { poseThreads, threadPathData, threadStroke, tauten, type V } from '@site/mark/geometry';
+  import {
+    DROP,
+    REEL,
+    baubleAt,
+    baubleMoving,
+    baublePos,
+    poseThreads,
+    stepBauble,
+    threadPathData,
+    threadStroke,
+    tauten,
+    toolPivot,
+    type Bauble,
+    type V,
+  } from '@site/mark/geometry';
   import {
     DOT_AT_REST,
+    REST,
+    clamp01,
     TITLE_EXIT_MS,
     TOOLS_CLOSED,
     dotMoving,
@@ -277,11 +374,15 @@ const n = (v: number) => +v.toFixed(2);
     poseBlend,
     setWant,
     stepDot,
+    stepToolSize,
     stepTools,
+    subStep,
     tautness,
+    toolReeledIn,
     titleExit,
     titleExitKeyframes,
     type DotState,
+    type Spring,
     type TitleStart,
     type ToolsState,
     type Viewport,
@@ -290,6 +391,17 @@ const n = (v: number) => +v.toFixed(2);
   import { HANG_DEPTH, anchorSlot, grownDot, hangSlot, type HangMetrics } from '@site/mark/hang';
   import { FALLBACK_DOT_INK, dotInSlot, inkBounds, inkEm, plausibleDotInk, type InkEm, type SlotDot } from '@site/mark/measure';
   import { PRESENTATION_EVENT, coldPresentation, currentPresentation, type Presentation, type PresentationDetail } from '@site/presentation-event';
+  import {
+    childPivot,
+    focusFallback,
+    focusOrder,
+    isTug,
+    tautThreads,
+    toolLength,
+    visibleTools,
+    type ToolNode,
+  } from '@site/mark/tools';
+  import { toolBehaviour, type ToolBehaviour, type ViewportPoint } from '@site/mark-tools';
 
   /** The one place the mark looks into the page: the page-mode title's full stop. */
   const SLOT_SELECTOR = '.stack-card--page .page-title-mark';
@@ -363,6 +475,54 @@ const n = (v: number) => +v.toFixed(2);
     height: document.documentElement.clientHeight,
   });
 
+  /**
+   * One tool as the mark drives it: its config (read off MarkTool's markup),
+   * its parts, and its motion. What it does is its behaviour, looked up by key.
+   */
+  interface Tool extends ToolNode {
+    el: SVGGElement;
+    /** The string, drawn (its length paid out is `string`, from the config). */
+    line: SVGLineElement;
+    bauble: SVGGElement;
+    /** The string and swing, about its pivot (geometry.ts). */
+    b: Bauble;
+    /** Its size, 0..1: grows out of the pivot as it falls, shrinks back as it is reeled in. */
+    s: Spring;
+    /** Where its bauble was last drawn, overlay coords, and at what scale: a child's pivot. */
+    at: V | null;
+    scale: number;
+    /** The pointer, viewport coords, while the bauble is dragged, and which pointer. */
+    pointer: V | null;
+    dragId: number | null;
+  }
+
+  /** A tool's config, as MarkTool.astro wrote it into the markup. Document order is depth-first. */
+  function readTool(el: SVGGElement): Tool {
+    const d = el.dataset;
+    return {
+      id: d.tool!,
+      behaviour: d.behaviour!,
+      thread: d.thread === undefined ? null : +d.thread,
+      parent: d.parent ?? null,
+      string: +d.string!,
+      radius: +d.radius!,
+      icon: '',
+      label: el.querySelector(':scope > .site-mark-bauble')?.getAttribute('aria-label') ?? '',
+      el,
+      line: el.querySelector(':scope > .site-mark-tool-string')!,
+      bauble: el.querySelector(':scope > .site-mark-bauble')!,
+      b: { r: 0, rv: 0, theta: 0, omega: 0 },
+      s: REST,
+      at: null,
+      scale: 0,
+      pointer: null,
+      dragId: null,
+    };
+  }
+
+  /** A swing as it falls, rad/s, so it never drops dead straight. */
+  const DROP_KICK = 0.9;
+
   class SiteMark extends HTMLElement {
     #overlay!: SVGSVGElement;
     #paths: SVGPathElement[] = [];
@@ -394,8 +554,21 @@ const n = (v: number) => +v.toFixed(2);
     #state: DotState = DOT_AT_REST;
     #prevY: number | null = null;
     #fontsReady = false;
-    /** The pull → release → rest machine (motion.ts). With no tools yet, every pull is a tug. */
+    /** The pull → release → rest machine (motion.ts): opening and closing the tools, or a tug. */
     #ts: ToolsState = TOOLS_CLOSED;
+    /** The tools, read off the markup; none where none are configured. */
+    #tools: Tool[] = [];
+    #group: SVGGElement | null = null;
+    /** The tools that hang (or are about to): decided on open, and again whenever a behaviour says `changed`. */
+    #visible: ReadonlySet<string> = new Set();
+    /** The pull in progress drops nothing, so it lapses (`lapseTug`). Always, with no tools. */
+    #tug = true;
+    /** The top-level tools whose threads take the pull in progress; null pulls every thread (a tug). */
+    #pulled: ReadonlySet<string> | null = null;
+    /** Unsubscribes from the behaviours' `changed`, while the tools are open. */
+    #unsubscribe: (() => void)[] | null = null;
+    /** Behaviour keys already reported missing. */
+    #missing = new Set<string>();
     #frame = 0;
     #last = 0;
     #ro = new ResizeObserver(() => this.#relayout());
@@ -410,8 +583,12 @@ const n = (v: number) => +v.toFixed(2);
       this.#probeText = this.querySelector('.site-mark-probe-text')!;
       this.#probeBase = this.querySelector('.site-mark-probe-base')!;
       this.#hangProbe = this.querySelector('.site-mark-hang-probe')!;
+      this.#group = this.#overlay.querySelector('.site-mark-tools');
+      this.#tools = [...this.#overlay.querySelectorAll<SVGGElement>('.site-mark-tool')].map(readTool);
+      for (const t of this.#tools) this.#wireTool(t);
 
       document.addEventListener(PRESENTATION_EVENT, this.#onPresentation);
+      document.addEventListener('keydown', this.#onKey);
       window.addEventListener('resize', this.#onResize);
       this.#hit.addEventListener('click', this.#onHit);
       // Nothing is drawn until the title's real font is in: until then the
@@ -434,7 +611,10 @@ const n = (v: number) => +v.toFixed(2);
 
     disconnectedCallback() {
       document.removeEventListener(PRESENTATION_EVENT, this.#onPresentation);
+      document.removeEventListener('keydown', this.#onKey);
       window.removeEventListener('resize', this.#onResize);
+      this.#hit.removeEventListener('click', this.#onHit);
+      this.#unwatch();
       this.#endRun();
       this.#ro.disconnect();
       cancelAnimationFrame(this.#frame);
@@ -459,6 +639,9 @@ const n = (v: number) => +v.toFixed(2);
         return;
       }
       this.#seeded = false;
+      // Any change of presentation closes the tools (they reel in over it),
+      // as the bench does.
+      this.#setOpen(false);
       // A change while an exit is still running ends that exit first: its
       // names and animations never outlive it.
       this.#endRun();
@@ -835,8 +1018,10 @@ const n = (v: number) => +v.toFixed(2);
       // (hang.ts), so the end of an exit is the picture a cold load starts with.
       const anchors = anchorSlot(s.c, em, p);
       const geoms = poseThreads(MARK_RIG, { slot: shift(anchors), dot: corner, size, em, p });
-      // No tools yet, so every thread takes the pull.
-      geoms.forEach((g, i) => this.#paths[i]?.setAttribute('d', threadPathData(k > 0 ? tauten(g, k) : g)));
+      // Only the threads that carry a tool in play take the pull (all of them, for a tug).
+      const taut = tautThreads(this.#tools, this.#pulled, geoms.length);
+      const pulled = geoms.map((g, i) => (k > 0 && taut[i] ? tauten(g, k) : g));
+      pulled.forEach((g, i) => this.#paths[i]?.setAttribute('d', threadPathData(g)));
       const stroke = String(threadStroke(MARK_RIG, em));
       for (const path of this.#paths) path.style.setProperty('stroke-width', stroke);
 
@@ -847,7 +1032,43 @@ const n = (v: number) => +v.toFixed(2);
       hs.setProperty('--site-mark-x', `${f(centre.x)}px`);
       hs.setProperty('--site-mark-y', `${f(hy)}px`);
       hs.setProperty('--site-mark-size', `${f(size)}px`);
+      this.#drawTools(pulled, o, stopped);
       return true;
+    }
+
+    /**
+     * Hang each open tool from its pivot and draw its string and bauble. A
+     * top-level tool's pivot is its thread's (`toolPivot`: the anchor in the
+     * title, or where the thread crosses the top edge when hanging); a child's
+     * is its parent's bauble, as just drawn (parents come first).
+     */
+    #drawTools(geoms: ReturnType<typeof poseThreads>, o: DOMRect, hanging: boolean) {
+      const byId = new Map(this.#tools.map((t) => [t.id, t]));
+      const f = (n: number) => n.toFixed(1);
+      for (const t of this.#tools) {
+        t.at = null;
+        if (!t.el.hasAttribute('data-open')) continue;
+        let pivot: V;
+        if (t.parent === null) {
+          const g = t.thread === null ? undefined : geoms[t.thread];
+          if (!g) continue;
+          pivot = toolPivot(g, hanging, -o.top);
+        } else {
+          const p = byId.get(t.parent);
+          if (!p?.at) continue;
+          pivot = childPivot(p.at, p.radius, p.scale);
+        }
+        // Dragged, the bauble is where the pointer is and the string follows.
+        if (t.pointer) t.b = baubleAt(pivot, { x: t.pointer.x - o.left, y: t.pointer.y - o.top });
+        const at = baublePos(pivot, t.b);
+        t.at = at;
+        t.scale = t.pointer ? 1 : clamp01(t.s.x);
+        t.line.setAttribute('x1', f(pivot.x));
+        t.line.setAttribute('y1', f(pivot.y));
+        t.line.setAttribute('x2', f(at.x));
+        t.line.setAttribute('y2', f(at.y));
+        t.bauble.setAttribute('transform', `translate(${f(at.x)} ${f(at.y)}) scale(${t.scale.toFixed(3)})`);
+      }
     }
 
     // ── The loop ───────────────────────────────────────────────────
@@ -885,10 +1106,14 @@ const n = (v: number) => +v.toFixed(2);
         reduced: !moves,
       });
       if (this.#ts.phase !== 'rest') {
-        this.#ts = lapseTug(stepTools(this.#ts, dt, false));
-        if (this.#ts.phase === 'rest') this.#ts = TOOLS_CLOSED;
+        this.#ts = stepTools(this.#ts, dt, !moves);
+        if (this.#tug) {
+          this.#ts = lapseTug(this.#ts);
+          if (this.#ts.phase === 'rest') this.#ts = TOOLS_CLOSED;
+        }
       }
-      const busy = !!this.#run || this.#ts.phase !== 'rest' || dotMoving(this.#state, size, this.#ts.taut.x);
+      const toolsBusy = this.#stepTools(dt, !moves);
+      const busy = !!this.#run || this.#ts.phase !== 'rest' || toolsBusy || dotMoving(this.#state, size, this.#ts.taut.x);
       // Settled in the title: hand the overlay to the document, where it
       // scrolls with the text. Hanging, it stays on the viewport.
       if (!busy && this.#mode === 'page' && !this.#state.stopped) this.#setAnchored(true);
@@ -898,19 +1123,256 @@ const n = (v: number) => +v.toFixed(2);
       else this.#prevY = null;
     };
 
-    // ── The tug ────────────────────────────────────────────────────
+    // ── The dot: open and close the tools, or tug ───────────────────
 
     #onHit = (e: MouseEvent) => {
       e.preventDefault();
-      // Reduced motion: the threads just don't move. Mid-exit, nothing to pull.
-      // Hanging, there is always a dot; in the title, only once it is measured.
-      if (this.#exiting() || !this.#moves()) return;
+      // Mid-exit, nothing to pull. Hanging, there is always a dot; in the
+      // title, only once it is measured.
+      if (this.#exiting()) return;
       if (this.#mode === 'page' ? !this.#measured : this.#mode !== 'card') return;
-      const next = setWant(this.#ts, true, false);
-      if (next === this.#ts) return;
-      this.#ts = next;
+      // A click from the keyboard (Enter/Space on the button) has no pointer
+      // detail: focus goes into the tools it opens.
+      if (this.#ts.want && !this.#tug) this.#setOpen(false);
+      else this.#setOpen(true, e.detail === 0);
+    };
+
+    /**
+     * Escape cancels a drag in progress, wherever focus is (a pointer drag
+     * doesn't move it); otherwise it closes the tools. A focused bauble's own
+     * handler has had it first, and the behaviour's `key` may have taken it.
+     */
+    #onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || !this.#ts.want || this.#tug) return;
+      const dragged = this.#tools.filter((t) => t.dragId !== null);
+      if (dragged.length) {
+        e.preventDefault();
+        for (const t of dragged) this.#endDrag(t, true);
+        return;
+      }
+      this.#setOpen(false);
+    };
+
+    /**
+     * Ask for the tools open or closed: a pull on the threads that carry them,
+     * then they drop (or are reeled in) on the release (motion.ts). When
+     * nothing would drop it is the tug, which does nothing under reduced motion.
+     */
+    #setOpen(open: boolean, fromKeyboard = false) {
+      const reduced = !this.#moves();
+      if (open) {
+        const visible = this.#resolveVisible();
+        if (isTug(this.#tools, visible)) {
+          if (reduced) return;
+          const next = setWant(this.#ts, true, false);
+          if (next === this.#ts) return;
+          this.#tug = true;
+          this.#pulled = null;
+          this.#ts = next;
+          this.#wake();
+          return;
+        }
+        const next = setWant(this.#ts, true, reduced);
+        if (next === this.#ts) return;
+        this.#tug = false;
+        this.#ts = next;
+        this.#visible = visible;
+        this.#pulled = new Set(this.#tools.filter((t) => t.parent === null && visible.has(t.id)).map((t) => t.id));
+        this.#watch();
+        for (const t of this.#tools) if (visible.has(t.id)) this.#hangOut(t, reduced);
+        this.#hit.setAttribute('aria-expanded', 'true');
+        if (fromKeyboard) this.#focusTool(focusOrder(this.#tools, visible)[0] ?? null);
+        this.#wake();
+        return;
+      }
+      // Closing. A tug lapses on its own.
+      if (this.#tug || !this.#ts.want) return;
+      for (const t of this.#tools) if (t.dragId !== null) this.#endDrag(t, true);
+      this.#pulled = new Set(this.#tools.filter((t) => t.parent === null && t.el.hasAttribute('data-open')).map((t) => t.id));
+      this.#ts = setWant(this.#ts, false, reduced);
+      this.#hit.setAttribute('aria-expanded', 'false');
+      // Focus in a tool that is going away goes back to the dot.
+      if (this.#group?.contains(document.activeElement)) this.#hit.focus();
+      this.#wake();
+    }
+
+    /** Start `t` hanging: drawn from its pivot, nothing paid out yet, with a swing to fall into. */
+    #hangOut(t: Tool, reduced: boolean) {
+      if (t.el.hasAttribute('data-open')) return;
+      t.el.setAttribute('data-open', '');
+      t.b = { r: 0, rv: 0, theta: 0, omega: reduced ? 0 : DROP_KICK };
+      t.s = { x: reduced ? 1 : 0, v: 0 };
+      const kind = this.#behaviour(t)?.kind;
+      if (kind) t.bauble.dataset.kind = kind;
+    }
+
+    #behaviour(t: Tool): ToolBehaviour | undefined {
+      const b = toolBehaviour(t.behaviour);
+      if (!b && !this.#missing.has(t.behaviour)) {
+        this.#missing.add(t.behaviour);
+        console.warn(`site-mark: no tool behaviour "${t.behaviour}" registered; "${t.id}" stays up.`);
+      }
+      return b;
+    }
+
+    /** Which tools hang now: shown by their behaviour, and hanging from something that hangs. */
+    #resolveVisible(): Set<string> {
+      const byId = new Map(this.#tools.map((t) => [t.id, t]));
+      return visibleTools(this.#tools, (n) => {
+        const b = this.#behaviour(byId.get(n.id)!);
+        return !!b && (b.shown ? b.shown() : true);
+      });
+    }
+
+    /** Follow the behaviours' `changed` while the tools are open. */
+    #watch() {
+      if (this.#unsubscribe) return;
+      const seen = new Set<ToolBehaviour>();
+      this.#unsubscribe = [];
+      for (const t of this.#tools) {
+        const b = toolBehaviour(t.behaviour);
+        if (!b?.subscribe || seen.has(b)) continue;
+        seen.add(b);
+        this.#unsubscribe.push(b.subscribe(this.#onShownChanged));
+      }
+    }
+
+    #unwatch() {
+      for (const off of this.#unsubscribe ?? []) off();
+      this.#unsubscribe = null;
+    }
+
+    /**
+     * A behaviour says its `shown()` may have changed. While open, each tool
+     * that now hangs and didn't drops on its own, and each that no longer
+     * hangs is reeled in on its own; no pull on the threads.
+     */
+    #onShownChanged = () => {
+      if (!this.#ts.want || this.#tug) return;
+      const before = this.#visible;
+      const now = this.#resolveVisible();
+      this.#visible = now;
+      const reduced = !this.#moves();
+      const active = document.activeElement;
+      for (const t of this.#tools) {
+        if (now.has(t.id) && !before.has(t.id)) this.#hangOut(t, reduced);
+        else if (!now.has(t.id) && before.has(t.id)) {
+          if (t.dragId !== null) this.#endDrag(t, true);
+          if (active instanceof Element && t.el.contains(active)) this.#focusTool(focusFallback(this.#tools, t.id, now));
+        }
+      }
       this.#wake();
     };
+
+    /** Focus a tool's bauble, or the dot for null. */
+    #focusTool(id: string | null) {
+      const t = id === null ? null : this.#tools.find((x) => x.id === id);
+      (t?.bauble ?? this.#hit).focus({ preventScroll: true });
+    }
+
+    /**
+     * One frame of every open tool: its string pays out to its length (or in
+     * to nothing) and it swings; it grows as it drops and shrinks as it is
+     * reeled in, and once reeled in it is no longer drawn. True while any of
+     * it still moves.
+     */
+    #stepTools(dt: number, reduced: boolean): boolean {
+      let busy = false;
+      const ts = this.#ts;
+      for (const t of this.#tools) {
+        if (!t.el.hasAttribute('data-open')) continue;
+        const len = toolLength(t, ts.toolsOut, this.#visible);
+        const out = len > 0;
+        if (!t.pointer) {
+          const spring = out ? DROP : REEL;
+          t.b = reduced ? { r: len, rv: 0, theta: 0, omega: 0 } : subStep(t.b, dt, (b, h) => stepBauble(b, len, h, spring));
+        }
+        t.s = stepToolSize(t.s, out, dt, reduced);
+        if (toolReeledIn({ ...ts, toolsOut: out }, t.b.r, t.s.x, !!t.pointer)) {
+          t.el.removeAttribute('data-open');
+          t.at = null;
+          continue;
+        }
+        if (t.pointer || baubleMoving(t.b, len) || Math.abs(t.s.x - (out ? 1 : 0)) > 0.005) busy = true;
+      }
+      // Closed and every tool in: stop listening until the next open.
+      if (!ts.want && ts.phase === 'rest' && !this.#tools.some((t) => t.el.hasAttribute('data-open'))) {
+        this.#unwatch();
+        this.#pulled = null;
+      }
+      return busy;
+    }
+
+    // ── A tool's own pointer and keys ──────────────────────────────
+
+    /**
+     * Every bauble gets the same wiring; what a gesture does is decided by its
+     * behaviour's `kind` when it happens (a behaviour may register after the
+     * mark has connected).
+     */
+    #wireTool(t: Tool) {
+      const point = (e: PointerEvent | MouseEvent): ViewportPoint => ({ x: e.clientX, y: e.clientY });
+      const el = t.bauble;
+      el.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 || !t.el.hasAttribute('data-open') || t.dragId !== null) return;
+        const b = this.#behaviour(t);
+        if (b?.kind !== 'drag') return;
+        e.preventDefault();
+        el.setPointerCapture(e.pointerId);
+        el.setAttribute('data-dragging', '');
+        t.dragId = e.pointerId;
+        t.pointer = point(e);
+        b.dragStart?.(point(e));
+        this.#wake();
+      });
+      el.addEventListener('pointermove', (e) => {
+        if (e.pointerId !== t.dragId) return;
+        t.pointer = point(e);
+        this.#behaviour(t)?.dragMove?.(point(e));
+        this.#wake();
+      });
+      el.addEventListener('pointerup', (e) => {
+        if (e.pointerId === t.dragId) this.#endDrag(t, false, point(e));
+      });
+      el.addEventListener('pointercancel', (e) => {
+        if (e.pointerId === t.dragId) this.#endDrag(t, true, point(e));
+      });
+      el.addEventListener('click', (e) => {
+        const b = this.#behaviour(t);
+        if (b?.kind !== 'press') return;
+        e.preventDefault();
+        b.press?.();
+      });
+      el.addEventListener('keydown', (e) => {
+        // Escape mid-drag cancels the drag, and only that.
+        if (e.key === 'Escape' && t.dragId !== null) {
+          e.preventDefault();
+          this.#endDrag(t, true);
+          return;
+        }
+        const b = this.#behaviour(t);
+        if (b?.key?.(e)) {
+          e.preventDefault();
+          return;
+        }
+        if (b?.kind === 'press' && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          b.press?.();
+        }
+      });
+    }
+
+    /** Let go of a drag: the bauble swings back to hang from its string. */
+    #endDrag(t: Tool, cancelled: boolean, p?: ViewportPoint) {
+      const at = p ?? t.pointer ?? { x: 0, y: 0 };
+      const id = t.dragId;
+      t.dragId = null;
+      t.pointer = null;
+      t.bauble.removeAttribute('data-dragging');
+      if (id !== null && t.bauble.hasPointerCapture(id)) t.bauble.releasePointerCapture(id);
+      this.#behaviour(t)?.dragEnd?.(at, cancelled);
+      this.#wake();
+    }
   }
 
   if (!customElements.get('site-mark')) customElements.define('site-mark', SiteMark);

@@ -55,7 +55,9 @@ overrides.
 | `src/lib/site/mark/motion.ts` | `step` spring, the catch/settle at the edge, the pull → release → rest phase machine (and `lapseTug`, the pull with no tools), `poseBlend`, `titleExit` | pure |
 | `src/lib/site/mark/measure.ts` | the full stop's ink box from a canvas pixel scan, in em; the plausibility check and Chromium-measured fallback; the dot within the slot | pure |
 | `src/lib/site/presentation-event.ts` | `site:presentation`: its detail type, `announcePresentation`, `currentPresentation` (reads `html[data-presentation]`) | shared |
-| `src/components/site/SuspendedMark.astro` | `<site-mark>` custom element: overlay SVG, hit button, rAF loop, SVG writes | effect |
+| `src/components/site/SuspendedMark.astro` | `<site-mark>` custom element: overlay SVG, hit button, rAF loop, SVG writes. Takes an optional `tools` prop (default `MARK_TOOLS`) | effect |
+| `src/components/site/MarkTool.astro` | slice 7: one tool's markup from its config (string, bauble, icon), children nested, recursive | markup |
+| `src/lib/site/mark/tools.ts` | slice 7: the generic tool decisions: `flattenTools`, `visibleTools`, `isTug`, `tautThreads`, `toolLength`, `childPivot`, `focusOrder`, `focusFallback`, `validateTools` | pure |
 
 The mark knows threads, the dot, the pull, and that baubles hang from
 pivots. It does not know what any tool does. See [Tools](#tools).
@@ -266,11 +268,52 @@ export interface ToolBehaviour {
 - `index.ts`: the registry `{ palette, 'palette-revert' }`. Adding a tool
   means adding a file and a registry line, then a config entry.
 
+**As built (slice 7).** `index.ts` exports `BUILT_IN` (the production
+behaviours, empty until slice 8), `toolBehaviour(key)` (what the mark calls)
+and `registerToolBehaviours(extra)`, which production never calls: it lets a
+dev bench hang behaviours of its own on the real registry without shipping
+them (`/experiments/mark-tools` registers its no-ops from its page script). A
+built-in key can't be replaced. The mark looks a behaviour up each time it
+opens or a gesture happens, so a late registration is fine.
+
+The mark side, generically:
+
+- **Open/close** is the pull → release machine. Only the threads carrying a
+  top-level tool that drops (or, closing, that is out) tauten
+  (`tautThreads`). When nothing would drop (no tools, or none shown) the click
+  is the slice-4 tug (`isTug` → `lapseTug`, every thread). Reduced motion:
+  the tools pay out and reel in at once; the tug still does nothing.
+- **Where it hangs:** a top-level tool from `toolPivot` on its (tautened)
+  thread; a child from the bottom of its parent's body as drawn
+  (`childPivot`), so it rides the parent's swing and drag. A child hangs only
+  while its parent does (`visibleTools`).
+- **`shown()`** is read on open and again on each `subscribe` callback while
+  open (subscriptions are held only while open). A change drops or reels in
+  that tool alone, with no pull.
+- **Pointer:** every bauble gets the same listeners; `kind` decides at event
+  time. Press: `click` → `press()`. Drag: pointer capture, the bauble follows
+  the pointer (`baubleAt`), `dragStart/Move/End`; pointercancel or Escape
+  (wherever focus is) cancels; let go, it swings back on its string.
+- **Keys:** Enter/Space on a press bauble presses; a bauble's keydown goes to
+  `key()` first, and Escape it doesn't take closes the tools.
+- **Closing:** a dot click, Escape, or any `site:presentation` change; any
+  drag is cancelled, and focus inside the tools returns to the dot.
+- **Focus:** opened from the keyboard (a click with no pointer detail), focus
+  goes to the first tool in `focusOrder` (depth-first, config order). A
+  focused tool that is hidden while open hands focus to its nearest hanging
+  ancestor, else the dot (`focusFallback`).
+- **Config checks:** `mark/tools.test.ts` runs `validateTools` (unique ids,
+  thread in range on top-level tools and absent on children, positive sizes,
+  icon and behaviour keys that exist) over `MARK_TOOLS` against `BUILT_IN`,
+  and over the bench's config against `BUILT_IN` plus its own behaviours.
+
 The mark imports the config and the registry, and nothing palette-specific.
 A small boundary test (`mark/boundary.test.ts`) enforces this. It reads the
-imports of `SuspendedMark.astro` and `src/lib/site/mark/*` and fails on
-anything under `mark-tools/` other than `index.ts`, and on any `@site/palette*`
-import.
+imports of `SuspendedMark.astro`, `MarkTool.astro` and `src/lib/site/mark/*`
+and fails on anything under `mark-tools/` other than `index.ts` and
+`types.ts`, and on any `@site/palette*` import. The other direction too: no
+file under `mark-tools/` may import anything under `src/lib/site/mark/` or
+either mark component; a behaviour's whole contract is `types.ts`.
 
 ### Palette effect layer: `src/lib/site/palette-dom.ts`
 
@@ -291,14 +334,15 @@ New selectors:
 | `.site-mark-overlay` | fixed full-viewport SVG |
 | `.site-mark-threads` (5 × `path`) | the threads |
 | `.site-mark-dot` | the dot (`rect`) |
-| `.site-mark-hit` | the tools button, `aria-expanded`, `aria-controls` → tools (until slice 7, decorative: `tabindex="-1"`, `aria-hidden`) |
+| `.site-mark-hit` | the tools button, `aria-label="Tools"`, `aria-expanded`, `aria-controls="site-mark-tools"`, when at least one tool is configured (slice 7). With none it stays decorative: `tabindex="-1"`, `aria-hidden` |
 | `.site-mark-probe`, `.site-mark-probe-text`, `.site-mark-probe-base` | a hidden full stop laid out in the title's font, whose empty inline-block gives the engine's own baseline (measure.ts) |
 | `.site-mark-hang` (5 × `path` in `.site-mark-threads`, `rect.site-mark-dot`) | slice 6: the hanging pose as the server draws it, for the first paint in card mode |
 | `.site-mark-hang-probe` | slice 6: resolves `--mark-hang-size` (width) and `--mark-hang-em` (height) to px for the script |
-| `.site-mark-tools` | the tool group |
-| `.site-mark-tool[data-tool]` | one tool (children are nested `.site-mark-tool`s) |
-| `.site-mark-tool-string`, `.site-mark-bauble`, `.site-mark-bauble-hit`, `.site-mark-bauble-body` | tool parts |
-| `.site-mark-icon-ink`, `.site-mark-icon-paper` | icon colouring |
+| `.site-mark-tools` | the tool group: `#site-mark-tools`, `role="group"`, `aria-label="Tools"`. Rendered only when tools are configured; then the overlay drops its `aria-hidden` and the threads and dot carry it instead |
+| `.site-mark-tool[data-tool]` | one tool (children are nested `.site-mark-tool`s). Also `data-behaviour`, `data-thread` (top-level), `data-parent` (children), `data-string`, `data-radius`: the config, written by `MarkTool.astro`, read by the script |
+| `.site-mark-tool-string`, `.site-mark-bauble`, `.site-mark-bauble-hit`, `.site-mark-bauble-body` | tool parts. The bauble is `role="button"`, `tabindex="0"`, `aria-label` from config; the hit circle is never under `--mark-hit-min` across |
+| `.site-mark-icon` | slice 7: the icon's group in the bauble, `scale(radius)` of the unit-box body from `MARK_ICONS` |
+| `.site-mark-icon-ink`, `.site-mark-icon-paper` | icon colouring (fills only) |
 | `.page-title-mark` | the period's slot in the title |
 | `.page-header-rule` | the line under the subtitle (replaces `.page-header`'s border-bottom) |
 
@@ -311,7 +355,8 @@ pre-paint script turns it `card` for a `from`/`to` fan),
 `html[data-mark-vt="title"|"mark"]` (slice 5: for the length of a page ↔ card
 VT, names the overlay and, for `title`, the page-mode title and subtitle;
 `mark` is reduced motion, the overlay only), `.site-mark-tool[data-open]`,
-`.site-mark-bauble[data-dragging]`, `html[data-mark-ready]`,
+`.site-mark-bauble[data-dragging]`, `.site-mark-bauble[data-kind="drag"|"press"]`
+(slice 7: the behaviour's kind, set when it drops; the cursor), `html[data-mark-ready]`,
 `html[data-presentation="page"|"card"]` (the last `site:presentation`, written
 by `announcePresentation`). `html[data-mark-ready]` now also retires the
 server's hanging pose.
@@ -347,6 +392,11 @@ Local custom properties (slice 4), in `SuspendedMark.astro`:
   in CSS.
 - `--site-mark-motion` on `site-mark`: `1`, or `0` under
   `prefers-reduced-motion`, read back by the script (the tug doesn't run).
+
+Local custom property (slice 7), inline on `.site-mark-bauble` from
+`MarkTool.astro`: `--site-mark-tool-r`, the configured radius in px, which the
+hit circle's `r` takes the max of with half of `--mark-hit-min`. Slice 7 adds
+no `:root` tokens.
 
 Local custom properties (slice 6), inline on `.site-mark-hang` from the
 build: `--hang-x`, `--hang-y`, `--hang-w`, `--hang-h` (its box, em, about the
@@ -407,7 +457,13 @@ Each slice ships green.
 7. **Tool framework.** `mark-tools.ts`, `mark-icons.ts`, the `ToolBehaviour`
    interface and registry, and the mark drawing tools generically, children
    included. The import-closure test goes in here. Prove it with a no-op
-   `press` tool in the experiment only.
+   `press` tool in the experiment only. **Built:** the proof is
+   `/experiments/mark-tools` (config and behaviours in
+   `src/experiments/mark-tools-proof.ts`): a press tool with a child, a drag
+   tool, and a `shown()` tool toggled from the page, on the real
+   `<SuspendedMark tools={…}>` (Base's own mark is off there). The mode buttons
+   announce `site:presentation` as CardStack does, so the hang, the VT exit and
+   the trim return are on the bench too.
 8. **Palette tool.** Add `palette-dom.ts` (shared with `PalettePicker`), the
    `palette` behaviour and keyboard picking.
 9. **Revert.** Add the `palette-revert` child behaviour, which drops when a
