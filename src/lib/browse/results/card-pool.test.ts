@@ -17,7 +17,13 @@ function fakeBundle(): CardPoolBundle {
     declaredValues: ['what:games'],
     collapseConfig: new Map([['what/stories', { target: true }]]),
     browseCards: [{ uid: 'browse' }],
-    hierarchies: { what: [{ value: 'what:games' }] },
+    hierarchies: {
+      what: [{
+        dimensionId: 'what', value: 'what:games', label: 'games', name: 'Games', declared: true,
+        group: 'Series', order: 1, cardUid: 'what/games', description: 'd', count: 2, drillOnly: true,
+        children: [{ dimensionId: 'what', value: 'what:games/x', label: 'x', name: 'X', count: 1, children: [] }],
+      }],
+    },
     cards: [{ uid: 'serialised' }],
     seriesMembers: { 'what/stories/00-intro': [{ uid: 'what/stories/00-intro' }] },
   } as unknown as CardPoolBundle;
@@ -44,9 +50,18 @@ describe('toSharedAsset', () => {
     const asset = toSharedAsset(bundle);
     expect(asset.cards).toBe(bundle.cards);
     expect(asset.tagDisplay).toBe(bundle.tagDisplay);
-    expect(asset.hierarchies).toBe(bundle.hierarchies);
     expect(asset.groupOrder).toBe(bundle.groupOrder);
     expect(asset.seriesMembers).toBe(bundle.seriesMembers);
+  });
+
+  it('puts only the structural fields of each hierarchy node on the wire', () => {
+    // Display fields (name, label, description, declared, cardUid, group, order)
+    // are tagDisplay's to carry — a second copy is the shadow state of #143.
+    const asset = toSharedAsset(fakeBundle());
+    expect(asset.hierarchies.what).toEqual([{
+      dimensionId: 'what', value: 'what:games', count: 2, drillOnly: true,
+      children: [{ dimensionId: 'what', value: 'what:games/x', count: 1, children: [] }],
+    }]);
   });
 
   it('serialises cardBackedValues from a Set to an array', () => {
@@ -115,6 +130,22 @@ describe('the /cards.json payload', () => {
 
     // And the whole document, which is the byte sequence the route writes.
     expect(JSON.parse(JSON.stringify(asset))).toEqual(asset);
+  }, 60_000);
+
+  it('ships no display field on any hierarchy node; tagDisplay resolves every value', async () => {
+    const asset = toSharedAsset(await buildCardPool());
+    const allowed = ['children', 'count', 'dimensionId', 'drillOnly', 'value'];
+    let seen = 0;
+    const walk = (nodes: { value: string; children: unknown[] }[]) => {
+      for (const node of nodes) {
+        seen++;
+        expect(Object.keys(node).filter(k => !allowed.includes(k)), node.value).toEqual([]);
+        expect(asset.tagDisplay, node.value).toHaveProperty([node.value]);
+        walk(node.children as never);
+      }
+    };
+    for (const nodes of Object.values(asset.hierarchies)) walk(nodes as never);
+    expect(seen).toBeGreaterThan(0);
   }, 60_000);
 
   it('is memoised at module level — two builds are one object', async () => {

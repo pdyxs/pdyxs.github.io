@@ -31,10 +31,11 @@ import { discoverCollapseConfig, type CollapseConfig } from '@content/cards/coll
 import { collapseCollections, collapsedFolderValues, collapsedSeriesMembers } from '@content/cards/collapse';
 import { FIVE_W_DIMENSIONS, type FiveWDimension } from '@content/tags/five-w';
 import { cardOwnValues } from '@content/cards/card-identity';
-import { DIMENSIONS } from '@dimensions';
+import { DIMENSIONS, STATUS_ROOT_VALUE } from '@dimensions';
 import { UNINSPECTED_TAG } from '@content/tags/uninspected-facet';
 import type { TagDisplay } from '@content/tags/tag-display';
-import type { TagNode } from '@browse/results/browse-helpers';
+import { toWireNodes, type TagNode, type WireTagNode } from '@browse/results/browse-helpers';
+import { STATUS_VALUES } from '@content/cards/status-visibility';
 import type { SerialisedCardFull } from '@browse/home/frontpage';
 
 /**
@@ -84,7 +85,8 @@ export interface CardPoolBundle {
 export interface SharedCardPoolAsset {
   cards: SerialisedCardFull[];
   tagDisplay: Record<string, TagDisplay>;
-  hierarchies: Record<string, TagNode[]>;
+  /** Structural nodes only — names, descriptions, groups etc. resolve through `tagDisplay`. */
+  hierarchies: Record<string, WireTagNode[]>;
   groupOrder: Partial<Record<FiveWDimension, string[]>>;
   cardBackedValues: string[];
   seriesMembers: Record<string, SerialisedCardFull[]>;
@@ -130,6 +132,11 @@ async function build(): Promise<CardPoolBundle> {
   // undeclared, and it never appears in a production build.
   if (import.meta.env.DEV) {
     tagDisplay[UNINSPECTED_TAG] = { name: 'Uninspected', declared: true };
+    // The dev-only status dimension's nodes are not tags, so the registry has
+    // nothing for them — but hierarchy nodes no longer carry their own names
+    // (see WireTagNode), so the panel resolves these through tagDisplay too.
+    tagDisplay[STATUS_ROOT_VALUE] = { name: 'Status', declared: true };
+    for (const value of STATUS_VALUES) tagDisplay[value] = { name: value, declared: true };
   }
   const declaredValues = [
     ...FIVE_W_DIMENSIONS.flatMap(d => registry[d].values),
@@ -213,7 +220,9 @@ export function toSharedAsset(bundle: CardPoolBundle): SharedCardPoolAsset {
   return {
     cards: bundle.cards,
     tagDisplay: bundle.tagDisplay,
-    hierarchies: bundle.hierarchies,
+    hierarchies: Object.fromEntries(
+      Object.entries(bundle.hierarchies).map(([id, nodes]) => [id, toWireNodes(nodes)]),
+    ),
     groupOrder: bundle.groupOrder,
     cardBackedValues: [...bundle.cardBackedValues],
     seriesMembers: bundle.seriesMembers,

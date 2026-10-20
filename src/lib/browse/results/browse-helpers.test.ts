@@ -7,10 +7,10 @@ import {
     dimensionHasTags,
     sortCardsForBrowse,
     limitCardsForBrowse,
-    filterVisibleNodes,
-    groupNodesIntoSections,
+    filterVisibleNodes as filterVisibleNodesRaw,
+    groupNodesIntoSections as groupNodesIntoSectionsRaw,
 } from "@browse/results/browse-helpers";
-import type { TagNode } from "@browse/results/browse-helpers";
+import type { TagNode, WireTagNode } from "@browse/results/browse-helpers";
 import { computeTagRegistry, flattenTagDisplay } from "@content/tags/tag-registry";
 import { fakeCardMeta } from "../../../test/fixtures";
 
@@ -563,6 +563,14 @@ describe("buildTagHierarchy fed by a real tag registry", () => {
 // ---------------------------------------------------------------------------
 
 describe("filterVisibleNodes", () => {
+    // `declared` lives in the display map, not on the node (see WireTagNode);
+    // the wrapper lifts it off the fixture tree so cases read as before.
+    function filterVisibleNodes(nodes: TagNode[], active: Set<string>) {
+        const display: Record<string, { name: string; declared?: boolean }> = {};
+        const walk = (ns: TagNode[]) => ns.forEach((n) => { display[n.value] = { name: n.name, declared: n.declared }; walk(n.children); });
+        walk(nodes);
+        return filterVisibleNodesRaw(nodes, active, display);
+    }
     function node(overrides: Partial<TagNode> & { value: string }): TagNode {
         return {
             dimensionId: 'what',
@@ -574,6 +582,14 @@ describe("filterVisibleNodes", () => {
             ...overrides,
         };
     }
+
+    it("reads declared from the display map, not the node", () => {
+        const wire = [{ dimensionId: 'what' as const, value: "what:projects", count: 0, children: [] }];
+        expect(
+            filterVisibleNodesRaw(wire, new Set(), { "what:projects": { name: "Projects", declared: true } }),
+        ).toHaveLength(1);
+        expect(filterVisibleNodesRaw(wire, new Set(), {})).toEqual([]);
+    });
 
     it("keeps a declared node", () => {
         const nodes = [node({ value: "what:projects", declared: true })];
@@ -882,17 +898,26 @@ describe("limitCardsForBrowse", () => {
 });
 
 describe("groupNodesIntoSections", () => {
-    function node(value: string, group?: string): TagNode {
-        return {
-            dimensionId: 'what',
-            value,
-            label: value,
-            name: value,
-            count: 0,
-            children: [],
-            ...(group ? { group } : {}),
-        };
+    // Groups live in the display map, never on the node (see WireTagNode); the
+    // helper records each grouped value there so tests read like the data did.
+    let display: Record<string, { name: string; group?: string }> = {};
+    function node(value: string, group?: string): WireTagNode {
+        display[value] = { name: value, ...(group ? { group } : {}) };
+        return { dimensionId: 'what', value, count: 0, children: [] };
     }
+    function groupNodesIntoSections(nodes: WireTagNode[], groupOrder: string[] = []) {
+        const sections = groupNodesIntoSectionsRaw(nodes, groupOrder, display);
+        display = {};
+        return sections;
+    }
+
+    it("reads group from the display map, not the node", () => {
+        const wire: WireTagNode[] = [{ dimensionId: 'what', value: "where:contact", count: 0, children: [] }];
+        const sections = groupNodesIntoSectionsRaw(wire, [], {
+            "where:contact": { name: "Contact", group: "Contact" },
+        });
+        expect(sections.map((s) => s.label)).toEqual(["Contact"]);
+    });
 
     it("returns a single unlabelled section when nothing is grouped", () => {
         const nodes = [node("where:australia"), node("where:europe")];
