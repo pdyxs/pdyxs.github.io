@@ -398,6 +398,72 @@ asserts the record agrees, because a floor disagreeing with the card it holds
 space for is exactly the document-height jump the placeholder exists to prevent
 and nothing else would catch it.
 
+## Viewport surface: mobile mode built, desktop not
+
+A card with `surface: viewport` (see [content-model.md](content-model.md#surface--surfaceon-claim-the-viewport-and-are-frontmatter-only))
+whose `surfaceOn` is `mobile` or `both` takes the whole viewport at `<=680px`.
+All of it is one `@media (max-width: 680px)` block at the end of
+`src/styles/stack.css`, keyed on the `data-surface` / `data-surface-on`
+attributes `CardStackCard.astro` renders. Above 681px those attributes are never
+read.
+
+**How to make a card take the viewport on mobile:** add `surface: viewport` to
+its frontmatter (`surfaceOn` defaults to `both`; `surfaceOn: mobile` is the
+explicit form). Nothing else; `src/content/what/games/digital/star-nav/index.md`
+is the one user.
+
+What the block does, with the active card matched as
+`.stack-card--active[data-surface="viewport"]:is([data-surface-on="mobile"], [data-surface-on="both"])`:
+
+- `#card-stack:has(<active viewport card>)` loses its padding.
+- `#card-stack:has(<active viewport card>) .stack-card:not(.stack-card--active)`
+  is `display: none` — the collapsed headers drop out.
+- The active card gets `min-height: 100dvh`.
+- `body:has(#card-stack <active viewport card>) :is(.site-footer, .stack-skeleton)`
+  is `display: none` — the footer (with the theme toggle) and the pre-paint
+  skeleton layer.
+- Star Nav only: the card sets `--viewport-header-h` (two `--space-md` paddings,
+  two `--border-width` borders, one 1.1rem title line at line-height 1.7); its
+  `.star-system` is `height: calc(100dvh - var(--viewport-header-h))` and
+  `.star-system .dither-svg` is `height: 100%; aspect-ratio: auto`, so the island
+  fills exactly the area below the header and the drawing fits inside it
+  (`fitTransform` in `src/components/dither-svg/fit.ts`).
+
+**Why no `position: fixed`.** A fixed card is clipped by, or re-parented to,
+any ancestor that establishes a containing block (`transform`, `filter`,
+`contain: paint`, ...; the open animation uses `clip-path` precisely because it
+does not — see `card-chrome.css`). The card stays in normal flow and is merely
+viewport-tall, so none of that can bite.
+
+**Why no geometry change.** The applier already writes `--geo-*` for every card
+and mobile ignores them (see the top of this file); hiding the other cards with
+`display: none` does not touch the store, `computeGeometry` or any node, and the
+active card is already the one in-flow node.
+
+**The exit is the ordinary close button.** The `.card-header` stays inside the
+card (the island height subtracts it), so closing works as for any card; there
+is no viewport-specific control. No transform or filter is applied to any of it
+(styling.md, dither grid).
+
+### The desktop half is declared, not built
+
+`surfaceOn: desktop` (and the desktop side of `both`) **currently has no effect
+above 680px.** The schema, `resolveCard()` and the data attributes are done.
+Building it will take, at least:
+
+- **Width.** The active card's width is a CSS `min()` that subtracts the spines'
+  reservation (the collapsed cards either side); a viewport card needs the
+  remaining width, read back by a `ResizeObserver` because geometry needs the
+  number in JS.
+- **Hide without destroying.** `computeGeometry` places every card, and the
+  applier owns every node, so hiding the others must be visual only — removing
+  nodes breaks the geometry and the keyed `slot` identity.
+- **Open/close animation** for entering and leaving the surface (the mobile mode
+  has none).
+- **popstate rebuilds.** Back/forward and cold load rebuild the stack from the
+  URL; the mode must derive from the resulting active card, not from a flag set
+  when it was opened.
+
 ## Stable selector contract
 
 These class names are a CSS/layout contract — renaming any of them is a CardStack.svelte + CSS refactor, not a local change:
@@ -407,6 +473,7 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `.stack-card-spine`, `.stack-card-spine-inner`, `.stack-card-spine-title`
 - `.card-header`, `.card-header-sentinel`, `.card-header--stuck`
 - `.stack-card--revealing`, `#card-stack.stack-motion`
+- `data-surface="viewport"` and `data-surface-on="mobile|desktop|both"` on `.stack-card` (written by `CardStackCard.astro` only when the card has a `surface`; read by the mobile viewport block in `stack.css`)
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`
 - `data-role="behind|active|ahead"` and `data-piled` (written by the applier)

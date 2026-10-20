@@ -81,9 +81,9 @@ pure decisions / thin effects, single source of truth) live in
 | when you're working on | read |
 |---|---|
 | the stack's state, entries, slots, `from`/`to` in the URL, fragments, read state, popstate, cold-load restore, Svelte islands, view transitions | [docs/agents/stack-state.md](docs/agents/stack-state.md) |
-| how the stack is drawn or moves: fan geometry, piles, collapse/expand, the pre-paint skeleton, scrolling, reduced motion, the stable selector contract, the home slot grid | [docs/agents/stack-layout.md](docs/agents/stack-layout.md) |
+| how the stack is drawn or moves: fan geometry, piles, collapse/expand, the pre-paint skeleton, scrolling, reduced motion, the stable selector contract, the home slot grid, mobile viewport mode | [docs/agents/stack-layout.md](docs/agents/stack-layout.md) |
 | CSS: where a rule lives, theme switching, the dither, tokens, selected states, code blocks, breakpoints | [docs/agents/styling.md](docs/agents/styling.md) |
-| cards, folder cascade, `_config.yaml`, priority, sort, tags, `excludeTags`, generators, affiliations, the `why` dimension, difficulty, redirects | [docs/agents/content-model.md](docs/agents/content-model.md) |
+| cards, folder cascade, `_config.yaml`, priority, sort, tags, `excludeTags`, generators, affiliations, the `why` dimension, difficulty, redirects, `surface`/`surfaceOn` (a card taking the viewport) | [docs/agents/content-model.md](docs/agents/content-model.md) |
 | lenses, the ranking chain, seen/unseen, home slots, the shared card pool, strip and history lenses, progressive reveal | [docs/agents/lenses-and-browse.md](docs/agents/lenses-and-browse.md) |
 | a renderer, nav renderer, collection view, card credits (`meta:`), actions, galleries, the lightbox, video embeds, header-image padding | [docs/agents/card-rendering.md](docs/agents/card-rendering.md) |
 | writing or running tests, the two vitest projects, happy-dom gaps | [docs/agents/testing.md](docs/agents/testing.md) |

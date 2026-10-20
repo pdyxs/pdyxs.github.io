@@ -85,6 +85,31 @@ one section and renders as a flat list, which is every other level on the site.
 
 The applier is `applyMaxWidth` in `CardStack.svelte`, and it writes `--max-width` to **both** `<html>` and `#card-stack`. That is not redundant: the server renders `#card-stack` with the initial location's width inline so the first paint is right before hydration, and an inline style on `#card-stack` beats an inherited value from `<html>` for everything inside it. Writing only to `<html>` left a card pushed on top of a wide lens (browse is 960px) wearing the lens's width forever.
 
+## `surface` / `surfaceOn` claim the viewport, and are frontmatter-only
+
+Two frontmatter keys (schema in `src/content.config.ts`) let a card take the
+whole browser viewport:
+
+- `surface: viewport` — the only value. Absent means an ordinary card.
+- `surfaceOn: mobile | desktop | both` — where it applies. Valid only alongside
+  `surface`; `surfaceOn` without `surface` fails the schema parse (a `refine`
+  with a message naming both keys), as does any unknown value (Zod would
+  otherwise strip typos silently).
+
+They are **frontmatter-only and non-cascading**, like `headerMedia`: a card
+claims the viewport, a folder never should, so `_config.yaml` and
+`FolderCascade` never read them. `resolveCard()` passes `surface` through and
+fills `surfaceOn` with `both` when the author left it out; with no `surface`,
+neither field exists on the `ResolvedCard`. They are deliberately off `CardMeta`
+(no listing acts on them). `CardStackCard.astro` renders `data-surface` and
+`data-surface-on` on `.stack-card`, only when `surface` is set — that DOM
+contract is the sole input to the CSS. Mechanism and the mobile behaviour:
+[stack-layout.md](stack-layout.md#viewport-surface-mobile-mode-built-desktop-not).
+
+**Only the mobile half is built.** `surfaceOn: desktop` and the desktop part of
+`both` are accepted by the schema and rendered as attributes, but have no effect
+above 680px today. Authors can write them now without a content migration later.
+
 ## `priority` is additive — and it is the only cascading *scalar* that is
 
 Every other cascading scalar (`renderer`, `navRenderer`, `status`, `width`,
