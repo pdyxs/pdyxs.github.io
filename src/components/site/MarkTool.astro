@@ -13,6 +13,7 @@ interface Props {
 }
 
 const { tool, parent } = Astro.props;
+const descId = `site-mark-tool-desc-${tool.id}`;
 ---
 
 <g
@@ -25,7 +26,15 @@ const { tool, parent } = Astro.props;
   data-radius={tool.radius}
 >
   <line class="site-mark-tool-string"></line>
-  <g class="site-mark-bauble" role="button" tabindex="0" aria-label={tool.label} style={`--site-mark-tool-r: ${tool.radius}px`}>
+  <g
+    class="site-mark-bauble"
+    role="button"
+    tabindex="0"
+    aria-label={tool.label}
+    aria-describedby={tool.description ? descId : undefined}
+    style={`--site-mark-tool-r: ${tool.radius}px`}
+  >
+    {tool.description && <desc class="site-mark-tool-desc" id={descId}>{tool.description}</desc>}
     <circle class="site-mark-bauble-hit" r={tool.radius}></circle>
     <circle class="site-mark-bauble-body" r={tool.radius}></circle>
     <g class="site-mark-icon" transform={`scale(${tool.radius})`} set:html={MARK_ICONS[tool.icon] ?? ''} />

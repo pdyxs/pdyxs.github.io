@@ -269,7 +269,7 @@ export interface ToolBehaviour {
   means adding a file and a registry line, then a config entry.
 
 **As built (slice 7).** `index.ts` exports `BUILT_IN` (the production
-behaviours, empty until slice 8), `toolBehaviour(key)` (what the mark calls)
+behaviours; the palette from slice 8), `toolBehaviour(key)` (what the mark calls)
 and `registerToolBehaviours(extra)`, which production never calls: it lets a
 dev bench hang behaviours of its own on the real registry without shipping
 them (`/experiments/mark-tools` registers its no-ops from its page script). A
@@ -322,6 +322,50 @@ either mark component; a behaviour's whole contract is `types.ts`.
 copy. `palette.ts` stays pure. The favicon re-renders on commit and on theme
 change, not from a MutationObserver on `<html style>`.
 
+**As built (slice 8).** The API:
+
+| export | what |
+|---|---|
+| `applyPalette(p \| null)` | writes (or removes) the four `--color-{light,dark}-{srgb,p3}` on `<html>`; a preview, nothing stored or announced |
+| `commitPalette(p \| null, point?)` | stores it (a default palette removes the `palette` key), applies it, re-renders the favicon, announces it; returns what was kept |
+| `onPaletteChange(fn)` → unsubscribe | the change signal: `{ palette, point }` on every commit and on another tab's (`storage`); `point` is the pick's viewport fractions when it came from one. Previews don't fire it |
+| `storedPalette()`, `currentSystem()`, `storeSystem(id)`, `PALETTE_SYSTEM_KEY` | storage reads/writes (`palette`, `palette-system`), every access try/caught |
+| `toFraction(clientPt)`, `pickAt(clientPt)`, `pickPoint(fractions)`, `pointFor(p \| null)` | picking in the current system; `pointFor` is the inverse, through the new pure `locate(system, palette)` in `palette.ts` (a grid search refined in OKLab; the default palette is the top-left corner) |
+| `faviconSvg(source, ink, paper)`, `renderFavicon()` | the favicon: `public/favicon.svg` with an appended `<style>` overriding `#paper` fill and `#dot` fill / `#threads path`, `#frame` stroke (`!important` beats the file's inline styles), from `body`'s computed `color` and `background-color`; `renderFavicon` points `link[rel=icon]` at it as a data URI |
+| `watchPalette()` | once per page, from a module script in `Base.astro`: other tabs' picks (`storage`), the favicon on `site:theme`, and the favicon at load when the page isn't the file's own black on white (a stored palette, or dark) |
+
+The theme-change signal didn't exist: `data-theme` was set silently in three
+places. It is now `site:theme` on `document` (`THEME_CHANGE_EVENT` in
+`theme.ts`, detail `{ theme }`), fired by ThemeToggle's click and its OS
+listener and by Base's head-script OS listener. They are inline, so they spell
+the name out; `theme.test.ts` holds them to the constant.
+
+The experiment's override named `.paper`/`.ink`/`.thread`/`.frame`, which the
+hand-simplified `favicon.svg` (1714bec) no longer has, so it recoloured
+nothing; the override now names the file's ids, and `palette-dom.test.ts`
+checks the file still has them.
+
+**The two pickers** share everything through palette-dom. PalettePicker
+subscribes to `onPaletteChange` for its reset button, readout and the point
+its dev system `<select>` re-picks, so a pick or reset from either side is
+reflected on the other; its own `storage` listener went (palette-dom has it).
+
+**The palette behaviour** (`mark-tools/palette.ts`): `dragStart` snapshots
+`storedPalette()`, `dragMove` applies `pickAt`, `dragEnd` commits (with the
+point) or, cancelled, applies the snapshot. The keyboard, in `key()` on the
+focused bauble: an arrow starts a pick at `pointFor(stored)`, so the first
+press nudges the current palette rather than jumping, then moves the virtual
+point by 1% of the viewport (Shift: 10%), clamped to it, applying live. Enter
+commits and ends the pick; Escape mid-pick reverts and returns true (the tools
+stay open); Enter and Escape with no pick return false, so Escape closes the
+tools. Focus leaving the bauble mid-pick (Tab away, a dot click, the tools
+closing) reverts too: an unkept pick never outlives the bauble. Arrows during
+a pointer drag are swallowed; a pointer drag takes over a keyboard pick and
+keeps the keyboard's snapshot. The keyboard path is the bauble's accessible
+description: `ToolConfig` gained an optional `description`, which
+`MarkTool.astro` renders as an SVG `<desc>` the bauble's `aria-describedby`
+names. The label stays the experiment's.
+
 ---
 
 ## Contract (selectors and CSS variables)
@@ -341,6 +385,7 @@ New selectors:
 | `.site-mark-tools` | the tool group: `#site-mark-tools`, `role="group"`, `aria-label="Tools"`. Rendered only when tools are configured; then the overlay drops its `aria-hidden` and the threads and dot carry it instead |
 | `.site-mark-tool[data-tool]` | one tool (children are nested `.site-mark-tool`s). Also `data-behaviour`, `data-thread` (top-level), `data-parent` (children), `data-string`, `data-radius`: the config, written by `MarkTool.astro`, read by the script |
 | `.site-mark-tool-string`, `.site-mark-bauble`, `.site-mark-bauble-hit`, `.site-mark-bauble-body` | tool parts. The bauble is `role="button"`, `tabindex="0"`, `aria-label` from config; the hit circle is never under `--mark-hit-min` across |
+| `.site-mark-tool-desc` | slice 8: `<desc id="site-mark-tool-desc-{id}">` in the bauble, from the optional config `description`; the bauble's `aria-describedby` |
 | `.site-mark-icon` | slice 7: the icon's group in the bauble, `scale(radius)` of the unit-box body from `MARK_ICONS` |
 | `.site-mark-icon-ink`, `.site-mark-icon-paper` | icon colouring (fills only) |
 | `.page-title-mark` | the period's slot in the title |
@@ -376,6 +421,15 @@ View-transition names:
 
 Event: `site:presentation` on `document`, detail
 `{ to: 'page' | 'card', vt: ViewTransition | null }` (`PresentationDetail`).
+
+Event (slice 8): `site:theme` on `document`, detail `{ theme: 'light' | 'dark' }`
+(`THEME_CHANGE_EVENT`, `ThemeChangeDetail` in `theme.ts`), after every
+`html[data-theme]` change.
+
+Slice 8 also writes `link[rel="icon"]`'s `href` (a data URI of the recoloured
+`favicon.svg`) and adds no selectors beyond `.site-mark-tool-desc`, no custom
+properties and no `:root` tokens: the palette's own four
+`--color-{light,dark}-{srgb,p3}` on `<html>` are unchanged.
 
 A local custom property (slice 3), set on `.stack-card--page > .page-header`
 from the spacing tokens, the way `--body-inset-inline` is:
@@ -465,7 +519,9 @@ Each slice ships green.
    announce `site:presentation` as CardStack does, so the hang, the VT exit and
    the trim return are on the bench too.
 8. **Palette tool.** Add `palette-dom.ts` (shared with `PalettePicker`), the
-   `palette` behaviour and keyboard picking.
+   `palette` behaviour and keyboard picking. **Built:** see "As built (slice 8)"
+   under [Palette effect layer](#palette-effect-layer-srclibsitepalette-domts).
+   The floating picker stays mounted alongside until slice 10.
 9. **Revert.** Add the `palette-revert` child behaviour, which drops when a
    palette is set and reels up when one is cleared.
 10. **Retire the floating picker.** Remove `<PalettePicker />` from Base. Its

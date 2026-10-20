@@ -11,7 +11,8 @@
 //      `ToolBehaviour` (types.ts), and one line in that folder's index.ts
 //      registry naming it. (Skip this if an existing behaviour fits.)
 //   2. If it needs a new icon, add one to src/data/mark-icons.ts.
-//   3. Add an entry below. Order is drop order and Tab order.
+//   3. Add an entry below. Order is drop order and Tab order. If the tool has
+//      a keyboard path a label can't carry, say how in `description`.
 //   `mark/tools.test.ts` checks the entries: unique ids, a thread in range for
 //   every top-level tool, and an icon and a behaviour that exist.
 //
@@ -34,9 +35,22 @@ export interface ToolConfig {
   icon: string;
   /** The bauble's accessible name. */
   label: string;
+  /** Optional: more on how to use it (the keyboard path, say), as the bauble's accessible description. */
+  description?: string;
   /** Tools that hang from this one's bauble. */
   children?: ToolConfig[];
 }
 
-/** The production tools. Empty until the palette lands (slice 8 of docs/plans/suspended-mark.md). */
-export const MARK_TOOLS: ToolConfig[] = [];
+/** The production tools. */
+export const MARK_TOOLS: ToolConfig[] = [
+  {
+    id: 'palette',
+    behaviour: 'palette',
+    thread: 1,
+    string: 80,
+    radius: 12,
+    icon: 'palette',
+    label: 'Colours: drag across the page to pick them',
+    description: 'Or use the arrow keys to move through the colours (Shift for bigger steps), Enter to keep them, Escape to put them back.',
+  },
+];

@@ -352,7 +352,17 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     type TitleStart,
     type Viewport,
   } from '@site/mark/motion';
-  import { PALETTE_STORAGE_KEY, findSystem, isDefault, parsePalette, type Palette } from '@site/palette';
+  import type { Palette } from '@site/palette';
+  import {
+    applyPalette,
+    commitPalette,
+    onPaletteChange,
+    pickAt as pickAtPoint,
+    renderFavicon,
+    storedPalette,
+    toFraction,
+  } from '@site/palette-dom';
+  import { THEME_CHANGE_EVENT } from '@site/theme';
 
   // The motion itself (springs, the catch, the pull, the pose blend) is pure,
   // in src/lib/site/mark/motion.ts; this script reads the page and draws.
@@ -428,32 +438,9 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
   }
 
   // The colour picker: dragging its bauble across the page picks the palette
-  // exactly as the production PalettePicker's swatch does (same maths, same
-  // storage), so a pick persists across the site. The few lines that apply a
-  // palette to :root are duplicated from PalettePicker.astro; they get shared
-  // when the mark leaves the experiment.
-  const PALETTE_SYSTEM_KEY = 'palette-system';
-  const stored = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
-  function applyPalette(p: Palette | null) {
-    const style = document.documentElement.style;
-    for (const end of ['light', 'dark'] as const) {
-      for (const gamut of ['srgb', 'p3'] as const) {
-        const prop = `--color-${end}-${gamut}`;
-        if (p) style.setProperty(prop, p[end][gamut]);
-        else style.removeProperty(prop);
-      }
-    }
-  }
-  function commitPalette(p: Palette | null) {
-    const keep = p && !isDefault(p) ? p : null;
-    try {
-      if (keep) localStorage.setItem(PALETTE_STORAGE_KEY, JSON.stringify(keep));
-      else localStorage.removeItem(PALETTE_STORAGE_KEY);
-    } catch { /* storage unavailable: the palette just won't persist */ }
-    applyPalette(keep);
-  }
-  const pickAt = (e: PointerEvent) =>
-    findSystem(stored(PALETTE_SYSTEM_KEY)).pick({ x: e.clientX / innerWidth, y: e.clientY / innerHeight });
+  // exactly as the production PalettePicker's swatch does, through the same
+  // effect layer (palette-dom.ts), so a pick persists across the site.
+  const pickAt = (e: PointerEvent) => pickAtPoint({ x: e.clientX, y: e.clientY });
 
   for (const tool of tools) {
     let drag: { id: number; before: Palette | null } | null = null;
@@ -462,7 +449,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
       e.preventDefault();
       tool.bauble.setPointerCapture(e.pointerId);
       tool.bauble.setAttribute('data-dragging', '');
-      drag = { id: e.pointerId, before: parsePalette(stored(PALETTE_STORAGE_KEY)) };
+      drag = { id: e.pointerId, before: storedPalette() };
       tool.pointer = { x: e.clientX, y: e.clientY };
       wake();
     });
@@ -475,7 +462,7 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
     const end = (e: PointerEvent, cancelled: boolean) => {
       if (!drag || e.pointerId !== drag.id) return;
       if (cancelled) applyPalette(drag.before);
-      else commitPalette(pickAt(e));
+      else commitPalette(pickAt(e), toFraction({ x: e.clientX, y: e.clientY }));
       drag = null;
       tool.pointer = null;
       tool.bauble.removeAttribute('data-dragging');
@@ -884,39 +871,18 @@ const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page
   addEventListener('resize', relayout);
 
   // ── Favicon: public/favicon.svg, recoloured to the palette ──
-  let faviconSource: Promise<string> | undefined;
-  const loadFavicon = () =>
-    (faviconSource ??= fetch('/favicon.svg', { cache: 'no-store' }).then((r) => r.text()));
-
+  // palette-dom draws the tab's icon on a commit and a theme change; this
+  // shows the same drawing at a few sizes.
   async function renderFavicons() {
-    const source = await loadFavicon();
-    const cs = getComputedStyle(document.body);
-    const ink = cs.color;
-    const paper = cs.backgroundColor;
-    // Override the file's own colours (and its dark-mode block) with the palette.
-    const override = `<style>.paper{fill:${paper}!important}.ink{fill:${ink}!important}`
-      + `.thread,.frame{stroke:${ink}!important}</style>`;
-    const svg = source.replace(/<\/svg>\s*$/, `${override}</svg>`);
-    const src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+    const src = await renderFavicon();
+    if (!src) return;
     const row = root.querySelector<HTMLElement>('.sd-fav-row')!;
     row.innerHTML = [16, 32, 64, 180]
       .map((s) => `<figure><img src="${src}" width="${s}" height="${s}" alt=""><figcaption>${s}px</figcaption></figure>`)
       .join('');
-    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'icon';
-      document.head.appendChild(link);
-    }
-    link.type = 'image/svg+xml';
-    link.href = src;
   }
-
-  // Palette or theme changes recolour the favicon.
-  new MutationObserver(() => requestAnimationFrame(renderFavicons)).observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['style', 'data-theme'],
-  });
+  onPaletteChange(() => void renderFavicons());
+  document.addEventListener(THEME_CHANGE_EVENT, () => void renderFavicons());
 
   document.fonts.ready.then(() => {
     relayout();

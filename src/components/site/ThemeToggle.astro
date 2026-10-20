@@ -89,6 +89,13 @@
       });
     }
 
+    // Set data-theme and say so: site:theme is THEME_CHANGE_EVENT
+    // (src/lib/site/theme.ts), which the favicon listens for.
+    function setTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      document.dispatchEvent(new CustomEvent('site:theme', { detail: { theme: theme } }));
+    }
+
     var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     var _mediaListener = null;
 
@@ -97,7 +104,7 @@
       _mediaListener = function (e) {
         var pref = localStorage.getItem('theme');
         if (!pref || pref === 'system') {
-          document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
+          setTheme(e.matches ? 'dark' : 'light');
         }
       };
       mediaQuery.addEventListener('change', _mediaListener);
@@ -128,7 +135,7 @@
       }
 
       var systemDark = mediaQuery.matches;
-      document.documentElement.dataset.theme = resolveTheme(newPref === 'system' ? null : newPref, systemDark);
+      setTheme(resolveTheme(newPref === 'system' ? null : newPref, systemDark));
       updateActiveButton(newPref);
     });
   })();

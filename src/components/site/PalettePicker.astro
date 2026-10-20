@@ -130,17 +130,18 @@ const dev = import.meta.env.DEV;
 </style>
 
 <script>
+  import { contrastRatio, findSystem, type Palette, type Point } from '@site/palette';
   import {
-    PALETTE_STORAGE_KEY,
-    contrastRatio,
-    findSystem,
-    isDefault,
-    parsePalette,
-    type Palette,
-    type Point,
-  } from '@site/palette';
+    applyPalette,
+    commitPalette,
+    currentSystem,
+    onPaletteChange,
+    pickPoint,
+    storeSystem,
+    storedPalette,
+    toFraction,
+  } from '@site/palette-dom';
 
-  const SYSTEM_KEY = 'palette-system';
   // Dev-only comparison: "shared" turns off the derived dark-mode background
   // (tokens.css) so the picked dark colour is used as-is.
   const DARK_MODE_KEY = 'palette-dark-mode';
@@ -154,7 +155,7 @@ const dev = import.meta.env.DEV;
       try {
         if (value === null) localStorage.removeItem(key);
         else localStorage.setItem(key, value);
-      } catch { /* storage unavailable: the palette just won't persist */ }
+      } catch { /* storage unavailable */ }
     },
   };
 
@@ -164,11 +165,12 @@ const dev = import.meta.env.DEV;
     #reset!: HTMLButtonElement;
     #systemSelect: HTMLSelectElement | null = null;
     #readout: HTMLOutputElement | null = null;
-    /** Where the last drag dropped, so switching system can re-pick it. */
+    /** Where the last kept pick came from (any picker's), so switching system can re-pick it. */
     #lastPoint: Point | null = null;
     #drag: { id: number; startX: number; startY: number; moved: boolean; before: Palette | null } | null = null;
     #frame = 0;
     #pending: PointerEvent | null = null;
+    #unsubscribe: (() => void) | null = null;
 
     connectedCallback() {
       this.#swatch = this.querySelector('.palette-picker-swatch')!;
@@ -177,7 +179,7 @@ const dev = import.meta.env.DEV;
       this.#readout = this.querySelector('.palette-picker-readout');
 
       if (this.#systemSelect) {
-        this.#systemSelect.value = findSystem(store.get(SYSTEM_KEY)).id;
+        this.#systemSelect.value = currentSystem().id;
         this.#systemSelect.addEventListener('change', this.#onSystemChange);
       }
       const derive = this.querySelector<HTMLInputElement>('.palette-picker-derive-input');
@@ -194,30 +196,33 @@ const dev = import.meta.env.DEV;
       this.#swatch.addEventListener('pointerup', this.#onUp);
       this.#swatch.addEventListener('pointercancel', this.#onCancel);
       this.#reset.addEventListener('click', this.#onReset);
-      window.addEventListener('storage', this.#onStorage);
       window.addEventListener('keydown', this.#onKey);
+      // Any kept change, from this picker, the mark's palette tool or another
+      // tab: reflect it (the reset button, the readout).
+      this.#unsubscribe = onPaletteChange(({ palette, point }) => {
+        this.#lastPoint = point;
+        this.#reflect(palette);
+      });
 
-      this.#render(parsePalette(store.get(PALETTE_STORAGE_KEY)));
+      this.#render(storedPalette());
     }
 
     disconnectedCallback() {
-      window.removeEventListener('storage', this.#onStorage);
       window.removeEventListener('keydown', this.#onKey);
+      this.#unsubscribe?.();
       cancelAnimationFrame(this.#frame);
     }
 
     // ── Effects ────────────────────────────────────────────────────
 
-    /** Apply a palette (null = defaults) to the target and reflect it here. */
+    /** Preview a palette (null = defaults) and reflect it here. */
     #render(p: Palette | null) {
-      const style = this.#target.style;
-      for (const end of ['light', 'dark'] as const) {
-        for (const gamut of ['srgb', 'p3'] as const) {
-          const prop = `--color-${end}-${gamut}`;
-          if (p) style.setProperty(prop, p[end][gamut]);
-          else style.removeProperty(prop);
-        }
-      }
+      applyPalette(p);
+      this.#reflect(p);
+    }
+
+    /** The reset button and the dev readout, for palette `p`. */
+    #reflect(p: Palette | null) {
       this.#reset.hidden = !p;
       if (this.#readout) {
         this.#readout.value = p
@@ -231,22 +236,8 @@ const dev = import.meta.env.DEV;
       else this.#target.setAttribute('data-palette-dark', 'shared');
     }
 
-    #commit(p: Palette | null) {
-      const keep = p && !isDefault(p) ? p : null;
-      store.set(PALETTE_STORAGE_KEY, keep ? JSON.stringify(keep) : null);
-      this.#render(keep);
-    }
-
-    #current(): Palette | null {
-      return parsePalette(store.get(PALETTE_STORAGE_KEY));
-    }
-
     #system() {
-      return findSystem(this.#systemSelect?.value ?? store.get(SYSTEM_KEY));
-    }
-
-    #pointFrom(e: PointerEvent): Point {
-      return { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight };
+      return this.#systemSelect ? findSystem(this.#systemSelect.value) : currentSystem();
     }
 
     #placeSwatch(e: PointerEvent | null) {
@@ -269,7 +260,7 @@ const dev = import.meta.env.DEV;
       if (e.button !== 0) return;
       e.preventDefault();
       this.#swatch.setPointerCapture(e.pointerId);
-      this.#drag = { id: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false, before: this.#current() };
+      this.#drag = { id: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false, before: storedPalette() };
     };
 
     #onMove = (e: PointerEvent) => {
@@ -284,8 +275,7 @@ const dev = import.meta.env.DEV;
         const ev = this.#pending;
         if (!ev || !this.#drag) return;
         this.#placeSwatch(ev);
-        this.#lastPoint = this.#pointFrom(ev);
-        this.#render(this.#system().pick(this.#lastPoint));
+        this.#render(this.#system().pick(toFraction({ x: ev.clientX, y: ev.clientY })));
       });
     };
 
@@ -295,8 +285,8 @@ const dev = import.meta.env.DEV;
       this.#drag = null;
       this.#placeSwatch(null);
       if (!d.moved) return;
-      this.#lastPoint = this.#pointFrom(e);
-      this.#commit(this.#system().pick(this.#lastPoint));
+      const point = toFraction({ x: e.clientX, y: e.clientY });
+      commitPalette(this.#system().pick(point), point);
     };
 
     #onCancel = () => {
@@ -315,19 +305,13 @@ const dev = import.meta.env.DEV;
     };
 
     #onReset = () => {
-      this.#lastPoint = null;
-      this.#commit(null);
+      commitPalette(null);
     };
 
     #onSystemChange = () => {
       const system = this.#system();
-      store.set(SYSTEM_KEY, system.id);
-      if (this.#lastPoint) this.#commit(system.pick(this.#lastPoint));
-    };
-
-    /** Another tab picked or reset: follow it. */
-    #onStorage = (e: StorageEvent) => {
-      if (e.key === PALETTE_STORAGE_KEY) this.#render(parsePalette(e.newValue));
+      storeSystem(system.id);
+      if (this.#lastPoint) commitPalette(pickPoint(this.#lastPoint), this.#lastPoint);
     };
   }
 

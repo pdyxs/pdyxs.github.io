@@ -6,11 +6,14 @@
 // and one line in BUILT_IN below.
 
 import type { ToolBehaviour } from './types';
+import { palette } from './palette';
 
 export type { ToolBehaviour, ViewportPoint } from './types';
 
-/** The behaviours every page has. Empty until the palette (slice 8 of docs/plans/suspended-mark.md). */
-export const BUILT_IN: Readonly<Record<string, ToolBehaviour>> = {};
+/** The behaviours every page has. */
+export const BUILT_IN: Readonly<Record<string, ToolBehaviour>> = {
+  palette,
+};
 
 const registry = new Map<string, ToolBehaviour>(Object.entries(BUILT_IN));
 

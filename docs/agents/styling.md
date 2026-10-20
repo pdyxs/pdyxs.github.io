@@ -138,8 +138,9 @@ No hex literals or raw pixel values outside `:root` for anything that represents
 The palette is **two colours**: ink (`--color-text`) and paper (`--color-bg`), pure black and pure white, swapped by `data-theme`. Everything greyscale derives from those two — `--color-surface`, `--color-border-light` and `--color-text-muted` are aliases, and every other tone is a `--dither-N` level built from the same two colours. There is no grey. De-emphasis is expressed by size and weight, never by a faded value; **an `opacity` used to soften a colour is a bug**, because it renders as the grey the palette doesn't have.
 
 Black and white are the **defaults**, not constants: the palette picker
-(`PalettePicker.astro`, maths in `src/lib/site/palette.ts`) lets a visitor
-replace the pair. It writes `--color-{light,dark}-{srgb,p3}` onto `<html>`, each
+(`PalettePicker.astro`, and the mark's palette tool; maths in
+`src/lib/site/palette.ts`, the shared applier in `src/lib/site/palette-dom.ts`)
+lets a visitor replace the pair. It writes `--color-{light,dark}-{srgb,p3}` onto `<html>`, each
 an `oklch()` string already fitted to that gamut, and `tokens.css` selects the P3
 pair under `@media (color-gamut: p3)`. Everything downstream, dithers included,
 follows because it only ever references the two tokens, which is why no call

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { resolveTheme, getActiveButton } from '@site/theme';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { resolveTheme, getActiveButton, THEME_CHANGE_EVENT } from '@site/theme';
 
 describe('resolveTheme', () => {
   it('returns light when preference is light, system dark', () => {
@@ -50,5 +52,15 @@ describe('getActiveButton', () => {
 
   it('returns system when preference is null', () => {
     expect(getActiveButton(null)).toBe('system');
+  });
+});
+
+// The inline scripts that change data-theme can't import the constant, so they
+// spell the event name out. A source guard is the only way to hold them to it.
+describe('THEME_CHANGE_EVENT', () => {
+  const root = path.resolve(import.meta.dirname, '../../..');
+  it.each(['src/components/site/ThemeToggle.astro', 'src/layouts/Base.astro'])('%s fires it by name', (file) => {
+    const src = readFileSync(path.join(root, file), 'utf8');
+    expect(src).toContain(`new CustomEvent('${THEME_CHANGE_EVENT}'`);
   });
 });

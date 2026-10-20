@@ -153,6 +153,8 @@ const jsonLd = [
           window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
             if (!localStorage.getItem('theme') || localStorage.getItem('theme') === 'system') {
               document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
+              // THEME_CHANGE_EVENT (src/lib/site/theme.ts)
+              document.dispatchEvent(new CustomEvent('site:theme', { detail: { theme: document.documentElement.dataset.theme } }));
             }
           });
         }
@@ -299,5 +301,11 @@ const jsonLd = [
         <span><a href="/">pdyxs.wtf</a> · <a href="/rss.xml">RSS</a></span>
       </footer>
     </div>
+    <script>
+      // The palette's page-wide effects (palette-dom.ts): another tab's picks,
+      // and the favicon, recoloured to the palette and the theme.
+      import { watchPalette } from '@site/palette-dom';
+      watchPalette();
+    </script>
   </body>
 </html>
