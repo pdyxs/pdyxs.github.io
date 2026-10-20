@@ -1,5 +1,7 @@
 # The shared card pool — implementation spec
 
+> **Built** — `src/lib/browse/results/card-pool.ts`. Kept as the record of the rulings.
+
 The locked spec for wayfinder map
 [#136, *Load the site's card data once per visitor, not once per island*](https://github.com/pdyxs/pdyxs.github.io/issues/136),
 assembled by [#142](https://github.com/pdyxs/pdyxs.github.io/issues/142).

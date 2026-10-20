@@ -13,6 +13,7 @@
 // CardStack.fragments.test.ts.
 import { describe, it, expect, vi } from 'vitest';
 import {
+  adoptDevStyles,
   buildPlaceholderHtml,
   createCardFragments,
   escapeHtml,
@@ -452,5 +453,29 @@ describe('the cache stores every fragment under its own handle (issue #100)', ()
     const fragments = createCardFragments({ load: fakeSource({}) });
     fragments.seedPlaceholder('lens/newest#2', 'Most Interesting');
     expect(fragments.get('lens/newest#2')).toContain('data-uid="lens/newest#2"');
+  });
+});
+
+describe('adoptDevStyles (dev-server component CSS arriving with a fragment)', () => {
+  const doc = (styles: string) =>
+    `<!doctype html><html><head>${styles}</head><body>${fragment('what/a')}</body></html>`;
+  const devIds = () => [...document.head.querySelectorAll('style[data-vite-dev-id]')]
+    .map((s) => s.getAttribute('data-vite-dev-id'));
+
+  it('copies the fetched head\'s dev styles into this page, once', () => {
+    document.head.innerHTML = '';
+    const html = doc('<style data-vite-dev-id="/a.astro">.a{color:red}</style>' +
+      '<style data-vite-dev-id="/b.astro">.b{color:red}</style><style>.plain{}</style>');
+    adoptDevStyles(html);
+    adoptDevStyles(html);
+    expect(devIds()).toEqual(['/a.astro', '/b.astro']);
+    expect(document.head.querySelector('style[data-vite-dev-id="/a.astro"]')!.textContent).toBe('.a{color:red}');
+  });
+
+  it('leaves styles the page already has alone', () => {
+    document.head.innerHTML = '<style data-vite-dev-id="/a.astro">.mine{}</style>';
+    adoptDevStyles(doc('<style data-vite-dev-id="/a.astro">.theirs{}</style>'));
+    expect(document.head.querySelectorAll('style').length).toBe(1);
+    expect(document.head.querySelector('style')!.textContent).toBe('.mine{}');
   });
 });

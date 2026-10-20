@@ -107,6 +107,26 @@ export function extractBodyInner(html: string): string | null {
   return tmp.querySelector('.stack-card-body-inner')?.innerHTML ?? null;
 }
 
+/**
+ * Dev only: copies the `<style data-vite-dev-id>` tags a fetched document
+ * carries into this page's `<head>`, skipping any id already present.
+ *
+ * `astro dev` links a component's CSS into the `<head>` of the page *that
+ * rendered it*, and a fragment's `<head>` is thrown away when its
+ * `.stack-card` is spliced in — so a component this page never rendered (the
+ * series date bar on a card pushed from a lens) arrives unstyled until a
+ * reload. A build has no such gap: `cssCodeSplit: false` links one bundle on
+ * every page (see styling.md). This makes dev behave the same.
+ */
+export function adoptDevStyles(html: string, doc: Document = document): void {
+  const incoming = new DOMParser().parseFromString(html, 'text/html');
+  for (const style of incoming.querySelectorAll('style[data-vite-dev-id]')) {
+    const id = style.getAttribute('data-vite-dev-id')!;
+    if (doc.head.querySelector(`style[data-vite-dev-id="${CSS.escape(id)}"]`)) continue;
+    doc.head.appendChild(doc.importNode(style, true));
+  }
+}
+
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -293,7 +313,9 @@ export function createCardFragments(options: CardFragmentsOptions = {}): CardFra
   const loader: FragmentLoader = options.load ?? (async (uid) => {
     const res = await fetch(uidToFetchUrl(uid));
     if (!res.ok) return null;
-    return extractStackCard(await res.text());
+    const text = await res.text();
+    if (import.meta.env.DEV) adoptDevStyles(text);
+    return extractStackCard(text);
   });
 
   function write(slot: string, html: string) {

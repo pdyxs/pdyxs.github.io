@@ -1,7 +1,8 @@
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import SeriesNavRenderer from '@components/card-renderers/SeriesNavRenderer.astro';
 import LinoCanvas from '@components/header-media/LinoCanvas.astro';
-import StarSystem from '@components/header-media/stars/StarSystem.astro';
+import StarSystemPrototype from '@components/star-nav/snapshots/2026-09-23-prototype/StarSystem.astro';
+import StarNav from '@components/star-nav/StarSystem.astro';
 
 // Keyed by renderer *name* (the cascaded _config.yaml / frontmatter `renderer`
 // value), not collection name. Only renderers with a dedicated component are
@@ -65,7 +66,10 @@ export const NAV_RENDERERS: Record<string, AstroComponentFactory> = {
 // wrapper that statically imports its own island — see LinoCanvas.astro.
 export const HEADER_MEDIA_RENDERERS: Record<string, AstroComponentFactory> = {
     'lino-canvas': LinoCanvas,
-    'star-system': StarSystem
+    // Frozen: the 2026-09-23 prototype, kept playable for the star-navigation toy card.
+    'star-system': StarSystemPrototype,
+    // Living: the star-nav project's current build. See src/components/star-nav/.
+    'star-nav': StarNav,
 };
 
 /**
