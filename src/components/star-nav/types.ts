@@ -21,3 +21,6 @@ export type PlanetData = {
 }
 
 export type Point = { x: number; y: number };
+
+/** A ship's position and heading (degrees clockwise from straight up). */
+export type Pose = { x: number; y: number; heading: number };
