@@ -11,6 +11,7 @@
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import StarSystem from '@components/star-nav/StarSystem.svelte';
+import { defaultTuning } from '@components/star-nav/sim/tuning';
 
 const SHIP_PATH = 'M -1 3 l 0 -2 l 1 -1 l 1 1 l 0 2';
 
@@ -37,7 +38,14 @@ function settle(stepMs = 50, maxSteps = 10_000) {
 let target: HTMLElement;
 let component: ReturnType<typeof mount> | null;
 
+// With the real tuning every planet is catchable from the start: the planets
+// loop round for four orbits and cross the ship's reach sooner or later. A
+// sluggish ship (set before mounting, which is when the island reads it)
+// leaves the inner planets out of reach, so both kinds exist at rest.
+const realTuning = { ...defaultTuning };
+
 beforeEach(() => {
+  defaultTuning.shipSpeed = 0.1;
   now = 0;
   frames = new Map();
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
@@ -60,6 +68,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  Object.assign(defaultTuning, realTuning);
   if (component) unmount(component);
   component = null;
   target.remove();
@@ -74,7 +83,9 @@ const layers = () => qa('.layer');
 // The real ship is drawn in the last (topmost, level-16) layer; a ghost ship,
 // when there is one, sits in the preview layer before it.
 const ship = () => qa(`mask path[d="${SHIP_PATH}"]`).at(-1)!.getAttribute('transform');
-const routes = () => qa<SVGLineElement>('mask line');
+const routes = () => qa<SVGPolylineElement>('mask polyline.route');
+const reach = () => qa<SVGPolygonElement>('mask polygon.reach');
+const routePoints = (r: Element) => r.getAttribute('points')!.split(' ').map((s) => s.split(',').map(Number));
 const resetButton = () => target.querySelector<HTMLButtonElement>('.star-reset');
 const visitable = () => hits().filter((h) => h.style.cursor === 'pointer');
 const unvisitable = () => hits().filter((h) => h.style.cursor !== 'pointer');
@@ -131,6 +142,18 @@ describe('StarSystem sizing', () => {
 });
 
 describe('StarSystem', () => {
+  it('shows the reach shape from the ship at its start: a narrow neck opening out ahead', () => {
+    expect(reach()).toHaveLength(1);
+    const pts = routePoints(reach()[0]);
+    // starts at the ship's nose, and runs off past the top of the viewBox
+    expect(pts[0]).toEqual([0, 4]);
+    expect(Math.min(...pts.map(([, y]) => y))).toBeLessThan(-5);
+    // wider far away than near
+    const near = pts.filter(([, y]) => 4 - y < 1);
+    expect(Math.max(...near.map(([x]) => Math.abs(x)))).toBeLessThan(0.5);
+    expect(Math.max(...pts.map(([x]) => Math.abs(x)))).toBeGreaterThan(5);
+  });
+
   it('draws four planets with hit targets, the ship at its start, and no reset', () => {
     expect(hits()).toHaveLength(4);
     expect(ship()).toBe(`${START} scale(0.05)`);
@@ -138,7 +161,7 @@ describe('StarSystem', () => {
     expect(routes()).toHaveLength(0);
   });
 
-  it('marks some planets reachable from the start and some not', () => {
+  it('marks some planets visitable from the start and some not (pointer vs default cursor)', () => {
     // The cursor is the visitor's only cue; both kinds must exist at rest for
     // the tests below to mean anything.
     expect(visitable().length).toBeGreaterThan(0);
@@ -146,7 +169,7 @@ describe('StarSystem', () => {
   });
 
   describe('hover preview', () => {
-    it('a reachable planet reveals ghost planets and a route that grows over the preview', () => {
+    it('a reachable planet reveals ghost planets and a curved route that grows over the preview', () => {
       const before = layers().length;
       pointer(visitable()[0], 'pointerenter');
 
@@ -155,23 +178,33 @@ describe('StarSystem', () => {
       expect(routes()).toHaveLength(1);
       const route = routes()[0];
       // The route starts at the ship.
-      expect(route.getAttribute('x1')).toBe('0');
-      expect(route.getAttribute('y1')).toBe('4');
+      expect(routePoints(route)[0]).toEqual([0, 4]);
 
       advance(250);
-      const midX = route.getAttribute('x2');
-      const midY = route.getAttribute('y2');
+      const mid = routePoints(route).at(-1);
       settle();
-      const endX = route.getAttribute('x2');
-      const endY = route.getAttribute('y2');
-      expect([midX, midY]).not.toEqual([endX, endY]);
-      expect([endX, endY]).not.toEqual(['0', '4']);
+      const full = routePoints(route);
+      expect(full.at(-1)).not.toEqual(mid);
+      expect(full.at(-1)).not.toEqual([0, 4]);
     });
 
-    it('an unreachable planet reveals ghosts but no route', () => {
+    it('a route to an off-axis planet bends: it is not a straight line', () => {
+      // Try each visitable planet; at least one needs an arc.
+      const bends = visitable().some((hit) => {
+        pointer(hit, 'pointerenter');
+        settle();
+        const pts = routePoints(routes()[0]);
+        pointer(hit, 'pointerleave');
+        const [x0, y0] = pts[0], [x1, y1] = pts.at(-1)!;
+        return pts.some(([x, y]) => Math.abs((x1 - x0) * (y0 - y) - (x0 - x) * (y1 - y0)) / Math.hypot(x1 - x0, y1 - y0) > 0.05);
+      });
+      expect(bends).toBe(true);
+    });
+
+    it('an unreachable planet previews nothing: no ghosts, no route', () => {
       const before = layers().length;
       pointer(unvisitable()[0], 'pointerenter');
-      expect(layers().length).toBe(before + 1);
+      expect(layers().length).toBe(before);
       expect(routes()).toHaveLength(0);
     });
 
@@ -194,7 +227,13 @@ describe('StarSystem', () => {
     }
 
     it('press and release on a reachable planet flies the ship there, then offers a reset', () => {
-      flyTo(visitable()[0]);
+      const hit = visitable()[0];
+      pointer(hit, 'pointerenter');
+      settle();
+      const shown = routePoints(routes()[0]);
+      const endOfRoute = shown.at(-1)!;
+      pointer(hit, 'pointerdown', { clientX: 100 });
+      pointer(hit, 'pointerup', { clientX: 100 });
       // Travel is under way: frames are queued and the ship is still at start.
       expect(frames.size).toBe(1);
 
@@ -205,6 +244,10 @@ describe('StarSystem', () => {
       settle();
       const arrived = ship();
       expect(arrived).not.toBe(underway);
+      // The ship ends at the end of the route it was shown.
+      const [ax, ay] = arrived!.match(/^translate\(([-\d.e]+) ([-\d.e]+)\)/)!.slice(1).map(Number);
+      expect(ax).toBeCloseTo(endOfRoute[0], 6);
+      expect(ay).toBeCloseTo(endOfRoute[1], 6);
       // Arrival clears the preview and the route.
       expect(routes()).toHaveLength(0);
       expect(resetButton()).not.toBeNull();
