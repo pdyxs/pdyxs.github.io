@@ -32,6 +32,14 @@ export type Tuning = {
    * `keepFactor * stopLength`. 0 turns the limit off.
    */
   keepFactor: number;
+  /** The fraction of the box's width a drag spans to reach the full range. */
+  dragRange: number;
+  /** The widest pass the drag can ask for, in viewBox units. */
+  maxOffset: number;
+  /** The commitment a drag starts from, before it moves along the approach. */
+  defaultCommit: number;
+  /** How far a touch may wobble on touch-down and still be a tap, in px. */
+  touchDeadPx: number;
 };
 
 export const defaultTuning: Tuning = {
@@ -43,6 +51,10 @@ export const defaultTuning: Tuning = {
   encounterStep: 0.005,
   encounterStart: 1.5,
   slingshotRadius: 1,
-  stopRule: { mode: 'distance', perUnit: 0.5 },
+  stopRule: { mode: 'constant', length: 0.5 },
   keepFactor: 0.75,
+  dragRange: 0.3,
+  maxOffset: 1,
+  defaultCommit: 0.5,
+  touchDeadPx: 8,
 };

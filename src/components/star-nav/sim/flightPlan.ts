@@ -1,7 +1,8 @@
 import type { Point, Pose } from '../types';
 import type { StarSystem } from '../star_system';
 import { afterStop, lowestCommitment } from './commitment';
-import { simulateEncounter } from './encounter';
+import { gravityReachShape } from './gravityReach';
+import { poseAtCommitment, simulateEncounter } from './encounter';
 import type { Sample } from './gravity';
 import { routeUpTo } from './route';
 import { steerPath, steeringTo } from './steering';
@@ -28,6 +29,11 @@ export type FlightPlan = {
   /** World path of the stop, choice point to after pose. */
   stopPath: Pose[];
   afterPose: Pose;
+  /** The smallest commitment the drag may reach, and where it puts the choice. */
+  lowestCommit: number;
+  lowestCommitPose: Pose;
+  /** The region steering could reach from the after pose, the planet still pulling. */
+  reachShape: Point[];
   /** Orbit time at which the stop ends. */
   endTime: number;
   positionAt(t: number): Pose;
@@ -101,11 +107,14 @@ export function flightPlan(input: FlightPlanInput): FlightPlan | null {
   const commit = Math.min(1, Math.max(lowest, controls.commit));
   const after = afterStop(encounter, commit, tuning.stopRule, mu, tuning);
 
+  const earliest = poseAtCommitment(encounter, lowest);
+
   const place = (s: Sample): { t: number; pose: Pose } => {
     const at = toWorld(planet.positionAt(pinnedArrival + s.t), arrivalHeading, s);
     return { t: s.t, pose: { ...at, heading: arrivalHeading + s.heading } };
   };
   const encounterSamples = encounter.samples.filter((s) => s.t <= after.choice.t).map(place);
+  const lowestCommitPose = place(earliest).pose;
   const stopSamples = after.stopPath.map(place);
   const timeline = [...encounterSamples, ...stopSamples.slice(1)];
 
@@ -118,6 +127,10 @@ export function flightPlan(input: FlightPlanInput): FlightPlan | null {
     choicePose: encounterSamples[encounterSamples.length - 1].pose,
     stopPath: stopSamples.map((s) => s.pose),
     afterPose: stopSamples[stopSamples.length - 1].pose,
+    reachShape: gravityReachShape(after.steerStart, mu, tuning).map((q) =>
+      toWorld(planet.positionAt(endTime), arrivalHeading, q)),
+    lowestCommit: lowest,
+    lowestCommitPose,
     endTime,
     positionAt(t) {
       if (t <= time) return { ...ship };

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { flightPlan } from './flightPlan';
 import { planApproach } from './approach';
+import { reachShape } from './steering';
 import { Planet } from '../planet';
 import { defaultTuning, type Tuning } from './tuning';
 import type { StarSystem } from '../star_system';
@@ -84,6 +85,59 @@ describe('flightPlan', () => {
       const late = plan({ offset: 0.5, commit: 1 }, { keepFactor: 0 });
       expect(late.encounterPath.length).toBeGreaterThan(early.encounterPath.length);
       expect(late.endTime).toBeGreaterThan(early.endTime);
+    });
+  });
+
+  describe('earliest allowed commitment', () => {
+    const rule = { stopRule: { mode: 'constant', length: 1 } as const, keepFactor: 0.75 };
+
+    it('a commit below the lowest is raised to it', () => {
+      const eager = plan({ offset: 0.5, commit: 0 }, rule);
+      expect(eager.lowestCommit).toBeGreaterThan(0);
+      const atLowest = plan({ offset: 0.5, commit: eager.lowestCommit }, rule);
+      expect(eager.choicePose).toEqual(atLowest.choicePose);
+      expect(eager.endTime).toBe(atLowest.endTime);
+    });
+
+    it('marks the earliest choice point on the encounter path, and a later commit passes it', () => {
+      const p = plan({ offset: 0.5, commit: 1 }, rule);
+      expect(p.encounterPath).toContainEqual(p.lowestCommitPose);
+      const eager = plan({ offset: 0.5, commit: 0 }, rule);
+      expect(eager.choicePose).toEqual(eager.lowestCommitPose);
+      expect(p.encounterPath.length).toBeGreaterThan(eager.encounterPath.length);
+    });
+
+    it('is 0 with the limit turned off', () => {
+      expect(plan({ offset: 0.5, commit: 0 }, { keepFactor: 0 }).lowestCommit).toBe(0);
+    });
+  });
+
+  describe('reach shape', () => {
+    const p = plan({ offset: 0.5, commit: 0.8 });
+
+    it('starts at the after pose and runs off the viewBox', () => {
+      expect(p.reachShape[0]).toMatchObject({ x: p.afterPose.x, y: p.afterPose.y });
+      const reach = Math.max(...p.reachShape.map((q) => dist(q, p.afterPose)));
+      expect(reach).toBeGreaterThan(10);
+    });
+
+    it('with no gravity matches the plain steering reach', () => {
+      const free = plan({ offset: 0.5, commit: 0.8 }, { massScale: 0 });
+      const plain = reachShape(free.afterPose, { ...tuning, massScale: 0 });
+      const wide = (pts: { x: number; y: number }[], sign: number) =>
+        pts.reduce((m, q) => (sign * q.x > sign * m.x ? q : m));
+      for (const sign of [1, -1]) {
+        expect(dist(wide(free.reachShape, sign), wide(plain, sign))).toBeLessThan(0.3);
+      }
+    });
+
+    it('the planet keeps pulling: the shape bends toward it', () => {
+      const free = plan({ offset: 0.5, commit: 0.8 }, { massScale: 5 });
+      const none = plan({ offset: 0.5, commit: 0.8 }, { massScale: 0 });
+      const centre = planet.positionAt(free.endTime);
+      const spread = (pts: { x: number; y: number }[]) => Math.max(...pts.map((q) => dist(q, centre)));
+      expect(free.reachShape).not.toEqual(none.reachShape);
+      expect(spread(free.reachShape)).toBeLessThan(spread(none.reachShape));
     });
   });
 });
