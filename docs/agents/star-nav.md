@@ -116,11 +116,10 @@ the action window of the planet.
 `lowestCommitment(encounter, rule, keepFactor, mu, tuning)` is the smallest `c`
 whose choice point is no further before the planet (along local +y) than
 `keepFactor * stopLength`; it falls back to 1, and `keepFactor <= 0` turns the
-limit off (0). **This is why the drag cannot start earlier than that point:** a
-choice earlier than `keepFactor * stopLength` before the planet would put the
-whole stop out in the approach, before the ship was near the planet, so the stop
-would not be a stop at the planet. The limit scales with the stop length, so
-lengthening the stop pushes the lowest commitment later. The plan raises any
+limit off (0). **This is why the drag cannot start earlier than that point:** the
+rule bounds how far out the stop may begin, so the stop is spent close to the
+planet rather than out on the approach. The bound scales with the stop length, so
+a longer stop (or a larger `keepFactor`) lets the floor move earlier. The plan raises any
 asked commitment to this floor (`Math.max(lowest, asked)` in `flightPlan`) and
 exposes it as `lowestCommit` / `lowestCommitPose`; the island draws a marker at
 the latter. The drag frame's own `lowestCommit` is set to 0 at press because the
