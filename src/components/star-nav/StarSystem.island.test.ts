@@ -619,7 +619,7 @@ describe('StarSystem', () => {
   });
 });
 
-// ── Tuning panel (dev only, behind ?tune) ───────────────────────────────────
+// ── Tuning panel (dev only) ───────────────────────────────────
 describe('StarSystem tuning panel', () => {
   const panel = () => target.querySelector('.star-tune');
   const remount = async (search: string) => {
@@ -632,13 +632,15 @@ describe('StarSystem tuning panel', () => {
   };
   afterEach(() => window.history.replaceState(null, '', '/'));
 
-  it('does not render without ?tune', async () => {
+  it('does not render in a production build', async () => {
+    vi.stubEnv('DEV', false);
     await remount('');
+    vi.unstubAllEnvs();
     expect(panel()).toBeNull();
   });
 
-  it('renders with ?tune in dev, as a sibling of the dithered box', async () => {
-    await remount('?tune');
+  it('renders in dev, as a sibling of the dithered box', async () => {
+    await remount('');
     expect(panel()).not.toBeNull();
     expect(panel()!.contains(target.querySelector('.dither-svg'))).toBe(false);
     expect(target.querySelector('.dither-svg')!.contains(panel())).toBe(false);
@@ -653,7 +655,7 @@ describe('StarSystem tuning panel', () => {
   };
 
   it('changing a slider re-plans what the island draws, and shows the value', async () => {
-    await remount('?tune');
+    await remount('');
     const before = reach()[0].getAttribute('points');
     setSlider('turnCap', 20);
     expect(reach()[0].getAttribute('points')).not.toBe(before);
@@ -661,7 +663,7 @@ describe('StarSystem tuning panel', () => {
   });
 
   it('has a slider for every numeric field of Tuning', async () => {
-    await remount('?tune');
+    await remount('');
     for (const [key, v] of Object.entries(defaultTuning)) {
       if (typeof v === 'number') expect(slider(key), key).not.toBeNull();
     }
@@ -672,7 +674,7 @@ describe('StarSystem tuning panel', () => {
     const choose = (mode: string) => { radio(mode).click(); flushSync(); };
 
     it('is a radio of constant / per-unit-distance / none, with the matching slider', async () => {
-      await remount('?tune');
+      await remount('');
       expect(['constant', 'distance', 'none'].map((m) => radio(m))).not.toContain(null);
       expect(radio('constant').checked).toBe(true);
       expect(slider('stopLength')).not.toBeNull();
@@ -686,7 +688,7 @@ describe('StarSystem tuning panel', () => {
     });
 
     it('shows the current stop length', async () => {
-      await remount('?tune');
+      await remount('');
       setSlider('stopLength', 1.5);
       expect(target.querySelector('.star-tune')!.textContent).toContain('1.5');
     });
@@ -698,7 +700,7 @@ describe('StarSystem tuning panel', () => {
     const choose = (el: HTMLInputElement) => { el.click(); flushSync(); };
 
     it('is a radio, commitment by default, and switching takes effect without a reload', async () => {
-      await remount('?tune');
+      await remount('');
       expect(scheme('commitment').checked).toBe(true);
       expect(scheme('approach').checked).toBe(false);
       expect(direction('up-is-more')).toBeNull();
@@ -711,12 +713,12 @@ describe('StarSystem tuning panel', () => {
     });
 
     it('?scheme=approach is reflected by the radio', async () => {
-      await remount('?tune&scheme=approach');
+      await remount('?scheme=approach');
       expect(scheme('approach').checked).toBe(true);
     });
 
     it('the fixed commitment is the lowest allowed, or a number from a slider', async () => {
-      await remount('?tune&scheme=approach');
+      await remount('?scheme=approach');
       const lowest = () => target.querySelector<HTMLInputElement>('.star-tune input[name="star-tune-fixed"][value="lowest"]')!;
       const number = () => target.querySelector<HTMLInputElement>('.star-tune input[name="star-tune-fixed"][value="number"]')!;
       expect(lowest().checked).toBe(true);
@@ -731,7 +733,7 @@ describe('StarSystem tuning panel', () => {
   });
 
   it('reset to defaults restores every value', async () => {
-    await remount('?tune');
+    await remount('');
     const initial = reach()[0].getAttribute('points');
     setSlider('turnCap', 20);
     setSlider('turnRadius', 3);

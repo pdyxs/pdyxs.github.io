@@ -191,12 +191,12 @@ point.
 **Switching.** Production is always `commitment`: `defaultTuning.controlScheme`
 is `'commitment'` and nothing in production reads the URL. In a dev build,
 `?scheme=approach` starts in `approach` (`devSchemeFromUrl` in the island), and
-`?tune` shows the panel, which also edits `curvatureDirection` and
+a dev build shows the panel, which also edits `curvatureDirection` and
 `fixedCommitment`.
 
 ## Dev tuning panel (`StarTune.svelte`)
 
-Shown only with `?tune` in a dev build. It owns no state: it displays the
+Shown in any dev build. It owns no state: it displays the
 island's `tuning` and hands back a whole replacement through `onchange`
 (sliders for the numeric fields, the stop rule mode, the `approach` options,
 and a reset to `defaultTuning`). It is **compiled out of production**: the

@@ -51,7 +51,7 @@
   // import, and with it the panel's component, markup and styles.
   let TunePanel = $state.raw<Component<{ tuning: Tuning; onchange: (t: Tuning) => void }> | null>(null);
   onMount(() => {
-    if (import.meta.env.DEV && new URLSearchParams(location.search).has('tune')) {
+    if (import.meta.env.DEV) {
       import('./StarTune.svelte').then((m) => { TunePanel = m.default; });
     }
   });
@@ -440,7 +440,7 @@
   <button class="star-reset" type="button" onclick={reset}>Reset</button>
 {/if}
 
-<!-- Dev only (?tune). A sibling of the dithered box, never an ancestor. -->
+<!-- Dev only. A sibling of the dithered box, never an ancestor. -->
 {#if TunePanel}
   <TunePanel {tuning} onchange={(t) => (tuning = t)} />
 {/if}
