@@ -258,6 +258,23 @@ describe('replaceBody (the placeholder → real content swap)', () => {
     expect(card.querySelector('.stack-card-spine-title')?.textContent?.trim()).toBe('Fog');
   });
 
+  it('copies the viewport-surface attributes onto the kept card (#204)', () => {
+    // The placeholder shell is permanent and carries no `data-surface*`, but
+    // the mobile viewport block in stack.css reads them off `.stack-card`. A
+    // card reached from a lens (placeholder, then replaceBody) must end up
+    // with the same attributes a direct load renders.
+    const fragments = createCardFragments();
+    fragments.seedPlaceholder('what/star-nav', 'Star Nav');
+    const card = mountedPlaceholder('what/star-nav', 'Star Nav');
+    const real = fragment('what/star-nav', { title: 'Star Nav' })
+      .replace('class="stack-card"', 'class="stack-card" data-surface="viewport" data-surface-on="mobile"');
+
+    fragments.replaceBody('what/star-nav', real, card);
+
+    expect(card.getAttribute('data-surface')).toBe('viewport');
+    expect(card.getAttribute('data-surface-on')).toBe('mobile');
+  });
+
   it('keeps the header ELEMENT while replacing its text', () => {
     // Not a detail: the sticky-header observer (#110) captures `.card-header`
     // by reference and toggles `card-header--stuck` on it. Swap the node and

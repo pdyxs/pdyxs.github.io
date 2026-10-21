@@ -473,7 +473,7 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `.stack-card-spine`, `.stack-card-spine-inner`, `.stack-card-spine-title`
 - `.card-header`, `.card-header-sentinel`, `.card-header--stuck`
 - `.stack-card--revealing`, `#card-stack.stack-motion`
-- `data-surface="viewport"` and `data-surface-on="mobile|desktop|both"` on `.stack-card` (written by `CardStackCard.astro` only when the card has a `surface`; read by the mobile viewport block in `stack.css`)
+- `data-surface="viewport"` and `data-surface-on="mobile|desktop|both"` on `.stack-card` (written by `CardStackCard.astro` only when the card has a `surface`; read by the mobile viewport block in `stack.css`) `replaceBody` copies them from the real fragment onto a card mounted from a placeholder (`syncSurface`, #204), since the placeholder shell is permanent.
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`
 - `data-role="behind|active|ahead"` and `data-piled` (written by the applier)

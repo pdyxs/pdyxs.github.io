@@ -235,6 +235,26 @@ export function syncTitles(html: string, cardEl: Element | null | undefined): vo
   if (spineFrom && spineTo) spineTo.textContent = spineFrom.textContent;
 }
 
+/**
+ * Copies the viewport-surface attributes (`data-surface`, `data-surface-on`)
+ * from the real fragment onto a card mounted from a placeholder (issue #204).
+ *
+ * The placeholder shell is permanent and knows nothing about the card's
+ * surface, but the mobile viewport block in stack.css reads those attributes
+ * off `.stack-card`. Without this, a card reached from a lens never fills the
+ * viewport, while the same card cold-loaded (real markup) does.
+ */
+export function syncSurface(html: string, cardEl: Element | null | undefined): void {
+  if (!cardEl || typeof document === 'undefined') return;
+  const incoming = parseStackCard(html);
+  if (!incoming) return;
+  for (const name of ['data-surface', 'data-surface-on']) {
+    const value = incoming.getAttribute(name);
+    if (value === null) cardEl.removeAttribute(name);
+    else cardEl.setAttribute(name, value);
+  }
+}
+
 /** The title a link (or any element) offers for the card it points at. */
 export function titleOfElement(el: Element | null | undefined): string | null {
   return el?.querySelector('.card-header-title')?.textContent?.trim() ?? null;
@@ -339,6 +359,7 @@ export function createCardFragments(options: CardFragmentsOptions = {}): CardFra
       const existing = cardEl?.querySelector('.stack-card-body-inner');
       if (inner !== null && existing) existing.innerHTML = inner;
       syncTitles(html, cardEl);
+      syncSurface(html, cardEl);
     },
     factsFor(key) {
       const html = cache.get(key);
