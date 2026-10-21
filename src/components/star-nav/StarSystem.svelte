@@ -3,7 +3,7 @@
   import DitherSvg from '@components/dither-svg/DitherSvg.svelte';
   import DitherLayer from '@components/dither-svg/DitherLayer.svelte';
   import HitLayer from '@components/dither-svg/HitLayer.svelte';
-  import { onDestroy, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack, type Component } from 'svelte';
   import { cubicInOut as easeInOut } from 'svelte/easing';
   import { Planet } from './planet';
   import { planApproach, type Approach } from './sim/approach';
@@ -11,7 +11,7 @@
   import { flightPlan, type FlightPlan } from './sim/flightPlan';
   import { reachShape } from './sim/steering';
   import { routeUpTo } from './sim/route';
-  import { defaultTuning } from './sim/tuning';
+  import { defaultTuning, type Tuning } from './sim/tuning';
   import type { StarSystem } from './star_system';
   import type { Pose } from './types';
 
@@ -30,7 +30,19 @@
   // Nose at the local origin, pointing up; tail 3 units behind.
   const SHIP_PATH = 'M -1 3 l 0 -2 l 1 -1 l 1 1 l 0 2';
   // The mechanic's numbers (speed, turning radius, turn cap) live in sim/tuning.
-  const tuning = defaultTuning;
+  // The island holds the one tuning object and hands it to every pure function.
+  // Replaced wholesale (never mutated), so the dev panel only ever swaps it.
+  let tuning = $state.raw<Tuning>({ ...defaultTuning });
+
+  // The dev-only tuning panel. Both gates are written inline so the bundler
+  // folds `import.meta.env.DEV` to false in production and drops the dynamic
+  // import, and with it the panel's component, markup and styles.
+  let TunePanel = $state.raw<Component<{ tuning: Tuning; onchange: (t: Tuning) => void }> | null>(null);
+  onMount(() => {
+    if (import.meta.env.DEV && new URLSearchParams(location.search).has('tune')) {
+      import('./StarTune.svelte').then((m) => { TunePanel = m.default; });
+    }
+  });
   // The ship's reach shape, drawn dithered at this level.
   const REACH_LEVEL = 1;
   // Under prefers-reduced-motion the reveal and the trip still happen — where
@@ -409,6 +421,11 @@
      re-anchors the dither grid (docs/agents/styling.md). -->
 {#if moved}
   <button class="star-reset" type="button" onclick={reset}>Reset</button>
+{/if}
+
+<!-- Dev only (?tune). A sibling of the dithered box, never an ancestor. -->
+{#if TunePanel}
+  <TunePanel {tuning} onchange={(t) => (tuning = t)} />
 {/if}
 </div>
 

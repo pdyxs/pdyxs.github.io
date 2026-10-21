@@ -542,3 +542,88 @@ describe('StarSystem', () => {
     });
   });
 });
+
+// ── Tuning panel (dev only, behind ?tune) ───────────────────────────────────
+describe('StarSystem tuning panel', () => {
+  const panel = () => target.querySelector('.star-tune');
+  const remount = async (search: string) => {
+    unmount(component!);
+    window.history.replaceState(null, '', `/${search}`);
+    component = mount(StarSystem as any, { target, props: { entryId: 'what/toys/star-navigation', images: [] } });
+    flushSync();
+    await vi.dynamicImportSettled();
+    flushSync();
+  };
+  afterEach(() => window.history.replaceState(null, '', '/'));
+
+  it('does not render without ?tune', async () => {
+    await remount('');
+    expect(panel()).toBeNull();
+  });
+
+  it('renders with ?tune in dev, as a sibling of the dithered box', async () => {
+    await remount('?tune');
+    expect(panel()).not.toBeNull();
+    expect(panel()!.contains(target.querySelector('.dither-svg'))).toBe(false);
+    expect(target.querySelector('.dither-svg')!.contains(panel())).toBe(false);
+  });
+
+  const slider = (key: string) => target.querySelector<HTMLInputElement>(`.star-tune input[data-tune="${key}"]`)!;
+  const setSlider = (key: string, value: number) => {
+    const el = slider(key);
+    el.value = String(value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+  };
+
+  it('changing a slider re-plans what the island draws, and shows the value', async () => {
+    await remount('?tune');
+    const before = reach()[0].getAttribute('points');
+    setSlider('turnCap', 20);
+    expect(reach()[0].getAttribute('points')).not.toBe(before);
+    expect(target.querySelector('.star-tune')!.textContent).toContain('20');
+  });
+
+  it('has a slider for every numeric field of Tuning', async () => {
+    await remount('?tune');
+    for (const [key, v] of Object.entries(defaultTuning)) {
+      if (typeof v === 'number') expect(slider(key), key).not.toBeNull();
+    }
+  });
+
+  describe('stop rule', () => {
+    const radio = (mode: string) => target.querySelector<HTMLInputElement>(`.star-tune input[type="radio"][value="${mode}"]`)!;
+    const choose = (mode: string) => { radio(mode).click(); flushSync(); };
+
+    it('is a radio of constant / per-unit-distance / none, with the matching slider', async () => {
+      await remount('?tune');
+      expect(['constant', 'distance', 'none'].map((m) => radio(m))).not.toContain(null);
+      expect(radio('constant').checked).toBe(true);
+      expect(slider('stopLength')).not.toBeNull();
+      expect(slider('stopPerUnit')).toBeNull();
+      choose('distance');
+      expect(slider('stopPerUnit')).not.toBeNull();
+      expect(slider('stopLength')).toBeNull();
+      choose('none');
+      expect(slider('stopLength')).toBeNull();
+      expect(slider('stopPerUnit')).toBeNull();
+    });
+
+    it('shows the current stop length', async () => {
+      await remount('?tune');
+      setSlider('stopLength', 1.5);
+      expect(target.querySelector('.star-tune')!.textContent).toContain('1.5');
+    });
+  });
+
+  it('reset to defaults restores every value', async () => {
+    await remount('?tune');
+    const initial = reach()[0].getAttribute('points');
+    setSlider('turnCap', 20);
+    setSlider('turnRadius', 3);
+    target.querySelector<HTMLButtonElement>('.star-tune-reset')!.click();
+    flushSync();
+    expect(slider('turnCap').value).toBe(String(defaultTuning.turnCap));
+    expect(reach()[0].getAttribute('points')).toBe(initial);
+  });
+});
