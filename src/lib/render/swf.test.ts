@@ -48,12 +48,14 @@ describe('parseSwfHeader', () => {
   });
 });
 
-describe('Tiny World poster', () => {
+describe.each([
+  ['Tiny World', 'what/games/digital/tiny-world-the-musical-the-game'],
+  ['Enemies', 'what/games/digital/enemies'],
+])('%s poster', (_name, id) => {
   // The poster fills a stage box with the SWF's aspect ratio (object-fit: cover),
   // so a poster of any other shape is cropped, and is not the framing Ruffle
   // shows once the game starts (#216).
   it('has the same aspect ratio as the stage it stands in for', () => {
-    const id = 'what/games/digital/tiny-world-the-musical-the-game';
     const png = readFileSync(`src/content/${id}/poster.png`);
     const posterW = png.readUInt32BE(16);
     const posterH = png.readUInt32BE(20);
