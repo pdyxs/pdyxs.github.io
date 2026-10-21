@@ -14,7 +14,7 @@ function memFs(initial: Record<string, string>): EditorFs & { files: Map<string,
   };
 }
 
-const valid = { walls: { width: 10, height: 6 }, player: { x: 0, y: 0, radius: 0.5 } };
+const valid = { walls: { width: 10, height: 6 }, player: { x: 0, y: 0 } };
 const make = (initial: Record<string, string> = {}) => {
   const fs = memFs(initial);
   return { fs, api: createEditorApi({ contentRoot: ROOT, fs, today: () => '2026-10-14' }) };

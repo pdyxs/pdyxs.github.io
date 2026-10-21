@@ -184,6 +184,7 @@
       {#if !p.live}
         <circle class="telegraph" r={p.radius * 1.6} />
       {/if}
+      <circle class="bounds" r={p.radius} />
       {#if glyph.kind === 'circle'}
         <circle class="shape" r={p.radius} />
       {:else}
@@ -200,6 +201,7 @@
       data-parity={snapshot.player.parity}
       transform="translate({snapshot.player.x} {snapshot.player.y})"
     >
+      <circle class="bounds" r={snapshot.player.radius} />
       {#if glyph.kind === 'circle'}
         <circle class="shape" r={snapshot.player.radius} />
       {:else}
@@ -295,6 +297,12 @@
   }
   .particle[data-colour='blue'] .shape {
     stroke-dasharray: 0.3 0.1 0.04 0.1;
+  }
+  /* The collider: a thin ring at the body's actual radius, whatever glyph is drawn inside it. */
+  .bounds {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-width: 0.04;
   }
   .telegraph {
     fill: none;

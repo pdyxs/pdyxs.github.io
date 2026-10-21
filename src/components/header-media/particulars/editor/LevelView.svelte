@@ -10,7 +10,7 @@
   import type { EditorHandle, Selection } from '../../../../lib/particulars/editor/selection';
   import type { Edit } from '../../../../lib/particulars/editor/edit';
   import type { Scenario } from '../../../../lib/particulars/scenario/types';
-  import { PARTICLE_RADIUS, VIEW_MARGIN } from '../../../../lib/particulars/constants';
+  import { radiusOf, VIEW_MARGIN } from '../../../../lib/particulars/constants';
 
   let {
     scenario,
@@ -82,9 +82,9 @@
   {#each scenario.blackHoles ?? [] as h, i (i)}
     <circle class="black-hole" cx={h.x} cy={h.y} r={0.4} />
   {/each}
-  <circle class="player" cx={scenario.player.x} cy={scenario.player.y} r={scenario.player.radius} />
+  <circle class="player" cx={scenario.player.x} cy={scenario.player.y} r={radiusOf(scenario.player.particle?.type ?? 'down')} />
   {#each spawns as s, i (i)}
-    <circle class="spawn" cx={s.x} cy={s.y} r={PARTICLE_RADIUS} data-type={s.particle.type} />
+    <circle class="spawn" cx={s.x} cy={s.y} r={radiusOf(s.particle.type)} data-type={s.particle.type} />
   {/each}
   {#each handles as h (h.key)}
     <circle role="button" tabindex="-1" aria-label="Drag handle {h.key}" class="handle" data-handle={h.key} cx={h.x} cy={h.y} r={0.3} onpointerdown={(e) => onHandleDown(e, h)} />

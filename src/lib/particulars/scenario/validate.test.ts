@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { validate } from './validate';
 
-const GOOD = { walls: { width: 20, height: 10 }, player: { x: 0, y: 0, radius: 0.5 } };
+const GOOD = { walls: { width: 20, height: 10 }, player: { x: 0, y: 0 } };
 
 describe('validate', () => {
   it('accepts a minimal scenario and returns it typed', () => {
@@ -18,7 +18,6 @@ describe('validate errors', () => {
     expect(result.errors).toEqual([
       'walls.width must be a positive number',
       'walls.height must be a positive number',
-      'player.radius must be a positive number',
     ]);
   });
 
@@ -29,7 +28,7 @@ describe('validate errors', () => {
   });
 
   it('rejects a player that does not fit inside the walls', () => {
-    const result = validate({ walls: { width: 4, height: 4 }, player: { x: 1.8, y: 0, radius: 0.5 } });
+    const result = validate({ walls: { width: 4, height: 4 }, player: { x: 1.8, y: 0 } });
     expect(result).toEqual({ ok: false, errors: ['player must lie fully inside the walls'] });
   });
 });
@@ -172,7 +171,7 @@ describe('validate forces and black holes', () => {
 
 describe('validate player particle', () => {
   it('accepts a chosen particle and rejects a bad one by path', () => {
-    expect(validate({ ...GOOD, player: { ...GOOD.player, particle: { type: 'top' } } }).ok).toBe(true);
+    expect(validate({ ...GOOD, player: { ...GOOD.player, particle: { type: 'bottom' } } }).ok).toBe(true);
     const bad = validate({ ...GOOD, player: { ...GOOD.player, particle: { type: 'quark' } } });
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.errors[0]).toMatch(/^player\.particle\.type must be one of/);

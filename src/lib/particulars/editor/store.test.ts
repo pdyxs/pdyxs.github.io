@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { createScenarioStore } from './store.ts';
 import type { Scenario } from '../scenario/types';
 
-const s0: Scenario = { walls: { width: 10, height: 6 }, player: { x: 0, y: 0, radius: 0.5 } };
+const s0: Scenario = { walls: { width: 10, height: 6 }, player: { x: 0, y: 0 } };
 
 describe('scenario store', () => {
   it('applies edits and notifies subscribers with the new scenario', () => {

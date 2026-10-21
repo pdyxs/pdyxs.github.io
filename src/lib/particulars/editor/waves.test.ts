@@ -4,7 +4,7 @@ import type { Scenario } from '../scenario/types';
 
 const s: Scenario = {
   walls: { width: 10, height: 6 },
-  player: { x: 0, y: 0, radius: 0.5 },
+  player: { x: 0, y: 0 },
   waves: [{ id: 'a', entries: [] }, { id: 'b', entries: [] }],
   triggers: [
     { kind: 'time', at: 2, actions: [{ kind: 'spawn', wave: 'a' }] },

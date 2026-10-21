@@ -4,7 +4,7 @@ import type { Scenario } from '../scenario/types';
 
 const base: Scenario = {
   walls: { width: 24, height: 12 },
-  player: { x: 0, y: 0, radius: 0.6 },
+  player: { x: 0, y: 0 },
   waves: [
     { id: 'a', entries: [{ spawn: 'electron' }] },
     { id: 'b', entries: [{ spawn: 'up' }] },

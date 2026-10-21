@@ -5,7 +5,7 @@ import type { Scenario } from '../scenario/types';
 
 const SCENARIO: Scenario = {
   walls: { width: 20, height: 10 },
-  player: { x: 0, y: 0, radius: 0.5 },
+  player: { x: 0, y: 0 },
   barriers: [{ shape: 'rect', mode: 'all', x: 2, y: 1, width: 4, height: 2 }],
   formations: {
     row: { kind: 'line', count: 3, distance: 2, contents: ['up'] },

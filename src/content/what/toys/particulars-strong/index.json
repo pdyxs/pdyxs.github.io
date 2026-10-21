@@ -1,0 +1,168 @@
+{
+  "walls": {
+    "width": 64,
+    "height": 36
+  },
+  "forces": {
+    "strong": true
+  },
+  "player": {
+    "x": 0,
+    "y": 0,
+    "particle": {
+      "type": "down",
+      "colour": "red"
+    }
+  },
+  "formations": {
+    "trio": {
+      "kind": "line",
+      "count": 3,
+      "distance": 2,
+      "contents": [
+        {
+          "type": "up",
+          "colour": "red"
+        },
+        {
+          "type": "up",
+          "colour": "green"
+        },
+        {
+          "type": "down",
+          "colour": "blue"
+        }
+      ]
+    }
+  },
+  "waves": [
+    {
+      "id": "red",
+      "entries": [
+        {
+          "spawn": {
+            "type": "up",
+            "colour": "red"
+          },
+          "position": {
+            "x": 0,
+            "y": -13
+          },
+          "velocity": {
+            "magnitude": 8,
+            "angle": 90
+          },
+          "telegraph": 0.5
+        }
+      ]
+    },
+    {
+      "id": "green",
+      "entries": [
+        {
+          "spawn": {
+            "type": "up",
+            "colour": "green"
+          },
+          "position": {
+            "x": 0,
+            "y": -13
+          },
+          "velocity": {
+            "magnitude": 8,
+            "angle": 90
+          },
+          "telegraph": 0.5
+        }
+      ]
+    },
+    {
+      "id": "white",
+      "entries": [
+        {
+          "spawn": "electron",
+          "position": {
+            "x": 0,
+            "y": -13
+          },
+          "velocity": {
+            "magnitude": 8,
+            "angle": 90
+          },
+          "telegraph": 0.5
+        }
+      ]
+    },
+    {
+      "id": "trio",
+      "entries": [
+        {
+          "spawn": "trio",
+          "position": {
+            "x": 26,
+            "y": -8
+          },
+          "velocity": {
+            "magnitude": 8,
+            "angle": 180
+          },
+          "telegraph": 1.5
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "kind": "page-button",
+      "button": "red",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "red"
+        }
+      ]
+    },
+    {
+      "kind": "page-button",
+      "button": "green",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "green"
+        }
+      ]
+    },
+    {
+      "kind": "page-button",
+      "button": "white",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "white"
+        }
+      ]
+    },
+    {
+      "kind": "page-button",
+      "button": "trio",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "trio"
+        }
+      ]
+    },
+    {
+      "kind": "time",
+      "at": 1,
+      "every": 7,
+      "repeats": 5,
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "trio"
+        }
+      ]
+    }
+  ]
+}

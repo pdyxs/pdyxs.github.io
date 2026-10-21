@@ -6,7 +6,7 @@ import Editor from './Editor.svelte';
 
 const SCENARIO = {
   walls: { width: 20, height: 10 },
-  player: { x: 0, y: 0, radius: 0.5 },
+  player: { x: 0, y: 0 },
   formations: { row: { kind: 'line', count: 5, distance: 1, contents: ['up'] } },
   barriers: [{ shape: 'rect', mode: 'all', x: 4, y: 2, width: 2, height: 1 }],
   waves: [

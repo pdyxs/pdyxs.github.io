@@ -1,0 +1,154 @@
+{
+  "walls": {
+    "width": 64,
+    "height": 36
+  },
+  "forces": {
+    "em": true
+  },
+  "player": {
+    "x": 0,
+    "y": 0
+  },
+  "formations": {
+    "pair": {
+      "kind": "circle",
+      "count": 4,
+      "radius": 2,
+      "contents": [
+        "electron",
+        {
+          "type": "electron",
+          "parity": -1
+        }
+      ]
+    }
+  },
+  "waves": [
+    {
+      "id": "electron",
+      "entries": [
+        {
+          "spawn": "electron",
+          "position": {
+            "x": 0,
+            "y": -13
+          },
+          "velocity": {
+            "magnitude": 8,
+            "angle": 90
+          },
+          "telegraph": 0.5
+        }
+      ]
+    },
+    {
+      "id": "positron",
+      "entries": [
+        {
+          "spawn": {
+            "type": "electron",
+            "parity": -1
+          },
+          "position": {
+            "x": 0,
+            "y": -13
+          },
+          "velocity": {
+            "magnitude": 8,
+            "angle": 90
+          },
+          "telegraph": 0.5
+        }
+      ]
+    },
+    {
+      "id": "up",
+      "entries": [
+        {
+          "spawn": "up",
+          "position": {
+            "x": 26,
+            "y": 0
+          },
+          "velocity": {
+            "magnitude": 8,
+            "angle": 180
+          },
+          "telegraph": 0.5
+        }
+      ]
+    },
+    {
+      "id": "pair",
+      "entries": [
+        {
+          "spawn": "pair",
+          "position": {
+            "x": -26,
+            "y": 0
+          },
+          "velocity": {
+            "magnitude": 8,
+            "angle": 0
+          },
+          "telegraph": 1
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "kind": "page-button",
+      "button": "electron",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "electron"
+        }
+      ]
+    },
+    {
+      "kind": "page-button",
+      "button": "positron",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "positron"
+        }
+      ]
+    },
+    {
+      "kind": "page-button",
+      "button": "up",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "up"
+        }
+      ]
+    },
+    {
+      "kind": "page-button",
+      "button": "pair",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "pair"
+        }
+      ]
+    },
+    {
+      "kind": "time",
+      "at": 1,
+      "every": 7,
+      "repeats": 5,
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "pair"
+        }
+      ]
+    }
+  ]
+}

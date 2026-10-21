@@ -1,5 +1,7 @@
 import { BOSON_TYPES, FORCE_NAMES, PARTICLE_COLOURS, PARTICLE_TYPES, WALL_MODES } from './types';
 import type { Scenario, ValidationResult } from './types';
+import { radiusOf } from '../constants';
+import { resolveParticle } from './expand';
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -206,7 +208,6 @@ export function validate(json: unknown): ValidationResult {
   else {
     if (!isFiniteNumber(player.x)) errors.push('player.x must be a number');
     if (!isFiniteNumber(player.y)) errors.push('player.y must be a number');
-    if (!isPositive(player.radius)) errors.push('player.radius must be a positive number');
     if (player.particle !== undefined) {
       if (isObject(player.particle)) checkRef(player.particle, 'player.particle', {}, errors);
       else errors.push('player.particle must be a particle object');
@@ -230,7 +231,8 @@ export function validate(json: unknown): ValidationResult {
   if (errors.length === 0) {
     const w = walls as Scenario['walls'];
     const p = player as Scenario['player'];
-    if (Math.abs(p.x) + p.radius > w.width / 2 || Math.abs(p.y) + p.radius > w.height / 2) {
+    const r = radiusOf(resolveParticle(p.particle ?? { type: 'down' }).type);
+    if (Math.abs(p.x) + r > w.width / 2 || Math.abs(p.y) + r > w.height / 2) {
       errors.push('player must lie fully inside the walls');
     }
     (json.blackHoles as Scenario['blackHoles'] ?? []).forEach((h, i) => {

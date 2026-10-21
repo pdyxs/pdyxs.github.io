@@ -9,8 +9,9 @@
 import type { Scenario } from '../scenario/types.ts';
 
 export const BLANK_SCENARIO: Scenario = {
-  walls: { width: 24, height: 12 },
-  player: { x: 0, y: 0, radius: 0.6 },
+  // The original's camera shows about 70 x 40 units, and particle sizes are in those units.
+  walls: { width: 64, height: 36 },
+  player: { x: 0, y: 0 },
 };
 
 export function newCardFiles(title: string, isoDate: string): { indexMd: string; indexJson: string } {

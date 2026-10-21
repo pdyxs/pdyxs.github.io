@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { World } from './world';
 import type { Scenario } from '../scenario/types';
 
-const SCENARIO: Scenario = { walls: { width: 20, height: 10 }, player: { x: 0, y: 0, radius: 0.5 } };
+const SCENARIO: Scenario = { walls: { width: 20, height: 10 }, player: { x: 0, y: 0 } };
 const RIGHT = { x: 1, y: 0 };
 const NONE = { x: 0, y: 0 };
 // Box2D lets bodies sink a hair into contacts (linear slop, 0.005); containment is within that.
@@ -16,7 +16,7 @@ function run(world: World, input: { x: number; y: number }, steps: number) {
 describe('World', () => {
   it('starts at rest where the scenario puts the player', () => {
     const snap = new World(SCENARIO).snapshot();
-    expect(snap.player).toMatchObject({ x: 0, y: 0, radius: 0.5 });
+    expect(snap.player).toMatchObject({ x: 0, y: 0, radius: 0.75 });
     expect(snap.walls).toEqual({ width: 20, height: 10 });
     expect(snap.tick).toBe(0);
   });
@@ -29,13 +29,31 @@ describe('World', () => {
     expect(snap.player.y).toBeCloseTo(0, 5);
   });
 
-  it('without steering the player slows to a stop', () => {
+  it('without steering the player coasts: the original has no drag on the player', () => {
     const world = new World(SCENARIO);
-    run(world, RIGHT, 30);
-    run(world, NONE, 600);
+    run(world, RIGHT, 10);
     const a = world.snapshot().player.x;
-    run(world, NONE, 60);
-    expect(world.snapshot().player.x).toBeCloseTo(a, 2);
+    run(world, NONE, 10);
+    const b = world.snapshot().player.x;
+    run(world, NONE, 10);
+    const c = world.snapshot().player.x;
+    expect(b - a).toBeGreaterThan(0.5);
+    expect(c - b).toBeCloseTo(b - a, 3);
+  });
+
+  it('steering against the motion brakes harder than steering along it accelerates', () => {
+    const speed = (w: World) => Math.abs(w.snapshot().player.x);
+    const along = new World(SCENARIO);
+    run(along, RIGHT, 10);
+    const x0 = speed(along);
+    run(along, RIGHT, 5);
+    const gained = speed(along) - x0;
+    const against = new World(SCENARIO);
+    run(against, RIGHT, 10);
+    const y0 = speed(against);
+    run(against, { x: -1, y: 0 }, 5);
+    // Braking for 5 steps from speed v covers less ground than cruising and accelerating.
+    expect(speed(against) - y0).toBeLessThan(gained);
   });
 
   it('cannot leave the walls, however long it pushes', () => {
@@ -70,7 +88,7 @@ describe('World waves', () => {
     waves: [{ id: 'w', entries: [{ spawn: 'electron', position: { x: 5, y: 2 }, telegraph: 1 }] }],
     triggers: [{ kind: 'time', at: 0.5, actions: [{ kind: 'spawn', wave: 'w' }] }],
   };
-  const TICKS_PER_SECOND = 60;
+  const TICKS_PER_SECOND = 50;
 
   it('a scheduled wave appears on time, flagged not live while it telegraphs', () => {
     const world = new World(WAVES);
@@ -83,8 +101,8 @@ describe('World waves', () => {
 
   it('goes live once the telegraph has run, and not a step before', () => {
     const world = new World(WAVES);
-    run(world, NONE, 31); // spawned on the 31st step (tick 30)
-    run(world, NONE, 59);
+    run(world, NONE, 26); // spawned on the 26th step (tick 25)
+    run(world, NONE, 49);
     expect(world.snapshot().particles[0].live).toBe(false);
     run(world, NONE, 1);
     expect(world.snapshot().particles[0].live).toBe(true);
@@ -98,7 +116,7 @@ describe('World waves', () => {
 
   it('a telegraphing particle neither moves nor collides, even overlapping the player', () => {
     const world = new World(ON_PLAYER);
-    const snap = run(world, NONE, 59);
+    const snap = run(world, NONE, 49);
     expect(snap.particles[0]).toMatchObject({ x: 0.2, y: 0, live: false });
     expect(snap.player).toMatchObject({ x: 0, y: 0 });
   });
@@ -117,7 +135,7 @@ describe('World waves', () => {
       waves: [{ id: 'w', entries: [{ spawn: 'up', position: { x: 8, y: 3 } }] }],
       triggers: [{ kind: 'time', at: 1, every: 1, repeats: 2, actions: [{ kind: 'spawn', wave: 'w' }] }],
     });
-    const counts = [60, 1, 59, 1, 59, 1, 120].map((n) => run(world, NONE, n).particles.length);
+    const counts = [50, 1, 49, 1, 49, 1, 100].map((n) => run(world, NONE, n).particles.length);
     expect(counts).toEqual([0, 1, 1, 2, 2, 3, 3]);
   });
 });
@@ -154,11 +172,39 @@ describe('World forces', () => {
     expect(gap(snap)).toBeGreaterThan(4.1);
   });
 
+  it('the player feels EM like any other particle: an electron pushes it away', () => {
+    const world = new World({
+      ...SCENARIO,
+      forces: { em: true },
+      waves: [{ id: 'w', entries: [{ spawn: 'electron', position: { x: 3, y: 0 } }] }],
+      triggers: [{ kind: 'time', at: 0, actions: [{ kind: 'spawn', wave: 'w' }] }],
+    });
+    const snap = run(world, NONE, 10);
+    expect(snap.player.x).toBeLessThan(-0.01);
+  });
+
+  it('a light particle is thrown about by what barely moves a heavy one', () => {
+    const world = new World({
+      ...SCENARIO,
+      forces: { em: true },
+      waves: [{ id: 'w', entries: [
+        { spawn: 'electron', position: { x: 3, y: 0 } },
+        { spawn: 'tau', position: { x: -3, y: 3 } },
+      ] }],
+      triggers: [{ kind: 'time', at: 0, actions: [{ kind: 'spawn', wave: 'w' }] }],
+    });
+    const snap = run(world, NONE, 10);
+    const electron = snap.particles[0];
+    const tau = snap.particles[1];
+    // Each is pushed by the player (-1) and the other; the electron is far lighter, so it moves far more.
+    expect(Math.hypot(electron.x - 3, electron.y)).toBeGreaterThan(5 * Math.hypot(tau.x + 3, tau.y - 3));
+  });
+
   const holeScenario = (forces: Scenario['forces']): Scenario => ({
     ...SCENARIO,
     forces,
     blackHoles: [{ x: 0, y: 0, mass: 10 }],
-    waves: [{ id: 'w', entries: [{ spawn: 'electronNeutrino', position: { x: 5, y: 0 } }] }],
+    waves: [{ id: 'w', entries: [{ spawn: 'electron', position: { x: 5, y: 0 } }] }],
     triggers: [{ kind: 'time', at: 0, actions: [{ kind: 'spawn', wave: 'w' }] }],
   });
 
@@ -168,8 +214,9 @@ describe('World forces', () => {
   });
 
   it('with gravity on, a black hole pulls a particle toward it', () => {
-    const snap = run(new World(holeScenario({ gravity: true })), NONE, 60);
-    expect(snap.particles[0].x).toBeLessThan(4.5);
+    // 40 * 10 / 5^2 = 16 units/s^2 whatever the particle's mass: about 0.32 in 10 steps.
+    const snap = run(new World(holeScenario({ gravity: true })), NONE, 10);
+    expect(snap.particles[0].x).toBeLessThan(4.8);
     expect(snap.particles[0].y).toBeCloseTo(0, 5);
   });
 

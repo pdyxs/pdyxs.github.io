@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { dueSpawns, initialSchedule } from './scheduler';
 import type { Scenario } from '../scenario/types';
 
-const base = { walls: { width: 20, height: 10 }, player: { x: 0, y: 0, radius: 0.5 } };
+const base = { walls: { width: 20, height: 10 }, player: { x: 0, y: 0 } };
 const scenario = (triggers: Scenario['triggers']): Scenario => ({
   ...base,
   waves: [{ id: 'w', entries: [{ spawn: 'electron' }, { spawn: 'up' }] }],

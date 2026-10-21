@@ -183,7 +183,6 @@
           <legend>Player</legend>
           {@render num('x', ['player', 'x'], scenario.player.x)}
           {@render num('y', ['player', 'y'], scenario.player.y)}
-          {@render num('Radius', ['player', 'radius'], scenario.player.radius)}
           <label>Particle
             <select data-field="player.particle.type" onchange={(e) => edit({ kind: 'set', path: ['player', 'particle'], value: { ...(scenario.player.particle ?? {}), type: e.currentTarget.value } })}>
               {#each PARTICLE_TYPES as t (t)}

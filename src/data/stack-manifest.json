@@ -1785,5 +1785,25 @@
     "uid": "what/toys/particulars",
     "code": "5N",
     "title": "Particulars"
+  },
+  {
+    "uid": "what/toys/particulars-em",
+    "code": "5O",
+    "title": "Particulars: electromagnetism only"
+  },
+  {
+    "uid": "what/toys/particulars-em-weak",
+    "code": "5P",
+    "title": "Particulars: electromagnetism + weak force"
+  },
+  {
+    "uid": "what/toys/particulars-em-weak-strong",
+    "code": "5Q",
+    "title": "Particulars: electromagnetism + weak + strong"
+  },
+  {
+    "uid": "what/toys/particulars-strong",
+    "code": "5R",
+    "title": "Particulars: strong force only"
   }
 ]

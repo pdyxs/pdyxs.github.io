@@ -5,7 +5,7 @@ import Toy from './Toy.svelte';
 import type { Scenario } from '../../../lib/particulars/scenario/types';
 import { dispatchCommand } from '../../../lib/particulars/input/command';
 
-const SCENARIO: Scenario = { walls: { width: 20, height: 10 }, player: { x: 0, y: 0, radius: 0.5 } };
+const SCENARIO: Scenario = { walls: { width: 20, height: 10 }, player: { x: 0, y: 0 } };
 
 let target: HTMLElement;
 let component: ReturnType<typeof mount>;
@@ -34,15 +34,14 @@ describe('Toy', () => {
     expect(player().getAttribute('data-type')).toBe('down');
   });
 
-  it('a held key moves the particle, and releasing it lets it settle', async () => {
+  it('a held key moves the particle, and releasing it lets it coast on', async () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
     await wait(300);
     expect(cx()).toBeGreaterThan(0.1);
     window.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowRight' }));
-    await wait(1500);
-    const settled = cx();
+    const released = cx();
     await wait(200);
-    expect(cx()).toBeCloseTo(settled, 1);
+    expect(cx()).toBeGreaterThan(released);
   });
 
   it('a held pointer steers toward it; a press on the player does not', async () => {

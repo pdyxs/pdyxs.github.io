@@ -115,8 +115,8 @@ export type WallDef =
 export interface Scenario {
   /** The walled box, centred on the origin. */
   walls: { width: number; height: number };
-  /** `particle` is what the player is; omitted, it is a down quark. */
-  player: { x: number; y: number; radius: number; particle?: ParticleDef };
+  /** `particle` is what the player is; omitted, it is a down quark. Its size, as for every particle, comes from its type. */
+  player: { x: number; y: number; particle?: ParticleDef };
   /** Which forces are on. Omitted forces are off. */
   forces?: Partial<ForceSwitches>;
   blackHoles?: BlackHoleDef[];
