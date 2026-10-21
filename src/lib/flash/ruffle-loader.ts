@@ -12,6 +12,11 @@ const CONFIG = {
   unmuteOverlay: 'hidden',
   // Where Ruffle fetches its core chunks and .wasm from.
   publicPath: '/ruffle/',
+  // A game that sets Stage.scaleMode = noScale (Tiny World does) is otherwise shown
+  // at native pixels and cropped to whatever the stage box is. The box already
+  // has the SWF's aspect ratio, so fitting the game to it is lossless.
+  scale: 'showAll',
+  forceScale: true,
 };
 
 export const loadRufflePlayer: PlayerLoader = async (swfUrl, container) => {
