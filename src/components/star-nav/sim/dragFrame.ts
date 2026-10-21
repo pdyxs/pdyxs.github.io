@@ -44,7 +44,7 @@ export function dragToControls(drag: Point, frame: DragFrame, tuning: Tuning): C
   const across = ignored ? 0 : drag.x * Math.cos(h) + drag.y * Math.sin(h);
   const along = ignored ? 0 : drag.x * Math.sin(h) - drag.y * Math.cos(h);
 
-  const size = Math.min(tuning.maxOffset, Math.max(frame.minOffset, (Math.abs(across) / range) * tuning.maxOffset));
+  const size = Math.min(tuning.maxOffset, Math.max(frame.minOffset, (range > 0 ? (Math.abs(across) / range) * tuning.maxOffset : 0)));
   const commit = tuning.defaultCommit + (range > 0 ? along / range : 0);
   return {
     offset: across < 0 ? -size : size,
