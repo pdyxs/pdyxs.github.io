@@ -48,6 +48,29 @@ describe('FlashGame', () => {
     expect(q('.flash-poster')).toBeNull();
   });
 
+  it('goes back to the poster and play button, with a message, when the player fails to load', async () => {
+    const failing = vi.fn(async () => {
+      throw new TypeError('error loading dynamically imported module');
+    });
+    unmount(component);
+    component = mount(FlashGame as any, {
+      target,
+      props: {
+        swfUrl: '/_astro/game.abc.swf',
+        width: 800,
+        height: 600,
+        poster: { src: '/img/poster.png', width: 800, height: 600 },
+        loadPlayer: failing,
+      },
+    });
+    flushSync();
+    q('.flash-play')!.click();
+    await vi.waitFor(() => expect(q('.flash-error')).not.toBeNull());
+    expect(q('.flash-error')!.getAttribute('role')).toBe('alert');
+    expect(q('.flash-poster')).not.toBeNull();
+    expect(q('.flash-play')).not.toBeNull();
+  });
+
   it('offers fullscreen on the stage', () => {
     const stage = q('.flash-stage')!;
     stage.requestFullscreen = vi.fn(async () => {});

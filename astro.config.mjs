@@ -43,6 +43,10 @@ export default defineConfig({
     syntaxHighlight: false,
   },
   vite: {
+    // Ruffle is only reached through a dynamic import on click, so Vite's dev
+    // optimizer can discover it late, re-bundle, and answer the import with a
+    // 504 "Outdated Optimize Dep" — the player never loads. Pre-bundle it up front.
+    optimizeDeps: { include: ['@ruffle-rs/ruffle'] },
     server: {
       allowedHosts: ['preview.pdyxs.wtf'],
       // The glob loader reads a changed file on the watcher event, with no
