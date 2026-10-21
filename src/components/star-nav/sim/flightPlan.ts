@@ -34,6 +34,8 @@ export type FlightPlan = {
   lowestCommitPose: Pose;
   /** The region steering could reach from the after pose, the planet still pulling. */
   reachShape: Point[];
+  /** Orbit time at which the encounter ends and the stop begins. */
+  choiceTime: number;
   /** Orbit time at which the stop ends. */
   endTime: number;
   positionAt(t: number): Pose;
@@ -131,6 +133,7 @@ export function flightPlan(input: FlightPlanInput): FlightPlan | null {
       toWorld(planet.positionAt(endTime), arrivalHeading, q)),
     lowestCommit: lowest,
     lowestCommitPose,
+    choiceTime: pinnedArrival + after.choice.t,
     endTime,
     positionAt(t) {
       if (t <= time) return { ...ship };

@@ -47,6 +47,10 @@
   const STOP_WIDTH = 0.06;
   const STOP_MARKER_RADIUS = 0.07;
   const EARLIEST_MARKER_RADIUS = 0.09;
+  // Flying a plan: wall-clock ms per second of orbit time, and the ring drawn
+  // round the ship while it is stopped for an action.
+  const FLIGHT_MS_PER_SECOND = 500;
+  const FLYING_STOP_RADIUS = 0.2;
 
   const system: StarSystem = {
     star: {},
@@ -105,6 +109,16 @@
   };
   let drag = $state<Drag | null>(null);
 
+  // The plan being flown, if any. `ship` and `baseTime` are driven along it
+  // frame by frame; nothing else about the flight is stored.
+  type Flight = { plan: FlightPlan; from: number };
+  let flight = $state<Flight | null>(null);
+  let flightFrame: number | null = null;
+  // Stopped for an action: past the choice point, not yet arrived.
+  const stopped = $derived(
+    flight !== null && baseTime >= flight.plan.choiceTime && baseTime < flight.plan.endTime
+  );
+
   const dragVector = $derived(drag ? { x: drag.dx, y: drag.dy } : null);
   const dragging = $derived(drag !== null && isDrag(dragVector!, drag.frame));
   const controls = $derived(drag ? dragToControls(dragVector!, drag.frame, tuning) : null);
@@ -119,7 +133,7 @@
 
   // The planet whose preview is up: the one being dragged, else the hovered
   // one, else the selected one. A planet that isn't visitable previews nothing.
-  const previewIndex = $derived(drag?.i ?? hovered ?? selected);
+  const previewIndex = $derived(flight ? null : (drag?.i ?? hovered ?? selected));
   const preview = $derived<Approach | null>(
     previewIndex === null ? null : approaches[previewIndex]
   );
@@ -143,7 +157,9 @@
 
   // The reach shape from where steering would start: after the stop of a plan
   // being dragged, else from the ship.
-  const reach = $derived(plan ? plan.reachShape : reachShape(ship, tuning));
+  const reach = $derived(
+    flight ? flight.plan.reachShape : plan ? plan.reachShape : reachShape(ship, tuning)
+  );
 
   let previewFrame: number | null = null;
 
@@ -182,6 +198,7 @@
   }
 
   function press(e: PointerEvent, i: number) {
+    if (flight) return;
     const approach = approaches[i];
     if (!approach) return;
     const target = e.currentTarget as Element;
@@ -214,8 +231,40 @@
     drag.dy = e.clientY - drag.originY;
   }
 
-  // Releasing a drag jumps the ship to the plan's end pose; releasing a tap
-  // selects the planet.
+  function cancelFlight() {
+    if (flightFrame !== null) cancelAnimationFrame(flightFrame);
+    flightFrame = null;
+    flight = null;
+  }
+
+  // Fly the ship along the plan's timeline, taking the orbit clock with it.
+  function fly(to: FlightPlan) {
+    cancelFlight();
+    const from = baseTime;
+    flight = { plan: to, from };
+    const reduced = reducedMotion();
+    const duration = ((to.endTime - from) * FLIGHT_MS_PER_SECOND) / (reduced ? REDUCED_SPEEDUP : 1);
+    const ease = reduced ? linear : easeInOut;
+    const startedAt = performance.now();
+    const step = (now: number) => {
+      const p = Math.min(1, (now - startedAt) / duration);
+      if (p < 1) {
+        const t = from + (to.endTime - from) * ease(p);
+        ship = to.positionAt(t);
+        baseTime = t;
+        flightFrame = requestAnimationFrame(step);
+      } else {
+        ship = { ...to.afterPose };
+        baseTime = to.endTime;
+        flightFrame = null;
+        flight = null;
+      }
+    };
+    flightFrame = requestAnimationFrame(step);
+  }
+
+  // Releasing a drag flies the ship along the plan; releasing a tap selects
+  // the planet.
   function release() {
     if (!drag) return;
     const { i } = drag;
@@ -224,9 +273,9 @@
     drag = null;
     if (!wasDrag) { selected = i; return; }
     if (to?.valid) {
-      ship = { ...to.afterPose };
-      baseTime = to.endTime;
       selected = null;
+      hovered = null;
+      fly(to);
     }
   }
 
@@ -245,13 +294,14 @@
   );
 
   function reset() {
+    cancelFlight();
     drag = null;
     selected = null;
     baseTime = 0;
     ship = { ...SHIP_START };
   }
 
-  onDestroy(cancelPreviewLoop);
+  onDestroy(() => { cancelPreviewLoop(); cancelFlight(); });
 </script>
 
 <div class="star-system">
@@ -314,6 +364,13 @@
         stroke-width={STOP_WIDTH} />
       <circle class="stop-marker"
         cx={plan.choicePose.x} cy={plan.choicePose.y} r={STOP_MARKER_RADIUS} />
+    </DitherLayer>
+  {/if}
+
+  {#if stopped}
+    <DitherLayer level={STOP_LEVEL}>
+      <circle class="flight-stop" fill="none" stroke-width={ORBIT_RADIUS}
+        cx={ship.x} cy={ship.y} r={FLYING_STOP_RADIUS} />
     </DitherLayer>
   {/if}
 

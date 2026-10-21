@@ -88,6 +88,28 @@ describe('flightPlan', () => {
     });
   });
 
+  describe('timeline continuity', () => {
+    it('never jumps across the approach, encounter and stop boundaries, and ends exactly at the after pose', () => {
+      const p = plan({ offset: 0.5, commit: 0.8 });
+      const dt = 0.002;
+      // the fastest the ship moves is bounded by its speed plus the planet's drift
+      const maxStep = (tuning.shipSpeed + 3) * dt;
+      let prev = p.positionAt(0);
+      for (let t = dt; t <= p.endTime; t += dt) {
+        const cur = p.positionAt(t);
+        expect(dist(cur, prev)).toBeLessThan(maxStep);
+        prev = cur;
+      }
+      for (const boundary of [p.arrivalTime, p.choiceTime]) {
+        expect(dist(p.positionAt(boundary - 1e-6), p.positionAt(boundary + 1e-6))).toBeLessThan(1e-3);
+      }
+      expect(p.arrivalTime).toBeLessThan(p.choiceTime);
+      expect(p.choiceTime).toBeLessThan(p.endTime);
+      expect(dist(p.positionAt(p.choiceTime), p.choicePose)).toBeLessThan(tuning.encounterStep * 6);
+      expect(p.positionAt(p.endTime)).toEqual(p.afterPose);
+    });
+  });
+
   describe('earliest allowed commitment', () => {
     const rule = { stopRule: { mode: 'constant', length: 1 } as const, keepFactor: 0.75 };
 

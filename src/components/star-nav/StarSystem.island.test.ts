@@ -380,19 +380,112 @@ describe('StarSystem', () => {
       expect(routes()[0].getAttribute('points')).toBe(direct);
     });
 
-    it('releasing a drag jumps the ship to the ghost ship at the end of the plan', () => {
-      const hit = plannable();
-      const ax = axes(hit);
-      press(hit);
-      const d = by(ax.right, 30);
-      moveTo(hit, d.dx, d.dy);
-      const planned = ghostShips()[0].getAttribute('transform');
-      release(hit);
-      expect(ship()).toBe(planned);
-      expect(ship()).not.toBe(`${START} scale(0.05)`);
-      expect(resetButton()).not.toBeNull();
-      expect(encounters()).toHaveLength(0);
-      expect(frames.size).toBe(0);
+    describe('flying the plan', () => {
+      const flyings = () => qa<SVGCircleElement>('mask circle.flight-stop');
+
+      /** Drag a plannable planet and release; returns what was planned. */
+      function launch() {
+        const hit = plannable();
+        const ax = axes(hit);
+        press(hit);
+        const d = by(ax.right, 30);
+        moveTo(hit, d.dx, d.dy);
+        const planned = ghostShips()[0].getAttribute('transform');
+        const reachStart = routePoints(reach()[0])[0];
+        release(hit);
+        return { hit, planned, reachStart };
+      }
+
+      it('release does not jump: the ship moves in steps and ends at the plan\'s after pose', () => {
+        const { planned } = launch();
+        expect(ship()).toBe(`${START} scale(0.05)`);
+        expect(frames.size).toBe(1);
+        expect(encounters()).toHaveLength(0);
+        const seen = new Set<string | null>();
+        for (let i = 0; i < 10_000 && frames.size > 0; i++) { advance(50); seen.add(ship()); }
+        expect(seen.size).toBeGreaterThan(5);
+        expect(seen.has(planned)).toBe(true);
+        expect(ship()).toBe(planned);
+        expect(frames.size).toBe(0);
+        expect(resetButton()).not.toBeNull();
+      });
+
+      it('moves the planets with the ship, ending at the plan\'s end time', () => {
+        launch();
+        const planetsAt = () => hits().map((h) => [h.getAttribute('cx'), h.getAttribute('cy')]);
+        const start = planetsAt();
+        advance(100);
+        const mid = planetsAt();
+        expect(mid).not.toEqual(start);
+        settle();
+        expect(planetsAt()).not.toEqual(mid);
+        const end = vi.mocked(flightPlan).mock.results.at(-1)!.value.endTime;
+        expect(end).toBeGreaterThan(0);
+      });
+
+      it('shows a stop indicator only while stopped for an action', () => {
+        launch();
+        expect(flyings()).toHaveLength(0);
+        let during = 0;
+        while (frames.size > 0) { advance(20); during += flyings().length; }
+        expect(during).toBeGreaterThan(0);
+        expect(flyings()).toHaveLength(0);
+      });
+
+      it('arrives with the reach shape drawn from the after pose and the selection cleared', () => {
+        const { reachStart } = launch();
+        settle();
+        const arrived = routePoints(reach()[0])[0];
+        expect(arrived).toEqual(reachStart);
+        expect(routes()).toHaveLength(0);
+        expect(layers().length).toBeGreaterThan(0);
+      });
+
+      it('cannot start a second drag while flying', () => {
+        const { hit } = launch();
+        advance(100);
+        const before = ship();
+        press(hit);
+        moveTo(hit, 30, 30);
+        expect(encounters()).toHaveLength(0);
+        release(hit);
+        settle();
+        expect(before).not.toBe(`${START} scale(0.05)`);
+      });
+
+      it('reset mid-flight stops everything and leaves a clean start', () => {
+        launch();
+        advance(100);
+        resetButton()!.click();
+        flushSync();
+        expect(frames.size).toBe(0);
+        expect(ship()).toBe(`${START} scale(0.05)`);
+        expect(resetButton()).toBeNull();
+        expect(flyings()).toHaveLength(0);
+      });
+
+      it('unmounting mid-flight cancels the animation frame', () => {
+        launch();
+        advance(100);
+        unmount(component!);
+        component = null;
+        expect(frames.size).toBe(0);
+      });
+
+      it('reduced motion flies the same route, faster', () => {
+        const count = () => { let n = 0; while (frames.size > 0) { advance(16); n++; } return n; };
+        launch();
+        const normal = count();
+        const normalEnd = ship();
+        resetButton()!.click();
+        flushSync();
+        vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {} }));
+        window.matchMedia = (globalThis as any).matchMedia;
+        launch();
+        const reduced = count();
+        expect(ship()).toBe(normalEnd);
+        expect(reduced).toBeLessThan(normal / 3);
+      });
     });
 
     it('a cancelled drag does not move the ship', () => {
@@ -429,6 +522,7 @@ describe('StarSystem', () => {
       const d = by(ax.right, 30);
       moveTo(hit, d.dx, d.dy);
       release(hit);
+      settle();
       // Orbit time moved, so the planets did too.
       expect(hits().map((h) => [h.getAttribute('cx'), h.getAttribute('cy')])).not.toEqual(hitsAtStart);
 
