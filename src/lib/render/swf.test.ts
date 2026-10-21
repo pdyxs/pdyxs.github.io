@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { deflateSync } from 'node:zlib';
-import { parseSwfHeader } from '@render/swf';
+import { readFileSync } from 'node:fs';
+import { parseSwfHeader, readCardSwfHeader } from '@render/swf';
 
 // Bit-packs a SWF RECT (Nbits, then Xmin/Xmax/Ymin/Ymax) into bytes.
 function rect(xmin: number, xmax: number, ymin: number, ymax: number, nbits: number): number[] {
@@ -44,5 +45,19 @@ describe('parseSwfHeader', () => {
 
   it('fails clearly on something that is not a SWF', () => {
     expect(() => parseSwfHeader(Uint8Array.from([1, 2, 3, 4, 5, 6, 7, 8, 9]))).toThrow(/not a SWF/i);
+  });
+});
+
+describe('Tiny World poster', () => {
+  // The poster fills a stage box with the SWF's aspect ratio (object-fit: cover),
+  // so a poster of any other shape is cropped, and is not the framing Ruffle
+  // shows once the game starts (#216).
+  it('has the same aspect ratio as the stage it stands in for', () => {
+    const id = 'what/games/digital/tiny-world-the-musical-the-game';
+    const png = readFileSync(`src/content/${id}/poster.png`);
+    const posterW = png.readUInt32BE(16);
+    const posterH = png.readUInt32BE(20);
+    const stage = readCardSwfHeader(id)!;
+    expect(posterW / posterH).toBeCloseTo(stage.width / stage.height, 3);
   });
 });

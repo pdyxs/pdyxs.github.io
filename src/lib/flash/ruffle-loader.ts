@@ -17,6 +17,11 @@ const CONFIG = {
   // has the SWF's aspect ratio, so fitting the game to it is lossless.
   scale: 'showAll',
   forceScale: true,
+  // Flash drew device fonts (a game that says "Georgia") with the visitor's own
+  // fonts. Ruffle's default renderer instead swaps every one for its built-in
+  // Noto Sans, which is the wrong face, wider (lines wrap and overlap) and
+  // drops some large text altogether. 'canvas' asks the browser to draw them.
+  deviceFontRenderer: 'canvas',
 };
 
 export const loadRufflePlayer: PlayerLoader = async (swfUrl, container) => {
