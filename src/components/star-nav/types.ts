@@ -18,6 +18,9 @@ export type PlanetData = {
   //0 is periapsis (closest to the star); this is a fraction of *time*,
   //not of angle, so the planet lingers near apoapsis as it should.
   phase: number;
+
+  //Relative mass; the planet's pull is massScale (Tuning) times this.
+  mass: number;
 }
 
 export type Point = { x: number; y: number };

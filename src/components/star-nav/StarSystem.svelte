@@ -45,10 +45,10 @@
   const system: StarSystem = {
     star: {},
     planets: [
-      new Planet({r: 1, e: 0.1, angle: 30, period: 5, phase: 0}),
-      new Planet({r: 0.5, e: 0.15, angle: 35, period: 2, phase: 0.3}),
-      new Planet({r: 3, e: 0.3, angle: 29, period: 15, phase: 0.6}),
-      new Planet({r: 3.5, e: 0.35, angle: 32, period: 25, phase: 0.9})
+      new Planet({r: 1, e: 0.1, angle: 30, period: 5, phase: 0, mass: 1}),
+      new Planet({r: 0.5, e: 0.15, angle: 35, period: 2, phase: 0.3, mass: 0.5}),
+      new Planet({r: 3, e: 0.3, angle: 29, period: 15, phase: 0.6, mass: 4}),
+      new Planet({r: 3.5, e: 0.35, angle: 32, period: 25, phase: 0.9, mass: 2.5})
     ]
   }
 

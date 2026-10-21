@@ -9,6 +9,7 @@ export class Planet {
     this.angle = data.angle;
     this.period = data.period;
     this.phase = data.phase;
+    this.mass = data.mass;
 
     this.rb = data.r * Math.sqrt(Math.abs(1 - data.e * data.e));
     this.offset = data.r * (1 - data.e) - data.r;
@@ -21,6 +22,7 @@ export class Planet {
   angle: number;
   period: number;
   phase: number;
+  mass: number;
 
   /**
    * Position at time t, in the same coordinate space as the star (the star is

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { steerPath, reachShape, steeringTo } from './steering';
-import type { Tuning } from './tuning';
+import { defaultTuning, type Tuning } from './tuning';
 
-const tuning: Tuning = { shipSpeed: 2, turnRadius: 2, turnCap: 50 };
+const tuning: Tuning = { ...defaultTuning, shipSpeed: 2, turnRadius: 2, turnCap: 50 };
 const origin = { x: 0, y: 0, heading: 0 };
 const pathLength = (pts: { x: number; y: number }[]) =>
   pts.slice(1).reduce((s, p, i) => s + Math.hypot(p.x - pts[i].x, p.y - pts[i].y), 0);
