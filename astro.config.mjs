@@ -6,6 +6,7 @@ import { REDIRECTS } from './src/data/redirects.generated.ts';
 import { rehypeExternalLinks } from './src/lib/render/external-links.ts';
 import { rehypeVideoEmbeds } from './src/lib/render/video-embeds.ts';
 import { devReloadPlugin } from './scripts/dev-reload-plugin.mjs';
+import { ruffleAssetsPlugin } from './scripts/ruffle-assets-plugin.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -42,6 +43,10 @@ export default defineConfig({
     syntaxHighlight: false,
   },
   vite: {
+    // Ruffle is only reached through a dynamic import on click, so Vite's dev
+    // optimizer can discover it late, re-bundle, and answer the import with a
+    // 504 "Outdated Optimize Dep" — the player never loads. Pre-bundle it up front.
+    optimizeDeps: { include: ['@ruffle-rs/ruffle'] },
     server: {
       allowedHosts: ['preview.pdyxs.wtf'],
       // The glob loader reads a changed file on the watcher event, with no
@@ -65,7 +70,7 @@ export default defineConfig({
     // Dev only: content YAML (`_config.yaml`, `*.tag.yaml`, `*.lens.yaml`) is
     // read by fs / consumed by a pre* generator, so nothing in the module graph
     // changes when it does. See scripts/dev-reload-plugin.mjs.
-    plugins: [devReloadPlugin()],
+    plugins: [devReloadPlugin(), ruffleAssetsPlugin()],
     build: {
       // Any location can be pushed onto the stack from any other, and a
       // pushed location arrives as a fetched HTML fragment injected into

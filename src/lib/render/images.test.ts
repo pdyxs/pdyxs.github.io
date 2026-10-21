@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveGalleryImages } from '@render/images';
+import { resolveGalleryImages, resolveLocalSwf } from '@render/images';
 
 describe('resolveGalleryImages', () => {
   it('defaults to colocated media, leading with the header image', () => {
@@ -157,5 +157,11 @@ describe('resolveGalleryImages', () => {
       'missing.jpg',
     ]);
     expect(result.map(m => m.kind)).toEqual(['image', 'video']);
+  });
+});
+
+describe('resolveLocalSwf', () => {
+  it('is undefined for a card with no colocated SWF', () => {
+    expect(resolveLocalSwf('what/art/art-heist')).toBeUndefined();
   });
 });
