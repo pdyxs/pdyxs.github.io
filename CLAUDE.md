@@ -86,6 +86,7 @@ pure decisions / thin effects, single source of truth) live in
 | cards, folder cascade, `_config.yaml`, priority, sort, tags, `excludeTags`, generators, affiliations, the `why` dimension, difficulty, redirects, `surface`/`surfaceOn` (a card taking the viewport) | [docs/agents/content-model.md](docs/agents/content-model.md) |
 | lenses, the ranking chain, seen/unseen, home slots, the shared card pool, strip and history lenses, progressive reveal | [docs/agents/lenses-and-browse.md](docs/agents/lenses-and-browse.md) |
 | a renderer, nav renderer, collection view, card credits (`meta:`), actions, galleries, the lightbox, video embeds, header-image padding | [docs/agents/card-rendering.md](docs/agents/card-rendering.md) |
+| Star Nav (`src/components/star-nav/`): steering and reach shape, slingshot, commitment and the stop, the flight plan, the two-axis drag, pinned planet, `Tuning`, the dev tuning panel, the control schemes | [docs/agents/star-nav.md](docs/agents/star-nav.md) |
 | writing or running tests, the two vitest projects, happy-dom gaps | [docs/agents/testing.md](docs/agents/testing.md) |
 | authoring content, the Obsidian vault, Templater scaffolds, `inspected`, dev hot-reload, experiment routes, plan docs, feature worktrees and merging them | [docs/agents/workflow.md](docs/agents/workflow.md) |
 | issues, triage labels, the glossary and decision records | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md), [docs/agents/triage-labels.md](docs/agents/triage-labels.md), [docs/agents/domain.md](docs/agents/domain.md) |
