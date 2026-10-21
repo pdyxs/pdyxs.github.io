@@ -51,3 +51,12 @@ export function dragToControls(drag: Point, frame: DragFrame, tuning: Tuning): C
     commit: Math.min(1, Math.max(frame.lowestCommit, commit)),
   };
 }
+
+/**
+ * Whether a pointer movement is a drag rather than a tap: it has gone
+ * somewhere, and at least as far as the dead zone.
+ */
+export function isDrag(drag: Point, frame: DragFrame): boolean {
+  const distance = Math.hypot(drag.x, drag.y);
+  return distance > 0 && distance >= frame.deadZone;
+}

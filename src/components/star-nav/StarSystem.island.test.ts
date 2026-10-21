@@ -12,6 +12,13 @@ import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import StarSystem from '@components/star-nav/StarSystem.svelte';
 import { defaultTuning } from '@components/star-nav/sim/tuning';
+import { flightPlan } from '@components/star-nav/sim/flightPlan';
+
+// Wrap the real flightPlan in a spy, so a test can see what it was asked.
+vi.mock('@components/star-nav/sim/flightPlan', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@components/star-nav/sim/flightPlan')>();
+  return { ...actual, flightPlan: vi.fn(actual.flightPlan) };
+});
 
 const SHIP_PATH = 'M -1 3 l 0 -2 l 1 -1 l 1 1 l 0 2';
 
@@ -141,7 +148,17 @@ describe('StarSystem sizing', () => {
   });
 });
 
+// happy-dom does no layout: the drawing is BOX px wide
+const BOX = 300;
+const press = (hit: Element, init: PointerEventInit = {}) => pointer(hit, 'pointerdown', { clientX: 100, clientY: 100, ...init });
+const moveTo = (hit: Element, dx: number, dy: number, init: PointerEventInit = {}) => pointer(hit, 'pointermove', { clientX: 100 + dx, clientY: 100 + dy, ...init });
+const release = (hit: Element) => pointer(hit, 'pointerup', {});
+
 describe('StarSystem', () => {
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ width: BOX, height: BOX, x: 0, y: 0, top: 0, left: 0, right: BOX, bottom: BOX, toJSON() {} });
+  });
+
   it('shows the reach shape from the ship at its start: a narrow neck opening out ahead', () => {
     expect(reach()).toHaveLength(1);
     const pts = routePoints(reach()[0]);
@@ -218,75 +235,200 @@ describe('StarSystem', () => {
     });
   });
 
-  describe('flying', () => {
-    function flyTo(hit: Element) {
-      pointer(hit, 'pointerenter');
-      settle();
-      pointer(hit, 'pointerdown', { clientX: 100 });
-      pointer(hit, 'pointerup', { clientX: 100 });
-    }
-
-    it('press and release on a reachable planet flies the ship there, then offers a reset', () => {
-      const hit = visitable()[0];
-      pointer(hit, 'pointerenter');
-      settle();
-      const shown = routePoints(routes()[0]);
-      const endOfRoute = shown.at(-1)!;
-      pointer(hit, 'pointerdown', { clientX: 100 });
-      pointer(hit, 'pointerup', { clientX: 100 });
-      // Travel is under way: frames are queued and the ship is still at start.
-      expect(frames.size).toBe(1);
-
-      advance(100);
-      const underway = ship();
-      expect(underway).not.toBe(`${START} scale(0.05)`);
-
-      settle();
-      const arrived = ship();
-      expect(arrived).not.toBe(underway);
-      // The ship ends at the end of the route it was shown.
-      const [ax, ay] = arrived!.match(/^translate\(([-\d.e]+) ([-\d.e]+)\)/)!.slice(1).map(Number);
-      expect(ax).toBeCloseTo(endOfRoute[0], 6);
-      expect(ay).toBeCloseTo(endOfRoute[1], 6);
-      // Arrival clears the preview and the route.
-      expect(routes()).toHaveLength(0);
-      expect(resetButton()).not.toBeNull();
-    });
-
-    it('hovering another planet mid-flight does not start a new preview', () => {
-      const [first, ...rest] = visitable().length > 1 ? visitable() : [visitable()[0], ...unvisitable()];
-      flyTo(first);
-      advance(100);
-      const layersInFlight = layers().length;
-      pointer(rest[0], 'pointerenter');
-      expect(layers().length).toBe(layersInFlight);
-    });
-
+  describe('an unreachable planet', () => {
     it('a press on an unreachable planet plans nothing', () => {
       const hit = unvisitable()[0];
-      pointer(hit, 'pointerenter');
-      settle();
-      pointer(hit, 'pointerdown', { clientX: 100 });
-      pointer(hit, 'pointerup', { clientX: 100 });
-      expect(frames.size).toBe(0);
+      press(hit);
+      moveTo(hit, 40, 0);
+      release(hit);
       expect(ship()).toBe(`${START} scale(0.05)`);
+      expect(routes()).toHaveLength(0);
     });
 
-    it('a cancelled press does not fly', () => {
-      const hit = visitable()[0];
+  });
+
+  describe('tap and drag', () => {
+    const encounters = () => qa<SVGPolylineElement>('mask polyline.encounter');
+    const stops = () => qa<SVGPolylineElement>('mask polyline.stop');
+    const earliest = () => qa<SVGCircleElement>('mask circle.earliest');
+    const stopMarkers = () => qa<SVGCircleElement>('mask circle.stop-marker');
+    const centre = (c: Element) => [Number(c.getAttribute('cx')), Number(c.getAttribute('cy'))];
+    const ghostShips = () => qa(`mask path[d="${SHIP_PATH}"]`).slice(0, -1);
+
+    // Drags need the ship fast enough that planets can be flown past: mount
+    // again with the real tuning.
+    beforeEach(() => {
+      unmount(component!);
+      Object.assign(defaultTuning, realTuning);
+      component = mount(StarSystem as any, { target, props: { entryId: 'what/toys/star-navigation', images: [] } });
+      flushSync();
+    });
+
+    /** The approach direction on screen, and the way to its right, once the preview has settled. */
+    function axes(hit: Element) {
       pointer(hit, 'pointerenter');
       settle();
-      pointer(hit, 'pointerdown', { clientX: 100 });
-      pointer(hit, 'pointercancel');
-      pointer(hit, 'pointerup', { clientX: 100 });
-      expect(frames.size).toBe(0);
+      const route = routePoints(routes()[0]);
+      pointer(hit, 'pointerleave');
+      const [x0, y0] = route[0], [x1, y1] = route.at(-1)!;
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      const along = { x: (x1 - x0) / len, y: (y1 - y0) / len };
+      return { along, right: { x: -along.y, y: along.x } };
+    }
+    const by = (ax: { x: number; y: number }, k: number) => ({ dx: ax.x * k, dy: ax.y * k });
+    const sum = (a: { dx: number; dy: number }, b: { dx: number; dy: number }) => ({ dx: a.dx + b.dx, dy: a.dy + b.dy });
+
+    /** A visitable planet from which a drag makes a valid plan. */
+    function plannable() {
+      return visitable().find((hit) => {
+        const ax = axes(hit);
+        press(hit);
+        const d = sum(by(ax.right, 30), by(ax.along, 0));
+        moveTo(hit, d.dx, d.dy);
+        const ok = encounters().length === 1;
+        pointer(hit, 'pointercancel');
+        return ok;
+      })!;
+    }
+
+    it('a tap selects the planet and shows its preview, and does not move the ship', () => {
+      const hit = visitable()[0];
+      const before = layers().length;
+      press(hit);
+      release(hit);
       expect(ship()).toBe(`${START} scale(0.05)`);
+      expect(resetButton()).toBeNull();
+      settle();
+      // the preview stays up without the pointer being over the planet
+      expect(layers().length).toBe(before + 2);
+      expect(routes()).toHaveLength(1);
+      expect(encounters()).toHaveLength(0);
+    });
+
+    it('a touch that wobbles inside the dead zone is still a tap', () => {
+      const hit = visitable()[0];
+      press(hit, { pointerType: 'touch' });
+      moveTo(hit, 4, 4, { pointerType: 'touch' });
+      release(hit);
+      expect(ship()).toBe(`${START} scale(0.05)`);
+      expect(encounters()).toHaveLength(0);
+      expect(routes()).toHaveLength(1);
+    });
+
+    it('selecting another planet replaces the selection', () => {
+      const [a, b] = visitable().length > 1 ? visitable() : [visitable()[0], visitable()[0]];
+      press(a); release(a); settle();
+      const first = routePoints(routes()[0]).at(-1);
+      press(b); release(b); settle();
+      expect(routes()).toHaveLength(1);
+      if (a !== b) expect(routePoints(routes()[0]).at(-1)).not.toEqual(first);
+    });
+
+    it('dragging shows the route, the encounter, the stop with a marker, the reach shape and the earliest choice', () => {
+      const hit = plannable();
+      const ax = axes(hit);
+      press(hit);
+      const d = by(ax.right, 30);
+      moveTo(hit, d.dx, d.dy);
+      expect(routes()).toHaveLength(1);
+      expect(encounters()).toHaveLength(1);
+      expect(stops()).toHaveLength(1);
+      expect(stopMarkers()).toHaveLength(1);
+      expect(earliest()).toHaveLength(1);
+      expect(ghostShips()).toHaveLength(1);
+      // the reach shape is drawn from the after-stop pose, not from the ship
+      expect(routePoints(reach()[0])[0]).not.toEqual([0, 4]);
+    });
+
+    it('dragging across the approach changes the route; the pass is on the side of the drag', () => {
+      const hit = plannable();
+      const ax = axes(hit);
+      press(hit);
+      const r = by(ax.right, 40), l = by(ax.right, -40);
+      moveTo(hit, r.dx, r.dy);
+      const right = routePoints(routes()[0]).at(-1)!;
+      moveTo(hit, l.dx, l.dy);
+      const left = routePoints(routes()[0]).at(-1)!;
+      const side = (p: number[]) => (p[0] - 0) * ax.right.x + (p[1] - 4) * ax.right.y;
+      expect(side(right)).toBeGreaterThan(side(left));
+    });
+
+    it('dragging along the approach moves the end of the stop, never before the earliest choice', () => {
+      const hit = plannable();
+      const ax = axes(hit);
+      press(hit);
+      const sideways = by(ax.right, 30);
+      const fwd = sum(sideways, by(ax.along, 50));
+      moveTo(hit, fwd.dx, fwd.dy);
+      const forward = encounters()[0].getAttribute('points')!.split(' ').length;
+      const back = sum(sideways, by(ax.along, -200));
+      moveTo(hit, back.dx, back.dy);
+      expect(encounters()[0].getAttribute('points')!.split(' ').length).toBeLessThan(forward);
+      // as early as it can go, the choice point is the marked earliest one
+      expect(centre(stopMarkers()[0])).toEqual(centre(earliest()[0]));
+    });
+
+    it('the frame is fixed at press: the same drag vector gives the same plan however the pointer got there', () => {
+      const hit = plannable();
+      const ax = axes(hit);
+      press(hit);
+      const target = sum(by(ax.right, 30), by(ax.along, 10));
+      moveTo(hit, target.dx, target.dy);
+      const direct = routes()[0].getAttribute('points');
+      moveTo(hit, -80, 60);
+      moveTo(hit, target.dx, target.dy);
+      expect(routes()[0].getAttribute('points')).toBe(direct);
+    });
+
+    it('releasing a drag jumps the ship to the ghost ship at the end of the plan', () => {
+      const hit = plannable();
+      const ax = axes(hit);
+      press(hit);
+      const d = by(ax.right, 30);
+      moveTo(hit, d.dx, d.dy);
+      const planned = ghostShips()[0].getAttribute('transform');
+      release(hit);
+      expect(ship()).toBe(planned);
+      expect(ship()).not.toBe(`${START} scale(0.05)`);
+      expect(resetButton()).not.toBeNull();
+      expect(encounters()).toHaveLength(0);
+      expect(frames.size).toBe(0);
+    });
+
+    it('a cancelled drag does not move the ship', () => {
+      const hit = plannable();
+      const ax = axes(hit);
+      press(hit);
+      const d = by(ax.right, 30);
+      moveTo(hit, d.dx, d.dy);
+      pointer(hit, 'pointercancel');
+      pointer(hit, 'pointerup', {});
+      expect(ship()).toBe(`${START} scale(0.05)`);
+      expect(encounters()).toHaveLength(0);
+    });
+
+    it('the planet stays pinned: every plan in a gesture is made for the same arrival', () => {
+      const hit = plannable();
+      const ax = axes(hit);
+      vi.mocked(flightPlan).mockClear();
+      press(hit);
+      for (const k of [10, 25, -30, 45]) {
+        const d = by(ax.right, k);
+        moveTo(hit, d.dx, d.dy);
+      }
+      const arrivals = vi.mocked(flightPlan).mock.calls.map(([input]) => input.pinnedArrival);
+      expect(arrivals.length).toBeGreaterThan(3);
+      expect(new Set(arrivals).size).toBe(1);
     });
 
     it('reset puts the ship and the system back to the start', () => {
       const hitsAtStart = hits().map((h) => [h.getAttribute('cx'), h.getAttribute('cy')]);
-      flyTo(visitable()[0]);
-      settle();
+      const hit = plannable();
+      const ax = axes(hit);
+      press(hit);
+      const d = by(ax.right, 30);
+      moveTo(hit, d.dx, d.dy);
+      release(hit);
       // Orbit time moved, so the planets did too.
       expect(hits().map((h) => [h.getAttribute('cx'), h.getAttribute('cy')])).not.toEqual(hitsAtStart);
 
@@ -297,17 +439,8 @@ describe('StarSystem', () => {
       expect(hits().map((h) => [h.getAttribute('cx'), h.getAttribute('cy')])).toEqual(hitsAtStart);
     });
 
-    it('reset mid-flight stops the travel', () => {
-      flyTo(visitable()[0]);
-      advance(100);
-      resetButton()!.click();
-      flushSync();
-      expect(frames.size).toBe(0);
-      expect(ship()).toBe(`${START} scale(0.05)`);
-    });
-
-    it('unmounting mid-flight cancels the animation frame', () => {
-      flyTo(visitable()[0]);
+    it('unmounting cancels the reveal animation frame', () => {
+      pointer(visitable()[0], 'pointerenter');
       advance(100);
       unmount(component!);
       component = null;

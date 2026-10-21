@@ -3,15 +3,17 @@
   import DitherSvg from '@components/dither-svg/DitherSvg.svelte';
   import DitherLayer from '@components/dither-svg/DitherLayer.svelte';
   import HitLayer from '@components/dither-svg/HitLayer.svelte';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import { cubicInOut as easeInOut } from 'svelte/easing';
   import { Planet } from './planet';
   import { planApproach, type Approach } from './sim/approach';
+  import { approachFrame, dragToControls, isDrag, type DragFrame } from './sim/dragFrame';
+  import { flightPlan, type FlightPlan } from './sim/flightPlan';
   import { reachShape } from './sim/steering';
   import { routeUpTo } from './sim/route';
   import { defaultTuning } from './sim/tuning';
   import type { StarSystem } from './star_system';
-  import type { Point, Pose } from './types';
+  import type { Pose } from './types';
 
   const { entryId, images }: HeaderMediaProps = $props();
 
@@ -31,9 +33,6 @@
   const tuning = defaultTuning;
   // The ship's reach shape, drawn dithered at this level.
   const REACH_LEVEL = 1;
-  // How much a finger may wobble on touch-down and still be a tap.
-  // seconds of orbit time per wall-clock second while travelling
-  const TIME_SCALE = 1;
   // Under prefers-reduced-motion the reveal and the trip still happen — where
   // things end up along an orbit is the point of them, not decoration — but
   // they run this many times faster, and without easing.
@@ -41,6 +40,13 @@
   // The dotted route from the ship to a visitable intercept point
   const ROUTE_LEVEL = 8;
   const ROUTE_DASH = 0.08;
+  // The pass through the slingshot, the stop (a thick segment with a marker
+  // where it begins) and the earliest allowed choice point.
+  const ENCOUNTER_LEVEL = 12;
+  const STOP_LEVEL = 16;
+  const STOP_WIDTH = 0.06;
+  const STOP_MARKER_RADIUS = 0.07;
+  const EARLIEST_MARKER_RADIUS = 0.09;
 
   const system: StarSystem = {
     star: {},
@@ -77,31 +83,67 @@
     system.planets.map((planet) => planApproach(ship, baseTime, planet, tuning))
   );
 
-  // While a visitable planet is hovered, ghosts show where every planet will be
-  // at the moment the ship, leaving now, would arrive, and the curved route
-  // grows from the ship to the arrival point. The real planets don't move, so
-  // the hit circle under the pointer stays put. A planet that isn't visitable
-  // has no arrival moment, so it previews nothing.
+  // The island stores only inputs: the ship, the time, which planet is
+  // hovered, which is selected, and the drag in progress. Everything drawn
+  // is derived from them.
   //
-  // `preview` is the hover's target approach; `previewProgress` (0-1, eased) is
-  // how far the reveal has got, driven by a rAF loop over PREVIEW_MS of
-  // wall-clock time. Everything drawn derives from the two: the ghosts sit
-  // at the time interpolated between now and the arrival, and the route
-  // grows along its length. Pointer-out cancels the loop and nulls the
-  // target, which unmounts both layers.
-  let preview = $state<Approach | null>(null);
-  let previewProgress = $state(0);
+  // A tap selects a planet (a touch has no hover, so this is the first the
+  // planet hears of it); a drag from a planet plans a flight past it and
+  // releasing the drag commits. The drag's frame (its axes, its limits) and
+  // the planet's pinned arrival time are fixed at press: moving the finger
+  // reshapes the route, never the axes or the moment the planet is met.
+  let hovered = $state<number | null>(null);
+  let selected = $state<number | null>(null);
+  type Drag = {
+    i: number;
+    frame: DragFrame;
+    pinnedArrival: number;
+    originX: number;
+    originY: number;
+    dx: number;
+    dy: number;
+  };
+  let drag = $state<Drag | null>(null);
 
+  const dragVector = $derived(drag ? { x: drag.dx, y: drag.dy } : null);
+  const dragging = $derived(drag !== null && isDrag(dragVector!, drag.frame));
+  const controls = $derived(drag ? dragToControls(dragVector!, drag.frame, tuning) : null);
+  const plan = $derived<FlightPlan | null>(
+    dragging && drag && controls
+      ? flightPlan({
+          ship, time: baseTime, system, target: drag.i, controls,
+          pinnedArrival: drag.pinnedArrival, tuning,
+        })
+      : null
+  );
+
+  // The planet whose preview is up: the one being dragged, else the hovered
+  // one, else the selected one. A planet that isn't visitable previews nothing.
+  const previewIndex = $derived(drag?.i ?? hovered ?? selected);
+  const preview = $derived<Approach | null>(
+    previewIndex === null ? null : approaches[previewIndex]
+  );
+
+  // The preview reveals over PREVIEW_MS of wall-clock time: `previewProgress`
+  // (0-1, eased) is how far it has got, driven by a rAF loop that restarts
+  // whenever the planet previewed changes. The ghosts sit at the time
+  // interpolated between now and the arrival, and the route grows along its
+  // length. While dragging the whole plan is shown at once.
+  let previewProgress = $state(0);
+  const shownProgress = $derived(dragging ? 1 : previewProgress);
   const previewTime = $derived(
-    preview === null ? null : baseTime + (preview.arrivalTime - baseTime) * previewProgress
+    preview === null ? null : baseTime + (preview.arrivalTime - baseTime) * shownProgress
   );
   const previewPositions = $derived.by(() => {
     const at = previewTime;
     return at === null ? [] : system.planets.map((p) => p.positionAt(at));
   });
-  // The part of the route revealed so far, and the ghost ship at its tip,
-  // which on arrival has the pose the ship will have.
-  const revealed = $derived(preview ? routeUpTo(preview.route, previewProgress) : null);
+  // The part of the route revealed so far.
+  const revealed = $derived(preview ? routeUpTo(preview.route, shownProgress) : null);
+
+  // The reach shape from where steering would start: after the stop of a plan
+  // being dragged, else from the ship.
+  const reach = $derived(plan ? plan.reachShape : reachShape(ship, tuning));
 
   let previewFrame: number | null = null;
 
@@ -110,12 +152,10 @@
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const linear = (t: number) => t;
 
-  function startPreview(i: number) {
-    if (travel) return;
+  function restartReveal(visitable: boolean) {
     cancelPreviewLoop();
-    const target = approaches[i];
-    if (target === null) { preview = null; return; }
-    preview = target;
+    previewProgress = 0;
+    if (!visitable) return;
 
     const reduced = reducedMotion();
     const duration = reduced ? PREVIEW_MS / REDUCED_SPEEDUP : PREVIEW_MS;
@@ -127,89 +167,71 @@
       previewProgress = ease(t);
       previewFrame = t < 1 ? requestAnimationFrame(step) : null;
     };
-    previewProgress = 0;
     previewFrame = requestAnimationFrame(step);
   }
 
-  function endPreview() {
-    if (travel) return;
-    cancelPreviewLoop();
-    preview = null;
-    previewProgress = 0;
-  }
+  $effect(() => {
+    const visitable = preview !== null;
+    previewIndex; // restart when the planet previewed changes
+    untrack(() => restartReveal(visitable));
+  });
 
   function cancelPreviewLoop() {
     if (previewFrame !== null) cancelAnimationFrame(previewFrame);
     previewFrame = null;
   }
 
-  // Planning a move: pointer held down on a visitable planet. The pointer is
-  // captured, so the hover preview stays up until the release flies the ship
-  // there (or a cancel drops the plan).
-  let plan = $state<{ i: number } | null>(null);
-
-  // The ghost ship: where the revealed route has got to, and the reach shape
-  // the ship would have from there.
-  const ghostShip = $derived(plan && revealed ? revealed.pose : null);
-
-  function beginPlan(e: PointerEvent, i: number) {
-    if (travel || !approaches[i]) return;
-    (e.currentTarget as Element).setPointerCapture(e.pointerId);
-    plan = { i };
-    // A touch has no hover: this is the first the planet has heard of it.
-    if (!preview) startPreview(i);
-  }
-
-  function commitPlan() {
-    const target = plan ? approaches[plan.i] : null;
-    plan = null;
-    if (target) startTravel(target);
-  }
-
-  function cancelPlan() {
-    plan = null;
-  }
-
-  // Travelling: baseTime runs forward at TIME_SCALE until it reaches the
-  // arrival moment, and the ship slides along the curved route to meet
-  // the planet. The hover preview is frozen at the arrival moment for the
-  // duration (previewProgress pinned at 1), then everything clears.
-  type Travel = { route: Point[]; fromTime: number; to: Approach };
-  let travel = $state<Travel | null>(null);
-  let travelFrame: number | null = null;
-
-  function startTravel(to: Approach) {
-    cancelPreviewLoop();
-    previewProgress = 1;
-    travel = { route: to.route, fromTime: baseTime, to };
-
-    const rate = TIME_SCALE * (reducedMotion() ? REDUCED_SPEEDUP : 1);
-
-    let last = performance.now();
-    const step = (now: number) => {
-      const t = travel!;
-      baseTime = Math.min(t.to.arrivalTime, baseTime + ((now - last) / 1000) * rate);
-      last = now;
-      const progress = (baseTime - t.fromTime) / (t.to.arrivalTime - t.fromTime);
-      ship = routeUpTo(t.route, progress).pose;
-      if (baseTime < t.to.arrivalTime) travelFrame = requestAnimationFrame(step);
-      else arrive();
+  function press(e: PointerEvent, i: number) {
+    const approach = approaches[i];
+    if (!approach) return;
+    const target = e.currentTarget as Element;
+    target.setPointerCapture(e.pointerId);
+    const boxWidth = target.closest('svg')!.getBoundingClientRect().width;
+    // The earliest allowed commitment depends on the pass, which the drag is
+    // still to choose, so the frame leaves it at 0 and the plan raises a
+    // commit that is too early.
+    const base = {
+      boxWidth,
+      deadZone: e.pointerType === 'mouse' ? 0 : tuning.touchDeadPx,
+      minOffset: PLANET_RADIUS,
+      lowestCommit: 0,
     };
-    travelFrame = requestAnimationFrame(step);
+    const pinnedArrival = approach.arrivalTime;
+    drag = {
+      i,
+      frame: approachFrame(ship, approach.arrivalPose, base),
+      pinnedArrival,
+      originX: e.clientX,
+      originY: e.clientY,
+      dx: 0,
+      dy: 0,
+    };
   }
 
-  function arrive() {
-    const t = travel!;
-    baseTime = t.to.arrivalTime;
-    ship = { ...t.to.arrivalPose };
-    travel = null;
-    travelFrame = null;
-    endPreview();
+  function move(e: PointerEvent) {
+    if (!drag) return;
+    drag.dx = e.clientX - drag.originX;
+    drag.dy = e.clientY - drag.originY;
   }
 
-  function cancelTravelLoop() {
-    if (travelFrame !== null) cancelAnimationFrame(travelFrame);
-    travelFrame = null;
+  // Releasing a drag jumps the ship to the plan's end pose; releasing a tap
+  // selects the planet.
+  function release() {
+    if (!drag) return;
+    const { i } = drag;
+    const to = plan;
+    const wasDrag = dragging;
+    drag = null;
+    if (!wasDrag) { selected = i; return; }
+    if (to?.valid) {
+      ship = { ...to.afterPose };
+      baseTime = to.endTime;
+      selected = null;
+    }
+  }
+
+  function cancel() {
+    drag = null;
   }
 
   // Nothing here is recoverable once the ship has flown — there is no history
@@ -223,17 +245,13 @@
   );
 
   function reset() {
-    cancelPreviewLoop();
-    cancelTravelLoop();
-    travel = null;
-    plan = null;
-    preview = null;
-    previewProgress = 0;
+    drag = null;
+    selected = null;
     baseTime = 0;
     ship = { ...SHIP_START };
   }
 
-  onDestroy(() => { cancelPreviewLoop(); cancelTravelLoop(); });
+  onDestroy(cancelPreviewLoop);
 </script>
 
 <div class="star-system">
@@ -243,7 +261,7 @@
        planned it is the one the ship would have on arrival. -->
   <DitherLayer level={REACH_LEVEL}>
     <polygon class="reach"
-      points={reachShape(ghostShip ?? ship, tuning).map((p) => `${p.x},${p.y}`).join(' ')} />
+      points={reach.map((p) => `${p.x},${p.y}`).join(' ')} />
   </DitherLayer>
 
   <DitherLayer level={4}>
@@ -266,9 +284,9 @@
       {#each previewPositions as p}
         <circle cx={p.x} cy={p.y} r={PLANET_RADIUS} />
       {/each}
-      {#if ghostShip}
+      {#if plan}
         <path
-          transform="translate({ghostShip.x} {ghostShip.y}) rotate({ghostShip.heading}) scale({SHIP_SCALE})"
+          transform="translate({plan.afterPose.x} {plan.afterPose.y}) rotate({plan.afterPose.heading}) scale({SHIP_SCALE})"
           d={SHIP_PATH} />
       {/if}
     </DitherLayer>
@@ -277,8 +295,25 @@
   {#if revealed}
     <DitherLayer level={ROUTE_LEVEL}>
       <polyline class="route" fill="none"
-        points={revealed.points.map((p) => `${p.x},${p.y}`).join(' ')}
+        points={(plan ? plan.route : revealed.points).map((p) => `${p.x},${p.y}`).join(' ')}
         stroke-width={ORBIT_RADIUS} stroke-dasharray="{ROUTE_DASH} {ROUTE_DASH}" />
+    </DitherLayer>
+  {/if}
+
+  {#if plan}
+    <DitherLayer level={ENCOUNTER_LEVEL}>
+      <polyline class="encounter" fill="none"
+        points={plan.encounterPath.map((p) => `${p.x},${p.y}`).join(' ')}
+        stroke-width={ORBIT_RADIUS} />
+      <circle class="earliest" fill="none" stroke-width={ORBIT_RADIUS}
+        cx={plan.lowestCommitPose.x} cy={plan.lowestCommitPose.y} r={EARLIEST_MARKER_RADIUS} />
+    </DitherLayer>
+    <DitherLayer level={STOP_LEVEL}>
+      <polyline class="stop" fill="none"
+        points={plan.stopPath.map((p) => `${p.x},${p.y}`).join(' ')}
+        stroke-width={STOP_WIDTH} />
+      <circle class="stop-marker"
+        cx={plan.choicePose.x} cy={plan.choicePose.y} r={STOP_MARKER_RADIUS} />
     </DitherLayer>
   {/if}
 
@@ -300,11 +335,12 @@
       <circle role="presentation" class="planet-hit"
         cx={p.x} cy={p.y} r={PLANET_HIT_RADIUS}
         style:cursor={approaches[i] ? 'pointer' : 'default'}
-        onpointerenter={() => startPreview(i)}
-        onpointerleave={endPreview}
-        onpointerdown={(e) => beginPlan(e, i)}
-        onpointerup={commitPlan}
-        onpointercancel={cancelPlan} />
+        onpointerenter={() => (hovered = i)}
+        onpointerleave={() => (hovered = null)}
+        onpointerdown={(e) => press(e, i)}
+        onpointermove={move}
+        onpointerup={release}
+        onpointercancel={cancel} />
     {/each}
   </HitLayer>
 </DitherSvg>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { approachFrame, dragToControls, type DragFrame } from './dragFrame';
+import { approachFrame, dragToControls, isDrag, type DragFrame } from './dragFrame';
 import { defaultTuning, type Tuning } from './tuning';
 
 const tuning: Tuning = { ...defaultTuning, dragRange: 0.5, maxOffset: 1, defaultCommit: 0.5 };
@@ -59,5 +59,18 @@ describe('dragToControls: the dead zone', () => {
 
   it('a box with no width ignores the drag rather than dividing by it', () => {
     expect(dragToControls({ x: 50, y: -20 }, { ...frame, boxWidth: 0 }, tuning)).toEqual({ offset: 0.05, commit: 0.5 });
+  });
+});
+
+describe('isDrag', () => {
+  it('a mouse that has not moved is a tap; any movement is a drag', () => {
+    expect(isDrag({ x: 0, y: 0 }, frame)).toBe(false);
+    expect(isDrag({ x: 0.5, y: 0 }, frame)).toBe(true);
+  });
+
+  it('a touch is a tap until it leaves the dead zone', () => {
+    const touch = { ...frame, deadZone: 8 };
+    expect(isDrag({ x: 5, y: 5 }, touch)).toBe(false);
+    expect(isDrag({ x: 6, y: 6 }, touch)).toBe(true);
   });
 });
