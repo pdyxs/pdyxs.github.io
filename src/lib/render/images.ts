@@ -37,6 +37,22 @@ export function resolveLocalVideo(entryId: string, filename: string | undefined)
   return localVideos[path];
 }
 
+// SWFs are likewise served as plain URLs and handed to Ruffle at click time.
+const localSwfs = import.meta.glob<string>(
+  '/src/content/**/*.swf',
+  { query: '?url', import: 'default', eager: true }
+);
+
+/**
+ * The URL of a card's colocated SWF, or undefined. A card has at most one, so
+ * unlike resolveLocalVideo there is no filename to name it by.
+ */
+export function resolveLocalSwf(entryId: string): string | undefined {
+  const prefix = `/src/content/${entryId}/`;
+  const path = Object.keys(localSwfs).find(p => p.startsWith(prefix) && !p.slice(prefix.length).includes('/'));
+  return path ? localSwfs[path] : undefined;
+}
+
 /**
  * Every colocated asset filename in a card's own directory, relative to that
  * directory (e.g. "hero.png", "shots/wide.jpg"). Images and videos both count —

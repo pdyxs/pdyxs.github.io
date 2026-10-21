@@ -342,3 +342,19 @@ the page jumps as each one finally pops in.
 The header image is the exception to the no-repeats rule above — it always leads
 the gallery, because the lightbox is the only way to see it full size.
 
+
+## Flash games (`headerMedia: flash-game`)
+
+A card folder holding one `.swf` plus a poster image plays the game in its
+header through self-hosted Ruffle (`@ruffle-rs/ruffle`, exact version pinned).
+`resolveLocalSwf(entryId)` finds the SWF URL; `readCardSwfHeader` /
+`parseSwfHeader` (`src/lib/render/swf.ts`) read the stage size at build time so
+`FlashGame.svelte` reserves the aspect ratio (`--flash-aspect`). The first
+colocated image is the poster, and the gallery strip is skipped for these
+cards. Ruffle is imported only on the play click, by `src/lib/flash/ruffle-loader.ts`
+(injectable as the `loadPlayer` prop, which is how tests avoid WASM). Its
+chunks and `.wasm` are served at `/ruffle/` by `scripts/ruffle-assets-plugin.mjs`
+(`publicPath`). Selectors: `.flash-game`, `.flash-stage`, `.flash-player`,
+`.flash-poster`, `.flash-play`, `.flash-fullscreen`; CSS variable `--flash-aspect`.
+Pre-existing `image:` is not used by the island: a card whose `image:` is a video
+embed should move it into the body.
