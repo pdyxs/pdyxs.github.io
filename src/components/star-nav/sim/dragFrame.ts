@@ -1,7 +1,7 @@
 import type { Point } from '../types';
 import { headingBetween } from './route';
 import type { Tuning } from './tuning';
-import type { Controls } from './flightPlan';
+import type { ApproachControls, CommitmentControls, Controls } from './flightPlan';
 
 const RAD = Math.PI / 180;
 
@@ -31,25 +31,57 @@ export function approachFrame(
   return { heading: headingBetween(ship, intercept), ...rest };
 }
 
+/** The drag split on the frame's axes, in px: across the approach and along it. */
+function axesOf(drag: Point, frame: DragFrame, range: number) {
+  const h = frame.heading * RAD;
+  const ignored = Math.hypot(drag.x, drag.y) < frame.deadZone || !(range > 0);
+  return {
+    across: ignored ? 0 : drag.x * Math.cos(h) + drag.y * Math.sin(h),
+    along: ignored ? 0 : drag.x * Math.sin(h) - drag.y * Math.cos(h),
+  };
+}
+
+/** The pass: the side the drag is on, scaled by the drag range, within the frame's limits. */
+function passOffset(across: number, range: number, frame: DragFrame, tuning: Tuning): number {
+  const size = Math.min(tuning.maxOffset, Math.max(frame.minOffset, (range > 0 ? (Math.abs(across) / range) * tuning.maxOffset : 0)));
+  return across < 0 ? -size : size;
+}
+
+/** `commitment` scheme: along the approach is the commitment, forward is more. */
+function commitmentControls(across: number, along: number, range: number, frame: DragFrame, tuning: Tuning): CommitmentControls {
+  const commit = tuning.defaultCommit + (range > 0 ? along / range : 0);
+  return {
+    scheme: 'commitment',
+    offset: passOffset(across, range, frame, tuning),
+    commit: Math.min(1, Math.max(frame.lowestCommit, commit)),
+  };
+}
+
 /**
- * A pointer drag (px, y down) as the plan's controls. Across the approach
- * sets the pass: the side the drag is on, scaled by the drag range, at least
- * the planet's radius and at most `maxOffset`. Along it sets the commitment:
- * forward is more, back is less, between the frame's lowest and 1.
+ * `approach` scheme: along the approach is the route's curvature, from 0 to
+ * 1/turnRadius, neutral at half; one drag range from neutral spans all of it.
+ */
+function approachControls(across: number, along: number, range: number, frame: DragFrame, tuning: Tuning): ApproachControls {
+  const sign = tuning.curvatureDirection === 'up-is-less' ? -1 : 1;
+  const fraction = 0.5 + (range > 0 ? (sign * along) / (2 * range) : 0);
+  return {
+    scheme: 'approach',
+    offset: passOffset(across, range, frame, tuning),
+    curvature: Math.min(1, Math.max(0, fraction)) / tuning.turnRadius,
+  };
+}
+
+/**
+ * A pointer drag (px, y down) as the plan's controls, for the tuning's control
+ * scheme. Across the approach always sets the pass; along it sets the
+ * commitment or the curvature.
  */
 export function dragToControls(drag: Point, frame: DragFrame, tuning: Tuning): Controls {
   const range = tuning.dragRange * frame.boxWidth;
-  const h = frame.heading * RAD;
-  const ignored = Math.hypot(drag.x, drag.y) < frame.deadZone || !(range > 0);
-  const across = ignored ? 0 : drag.x * Math.cos(h) + drag.y * Math.sin(h);
-  const along = ignored ? 0 : drag.x * Math.sin(h) - drag.y * Math.cos(h);
-
-  const size = Math.min(tuning.maxOffset, Math.max(frame.minOffset, (range > 0 ? (Math.abs(across) / range) * tuning.maxOffset : 0)));
-  const commit = tuning.defaultCommit + (range > 0 ? along / range : 0);
-  return {
-    offset: across < 0 ? -size : size,
-    commit: Math.min(1, Math.max(frame.lowestCommit, commit)),
-  };
+  const { across, along } = axesOf(drag, frame, range);
+  return tuning.controlScheme === 'approach'
+    ? approachControls(across, along, range, frame, tuning)
+    : commitmentControls(across, along, range, frame, tuning);
 }
 
 /**

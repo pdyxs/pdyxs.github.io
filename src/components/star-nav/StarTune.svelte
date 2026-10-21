@@ -41,6 +41,16 @@
     else setStop({ mode });
   }
 
+  const DIRECTIONS = [
+    ['up-is-more', 'Up is more curvature'],
+    ['up-is-less', 'Up is less curvature'],
+  ] as const;
+
+  // The fixed commitment is 'lowest' or a number; the slider appears for a number.
+  const fixed = $derived(tuning.fixedCommitment);
+  const chooseFixed = (kind: 'lowest' | 'number') =>
+    onchange({ ...tuning, fixedCommitment: kind === 'lowest' ? 'lowest' : 0.5 });
+
   const reset = () => onchange({ ...defaultTuning });
 </script>
 
@@ -55,6 +65,46 @@
       <output class="star-tune-value">{tuning[key]}</output>
     </label>
   {/each}
+
+  <fieldset class="star-tune-stop">
+    <legend class="star-tune-name">controlScheme</legend>
+    {#each ['commitment', 'approach'] as const as scheme}
+      <label class="star-tune-radio">
+        <input type="radio" name="star-tune-scheme" value={scheme}
+          checked={tuning.controlScheme === scheme}
+          onchange={() => onchange({ ...tuning, controlScheme: scheme })} />
+        {scheme}
+      </label>
+    {/each}
+    {#if tuning.controlScheme === 'approach'}
+      {#each DIRECTIONS as [direction, label]}
+        <label class="star-tune-radio">
+          <input type="radio" name="star-tune-direction" value={direction}
+            checked={tuning.curvatureDirection === direction}
+            onchange={() => onchange({ ...tuning, curvatureDirection: direction })} />
+          {label}
+        </label>
+      {/each}
+      <label class="star-tune-radio">
+        <input type="radio" name="star-tune-fixed" value="lowest"
+          checked={fixed === 'lowest'} onchange={() => chooseFixed('lowest')} />
+        Fixed commitment: lowest allowed
+      </label>
+      <label class="star-tune-radio">
+        <input type="radio" name="star-tune-fixed" value="number"
+          checked={fixed !== 'lowest'} onchange={() => chooseFixed('number')} />
+        Fixed commitment: a number
+      </label>
+      {#if fixed !== 'lowest'}
+        <label class="star-tune-row">
+          <span class="star-tune-name">fixedCommitment</span>
+          <input data-tune="fixedCommitment" type="range" min="0" max="1" step="0.01" value={fixed}
+            oninput={(e) => onchange({ ...tuning, fixedCommitment: e.currentTarget.valueAsNumber })} />
+          <output class="star-tune-value">{fixed}</output>
+        </label>
+      {/if}
+    {/if}
+  </fieldset>
 
   <fieldset class="star-tune-stop">
     <legend class="star-tune-name">stopRule</legend>

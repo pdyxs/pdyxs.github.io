@@ -4,19 +4,31 @@ import { afterStop, lowestCommitment } from './commitment';
 import { gravityReachShape } from './gravityReach';
 import { poseAtCommitment, simulateEncounter } from './encounter';
 import type { Sample } from './gravity';
+import { solveApproachByCurvature } from './approachCurvature';
 import { routeUpTo } from './route';
 import { steerPath, steeringTo } from './steering';
 import type { Tuning } from './tuning';
 
 const RAD = Math.PI / 180;
 
-/** What the player's drag decides. */
-export type Controls = {
+/** `commitment` scheme: what the player's drag decides. */
+export type CommitmentControls = {
+  scheme: 'commitment';
   /** Lateral distance of the pass: positive passes with the planet on the ship's left. */
   offset: number;
   /** 0-1: how much of the slingshot happens before the next choice. */
   commit: number;
 };
+
+/** `approach` scheme: what the player's drag decides. */
+export type ApproachControls = {
+  scheme: 'approach';
+  offset: number;
+  /** 0 to 1/turnRadius: how tightly the route bends towards the target. */
+  curvature: number;
+};
+
+export type Controls = CommitmentControls | ApproachControls;
 
 export type FlightPlan = {
   valid: boolean;
@@ -85,10 +97,25 @@ function sampleAt(samples: { t: number; pose: Pose }[], t: number): Pose {
   };
 }
 
-export function flightPlan(input: FlightPlanInput): FlightPlan | null {
-  const { ship, time, system, target, controls, pinnedArrival, tuning } = input;
-  const planet = system.planets[target];
-  const pinned = planet.positionAt(pinnedArrival);
+/** What a scheme decides before the shared encounter: the route in, and when and how it arrives. */
+type Approach = {
+  valid: boolean;
+  route: Point[];
+  /** Orbit time at which the encounter begins. */
+  arrivalTime: number;
+  /** Degrees clockwise from up: the way the encounter's local frame faces. */
+  arrivalHeading: number;
+  /** The commitment asked for; raised to the lowest allowed. */
+  commit: 'lowest' | number;
+};
+
+/**
+ * `commitment` scheme: the planet is pinned at the zero-offset arrival, and
+ * the route bends to meet the entry point of the chosen pass there.
+ */
+function pinnedApproach(input: FlightPlanInput, controls: CommitmentControls): Approach | null {
+  const { ship, system, target, pinnedArrival, tuning } = input;
+  const pinned = system.planets[target].positionAt(pinnedArrival);
 
   // The way the zero-offset plan arrives is the way every plan arrives.
   const straight = steeringTo(ship, pinned, tuning);
@@ -101,12 +128,44 @@ export function flightPlan(input: FlightPlanInput): FlightPlan | null {
     ? steerPath(ship, steer.side, steer.turnAmount, tuning, steer.length)
     : [{ x: ship.x, y: ship.y }, entry];
   route[route.length - 1] = entry;
+  return { valid: steer !== null, route, arrivalTime: pinnedArrival, arrivalHeading, commit: controls.commit };
+}
+
+/**
+ * `approach` scheme: the route is chosen by its curvature, and the arrival
+ * time and heading follow from it. The commitment is the tuning's fixed one.
+ */
+function curvatureApproach(input: FlightPlanInput, controls: ApproachControls): Approach | null {
+  const { ship, time, system, target, tuning } = input;
+  const solved = solveApproachByCurvature({
+    pose: ship, time, planet: system.planets[target],
+    offset: controls.offset, kappa: controls.curvature, tuning,
+  });
+  if (!solved) return null;
+  return {
+    valid: true,
+    route: solved.route.points,
+    arrivalTime: solved.arrivalTime,
+    arrivalHeading: solved.arrivalHeading,
+    commit: tuning.fixedCommitment,
+  };
+}
+
+export function flightPlan(input: FlightPlanInput): FlightPlan | null {
+  const { ship, time, system, target, controls, tuning } = input;
+  const planet = system.planets[target];
+  const approach = controls.scheme === 'approach'
+    ? curvatureApproach(input, controls)
+    : pinnedApproach(input, controls);
+  if (!approach) return null;
+  const { route, arrivalTime: pinnedArrival, arrivalHeading } = approach;
 
   // The pass, in the local frame, then carried with the planet.
   const mu = tuning.massScale * planet.mass;
   const encounter = simulateEncounter(controls.offset, mu, tuning);
   const lowest = lowestCommitment(encounter, tuning.stopRule, tuning.keepFactor, mu, tuning);
-  const commit = Math.min(1, Math.max(lowest, controls.commit));
+  const asked = approach.commit === 'lowest' ? lowest : approach.commit;
+  const commit = Math.min(1, Math.max(lowest, asked));
   const after = afterStop(encounter, commit, tuning.stopRule, mu, tuning);
 
   const earliest = poseAtCommitment(encounter, lowest);
@@ -122,7 +181,7 @@ export function flightPlan(input: FlightPlanInput): FlightPlan | null {
 
   const endTime = pinnedArrival + after.steerStart.t;
   return {
-    valid: steer !== null,
+    valid: approach.valid,
     route,
     arrivalTime: pinnedArrival,
     encounterPath: encounterSamples.map((s) => s.pose),

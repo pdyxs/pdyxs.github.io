@@ -32,7 +32,19 @@
   // The mechanic's numbers (speed, turning radius, turn cap) live in sim/tuning.
   // The island holds the one tuning object and hands it to every pure function.
   // Replaced wholesale (never mutated), so the dev panel only ever swaps it.
-  let tuning = $state.raw<Tuning>({ ...defaultTuning });
+  //
+  // The control scheme is part of it. Only a development build ever starts
+  // anywhere but the default: the gate is inline so the bundler folds it away
+  // and no production code reads the URL for it.
+  let tuning = $state.raw<Tuning>({ ...defaultTuning, ...devSchemeFromUrl() });
+
+  function devSchemeFromUrl(): Pick<Tuning, 'controlScheme'> | null {
+    if (import.meta.env.DEV && typeof location !== 'undefined'
+      && new URLSearchParams(location.search).get('scheme') === 'approach') {
+      return { controlScheme: 'approach' };
+    }
+    return null;
+  }
 
   // The dev-only tuning panel. Both gates are written inline so the bundler
   // folds `import.meta.env.DEV` to false in production and drops the dynamic
@@ -157,8 +169,13 @@
   // length. While dragging the whole plan is shown at once.
   let previewProgress = $state(0);
   const shownProgress = $derived(dragging ? 1 : previewProgress);
+  // A plan in the `approach` scheme re-solves its arrival time as the drag
+  // moves; in `commitment` the plan's is the pinned one, the preview's own.
+  const previewArrival = $derived(plan ? plan.arrivalTime : preview?.arrivalTime ?? null);
   const previewTime = $derived(
-    preview === null ? null : baseTime + (preview.arrivalTime - baseTime) * shownProgress
+    preview === null || previewArrival === null
+      ? null
+      : baseTime + (previewArrival - baseTime) * shownProgress
   );
   const previewPositions = $derived.by(() => {
     const at = previewTime;

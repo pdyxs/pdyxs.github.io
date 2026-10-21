@@ -533,6 +533,82 @@ describe('StarSystem', () => {
       expect(hits().map((h) => [h.getAttribute('cx'), h.getAttribute('cy')])).toEqual(hitsAtStart);
     });
 
+    describe('control schemes', () => {
+      const remount = (search: string) => {
+        unmount(component!);
+        window.history.replaceState(null, '', `/${search}`);
+        component = mount(StarSystem as any, { target, props: { entryId: 'what/toys/star-navigation', images: [] } });
+        flushSync();
+      };
+      afterEach(() => { window.history.replaceState(null, '', '/'); vi.unstubAllEnvs(); });
+
+      const lastControls = () => vi.mocked(flightPlan).mock.calls.at(-1)![0].controls;
+      const lastPlan = () => vi.mocked(flightPlan).mock.results.at(-1)!.value as ReturnType<typeof flightPlan>;
+      /** Where every planet-sized circle is drawn: the real planets and, while previewing, the ghosts. */
+      const planetCircles = () => qa('mask circle').filter((c) => c.getAttribute('r') === '0.05')
+        .map((c) => `${c.getAttribute('cx')},${c.getAttribute('cy')}`);
+
+      it('?scheme=approach in development selects the approach scheme: along the approach is curvature and the arrival is re-solved', () => {
+        remount('?scheme=approach');
+        const hit = plannable();
+        const ax = axes(hit);
+        press(hit);
+        const side = by(ax.right, 30);
+        const fwd = sum(side, by(ax.along, 200));
+        moveTo(hit, fwd.dx, fwd.dy);
+        expect(lastControls().scheme).toBe('approach');
+        const more = lastControls() as { curvature: number };
+        const moreArrival = lastPlan()!.arrivalTime;
+        const moreRoute = routePoints(routes()[0]);
+        const moreGhosts = planetCircles();
+
+        const back = sum(side, by(ax.along, -200));
+        moveTo(hit, back.dx, back.dy);
+        const less = lastControls() as { curvature: number };
+        expect(less.curvature).toBeLessThan(more.curvature);
+        expect(lastPlan()!.arrivalTime).not.toBeCloseTo(moreArrival, 5);
+        expect(routePoints(routes()[0])).not.toEqual(moreRoute);
+        expect(planetCircles()).not.toEqual(moreGhosts);
+        // the stop happens at the fixed commitment: the lowest allowed
+        expect(centre(stopMarkers()[0])).toEqual(centre(earliest()[0]));
+      });
+
+      it('in the approach scheme left and right still change the pass', () => {
+        remount('?scheme=approach');
+        const hit = plannable();
+        const ax = axes(hit);
+        press(hit);
+        const r = by(ax.right, 40), l = by(ax.right, -40);
+        moveTo(hit, r.dx, r.dy);
+        const right = (lastControls() as { offset: number }).offset;
+        moveTo(hit, l.dx, l.dy);
+        expect((lastControls() as { offset: number }).offset).toBeLessThan(right);
+      });
+
+      it('the commitment scheme is the default, and keeps the planet pinned', () => {
+        const hit = plannable();
+        const ax = axes(hit);
+        press(hit);
+        const a = by(ax.right, 30), b = sum(a, by(ax.along, 40));
+        moveTo(hit, a.dx, a.dy);
+        const first = lastPlan()!.arrivalTime;
+        moveTo(hit, b.dx, b.dy);
+        expect(lastControls().scheme).toBe('commitment');
+        expect(lastPlan()!.arrivalTime).toBe(first);
+      });
+
+      it('a production build ignores ?scheme=', () => {
+        vi.stubEnv('DEV', false);
+        remount('?scheme=approach');
+        const hit = plannable();
+        const ax = axes(hit);
+        press(hit);
+        const d = by(ax.right, 30);
+        moveTo(hit, d.dx, d.dy);
+        expect(lastControls().scheme).toBe('commitment');
+      });
+    });
+
     it('unmounting cancels the reveal animation frame', () => {
       pointer(visitable()[0], 'pointerenter');
       advance(100);
@@ -613,6 +689,44 @@ describe('StarSystem tuning panel', () => {
       await remount('?tune');
       setSlider('stopLength', 1.5);
       expect(target.querySelector('.star-tune')!.textContent).toContain('1.5');
+    });
+  });
+
+  describe('control scheme', () => {
+    const scheme = (v: string) => target.querySelector<HTMLInputElement>(`.star-tune input[name="star-tune-scheme"][value="${v}"]`)!;
+    const direction = (v: string) => target.querySelector<HTMLInputElement>(`.star-tune input[name="star-tune-direction"][value="${v}"]`)!;
+    const choose = (el: HTMLInputElement) => { el.click(); flushSync(); };
+
+    it('is a radio, commitment by default, and switching takes effect without a reload', async () => {
+      await remount('?tune');
+      expect(scheme('commitment').checked).toBe(true);
+      expect(scheme('approach').checked).toBe(false);
+      expect(direction('up-is-more')).toBeNull();
+      choose(scheme('approach'));
+      expect(scheme('approach').checked).toBe(true);
+      expect(direction('up-is-more').checked).toBe(true);
+      choose(direction('up-is-less'));
+      expect(direction('up-is-less').checked).toBe(true);
+      expect(slider('fixedCommitment')).toBeNull();
+    });
+
+    it('?scheme=approach is reflected by the radio', async () => {
+      await remount('?tune&scheme=approach');
+      expect(scheme('approach').checked).toBe(true);
+    });
+
+    it('the fixed commitment is the lowest allowed, or a number from a slider', async () => {
+      await remount('?tune&scheme=approach');
+      const lowest = () => target.querySelector<HTMLInputElement>('.star-tune input[name="star-tune-fixed"][value="lowest"]')!;
+      const number = () => target.querySelector<HTMLInputElement>('.star-tune input[name="star-tune-fixed"][value="number"]')!;
+      expect(lowest().checked).toBe(true);
+      expect(slider('fixedCommitment')).toBeNull();
+      choose(number());
+      expect(slider('fixedCommitment')).not.toBeNull();
+      setSlider('fixedCommitment', 0.8);
+      expect(target.querySelector('.star-tune')!.textContent).toContain('0.8');
+      choose(lowest());
+      expect(slider('fixedCommitment')).toBeNull();
     });
   });
 

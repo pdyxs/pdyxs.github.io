@@ -38,6 +38,17 @@ export type Tuning = {
   maxOffset: number;
   /** The commitment a drag starts from, before it moves along the approach. */
   defaultCommit: number;
+  /**
+   * The control scheme under trial (dev only picks anything else):
+   * `commitment`: along the approach sets the commitment, the planet is pinned at press.
+   * `approach`: along the approach sets the route's curvature, the commitment is fixed
+   * and the arrival time is re-solved from the route.
+   */
+  controlScheme: 'commitment' | 'approach';
+  /** `approach` scheme: the commitment of every plan; 'lowest' is the lowest allowed. */
+  fixedCommitment: 'lowest' | number;
+  /** `approach` scheme: which way along the approach is more curvature. */
+  curvatureDirection: 'up-is-more' | 'up-is-less';
   /** How far a touch may wobble on touch-down and still be a tap, in px. */
   touchDeadPx: number;
 };
@@ -56,5 +67,8 @@ export const defaultTuning: Tuning = {
   dragRange: 0.3,
   maxOffset: 1,
   defaultCommit: 0.5,
+  controlScheme: 'commitment',
+  fixedCommitment: 'lowest',
+  curvatureDirection: 'up-is-more',
   touchDeadPx: 8,
 };

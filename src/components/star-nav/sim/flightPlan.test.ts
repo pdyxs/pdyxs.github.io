@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { flightPlan } from './flightPlan';
 import { planApproach } from './approach';
+import { solveApproachByCurvature } from './approachCurvature';
 import { reachShape } from './steering';
 import { Planet } from '../planet';
 import { defaultTuning, type Tuning } from './tuning';
@@ -15,8 +16,8 @@ const approach = planApproach(ship, 0, planet, tuning)!;
 const pinnedArrival = approach.arrivalTime;
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
 
-const plan = (controls = { offset: 0.5, commit: 0.5 }, over: Partial<Tuning> = {}) =>
-  flightPlan({ ship, time: 0, system, target: 0, controls, pinnedArrival, tuning: { ...tuning, ...over } })!;
+const plan = (controls: { offset: number; commit: number } = { offset: 0.5, commit: 0.5 }, over: Partial<Tuning> = {}) =>
+  flightPlan({ ship, time: 0, system, target: 0, controls: { scheme: 'commitment', ...controls }, pinnedArrival, tuning: { ...tuning, ...over } })!;
 
 describe('flightPlan', () => {
   it('flies a route from the ship, arriving at the pinned time', () => {
@@ -161,5 +162,55 @@ describe('flightPlan', () => {
       expect(free.reachShape).not.toEqual(none.reachShape);
       expect(spread(free.reachShape)).toBeLessThan(spread(none.reachShape));
     });
+  });
+});
+
+describe('flightPlan: the approach scheme', () => {
+  const aplan = (controls: { offset: number; curvature: number } = { offset: 0.5, curvature: 0.3 }, over: Partial<Tuning> = {}) =>
+    flightPlan({ ship, time: 0, system, target: 0, controls: { scheme: 'approach', ...controls }, pinnedArrival, tuning: { ...tuning, ...over } });
+
+  it('arrives when the curvature route does: the arrival time is re-solved, not pinned', () => {
+    const solved = solveApproachByCurvature({ pose: ship, time: 0, planet, offset: 0.5, kappa: 0.3, tuning })!;
+    const p = aplan()!;
+    expect(p.valid).toBe(true);
+    expect(p.arrivalTime).toBeCloseTo(solved.arrivalTime, 9);
+    expect(p.route.at(-1)).toEqual(solved.entryPoint);
+    expect(dist(p.positionAt(p.arrivalTime), solved.entryPoint)).toBeLessThan(1e-9);
+    // a different curvature is a different route and a different arrival
+    const q = aplan({ offset: 0.5, curvature: 0.6 })!;
+    expect(q.arrivalTime).not.toBeCloseTo(p.arrivalTime, 3);
+    expect(q.route).not.toEqual(p.route);
+  });
+
+  it('runs the encounter in the frame of the actual arrival heading, with the planet where it is at arrival', () => {
+    const p = aplan()!;
+    const there = planet.positionAt(p.arrivalTime);
+    // the entry is offset to the side and encounterStart short of the planet, whatever the heading
+    expect(dist(p.encounterPath[0], there)).toBeCloseTo(Math.hypot(0.5, tuning.encounterStart), 6);
+    const solved = solveApproachByCurvature({ pose: ship, time: 0, planet, offset: 0.5, kappa: 0.3, tuning })!;
+    expect(p.encounterPath[0].heading).toBeCloseTo(solved.arrivalHeading, 6);
+  });
+
+  it('applies the fixed commitment: the lowest allowed, or a number', () => {
+    const rule = { stopRule: { mode: 'constant', length: 1 } as const, keepFactor: 0.75 };
+    const lowest = aplan(undefined, { ...rule, fixedCommitment: 'lowest' })!;
+    expect(lowest.choicePose).toEqual(lowest.lowestCommitPose);
+    const late = aplan(undefined, { ...rule, fixedCommitment: 1 })!;
+    expect(late.encounterPath.length).toBeGreaterThan(lowest.encounterPath.length);
+    // a number below the lowest is raised to it, as in the other scheme
+    const low = aplan(undefined, { ...rule, fixedCommitment: 0 })!;
+    expect(low.choicePose).toEqual(low.lowestCommitPose);
+  });
+
+  it('keeps the stop, after pose and reach shape', () => {
+    const p = aplan()!;
+    expect(p.stopPath[0]).toEqual(p.choicePose);
+    expect(p.stopPath.at(-1)).toEqual(p.afterPose);
+    expect(p.positionAt(p.endTime)).toEqual(p.afterPose);
+    expect(p.reachShape[0]).toMatchObject({ x: p.afterPose.x, y: p.afterPose.y });
+  });
+
+  it('is null when the planet cannot be reached', () => {
+    expect(aplan(undefined, { shipSpeed: 0.001 })).toBeNull();
   });
 });
