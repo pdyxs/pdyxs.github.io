@@ -1,10 +1,11 @@
 ---
 import type { RenderResult } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
-import { resolveLocalImage, resolveLocalVideo, resolveGalleryImages, cardLocalImages, isRemoteImageUrl, isRemoteVideoUrl } from '@render/images';
+import { resolveLocalImage, resolveLocalVideo, resolveLocalSwf, resolveGalleryImages, cardLocalImages, isRemoteImageUrl, isRemoteVideoUrl } from '@render/images';
 import { parseEmbedUrl, EMBED_IFRAME_ALLOW } from '@render/embeds';
 import { resolveHeaderMedia } from '@render/renderers';
-import type { HeaderMediaImage } from '@render/header-media';
+import type { HeaderMediaImage, HeaderMediaSwf } from '@render/header-media';
+import { readCardSwfHeader } from '@render/swf';
 import { displayFor, narrowTagDisplay } from '@content/tags/tag-display';
 import { computeCardTagDisplay } from '@content/cards/card-tag-display';
 import type { TagDisplay } from '@content/tags/tag-display';
@@ -167,10 +168,20 @@ const headerMediaImages: HeaderMediaImage[] = entry && HeaderMedia
     )
   : [];
 
+// The card's colocated SWF, with its stage size read from the file header so
+// the island reserves the right aspect ratio before anything loads.
+const swfUrl = entry && HeaderMedia ? resolveLocalSwf(entry.id) : undefined;
+const swfHeader = swfUrl && entry ? readCardSwfHeader(entry.id) : undefined;
+const headerMediaSwf: HeaderMediaSwf | undefined = swfUrl && swfHeader
+  ? { url: swfUrl, width: swfHeader.width, height: swfHeader.height }
+  : undefined;
+
 const hasHeaderMedia = Boolean(HeaderMedia || headerEmbed || remoteImageSrc || remoteVideoSrc || localImage || localVideo);
 const hasMasthead = tags.length > 0 || actions.length > 0;
 
-const gallerySources = entry && gallery
+// A flash game's colocated poster is already the header; sweeping it into the
+// strip would show it twice.
+const gallerySources = entry && gallery && !headerMediaSwf
   ? resolveGalleryImages(entry.id, data?.image, data?.images, entry.body)
   : [];
 const galleryImages = await Promise.all(
@@ -199,7 +210,7 @@ const galleryImages = await Promise.all(
       <div class="generic-bleed">
         {seriesDateBar && <SeriesDateBar bar={seriesDateBar} />}
         {HeaderMedia ? (
-          <HeaderMedia entryId={entry!.id} images={headerMediaImages} />
+          <HeaderMedia entryId={entry!.id} images={headerMediaImages} swf={headerMediaSwf} />
         ) : (
           <>
             {/* The same responsive figure the body form emits (embedFigure,

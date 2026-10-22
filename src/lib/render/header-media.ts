@@ -31,4 +31,14 @@ export interface HeaderMediaProps {
   entryId: string;
   /** Every colocated image, filename-sorted. Unfiltered: the island decides. */
   images: HeaderMediaImage[];
+  /** The card's colocated SWF, when it has one. */
+  swf?: HeaderMediaSwf;
+}
+
+/** A card's colocated SWF, for the `flash-game` header media. */
+export interface HeaderMediaSwf {
+  url: string;
+  /** Stage size in pixels, parsed from the SWF header at build time. */
+  width: number;
+  height: number;
 }

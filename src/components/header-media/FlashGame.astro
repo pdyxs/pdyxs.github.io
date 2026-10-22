@@ -1,0 +1,11 @@
+---
+// Thin wrapper: the registry entry, and nothing else. See LinoCanvas.astro for
+// why a `client:*` island must be imported statically here.
+import type { HeaderMediaProps } from '@render/header-media';
+import FlashGame from '@components/header-media/FlashGame.svelte';
+
+const { images, swf } = Astro.props as HeaderMediaProps;
+// The first colocated image is the poster. A card with no SWF renders nothing.
+const poster = images[0] && { src: images[0].src, width: images[0].width, height: images[0].height };
+---
+{swf && <FlashGame swfUrl={swf.url} width={swf.width} height={swf.height} poster={poster} client:load />}
