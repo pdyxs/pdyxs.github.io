@@ -26,6 +26,3 @@ src/content/.obsidian/plugins/*/*
 src/content/.obsidian/plugins/obsidian-git/data.json
 src/content/.trash/
 
-# Houston build SWFs for the comparison page (#200): fetched from Koofr, never committed.
-# Fetch commands are at the top of src/pages/experiments/houston-builds.astro.
-public/experiments/houston/
