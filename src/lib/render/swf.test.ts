@@ -51,6 +51,7 @@ describe('parseSwfHeader', () => {
 describe.each([
   ['Tiny World', 'what/games/digital/tiny-world-the-musical-the-game'],
   ['Enemies', 'what/games/digital/enemies'],
+  ['Whenfore Art Thou', 'what/games/digital/whenfore-art-thou'],
 ])('%s poster', (_name, id) => {
   // The poster fills a stage box with the SWF's aspect ratio (object-fit: cover),
   // so a poster of any other shape is cropped, and is not the framing Ruffle
