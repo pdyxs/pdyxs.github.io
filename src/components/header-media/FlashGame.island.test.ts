@@ -77,4 +77,18 @@ describe('FlashGame', () => {
     q('.flash-fullscreen')!.click();
     expect(stage.requestFullscreen).toHaveBeenCalled();
   });
+
+  it('plays a bare SWF URL with no poster, as the comparison pages use it', () => {
+    unmount(component);
+    component = mount(FlashGame as any, {
+      target,
+      props: { swfUrl: '/experiments/houston/p1/houston.swf', width: 1024, height: 768, loadPlayer },
+    });
+    flushSync();
+    expect(q('.flash-poster')).toBeNull();
+    expect(q('.flash-stage')!.getAttribute('style')).toContain('--flash-aspect: 1024 / 768');
+    q('.flash-play')!.click();
+    flushSync();
+    expect(loadPlayer.mock.calls[0]![0]).toBe('/experiments/houston/p1/houston.swf');
+  });
 });

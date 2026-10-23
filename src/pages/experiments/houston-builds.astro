@@ -1,0 +1,35 @@
+---
+// Throwaway comparison page (#200): play the three Houston builds, Paul picks one.
+// Delete this page, houston-builds.ts and the .gitignore entry in the Houston card issue.
+//
+// The SWFs are NOT in git (public/experiments/houston/ is gitignored). Fetch them with:
+//
+//   B="kunlim:Archive/Dev/houston-Builds"
+//   D=public/experiments/houston
+//   ~/server-project/scripts/rclone-koofr copy "$B/Prototype 1/bin/houston.swf" $D/p1
+//   ~/server-project/scripts/rclone-koofr copy "$B/bin/houston.swf"             $D/p2
+//   ~/server-project/scripts/rclone-koofr copy "$B/mobile/bin/HoustonMobile.swf" $D/mobile
+//
+// In an agent session rclone-koofr is blocked; use `rclone-koofr-ro copy` (same arguments).
+import Base from '../../layouts/Base.astro';
+import FlashGame from '@components/header-media/FlashGame.svelte';
+import { HOUSTON_BUILDS } from '../../lib/flash/houston-builds';
+---
+
+<Base title="Houston builds">
+  <main class="wrap">
+    <h1>Houston builds</h1>
+    <p>Three builds, all 1024x768. Press play on one at a time and say which to port.</p>
+    {HOUSTON_BUILDS.map((b) => (
+      <section id={b.id}>
+        <h2>{b.name} <small>({b.date})</small></h2>
+        <FlashGame swfUrl={b.swfUrl} width={b.width} height={b.height} client:load />
+      </section>
+    ))}
+  </main>
+</Base>
+
+<style>
+  .wrap { max-width: 60rem; margin: 0 auto; padding: var(--space-lg); }
+  section { margin-block: var(--space-lg); }
+</style>
