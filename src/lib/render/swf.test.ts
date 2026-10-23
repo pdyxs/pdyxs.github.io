@@ -52,6 +52,8 @@ describe.each([
   ['Tiny World', 'what/games/digital/tiny-world-the-musical-the-game'],
   ['Enemies', 'what/games/digital/enemies'],
   ['Whenfore Art Thou', 'what/games/digital/whenfore-art-thou'],
+  ['Particulars (2010 original)', 'what/games/digital/particulars-original'],
+  ['Particulars (2012 rewrite)', 'what/games/digital/particulars-2012'],
 ])('%s poster', (_name, id) => {
   // The poster fills a stage box with the SWF's aspect ratio (object-fit: cover),
   // so a poster of any other shape is cropped, and is not the framing Ruffle
