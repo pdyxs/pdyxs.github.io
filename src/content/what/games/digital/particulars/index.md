@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: Particulars
 description: A minimalist meditation on the chaos of life, the universe and sub-atomic particle physics
 image: 5-1b.jpg
@@ -46,6 +46,7 @@ images:
   - 5-5b.jpg
   - comic-e.jpg
 medium: Video Game
+series: Particulars
 meta:
   - label: Topic
     values:
@@ -78,3 +79,5 @@ meta:
 Particulars is a game based on the science of sub-atomic particle Physics. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
 
 The game follows the story of a young physicist Alison, as she navigates the forces affecting her life.
+
+Earlier Flash versions: the [2010 original](card:what/games/digital/particulars-original) and the [2012 rewrite](card:what/games/digital/particulars-2012).

@@ -1790,5 +1790,15 @@
     "uid": "what/games/digital/whenfore-art-thou",
     "code": "5O",
     "title": "Whenfore Art Thou"
+  },
+  {
+    "uid": "what/games/digital/particulars-2012",
+    "code": "5P",
+    "title": "Particulars (2012 rewrite)"
+  },
+  {
+    "uid": "what/games/digital/particulars-original",
+    "code": "5Q",
+    "title": "Particulars (2010 original)"
   }
 ]
