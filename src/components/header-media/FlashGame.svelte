@@ -39,7 +39,7 @@
 </script>
 
 <div class="flash-game">
-  <div class="flash-stage" bind:this={stage} style="--flash-aspect: {width} / {height}">
+  <div class="flash-stage" bind:this={stage} style="--flash-aspect: {width} / {height}; --flash-ratio: {width / height}">
     <div class="flash-player" bind:this={playerHost}></div>
     {#if !started}
       {#if poster}
@@ -74,6 +74,21 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  /* The browser makes the stage fill the screen; without this the player filled
+     it from the top-left corner. Fit the player to the screen at the SWF's ratio
+     and centre it. */
+  .flash-stage:fullscreen {
+    display: grid;
+    place-items: center;
+    container-type: size;
+  }
+  .flash-stage:fullscreen .flash-player {
+    position: relative;
+    inset: auto;
+    aspect-ratio: var(--flash-aspect);
+    width: min(100cqw, 100cqh * var(--flash-ratio));
+    height: auto;
   }
   .flash-play {
     position: absolute;
