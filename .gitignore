@@ -26,3 +26,6 @@ src/content/.obsidian/plugins/*/*
 src/content/.obsidian/plugins/obsidian-git/data.json
 src/content/.trash/
 
+
+# Flatland web build, fetched by scripts/fetch-flatland.mjs
+public/games/flatland/

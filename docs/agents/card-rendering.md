@@ -386,3 +386,19 @@ chunks and `.wasm` are served at `/ruffle/` by `scripts/ruffle-assets-plugin.mjs
 `.flash-poster`, `.flash-play`, `.flash-fullscreen`; CSS variable `--flash-aspect`.
 Pre-existing `image:` is not used by the island: a card whose `image:` is a video
 embed should move it into the body.
+
+## Flatland (`headerMedia: flatland-game`)
+
+The Flatland: Fallen Angle card plays its web port in an `<iframe>`
+(`allow="fullscreen; autoplay"`), so the game's keyboard capture and canvas stay
+out of the card stack. `FlatlandGame.svelte` shows the first colocated image as
+a poster with a play button at 4:3; nothing loads until the click. The build is
+the private release `flatland-web-<version>.zip` of
+`pdyxs/flatland-fallen-angle-web`, fetched by `scripts/fetch-flatland.mjs`
+(`npm run generate:flatland`, a predev/prebuild step; version pinned in
+`FLATLAND_VERSION`, skipped when `public/games/flatland/.version` matches, the
+decision being `needsFetch` in `src/lib/flatland/release.ts`) into the gitignored
+`public/games/flatland/`. Fetching needs `GH_TOKEN` (or a `gh` login) that can
+read that repo's releases. Selectors: `.flatland-game`, `.flatland-stage`,
+`.flatland-frame`, `.flatland-poster`, `.flatland-play`, `.flatland-fullscreen`;
+CSS variable `--flatland-aspect`. The card's YouTube trailer stays in its gallery.

@@ -1,10 +1,11 @@
 ---
-inspected: true
+inspected: false
 title: "Flatland: Fallen Angle"
 description: A neo-noir adventure set in a two-dimensional world
 images:
   - https://www.youtube.com/embed/NY7sIlyq5Zg
 image: Flatland1.jpg
+headerMedia: flatland-game
 tags:
   - when/released
   - where/work/seethrough
