@@ -1,5 +1,33 @@
 # Rendering a card: renderers, media, credits, links
 
+## A card has two delivery paths
+
+A card reaches the page two ways, and only one carries the page's `<head>`:
+
+- **Direct load** (`/card/...` typed or linked): Astro renders the whole page,
+  and Vite/Rollup attach the card's stylesheets, island entries and (in dev)
+  dependency discovery to that page's `<head>`.
+- **Push from a lens or another card**: `card-fragments.ts` fetches the same URL
+  as text and keeps only `.stack-card`. The fetched `<head>` is discarded. The
+  card lands in a page built for something else.
+
+So a card works when pushed only if everything it needs is in its own markup or
+in a module an island imports. Nothing else crosses over: no inline `<script>`
+(`{@html}` drops it), no page-load hook (`DOMContentLoaded`, a startup
+`querySelectorAll` — the card arrives later), nothing read from the host page's
+head or globals.
+
+The failures so far are all this one rule, found one resource type at a time:
+scoped CSS (`cssCodeSplit: false`, `b330cd0f`), dev style tags (`adoptDevStyles`,
+`0a5e1d64`), and npm dependencies only one island imports, which Vite finds late
+in dev and answers with a 504 `Outdated Optimize Dep` (planck, Ruffle in
+`optimizeDeps.include`, `79e84b99`). Expect the next failure to be a fourth
+resource type, not a fourth card — and to show in dev and on a push only.
+
+**Every card feature is verified pushed, not only loaded directly.** The check is
+per delivery mechanism, not per feature: see
+[workflow.md → Plans name their delivery mechanism](workflow.md#plans-name-their-delivery-mechanism-and-a-push-path-check).
+
 ## Nav renderer pattern (`NAV_RENDERERS`)
 
 Collections that need custom navigation (e.g. prev/next chapter buttons, position indicators) register a nav renderer in `NAV_RENDERERS` (`src/lib/render/renderers.ts`). A nav renderer owns the full card shell — header and body structure — and receives the content renderer as `<slot />`. It is responsible for rendering `<CardHeader>` (or a custom header), the `.body-wrapper` / `.stack-card-body` structure, and any footer nav. Props passed by `card/[...path].astro`: `title`, `titleSuffix`, `entry`, `allEntries`.

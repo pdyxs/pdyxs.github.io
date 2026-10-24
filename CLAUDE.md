@@ -75,6 +75,11 @@ pure decisions / thin effects, single source of truth) live in
   → [workflow.md](docs/agents/workflow.md)
 - **A plan names the selectors and CSS variables it adds**, so reviewers see the
   contract without reading the diff. → [workflow.md](docs/agents/workflow.md)
+- **A card feature is verified pushed from a lens, not only loaded directly.** A
+  push drops the card's `<head>`, so what works direct can fail pushed — in dev,
+  usually. A plan names its delivery mechanism and runs the matching check.
+  → [card-rendering.md](docs/agents/card-rendering.md),
+  [workflow.md](docs/agents/workflow.md)
 
 ## Reach for these
 

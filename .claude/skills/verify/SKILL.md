@@ -28,6 +28,26 @@ a prior snapshot (e.g. `f1e20`), not a CSS selector or free text — grab the re
 Always check `browser_console_messages` (level `warning`, `all: true`) after driving a
 flow — zero errors/warnings is part of the pass bar, not optional.
 
+## Verify a card feature pushed, not only loaded directly
+
+A card opened directly gets its page's `<head>` (styles, island entries, Vite's
+dev dependency discovery); a card pushed from a lens arrives as a fetched
+fragment and gets none of it. Anything that works direct can fail pushed — in dev,
+usually — so a card feature is not verified until both have been driven. See
+`docs/agents/card-rendering.md` → "A card has two delivery paths".
+
+1. Cold-load the card URL and confirm the feature works (the baseline).
+2. In a separate cold load, open a lens that lists the card, click through to
+   it (in-app click, no `browser_navigate` in between — see the history gotcha
+   below), and confirm the same feature works.
+3. Check `browser_console_messages` and `browser_network_requests` after the
+   push: no errors, no `Outdated Optimize Dep` 504s, no failed `/ruffle/` or
+   chunk requests.
+4. Use the check that matches the feature's delivery mechanism (table in
+   `docs/agents/workflow.md` → "Plans name their delivery mechanism"): styled,
+   island hydrated (no `ssr` attribute left on its `astro-island`), or the lazy
+   part actually loaded (click play, open the lightbox).
+
 ## Gotcha: mixing full navigation with in-app clicks confuses history
 
 This is a client-side-stack SPA (`CardStack.svelte` intercepts in-app link/button clicks

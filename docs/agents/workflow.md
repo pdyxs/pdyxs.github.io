@@ -191,6 +191,26 @@ worktree has no build server of its own; its preview is `astro dev` only.
 
 Given the selector contract ([stack-layout.md](stack-layout.md)) and the CSS custom property convention ([styling.md](styling.md)), a plan file should explicitly list any new class names it adds to the JS contract and any new CSS variables it introduces. Reviewers and future sessions should see this without re-reading the diff.
 
+## Plans name their delivery mechanism, and a push-path check
+
+A card feature that works on a direct load can still fail when the card is pushed
+from a lens, because a push drops the card's `<head>`
+([card-rendering.md → A card has two delivery paths](card-rendering.md#a-card-has-two-delivery-paths)).
+Every plan for a card feature names which of these it uses; the first match that
+applies is the check, and a feature using none needs no push check:
+
+| mechanism | example | push check |
+|---|---|---|
+| scoped CSS in a component | series card | styled after a push from a lens |
+| island with a static npm dependency | Particulars (planck) | island hydrates (no `ssr` attribute left on its `astro-island`), no console error |
+| island with a lazy import or served assets | flash game (Ruffle) | the lazy part actually loads (click play), no failed request |
+| island nested in a pushed fragment | a lens pushed onto the stack | nested island hydrates |
+
+A feature is not done until the check has been run on the dev server
+(`preview.pdyxs.wtf`) with the card **pushed from a lens**, not just opened
+directly. Dev is where these fail; the production build bundles around most of
+them. Add a row only for a mechanism that is not covered — not for each new card.
+
 
 ## Feature worktrees
 
