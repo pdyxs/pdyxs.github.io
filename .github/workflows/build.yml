@@ -13,6 +13,10 @@ name: Build
 on:
   push:
     branches:
+      # `dev` runs the gates only (generators, tests, type check) and deploys
+      # nothing: the `build` job's publish steps are conditional on the target
+      # being `main`, and `deploy` already is. See issue #177.
+      - dev
       # `main` is the deploy branch (map #157, issue #176). It is authored by
       # nothing but promotion commits — see .github/workflows/promote.yml — so
       # a push here IS a publish. Work lands on `dev`, which deploys nothing.
@@ -127,10 +131,23 @@ jobs:
       - name: Type check
         run: npm run check
 
+      # `main` only, and before the build. Every card must be `inspected: true`
+      # (absent counts). Failing is not shipping, so this can never unpublish a
+      # live URL the way filtering would. It is a CI step and NOT part of
+      # `astro build`, which also runs on build.pdyxs.wtf, the surface built to
+      # review uninspected content. Covers hotfixes, hand-merges and a bug in
+      # the promotion script. docs/plans/publishing-pipeline.md §6, issue #177.
+      - name: Assert every card is inspected
+        if: steps.target.outputs.ref == 'main'
+        run: node scripts/assert-inspected.mjs
+
+      # A `dev` run stops after the gates above: its build would be thrown away.
       - name: Build
+        if: steps.target.outputs.ref == 'main'
         run: npm run build
 
       - name: Upload Pages artifact
+        if: steps.target.outputs.ref == 'main'
         uses: actions/upload-pages-artifact@v5
         with:
           path: dist/
@@ -152,9 +169,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       # Flips the Pages source from "Deploy from a branch" to "GitHub
-      # Actions" the first time this runs. Rollback (#75's note) is this
-      # switching back via Settings -> Pages -> Source = Deploy from a
-      # branch -> master, which only works while master still holds Jekyll.
+      # Actions" the first time this runs.
+      #
+      # EVACUATION (not rollback; rollback is .github/workflows/rollback.yml).
+      # Switching Settings -> Pages -> Source back to "Deploy from a branch" ->
+      # master serves the retired Jekyll site and takes the WHOLE site back to
+      # pre-cutover. Kept because it is the only lever that works when Actions
+      # itself is broken. Shelf life: it works only while `master` still holds
+      # a servable Jekyll site (frozen for an unrelated reason, plan §3).
       - name: Configure Pages
         uses: actions/configure-pages@v6
 

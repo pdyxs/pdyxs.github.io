@@ -1,0 +1,88 @@
+name: Rollback
+
+# Backs a bad publish of ONE card out of production, in one run, both halves.
+# See docs/plans/publishing-pipeline.md §7 (map #157, issue #177).
+#
+#   1. on main: restore the card's last-good version (git rm if it is new)
+#   2. on dev:  inspected: false
+#
+# Scripted rather than documented because each half is silent alone. Step 1
+# alone is undone by the next daily promotion (the card is still ticked on
+# dev). Step 2 alone retracts nothing: an un-ticked card falls out of the
+# promotion pathspec and freezes at whatever main has. Freezing is not
+# retracting.
+#
+# Code rolls back with `git revert` on main and needs no step 2; that is not
+# this workflow's job.
+
+on:
+  workflow_dispatch:
+    inputs:
+      uid:
+        description: "Card uid to roll back, e.g. what/projects/art-heist"
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  # Shares promote.yml's group: both rewrite `main` and `dev` from each other.
+  group: "promote"
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      # Same hard stop as promote.yml: the deploy below is a workflow_call, which
+      # runs in the caller's branch context.
+      - name: Refuse to run from anywhere but main
+        if: github.ref_name != 'main'
+        run: |
+          echo "::error::rollback must run on main (got '${{ github.ref_name }}'). Re-dispatch with --ref main."
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # The script is the tool, taken from `dev` like promote.mjs, so a fix
+          # to it applies without having to be promoted first.
+          fetch-depth: 0
+          ref: dev
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22.18.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git branch -f main origin/main
+
+      # The script refuses (non-zero, nothing pushed) if the card is not
+      # currently on main.
+      - name: Roll back
+        env:
+          UID_INPUT: ${{ inputs.uid }}
+        run: node scripts/rollback.mjs "$UID_INPUT"
+
+      # Atomic: both halves land or neither does.
+      - name: Push
+        run: git push --atomic origin main dev
+
+  deploy:
+    needs: rollback
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/build.yml
+    with:
+      ref: main
