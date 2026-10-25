@@ -1,5 +1,28 @@
 # pdyxs.wtf — Astro rebuild
 
+## Environments
+
+Two axes, kept apart: **build mode decides features, branch decides content.**
+`astro dev` is dev mode (`import.meta.env.DEV`: status rules bypassed, the audit
+lens and `why:uninspected` facet on); `astro build` is production mode whatever
+branch it builds. So `build.pdyxs.wtf` behaves as production does, but shows
+`dev`'s content, uninspected cards included.
+
+| surface | mode | branch / content | refreshed by |
+|---|---|---|---|
+| `preview.pdyxs.wtf` | dev (`astro-preview.service`) | `dev`, this checkout | hot-reload |
+| `build.pdyxs.wtf` | production build | `dev`, this checkout's working tree | `astro-build.timer`, every 10 min |
+| `pdyxs.wtf` (production) | production build | `main`, only `inspected: true` cards | `promote.yml` then `build.yml` on GitHub Actions |
+
+`dev` is the trunk and `main` is authored by nothing but promotion and rollback
+commits. Never commit to or push `main` by hand. A push to `dev` runs
+generators, tests and type-check with no deploy; a push to `main` runs the
+`inspected` assertion, build and deploy. Pipeline details and the withholding
+gates: [workflow.md → `inspected`](docs/agents/workflow.md#inspected-is-the-publish-gate-and-an-editorial-flag);
+spec: [docs/plans/publishing-pipeline.md](docs/plans/publishing-pipeline.md).
+Settings → Pages → Source back to `master` is *evacuation* (it serves the retired
+Jekyll site), not rollback; rollback is `rollback.yml`.
+
 ## Dev server
 
 Runs as a user systemd service, `astro-preview.service`:
@@ -14,7 +37,7 @@ content database. Markdown and the content YAML hot-reload on their own
 (`scripts/dev-reload-plugin.mjs`) — see [docs/agents/workflow.md](docs/agents/workflow.md)
 for what still needs a manual `npm run generate:*`.
 
-`build.pdyxs.wtf` serves the production build; refresh steps are in
+Refresh steps for `build.pdyxs.wtf` are in
 [workflow.md → The build server](docs/agents/workflow.md#the-build-server-buildpdyxswtf).
 Check there when something looks wrong in dev only.
 
@@ -70,9 +93,11 @@ pure decisions / thin effects, single source of truth) live in
 - **A test that mounts a Svelte island is named `*.island.test.ts`.** That
   filename is what routes it to the vitest project where `mount()` works.
   → [testing.md](docs/agents/testing.md)
-- **Any script, generator or agent that edits a card's frontmatter or body sets
-  `inspected: false` on it**, in the same change.
-  → [workflow.md](docs/agents/workflow.md)
+- **`inspected: true` is the publish gate, and absent counts as not-inspected.**
+  Any script, generator or agent that edits a card's frontmatter or body sets
+  `inspected: false` on it, in the same change, or the edit publishes itself.
+  Exempt: `content: auto-sync`, `backfill-inspected.mjs`, and promotion clearing
+  `awaitsCode`. → [workflow.md](docs/agents/workflow.md)
 - **A plan names the selectors and CSS variables it adds**, so reviewers see the
   contract without reading the diff. → [workflow.md](docs/agents/workflow.md)
 - **A card feature is verified pushed from a lens, not only loaded directly.** A
@@ -92,7 +117,7 @@ pure decisions / thin effects, single source of truth) live in
 | lenses, the ranking chain, seen/unseen, home slots, the shared card pool, strip and history lenses, progressive reveal | [docs/agents/lenses-and-browse.md](docs/agents/lenses-and-browse.md) |
 | a renderer, nav renderer, collection view, card credits (`meta:`), actions, galleries, the lightbox, video embeds, header-image padding | [docs/agents/card-rendering.md](docs/agents/card-rendering.md) |
 | writing or running tests, the two vitest projects, happy-dom gaps | [docs/agents/testing.md](docs/agents/testing.md) |
-| authoring content, the Obsidian vault, Templater scaffolds, `inspected`, dev hot-reload, experiment routes, plan docs, feature worktrees and merging them | [docs/agents/workflow.md](docs/agents/workflow.md) |
+| authoring content, the Obsidian vault, Templater scaffolds, `inspected` and `awaitsCode`, the publish gate and rollback, dev hot-reload, experiment routes, plan docs, feature worktrees and merging them | [docs/agents/workflow.md](docs/agents/workflow.md) |
 | issues, triage labels, the glossary and decision records | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md), [docs/agents/triage-labels.md](docs/agents/triage-labels.md), [docs/agents/domain.md](docs/agents/domain.md) |
 
 The issue tracker is GitHub Issues on `pdyxs/pdyxs.github.io`, via `gh`. Domain

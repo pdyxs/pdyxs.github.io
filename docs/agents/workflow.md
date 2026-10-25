@@ -45,14 +45,19 @@ Two consequences for code:
   container folder or a schema field means a regen. See
   `src/content/_templates/README.md`.
 
-## `inspected` is a permanent editorial flag, not a pre-MVP sweep
+## `inspected` is the publish gate, and an editorial flag
 
-`inspected` (`src/content.config.ts`) answers one question forever: has a
-human read this card end to end since its last change? It started as a
-one-off pre-launch backfill and stayed — the mechanism turned out to be a
-general-purpose "something changed this without me looking" signal, useful
-long after the initial sweep finishes. Three things read it, and all three
-are permanent:
+`inspected` (`src/content.config.ts`) answers two questions with one tick: has a
+human read this card end to end since its last change, and therefore **may it go
+live now**. `inspected: true` is the publish gate: a card crosses from `dev` to
+`main` (production) only while it is true. The pipeline is specified in
+[docs/plans/publishing-pipeline.md](../plans/publishing-pipeline.md); this
+section is what a session must not violate, not a restatement of it.
+
+**One definition: `inspected` is inspected only when it is exactly `true`, and
+absent counts as not-inspected.** The audit lens, the facet and the gate all
+share it (`uninspectedCards` in `src/lib/site/inspected-gate.ts`). Five things
+read the flag:
 
 - **`scripts/backfill-inspected.mjs`** stamps `inspected: false` onto any card
   that lacks the key, so Obsidian's Properties view has a checkbox to render.
@@ -65,25 +70,82 @@ are permanent:
   ("uninspected puzzles", "uninspected posts from 2019"), which the flat
   audit list can't do. See that file for why it's deliberately *not* a
   `FilterGenerator`: the value must never receive a stack-manifest short code.
+- **The promotion script** (`scripts/promote.mjs`, `.github/workflows/promote.yml`)
+  — daily at 18:00 UTC and on demand, it moves a card to `main` only if it is
+  `inspected: true`.
+- **The `main`-only CI assertion** (`scripts/assert-inspected.mjs`, a step in
+  `build.yml` before the build) — scans the whole tree and **fails** the run if
+  any card is not inspected. It fails rather than filters: dropping a card would
+  silently unpublish a live URL. It must never move into `astro build`, which
+  also runs for `build.pdyxs.wtf`, the surface built to review uninspected
+  content. There is no branch protection on `main`; the assertion is the
+  enforcement.
 
 **The rule this drives:** any script, generator or AI agent that changes a
 card's frontmatter **or** body — not Paul editing directly in Obsidian — must
 set `inspected: false` on that card's frontmatter as part of the same change.
 An automated edit is exactly the kind of change nobody has personally read
-yet, so it belongs on the worklist the flag already drives. Set it even if the
-card was previously ticked `true` — an automated change is new content a
-human hasn't seen, regardless of what was reviewed before it.
+yet, so it must not reach production, and it belongs on the worklist the flag
+already drives. Set it even if the card was previously ticked `true` — an
+automated change is new content a human hasn't seen, regardless of what was
+reviewed before it. Without it, a machine edit publishes itself.
 
-This does **not** apply to `content: auto-sync` commits that carry Paul's own
-edits from Obsidian mobile — those are authored directly by him and need no
-re-flagging. It also doesn't apply to `scripts/backfill-inspected.mjs` itself,
-which only ever writes `inspected: false` onto a card that has no `inspected`
-key at all — that is the one write this rule doesn't cover, since there was
-nothing there to have been "read" yet.
+Exceptions, all stated, none implied:
+
+- `content: auto-sync` commits that carry Paul's own edits from Obsidian mobile
+  — authored directly by him, so they need no re-flagging.
+- `scripts/backfill-inspected.mjs`, which only ever writes `inspected: false`
+  onto a card that has no `inspected` key at all — there was nothing there to
+  have been "read" yet.
+- **The promotion script clearing `awaitsCode`** (below). That is pipeline
+  bookkeeping about *when* a card ships, not a change to its content. Without
+  this exemption a promoted card would un-tick itself and withhold itself
+  forever.
+
+The **rollback workflow** (`.github/workflows/rollback.yml`,
+`scripts/rollback.mjs`) is the one case where the rule *agrees* with what is
+wanted: it sets `inspected: false` on `dev` deliberately. Dispatched with a card
+uid, it does both halves in one run — restore the card's last-good version on
+`main` (or `git rm` it if new), and flag it on `dev` — and refuses if the card is
+not currently on `main`. Each half is silent alone: the restore alone is undone
+by the next daily run, and the flag alone retracts nothing (an un-ticked card
+falls out of the promotion pathspec and *freezes* at whatever `main` has, which
+is not retracting). Code rolls back with `git revert` on `main` and needs no
+second half; the residual gap, promoting later from an unfixed `dev`, is covered
+by the "What has not been promoted" diff the promote workflow prints at dispatch.
 
 New cards from the Templater scaffold are prefilled `inspected: true`, not
 left commented out — a card Paul writes himself needs no confirmation of his
 own words; the flag is scoped to content something *other than him* touched.
+
+### `awaitsCode`
+
+`awaitsCode: true` is a **trigger, not a gate**. It means "this card is ready but
+depends on code that has not shipped": it holds the card back from the daily
+content run and lets it cross with the next *code* promotion
+(`promote.yml` dispatched with `code`). It only means anything once
+`inspected: true`; on its own it publishes nothing.
+
+- Frontmatter only and **does not cascade** from `_config.yaml`.
+- **Nothing reads it at render time.** It is purely a promotion-time selector.
+- It is **consumed** by promotion: when the card crosses, the script clears it
+  on `dev` (the exemption above).
+- It is a boolean rather than `awaitsFeature: <name>` *because* code crosses
+  wholesale, so `main` only ever holds one code state and naming a feature would
+  distinguish nothing. **That stops being true the moment anyone reintroduces
+  partial code promotion** — revisit this flag then.
+
+### Three withholding gates
+
+| gate | withholds from | notes |
+|---|---|---|
+| `inspected: false` (or absent) | production (`main`) only | the card is fully visible on `build.pdyxs.wtf` and `preview.pdyxs.wtf` |
+| `status: draft` | production **and** `build.pdyxs.wtf` | hidden everywhere but the dev server |
+| `status: scheduled` | production until its `date` | timed; the 18:00 UTC run rebuilds when a date passes |
+
+Because `inspected` now keeps unreviewed work out of production, `draft` is much
+rarer in practice. **Low `draft` usage is not evidence the status is dead** — it
+is the only gate that also hides a card from the build server.
 
 ## Where a module lives, and which import idiom it uses
 
