@@ -19,7 +19,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { needsFetch, releaseAssetName } from '../src/lib/flatland/release.ts';
 
-const FLATLAND_VERSION = 'v1.0.0';
+const FLATLAND_VERSION = 'v1.1.0';
 const REPO = 'pdyxs/flatland-fallen-angle-web';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
