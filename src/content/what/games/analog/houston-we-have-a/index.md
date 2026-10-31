@@ -21,6 +21,8 @@ images:
   - https://www.youtube.com/embed/hGbso0glYrQ
 headerMedia: flash-game
 ---
-Major Thompson is on an alien craft that he cannot understand. Ground Control have the manuals to help him get there. Together, can they land the ship, without it crashing?
+> *Major Thompson is on an alien craft that he cannot understand. Ground Control have the manuals to help him get there. Together, can they land the ship, without it crashing?*
 
 "Houston, we have a #$!?" is a hybrid digital/analog game made over a single weekend at Global Game Jam Sydney 2015, where it was runner up for best game.
+
+The game is designed to be played by 2-4 players. 1 player, playing Major Thompson, plays the digital game (above). The other players guide them using the manuals, without looking at the screen.
