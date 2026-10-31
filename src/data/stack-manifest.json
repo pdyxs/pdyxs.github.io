@@ -1799,6 +1799,10 @@
   {
     "uid": "what/games/digital/particulars-original",
     "code": "5Q",
-    "title": "Particulars (2010 original)"
+    "title": "Particulars (2010)"
+  },
+  {
+    "uid": "what/games/digital/houston-we-have-a",
+    "code": "5R"
   }
 ]
