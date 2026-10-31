@@ -137,6 +137,13 @@ describe('resolveGalleryImages', () => {
     expect(result.map(m => m.kind)).toEqual(['image', 'video']);
   });
 
+  it('explicitOnly galleries just images[]: no header, no colocated sweep', () => {
+    const youtube = 'https://www.youtube.com/embed/hGbso0glYrQ';
+    const result = resolveGalleryImages('what/art/art-heist', 'outside.jpg', [youtube], undefined, true);
+    expect(result.map(m => m.kind)).toEqual(['embed']);
+    expect(resolveGalleryImages('what/art/art-heist', 'outside.jpg', [], undefined, true)).toEqual([]);
+  });
+
   it('drops images[] entries with no colocated file', () => {
     const result = resolveGalleryImages('what/art/art-heist', 'outside.jpg', [
       'missing.jpg',

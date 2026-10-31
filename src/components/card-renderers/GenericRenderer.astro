@@ -180,9 +180,9 @@ const hasHeaderMedia = Boolean(HeaderMedia || headerEmbed || remoteImageSrc || r
 const hasMasthead = tags.length > 0 || actions.length > 0;
 
 // A flash game's colocated poster is already the header; sweeping it into the
-// strip would show it twice.
-const gallerySources = entry && gallery && !headerMediaSwf
-  ? resolveGalleryImages(entry.id, data?.image, data?.images, entry.body)
+// strip would show it twice — so its gallery is only what `images:` names.
+const gallerySources = entry && gallery
+  ? resolveGalleryImages(entry.id, data?.image, data?.images, entry.body, Boolean(headerMediaSwf))
   : [];
 const galleryImages = await Promise.all(
   gallerySources.map(async ({ src, kind, poster }) => {
