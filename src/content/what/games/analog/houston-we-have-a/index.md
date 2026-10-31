@@ -6,9 +6,20 @@ tags:
   - when/released
 date: 2015-01-23
 medium: Hybrid Digital/Analog Game
-actions: []
+actions:
+  - text: "Craft Notes #01: basic operations"
+    url: /games/houston/manual_1.pdf
+    kind: read
+  - text: "Craft Notes #02: malfunctions"
+    url: /games/houston/manual_2.pdf
+    kind: read
+  - text: "Craft Notes #03: landing"
+    url: /games/houston/manual_3.pdf
+    kind: read
 quotes: []
-image: https://www.youtube.com/embed/hGbso0glYrQ
+images:
+  - https://www.youtube.com/embed/hGbso0glYrQ
+headerMedia: flash-game
 ---
 Major Thompson is on an alien craft that he cannot understand. Ground Control have the manuals to help him get there. Together, can they land the ship, without it crashing?
 
