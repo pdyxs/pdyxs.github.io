@@ -5,6 +5,7 @@
     "cssclasses": "multitext",
     "tags": "tags",
     "actions": "multitext",
-    "priority": "number"
+    "priority": "number",
+    "images": "multitext"
   }
 }
