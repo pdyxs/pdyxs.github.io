@@ -34,7 +34,7 @@
   .flatland-game {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
     gap: var(--space-xs);
   }
   /* The game is 4:3 whatever the poster's shape. */

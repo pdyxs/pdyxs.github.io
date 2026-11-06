@@ -58,7 +58,7 @@
   .flash-game {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
     gap: var(--space-xs);
   }
   .flash-stage {

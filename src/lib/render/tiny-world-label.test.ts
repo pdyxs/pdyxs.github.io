@@ -5,8 +5,9 @@ import { describe, expect, it } from 'vitest';
 // Tiny World's Credits/Back button label is a Spark Label (26pt Georgia) built in
 // Main._Main_Label1_i. The game was authored with a box 23px tall, shorter than one
 // line of that font. Flash drew the line anyway; Ruffle draws nothing when no line
-// fits the box, leaving the button blank (#217). scripts/patch-tiny-world-label.mjs
-// heightens the box in game.swf. Newer Ruffle nightlies do not fix it.
+// fits the box, leaving the button blank (#217). scripts/game-builds/tiny-world/
+// (credits-label.patch) heightens the box when game.swf is built. Newer Ruffle
+// nightlies do not fix it.
 
 const SWF = 'src/content/what/games/digital/tiny-world-the-musical-the-game/game.swf';
 const FONT_SIZE = 26;

@@ -1,0 +1,398 @@
+---
+import Base from '../../layouts/Base.astro';
+
+// Throwaway: four candidate looks for the credits section, same fixtures each.
+// kind: card = card-backed (links to its card), tag = tag-only (links to filtered lens), none = plain text.
+type Credit = { name: string; role: string; kind: 'card' | 'tag' | 'none'; org?: boolean };
+const few: Credit[] = [
+  { name: 'Jetpack Theatre', role: 'Co-creator', kind: 'tag', org: true },
+];
+const some: Credit[] = [
+  { name: 'SeeThrough Studios', role: 'Studio', kind: 'card', org: true },
+  { name: 'Jetpack Theatre', role: 'Performance', kind: 'tag', org: true },
+  { name: 'Maya Chen', role: 'Sound design', kind: 'tag' },
+  { name: 'Maya Chen', role: 'Music', kind: 'tag' },
+  { name: 'Sam Okafor', role: 'Co-designer', kind: 'none' },
+  { name: 'A friend at the market', role: 'Playtesting', kind: 'none' },
+];
+const many: Credit[] = [
+  ...some,
+  ...['Ana', 'Ben', 'Chloe', 'Dev', 'Eli', 'Fern', 'Gus', 'Hana', 'Ivo'].map((n, i) => ({
+    name: `${n} ${['Lee', 'Ward', 'Ng', 'Rao', 'Cole'][i % 5]}`,
+    role: i < 5 ? 'Performer' : 'Crew',
+    kind: (i % 3 === 0 ? 'tag' : 'none') as Credit['kind'],
+  })),
+];
+const sets = [
+  { label: 'One credit', credits: few, affil: [] as string[] },
+  { label: 'Six credits, mixed targets', credits: some, affil: ['Art Heist'] },
+  { label: 'Fifteen credits', credits: many, affil: ['Art Heist'] },
+];
+const byName = (cs: Credit[]) => {
+  const m = new Map<string, { c: Credit; roles: string[] }>();
+  for (const c of cs) (m.get(c.name) ?? m.set(c.name, { c, roles: [] }).get(c.name)!).roles.push(c.role);
+  return [...m.values()];
+};
+const href = (c: Credit) => (c.kind === 'card' ? '#card' : c.kind === 'tag' ? '#lens' : undefined);
+---
+
+<Base title="Credits prototypes">
+  <main class="wrap">
+    <h1>Credits section — four looks</h1>
+    <p class="lede">
+      Same fixtures in each. Solid underline = card-backed (opens its card), dotted = tag-only
+      (opens a filtered lens), plain = no target. “Affiliated” items are cards in the filter
+      without being credited; each option shows them differently.
+    </p>
+
+    <section class="set">
+      <h2>Switchable (N), fifteen credits</h2>
+      <p class="lede">One credit list, several ways to look at it. Pills flip the view (CSS only); the die is a few lines of JS.</p>
+      <div class="opts">
+        <figure class="opt n-wrap">
+          <figcaption>N · Lens pills: by role / by person / people &amp; groups, plus “surprise me”</figcaption>
+          <div class="cr n">
+            <div class="pills" role="radiogroup" aria-label="View credits">
+              {[['role', 'by role'], ['person', 'by person'], ['kind', 'people & groups']].map(([v, l], i) => (
+                <label><input type="radio" name="lens-n" value={v} checked={i === 0} /><span>{l}</span></label>
+              ))}
+              <button type="button" class="die" aria-label="Pick a random credit">🎲</button>
+            </div>
+            <p class="pick" aria-live="polite" hidden></p>
+
+            <div class="v v-role">
+              {[...new Set(many.map((c) => c.role))].map((r) => (
+                <p><em>{r}</em> {many.filter((c) => c.role === r).map((c, i) => <>{i > 0 && ', '}{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</>)}</p>
+              ))}
+            </div>
+
+            <ul class="v v-person b">
+              {byName(many).map(({ c, roles }) => (
+                <li data-pick={`${c.name}|${roles.join(' & ')}`}><span class="nm">{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</span><span class="rl">{roles.join(' · ')}</span></li>
+              ))}
+            </ul>
+
+            <div class="v v-kind">
+              {[['Groups', true], ['People', false]].map(([h, org]) => (
+                <p><em>{h}</em> {byName(many).filter(({ c }) => !!c.org === org).map(({ c, roles }, i) => <>{i > 0 && ', '}{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}<small> ({roles.join(', ').toLowerCase()})</small></>)}</p>
+              ))}
+            </div>
+          </div>
+        </figure>
+      </div>
+      <script is:inline>
+        document.querySelectorAll('.n .die').forEach((b) => b.addEventListener('click', () => {
+          const root = b.closest('.n');
+          const items = [...root.querySelectorAll('.v-person li')];
+          const li = items[Math.floor(Math.random() * items.length)];
+          const [name, roles] = li.dataset.pick.split('|');
+          const out = root.querySelector('.pick');
+          out.hidden = false;
+          out.textContent = name + ' — ' + roles.toLowerCase();
+          items.forEach((x) => x.classList.toggle('hit', x === li));
+          root.querySelector('input[value=person]').checked = true;
+        }));
+      </script>
+    </section>
+
+    <section class="set">
+      <h2>Stranger ideas (I–M), fifteen credits</h2>
+      <p class="lede">Less “list”, more “object on the page”. Same fixtures; hover or focus the dots in K.</p>
+      <div class="opts">
+
+        <figure class="opt">
+          <figcaption>I · Programme: leader dots, role → name, two columns, whole thing folds to “Fin”</figcaption>
+          <details class="cr i">
+            <summary>Cast &amp; crew <span class="cnt">{byName(many).length}</span></summary>
+            <ul>
+              {byName(many).map(({ c, roles }) => (
+                <li><span class="rl">{roles.join(' · ')}</span><span class="lead"></span><span class="nm">{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</span></li>
+              ))}
+            </ul>
+          </details>
+        </figure>
+
+        <figure class="opt">
+          <figcaption>J · End-roll: credits scroll slowly in a small window (pause on hover; reduced-motion = static list)</figcaption>
+          <div class="cr j" tabindex="0">
+            <div class="roll">
+              {[0, 1].map(() => (
+                <div>
+                  {[...new Set(many.map((c) => c.role))].map((r) => (
+                    <p><em>{r}</em>{many.filter((c) => c.role === r).map((c) => <span>{c.name}</span>)}</p>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </figure>
+
+        <figure class="opt">
+          <figcaption>K · Constellation: one dot per person (org = ring); hover/focus names them; click opens target</figcaption>
+          <div class="cr k">
+            <ul class="dots">
+              {byName(many).map(({ c, roles }) => (
+                <li class={c.org ? 'org' : ''}>
+                  {href(c) ? <a class={c.kind} href={href(c)} aria-label={`${c.name}, ${roles.join(', ')}`}></a> : <button type="button" aria-label={`${c.name}, ${roles.join(', ')}`}></button>}
+                  <span class="tip"><b>{c.name}</b> {roles.join(' · ')}</span>
+                </li>
+              ))}
+            </ul>
+            <p class="hint">{byName(many).length} people &amp; groups</p>
+          </div>
+        </figure>
+
+        <figure class="opt">
+          <figcaption>L · Dither weight: each name sits on a dither, denser = more roles or lead (the site’s own greys, used as data)</figcaption>
+          <p class="cr l">
+            {byName(many).map(({ c, roles }, i) => (
+              <span class={`w w${Math.min(roles.length + (i < 2 ? 1 : 0), 3)}`}>{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</span>
+            ))}
+          </p>
+        </figure>
+
+        <figure class="opt">
+          <figcaption>M · Sentences by verb: “Designed by…, performed by…, sound by…” with a fold on any verb that gets long</figcaption>
+          <div class="cr m">
+            {[...new Set(many.map((c) => c.role))].map((r) => {
+              const cs = many.filter((c) => c.role === r);
+              const links = (xs: Credit[]) => xs.map((c, i) => <>{i > 0 && ', '}{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</>);
+              return (
+                <p><em>{r.toLowerCase()}:</em> {links(cs.slice(0, 2))}
+                  {cs.length > 2 && <> <details class="inl"><summary>+{cs.length - 2}</summary>, {links(cs.slice(2))}</details></>}
+                </p>
+              );
+            })}
+          </div>
+        </figure>
+
+      </div>
+    </section>
+
+    <section class="set">
+      <h2>Collapsing the fifteen (E–H)</h2>
+      <p class="lede">Native <code>&lt;details&gt;</code>, no JS. Threshold idea: at or under ~6 credits show everything, above that use one of these.</p>
+      <div class="opts">
+
+        <figure class="opt">
+          <figcaption>E · Whole section folded: summary line only</figcaption>
+          <details class="cr e">
+            <summary>Credits <span class="cnt">{many.length} people &amp; groups</span></summary>
+            <ul class="b">
+              {byName(many).map(({ c, roles }) => (
+                <li><span class="nm">{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</span><span class="rl">{roles.join(' · ')}</span></li>
+              ))}
+            </ul>
+          </details>
+        </figure>
+
+        <figure class="opt">
+          <figcaption>F · Lead credits shown, rest behind “and 11 more”</figcaption>
+          <div class="cr f">
+            <ul class="b">
+              {byName(many).slice(0, 4).map(({ c, roles }) => (
+                <li><span class="nm">{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</span><span class="rl">{roles.join(' · ')}</span></li>
+              ))}
+            </ul>
+            <details>
+              <summary>and {byName(many).length - 4} more</summary>
+              <ul class="b">
+                {byName(many).slice(4).map(({ c, roles }) => (
+                  <li><span class="nm">{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</span><span class="rl">{roles.join(' · ')}</span></li>
+                ))}
+              </ul>
+            </details>
+          </div>
+        </figure>
+
+        <figure class="opt">
+          <figcaption>G · By role: small roles inline, big roles fold with a count</figcaption>
+          <div class="cr g">
+            {[...new Set(many.map((c) => c.role))].map((r) => {
+              const cs = many.filter((c) => c.role === r);
+              const list = cs.map((c, i) => <>{i > 0 && ', '}{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</>);
+              return cs.length <= 2
+                ? <p class="row"><span class="rl">{r}</span> {list}</p>
+                : <details class="row"><summary><span class="rl">{r}</span> <span class="cnt">{cs.length}</span></summary><p>{list}</p></details>;
+            })}
+          </div>
+        </figure>
+
+        <figure class="opt">
+          <figcaption>H · One prose line, tail folds: “Made with A, B, C and 12 others”</figcaption>
+          <p class="cr c">
+            Made with
+            {byName(many).slice(0, 3).map(({ c }, i) => <>{i > 0 && ', '}{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</>)}
+            and <details class="inl"><summary>{byName(many).length - 3} others</summary>
+              {byName(many).slice(3).map(({ c, roles }, i) => <>{i > 0 && ', '}{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}<small> ({roles.join(', ').toLowerCase()})</small></>)}.
+            </details>
+          </p>
+        </figure>
+
+      </div>
+    </section>
+
+    {sets.map((s) => (
+      <section class="set">
+        <h2>{s.label}</h2>
+        <div class="opts">
+
+          <figure class="opt">
+            <figcaption>A · Definition list (role is the label, like <code>meta:</code>)</figcaption>
+            <section class="cr a">
+              <h3>Credits</h3>
+              <dl>
+                {s.credits.map((c) => (
+                  <><dt>{c.role}</dt><dd>{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</dd></>
+                ))}
+              </dl>
+              {s.affil.length > 0 && <p class="aff">Also associated with: {s.affil.join(', ')}</p>}
+            </section>
+          </figure>
+
+          <figure class="opt">
+            <figcaption>B · People first (name once, roles gathered)</figcaption>
+            <ul class="cr b">
+              {byName(s.credits).map(({ c, roles }) => (
+                <li>
+                  <span class="nm">{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</span>
+                  <span class="rl">{roles.join(' · ')}</span>
+                </li>
+              ))}
+            </ul>
+            {s.affil.length > 0 && <p class="aff b-aff">Affiliated: {s.affil.join(', ')}</p>}
+          </figure>
+
+          <figure class="opt">
+            <figcaption>C · One line of prose (scales down, not up)</figcaption>
+            <p class="cr c">
+              Made with
+              {byName(s.credits).map(({ c, roles }, i, a) => (
+                <>
+                  {i > 0 && (i === a.length - 1 ? ' and ' : ', ')}
+                  {href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}
+                  <small> ({roles.join(', ').toLowerCase()})</small>
+                </>
+              ))}.
+              {s.affil.length > 0 && <span class="aff"> Part of the {s.affil.join(', ')} world.</span>}
+            </p>
+          </figure>
+
+          <figure class="opt">
+            <figcaption>D · Credit roll (grouped by role, affiliation as a separate rule)</figcaption>
+            <section class="cr d">
+              {[...new Set(s.credits.map((c) => c.role))].map((r) => (
+                <div class="grp">
+                  <h4>{r}</h4>
+                  <p>
+                    {s.credits.filter((c) => c.role === r).map((c, i) => (
+                      <>{i > 0 && ', '}{href(c) ? <a class={c.kind} href={href(c)}>{c.name}</a> : c.name}</>
+                    ))}
+                  </p>
+                </div>
+              ))}
+              {s.affil.length > 0 && <div class="grp aff-grp"><h4>Related</h4><p>{s.affil.join(', ')}</p></div>}
+            </section>
+          </figure>
+
+        </div>
+      </section>
+    ))}
+  </main>
+</Base>
+
+<style>
+  .wrap { max-width: 64rem; margin: 0 auto; padding: var(--space-lg); font-family: var(--font-ui); color: var(--color-text); }
+  .lede { color: var(--color-text-muted); max-width: 44rem; }
+  .set { margin-block: var(--space-lg); }
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: var(--space-md); align-items: start; }
+  .opt { margin: 0; border: var(--border-width) solid var(--color-border-light); padding: var(--space-md); }
+  figcaption { font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: var(--space-sm); }
+  h3, h4 { font-family: var(--font-heading); margin: 0; }
+  a { color: inherit; }
+  a.card { text-decoration: underline; text-underline-offset: 3px; }
+  a.tag { text-decoration: underline dotted; text-underline-offset: 3px; }
+  .aff { color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; }
+
+  .a dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem var(--space-md); margin: var(--space-sm) 0; }
+  .a dt { color: var(--color-text-muted); font-size: 0.85rem; }
+  .a dd { margin: 0; }
+
+  .b { list-style: none; padding: 0; margin: 0; }
+  .b li { display: flex; justify-content: space-between; gap: var(--space-md); padding: 0.25rem 0; border-bottom: 1px dotted var(--color-border-light); }
+  .b .rl { color: var(--color-text-muted); font-size: 0.85rem; text-align: right; }
+  .b-aff { margin-top: var(--space-sm); }
+
+  .c { line-height: 1.6; margin: 0; }
+  .c small { color: var(--color-text-muted); }
+
+  .d { text-align: center; }
+  .d .grp { margin-block: var(--space-sm); }
+  .d h4 { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-text-muted); }
+  .d p { margin: 0.1rem 0 0; }
+  .d .aff-grp { border-top: var(--border-width) solid var(--color-border-light); padding-top: var(--space-sm); }
+
+  summary { cursor: pointer; font-family: var(--font-heading); }
+  .cnt { color: var(--color-text-muted); font-size: 0.8rem; font-family: var(--font-ui); margin-left: 0.4rem; }
+  .e ul { margin-top: var(--space-sm); }
+  .f details { margin-top: var(--space-sm); }
+  .f summary { color: var(--color-text-muted); font-size: 0.85rem; font-family: var(--font-ui); }
+  .g .row { margin: 0.25rem 0; }
+  .g .rl { color: var(--color-text-muted); font-size: 0.85rem; display: inline-block; min-width: 6rem; }
+  .g details p { margin: 0.2rem 0 0.4rem 6rem; }
+  details.inl { display: inline; }
+  details.inl summary { display: inline; color: var(--color-text-muted); text-decoration: underline dotted; font-family: inherit; }
+  details.inl[open] summary { display: none; }
+
+  .i summary { font-family: var(--font-heading); cursor: pointer; }
+  .i ul { list-style: none; padding: 0; margin: var(--space-sm) 0 0; columns: 2; column-gap: var(--space-lg); }
+  .i li { display: flex; align-items: baseline; gap: 0.3rem; break-inside: avoid; padding: 0.1rem 0; }
+  .i .rl { color: var(--color-text-muted); font-size: 0.8rem; }
+  .i .lead { flex: 1; border-bottom: 1px dotted var(--color-border-light); transform: translateY(-0.25em); min-width: 0.5rem; }
+  .i .nm { text-align: right; }
+
+  .j { height: 11rem; overflow: hidden; text-align: center; position: relative; mask-image: linear-gradient(transparent, #000 15%, #000 85%, transparent); }
+  .j .roll { animation: roll 30s linear infinite; }
+  .j:hover .roll, .j:focus .roll { animation-play-state: paused; }
+  .j p { margin: 0 0 var(--space-md); display: flex; flex-direction: column; }
+  .j em { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-text-muted); font-style: normal; }
+  @keyframes roll { to { transform: translateY(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .j { height: auto; mask-image: none; } .j .roll { animation: none; } .j .roll > div + div { display: none; } }
+
+  .k .dots { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.7rem; }
+  .k li { position: relative; }
+  .k a, .k button { display: block; width: 0.9rem; height: 0.9rem; border-radius: 50%; background: var(--color-text); border: 0; padding: 0; cursor: pointer; }
+  .k .org a, .k .org button { background: transparent; box-shadow: inset 0 0 0 2px var(--color-text); }
+  .k a.tag { background: var(--color-text-muted); }
+  .k .tip { display: none; position: absolute; bottom: 140%; left: 0; z-index: 2; white-space: nowrap; background: var(--color-bg, #fff); border: var(--border-width) solid var(--color-border-light); padding: 0.2rem 0.5rem; font-size: 0.85rem; }
+  .k li:hover .tip, .k li:focus-within .tip { display: block; }
+  .k .tip b { font-weight: normal; margin-right: 0.4rem; }
+  .k .hint { margin: var(--space-sm) 0 0; font-size: 0.8rem; color: var(--color-text-muted); }
+
+  .l { line-height: 2.2; margin: 0; }
+  .l .w { padding: 0.1rem 0.4rem; margin-right: 0.3rem; background: var(--dither-1); }
+  .l .w1 { background: var(--dither-2); }
+  .l .w2 { background: var(--dither-3); }
+  .l .w3 { background: var(--dither-4); }
+
+  .m p { margin: 0.2rem 0; }
+  .m em { color: var(--color-text-muted); font-style: italic; }
+
+  .n .pills { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-bottom: var(--space-sm); }
+  .n .pills input { position: absolute; opacity: 0; pointer-events: none; }
+  .n .pills label span { display: inline-block; padding: 0.15rem 0.7rem; border: var(--border-width) solid var(--color-border-light); border-radius: 999px; cursor: pointer; font-size: 0.85rem; }
+  .n .pills input:checked + span { background: var(--color-text); color: var(--color-bg, #fff); }
+  .n .pills input:focus-visible + span { outline: 2px solid var(--color-text); outline-offset: 2px; }
+  .n .die { background: none; border: 0; cursor: pointer; font-size: 1.1rem; padding: 0 0.3rem; }
+  .n .die:active { transform: rotate(40deg); }
+  .n .pick { margin: 0 0 var(--space-sm); padding: 0.3rem 0.6rem; background: var(--dither-2); }
+  .n .v { display: none; margin: 0; }
+  .n:has(input[value=role]:checked) .v-role,
+  .n:has(input[value=kind]:checked) .v-kind { display: block; }
+  .n:has(input[value=person]:checked) .v-person { display: block; }
+  .n .v p { margin: 0.3rem 0; }
+  .n .v em { display: inline-block; min-width: 6.5rem; color: var(--color-text-muted); font-style: normal; font-size: 0.85rem; }
+  .n .v-kind em { display: block; }
+  .n small { color: var(--color-text-muted); }
+  .n li.hit { background: var(--dither-2); }
+</style>
