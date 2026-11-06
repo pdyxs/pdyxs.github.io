@@ -157,16 +157,20 @@ const content = defineCollection({
         // that, which is why `viewable: always` became `tags: [why/viewable]`
         // and why `location:`/`era:` could be retired outright.
         excludeTags: z.array(z.string()).nullable().optional().transform((v) => v ?? undefined),
-        // Manual "a human has read this card end to end" flag. Obsidian's
+        // The publish gate: `true` means "a human has read this card end to
+        // end, and it may go live now". Obsidian's
         // Properties view only renders a checkbox for a key that actually
         // exists in the file — scripts/backfill-inspected.mjs stamps it onto
         // any card that lacks it (idempotent, safe to re-run). Absence counts
-        // the same as `false` everywhere this is read.
+        // the same as `false` everywhere this is read: the audit lens, the
+        // `why:uninspected` facet, the promotion script and the `main`-only CI
+        // assertion (scripts/assert-inspected.mjs) share that one definition.
         //
-        // Not a one-off: any automated edit to a card's frontmatter or body —
+        // Any automated edit to a card's frontmatter or body —
         // a script, a generator, an AI agent — must reset this to `false` as
         // part of that edit (see docs/agents/workflow.md,
-        // "`inspected` is a permanent editorial flag"). It also drives the dev-only
+        // "`inspected` is the publish gate"; the promotion script clearing
+        // `awaitsCode` is the one stated exception). It also drives the dev-only
         // `why:uninspected` filter (src/lib/content/tags/uninspected-facet.ts), and the
         // `not-inspected` finding on the dev-only audit lens (src/lib/site/audit.ts).
         inspected: z.boolean().optional(),

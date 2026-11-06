@@ -123,6 +123,33 @@ export function planPush(
   return { kind: 'push', entry: withFreeSlot([...state.entries, ...pending], target) };
 }
 
+/** What a replace of the active slot should actually do. See `planReplace`. */
+export type ReplacePlan =
+  /** A push or replace already in flight is delivering this location. */
+  | { kind: 'ignore' }
+  /** Swap the active slot for `entry`, whose slot is free. */
+  | { kind: 'replace'; entry: LocationEntry };
+
+/**
+ * The decision behind a replace (issue #114): same hole as `planPush`, a
+ * different act, so a different vocabulary. A replace never re-activates -- it
+ * swaps the active slot for a FRESH handle, even when the location is already
+ * stacked elsewhere -- so the only choices are `ignore` and `replace`.
+ *
+ * It shares `pending` with `planPush` on purpose: both claim a slot and then
+ * await before appending, so both must see each other's claims. Ignore on a
+ * matching in-flight key is the double-click reading (one intent delivered
+ * twice); the allocation avoids every slot in the store and in flight.
+ */
+export function planReplace(
+  state: StackState,
+  pending: readonly LocationEntry[],
+  target: LocationEntry,
+): ReplacePlan {
+  if (pending.some(e => e.key === target.key)) return { kind: 'ignore' };
+  return { kind: 'replace', entry: withFreeSlot([...state.entries, ...pending], target) };
+}
+
 /**
  * The DOM/cache handle of the FIRST entry holding an identity key, or null
  * when it isn't stacked. Keys are not unique (see the note at the top), so

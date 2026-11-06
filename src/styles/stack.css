@@ -300,6 +300,11 @@
 .stack-card-body {
   overflow: clip;
   min-height: 0;
+  /* The body is the item of `.body-wrapper`'s implicit auto column, whose
+     automatic minimum is the content's width; `overflow: clip` (unlike
+     `hidden`) doesn't zero it. Without this a CardStrip's scrollable width
+     widened the whole card far past the viewport (issue #194). */
+  min-width: 0;
 }
 
 .stack-card-body-inner {

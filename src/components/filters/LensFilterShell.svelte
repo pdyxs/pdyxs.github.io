@@ -168,6 +168,7 @@
 
 <FilterBar
   {hierarchies}
+  {tagDisplay}
   {groupOrder}
   {poolState}
   filterState={$lensFilterStore}

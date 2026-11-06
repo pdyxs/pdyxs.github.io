@@ -61,4 +61,24 @@ describe('header-media wrappers', () => {
     expect(island.querySelectorAll('.planet-hit')).toHaveLength(4);
     expect(island.querySelector('.star-reset')).toBeNull();
   });
+
+  it('FlashGame is registered as flash-game and server-renders the poster inside an island', async () => {
+    const Component = resolveHeaderMedia('flash-game')!;
+    expect(Component).toBeDefined();
+    const container = await AstroContainer.create({
+      renderers: [{ ...getContainerRenderer(), ssr: svelteServerRenderer }],
+    });
+    const div = document.createElement('div');
+    div.innerHTML = await container.renderToString(Component, {
+      props: {
+        entryId: 'what/games/digital/x',
+        images: [{ filename: 'poster.png', src: '/img/poster.png', width: 800, height: 600 }],
+        swf: { url: '/game.swf', width: 800, height: 600 },
+      },
+    });
+    const island = div.querySelector('astro-island')!;
+    expect(island.getAttribute('client')).toBe('load');
+    expect(island.querySelector('.flash-poster')!.getAttribute('src')).toBe('/img/poster.png');
+    expect(island.querySelector<HTMLElement>('.flash-stage')!.getAttribute('style')).toContain('800 / 600');
+  });
 });

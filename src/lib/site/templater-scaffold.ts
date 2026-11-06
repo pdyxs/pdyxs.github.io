@@ -231,7 +231,7 @@ const SLUGIFY_JS =
  *
  * `inspected: true` is prefilled rather than offered as a suggestion — a card
  * Paul writes himself through this scaffold needs no confirmation of his own
- * words. See "`inspected` is a permanent editorial flag" in
+ * words. See "`inspected` is the publish gate" in
  * docs/agents/workflow.md for the automated-edit rule this is the counterpart
  * to.
  */
