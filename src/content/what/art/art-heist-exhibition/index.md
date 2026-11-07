@@ -1,6 +1,5 @@
 ---
 title: Art Heist (Exhibition)
-status: unlisted
 date: 2016-02-01
 tags:
   - what/art/the-neighbourhood

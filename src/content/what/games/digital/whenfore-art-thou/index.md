@@ -1,8 +1,8 @@
 ---
 inspected: false
-title: "Whenfore Art Thou"
-description: "Ludum Dare 22 entry (December 2011)"
-status: unlisted
+title: Whenfore Art Thou
+description: Ludum Dare 22 entry (December 2011)
+status: draft
 tags: []
 date: 2011-12-19
 medium: Video Game
