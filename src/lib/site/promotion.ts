@@ -88,6 +88,15 @@ export function parseNameStatus(raw: string): DiffEntry[] {
   return out;
 }
 
+/**
+ * Paths that must never exist on `main`: throwaway experiment routes
+ * (docs/agents/workflow.md → Experiments). They are built on `dev` and on
+ * build.pdyxs.wtf for looking at, and the production site has no use for them
+ * — and they import content `main` withholds, which fails the production build.
+ * Never taken from `dev`, and stripped from `main` if already there.
+ */
+const MAIN_NEVER = ['src/pages/experiments/'];
+
 /** Paths under src/content that are never promoted, whatever else is true. */
 const CONTENT_NEVER = ['src/content/.trash/', 'src/content/.obsidian/'];
 
@@ -156,6 +165,8 @@ export interface PromotionInput {
   cardDirsOnMain: ReadonlySet<string>;
   /** Whether this run promotes code. */
   promoteCode: boolean;
+  /** Every file path on `main`, so MAIN_NEVER paths already there can be removed. */
+  pathsOnMain?: readonly string[];
 }
 
 export interface PromotionPlan {
@@ -191,13 +202,18 @@ function isStructurePath(path: string): boolean {
  * holding one back is worse than shipping it.
  */
 export function planPromotion(input: PromotionInput): PromotionPlan {
-  const { diff, cardsOnDev, cardDirsOnMain, promoteCode } = input;
+  const { diff, cardsOnDev, cardDirsOnMain, promoteCode, pathsOnMain = [] } = input;
 
   const allCardDirs = new Set<string>([...cardsOnDev.keys(), ...cardDirsOnMain]);
   const plan: PromotionPlan = { checkout: [], remove: [], awaitsCodeConsumed: [] };
   const consumed = new Set<string>();
 
+  // Stripped on every run, content-only or not: absence from `main` is the rule.
+  const stripped = new Set(pathsOnMain.filter((p) => MAIN_NEVER.some((prefix) => p.startsWith(prefix))));
+  for (const path of stripped) plan.remove.push(path);
+
   for (const { status, path } of diff) {
+    if (MAIN_NEVER.some((prefix) => path.startsWith(prefix))) continue;
     if (CONTENT_NEVER.some((prefix) => path.startsWith(prefix))) continue;
 
     let include: boolean;

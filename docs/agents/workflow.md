@@ -223,6 +223,8 @@ committed images.
 
 `/experiment` should create throwaway pages under `src/pages/experiments/` with synthetic fixtures (e.g. 10 fake cards for an overflow experiment). Don't prototype by mutating production components and reverting.
 
+**They never reach `main`.** Promotion skips anything under `src/pages/experiments/` and strips it from `main` if present (`MAIN_NEVER` in `src/lib/site/promotion.ts`, pinned by `promotion.test.ts`), so production never builds them — and an experiment may freely import content `main` withholds. They still build on `dev`, `preview.` and `build.pdyxs.wtf`.
+
 Note: Astro excludes directories starting with `_` from routing, so `_experiments` does **not** work — use `experiments` (no underscore).
 
 ## The build server (`build.pdyxs.wtf`)
