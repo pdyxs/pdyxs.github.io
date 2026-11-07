@@ -136,6 +136,10 @@ jobs:
 
       - name: Type check
         run: npm run check
+        env:
+          # `astro check` hit Node's ~4 GB default heap limit and aborted (exit
+          # 134) on the runner. Standard runners for public repos have 16 GB.
+          NODE_OPTIONS: --max-old-space-size=8192
 
       # `main` only, and before the build. Every card must be `inspected: true`
       # (absent counts). Failing is not shipping, so this can never unpublish a
