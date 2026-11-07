@@ -100,6 +100,12 @@ jobs:
       # reported as its own step.
       - name: Run generators (prebuild)
         run: npm run prebuild
+        env:
+          # fetch-flatland.mjs downloads a release from a PRIVATE repo; the
+          # default github.token cannot read another repo, so it needs this PAT
+          # (fine-grained, Contents: read on pdyxs/flatland-fallen-angle-web).
+          # Callers (promote.yml, rollback.yml) must pass `secrets: inherit`.
+          GH_TOKEN: ${{ secrets.FLATLAND_TOKEN }}
 
       # The component tests render .astro components against the content
       # collection, which reads `.astro/data-store.json` AT THE PROJECT ROOT.
