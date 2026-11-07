@@ -1,7 +1,7 @@
 ---
 inspected: true
 title: Particulars (2012 rewrite)
-description: The 2012 Flash rewrite of Particulars
+description: The 2012 version of Particulars
 tags: []
 date: 2012-01-01
 medium: Video Game

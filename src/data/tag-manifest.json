@@ -2090,5 +2090,9 @@
   {
     "uid": "what:toys",
     "code": "8q"
+  },
+  {
+    "uid": "what:games/digital/enemies",
+    "code": "8r"
   }
 ]
