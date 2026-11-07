@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { deflateSync } from 'node:zlib';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { parseSwfHeader, readCardSwfHeader } from '@render/swf';
 
 // Bit-packs a SWF RECT (Nbits, then Xmin/Xmax/Ymin/Ymax) into bytes.
@@ -55,10 +55,13 @@ describe.each([
   ['Particulars (2010 original)', 'what/games/digital/particulars-original'],
   ['Particulars (2012 rewrite)', 'what/games/digital/particulars-2012'],
 ])('%s poster', (_name, id) => {
+  // Posters and SWFs are content: on `main` they are absent until the card is
+  // inspected and promoted, so there is nothing to compare yet.
+  const present = existsSync(`src/content/${id}/poster.png`);
   // The poster fills a stage box with the SWF's aspect ratio (object-fit: cover),
   // so a poster of any other shape is cropped, and is not the framing Ruffle
   // shows once the game starts (#216).
-  it('has the same aspect ratio as the stage it stands in for', () => {
+  it.skipIf(!present)('has the same aspect ratio as the stage it stands in for', () => {
     const png = readFileSync(`src/content/${id}/poster.png`);
     const posterW = png.readUInt32BE(16);
     const posterH = png.readUInt32BE(20);
