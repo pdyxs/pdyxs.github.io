@@ -46,6 +46,7 @@ images:
   - 5-5b.jpg
   - comic-e.jpg
 medium: Video Game
+series: Particulars
 meta:
   - label: Topic
     values:
