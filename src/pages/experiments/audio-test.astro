@@ -3,7 +3,11 @@
 // without the site around them. No Base layout, so no card stack, dither or view transitions.
 // Delete this page when the cause is found.
 import FlashGame from '@components/header-media/FlashGame.svelte';
-import houstonSwf from '../../content/what/games/analog/houston-we-have-a/game.swf?url';
+// A glob, not a bare import: the SWF is content, and `main` withholds it until the
+// Houston card is inspected, so a hard import would fail the production build.
+const houstonSwf = Object.values(
+  import.meta.glob<string>('../../content/what/games/analog/houston-we-have-a/game.swf', { query: '?url', import: 'default', eager: true }),
+)[0];
 ---
 
 <html lang="en">
@@ -43,7 +47,7 @@ import houstonSwf from '../../content/what/games/analog/houston-we-have-a/game.s
     <section>
       <h2>2. Houston in Ruffle, on this bare page</h2>
       <p>Press play, then click through its title. Houston has sound effects and an engine hum.</p>
-      <FlashGame swfUrl={houstonSwf} width={1024} height={768} client:load />
+      {houstonSwf ? <FlashGame swfUrl={houstonSwf} width={1024} height={768} client:load /> : <p>Houston's SWF is not on this branch.</p>}
     </section>
 
     <section>
