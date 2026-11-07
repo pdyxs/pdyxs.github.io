@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 
@@ -28,7 +28,9 @@ function label1Box(): { x: number; y: number; height: number } {
   return { x: signed(m[1]), y: signed(m[2]), height: signed(m[3]) };
 }
 
-describe('Tiny World Credits/Back label', () => {
+// The game binary is content: on `main` it is absent until the card is inspected
+// and promoted, so there is nothing to check yet.
+describe.skipIf(!existsSync(SWF))('Tiny World Credits/Back label', () => {
   it('has a box tall enough for one line of its font, or Ruffle draws nothing', () => {
     expect(label1Box().height).toBeGreaterThanOrEqual(Math.ceil(FONT_SIZE * 1.2));
   });
