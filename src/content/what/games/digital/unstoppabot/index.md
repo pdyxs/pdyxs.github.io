@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: Unstoppabot
 description: A hybrid of an infinitely running bot and a puzzle game, complemented with sarcastic wit
 images:
@@ -20,9 +20,78 @@ meta:
   - label: Developed By
     values:
       - SeeThrough Studios
-  - label: Roles
-    values:
-      - Lead Developer
-      - Designer
+credits:
+  - name: "Nick Kolan"
+    person: "nick-kolan"
+    role: "Game Designer"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Paul Sztajer"
+    person: "me"
+    role: "Lead Programmer"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Thomas Bowker"
+    person: "thomas-bowker"
+    role: "Programming"
+    group: ""
+    note: ""
+    listed: map
+  - name: "David Kilford"
+    person: "david-kilford"
+    role: "Programming"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Saul Alexander"
+    person: "saul-alexander"
+    role: "Creative Director"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Kristy Pearce"
+    person: "kristy-pearce"
+    role: "Art"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Eloise Bonner"
+    person: "eloise-bonner"
+    role: "Art"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Louise Fisher"
+    person: "louise-fisher"
+    role: "Art"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Dan Baker"
+    person: "dan-baker"
+    role: "Music Producer"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Angus O'Sullivan"
+    person: "angus-osullivan"
+    role: "Sound Effects"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Tom Dicker"
+    person: "tom-dicker"
+    role: "Video Producer"
+    group: ""
+    note: ""
+    listed: map
+  - name: "the Academy of Interactive Entertainment"
+    person: ""
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
 ---
 Unstoppabot is a hybrid of an infinite runner and a puzzle game, revolving around a robot that cannot stop, but which needs help to get past various traps and terrain. The game was released for iPhone and iPad.

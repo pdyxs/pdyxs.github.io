@@ -22,6 +22,7 @@ import { resolveCardRenderer, resolveNavRenderer } from '@render/location-resolv
 import type { TagDisplay } from '@content/tags/tag-display';
 import { resolveSeriesCards } from '@render/series-cards';
 import { computeSeriesDateBar } from '@content/cards/series';
+import { creditsView } from '@content/credits/credits';
 import CardHeader from '@components/stack/CardHeader.astro';
 import { SOLO_BUTTON, CLOSE_BUTTON } from '@render/header-icons';
 
@@ -65,6 +66,9 @@ const NavComponent = resolveNavRenderer(card.navRenderer);
 // same array without the images/description a 'strip' tile needs) is the
 // caller's business, not this resolution's — the whole array is fetched
 // either way and it's cheap.
+// Credits were normalised once, in resolveCard(); this only shapes the island's prop.
+const credits = creditsView(card.credits);
+
 const seriesCards = entry?.data?.series && card.seriesPreview !== 'none'
   ? await resolveSeriesCards(entry as any, allEntries as any, {
       isDev: import.meta.env.DEV,
@@ -109,7 +113,7 @@ const seriesDateBar = card.dateBar && entry?.data?.series
       date={card.date}
       {tagDisplay}
     >
-      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
+      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {credits} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
     </NavComponent>
   ) : (
     <>
@@ -129,7 +133,7 @@ const seriesDateBar = card.dateBar && entry?.data?.series
       <div class="body-wrapper open">
         <div class="stack-card-body">
           <div class="stack-card-body-inner">
-            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
+            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {credits} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
           </div>
         </div>
       </div>

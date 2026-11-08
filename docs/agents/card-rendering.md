@@ -75,7 +75,45 @@ Two traps that cost a round each:
 
 Collection views are browsing cards for an entire collection — e.g. `/card/posts` lists all posts with tag filter chips. They use bare collection-name UIDs (`posts`, `projects`) with no id component, which is a deliberate exception to the `collection/id` invariant. Register them in `COLLECTION_VIEW_RENDERERS` (`src/lib/render/renderers.ts`). The renderer is a plain Astro component that fetches all cards server-side and passes them to `<CollectionBrowser client:load />`. To link to a collection view from card content, use `[text](collection:posts)` — `CardStack.onDocumentClick` handles the `collection:` protocol and pushes `/card/posts`.
 
-## Card credits (`meta:`) are one flat shape, for Metadata Menu
+## Card credits (`credits:`)
+
+A card with a `credits:` block shows a centred **"made by …" line** between the
+meta rows and the prose, and the line opens a panel holding the full listing.
+Opt-in: no block, no section and no empty wrapper, and nothing is backfilled
+from `meta:` rows. The authored shape is one Object List of identical six-key
+entries (Metadata Menu allows one shape per item):
+
+```yaml
+credits:
+  - name: Nick Kolan      # required, as the source gives it
+    person: nick-kolan    # optional bare slug = identity; `me` is Paul
+    role: Game Designer   # optional, verbatim
+    group: ""             # optional heading above the role
+    note: ""              # optional, full listing only
+    listed: map           # map | listing (default map); listing = never the line
+```
+
+Three places, one decision each:
+
+- `src/lib/content/credits/credits.ts` is pure: `creditIdentity` (same `person`,
+  else same `name`), `madeByLine` (distinct `listed: map` identities; 1-3 are
+  named, more are counted), `creditListing` (group, then role, authored order)
+  and `creditsView`, which is `undefined` when there is nothing to open.
+- `resolveCard()` is the only reader of the frontmatter: `ResolvedCard.credits`
+  is the normalised list (empty strings dropped), `undefined` when absent.
+  **The schema field has no `.default([])`**, unlike the other list fields,
+  because absent must stay distinct from empty.
+- `CreditsSection.svelte` (`client:load`, one `{line, listing}` prop) is a
+  single `aria-expanded` button plus the panel; Esc inside the panel folds it.
+  `CardStackCard` builds the prop and passes it to `GenericRenderer` like
+  `relatedCards`, so both card routes render identically.
+
+It is an island with its own markup and no inline script, so it survives a push
+from a lens. Selectors: `.credits`, `.credits-by`, `.credits-panel`,
+`.credits-listing`, `.credits-listing-section`, `.credits-listing-name`,
+`.credits-note`. New tokens: none.
+
+## Card facts (`meta:`) are one flat shape, for Metadata Menu
 
 A card's credit/fact rows ("Medium", "Technology", "Accolades", "Made with") are
 an open-ended list, ported from the Jekyll site's `definitions:` — 22 distinct

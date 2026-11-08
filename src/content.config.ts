@@ -2,6 +2,7 @@ import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 import { ACTION_KINDS } from "@content/cards/card-actions";
+import { CREDIT_LISTED } from "@content/credits/credits";
 import { CONTENT_GLOB_PATTERN } from "@content/folders/content-glob";
 import { normaliseAuthoredTags } from "@content/tags/five-w";
 
@@ -52,6 +53,21 @@ const quote = z.object({
 const metaRow = z.object({
     label: z.string(),
     values: z.array(z.string()).nullable().default([]).transform((v) => v ?? []),
+});
+
+// One credit on a card's `credits:` block. Like `metaRow`, deliberately ONE
+// shape (every entry the same six keys) so Metadata Menu can edit it as an
+// Object List. `person` is a bare slug (`me` is Paul), optional strings may be
+// left empty (credits.ts normalises that away), and an unknown `listed` fails
+// the build. Unlike the list fields above, the block itself has no `.default([])`:
+// an absent `credits:` must stay distinct from an empty one.
+const credit = z.object({
+    name: z.string(),
+    person: z.string().nullish(),
+    role: z.string().nullish(),
+    group: z.string().nullish(),
+    note: z.string().nullish(),
+    listed: z.enum(CREDIT_LISTED).default("map"),
 });
 
 // ─── Unified content collection ───────────────────────────────────────────────
@@ -105,6 +121,8 @@ const content = defineCollection({
         // Zod strips unknown keys, so `priorty:` would be silently ignored —
         // src/lib/content/cards/priority-frontmatter.test.ts fails the build instead.
         priority: z.number().optional(),
+        // Opt-in credits block (see `credit` above). Absent stays undefined.
+        credits: z.array(credit).nullish().transform((v) => v ?? undefined),
         // ── generated-tag overrides ──
         // Derivation control. `location:`/`era:` used to live here as "derive
         // this instead" knobs; issue #116 retired both, so redirecting a
