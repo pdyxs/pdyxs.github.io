@@ -1,7 +1,8 @@
 ---
 title: Escape from Flatland
 date: 2011-08-19
-tags: []
+tags:
+  - why/playable
 series: Flatland Projects
 order: 1
 inspected: true

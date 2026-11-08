@@ -3,7 +3,8 @@ inspected: true
 solo: true
 title: Particulars (2012 rewrite)
 description: The 2012 version of Particulars
-tags: []
+tags:
+  - why/playable
 date: 2012-01-01
 medium: Video Game
 series: Particulars

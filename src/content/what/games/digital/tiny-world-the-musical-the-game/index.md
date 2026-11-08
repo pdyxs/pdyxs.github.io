@@ -4,6 +4,7 @@ title: Tiny World, the Musical, the Game
 description: A Ludum Dare prototype exploring interactive fiction and a custom game engine
 tags:
   - when/released
+  - why/playable
 date: 2012-04-20
 medium: Video Game
 actions: []

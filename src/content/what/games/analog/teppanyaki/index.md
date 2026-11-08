@@ -25,6 +25,7 @@ meta:
     values:
       - 14+
 image: logo.jpg
+solo: true
 ---
 Teppanyaki is a real-time card game about cooking fast and throwing food. Players race to assemble meals from ingredient cards, then throw them across the table to other players, who have to catch them in bowls to score.
 

@@ -35,6 +35,7 @@ meta:
       - Art Heist, 2016
       - Art Attacks the Little Guy, 2016
       - The 2016 Waterhouse Natural Science Art Prize (at the South Australian Museum)
+solo: true
 ---
 The Neighbourhood re-imagines the 8912 stars visible from Earth with the naked eye as a city.
 

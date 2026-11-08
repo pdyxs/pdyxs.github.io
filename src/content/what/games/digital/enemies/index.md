@@ -3,7 +3,8 @@ inspected: true
 solo: true
 title: The Enemy Of My Enemy Is My Heat-Seeking Missile
 description: "Enemies: Flash game (2010)"
-tags: []
+tags:
+  - why/playable
 date: 2010-08-22
 medium: Video Game
 headerMedia: flash-game
