@@ -10,6 +10,13 @@ export const VIEW = { width: 800, height: 480 } as const;
 export const MIN_ZOOM = 0.25;
 export const MAX_FIT_ZOOM = 1;
 export const PHONE_ZOOM = 1.6;
+/**
+ * The least a desktop view of the whole card opens at. A big credit list
+ * (Particulars) fits at about 0.35, too small to read, so the opening view
+ * centres on the card at this zoom instead and leaves the rest a pan away.
+ * It applies only when the card is framed; a person or role still fits.
+ */
+export const DESKTOP_CARD_ZOOM = 0.8;
 /** Room left around the framed box for labels. */
 const PAD = { x: 90, y: 55 };
 
@@ -30,6 +37,7 @@ export function connectedIds(graph: PositionedGraph, id: string): Set<string> {
  * Frame the selection together with what it connects to, centred on that box.
  * Zoom is the fit, at most 1 and at least 0.25. On a phone the zoom holds at
  * 1.6 and the view centres on the node itself instead, the rest a pan away.
+ * On desktop, framing the card holds at least DESKTOP_CARD_ZOOM the same way.
  */
 export function frameSelection(graph: PositionedGraph, id: string, opts: { phone: boolean }): Camera {
   const lit = connectedIds(graph, id);
@@ -45,5 +53,6 @@ export function frameSelection(graph: PositionedGraph, id: string, opts: { phone
     Math.max(MIN_ZOOM, Math.min((VIEW.width - 2 * PAD.x) / Math.max(1, x1 - x0), (VIEW.height - 2 * PAD.y) / Math.max(1, y1 - y0))),
   );
   if (opts.phone && PHONE_ZOOM > fit) return { cx: sel.x, cy: sel.y, s: PHONE_ZOOM };
+  if (!opts.phone && sel.kind === 'card' && DESKTOP_CARD_ZOOM > fit) return { cx: sel.x, cy: sel.y, s: DESKTOP_CARD_ZOOM };
   return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, s: fit };
 }

@@ -19,6 +19,13 @@ describe('buildCreditsGraph', () => {
     ]);
   });
 
+  it("names the centre node after the card, falling back to 'This card'", () => {
+    const one = [credit({ name: 'Nick', role: 'Designer' })];
+    const centre = (g: ReturnType<typeof buildCreditsGraph>) => g.nodes.find(n => n.kind === 'card')!.label;
+    expect(centre(buildCreditsGraph(one, { uid: 'g/u', index: computeCreditsIndex([]), title: 'Unstoppabot' }))).toBe('Unstoppabot');
+    expect(centre(buildCreditsGraph(one))).toBe('This card');
+  });
+
   const shape = (g: ReturnType<typeof buildCreditsGraph>) => {
     const label = (id: string) => g.nodes.find(n => n.id === id)!.kind === 'card' ? 'CARD' : g.nodes.find(n => n.id === id)!.label;
     return g.edges.map(e => `${label(e.from)}>${label(e.to)}`);

@@ -37,14 +37,26 @@ describe('frameSelection', () => {
 
   it('zooms out only as far as needed, never past 1 and never below 0.25', () => {
     expect(frameSelection(graph, 'a', { phone: false }).s).toBe(1);
-    const wide = frameSelection(graph, 'card', { phone: false });
+    // r2 reaches the far-off c, so its box is wider than 0.25 can fit.
+    const wide = frameSelection(graph, 'r2', { phone: false });
     expect(wide.s).toBe(0.25);
   });
 
   it('fits the connected box with room for labels when it is bigger than the view', () => {
-    const mid = frameSelection({ ...graph, nodes: graph.nodes.map(n => (n.id === 'c' ? { ...n, x: -500 } : n)) }, 'card', { phone: false });
+    const mid = frameSelection({ ...graph, nodes: graph.nodes.map(n => (n.id === 'c' ? { ...n, x: -1000 } : n)) }, 'r2', { phone: false });
     expect(mid.s).toBeGreaterThan(0.25);
     expect(mid.s).toBeLessThan(1);
+  });
+
+  it('on desktop, a card too big to fit opens at 0.8, centred on the card', () => {
+    expect(frameSelection(graph, 'card', { phone: false })).toEqual({ cx: 0, cy: 0, s: 0.8 });
+  });
+
+  it('on desktop, a card that fits above 0.8 still fits', () => {
+    const small = { ...graph, nodes: graph.nodes.map(n => (n.id === 'c' ? { ...n, x: -400 } : n)) };
+    const cam = frameSelection(small, 'card', { phone: false });
+    expect(cam.s).toBeGreaterThan(0.8);
+    expect(cam.cx).not.toBe(0);
   });
 
   it('on a phone, opens the card zoomed in at 1.6 and centred on the node', () => {

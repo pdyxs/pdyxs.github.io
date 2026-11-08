@@ -22,8 +22,11 @@ export type CreditsGraph = {
 
 export const CARD_NODE = 'card';
 
-/** Pass `context` to add each person's other credited cards as expansions. */
-export function buildCreditsGraph(credits: Credit[], context?: { uid: string; index: CreditsIndex }): CreditsGraph {
+/**
+ * Pass `context` to add each person's other credited cards as expansions, and
+ * `title` to name the centre node after the card (it falls back to "This card").
+ */
+export function buildCreditsGraph(credits: Credit[], context?: { uid: string; index: CreditsIndex; title?: string }): CreditsGraph {
   const nodes = new Map<string, CreditsNode>();
   const edges = new Map<string, CreditsEdge>();
   const node = (id: string, kind: CreditsNodeKind, label: string) => {
@@ -34,7 +37,7 @@ export function buildCreditsGraph(credits: Credit[], context?: { uid: string; in
     edges.set(`${from}\u0000${to}`, { from, to });
   };
 
-  node(CARD_NODE, 'card', 'This card');
+  node(CARD_NODE, 'card', context?.title || 'This card');
   for (const c of credits) {
     if (c.listed !== 'map') continue;
     let parent = CARD_NODE;

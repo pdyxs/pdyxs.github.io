@@ -14,10 +14,10 @@ export type CreditsView = { line: MadeByLine; listing: CreditListingSection[]; g
 export function buildCreditsViews(cards: { uid: string; title: string; credits?: Credit[] }[]): Map<string, CreditsView> {
   const index = computeCreditsIndex(cards);
   const views = new Map<string, CreditsView>();
-  for (const { uid, credits } of cards) {
+  for (const { uid, title, credits } of cards) {
     const base = listingView(credits);
     if (!base || !credits) continue;
-    views.set(uid, { ...base, graph: layoutCreditsGraph(buildCreditsGraph(credits, { uid, index })) });
+    views.set(uid, { ...base, graph: layoutCreditsGraph(buildCreditsGraph(credits, { uid, index, title })) });
   }
   return views;
 }
