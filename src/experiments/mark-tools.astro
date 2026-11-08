@@ -1,0 +1,143 @@
+---
+// The real suspended mark with no-op tools hung on it: proves the tool framework (press, a child, drag, shown()).
+//
+// Slice 7 of docs/plans/suspended-mark.md. The page mounts the production
+// <SuspendedMark> itself (Base's is off) with PROOF_TOOLS in place of
+// MARK_TOOLS, and registers the proof behaviours on the real registry from its
+// own script, so nothing here ships: production pages get MARK_TOOLS and the
+// built-in behaviours only. The title below is a stand-in for a page-mode lens
+// (the same markup the mark looks for); the mode buttons announce
+// `site:presentation` as CardStack would, so the hanging pose and the exit can
+// be checked here too.
+import Base from '../layouts/Base.astro';
+import SuspendedMark from '@components/site/SuspendedMark.astro';
+import { PROOF_TOOLS } from './mark-tools-proof';
+---
+
+<Base title="Mark tools" mark={false} presentation="page">
+  <SuspendedMark tools={PROOF_TOOLS} />
+  <main class="mt">
+    <div class="stack-card--page mt-page">
+      <header class="page-header">
+        <h1 class="page-title"><a href="/experiments/mark-tools" class="page-title-link">pdyxs<span class="page-title-mark">.</span>wtf</a></h1>
+        <p class="page-subtitle">the tool framework, on no-op tools</p>
+        <div class="page-header-rule"></div>
+      </header>
+    </div>
+    <section class="mt-panel">
+      <p>
+        Click the dot (or Tab to it and press Enter): three tools drop. <strong>+</strong> logs a press, and so does the
+        <strong>×</strong> hanging from it. The four-way bauble reports its pointer while dragged (Escape cancels). The
+        ring is toggled by the button below, open or closed.
+      </p>
+      <div class="mt-buttons">
+        <button type="button" class="mt-toggle" aria-pressed="true">Ring tool shown</button>
+        <button type="button" class="mt-mode" data-to="card">Hang (card mode)</button>
+        <button type="button" class="mt-mode" data-to="card" data-vt>Leave with a View Transition</button>
+        <button type="button" class="mt-mode" data-to="page">Back to the title</button>
+        <button type="button" class="mt-clear">Clear log</button>
+      </div>
+      <ol class="mt-log" aria-live="polite"></ol>
+      <div class="mt-spacer" aria-hidden="true"></div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .mt {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 0 var(--space-md) var(--space-xl);
+  }
+  .mt-page {
+    text-align: center;
+  }
+  .mt-panel {
+    display: grid;
+    gap: var(--space-md);
+    margin-top: calc(var(--space-xl) * 2);
+  }
+  .mt-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+  .mt-buttons button {
+    font: inherit;
+    padding: var(--space-xs) var(--space-sm);
+    border: var(--border-width) solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .mt-buttons button[aria-pressed='false'] {
+    background: var(--color-selected-bg);
+    color: var(--color-selected-fg);
+  }
+  .mt-log {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    min-height: 8rem;
+    max-height: 14rem;
+    overflow: auto;
+    border: var(--border-width) solid var(--color-border);
+    padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-xl);
+    margin: 0;
+  }
+  /* Room to scroll, so the title (and the tools in it) can be scrolled. */
+  .mt-spacer {
+    height: 100vh;
+  }
+</style>
+
+<script>
+  import { registerToolBehaviours } from '@site/mark-tools';
+  import { announcePresentation } from '@site/presentation-event';
+  import { PROOF_BEHAVIOURS, proofToggle, setProofLog, setProofToggle } from './mark-tools-proof';
+
+  const log = document.querySelector<HTMLOListElement>('.mt-log')!;
+  let n = 0;
+  setProofLog((line) => {
+    const li = document.createElement('li');
+    li.textContent = `${++n} ${line}`;
+    log.append(li);
+    log.scrollTop = log.scrollHeight;
+  });
+  registerToolBehaviours(PROOF_BEHAVIOURS);
+
+  const toggle = document.querySelector<HTMLButtonElement>('.mt-toggle')!;
+  toggle.addEventListener('click', () => {
+    setProofToggle(!proofToggle());
+    toggle.setAttribute('aria-pressed', String(proofToggle()));
+    toggle.textContent = proofToggle() ? 'Ring tool shown' : 'Ring tool hidden';
+  });
+  document.querySelector('.mt-clear')!.addEventListener('click', () => {
+    log.replaceChildren();
+    n = 0;
+  });
+
+  // Stand in for CardStack: the header shows in page mode and not in card
+  // mode, and each change is announced.
+  const page = document.querySelector<HTMLElement>('.mt-page')!;
+  const show = (to: 'page' | 'card') => page.classList.toggle('stack-card--page', to === 'page');
+  for (const b of document.querySelectorAll<HTMLButtonElement>('.mt-mode')) {
+    b.addEventListener('click', () => {
+      const to = b.dataset.to as 'page' | 'card';
+      if (b.hasAttribute('data-vt') && typeof document.startViewTransition === 'function') {
+        const vt = document.startViewTransition(() => show(to));
+        announcePresentation({ to, vt });
+        return;
+      }
+      // As the stack does it: going to a card, announced while the title is
+      // still laid out; coming back, once it is.
+      if (to === 'card') {
+        announcePresentation({ to, vt: null });
+        show(to);
+      } else {
+        show(to);
+        announcePresentation({ to, vt: null });
+      }
+    });
+  }
+  announcePresentation({ to: 'page', vt: null });
+</script>

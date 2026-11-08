@@ -3,7 +3,8 @@
 .site-footer {
   text-align: center;
   /* Box (and border-top) must match .page-header's box so the top and
-     bottom divider lines line up. Mobile: inset via margin, same as
+     bottom divider lines line up — the top one is .page-header-rule, which
+     spans that box exactly. Mobile: inset via margin, same as
      #card-stack's padding, so the border matches the card column instead
      of running full-bleed. Desktop restores original padding but caps
      width to --max-width, centered — same box .page-header ends up with. */

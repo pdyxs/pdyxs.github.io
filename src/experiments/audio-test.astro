@@ -6,7 +6,7 @@ import FlashGame from '@components/header-media/FlashGame.svelte';
 // A glob, not a bare import: the SWF is content, and `main` withholds it until the
 // Houston card is inspected, so a hard import would fail the production build.
 const houstonSwf = Object.values(
-  import.meta.glob<string>('../../content/what/games/analog/houston-we-have-a/game.swf', { query: '?url', import: 'default', eager: true }),
+  import.meta.glob<string>('../content/what/games/analog/houston-we-have-a/game.swf', { query: '?url', import: 'default', eager: true }),
 )[0];
 ---
 

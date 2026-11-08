@@ -1,0 +1,889 @@
+---
+import Base from '../layouts/Base.astro';
+import { DOT_ZETA, TITLE_EXIT_SCALE } from '@site/mark/motion';
+
+// Throwaway /experiments route: the suspended dot. The full stop in pdyxs.wtf
+// hangs from five threads tied to the letters around it (s top, s bottom, x
+// foot, w top, w foot). When the header goes away — opening a card from home —
+// the whole title rises, grows and drifts to the centre as one piece; the dot's only
+// difference is that it STOPS at the top edge (with a small settle), half
+// off-screen, while the letters carry on out of view and the threads pay out.
+// That hanging dot is the mark you click for global tools: it pulls the
+// threads taut and tools drop from their far ends on strings of their own.
+// The favicon is the same rig in a square frame.
+//
+// The card open is SIMULATED (a mock home list and a mock card), not wired
+// into CardStack.svelte: on the real site the header's exit is a view
+// transition that morphs the title into the card header, which this idea
+// would replace.
+//
+// Springs are hand-rolled (a damped spring is ten lines, and the target moves
+// every frame with the scroll, which is what animation libraries fight).
+// Thread sag is solved from each thread's rest length, not simulated.
+
+const PARAGRAPHS = Array.from({ length: 14 }, (_, i) => i);
+
+// Clicking the dot pulls the threads taut and drops tools from their far ends.
+// Each tool hangs from one thread (an index into MARK_RIG.threads): from its
+// anchor on the letters in the title, from where the thread leaves the top edge
+// everywhere else. Only the colour picker so far.
+const TOOLS = [{ id: 'palette', thread: 1, label: 'Colours: drag across the page to pick them', length: 80 }];
+---
+
+<Base title="Suspended dot" mark={false}>
+  <div class="sd">
+    <div class="sd-frame">
+    <header class="sd-header">
+      <h1 class="page-title sd-title">
+        pdy<span data-l="x">x</span><span data-l="s">s</span><span class="sd-slot">.</span><span data-l="w">w</span>tf
+      </h1>
+      <p class="page-subtitle">Paul Sztajer — games, puzzles and writing</p>
+      {/* The line under the subtitle, as its own element (prod: .page-header-rule):
+          on a card open it is what morphs into the card header. */}
+      <div class="sd-rule"></div>
+    </header>
+
+    <main class="sd-body">
+      {/* Home: a list of cards to open. */}
+      <section class="sd-home">
+        <p>
+          Open a card. The header leaves upwards; the dot lags behind, swings to
+          the centre and hangs from the top edge. Close the card to bring it
+          back. Click the dot, in the title or hanging, to pull the threads taut and drop the tools; drag the colour bauble across the page to pick colours.
+        </p>
+        <ul class="sd-list">
+          {['Summoning Fog', 'Lino Tiles', 'Who I am', 'This website', 'Gotta Go'].map((t) => (
+            <li><button type="button" class="sd-open" data-title={t}>{t}</button></li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Card: stands in for an opened card. */}
+      <article class="sd-card" hidden>
+        <div class="sd-card-header">
+          <span class="sd-card-title"></span>
+          <button type="button" class="sd-close" aria-label="Close card">✕</button>
+        </div>
+        {PARAGRAPHS.map((i) => (
+          <p>
+            Card body paragraph {i + 1}. The dot keeps hanging while you read;
+            it only drops back into the title when the header returns.
+          </p>
+        ))}
+      </article>
+
+      <section class="sd-fav">
+        <h2>Favicon</h2>
+        <p>
+          <code>public/favicon.svg</code>, hand-editable: the same five threads holding
+          the dot in a square frame. Shown here recoloured to the current palette
+          (this page’s tab too). Reload after editing the file.
+        </p>
+        <div class="sd-fav-rows">
+          <div class="sd-fav-row"></div>
+        </div>
+      </section>
+    </main>
+    </div>
+
+    {/* ── The overlay: dot, threads, hit target ── */}
+    <svg class="sd-overlay" aria-hidden="true">
+      <g class="sd-threads">
+        <path></path><path></path><path></path><path></path><path></path>
+      </g>
+      <g class="sd-tools">
+        {TOOLS.map((t) => (
+          <g class="sd-tool" data-tool={t.id} data-thread={t.thread} data-length={t.length}>
+            <line class="sd-tool-string"></line>
+            <g class="sd-bauble" role="button" tabindex="0" aria-label={t.label}>
+              <title>{t.label}</title>
+              <circle class="sd-bauble-hit" r="22"></circle>
+              <circle class="sd-bauble-body" r="12"></circle>
+              <circle class="sd-bauble-core" r="4.7"></circle>
+            </g>
+          </g>
+        ))}
+      </g>
+      <rect class="sd-dot"></rect>
+      <g class="sd-debug"></g>
+    </svg>
+    <button type="button" class="sd-hit" aria-label="Tools" aria-expanded="false"></button>
+
+    <fieldset class="sd-controls">
+      <legend>tune</legend>
+      <label>grow to <input type="range" class="sd-in-hang" min="100" max="500" step="25" value={TITLE_EXIT_SCALE * 100} /> <output></output></label>
+      <label>settle <input type="range" class="sd-in-swing" min="15" max="100" value={Math.round(DOT_ZETA * 100)} /> <output></output></label>
+      <label><input type="checkbox" class="sd-in-debug" /> hit area</label>
+      <label><input type="checkbox" class="sd-in-css" /> css exit (no VT)</label>
+      <a href="/experiments/mark-editor">edit strands →</a>
+    </fieldset>
+  </div>
+</Base>
+
+<style>
+  /* The header leaves upwards: a negative top margin as tall as itself,
+     animated, so the page content rides up with it (margin, not a transform —
+     nothing that holds dither may be transformed). */
+  /* The page-mode card: on the real site the front page is a ~1100px box,
+     centred, whose header carries the md inline padding. The title's size comes
+     from the real .page-title rule (clamp of 3rem, which is 54px at 18px root),
+     not from anything here. */
+  .sd-frame { width: min(1100px, 100%); margin: 0 auto; }
+  .sd-header {
+    padding: var(--space-xl) var(--space-md) 0;
+    transition:
+      margin-top 420ms cubic-bezier(0.5, 0, 0.75, 0),
+      transform 420ms cubic-bezier(0.5, 0, 0.75, 0);
+  }
+  /* Rises out AND drifts so the dot's slot lands on the centre line: one shared
+     motion for the whole title. translateX is safe here only because nothing
+     in the header is dithered (styling.md). */
+  .sd[data-mode='card'] .sd-header {
+    margin-top: calc(-1 * var(--sd-header-h, 12rem));
+    transform: translateX(var(--sd-dx, 0px));
+  }
+  .sd[data-mode='page'] .sd-header { transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1); }
+  /* The rule carries the border the header used to: same box at rest (the
+     header's bottom padding is now its top margin, and it spans the header's
+     inline padding), but a box of its own, so it alone can be named. */
+  .sd-rule {
+    margin: var(--space-lg) calc(-1 * var(--space-md)) 0;
+    border-top: var(--border-width) solid var(--color-border);
+  }
+  /* A view-transition exit: the new state is laid out at once (the VT animates
+     the snapshots); a CSS transition here would move the live title under them. */
+  .sd[data-exit='vt'] .sd-header,
+  .sd[data-exit='vt'] .sd-title { transition: none; }
+
+  /* The title line grows as it rises, scaled about the dot's slot so the dot
+     stays put within it — that growth is what brings the dot to its hanging
+     size. Only the h1 scales, so the tagline still clears the top. Safe to
+     transform: nothing in it is dithered. */
+  .sd-title {
+    transform-origin: var(--sd-ox, 50%) var(--sd-oy, 50%);
+    transition: transform 420ms cubic-bezier(0.5, 0, 0.75, 0);
+  }
+  .sd[data-mode='card'] .sd-title { transform: scale(var(--sd-scale, 1)); }
+  .sd[data-mode='page'] .sd-title { transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1); }
+  /* Reduced motion: no VT, and the header just swaps (after the rules above, which it overrides). */
+  @media (prefers-reduced-motion: reduce) {
+    .sd-header, .sd-title { transition: none; }
+  }
+
+  .sd-list { list-style: none; padding: 0; display: grid; gap: var(--space-sm); }
+  .sd-open {
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    padding: var(--space-md);
+    cursor: pointer;
+  }
+  .sd-open:hover { background: var(--color-bg-hover); }
+
+  .sd-card { border: var(--border-width) solid var(--color-border); margin-top: var(--space-lg); }
+  .sd-card[hidden], .sd-home[hidden] { display: none; }
+  .sd-card p { padding: 0 var(--space-md); }
+  .sd-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    background: var(--dither-4);
+    border-bottom: var(--border-width) solid var(--color-border);
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+  }
+  .sd-card-title { background: var(--color-bg); padding: 0 var(--space-xs); }
+  .sd-close {
+    font: inherit;
+    font-size: 1rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    cursor: pointer;
+  }
+  /* The period keeps its advance and kerning, but is drawn by the overlay. */
+  .sd-slot { color: transparent; }
+  .sd-body { max-width: var(--max-width); padding: 0 var(--space-md) 40vh; }
+
+  .sd-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 900;
+    overflow: visible;
+  }
+  /* At rest in the title, the overlay lives in the document so it scrolls
+     natively with the text (a rAF redraw would trail the scroll by a frame).
+     Only a transition, or hanging, puts it back on the viewport. */
+  .sd[data-overlay='doc'] .sd-overlay,
+  .sd[data-overlay='doc'] .sd-hit { position: absolute; }
+  .sd-threads path {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .sd-dot { fill: var(--color-text); }
+  .sd-hit {
+    position: fixed;
+    z-index: 901;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .sd[data-debug] .sd-hit { outline: 1px dashed var(--color-text); }
+
+  /* Tools: a bauble on a string, from the threads' far ends. */
+  .sd-tool:not([data-open]) { display: none; }
+  .sd-tool-string {
+    stroke: var(--color-text);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .sd-bauble { pointer-events: auto; cursor: grab; touch-action: none; }
+  .sd-bauble[data-dragging] { cursor: grabbing; }
+  .sd-bauble-hit { fill: transparent; }
+  .sd-bauble-body { fill: var(--color-bg); stroke: var(--color-text); stroke-width: 2.5; }
+  .sd-bauble-core { fill: var(--color-text); }
+  .sd-bauble:focus-visible .sd-bauble-body { stroke-width: 4; }
+
+  .sd-controls {
+    position: fixed;
+    left: var(--space-sm);
+    bottom: var(--space-sm);
+    z-index: 950;
+    display: grid;
+    gap: 2px;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    font-size: 0.75rem;
+  }
+  .sd-controls label { display: flex; align-items: center; gap: var(--space-xs); }
+  .sd-controls input[type='range'] { width: 7rem; }
+  .sd-controls output { font-family: var(--font-mono); min-width: 2.5em; }
+  .sd-fav { margin-top: var(--space-xl); }
+  .sd-fav-rows { display: grid; gap: var(--space-md); }
+  .sd-fav-row { display: flex; align-items: flex-end; gap: var(--space-lg); }
+  .sd-fav-label { width: 4em; font-size: 0.8rem; }
+  .sd-fav-row :global(figure) { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; }
+  .sd-fav-row :global(img) { display: block; }
+</style>
+
+<style is:global>
+  /* The VT spike. Names are set by the script just before startViewTransition
+     and cleared on finished. The overlay renders live through the transition:
+     no old image, and the new one (a live view of the SVG the rAF loop is
+     drawing) neither fades nor moves. Above the title groups, which on a close
+     are new-only and so would otherwise be stacked after it. */
+  ::view-transition-old(site-mark) { display: none; }
+  ::view-transition-new(site-mark),
+  ::view-transition-group(site-mark) { animation: none; }
+  ::view-transition-group(site-mark) { z-index: 2; }
+  /* The title and subtitle have one side only (old on open, new on close), so
+     the UA gives them no group morph, just a fade on the image. Kill the fade;
+     the script drives the image's transform with titleExit keyframes. */
+  ::view-transition-old(page-title),
+  ::view-transition-new(page-title),
+  ::view-transition-old(page-subtitle),
+  ::view-transition-new(page-subtitle) { animation: none; }
+  /* Departing (or returning) over the morphing rule, not under it. */
+  ::view-transition-group(page-title),
+  ::view-transition-group(page-subtitle) { z-index: 1; }
+  /* The rule ↔ card header: the default group morph, line box ↔ header box.
+     The header's image is stretched to the box (by default it keeps its aspect
+     and spills out below the box while the box is still line-thin), so it
+     reads as the line thickening into the header. The line's own image keeps
+     its aspect: stretched, it would be a solid bar. */
+  ::view-transition-group(page-rule) {
+    animation-duration: 420ms;
+    animation-timing-function: ease-in-out;
+  }
+  /* Which side is the header depends on the direction (prod could use VT
+     types, :active-view-transition-type(), instead of an attribute). */
+  html[data-sd-vt='leave']::view-transition-new(page-rule),
+  html[data-sd-vt='return']::view-transition-old(page-rule) { block-size: 100%; }
+</style>
+
+<script>
+  import { MARK_RIG, type MarkRig } from '@data/mark-rig';
+  import {
+    poseThreads,
+    threadPathData,
+    tauten,
+    toolPivot,
+    stepBauble,
+    DROP,
+    REEL,
+    baublePos,
+    baubleAt,
+    baubleMoving,
+    RIG_STORAGE_KEY,
+    type Bauble,
+    type ThreadGeometry,
+  } from '@site/mark/geometry';
+  import {
+    type Spring,
+    type ToolsState,
+    DOT_AT_REST,
+    TOOLS_CLOSED,
+    clamp01,
+    stepDot,
+    dotMoving,
+    hangSeparation as separationFor,
+    poseBlend as blendFor,
+    setWant,
+    stepTools,
+    tautness,
+    stepToolSize,
+    toolReeledIn,
+    subStep,
+    titleExit,
+    titleExitKeyframes,
+    TITLE_EXIT_MS,
+    type TitleStart,
+    type Viewport,
+  } from '@site/mark/motion';
+  import type { Palette } from '@site/palette';
+  import {
+    applyPalette,
+    commitPalette,
+    onPaletteChange,
+    pickAt as pickAtPoint,
+    renderFavicon,
+    storedPalette,
+    toFraction,
+  } from '@site/palette-dom';
+  import { THEME_CHANGE_EVENT } from '@site/theme';
+
+  // The motion itself (springs, the catch, the pull, the pose blend) is pure,
+  // in src/lib/site/mark/motion.ts; this script reads the page and draws.
+  type V = { x: number; y: number };
+
+  // ── Page ───────────────────────────────────────────────────────────
+
+  const root = document.querySelector<HTMLElement>('.sd')!;
+  const title = root.querySelector<HTMLElement>('.sd-title')!;
+  const slot = root.querySelector<HTMLElement>('.sd-slot')!;
+  const paths = [...root.querySelectorAll<SVGPathElement>('.sd-threads path')];
+  const dotEl = root.querySelector<SVGRectElement>('.sd-dot')!;
+  const debugG = root.querySelector<SVGGElement>('.sd-debug')!;
+  const hit = root.querySelector<HTMLButtonElement>('.sd-hit')!;
+  const inHang = root.querySelector<HTMLInputElement>('.sd-in-hang')!;
+  const inSwing = root.querySelector<HTMLInputElement>('.sd-in-swing')!;
+  const inDebug = root.querySelector<HTMLInputElement>('.sd-in-debug')!;
+  const inCss = root.querySelector<HTMLInputElement>('.sd-in-css')!;
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  // ── Tools ──────────────────────────────────────────────────────────
+
+  interface Tool {
+    id: string;
+    thread: number;
+    /** String length when dropped, px. */
+    length: number;
+    el: SVGGElement;
+    string: SVGLineElement;
+    bauble: SVGGElement;
+    b: Bauble;
+    /** Its size, 0..1: grows out of the letters, shrinks back into them. */
+    s: Spring;
+    /** Where it hangs from, in overlay coords; set by draw(). */
+    pivot: V;
+    /** The pointer (viewport coords) while the bauble is being dragged. */
+    pointer: V | null;
+  }
+  const tools: Tool[] = [...root.querySelectorAll<SVGGElement>('.sd-tool')].map((el) => ({
+    id: el.dataset.tool!,
+    thread: +el.dataset.thread!,
+    length: +el.dataset.length!,
+    el,
+    string: el.querySelector('.sd-tool-string')!,
+    bauble: el.querySelector('.sd-bauble')!,
+    b: { r: 0, rv: 0, theta: 0, omega: 0 },
+    s: { x: 0, v: 0 },
+    pivot: { x: 0, y: 0 },
+    pointer: null,
+  }));
+  /** The pull → release → rest machine (motion.ts). */
+  let ts: ToolsState = TOOLS_CLOSED;
+  const toolLen = (t: Tool) => (ts.toolsOut ? t.length : 0);
+  const carriesTool = (thread: number) => tools.some((t) => t.thread === thread);
+
+  function setTools(open: boolean) {
+    const next = setWant(ts, open, reduced.matches);
+    if (next === ts) return;
+    ts = next;
+    hit.setAttribute('aria-expanded', String(open));
+    for (const t of tools) {
+      if (open && !t.el.hasAttribute('data-open')) {
+        t.el.setAttribute('data-open', '');
+        // Nothing paid out yet; a little sideways kick so it swings as it falls.
+        t.b = { r: 0, rv: 0, theta: 0, omega: reduced.matches ? 0 : 0.9 };
+        t.s = { x: reduced.matches ? 1 : 0, v: 0 };
+      }
+    }
+    wake();
+  }
+
+  // The colour picker: dragging its bauble across the page picks the palette
+  // exactly as the mark's palette tool does, through the same
+  // effect layer (palette-dom.ts), so a pick persists across the site.
+  const pickAt = (e: PointerEvent) => pickAtPoint({ x: e.clientX, y: e.clientY });
+
+  for (const tool of tools) {
+    let drag: { id: number; before: Palette | null } | null = null;
+    tool.bauble.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      tool.bauble.setPointerCapture(e.pointerId);
+      tool.bauble.setAttribute('data-dragging', '');
+      drag = { id: e.pointerId, before: storedPalette() };
+      tool.pointer = { x: e.clientX, y: e.clientY };
+      wake();
+    });
+    tool.bauble.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      tool.pointer = { x: e.clientX, y: e.clientY };
+      applyPalette(pickAt(e));
+      wake();
+    });
+    const end = (e: PointerEvent, cancelled: boolean) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      if (cancelled) applyPalette(drag.before);
+      else commitPalette(pickAt(e), toFraction({ x: e.clientX, y: e.clientY }));
+      drag = null;
+      tool.pointer = null;
+      tool.bauble.removeAttribute('data-dragging');
+      wake(); // released: it swings back to hang from its string
+    };
+    tool.bauble.addEventListener('pointerup', (e) => end(e, false));
+    tool.bauble.addEventListener('pointercancel', (e) => end(e, true));
+  }
+
+  /**
+   * What the page measures from the laid-out title: the dot's size, the
+   * slot's box, and the font size that the authored rig's em units scale by.
+   * The threads themselves are authored (src/data/mark-rig.ts), not measured.
+   */
+  let rig: { dot: number; px: number; slotW: number; slotDelta: V } | null = null;
+
+  /**
+   * A view-transition exit in flight. The live title is already where the new
+   * state puts it, and only its snapshot is moving, so nothing can be read off
+   * the DOM: the slot comes from titleExit, the same function the snapshot's
+   * keyframes were sampled from.
+   */
+  let vtRun: {
+    start: TitleStart;
+    viewport: Viewport;
+    direction: 'leave' | 'return';
+    scale: number;
+    /** The title snapshot's animation, once `ready`: its clock is the one to sample. */
+    anim: Animation | null;
+  } | null = null;
+
+  /** Where the title is in the running VT: elapsed time read off the snapshot's own animation. */
+  function vtFrame() {
+    const run = vtRun!;
+    // Until `ready` the snapshots haven't started moving either.
+    const t = run.anim ? Number(run.anim.currentTime ?? 0) : 0;
+    return titleExit(run.start, run.viewport, t, { direction: run.direction, scale: run.scale });
+  }
+
+  /** How much the title is currently scaled, read off the live slot box. */
+  function liveScale(): number {
+    if (vtRun) return vtFrame().title.scale;
+    return slot.getBoundingClientRect().width / rig!.slotW;
+  }
+
+  /** The dot slot's centre in viewport coords, read live (the header moves and grows). */
+  function realSlot(): V {
+    if (vtRun) return vtFrame().title.slot;
+    const r = slot.getBoundingClientRect();
+    const k = r.width / rig!.slotW;
+    return { x: r.left + rig!.slotDelta.x * k, y: r.top + rig!.slotDelta.y * k };
+  }
+
+  function measure() {
+    const px = parseFloat(getComputedStyle(title).fontSize);
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = `400 ${px}px "Saira Stencil"`;
+    const ink = (ch: string, el: HTMLElement) => {
+      const m = ctx.measureText(ch);
+      const r = el.getBoundingClientRect();
+      const baseline = r.top + m.fontBoundingBoxAscent + (r.height - m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+      return {
+        left: r.left - m.actualBoundingBoxLeft,
+        right: r.left + m.actualBoundingBoxRight,
+        top: baseline - m.actualBoundingBoxAscent,
+        bottom: baseline + m.actualBoundingBoxDescent,
+      };
+    };
+    const dotBox = ink('.', slot);
+    const size = dotBox.right - dotBox.left;
+    const centre = { x: (dotBox.left + dotBox.right) / 2, y: (dotBox.top + dotBox.bottom) / 2 };
+    const sr = slot.getBoundingClientRect();
+    rig = { dot: size, px, slotW: sr.width, slotDelta: { x: centre.x - sr.left, y: centre.y - sr.top } };
+  }
+
+  // The dot's centre. x is always the title's, and so is its size (it grows
+  // with the title); only y springs, and only once the dot has stopped
+  // (`dot.stopped`, motion.ts's catch at the edge).
+  const D = { x: 0, size: 0 };
+  let dot = DOT_AT_REST;
+  let prevY: number | null = null;
+  /** Keep ticking until this time, while the header's own transition runs. */
+  let busyUntil = 0;
+  let frame = 0;
+  let last = 0;
+
+  function tick(now: number) {
+    frame = 0;
+    if (!rig) return;
+    const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+    last = now;
+    const real = realSlot();
+    const vy = prevY === null ? 0 : (real.y - prevY) / dt;
+    prevY = real.y;
+    const zeta = +inSwing.value / 100;
+
+    // Carried up with the title, the dot is caught at the edge and settles
+    // there (motion.ts). It hangs from the strings' pull of the last frame.
+    D.x = real.x;
+    D.size = rig.dot * liveScale();
+    dot = stepDot(dot, {
+      slotY: real.y,
+      slotVy: vy,
+      mode: root.dataset.mode === 'card' ? 'card' : 'page',
+      size: D.size,
+      taut: ts.taut.x,
+      dt,
+      reduced: reduced.matches,
+      zeta,
+    });
+
+    // The tools: a pull on the strings, then the tool moves as they relax.
+    ts = stepTools(ts, dt, reduced.matches);
+    const reel = ts.want ? DROP : REEL;
+    for (const tool of tools) {
+      if (!tool.pointer) {
+        tool.b = reduced.matches
+          ? { r: toolLen(tool), rv: 0, theta: 0, omega: 0 }
+          : subStep(tool.b, dt, (b, h) => stepBauble(b, toolLen(tool), h, reel));
+      }
+      tool.s = stepToolSize(tool.s, ts.toolsOut, dt, reduced.matches);
+      if (toolReeledIn(ts, tool.b.r, tool.s.x, !!tool.pointer)) tool.el.removeAttribute('data-open');
+    }
+    const toolsBusy = ts.phase !== 'rest' || tools.some((t) => t.pointer || baubleMoving(t.b, toolLen(t)) || Math.abs(t.s.x - (ts.toolsOut ? 1 : 0)) > 0.005);
+
+    const moving = dotMoving(dot, D.size, ts.taut.x);
+    const busy = moving || toolsBusy || now < busyUntil || !!vtRun;
+    // Settled in the title: hand the overlay to the document and stop. Any
+    // motion (or hanging) puts it back on the viewport first.
+    setAnchored(!dot.stopped && !busy);
+    draw();
+    if (busy) frame = requestAnimationFrame(tick);
+    else prevY = null;
+  }
+
+  /** At rest in the title: drawn into the document, so scrolling never moves it. */
+  let anchored = false;
+  const overlay = root.querySelector<SVGSVGElement>('.sd-overlay')!;
+
+  function setAnchored(on: boolean) {
+    if (on === anchored) return;
+    anchored = on;
+    if (on) root.setAttribute('data-overlay', 'doc');
+    else root.removeAttribute('data-overlay');
+  }
+
+  function draw() {
+    const r = rig!;
+    // Everything below is computed in viewport coords; shift into whatever
+    // box the overlay is positioned against (the viewport, or the document).
+    const o = overlay.getBoundingClientRect();
+    const hb = (hit.offsetParent as HTMLElement | null)?.getBoundingClientRect() ?? { left: 0, top: 0 };
+    const real = realSlot();
+    const k = liveScale();
+    const size = D.size;
+    const dx = D.x - size / 2;
+    const dy = dot.y.x - size / 2;
+    dotEl.setAttribute('x', (dx - o.left).toFixed(1));
+    dotEl.setAttribute('y', (dy - o.top).toFixed(1));
+    dotEl.setAttribute('width', size.toFixed(1));
+    dotEl.setAttribute('height', size.toFixed(1));
+    const shift = (v: V) => ({ x: v.x - o.left, y: v.y - o.top });
+    const geoms = poseThreads(cfg, {
+      slot: shift(realSlot()),
+      dot: shift({ x: D.x - size / 2, y: dot.y.x - size / 2 }),
+      size,
+      em: r.px * k,
+      p: poseBlend(),
+    }).map((g, i) => (carriesTool(i) ? tauten(g, tautness(ts)) : g));
+    geoms.forEach((g: ThreadGeometry, i) => paths[i].setAttribute('d', threadPathData(g)));
+    drawTools(geoms, o);
+    const em = r.px * k;
+    paths.forEach((p) => p.style.setProperty('stroke-width', String(Math.max(1.2, cfg.width * em))));
+
+    // Hit target: never under 44px, centred on the visible part of the dot.
+    const hitSize = Math.max(44, size * 1.6);
+    const visibleTop = Math.max(0, dy);
+    const cy = dot.stopped ? (visibleTop + dy + size) / 2 : dot.y.x;
+    hit.style.width = hit.style.height = `${hitSize}px`;
+    hit.style.left = `${D.x - hitSize / 2 - hb.left}px`;
+    hit.style.top = `${Math.max(0, cy - hitSize / 2) - hb.top}px`;
+
+  }
+
+  /** Hang each open tool from its thread's pivot and draw its string and bauble. */
+  function drawTools(geoms: ThreadGeometry[], o: DOMRect) {
+    for (const tool of tools) {
+      if (!tool.el.hasAttribute('data-open')) continue;
+      tool.pivot = toolPivot(geoms[tool.thread], dot.stopped, -o.top);
+      // While dragged, the bauble goes where the pointer is and the string follows.
+      if (tool.pointer) tool.b = baubleAt(tool.pivot, { x: tool.pointer.x - o.left, y: tool.pointer.y - o.top });
+      const p = baublePos(tool.pivot, tool.b);
+      tool.string.setAttribute('x1', tool.pivot.x.toFixed(1));
+      tool.string.setAttribute('y1', tool.pivot.y.toFixed(1));
+      tool.string.setAttribute('x2', p.x.toFixed(1));
+      tool.string.setAttribute('y2', p.y.toFixed(1));
+      // It grows out of the letters as it falls (and shrinks back as it is reeled
+      // up), so it never pops in over a much smaller thing. Held full-size while dragged.
+      const scale = tool.pointer ? 1 : clamp01(tool.s.x);
+      tool.bauble.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) scale(${scale.toFixed(3)})`);
+    }
+  }
+
+  // ── The authored rig, posed ──
+
+  /** The authored rig: in-progress edits from the editor page, else the file. */
+  const cfg: MarkRig = (() => {
+    try {
+      const raw = localStorage.getItem(RIG_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch { /* fall back to the file */ }
+    return MARK_RIG;
+  })();
+
+  /** poseBlend's denominator: how far the departing title ends up past the edge (set when the card opens). */
+  let hangSeparation = 1;
+  const poseBlend = () => blendFor(dot.stopped, realSlot().y, hangSeparation);
+
+  const wake = () => { if (!frame) frame = requestAnimationFrame(tick); };
+
+  /**
+   * The header's height, rounded up. It leaves by exactly this much, so a
+   * rounded-down (offsetHeight) value leaves its bottom border poking into the
+   * top row of pixels.
+   */
+  const headerHeight = () => Math.ceil(header.getBoundingClientRect().height);
+
+  function relayout() {
+    // Measure in page mode only: in card mode the header is off the top.
+    if (root.dataset.mode !== 'card') {
+      measure();
+      root.style.setProperty('--sd-header-h', `${headerHeight()}px`);
+    }
+    wake();
+  }
+
+  // ── Mode: page (header showing) ↔ card (header gone) ──
+  const header = root.querySelector<HTMLElement>('.sd-header')!;
+  const home = root.querySelector<HTMLElement>('.sd-home')!;
+  const card = root.querySelector<HTMLElement>('.sd-card')!;
+  const cardTitle = root.querySelector<HTMLElement>('.sd-card-title')!;
+
+  const subtitle = header.querySelector<HTMLElement>('.page-subtitle')!;
+  const rule = header.querySelector<HTMLElement>('.sd-rule')!;
+  const cardHeader = card.querySelector<HTMLElement>('.sd-card-header')!;
+
+  /**
+   * Measured with the header at rest, before it leaves: where the slot and the
+   * title box start. The card mode's CSS end state (rise, drift, growth) is
+   * set from it too, so after a VT the live title sits exactly where
+   * titleExit's last frame put the snapshot.
+   */
+  let titleStart: TitleStart | null = null;
+
+  function prepareCard(): TitleStart {
+    const hh = headerHeight();
+    root.style.setProperty('--sd-header-h', `${hh}px`);
+    // How far the title drifts so the dot's slot ends on the centre line,
+    // and the point it grows about: the dot's own centre.
+    const real = realSlot();
+    const tr = title.getBoundingClientRect();
+    root.style.setProperty('--sd-dx', `${innerWidth / 2 - real.x}px`);
+    root.style.setProperty('--sd-ox', `${real.x - tr.left}px`);
+    root.style.setProperty('--sd-oy', `${real.y - tr.top}px`);
+    root.style.setProperty('--sd-scale', String(+inHang.value / 100));
+    hangSeparation = separationFor(hh, real.y);
+    return { slot: real, titleOrigin: { x: tr.left, y: tr.top }, headerHeight: hh };
+  }
+
+  /** Swap home ↔ card. With a VT running, this is the new state, laid out at once. */
+  function applyMode(mode: 'page' | 'card', titleText: string) {
+    root.dataset.mode = mode;
+    if (mode === 'card') {
+      cardTitle.textContent = titleText;
+      home.hidden = true;
+      card.hidden = false;
+    } else {
+      home.hidden = false;
+      card.hidden = true;
+    }
+  }
+
+  function setMode(mode: 'page' | 'card', titleText = '') {
+    if (vtRun) return;
+    setTools(false);
+    scrollTo(0, 0);
+    if (mode === 'card') titleStart = prepareCard();
+    const useVT = !inCss.checked && !reduced.matches && titleStart && typeof document.startViewTransition === 'function';
+    if (useVT) return runVT(mode, titleText, titleStart!);
+    // The CSS path: the live header animates its margin, translate and scale.
+    // Reduced motion lands here too, with those transitions off (an instant swap).
+    applyMode(mode, titleText);
+    busyUntil = performance.now() + 500;
+    wake();
+  }
+
+  const name = (el: HTMLElement | SVGElement, n: string) => (el.style.viewTransitionName = n);
+
+  /**
+   * page → card (or back) as a real View Transition. The title and subtitle
+   * leave as snapshots, moved by WAAPI keyframes sampled from titleExit; the
+   * rule morphs into the card header (the default group animation); and the
+   * overlay is named so its new image renders live, the rAF loop drawing the
+   * dot from the same titleExit as the snapshots.
+   */
+  function runVT(mode: 'page' | 'card', titleText: string, start: TitleStart) {
+    const direction = mode === 'card' ? 'leave' : 'return';
+    const viewport = { width: innerWidth, height: innerHeight };
+    const scale = +inHang.value / 100;
+    // The overlay must be on the viewport (not the document) for the whole VT.
+    setAnchored(false);
+    name(overlay, 'site-mark');
+    // Old state. On a close the title is off the top and not named: it is new-only.
+    if (direction === 'leave') {
+      name(title, 'page-title');
+      name(subtitle, 'page-subtitle');
+      name(rule, 'page-rule');
+    } else {
+      name(cardHeader, 'page-rule');
+    }
+    root.dataset.exit = 'vt';
+    document.documentElement.dataset.sdVt = direction;
+    vtRun = { start, viewport, direction, scale, anim: null };
+    const anims: Animation[] = [];
+
+    const vt = document.startViewTransition(() => {
+      // Every name is cleared off the old side, because the old elements are
+      // still in the DOM: a named title off the top would be captured as the
+      // new side (pairing it into a morph), and a second page-rule aborts the
+      // whole transition as a duplicate name.
+      name(title, '');
+      name(subtitle, '');
+      name(rule, '');
+      name(cardHeader, '');
+      applyMode(mode, titleText);
+      if (direction === 'leave') {
+        name(cardHeader, 'page-rule');
+      } else {
+        name(title, 'page-title');
+        name(subtitle, 'page-subtitle');
+        name(rule, 'page-rule');
+      }
+    });
+
+    vt.ready
+      .then(() => {
+        // The image, not the group: the group's transform is what places it
+        // (the UA sets it to the element's captured position), and a
+        // one-sided group has no animation to override. The image sits at
+        // 0,0 in it, at the element's border box, so the keyframes'
+        // transform-origin (slot − title box) is in the right frame.
+        const side = direction === 'leave' ? 'old' : 'new';
+        const kf = titleExitKeyframes(start, viewport, { direction, scale });
+        const opts = { duration: TITLE_EXIT_MS, fill: 'both' as const };
+        const html = document.documentElement;
+        const anim = html.animate(kf.title, { ...opts, pseudoElement: `::view-transition-${side}(page-title)` });
+        anims.push(anim, html.animate(kf.subtitle, { ...opts, pseudoElement: `::view-transition-${side}(page-subtitle)` }));
+        if (vtRun) vtRun.anim = anim;
+      })
+      .catch(() => { /* skipped: finished still settles below */ });
+
+    vt.finished.finally(() => {
+      for (const el of [overlay, title, subtitle, rule, cardHeader]) name(el, '');
+      // fill: 'both' outlives the pseudo it targeted: left alone, it would
+      // still be applying its end transform to the next VT's same-named pseudo.
+      for (const a of anims) a.cancel();
+      delete root.dataset.exit;
+      delete document.documentElement.dataset.sdVt;
+      vtRun = null;
+      // The live title is now where the last frame left the snapshot.
+      busyUntil = performance.now() + 100;
+      wake();
+    }).catch(() => { /* the update callback threw: names are cleared all the same */ });
+    wake();
+  }
+  root.querySelectorAll<HTMLButtonElement>('.sd-open').forEach((b) =>
+    b.addEventListener('click', () => setMode('card', b.dataset.title)),
+  );
+  root.querySelector('.sd-close')!.addEventListener('click', () => setMode('page'));
+
+  // ── Controls ──
+  const show = (input: HTMLInputElement, fmt: (v: string) => string) => {
+    const out = input.parentElement!.querySelector('output')!;
+    const upd = () => (out.value = fmt(input.value));
+    input.addEventListener('input', upd);
+    upd();
+  };
+  show(inHang, (v) => `×${(+v / 100).toFixed(2)}`);
+  show(inSwing, (v) => `ζ ${(+v / 100).toFixed(2)}`);
+  inHang.addEventListener('input', wake);
+  inSwing.addEventListener('input', wake);
+  inDebug.addEventListener('change', () => {
+    root.toggleAttribute('data-debug', inDebug.checked);
+    draw();
+  });
+
+  hit.addEventListener('click', () => setTools(!ts.want));
+  addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setTools(false);
+  });
+
+  // Scrolling never animates the dot: at rest it scrolls with the document,
+  // and hanging it is pinned to the viewport. Only mid-transition does a
+  // scroll need a redraw, and the running tick already covers that.
+  root.dataset.mode = 'page';
+  addEventListener('resize', relayout);
+
+  // ── Favicon: public/favicon.svg, recoloured to the palette ──
+  // palette-dom draws the tab's icon on a commit and a theme change; this
+  // shows the same drawing at a few sizes.
+  async function renderFavicons() {
+    const src = await renderFavicon();
+    if (!src) return;
+    const row = root.querySelector<HTMLElement>('.sd-fav-row')!;
+    row.innerHTML = [16, 32, 64, 180]
+      .map((s) => `<figure><img src="${src}" width="${s}" height="${s}" alt=""><figcaption>${s}px</figcaption></figure>`)
+      .join('');
+  }
+  onPaletteChange(() => void renderFavicons());
+  document.addEventListener(THEME_CHANGE_EVENT, () => void renderFavicons());
+
+  document.fonts.ready.then(() => {
+    relayout();
+    renderFavicons();
+  });
+</script>
