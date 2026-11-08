@@ -30,6 +30,7 @@ import { generatorFrontmatterKeys } from '@content/tags/filter-generators';
 import { localAssetFilenames } from '@render/images';
 import { serialiseBrowseCards } from '@browse/results/browse-card';
 import { buildCardPool } from '@browse/results/card-pool';
+import { normaliseCredits } from '@content/credits/credits';
 import { auditCards, auditedCardCount, type AuditCard } from '@site/audit';
 import { ORPHANED_OLD_URLS } from '@data/redirects.generated';
 import type { BrowseCardData } from '@browse/results/browse-helpers';
@@ -63,6 +64,8 @@ const auditInput: AuditCard[] = await Promise.all(
       body: e.body,
       inspected: e.data.inspected,
       awaitsCode: e.data.awaitsCode,
+      solo: e.data.solo,
+      credits: normaliseCredits(e.data.credits),
       localAssets: localAssetFilenames(e.id),
       orphanedOldUrls: orphanedByUid.get(e.id),
       // Needs the same cascade + generator run resolveCard() does, which is why

@@ -100,7 +100,8 @@ function main() {
 
   const devPaths = listTree(from);
   const devCardDirs = cardDirsIn(devPaths);
-  const mainCardDirs = cardDirsIn(listTree(to));
+  const mainPaths = listTree(to);
+  const mainCardDirs = cardDirsIn(mainPaths);
 
   // The unit of promotion is the card directory, so a card inside a card would
   // be promoted by its ancestor's gate instead of its own — publishing an
@@ -123,6 +124,7 @@ function main() {
     diff,
     cardsOnDev,
     cardDirsOnMain: new Set(mainCardDirs),
+    pathsOnMain: mainPaths,
     promoteCode: opts.code,
   });
 

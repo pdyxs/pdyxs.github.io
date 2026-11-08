@@ -128,6 +128,12 @@
   --space-lg:     2rem;
   --space-xl:     3.5rem;
 
+  /* The credits map's height (its width is the card's), and the dash of a
+     faded edge or outline. Faded is drawn, never softened with opacity: the
+     palette has no grey. */
+  --credits-map-height:  22rem;
+  --credits-faded-dash:  3 4;
+
   /* The home slot grid's gutter. One number: the rail's gutter and the row
      rhythm are the same gap (see .fp-slot-grid). */
   --fp-slot-gap:  var(--space-md);

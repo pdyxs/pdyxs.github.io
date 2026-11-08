@@ -12,6 +12,19 @@ medium: Card Game
 actions: []
 quotes: []
 images: []
+credits:
+  - name: Paul Sztajer
+    person: me
+    role: Design
+    group: ""
+    note: ""
+    listed: map
+  - name: Vicente Araullo-Peters
+    person: vicente-araullo-peters
+    role: Art
+    group: ""
+    note: ""
+    listed: map
 ---
 The Odysseys is a game about fate, and choosing to accept or fight it.
 

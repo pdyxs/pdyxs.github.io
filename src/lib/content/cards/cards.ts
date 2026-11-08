@@ -19,6 +19,7 @@ import { resolveDescription } from './description';
 import { resolveCardPriority, tagPrioritySum, type TagPriorities } from './priority';
 import { DEFAULT_FOLDER_SORT, resolveSortValue, type FolderSort } from '../folders/folder-sort';
 import { withUninspectedTag } from '../tags/uninspected-facet';
+import { normaliseCredits, type Credit, type RawCredit } from '../credits/credits';
 import type { StatusValue, StatusVisibility } from './status-visibility';
 
 /** Merges a card's path-derived tag, its ancestors' cascade tags, and its own frontmatter tags (in that precedence, deduped). */
@@ -66,6 +67,10 @@ export type CardFrontmatter = {
   gallery?: boolean;
   dateBar?: boolean;
   seriesPreview?: 'strip' | 'dots' | 'none';
+  /** Authored `credits:` block — normalised into `ResolvedCard.credits`. */
+  credits?: RawCredit[];
+  /** Solo work on a card with no credits module — see teamSizeBucket(). */
+  solo?: boolean;
   [key: string]: unknown;
 };
 
@@ -132,6 +137,8 @@ function generationInputs(
     overrides,
     exclude,
     actions: resolveActions(data as ActionSource),
+    credits: normaliseCredits(data.credits),
+    solo: data.solo,
   });
 
   // A re-enable that undid no exclusion did nothing, and the author should be
@@ -288,6 +295,11 @@ export type ResolvedCard = CardMeta & {
    * CardMeta for the same reason as `dateBar`.
    */
   seriesPreview?: 'strip' | 'dots' | 'none';
+  /**
+   * The normalised `credits:` block, or `undefined` when the card has none.
+   * Absent is distinct from `[]`. Kept off CardMeta: a listing shows no credits.
+   */
+  credits?: Credit[];
 };
 
 
@@ -399,6 +411,7 @@ export function resolveCard(
     dateBar: data.dateBar ?? cascade.dateBar,
     seriesPreview: data.seriesPreview ?? (cascade.seriesPreview as ResolvedCard['seriesPreview']),
     collapsedContainer: cascade.collapsedContainer,
+    credits: normaliseCredits(data.credits),
   } satisfies ResolvedCard;
 }
 

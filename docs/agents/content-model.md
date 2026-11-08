@@ -358,6 +358,38 @@ is load-bearing for exactly the reason the affiliation containers are:
 children*, so an undeclared container takes both perfectly-declared topics out
 of the panel with no error anywhere.
 
+## Team size is generated from credits, and `solo:` is the only way to say "none"
+
+`collaboratorsGenerator` (`filter-generators.ts`) emits one of three values from
+a card's `credits:` block, shown in the panel under Collaborators in their own
+"Team size" section, in this order:
+
+| value | label | when |
+|---|---|---|
+| `who:collaborators/none` | Solo | credits name no one but `me`, or no `credits:` and `solo: true` |
+| `who:collaborators/small` | Small team (1–4) | 1–4 others |
+| `who:collaborators/large` | Large team (5+) | 5 or more |
+
+There are deliberately no per-person values. Suppress with
+`excludeTags: [generated/collaborators]` (an unused one is reported by the
+`inert-derivation-control` audit finding like any other).
+
+**The counting rule** lives in `teamSizeBucket(credits, solo)`
+(`src/lib/content/credits/credits.ts`, pure): distinct `creditIdentity` among
+`listed: map` credits, excluding the person slug `me`. `me` is matched by slug,
+never by display name, so `name: Paul Swe` with no `person: me` counts.
+`listed: listing` credits are never counted; a repeated identity counts once.
+
+**`solo: true` is for cards with no `credits:` module.** A card with neither
+gets *no* tag at all: no credits module covers both solo work and teams nobody
+listed, so absence must not read as solo. `solo: true` alongside credits naming
+anyone but `me` is a contradiction: the audit lens reports `solo-with-credits`
+and the credits' bucket wins (no `none`). Credits and `solo` reach the
+generator as `FilterGeneratorCard.credits` / `.solo`, filled in
+`generationInputs` (`cards.ts`) from the same `normaliseCredits` result
+`resolveCard` uses. Group affiliations (`who:collaborators/jetpack`) are
+untouched.
+
 ## Affiliations are a pool-wide closure, not a filter generator
 
 `who:*` values (the employers, plus `who:me`) are **affiliations**: a

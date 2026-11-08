@@ -1,6 +1,7 @@
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import SeriesNavRenderer from '@components/card-renderers/SeriesNavRenderer.astro';
 import FlashGame from '@components/header-media/FlashGame.astro';
+import FlatlandGame from '@components/header-media/FlatlandGame.astro';
 import LinoCanvas from '@components/header-media/LinoCanvas.astro';
 import StarSystemPrototype from '@components/star-nav/snapshots/2026-09-23-prototype/StarSystem.astro';
 import StarNav from '@components/star-nav/StarSystem.astro';
@@ -69,6 +70,8 @@ export const HEADER_MEDIA_RENDERERS: Record<string, AstroComponentFactory> = {
     'lino-canvas': LinoCanvas,
     // A colocated Flash game played through self-hosted Ruffle; poster until clicked.
     'flash-game': FlashGame,
+    // The Flatland web port in an iframe (public/games/flatland/, fetched by scripts/fetch-flatland.mjs); poster until clicked.
+    'flatland-game': FlatlandGame,
     // Frozen: the 2026-09-23 prototype, kept playable for the star-navigation toy card.
     'star-system': StarSystemPrototype,
     // Living: the star-nav project's current build. See src/components/star-nav/.

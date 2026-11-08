@@ -1,0 +1,11 @@
+---
+// Thin wrapper: the registry entry, and nothing else. See LinoCanvas.astro for
+// why a `client:*` island must be imported statically here.
+import type { HeaderMediaProps } from '@render/header-media';
+import FlatlandGame from '@components/header-media/FlatlandGame.svelte';
+
+const { images } = Astro.props as HeaderMediaProps;
+// The first colocated image is the poster.
+const poster = images[0] && { src: images[0].src, width: images[0].width, height: images[0].height };
+---
+<FlatlandGame poster={poster} client:load />

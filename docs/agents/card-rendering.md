@@ -1,5 +1,33 @@
 # Rendering a card: renderers, media, credits, links
 
+## A card has two delivery paths
+
+A card reaches the page two ways, and only one carries the page's `<head>`:
+
+- **Direct load** (`/card/...` typed or linked): Astro renders the whole page,
+  and Vite/Rollup attach the card's stylesheets, island entries and (in dev)
+  dependency discovery to that page's `<head>`.
+- **Push from a lens or another card**: `card-fragments.ts` fetches the same URL
+  as text and keeps only `.stack-card`. The fetched `<head>` is discarded. The
+  card lands in a page built for something else.
+
+So a card works when pushed only if everything it needs is in its own markup or
+in a module an island imports. Nothing else crosses over: no inline `<script>`
+(`{@html}` drops it), no page-load hook (`DOMContentLoaded`, a startup
+`querySelectorAll` — the card arrives later), nothing read from the host page's
+head or globals.
+
+The failures so far are all this one rule, found one resource type at a time:
+scoped CSS (`cssCodeSplit: false`, `b330cd0f`), dev style tags (`adoptDevStyles`,
+`0a5e1d64`), and npm dependencies only one island imports, which Vite finds late
+in dev and answers with a 504 `Outdated Optimize Dep` (planck, Ruffle in
+`optimizeDeps.include`, `79e84b99`). Expect the next failure to be a fourth
+resource type, not a fourth card — and to show in dev and on a push only.
+
+**Every card feature is verified pushed, not only loaded directly.** The check is
+per delivery mechanism, not per feature: see
+[workflow.md → Plans name their delivery mechanism](workflow.md#plans-name-their-delivery-mechanism-and-a-push-path-check).
+
 ## Nav renderer pattern (`NAV_RENDERERS`)
 
 Collections that need custom navigation (e.g. prev/next chapter buttons, position indicators) register a nav renderer in `NAV_RENDERERS` (`src/lib/render/renderers.ts`). A nav renderer owns the full card shell — header and body structure — and receives the content renderer as `<slot />`. It is responsible for rendering `<CardHeader>` (or a custom header), the `.body-wrapper` / `.stack-card-body` structure, and any footer nav. Props passed by `card/[...path].astro`: `title`, `titleSuffix`, `entry`, `allEntries`.
@@ -47,7 +75,80 @@ Two traps that cost a round each:
 
 Collection views are browsing cards for an entire collection — e.g. `/card/posts` lists all posts with tag filter chips. They use bare collection-name UIDs (`posts`, `projects`) with no id component, which is a deliberate exception to the `collection/id` invariant. Register them in `COLLECTION_VIEW_RENDERERS` (`src/lib/render/renderers.ts`). The renderer is a plain Astro component that fetches all cards server-side and passes them to `<CollectionBrowser client:load />`. To link to a collection view from card content, use `[text](collection:posts)` — `CardStack.onDocumentClick` handles the `collection:` protocol and pushes `/card/posts`.
 
-## Card credits (`meta:`) are one flat shape, for Metadata Menu
+## Card credits (`credits:`)
+
+A card with a `credits:` block shows a centred **"made by …" line** between the
+meta rows and the prose, and the line opens a panel holding the full listing.
+Opt-in: no block, no section and no empty wrapper, and nothing is backfilled
+from `meta:` rows. The authored shape is one Object List of identical six-key
+entries (Metadata Menu allows one shape per item):
+
+```yaml
+credits:
+  - name: Nick Kolan      # required, as the source gives it
+    person: nick-kolan    # optional bare slug = identity; `me` is Paul
+    role: Game Designer   # optional, verbatim
+    group: ""             # optional heading above the role
+    note: ""              # optional, full listing only
+    listed: map           # map | listing (default map); listing = never the line
+```
+
+Opening the panel shows the credits as a **map** (a graph), and a **Full
+listing** button swaps it for the listing (the button then reads **Map**).
+Topology per card: card -> group -> role -> person. A credit with no `group`
+skips that tier, with no `role` the person hangs off the group (or the card).
+Groups and roles are per-card nodes; one person node per identity per card,
+joined to each role they hold. Only `listed: map` credits are on the map, and
+`note`s never are.
+
+Places, one decision each:
+
+- `src/lib/content/credits/credits.ts` is pure: `creditIdentity` (same `person`,
+  else same `name`), `madeByLine` (distinct `listed: map` identities; 1-3 are
+  named, more are counted), `creditListing` (group, then role, authored order;
+  a map-listed entry carries `personId`, its graph node) and `creditsView`.
+- `credits-graph.ts` (`buildCreditsGraph`) is the topology;
+  `credits-layout.ts` (`layoutCreditsGraph`) is the **build-time layout**: a
+  deterministic radial seed plus force pass, label widths estimated from
+  character counts. Invariants it guarantees: a child is radially further from
+  the card than its parent, label boxes never overlap, and edges avoid foreign
+  labels. The browser does no layout.
+- `credits-view.ts` (`buildCreditsViews`) composes `{line, listing, graph}` per
+  card. Both card routes call it in `getStaticPaths`, once per build, and pass
+  `credits` to `CardStackCard` -> `GenericRenderer`. `creditsView()` is
+  `undefined` when there is nothing to open, and no view means no section.
+- `resolveCard()` is the only reader of the frontmatter: `ResolvedCard.credits`
+  is the normalised list (empty strings dropped), `undefined` when absent.
+  **The schema field has no `.default([])`**, unlike the other list fields,
+  because absent must stay distinct from empty.
+- `CreditsSection.svelte` (`client:load`) holds the panel, the Map/listing
+  toggle and the selected node; `CreditsMap.svelte` draws the positioned graph.
+  The camera maths (`connectedIds`, `frameSelection`) is the pure
+  `src/components/credits/credits-camera.ts`. The island imports only types
+  from content code.
+
+Behaviour: the camera frames the selected node with everything connected to it,
+centred on that box (zoom at most 1, floor 0.25); under 600px wide the map
+opens at 1.6x on the card. Drag pans, wheel/pinch zooms, an empty-space click
+or Esc returns to the card, and Esc on the card folds the panel. In the
+listing a map-listed name is a button that opens the map on that person.
+
+**Fade is never `opacity`.** The palette is ink and paper; a softening opacity
+renders a grey the site does not have. A node not connected to the selection is
+drawn hollow (outline only, no fill) with thin dashes (`--credits-faded-dash`)
+and a lighter label weight; its edges are thin and dashed. Only an enter
+animation may pass through opacity while it runs. No `--dither-*` inside the
+map: its SVG group is transformed.
+
+It is an island with its own markup and no inline script, so it survives a push
+from a lens. Selectors: `.credits`, `.credits-by`, `.credits-panel`,
+`.credits-view-toggle`, `.credits-map`, `.credits-node[data-kind=...]`,
+`.credits-node.is-faded`, `.credits-node.is-selected`, `.credits-edge`,
+`.credits-edge.is-faded`, `.credits-listing`, `.credits-listing-section`,
+`.credits-listing-name`, `.credits-note`. New `:root` tokens:
+`--credits-map-height`, `--credits-faded-dash`.
+
+## Card facts (`meta:`) are one flat shape, for Metadata Menu
 
 A card's credit/fact rows ("Medium", "Technology", "Accolades", "Made with") are
 an open-ended list, ported from the Jekyll site's `definitions:` — 22 distinct
@@ -229,12 +330,22 @@ always the light one: a scraper has no theme.
 
 Three things follow:
 
-- **The stills are committed, and the build never regenerates them.** Re-run
-  the generator yourself after changing a header-media component, or the
-  committed picture is of the old one. The run is incremental — each entry
+- **The stills are committed, and the build never regenerates them** — but
+  the build *box* does. `astro-build.service` runs
+  `~/server-project/scripts/pdyxs-header-previews-sync` before each build
+  (every 10 minutes): it runs the generator against the running preview server
+  and commits `public/previews` and `header-previews.generated.ts` to `dev`
+  as `previews: auto-generate …` (skipped off `dev`, or mid-merge/rebase). On
+  a machine without that timer, re-run the generator yourself after changing a
+  header-media component, or the committed picture is of the old one.
+  `header-previews.test.ts` fails when a card that needs a still has none. The run is incremental — each entry
   carries a hash of the whole `src/components/header-media/` tree plus the
   capture route, so an unchanged card launches no browser. `--force`
   re-shoots everything, `--card <uid>` limits it to one.
+- **Only cards with no `image:` get a still.** A card with its own `image:`
+  is skipped, and its still is pruned: `needsPreview()` in
+  `scripts/lib/header-previews.mjs` is the one definition, shared by the
+  generator and the test.
 - **The preview is a *fallback*.** `resolveThumb` reaches it only after
   `image:` has failed to resolve, so a card with both a header image and a
   header-media island keeps showing the image.
@@ -350,11 +461,28 @@ header through self-hosted Ruffle (`@ruffle-rs/ruffle`, exact version pinned).
 `resolveLocalSwf(entryId)` finds the SWF URL; `readCardSwfHeader` /
 `parseSwfHeader` (`src/lib/render/swf.ts`) read the stage size at build time so
 `FlashGame.svelte` reserves the aspect ratio (`--flash-aspect`). The first
-colocated image is the poster, and the gallery strip is skipped for these
-cards. Ruffle is imported only on the play click, by `src/lib/flash/ruffle-loader.ts`
+colocated image is the poster, so the gallery for these cards is only what
+`images:` names (`resolveGalleryImages`' `explicitOnly`) — no header prepend, no
+colocated sweep. Ruffle is imported only on the play click, by `src/lib/flash/ruffle-loader.ts`
 (injectable as the `loadPlayer` prop, which is how tests avoid WASM). Its
 chunks and `.wasm` are served at `/ruffle/` by `scripts/ruffle-assets-plugin.mjs`
 (`publicPath`). Selectors: `.flash-game`, `.flash-stage`, `.flash-player`,
 `.flash-poster`, `.flash-play`, `.flash-fullscreen`; CSS variable `--flash-aspect`.
-Pre-existing `image:` is not used by the island: a card whose `image:` is a video
-embed should move it into the body.
+Pre-existing `image:` is not used by the island: list a video embed under
+`images:` to gallery it.
+
+## Flatland (`headerMedia: flatland-game`)
+
+The Flatland: Fallen Angle card plays its web port in an `<iframe>`
+(`allow="fullscreen; autoplay"`), so the game's keyboard capture and canvas stay
+out of the card stack. `FlatlandGame.svelte` shows the first colocated image as
+a poster with a play button at 4:3; nothing loads until the click. The build is
+the private release `flatland-web-<version>.zip` of
+`pdyxs/flatland-fallen-angle-web`, fetched by `scripts/fetch-flatland.mjs`
+(`npm run generate:flatland`, a predev/prebuild step; version pinned in
+`FLATLAND_VERSION`, skipped when `public/games/flatland/.version` matches, the
+decision being `needsFetch` in `src/lib/flatland/release.ts`) into the gitignored
+`public/games/flatland/`. Fetching needs `GH_TOKEN` (or a `gh` login) that can
+read that repo's releases. Selectors: `.flatland-game`, `.flatland-stage`,
+`.flatland-frame`, `.flatland-poster`, `.flatland-play`, `.flatland-fullscreen`;
+CSS variable `--flatland-aspect`. The card's YouTube trailer stays in its gallery.

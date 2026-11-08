@@ -20,6 +20,7 @@ function plan(opts: {
   diff: DiffEntry[];
   dev?: Record<string, CardPromotion>;
   main?: string[];
+  mainPaths?: string[];
   promoteCode?: boolean;
 }) {
   return planPromotion({
@@ -27,6 +28,7 @@ function plan(opts: {
     cardsOnDev: new Map(Object.entries(opts.dev ?? {})),
     cardDirsOnMain: new Set(opts.main ?? []),
     promoteCode: opts.promoteCode ?? false,
+    pathsOnMain: opts.mainPaths,
   });
 }
 
@@ -219,6 +221,22 @@ describe('planPromotion — never-promoted paths', () => {
       promoteCode: true,
     });
     expect(p).toMatchObject({ checkout: [], remove: [] });
+  });
+});
+
+describe('planPromotion — experiment routes never reach main', () => {
+  const EXP = 'src/experiments/audio-test.astro';
+  const OLD = 'src/pages/experiments/dither.astro';
+  it('does not take a new or changed experiment from dev, even on a code run', () => {
+    const p = plan({ diff: diff(['A', EXP], ['M', 'src/experiments/dither.astro']), promoteCode: true });
+    expect(p.checkout).toEqual([]);
+    expect(p.remove).toEqual([]);
+  });
+  it('removes experiments already on main, on content-only and code runs alike', () => {
+    for (const promoteCode of [false, true]) {
+      const p = plan({ diff: [], mainPaths: [EXP, OLD, 'src/pages/index.astro'], promoteCode });
+      expect(p.remove).toEqual([EXP, OLD]);
+    }
   });
 });
 

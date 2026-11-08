@@ -1,0 +1,366 @@
+---
+import Base from '../layouts/Base.astro';
+// Throwaway: Pace holistic prototype. Schedule (home) + Edit + Experiments in one app, one shared editor. B&W.
+---
+<Base title="Pace app">
+  <main style="max-width:44rem;margin:2rem auto;padding:0 1rem;font-family:system-ui;color:#000">
+    <h1>Pace app (prototype)</h1>
+    <p>One app. Home is the schedule; header icons go to Edit (▤ base setup) and Experiments (🧪). Creating or editing an experiment opens the <i>same</i> editor on base + that experiment; only the difference from base is saved, and differences are highlighted as you edit. Experiments have a duration only; "Start" stamps the date.</p>
+    <div class="dev">
+      <b id="dl"></b> <button data-dd="-1">−1d</button><button data-dd="1">+1d</button><button data-dd="7">+7d</button>
+      &nbsp; Time <input id="t" type="range" min="360" max="1380" step="15" value="600" style="width:140px"> <b id="tl"></b>
+    </div>
+    <div id="ph" class="ph"></div>
+  </main>
+  <style is:global>
+    .dev{font-size:14px;margin:8px 0;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .dev button,.ph button{border:1.5px solid #000;background:#fff;font:inherit;font-size:14px;padding:3px 9px;cursor:pointer;color:#000}
+    .ph button.on{background:#000;color:#fff}
+    .ph{width:360px;border:2px solid #000;background:#fff;padding:12px;font-size:16px;position:relative;min-height:640px;color:#000}
+    .ph input,.ph select{font:inherit;border:1.5px solid #000;padding:4px;box-sizing:border-box;background:#fff;color:#000}
+    .top{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:6px;font-size:18px}
+    .top span{display:flex;gap:4px}
+    .hd{display:flex;justify-content:space-between;font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;margin:14px 0 0;border-bottom:2px solid #000;padding:4px 0}
+    .hd.click{cursor:pointer}
+    .row{display:flex;align-items:center;gap:8px;padding:7px 0 7px 4px;border-bottom:1px solid #000}
+    .row.click{cursor:pointer}
+    .row .n{flex:1} .row small{display:block;font-size:13px}
+    .row.chg{border-left:5px solid #000;background:repeating-linear-gradient(135deg,#fff 0 6px,#eee 6px 7px)}
+    .row.ghost{border-left:5px dashed #000;opacity:.7}
+    .row.ghost .n b{text-decoration:line-through;font-weight:400}
+    .tag{font-size:12px;border:1.5px solid #000;padding:0 5px;white-space:nowrap}
+    .tag.inv{background:#000;color:#fff}
+    .add{margin-top:6px;border-style:dashed!important}
+    .sheet{position:absolute;inset:0;background:#fff;padding:12px;overflow:auto;z-index:2}
+    .sheet label,.lab{display:block;font-size:12px;font-weight:700;margin:10px 0 3px;text-transform:uppercase}
+    .sheet input{width:100%}
+    .chips{display:flex;gap:6px;flex-wrap:wrap}
+    .att{border:1.5px solid #000;padding:6px;margin-top:6px}
+    .grip{cursor:grab;padding:0 4px;touch-action:none}.row.over{border-top:3px solid #000}.row.drag{opacity:.4}
+    .card{border:1.5px solid #000;padding:8px;margin-top:10px}
+    .card.dim{border-style:dashed}
+    .bar{height:10px;border:1.5px solid #000;margin:6px 0}.bar i{display:block;height:100%;background:#000}
+    .btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .err{border:2px solid #000;padding:6px;margin-top:8px;font-size:14px;font-weight:700}
+    .del{font-size:13px;padding:2px 0;border-bottom:1px dotted #000}
+    .note{font-size:13px}
+    .banner{border:2px solid #000;padding:6px;margin-top:8px;font-size:14px;cursor:pointer}
+    sup{font-size:11px}
+  </style>
+  <script is:inline>
+    const DAY = 86400000, T0 = new Date('2026-10-23T00:00:00').getTime(); // Fri
+    const D = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], all = [0,1,2,3,4,5,6];
+    const clone = (o) => JSON.parse(JSON.stringify(o)), J = JSON.stringify;
+    const dayStr = (d) => new Date(T0 + d * DAY).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+    const wd = (d) => (new Date(T0 + d * DAY).getDay() + 6) % 7;
+    const mins = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+    const hhmm = (n) => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
+    const eod = (s) => s === '23:59' ? 'eod' : s;
+    const daysText = (d) => d.length === 7 ? 'Daily' : d.length === 5 && !d.includes(5) && !d.includes(6) ? 'Weekdays' : d.map((x) => D[x]).join(' ');
+    const doseText = (d) => d.t === 'amt' ? (d.n ? d.n + ' ' + d.unit : '') : d.v;
+
+    // ---- data -------------------------------------------------------------
+    let base = {
+      periods: [
+        { id: 'e', name: 'Early', from: '06:00', to: '12:00' },
+        { id: 'm', name: 'Morning', from: '07:30', to: '12:00' },
+        { id: 'a', name: 'Arvo', from: '14:00', to: '18:00' },
+        { id: 'v', name: 'Evening', from: '21:00', to: '23:59' },
+      ],
+      items: [
+        { id: 'pea', name: 'PEA-LUT', dose: { t: 'text', v: '' }, att: [{ p: 'e', days: all, kind: 'reminded' }, { p: 'v', days: all, kind: 'reminded' }] },
+        { id: 'phys', name: 'Physio', dose: { t: 'text', v: 'Bicep curls 4kg 3x6' }, att: [{ p: 'e', days: [0, 4], kind: 'reminded' }] },
+        { id: 'pills', name: 'Morning pills', dose: { t: 'text', v: 'LDN, Famatodine' }, att: [{ p: 'm', days: all, kind: 'baseline' }] },
+        { id: 'iva', name: 'Ivabradine', dose: { t: 'amt', n: '5', unit: 'mg' }, att: [{ p: 'm', days: all, kind: 'baseline' }, { p: 'a', days: all, kind: 'reminded' }] },
+        { id: 'mag', name: 'Magnesium', dose: { t: 'amt', n: '200', unit: 'mg' }, att: [{ p: 'v', days: all, kind: 'reminded' }] },
+        { id: 'zinc', name: 'Zinc', dose: { t: 'amt', n: '15', unit: 'mg' }, att: [] },
+      ],
+    };
+    // experiment = { id, name, days, startedOn|null, endedOn|null, fate|null, delta:{add:[item], patch:{id:{name?,dose?,att?}}} }
+    let exps = [
+      { id: 1, name: 'Ivabradine up to 7.5 mg', days: 14, startedOn: 0, endedOn: null, fate: null, delta: { add: [], patch: { iva: { dose: { t: 'amt', n: '7.5', unit: 'mg' } } } } },
+      { id: 2, name: 'Try magnesium glycinate', days: 10, startedOn: null, endedOn: null, fate: null, delta: { add: [{ id: 'mgg', name: 'Mg glycinate', dose: { t: 'amt', n: '1', unit: 'pills' }, att: [{ p: 'v', days: all, kind: 'reminded' }] }], patch: { mag: { att: [] } } } },
+      { id: 3, name: 'Physio only Mondays', days: 21, startedOn: null, endedOn: null, fate: null, delta: { add: [], patch: { phys: { att: [{ p: 'e', days: [0], kind: 'reminded' }] } } } },
+    ];
+    let today = 0, now = 600, view = 'today', ed = null, err = '', nid = 10;
+    const skipped = []; // keys passed over for now, oldest first; Next prefers unskipped
+    const flags = new Set(); // 'day|item|period' ticked (reminded) or missed (baseline)
+
+    // ---- delta engine (pure) ---------------------------------------------
+    function diff(b, w) {
+      const d = { add: [], patch: {} };
+      for (const wi of w.items) {
+        const bi = b.items.find((x) => x.id === wi.id);
+        if (!bi) { d.add.push(clone(wi)); continue; }
+        const p = {};
+        if (wi.name !== bi.name) p.name = wi.name;
+        if (J(wi.dose) !== J(bi.dose)) p.dose = clone(wi.dose);
+        const norm = (a) => J([...a].sort((x, y) => x.p < y.p ? -1 : 1));
+        if (norm(wi.att) !== norm(bi.att)) p.att = clone(wi.att);
+        if (Object.keys(p).length) d.patch[wi.id] = p;
+      }
+      return d;
+    }
+    function applyDelta(s, d) {
+      const ok = new Set(s.periods.map((p) => p.id));
+      const fix = (i) => ({ ...i, att: i.att.filter((a) => ok.has(a.p)) });
+      return { periods: s.periods, items: s.items.map((i) => fix(d.patch[i.id] ? { ...clone(i), ...clone(d.patch[i.id]) } : clone(i))).concat(clone(d.add).map(fix)) };
+    }
+    const touched = (e) => Object.keys(e.delta.patch);
+    const endDay = (e) => e.endedOn ?? e.startedOn + e.days;
+    const status = (e) => e.fate ? e.fate : e.startedOn == null ? 'queued' : today >= endDay(e) ? 'ended' : 'active';
+    const applying = (e) => ['active', 'ended'].includes(status(e)); // ended-undecided keeps applying
+    function effective() {
+      let s = clone(base); const tags = {};
+      for (const e of exps.filter(applying)) {
+        s = applyDelta(s, e.delta);
+        for (const id of [...touched(e), ...e.delta.add.map((i) => i.id)]) tags[id] = e.name;
+      }
+      return { s, tags };
+    }
+    function clash(x, skip) {
+      for (const o of exps) {
+        if (o.id === skip || !applying(o)) continue;
+        const shared = touched(x).find((id) => touched(o).includes(id));
+        if (shared) return `Blocked: "${o.name}" is running and also changes ${base.items.find((i) => i.id === shared)?.name}.`;
+      }
+      return '';
+    }
+    // highlight: how an item's attachment differs from a reference setup (shared by Today and the editor)
+    function mark(ref, item, a) {
+      if (!ref) return null;
+      const ri = ref.items.find((x) => x.id === item.id);
+      if (!ri) return { tag: '+ new', notes: [] };
+      const ra = ri.att.find((x) => x.p === a.p);
+      const notes = [];
+      if (ri.name !== item.name) notes.push('was ' + ri.name);
+      if (J(ri.dose) !== J(item.dose)) notes.push('dose was ' + (doseText(ri.dose) || '—'));
+      if (!ra) return { tag: '+ here', notes };
+      if (ra.kind !== a.kind) notes.push('was ' + ra.kind);
+      if (J(ra.days) !== J(a.days)) notes.push('was ' + daysText(ra.days));
+      return notes.length ? { tag: 'changed', notes } : null;
+    }
+    function describe(e) {
+      const out = [];
+      for (const i of e.delta.add) out.push(`+ ${i.name} ${doseText(i.dose)} (${i.att.map((a) => base.periods.find((p) => p.id === a.p)?.name).join(', ')})`);
+      for (const [id, p] of Object.entries(e.delta.patch)) {
+        const bi = base.items.find((i) => i.id === id); if (!bi) continue;
+        if (p.name) out.push(`${bi.name} renamed ${p.name}`);
+        if (p.dose) out.push(`${bi.name}: ${doseText(bi.dose) || '—'} → ${doseText(p.dose) || '—'}`);
+        if (p.att) {
+          if (!p.att.length) out.push(`${bi.name}: archived`);
+          else for (const a of p.att) { const ra = bi.att.find((x) => x.p === a.p), pn = base.periods.find((q) => q.id === a.p)?.name;
+            if (!ra) out.push(`${bi.name}: + ${pn}`); else if (ra.kind !== a.kind || J(ra.days) !== J(a.days)) out.push(`${bi.name} @ ${pn}: ${ra.kind} ${daysText(ra.days)} → ${a.kind} ${daysText(a.days)}`); }
+          for (const ra of bi.att) if (p.att.length && !p.att.some((a) => a.p === ra.p)) out.push(`${bi.name}: − ${base.periods.find((q) => q.id === ra.p)?.name}`);
+        }
+      }
+      return out;
+    }
+
+    // ---- rendering --------------------------------------------------------
+    const ph = document.getElementById('ph');
+    const svg = (i) => `<svg width="26" height="26" viewBox="0 0 26 26">${i}</svg>`;
+    const circ = (x) => `<circle cx="13" cy="13" r="11" ${x}/>`;
+    const needDecide = () => exps.filter((e) => status(e) === 'ended').length;
+    function header(title) {
+      const nd = needDecide(), run = exps.filter((e) => status(e) === 'active').length;
+      const nav = (v, g, t) => `<button data-nav="${v}" title="${t}" class="${view === v ? 'on' : ''}">${g}</button>`;
+      return `<div class="top"><b>${title}</b><span>${nav('today', '☰', 'Schedule')}${nav('edit', '▤', 'Edit setup')}${nav('exps', `🧪${nd ? '<sup>' + nd + '!</sup>' : run ? '<sup>' + run + '</sup>' : ''}`, 'Experiments')}</span></div>`;
+    }
+    function viewToday() {
+      const { s, tags } = effective(), w = wd(today);
+      const rows = []; // {p,i,a}
+      for (const p of s.periods) for (const i of s.items) for (const a of i.att) if (a.p === p.id && a.days.includes(w)) rows.push({ p, i, a });
+      const key = (r) => `${today}|${r.i.id}|${r.p.id}`;
+      const cand = rows.filter((r) => r.a.kind === 'reminded' && !flags.has(key(r)) && now >= mins(r.p.from) && now < mins(r.p.to));
+      const next = cand.find((r) => !skipped.includes(key(r))) || [...cand].sort((a, b) => skipped.indexOf(key(a)) - skipped.indexOf(key(b)))[0];
+      let h = header(dayStr(today));
+      h += next
+        ? `<div style="display:flex;gap:8px;margin-top:4px"><div class="row click" data-f="${key(next)}" style="flex:1;font-size:22px;font-weight:700;min-height:28px;border:2px solid #000;padding:8px">Next: ${next.i.name}</div>${cand.length > 1 ? `<button data-skip="${key(next)}" style="border:2px solid #000;background:#fff;padding:8px;font-weight:700">Skip</button>` : ''}</div>`
+        : `<div style="font-size:22px;font-weight:700;min-height:28px;margin-top:4px">All caught up</div>`;
+      const nd = needDecide();
+      if (nd) h += `<div class="banner" data-nav="exps">🧪 ${nd} experiment${nd > 1 ? 's' : ''} ended — decide</div>`;
+      for (const p of s.periods) {
+        const rs = rows.filter((r) => r.p === p); if (!rs.length) continue;
+        h += `<div class="hd"><span>${p.name} ${p.from}-${eod(p.to)}</span></div>`;
+        for (const r of rs) {
+          const on = flags.has(key(r)), mk = mark(base, r.i, r.a), tg = tags[r.i.id];
+          let dot;
+          if (r.a.kind === 'baseline') dot = svg(circ(`fill="${on ? '#fff' : '#000'}" stroke="#000" stroke-width="2" stroke-dasharray="3 3"`));
+          else if (on) dot = svg(circ('fill="#000"'));
+          else if (now > mins(r.p.to)) dot = svg(circ('fill="#fff" stroke="#000" stroke-width="2"') + '<text x="13" y="19" text-anchor="middle" font-size="18" font-weight="700">!</text>');
+          else dot = svg(circ(`fill="#fff" stroke="#000" stroke-width="${now >= mins(p.from) ? 4 : 1.5}"`));
+          h += `<div class="row click ${mk ? 'chg' : ''}" data-f="${key(r)}"><span>${dot}</span><span class="n">${r.i.name}<small>${[doseText(r.i.dose), ...(mk ? mk.notes : []), skipped.includes(key(r)) && !on ? 'skipped' : ''].filter(Boolean).join(' · ')}</small></span>${tg ? `<span title="${tg}">🧪</span>` : ''}</div>`;
+        }
+      }
+      return h;
+    }
+    function expBar() {
+      const x = ed.exp, st = x.startedOn != null;
+      return `<div class="card" style="margin-top:0"><b>🧪 ${x.isNew ? 'New experiment' : 'Editing experiment'}${st ? ' (running)' : ''}</b>
+        <span class="lab">Name</span><input id="x-name" value="${x.name}" style="width:100%">
+        <span class="lab">Duration (days)</span><input id="x-days" type="number" min="1" value="${x.days}" style="width:80px">
+        <p class="note">Edit the whole setup below. Only differences from the base are saved; they are highlighted. Periods and order are base-only.</p>
+        ${err ? `<div class="err">${err}</div>` : ''}
+        <div class="btns"><button id="x-save">${x.isNew ? 'Add to queue' : 'Save'}</button><button id="x-cancel">Cancel</button></div></div>`;
+    }
+    function viewEdit() {
+      const w = ed.draft, ref = ed.mode === 'exp' ? base : null, isBase = !ref;
+      let h = header(isBase ? 'Edit setup' : 'Experiment');
+      if (ref) h += expBar();
+      else if (exps.some(applying)) h += `<p class="note">Base setup. ${exps.filter(applying).length} running experiment(s) apply on top; their changes are not shown here.</p>`;
+      for (const p of w.periods) {
+        h += `<div class="hd ${isBase ? 'click' : ''}" ${isBase ? `data-p="${p.id}"` : ''}><span>${p.name} ${p.from}-${eod(p.to)}</span><span>${isBase ? '✎' : ''}</span></div>`;
+        for (const i of w.items) for (const a of i.att.filter((a) => a.p === p.id)) {
+          const mk = mark(ref, i, a);
+          h += `<div class="row click ${mk ? 'chg' : ''}" data-i="${i.id}" data-rp="${p.id}">${isBase ? '<span class="grip">⠿</span>' : ''}<span class="n">${i.name}<small>${[doseText(i.dose), daysText(a.days), ...(mk ? mk.notes : [])].filter(Boolean).join(' · ')}${i.att.length > 1 ? ' · also ' + i.att.filter((x) => x !== a).map((x) => w.periods.find((q) => q.id === x.p).name).join(', ') : ''}</small></span>${mk ? `<span class="tag inv">${mk.tag}</span>` : ''}<span class="note">${a.kind === 'baseline' ? '◉ baseline' : '○ reminded'}</span></div>`;
+        }
+        if (ref) for (const ri of ref.items) if (ri.att.some((a) => a.p === p.id) && !w.items.find((x) => x.id === ri.id)?.att.some((a) => a.p === p.id))
+          h += `<div class="row ghost"><span class="n"><b>${ri.name}</b><small>removed here by this experiment</small></span><span class="tag inv">− removed</span></div>`;
+        h += `<button class="add" data-n="${p.id}">+ intervention</button>`;
+      }
+      if (isBase) h += `<div><button class="add" data-np style="margin-top:16px">+ period</button></div>`;
+      const arch = w.items.filter((i) => !i.att.length);
+      h += `<div class="hd"><span>Archived (${arch.length})</span></div>` + arch.map((i) => `<div class="row click" data-i="${i.id}"><span class="n">${i.name}<small>not in any period</small></span>${ref && ref.items.find((x) => x.id === i.id)?.att.length ? '<span class="tag inv">archived</span>' : ''}</div>`).join('');
+      if (ed.sheet) h += sheetHtml();
+      return h;
+    }
+    function sheetHtml() {
+      const sh = ed.sheet, w = ed.draft, ref = ed.mode === 'exp' ? base : null;
+      if (sh.type === 'p') {
+        const p = sh.d;
+        return `<div class="sheet"><b>${sh.isNew ? 'New period' : 'Edit period'}</b>
+          <label>Name</label><input id="f-name" value="${p.name}">
+          <label>Window</label><div style="display:flex;gap:8px"><input id="f-from" type="time" value="${p.from}"><input id="f-to" type="time" value="${p.to}"></div>
+          <p class="note">${sh.isNew ? '' : w.items.filter((i) => i.att.some((a) => a.p === p.id)).length + ' interventions use this period.'}</p>
+          <div class="btns"><button id="save">Save</button><button id="cancel">Cancel</button>${sh.isNew ? '' : '<button id="del">Delete period</button>'}</div></div>`;
+      }
+      const i = sh.d, ri = ref?.items.find((x) => x.id === i.id);
+      let h = `<div class="sheet"><b>${sh.isNew ? 'New intervention' : 'Edit intervention'}</b>
+        <label>Name</label><input id="f-name" value="${i.name}">
+        <label>Dose / detail</label><div class="chips"><button data-dt="text" class="${i.dose.t === 'text' ? 'on' : ''}">Text</button><button data-dt="amt" class="${i.dose.t === 'amt' ? 'on' : ''}">Amount + unit</button></div>
+        ${i.dose.t === 'text' ? `<input id="f-dtext" value="${i.dose.v}" placeholder="e.g. Bicep curls, 4kg 3x6" style="margin-top:6px">` : `<div style="display:flex;gap:8px;margin-top:6px"><input id="f-dn" inputmode="decimal" value="${i.dose.n}" placeholder="2" style="width:30%"><input id="f-du" list="units" value="${i.dose.unit}" placeholder="pills, mg…"><datalist id="units"><option>pills</option><option>mg</option><option>g</option><option>ml</option><option>mcg</option></datalist></div>`}
+        ${ri && J(ri.dose) !== J(i.dose) ? `<p class="note"><b>Base:</b> ${doseText(ri.dose) || '—'}</p>` : ''}
+        <label>Appears in</label><div class="chips">${w.periods.map((p) => `<button data-ap="${p.id}" class="${i.att.some((a) => a.p === p.id) ? 'on' : ''}">${p.name}</button>`).join('')}</div>`;
+      for (const a of i.att) {
+        const ra = ri?.att.find((x) => x.p === a.p);
+        h += `<div class="att"><b class="note">${w.periods.find((p) => p.id === a.p).name} · ${daysText(a.days)}</b>${ref ? `<span class="note"> ${ra ? (ra.kind !== a.kind || J(ra.days) !== J(a.days) ? '(base: ' + ra.kind + ' ' + daysText(ra.days) + ')' : '') : '(new here)'}</span>` : ''}<div class="chips" style="margin-top:4px"><button data-kp="${a.p}" data-k="baseline" class="${a.kind === 'baseline' ? 'on' : ''}">Baseline</button><button data-kp="${a.p}" data-k="reminded" class="${a.kind === 'reminded' ? 'on' : ''}">Reminded</button></div><div class="chips" style="margin-top:6px">${D.map((d, k) => `<button data-dp="${a.p}" data-d="${k}" class="${a.days.includes(k) ? 'on' : ''}">${d[0]}</button>`).join('')}</div></div>`;
+      }
+      h += `<div class="btns" style="margin-top:16px"><button id="save">Save</button><button id="cancel">Cancel</button>${sh.isNew || !i.att.length ? '' : '<button id="del">Archive</button>'}</div>${i.att.length ? '' : '<p class="note">Archived: attach a period above to bring it back.</p>'}</div>`;
+      return h;
+    }
+    function expCard(e, queueIdx, queueLen) {
+      const s = status(e), st = e.startedOn;
+      let h = `<div class="card ${s === 'kept' || s === 'discarded' ? 'dim' : ''}"><div style="display:flex;justify-content:space-between"><b>${e.name}</b><span class="tag">${s === 'ended' ? 'ended: decide' : s}</span></div>`;
+      if (s === 'queued') h += `<div class="note">${e.days} days · projected ${dayStr(proj[e.id])} → ${dayStr(proj[e.id] + e.days - 1)}</div>`;
+      else h += `<div class="note">${dayStr(st)} → ${dayStr(Math.max(st, endDay(e) - 1))} · ${Math.max(1, endDay(e) - st)} days${e.endedOn != null ? ' (ended early)' : ''}</div>`;
+      if (s === 'kept') h += '<div class="note">Merged into base.</div>';
+      else if (s === 'discarded') h += '<div class="note">Archived, nothing kept.</div>';
+      else h += describe(e).map((l) => `<div class="del">${l}</div>`).join('');
+      if (s === 'active') h += `<div class="bar"><i style="width:${Math.max(0, Math.min(1, (today - st) / e.days)) * 100}%"></i></div><div class="note">Day ${today - st + 1} of ${e.days}</div><div class="btns"><button data-xedit="${e.id}">Edit</button><button data-xend="${e.id}">End now</button></div>`;
+      if (s === 'ended') h += `<div class="bar"><i style="width:100%"></i></div><div class="note">Still applying until you decide.</div><div class="btns"><button data-keep="${e.id}">Keep</button><button data-disc="${e.id}">Discard</button></div>`;
+      if (s === 'queued') h += `<div class="btns"><button data-start="${e.id}">Start today</button><button data-xedit="${e.id}">Edit</button><button data-up="${e.id}" ${queueIdx === 0 ? 'disabled' : ''}>▲</button><button data-dn="${e.id}" ${queueIdx === queueLen - 1 ? 'disabled' : ''}>▼</button><button data-rm="${e.id}">Remove</button></div>`;
+      return h + '</div>';
+    }
+    let proj = {};
+    function viewExps() {
+      const q = exps.filter((e) => status(e) === 'queued');
+      let at = Math.max(today, ...exps.filter(applying).map(endDay));
+      proj = {}; for (const e of q) { proj[e.id] = at; at += e.days; }
+      const sec = (t, st) => { const l = exps.filter((e) => st.includes(status(e))); return l.length ? `<div class="hd"><span>${t}</span></div>` + l.map((e) => expCard(e)).join('') : ''; };
+      let h = header('Experiments') + `<button data-new style="margin-top:4px">+ experiment</button>` + (err ? `<div class="err">${err}</div>` : '');
+      h += sec('Needs decision', ['ended']) + sec('Running', ['active']);
+      h += `<div class="hd"><span>Queue</span></div>` + (q.length ? q.map((e, k) => expCard(e, k, q.length)).join('') : '<p class="note">Nothing queued.</p>');
+      h += sec('Done', ['kept', 'discarded']);
+      return h;
+    }
+    function render() {
+      document.getElementById('dl').textContent = dayStr(today) + ' (' + D[wd(today)] + ')';
+      document.getElementById('tl').textContent = hhmm(now);
+      ph.innerHTML = view === 'today' ? viewToday() : view === 'edit' ? viewEdit() : viewExps();
+      wire();
+    }
+
+    // ---- interaction ------------------------------------------------------
+    const go = (v) => {
+      err = ''; view = v; ed = null;
+      if (v === 'edit') ed = { mode: 'base', draft: clone(base), sheet: null };
+      render();
+    };
+    const commitBase = () => { if (ed.mode === 'base') base = clone(ed.draft); };
+    function wire() {
+      const $ = (s) => ph.querySelectorAll(s);
+      $('[data-nav]').forEach((b) => b.onclick = () => go(b.dataset.nav));
+      $('[data-f]').forEach((b) => b.onclick = () => { const k = b.dataset.f; flags.has(k) ? flags.delete(k) : flags.add(k); const si = skipped.indexOf(k); if (si >= 0) skipped.splice(si, 1); render(); });
+      $('[data-skip]').forEach((b) => b.onclick = () => { const k = b.dataset.skip; const si = skipped.indexOf(k); if (si >= 0) skipped.splice(si, 1); skipped.push(k); render(); });
+      const byId = (id) => exps.find((e) => e.id == id);
+      $('[data-new]').forEach((b) => b.onclick = () => { err = ''; view = 'edit'; ed = { mode: 'exp', exp: { id: nid++, name: '', days: 14, startedOn: null, endedOn: null, fate: null, delta: null, isNew: true }, draft: clone(base), sheet: null }; render(); });
+      $('[data-xedit]').forEach((b) => b.onclick = () => { const e = byId(b.dataset.xedit); err = ''; view = 'edit'; ed = { mode: 'exp', exp: clone(e), draft: applyDelta(clone(base), e.delta), sheet: null }; render(); });
+      $('[data-start]').forEach((b) => b.onclick = () => { const e = byId(b.dataset.start), c = clash(e, e.id); if (c) { err = c; return render(); } err = ''; e.startedOn = today; render(); });
+      $('[data-xend]').forEach((b) => b.onclick = () => { err = ''; byId(b.dataset.xend).endedOn = today; render(); });
+      $('[data-rm]').forEach((b) => b.onclick = () => { exps = exps.filter((e) => e.id != b.dataset.rm); render(); });
+      const mv = (id, d) => { const q = exps.filter((e) => status(e) === 'queued'), k = q.findIndex((e) => e.id == id), o = q[k + d]; if (!o) return; const a = exps.indexOf(q[k]), c = exps.indexOf(o); [exps[a], exps[c]] = [exps[c], exps[a]]; render(); };
+      $('[data-up]').forEach((b) => b.onclick = () => mv(b.dataset.up, -1));
+      $('[data-dn]').forEach((b) => b.onclick = () => mv(b.dataset.dn, 1));
+      $('[data-keep]').forEach((b) => b.onclick = () => { err = ''; const e = byId(b.dataset.keep); base = applyDelta(base, e.delta); e.fate = 'kept'; render(); });
+      $('[data-disc]').forEach((b) => b.onclick = () => { byId(b.dataset.disc).fate = 'discarded'; render(); });
+      if (view === 'edit') wireEdit($);
+    }
+    function wireEdit($) {
+      const w = ed.draft;
+      if (ed.mode === 'exp') {
+        document.getElementById('x-name').oninput = (e) => ed.exp.name = e.target.value;
+        document.getElementById('x-days').oninput = (e) => ed.exp.days = Math.max(1, +e.target.value || 1);
+        document.getElementById('x-cancel').onclick = () => { err = ''; go('exps'); };
+        document.getElementById('x-save').onclick = () => {
+          const x = ed.exp; x.name = x.name.trim();
+          if (!x.name) { err = 'Give it a name.'; return render(); }
+          const d = diff(base, w);
+          if (!d.add.length && !Object.keys(d.patch).length) { err = 'No changes yet: edit something below.'; return render(); }
+          x.delta = d;
+          if (x.startedOn != null) { const c = clash(x, x.id); if (c) { err = c; return render(); } }
+          const { isNew, ...rec } = x, k = exps.findIndex((e) => e.id === rec.id);
+          k >= 0 ? exps[k] = rec : exps.push(rec);
+          err = ''; go('exps');
+        };
+      }
+      const sh = ed.sheet;
+      $('[data-p]').forEach((e) => e.onclick = () => { ed.sheet = { type: 'p', d: { ...w.periods.find((p) => p.id === e.dataset.p) } }; render(); });
+      $('[data-np]').forEach((e) => e.onclick = () => { ed.sheet = { type: 'p', isNew: true, d: { id: 'p' + nid++, name: '', from: '09:00', to: '12:00' } }; render(); });
+      $('[data-i]').forEach((e) => e.onclick = () => { ed.sheet = { type: 'i', d: clone(w.items.find((x) => x.id === e.dataset.i)) }; render(); });
+      $('[data-n]').forEach((e) => e.onclick = () => { ed.sheet = { type: 'i', isNew: true, d: { id: 'n' + nid++, name: '', dose: { t: 'amt', n: '', unit: '' }, att: [{ p: e.dataset.n, days: [...all], kind: 'reminded' }] } }; render(); });
+      if (ed.mode === 'base') $('.row[data-rp] .grip').forEach((g) => {
+        const row = g.closest('.row');
+        g.onclick = (ev) => ev.stopPropagation();
+        g.onpointerdown = (ev) => {
+          ev.preventDefault(); ev.stopPropagation(); g.setPointerCapture(ev.pointerId); row.classList.add('drag');
+          let target = null;
+          const clear = () => ph.querySelectorAll('.over').forEach((x) => x.classList.remove('over'));
+          g.onpointermove = (m) => {
+            clear(); target = null;
+            const el = document.elementFromPoint(m.clientX, m.clientY)?.closest('.row[data-rp]');
+            if (el && el !== row && el.dataset.rp === row.dataset.rp) { target = el; el.classList.add('over'); }
+          };
+          g.onpointerup = g.onpointercancel = () => {
+            g.onpointermove = g.onpointerup = g.onpointercancel = null;
+            if (target) { const f = w.items.findIndex((x) => x.id == row.dataset.i), m = w.items.splice(f, 1)[0]; w.items.splice(w.items.findIndex((x) => x.id == target.dataset.i), 0, m); commitBase(); }
+            render();
+          };
+        };
+      });
+      if (!sh) return;
+      const sync = () => { const g = (i) => document.getElementById(i); if (g('f-name')) sh.d.name = g('f-name').value; if (g('f-dtext')) sh.d.dose.v = g('f-dtext').value; if (g('f-dn')) { sh.d.dose.n = g('f-dn').value; sh.d.dose.unit = g('f-du').value; } if (g('f-from')) { sh.d.from = g('f-from').value; sh.d.to = g('f-to').value; } };
+      $('[data-dt]').forEach((e) => e.onclick = () => { sync(); const t = e.dataset.dt; if (sh.d.dose.t !== t) sh.d.dose = t === 'amt' ? { t, n: '', unit: '' } : { t, v: '' }; render(); });
+      $('[data-k]').forEach((e) => e.onclick = () => { sync(); sh.d.att.find((x) => x.p === e.dataset.kp).kind = e.dataset.k; render(); });
+      $('[data-ap]').forEach((e) => e.onclick = () => { sync(); const a = sh.d.att, k = a.findIndex((x) => x.p === e.dataset.ap); k >= 0 ? a.splice(k, 1) : a.push({ p: e.dataset.ap, days: [...all], kind: 'reminded' }); render(); });
+      $('[data-dp]').forEach((e) => e.onclick = () => { sync(); const a = sh.d.att.find((x) => x.p === e.dataset.dp), d = +e.dataset.d; a.days = a.days.includes(d) ? a.days.filter((x) => x !== d) : [...a.days, d].sort(); render(); });
+      document.getElementById('cancel').onclick = () => { ed.sheet = null; render(); };
+      document.getElementById('save').onclick = () => { sync(); const list = sh.type === 'p' ? w.periods : w.items, k = list.findIndex((x) => x.id === sh.d.id); k >= 0 ? list[k] = sh.d : list.push(sh.d); ed.sheet = null; commitBase(); render(); };
+      const del = document.getElementById('del');
+      if (del) del.onclick = () => { if (sh.type === 'p') { w.periods = w.periods.filter((p) => p.id !== sh.d.id); w.items.forEach((i) => i.att = i.att.filter((a) => a.p !== sh.d.id)); } else w.items.find((i) => i.id === sh.d.id).att = []; ed.sheet = null; commitBase(); render(); };
+    }
+    document.querySelectorAll('[data-dd]').forEach((b) => b.onclick = () => { today += +b.dataset.dd; render(); });
+    document.getElementById('t').oninput = (e) => { now = +e.target.value; render(); };
+    render();
+  </script>
+</Base>

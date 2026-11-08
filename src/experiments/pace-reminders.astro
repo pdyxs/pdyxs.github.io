@@ -1,0 +1,61 @@
+---
+import Base from '../layouts/Base.astro';
+
+// Throwaway: three candidate looks for the Pace widget's reminders block (1x1), fed by the
+// scheduling structure in Interventions.md (windows, groups, day rules). Pure B&W for e-ink.
+const items = [
+  { name: 'PEA-LUT', group: 'Early', from: '06:00', to: '12:00' },
+  { name: 'Physio', group: 'Early', from: '06:00', to: '23:59' },
+  { name: 'Morning pills', habitual: true, group: 'Morning', from: '07:30', to: '12:00' },
+  { name: 'Powders', habitual: true, group: 'Morning', from: '07:30', to: '12:00' },
+  { name: 'Brekky Ive', group: 'Morning', from: '08:00', to: '14:00' },
+  { name: 'Compression', habitual: true, group: 'Day', from: '08:30', to: '23:59' },
+  { name: 'Arvo Ive', group: 'Arvo', from: '14:00', to: '18:00' },
+  { name: 'Evening pills', group: 'Evening', from: '21:00', to: '23:59' },
+];
+---
+<Base title="Pace reminders block">
+  <main style="max-width:56rem;margin:2rem auto;padding:0 1rem;font-family:system-ui">
+    <h1>Pace widget: reminders block (1x1)</h1>
+    <p>Layout: <b>2x1 capacity</b> + <b>1x1 symptoms</b> + <b>1x1 reminders</b>. Chosen direction (C, rotated), fed by the same schedule data as <code>Interventions.md</code> (windows, groups, day rules). Scrub the clock; tick items to see state change. Day = Daily, no day-rule items today.</p>
+    <label>Time <input id="t" type="range" min="360" max="1380" step="15" value="540" style="width:60%"> <b id="tl"></b></label>
+    
+    <div id="out"></div>
+  </main>
+  <script is:inline define:vars={{ items }}>
+    const done = new Set();
+    const m = (s) => { const [h, mi] = s.split(':').map(Number); return h * 60 + mi; };
+    const fmt = (n) => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
+    const state = (i, now) => done.has(i.name) ? 'done' : now < m(i.from) ? 'later' : now <= m(i.to) ? 'due' : 'over';
+    const sym = { done: '✓', later: '○', due: '●', over: '◐' };
+    const box = (inner, label, note) => `<figure style="margin:0"><div style="width:140px;height:140px;border:2px solid #000;background:#fff;color:#000;padding:8px;box-sizing:border-box;overflow:hidden;font:600 13px/1.25 system-ui">${inner}</div><figcaption style="font-size:.8rem;max-width:200px;margin-top:.3rem"><b>${label}</b><br>${note}</figcaption></figure>`;
+
+    function render() {
+      const now = +document.getElementById('t').value;
+      document.getElementById('tl').textContent = fmt(now);
+      const st = items.map((i) => ({ ...i, s: state(i, now) }));
+      const act = st.filter((i) => i.s === 'due' || i.s === 'over');
+      // Period columns, bottom-aligned, no period labels; one label above for the next reminded thing to do.
+      const groups = [...new Set(items.map((i) => i.group))];
+      const R = 7;
+      const dot = (i) => {
+        if (i.habitual && i.s !== 'done') return `<svg width="16" height="16"><circle cx="8" cy="8" r="${R}" fill="#000" stroke="#000" stroke-width="1.5" stroke-dasharray="2 2"/></svg>`;
+        if (i.s === 'done') return `<svg width="16" height="16"><circle cx="8" cy="8" r="${R}" fill="#000"/></svg>`;
+        if (i.s === 'over') return `<svg width="16" height="16"><circle cx="8" cy="8" r="${R}" fill="#fff" stroke="#000" stroke-width="1.5"/><text x="8" y="12" text-anchor="middle" font-size="11" font-weight="700" fill="#000">!</text></svg>`;
+        return `<svg width="16" height="16"><circle cx="8" cy="8" r="${R}" fill="#fff" stroke="#000" stroke-width="${i.s === 'due' ? 2.5 : 1}"/></svg>`;
+      };
+      const todo = st.filter((i) => !i.habitual && (i.s === 'due' || i.s === 'over')).sort((x, y) => (x.s === 'over' ? 0 : 1) - (y.s === 'over' ? 0 : 1) || m(x.to) - m(y.to));
+      const label = todo.length ? todo[0].name + (todo.length > 1 ? ` +${todo.length - 1}` : '') : '';
+      const cols = groups.map((g) => `<div style="display:flex;flex-direction:column;justify-content:flex-end;gap:4px;height:100%">${st.filter((i) => i.group === g).map(dot).join('')}</div>`).join('');
+      const C = box(
+        `<div style="height:24px;font-size:20px;line-height:24px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</div><div style="display:flex;justify-content:space-between;align-items:flex-end;height:calc(100% - 28px)">${cols}</div>`,
+        'Period columns',
+        'Tap opens the app. Filled + dotted outline = baseline, counts as done. Empty = reminded (thick = due now). ! = overdue reminded. Solid = ticked.');
+      document.getElementById('out').innerHTML = `<div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin:1rem 0">${C}</div>
+        <h3>Tick to mark done</h3><div style="display:flex;gap:.6rem;flex-wrap:wrap">${items.map((i) => `<label><input type="checkbox" data-n="${i.name}" ${done.has(i.name) ? 'checked' : ''}> ${i.name} <small>${i.from}-${i.to === '23:59' ? 'eod' : i.to}</small></label>`).join('')}</div>`;
+      document.querySelectorAll('[data-n]').forEach((c) => c.onchange = () => { c.checked ? done.add(c.dataset.n) : done.delete(c.dataset.n); render(); });
+    }
+    document.getElementById('t').oninput = render;
+    render();
+  </script>
+</Base>

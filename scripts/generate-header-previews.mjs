@@ -27,12 +27,11 @@
  * Run via `npm run generate:header-previews`.
  */
 import { spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import matter from 'gray-matter';
+import { THEMES, SIZE, previewTargets, sourceHash, readManifest } from './lib/header-previews.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CONTENT_DIR = join(ROOT, 'src/content');
@@ -41,88 +40,12 @@ const ROUTE = join(ROOT, 'src/pages/preview/[theme]/[...path].astro');
 const OUT_DIR = join(ROOT, 'public/previews');
 const MANIFEST = join(ROOT, 'src/data/header-previews.generated.ts');
 
-const THEMES = ['light', 'dark'];
-/** Must match PREVIEW_SIZE in the capture route. */
-const SIZE = 720;
 const PORT = 43_217;
 
 const args = process.argv.slice(2);
 const force = args.includes('--force');
 const cardFlag = args.indexOf('--card');
 const onlyCard = cardFlag === -1 ? null : args[cardFlag + 1] ?? null;
-
-/** Every markdown file under src/content, mirroring CONTENT_GLOB_PATTERN. */
-async function markdownFiles(dir) {
-  const found = [];
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.name.startsWith('_') || entry.name.startsWith('.')) continue;
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) found.push(...(await markdownFiles(path)));
-    else if (entry.name.endsWith('.md')) found.push(path);
-  }
-  return found;
-}
-
-/** uid + renderer name for every card that declares `headerMedia`. */
-async function cardsWithHeaderMedia() {
-  const cards = [];
-  for (const file of await markdownFiles(CONTENT_DIR)) {
-    let data;
-    try {
-      ({ data } = matter(await readFile(file, 'utf8')));
-    } catch {
-      continue; // unparseable frontmatter: no headerMedia to read
-    }
-    if (typeof data?.headerMedia !== 'string') continue;
-    // uid is the directory for an index.md card, the file stem otherwise —
-    // the same `collection/id` Astro's glob loader produces.
-    const rel = relative(CONTENT_DIR, file);
-    const uid = rel.endsWith('/index.md') ? rel.slice(0, -'/index.md'.length) : rel.slice(0, -'.md'.length);
-    cards.push({ uid, name: data.headerMedia });
-  }
-  return cards.sort((a, b) => a.uid.localeCompare(b.uid));
-}
-
-/**
- * What a still depends on. Deliberately coarse: the whole header-media source
- * tree plus the capture route, so a change anywhere in a component re-shoots
- * every card that uses one. Over-invalidating costs a few seconds; under-
- * invalidating ships a stale picture of the thing.
- */
-async function sourceHash() {
-  const hash = createHash('sha256');
-  const walk = async (dir) => {
-    for (const entry of (await readdir(dir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) await walk(path);
-      else if (!entry.name.endsWith('.test.ts')) hash.update(await readFile(path));
-    }
-  };
-  await walk(MEDIA_DIR);
-  hash.update(await readFile(ROUTE));
-  hash.update(`size:${SIZE}`);
-  return hash.digest('hex').slice(0, 16);
-}
-
-async function readManifest() {
-  if (!existsSync(MANIFEST)) return {};
-  const source = await readFile(MANIFEST, 'utf8');
-  // Parse the HEADER_PREVIEWS object only — the file also declares a type,
-  // whose braces come first.
-  const start = source.indexOf('HEADER_PREVIEWS');
-  if (start === -1) return {};
-  const open = source.indexOf('{', start);
-  const close = source.lastIndexOf('}');
-  if (open === -1 || close <= open) return {};
-  // Keys and values are written with JSON.stringify, so the only thing
-  // between here and JSON is the trailing comma on each line.
-  const json = source.slice(open, close + 1).replace(/,(\s*[}\]])/g, '$1');
-  try {
-    return JSON.parse(json);
-  } catch {
-    return {}; // unreadable: treat as empty and re-shoot
-  }
-}
 
 async function writeManifest(entries) {
   const body = Object.entries(entries)
@@ -141,8 +64,33 @@ async function writeManifest(entries) {
   );
 }
 
+/**
+ * Astro allows one dev server per project, and a second `astro dev` exits 0
+ * at once ("already running") — so a run on a machine that has the preview
+ * service up must use that server, not start its own. `astro dev status` says
+ * where it is.
+ */
+function runningDevServerUrl() {
+  return new Promise(resolve => {
+    let out = '';
+    const proc = spawn('npx', ['astro', 'dev', 'status'], { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] });
+    proc.stdout.on('data', d => (out += d));
+    proc.on('close', () => resolve(out.match(/running at (http:\/\/localhost:\d+)/)?.[1] ?? null));
+  });
+}
+
+/** Stop the server whether `astro dev` stayed attached or daemonised. */
+async function stopDevServer(proc) {
+  proc.kill('SIGTERM');
+  await new Promise(resolve => {
+    spawn('npx', ['astro', 'dev', 'stop'], { cwd: ROOT, stdio: 'ignore' }).on('close', resolve);
+  });
+}
+
 /** Start a dev server of our own, so the run doesn't depend on one running. */
 async function startDevServer() {
+  const existing = await runningDevServerUrl();
+  if (existing) return { proc: null, url: existing };
   // `npx astro dev`, not `npm run dev`: the latter fires every predev
   // generator, including slow network ones, for a screenshot run.
   const proc = spawn('npx', ['astro', 'dev', '--port', String(PORT)], {
@@ -152,7 +100,9 @@ async function startDevServer() {
   const url = `http://localhost:${PORT}`;
   const deadline = Date.now() + 90_000;
   while (Date.now() < deadline) {
-    if (proc.exitCode !== null) throw new Error(`astro dev exited (${proc.exitCode}) before it was ready`);
+    // Exit 0 is fine: with piped stdio, `astro dev` daemonises itself and the
+    // launcher exits at once; the server is then stopped with `astro dev stop`.
+    if (proc.exitCode) throw new Error(`astro dev exited (${proc.exitCode}) before it was ready`);
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(2000) });
       if (res.ok) return { proc, url };
@@ -161,13 +111,13 @@ async function startDevServer() {
     }
     await new Promise(r => setTimeout(r, 500));
   }
-  proc.kill('SIGTERM');
+  await stopDevServer(proc);
   throw new Error('astro dev did not become ready within 90s');
 }
 
-const cards = (await cardsWithHeaderMedia()).filter(c => !onlyCard || c.uid === onlyCard);
-const hash = await sourceHash();
-const manifest = await readManifest();
+const cards = (await previewTargets(CONTENT_DIR)).filter(c => !onlyCard || c.uid === onlyCard);
+const hash = await sourceHash(MEDIA_DIR, ROUTE);
+const manifest = await readManifest(MANIFEST);
 
 // Drop entries for cards that no longer declare header media, and their files.
 const live = new Set(cards.map(c => c.uid));
@@ -261,7 +211,7 @@ try {
   }
 } finally {
   await browser?.close();
-  server.proc.kill('SIGTERM');
+  if (server.proc) await stopDevServer(server.proc);
 }
 
 await writeManifest(manifest);

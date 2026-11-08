@@ -17,6 +17,8 @@ import { resolveDateline } from '@content/cards/card-date';
 import type { SeriesDateBar as SeriesDateBarModel } from '@content/cards/series';
 import type { RawMetaRow } from '@content/cards/card-meta';
 import type { Action } from '@content/cards/card-actions';
+import type { CreditsView } from '@content/credits/credits-view';
+import CreditsSection from '@components/credits/CreditsSection.svelte';
 import ImageGallery from '@components/media/ImageGallery.svelte';
 import InlineImageViewer from '@components/media/InlineImageViewer.svelte';
 import CardStrip from '@components/browse/CardStrip.svelte';
@@ -77,12 +79,14 @@ interface Props {
   /** `ResolvedCard.collapsedContainer` — the collapsed folder this card is a
    * part of. Suppresses the chip repeating it, and names the series section. */
   collapsedContainer?: string;
+  /** The credits view `buildCreditsViews` made for this card (line, listing, laid-out graph) — absent for a card with no `credits:` block, which renders nothing at all. */
+  credits?: CreditsView;
 }
 
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], seriesCards = [], seriesDateBar = null, seriesPreview, cardTags = [], date, dateLabel, gallery = true, collapsedContainer } = Astro.props as Props;
+const { entry, Content, tagDisplay = {}, relatedCards = [], subjectCards = [], seriesCards = [], seriesDateBar = null, seriesPreview, cardTags = [], date, dateLabel, gallery = true, collapsedContainer, credits } = Astro.props as Props;
 const data = entry?.data;
 
 // Whether this card is a dated thing, and how its date is worded — decided by
@@ -180,9 +184,9 @@ const hasHeaderMedia = Boolean(HeaderMedia || headerEmbed || remoteImageSrc || r
 const hasMasthead = tags.length > 0 || actions.length > 0;
 
 // A flash game's colocated poster is already the header; sweeping it into the
-// strip would show it twice.
-const gallerySources = entry && gallery && !headerMediaSwf
-  ? resolveGalleryImages(entry.id, data?.image, data?.images, entry.body)
+// strip would show it twice — so its gallery is only what `images:` names.
+const gallerySources = entry && gallery
+  ? resolveGalleryImages(entry.id, data?.image, data?.images, entry.body, Boolean(headerMediaSwf))
   : [];
 const galleryImages = await Promise.all(
   gallerySources.map(async ({ src, kind, poster }) => {
@@ -314,6 +318,8 @@ const galleryImages = await Promise.all(
         {' '}<a href={data.canonical_url} target="_blank" rel="noopener noreferrer">↗</a>
       </p>
     )}
+
+    {credits && <CreditsSection line={credits.line} listing={credits.listing} graph={credits.graph} client:load />}
 
     {/* .card-prose is what the reading typography (base.css) keys on — the
         markdown only, not the card UI that shares .stack-card-body-inner. */}

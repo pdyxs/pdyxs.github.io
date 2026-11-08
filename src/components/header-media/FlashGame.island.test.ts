@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import FlashGame from '@components/header-media/FlashGame.svelte';
@@ -76,5 +77,31 @@ describe('FlashGame', () => {
     stage.requestFullscreen = vi.fn(async () => {});
     q('.flash-fullscreen')!.click();
     expect(stage.requestFullscreen).toHaveBeenCalled();
+  });
+
+  it('plays a bare SWF URL with no poster, as the comparison pages use it', () => {
+    unmount(component);
+    component = mount(FlashGame as any, {
+      target,
+      props: { swfUrl: '/experiments/houston/p1/houston.swf', width: 1024, height: 768, loadPlayer },
+    });
+    flushSync();
+    expect(q('.flash-poster')).toBeNull();
+    expect(q('.flash-stage')!.getAttribute('style')).toContain('--flash-aspect: 1024 / 768');
+    q('.flash-play')!.click();
+    flushSync();
+    expect(loadPlayer.mock.calls[0]![0]).toBe('/experiments/houston/p1/houston.swf');
+  });
+
+  // happy-dom does no layout, so the fullscreen geometry is pinned at the CSS
+  // source, as the repo's other style tests do. Issue #219: the player sat in the
+  // top-left of the fullscreen box, leaving a black band on the right.
+  it('centres the player in the fullscreen stage', () => {
+    const src = readFileSync('src/components/header-media/FlashGame.svelte', 'utf8');
+    const rule = (sel: string) => src.match(new RegExp(sel.replace(/[.:]/g, '\\$&') + '\\s*\\{([^}]*)\\}'))?.[1] ?? '';
+    expect(rule('.flash-stage:fullscreen')).toMatch(/display:\s*grid/);
+    expect(rule('.flash-stage:fullscreen')).toMatch(/place-items:\s*center/);
+    expect(rule('.flash-stage:fullscreen .flash-player')).toMatch(/position:\s*relative/);
+    expect(rule('.flash-stage:fullscreen .flash-player')).toMatch(/aspect-ratio:\s*var\(--flash-aspect\)/);
   });
 });

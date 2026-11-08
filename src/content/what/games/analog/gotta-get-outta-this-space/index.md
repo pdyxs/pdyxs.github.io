@@ -19,12 +19,28 @@ meta:
   - label: Release
     values:
       - June 2020
-  - label: Roles
-    values:
-      - Designer, Developer
   - label: Developed With
     values:
       - Alistair Magee
+credits:
+  - name: Paul Sztajer
+    person: me
+    role: Made by
+    group: ""
+    note: ""
+    listed: map
+  - name: Alistair Magee
+    person: alistair-magee
+    role: Art
+    group: ""
+    note: ""
+    listed: map
+  - name: Yasmin Clarke
+    person: yasmin-clarke
+    role: Official Playlist
+    group: ""
+    note: ""
+    listed: map
 ---
 Gotta Get Outta This Space is a co-operative board game, which has you saving yourself from a robot apocalypse, before sending the game to your friends to do the same.
 

@@ -13,5 +13,42 @@ images:
   - time_fight_logo_youtube-02.jpg
   - 03(1).jpg
   - freeplay_poster_2.jpg
+credits:
+  - name: Paul Sztajer
+    person: me
+    role: Made by
+    group: ""
+    note: ""
+    listed: map
+  - name: Tom Dicker
+    person: tom-dicker
+    role: Made by
+    group: ""
+    note: ""
+    listed: map
+  - name: Rona Barugahare
+    person: rona-barugahare
+    role: Made by
+    group: ""
+    note: ""
+    listed: map
+  - name: Vicente Araullo-Peters
+    person: vicente-araullo-peters
+    role: Made by
+    group: ""
+    note: ""
+    listed: map
+  - name: Paul Sztajer
+    person: me
+    role: Lead design
+    group: ""
+    note: ""
+    listed: map
+  - name: Tom Dicker
+    person: tom-dicker
+    role: Art
+    group: ""
+    note: ""
+    listed: map
 ---
 Time Fight is a board game exploring what happens when different players experience turn order — and time itself — differently, with some players moving forwards and others moving backwards through the game's timeline. It was prototyped and iterated on across several versions between 2013 and 2020.

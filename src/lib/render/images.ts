@@ -173,7 +173,19 @@ export function resolveGalleryImages(
   images: string[] | undefined,
   /** The card's raw markdown body, used to spot images it already renders inline. */
   body?: string,
+  /**
+   * Gallery only what `images[]` names: no header prepend, no colocated sweep.
+   * For cards whose colocated media is already the masthead (flash games, whose
+   * poster would otherwise be swept in a second time).
+   */
+  explicitOnly = false,
 ): GalleryImageSource[] {
+  if (explicitOnly) {
+    return (images ?? [])
+      .map(ref => resolveMediaRef(entryId, ref))
+      .filter((m): m is GalleryImageSource => m !== undefined);
+  }
+
   const header = resolveMediaRef(entryId, headerImage);
   // An embed header is the exception to the lead-the-gallery rule below: the
   // masthead renders it as a live, fullscreen-capable player

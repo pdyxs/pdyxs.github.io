@@ -470,4 +470,32 @@ describe('resolveCard', () => {
       expect(resolveFixture({ id: 'a/b' }).dateLabel).toBeUndefined();
     });
   });
+
+  describe('credits', () => {
+    it('is undefined when the card has no credits block', () => {
+      expect(resolveFixture({ id: 'a/b' }).credits).toBeUndefined();
+    });
+
+    it('normalises an authored block, dropping empty strings and defaulting listed to map', () => {
+      const card = resolveFixture({
+        id: 'a/b',
+        data: {
+          credits: [
+            { name: 'Nick Kolan', person: 'nick-kolan', role: 'Game Designer', group: '', note: '', listed: 'map' },
+            { name: 'the Academy', person: '', role: '', group: 'Special thanks', note: '', listed: 'listing' },
+            { name: 'Paul' },
+          ],
+        },
+      });
+      expect(card.credits).toEqual([
+        { name: 'Nick Kolan', person: 'nick-kolan', role: 'Game Designer', listed: 'map' },
+        { name: 'the Academy', group: 'Special thanks', listed: 'listing' },
+        { name: 'Paul', listed: 'map' },
+      ]);
+    });
+
+    it('keeps an empty block distinct from an absent one', () => {
+      expect(resolveFixture({ id: 'a/b', data: { credits: [] } }).credits).toEqual([]);
+    });
+  });
 });
