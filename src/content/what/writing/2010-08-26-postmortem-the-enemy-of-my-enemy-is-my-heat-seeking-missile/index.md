@@ -5,11 +5,12 @@ date: 2010-08-26 17:00:00 +1000
 image: IMG_0088.jpg
 tags:
   - why/learn/gamedev
+  - what/games/digital/enemies
 priority: -1
 ---
 So its been a couple of days since my game went up, and I thought it was high time I did a post-mortem. To give a bit of background: this is my 2nd flash game ever (number 3 is in the works), and was my first time doing a Ludum Dare, so I'm fairly new to the whole experience. Overall (spoiler alert!) it was an awesome experience that I'm looking forward to repeating(end spoiler).
 
-The game can be [found here](http://www.ludumdare.com/compo/ludum-dare-18/?action=preview&uid=2440) -- I'm looking to polish it up and do a re-release, so any suggestions are more than welcome.
+The game can be [played here](card:what/games/digital/enemies) -- I'm looking to polish it up and do a re-release (editor's note: this never happened), so any suggestions are more than welcome.
 
 Now, onto the experience:
 

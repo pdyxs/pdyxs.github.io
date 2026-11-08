@@ -27,21 +27,58 @@ meta:
   - label: Technology
     values:
       - Python, Unity
-  - label: Developed With
-    values:
-      - Owen Brasier
-      - Anitta Smith
-      - Paul Nunes
-      - Scott Brownless
-      - Caitlin Fisher
-      - Blair Morrison
-      - Angus Hamilton
-  - label: Role
-    values:
-      - Interaction Design, Development
   - label: Exhibited at
     values:
       - Vivid Sydney, 2015
+credits:
+  - name: Paul Sztajer
+    person: me
+    role: Interaction Design, Development
+    group: ""
+    note: ""
+    listed: map
+  - name: Owen Brasier
+    person: owen-brasier
+    role: ""
+    group: Developed With
+    note: ""
+    listed: map
+  - name: Anitta Smith
+    person: anitta-smith
+    role: ""
+    group: Developed With
+    note: ""
+    listed: map
+  - name: Paul Nunes
+    person: paul-nunes
+    role: ""
+    group: Developed With
+    note: ""
+    listed: map
+  - name: Scott Brownless
+    person: scott-brownless
+    role: ""
+    group: Developed With
+    note: ""
+    listed: map
+  - name: Caitlin Fisher
+    person: caitlin-fisher
+    role: ""
+    group: Developed With
+    note: ""
+    listed: map
+  - name: Blair Morrison
+    person: blair-morrison
+    role: ""
+    group: Developed With
+    note: ""
+    listed: map
+  - name: Angus Hamilton
+    person: angus-hamilton
+    role: ""
+    group: Developed With
+    note: ""
+    listed: map
 ---
 The Laser Harp is a musical instrument which combines light, sound and interactive art.
 

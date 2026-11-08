@@ -30,6 +30,7 @@ import {
   formatDifficultyStars,
   parseDifficultyLevel,
 } from '../cards/difficulty.ts';
+import { teamSizeBucket, type Credit, type TeamSize } from '../credits/credits.ts';
 import type { Action } from '../cards/card-actions.ts';
 import { WHY_AFFORDANCES, WHY_SUPPRESSION_KEYS, deriveWhyTags } from './why-tags.ts';
 import {
@@ -75,6 +76,10 @@ export type FilterGeneratorCard = {
    * generator for one to be sequenced wrongly against.
    */
   exclude?: ExcludePlan;
+  /** The card's normalised `credits:` block; `undefined` when it has none. */
+  credits?: Credit[];
+  /** Frontmatter `solo: true` — solo work on a card with no credits module. */
+  solo?: boolean;
 };
 
 export type FilterGenerator = {
@@ -243,12 +248,47 @@ const whyAffordanceGenerator: FilterGenerator = {
   },
 };
 
+/** This generator's name in the `generated/*` namespace. */
+const COLLABORATORS_DERIVATION = 'collaborators';
+
+const TEAM_SIZES: TeamSize[] = ['none', 'small', 'large'];
+const teamSizeTag = (size: TeamSize) => `who:collaborators/${size}`;
+
+/** Panel section the team-size values form under Collaborators. */
+const TEAM_SIZE_GROUP = 'Team size';
+
+const TEAM_SIZE_LABELS: Record<string, string> = {
+  [teamSizeTag('none')]: 'Solo',
+  [teamSizeTag('small')]: 'Small team (1–4)',
+  [teamSizeTag('large')]: 'Large team (5+)',
+};
+
+/**
+ * `who:collaborators/{none,small,large}` from a card's credits (or `solo`).
+ * The count and the no-credits-no-solo case are decided in teamSizeBucket();
+ * this is the shell. A card with neither gets no tag at all.
+ */
+const collaboratorsGenerator: FilterGenerator = {
+  derivations: [COLLABORATORS_DERIVATION],
+  apply(tags, { credits, solo, exclude }) {
+    if (exclude?.suppressed.has(COLLABORATORS_DERIVATION)) return tags;
+    const bucket = teamSizeBucket(credits, solo);
+    if (bucket === undefined) return tags;
+    const derived = teamSizeTag(bucket);
+    return tags.includes(derived) ? tags : [...tags, derived];
+  },
+  allValues() {
+    return TEAM_SIZES.map(teamSizeTag);
+  },
+};
+
 /** The active generators, applied in order. Add new generators here. */
 export const FILTER_GENERATORS: FilterGenerator[] = [
   travelWhereGenerator,
   dateEraGenerator,
   puzzleDifficultyGenerator,
   whyAffordanceGenerator,
+  collaboratorsGenerator,
 ];
 
 /**
@@ -286,6 +326,7 @@ const WHEN_ERA_ORDER: Record<string, number> = Object.fromEntries(
  */
 export function generatedDisplayName(value: string): string | undefined {
   if (GENERATED_DISPLAY_NAMES[value]) return GENERATED_DISPLAY_NAMES[value];
+  if (TEAM_SIZE_LABELS[value]) return TEAM_SIZE_LABELS[value];
   // A difficulty reads as its rating, not as "Level 3" — same stars the card
   // itself shows (see difficulty.ts).
   const difficulty = difficultyLevelFromTag(value);
@@ -307,6 +348,8 @@ export function generatedSortOrder(value: string): number | undefined {
   // to a collator, and the underlying slugs would sort level-10 before level-2.
   const difficulty = difficultyLevelFromTag(value);
   if (difficulty !== undefined) return difficulty;
+  const teamSize = TEAM_SIZES.findIndex(size => teamSizeTag(size) === value);
+  if (teamSize !== -1) return teamSize;
   return WHEN_ERA_ORDER[value];
 }
 
@@ -316,6 +359,7 @@ export function generatedSortOrder(value: string): number | undefined {
  * a `_config.yaml` — see groupNodesIntoSections in browse-helpers.ts.
  */
 export function generatedGroup(value: string): string | undefined {
+  if (TEAM_SIZE_LABELS[value]) return TEAM_SIZE_GROUP;
   return difficultyLevelFromTag(value) !== undefined ? DIFFICULTY_GROUP : undefined;
 }
 

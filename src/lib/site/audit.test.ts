@@ -45,6 +45,7 @@ describe('auditCards — shape', () => {
       'legacy-markup',
       'orphaned-old-url',
       'inert-derivation-control',
+      'solo-with-credits',
       'missing-title',
       'missing-date',
       'not-inspected',
@@ -287,5 +288,25 @@ describe('awaiting-code finding', () => {
   // card that is otherwise ready rides.
   it('ignores an uninspected card even when it awaits code', () => {
     expect(hits([{ uid: 'a', inspected: false, awaitsCode: true }])).toEqual([]);
+  });
+});
+
+describe('auditCards — solo-with-credits', () => {
+  const run = (card: Partial<AuditCard>) => uidsFor([cleanCard(card)], 'solo-with-credits');
+  const other = { name: 'Nick', person: 'nick', listed: 'map' as const };
+  const me = { name: 'Paul', person: 'me', listed: 'map' as const };
+
+  it('flags solo: true with credits naming someone other than me', () => {
+    expect(run({ solo: true, credits: [me, other] })).toEqual(['what/writing/a-clean-card']);
+  });
+
+  it('does not flag solo with no credits, only me, or listing-only others', () => {
+    expect(run({ solo: true })).toEqual([]);
+    expect(run({ solo: true, credits: [me] })).toEqual([]);
+    expect(run({ solo: true, credits: [{ ...other, listed: 'listing' }] })).toEqual([]);
+  });
+
+  it('does not flag credits without solo', () => {
+    expect(run({ credits: [other] })).toEqual([]);
   });
 });

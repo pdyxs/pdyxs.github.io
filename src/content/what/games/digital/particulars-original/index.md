@@ -1,8 +1,10 @@
 ---
 inspected: true
+solo: true
 title: Particulars (2010)
 description: The original Flash version of Particulars (2010)
 tags:
+  - why/playable
 date: 2010-01-01
 medium: Video Game
 series: Particulars

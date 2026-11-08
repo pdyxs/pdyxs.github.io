@@ -4,12 +4,58 @@ title: "Houston, we have a #$!?"
 description: A hybrid digital/analog game made at Global Game Jam Sydney 2015
 tags:
   - when/released
+  - why/playable
 date: 2015-01-23
 medium: Hybrid Digital/Analog Game
-actions: []
+actions:
+  - text: "Manual #1"
+    url: /games/houston/manual_1.pdf
+    kind: read
+  - text: "Manual #2"
+    url: /games/houston/manual_2.pdf
+    kind: read
+  - text: "Manual #3"
+    url: /games/houston/manual_3.pdf
+    kind: read
 quotes: []
-image: https://www.youtube.com/embed/hGbso0glYrQ
+images:
+  - https://www.youtube.com/embed/hGbso0glYrQ
+headerMedia: flash-game
+credits:
+  - name: John Kane
+    person: john-kane
+    role: Made by
+    group: ""
+    note: ""
+    listed: map
+  - name: Paul Sztajer
+    person: me
+    role: Made by
+    group: ""
+    note: ""
+    listed: map
+  - name: Tim Grants
+    person: tim-grants
+    role: With assistance from
+    group: ""
+    note: ""
+    listed: map
+  - name: Sally Kellaway
+    person: sally-kellaway
+    role: With assistance from
+    group: ""
+    note: ""
+    listed: map
+  - name: Robert Snars
+    person: robert-snars
+    role: With assistance from
+    group: ""
+    note: ""
+    listed: map
+image: header.png
 ---
-Major Thompson is on an alien craft that he cannot understand. Ground Control have the manuals to help him get there. Together, can they land the ship, without it crashing?
+> *Major Thompson is on an alien craft that he cannot understand. Ground Control have the manuals to help him get there. Together, can they land the ship, without it crashing?*
 
 "Houston, we have a #$!?" is a hybrid digital/analog game made over a single weekend at Global Game Jam Sydney 2015, where it was runner up for best game.
+
+The game is designed to be played by 2-4 players. 1 player, playing Major Thompson, plays the digital game (above). The other players guide them using the manuals, without looking at the screen.

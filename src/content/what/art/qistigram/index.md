@@ -25,16 +25,41 @@ meta:
   - label: Made for
     values:
       - "[Qiskit Camp Europe 2019](https://qiskit.org/events/europe/)"
-  - label: Made with
-    values:
-      - "[Libby Heaney](http://libbyheaney.co.uk/)"
-      - "[Jessii Mai](https://www.instagram.com/jessiimai/)"
-      - "[Oday Darwich](https://twitter.com/zeeroday/)"
-      - "[Ana Fernandez](https://www.instagram.com/ananatiin/)"
   - label: Technology
     values:
       - Unity, Python (Qiskit framework)
 priority: -2
+credits:
+  - name: Paul Sztajer
+    person: me
+    role: ""
+    group: ""
+    note: ""
+    listed: map
+  - name: Libby Heaney
+    person: libby-heaney
+    role: ""
+    group: ""
+    note: ""
+    listed: map
+  - name: Jessii Mai
+    person: jessii-mai
+    role: ""
+    group: ""
+    note: ""
+    listed: map
+  - name: Oday Darwich
+    person: oday-darwich
+    role: ""
+    group: ""
+    note: ""
+    listed: map
+  - name: Ana Fernandez
+    person: ana-fernandez
+    role: ""
+    group: ""
+    note: ""
+    listed: map
 ---
 Qistigram was made as a part of Qiskit Camp Europe - a quantum computing hackathon in Switzerland.
 

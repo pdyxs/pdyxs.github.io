@@ -75,7 +75,80 @@ Two traps that cost a round each:
 
 Collection views are browsing cards for an entire collection — e.g. `/card/posts` lists all posts with tag filter chips. They use bare collection-name UIDs (`posts`, `projects`) with no id component, which is a deliberate exception to the `collection/id` invariant. Register them in `COLLECTION_VIEW_RENDERERS` (`src/lib/render/renderers.ts`). The renderer is a plain Astro component that fetches all cards server-side and passes them to `<CollectionBrowser client:load />`. To link to a collection view from card content, use `[text](collection:posts)` — `CardStack.onDocumentClick` handles the `collection:` protocol and pushes `/card/posts`.
 
-## Card credits (`meta:`) are one flat shape, for Metadata Menu
+## Card credits (`credits:`)
+
+A card with a `credits:` block shows a centred **"made by …" line** between the
+meta rows and the prose, and the line opens a panel holding the full listing.
+Opt-in: no block, no section and no empty wrapper, and nothing is backfilled
+from `meta:` rows. The authored shape is one Object List of identical six-key
+entries (Metadata Menu allows one shape per item):
+
+```yaml
+credits:
+  - name: Nick Kolan      # required, as the source gives it
+    person: nick-kolan    # optional bare slug = identity; `me` is Paul
+    role: Game Designer   # optional, verbatim
+    group: ""             # optional heading above the role
+    note: ""              # optional, full listing only
+    listed: map           # map | listing (default map); listing = never the line
+```
+
+Opening the panel shows the credits as a **map** (a graph), and a **Full
+listing** button swaps it for the listing (the button then reads **Map**).
+Topology per card: card -> group -> role -> person. A credit with no `group`
+skips that tier, with no `role` the person hangs off the group (or the card).
+Groups and roles are per-card nodes; one person node per identity per card,
+joined to each role they hold. Only `listed: map` credits are on the map, and
+`note`s never are.
+
+Places, one decision each:
+
+- `src/lib/content/credits/credits.ts` is pure: `creditIdentity` (same `person`,
+  else same `name`), `madeByLine` (distinct `listed: map` identities; 1-3 are
+  named, more are counted), `creditListing` (group, then role, authored order;
+  a map-listed entry carries `personId`, its graph node) and `creditsView`.
+- `credits-graph.ts` (`buildCreditsGraph`) is the topology;
+  `credits-layout.ts` (`layoutCreditsGraph`) is the **build-time layout**: a
+  deterministic radial seed plus force pass, label widths estimated from
+  character counts. Invariants it guarantees: a child is radially further from
+  the card than its parent, label boxes never overlap, and edges avoid foreign
+  labels. The browser does no layout.
+- `credits-view.ts` (`buildCreditsViews`) composes `{line, listing, graph}` per
+  card. Both card routes call it in `getStaticPaths`, once per build, and pass
+  `credits` to `CardStackCard` -> `GenericRenderer`. `creditsView()` is
+  `undefined` when there is nothing to open, and no view means no section.
+- `resolveCard()` is the only reader of the frontmatter: `ResolvedCard.credits`
+  is the normalised list (empty strings dropped), `undefined` when absent.
+  **The schema field has no `.default([])`**, unlike the other list fields,
+  because absent must stay distinct from empty.
+- `CreditsSection.svelte` (`client:load`) holds the panel, the Map/listing
+  toggle and the selected node; `CreditsMap.svelte` draws the positioned graph.
+  The camera maths (`connectedIds`, `frameSelection`) is the pure
+  `src/components/credits/credits-camera.ts`. The island imports only types
+  from content code.
+
+Behaviour: the camera frames the selected node with everything connected to it,
+centred on that box (zoom at most 1, floor 0.25); under 600px wide the map
+opens at 1.6x on the card. Drag pans, wheel/pinch zooms, an empty-space click
+or Esc returns to the card, and Esc on the card folds the panel. In the
+listing a map-listed name is a button that opens the map on that person.
+
+**Fade is never `opacity`.** The palette is ink and paper; a softening opacity
+renders a grey the site does not have. A node not connected to the selection is
+drawn hollow (outline only, no fill) with thin dashes (`--credits-faded-dash`)
+and a lighter label weight; its edges are thin and dashed. Only an enter
+animation may pass through opacity while it runs. No `--dither-*` inside the
+map: its SVG group is transformed.
+
+It is an island with its own markup and no inline script, so it survives a push
+from a lens. Selectors: `.credits`, `.credits-by`, `.credits-panel`,
+`.credits-view-toggle`, `.credits-map`, `.credits-node[data-kind=...]`,
+`.credits-node.is-faded`, `.credits-node.is-selected`, `.credits-edge`,
+`.credits-edge.is-faded`, `.credits-listing`, `.credits-listing-section`,
+`.credits-listing-name`, `.credits-note`. New `:root` tokens:
+`--credits-map-height`, `--credits-faded-dash`.
+
+## Card facts (`meta:`) are one flat shape, for Metadata Menu
 
 A card's credit/fact rows ("Medium", "Technology", "Accolades", "Made with") are
 an open-ended list, ported from the Jekyll site's `definitions:` — 22 distinct
@@ -257,12 +330,22 @@ always the light one: a scraper has no theme.
 
 Three things follow:
 
-- **The stills are committed, and the build never regenerates them.** Re-run
-  the generator yourself after changing a header-media component, or the
-  committed picture is of the old one. The run is incremental — each entry
+- **The stills are committed, and the build never regenerates them** — but
+  the build *box* does. `astro-build.service` runs
+  `~/server-project/scripts/pdyxs-header-previews-sync` before each build
+  (every 10 minutes): it runs the generator against the running preview server
+  and commits `public/previews` and `header-previews.generated.ts` to `dev`
+  as `previews: auto-generate …` (skipped off `dev`, or mid-merge/rebase). On
+  a machine without that timer, re-run the generator yourself after changing a
+  header-media component, or the committed picture is of the old one.
+  `header-previews.test.ts` fails when a card that needs a still has none. The run is incremental — each entry
   carries a hash of the whole `src/components/header-media/` tree plus the
   capture route, so an unchanged card launches no browser. `--force`
   re-shoots everything, `--card <uid>` limits it to one.
+- **Only cards with no `image:` get a still.** A card with its own `image:`
+  is skipped, and its still is pruned: `needsPreview()` in
+  `scripts/lib/header-previews.mjs` is the one definition, shared by the
+  generator and the test.
 - **The preview is a *fallback*.** `resolveThumb` reaches it only after
   `image:` has failed to resolve, so a card with both a header image and a
   header-media island keeps showing the image.

@@ -66,6 +66,7 @@ describe('parseSchemaFields', () => {
       "        status: z.enum(['draft', 'published']).optional(),",
       '        actions: z.array(action).default([]),',
       '        quotes: z.array(quote).default([]),',
+      '        credits: z.array(credit).nullish().transform((v) => v ?? undefined),',
       '    }),',
       '});',
     ].join('\n');
@@ -80,6 +81,7 @@ describe('parseSchemaFields', () => {
       'status=draft | published',
       'actions=list of { text, url }',
       'quotes=list of { quote, by?, in? }',
+      'credits=list of { name, person?, role?, group?, note?, listed? }',
     ]);
   });
 
