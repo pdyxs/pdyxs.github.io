@@ -6,6 +6,7 @@ import type { BrowseCardData } from '@browse/results/browse-helpers';
 import { getTagRegistry, flattenTagDisplay } from '@content/tags/tag-registry';
 import type { TagDisplay } from '@content/tags/tag-display';
 import { computeRelatedCardsIndex, computeSubjectCardsIndex } from '@content/cards/card-identity';
+import { buildCreditsViews, type CreditsView } from '@content/credits/credits-view';
 import { serialiseBrowseCards } from '@browse/results/browse-card';
 import { resolveLocalImage, isRemoteImageUrl } from '@render/images';
 import { HEADER_PREVIEWS } from '@data/header-previews.generated';
@@ -25,6 +26,8 @@ export async function getStaticPaths() {
   const tagDisplay = flattenTagDisplay(await getTagRegistry(reachableCards));
   const relatedCardsIndex = computeRelatedCardsIndex(reachableCards);
   const subjectCardsIndex = computeSubjectCardsIndex(reachableCards);
+  // Layout of every credits map happens here, once, at build time (the island does none).
+  const creditsViews = buildCreditsViews(reachableCards);
   // The whole resolved card rides along, so neither this page nor
   // CardStackCard ever re-derives any of it (issue #77). Base.astro's share
   // metadata (canonical/OG/Twitter/JSON-LD, issue #71) reads it here; the card
@@ -41,17 +44,19 @@ export async function getStaticPaths() {
         tagDisplay,
         relatedCards: await serialiseBrowseCards(relatedCardsIndex.get(c.uid) ?? []),
         subjectCards: await serialiseBrowseCards(subjectCardsIndex.get(c.uid) ?? []),
+        credits: creditsViews.get(c.uid),
       },
     })),
   );
 }
 
 const { path } = Astro.params;
-const { card, tagDisplay, relatedCards, subjectCards } = Astro.props as {
+const { card, tagDisplay, relatedCards, subjectCards, credits } = Astro.props as {
   card: ResolvedCard;
   tagDisplay: Record<string, TagDisplay>;
   relatedCards: BrowseCardData[];
   subjectCards: BrowseCardData[];
+  credits?: CreditsView;
 };
 const { title, description, date, image } = card;
 
@@ -78,6 +83,6 @@ if (localImage) {
 <Base {title} {description} {date} image={ogImage} ogType={date ? 'article' : 'website'}>
   <div id="homepage" hidden></div>
   <StackNav activeUid={path} initialWidth={card.width}>
-    <CardStackCard {card} {tagDisplay} {relatedCards} {subjectCards} />
+    <CardStackCard {card} {tagDisplay} {relatedCards} {subjectCards} {credits} />
   </StackNav>
 </Base>

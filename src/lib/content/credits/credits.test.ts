@@ -66,16 +66,26 @@ describe('creditListing', () => {
     expect(creditListing(credits)).toEqual([
       {
         rows: [
-          { role: 'Designer', entries: [{ name: 'Nick' }] },
-          { role: 'Programming', entries: [{ name: 'Thomas' }, { name: 'David' }] },
+          { role: 'Designer', entries: [{ name: 'Nick', personId: 'name:Nick' }] },
+          { role: 'Programming', entries: [{ name: 'Thomas', personId: 'name:Thomas' }, { name: 'David', personId: 'name:David' }] },
         ],
       },
       {
         heading: 'Level Design',
-        rows: [{ role: 'Lead', entries: [{ name: 'Ann' }, { name: 'Alison', note: 'as Alison Scott' }] }],
+        rows: [{ role: 'Lead', entries: [{ name: 'Ann', personId: 'name:Ann' }, { name: 'Alison', personId: 'name:Alison', note: 'as Alison Scott' }] }],
       },
       { heading: 'Special thanks', rows: [{ entries: [{ name: 'Academy' }] }] },
     ]);
+  });
+});
+
+describe('creditListing map identity', () => {
+  it('tags map-listed entries with their identity, and leaves listing-only ones plain', () => {
+    const [section] = creditListing([
+      credit({ name: 'Nick', person: 'nick', role: 'R' }),
+      credit({ name: 'Academy', role: 'R', listed: 'listing' }),
+    ]);
+    expect(section.rows[0].entries).toEqual([{ name: 'Nick', personId: 'person:nick' }, { name: 'Academy' }]);
   });
 });
 
@@ -93,7 +103,7 @@ describe('creditsView', () => {
     const credits = [credit({ name: 'Nick', role: 'Designer' })];
     expect(creditsView(credits)).toEqual({
       line: { names: ['Nick'] },
-      listing: [{ rows: [{ role: 'Designer', entries: [{ name: 'Nick' }] }] }],
+      listing: [{ rows: [{ role: 'Designer', entries: [{ name: 'Nick', personId: 'name:Nick' }] }] }],
     });
   });
 });

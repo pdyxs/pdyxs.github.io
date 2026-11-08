@@ -70,7 +70,8 @@ export function teamSizeBucket(credits: Credit[] | undefined, solo: boolean | un
   return n === 0 ? 'none' : n <= 4 ? 'small' : 'large';
 }
 
-export type CreditListingEntry = { name: string; note?: string };
+/** `personId` is the graph node of a map-listed name, so the listing can open the map on them; listing-only names have none. */
+export type CreditListingEntry = { name: string; personId?: string; note?: string };
 export type CreditListingRow = { role?: string; entries: CreditListingEntry[] };
 export type CreditListingSection = { heading?: string; rows: CreditListingRow[] };
 
@@ -95,7 +96,11 @@ export function creditListing(credits: Credit[]): CreditListingSection[] {
       rows.set(rowKey, row);
       section.rows.push(row);
     }
-    row.entries.push(c.note ? { name: c.name, note: c.note } : { name: c.name });
+    row.entries.push({
+      name: c.name,
+      ...(c.listed === 'map' && { personId: creditIdentity(c) }),
+      ...(c.note && { note: c.note }),
+    });
   }
   return [...sections.values()];
 }
@@ -127,14 +132,14 @@ export function normaliseCredits(raw: RawCredit[] | undefined): Credit[] | undef
 }
 
 /** The plain-data prop `CreditsSection` takes. */
-export type CreditsView = { line: MadeByLine; listing: CreditListingSection[] };
+export type CreditsLineAndListing = { line: MadeByLine; listing: CreditListingSection[] };
 
 /**
  * What to render for a card's credits, or `undefined` for nothing at all: no
  * block, an empty block, or one that names nobody (all listing-only) has no
  * line to open the panel from.
  */
-export function creditsView(credits: Credit[] | undefined): CreditsView | undefined {
+export function creditsView(credits: Credit[] | undefined): CreditsLineAndListing | undefined {
   if (!credits) return undefined;
   const line = madeByLine(credits);
   if ('names' in line && line.names.length === 0) return undefined;

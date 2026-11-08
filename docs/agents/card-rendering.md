@@ -93,25 +93,60 @@ credits:
     listed: map           # map | listing (default map); listing = never the line
 ```
 
-Three places, one decision each:
+Opening the panel shows the credits as a **map** (a graph), and a **Full
+listing** button swaps it for the listing (the button then reads **Map**).
+Topology per card: card -> group -> role -> person. A credit with no `group`
+skips that tier, with no `role` the person hangs off the group (or the card).
+Groups and roles are per-card nodes; one person node per identity per card,
+joined to each role they hold. Only `listed: map` credits are on the map, and
+`note`s never are.
+
+Places, one decision each:
 
 - `src/lib/content/credits/credits.ts` is pure: `creditIdentity` (same `person`,
   else same `name`), `madeByLine` (distinct `listed: map` identities; 1-3 are
-  named, more are counted), `creditListing` (group, then role, authored order)
-  and `creditsView`, which is `undefined` when there is nothing to open.
+  named, more are counted), `creditListing` (group, then role, authored order;
+  a map-listed entry carries `personId`, its graph node) and `creditsView`.
+- `credits-graph.ts` (`buildCreditsGraph`) is the topology;
+  `credits-layout.ts` (`layoutCreditsGraph`) is the **build-time layout**: a
+  deterministic radial seed plus force pass, label widths estimated from
+  character counts. Invariants it guarantees: a child is radially further from
+  the card than its parent, label boxes never overlap, and edges avoid foreign
+  labels. The browser does no layout.
+- `credits-view.ts` (`buildCreditsViews`) composes `{line, listing, graph}` per
+  card. Both card routes call it in `getStaticPaths`, once per build, and pass
+  `credits` to `CardStackCard` -> `GenericRenderer`. `creditsView()` is
+  `undefined` when there is nothing to open, and no view means no section.
 - `resolveCard()` is the only reader of the frontmatter: `ResolvedCard.credits`
   is the normalised list (empty strings dropped), `undefined` when absent.
   **The schema field has no `.default([])`**, unlike the other list fields,
   because absent must stay distinct from empty.
-- `CreditsSection.svelte` (`client:load`, one `{line, listing}` prop) is a
-  single `aria-expanded` button plus the panel; Esc inside the panel folds it.
-  `CardStackCard` builds the prop and passes it to `GenericRenderer` like
-  `relatedCards`, so both card routes render identically.
+- `CreditsSection.svelte` (`client:load`) holds the panel, the Map/listing
+  toggle and the selected node; `CreditsMap.svelte` draws the positioned graph.
+  The camera maths (`connectedIds`, `frameSelection`) is the pure
+  `src/components/credits/credits-camera.ts`. The island imports only types
+  from content code.
+
+Behaviour: the camera frames the selected node with everything connected to it,
+centred on that box (zoom at most 1, floor 0.25); under 600px wide the map
+opens at 1.6x on the card. Drag pans, wheel/pinch zooms, an empty-space click
+or Esc returns to the card, and Esc on the card folds the panel. In the
+listing a map-listed name is a button that opens the map on that person.
+
+**Fade is never `opacity`.** The palette is ink and paper; a softening opacity
+renders a grey the site does not have. A node not connected to the selection is
+drawn hollow (outline only, no fill) with thin dashes (`--credits-faded-dash`)
+and a lighter label weight; its edges are thin and dashed. Only an enter
+animation may pass through opacity while it runs. No `--dither-*` inside the
+map: its SVG group is transformed.
 
 It is an island with its own markup and no inline script, so it survives a push
 from a lens. Selectors: `.credits`, `.credits-by`, `.credits-panel`,
-`.credits-listing`, `.credits-listing-section`, `.credits-listing-name`,
-`.credits-note`. New tokens: none.
+`.credits-view-toggle`, `.credits-map`, `.credits-node[data-kind=...]`,
+`.credits-node.is-faded`, `.credits-node.is-selected`, `.credits-edge`,
+`.credits-edge.is-faded`, `.credits-listing`, `.credits-listing-section`,
+`.credits-listing-name`, `.credits-note`. New `:root` tokens:
+`--credits-map-height`, `--credits-faded-dash`.
 
 ## Card facts (`meta:`) are one flat shape, for Metadata Menu
 
