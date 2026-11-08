@@ -6,8 +6,12 @@
  * injected route is only registered under `astro dev`, so nothing here reaches
  * a production build. The folder is scanned when the server starts, so a new
  * experiment needs a restart of astro-preview.service.
+ *
+ * The folder may not exist: promotion strips it from `main` (MAIN_NEVER in
+ * src/lib/site/promotion.ts), and CI still runs `astro dev` there to warm the
+ * content store. With no folder there are no experiments, and no index.
  */
-import { readdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 export const EXPERIMENTS_DIR = new URL('../src/experiments/', import.meta.url);
@@ -27,6 +31,7 @@ export function experimentsIntegration() {
       'astro:config:setup': ({ command, injectRoute }) => {
         if (command !== 'dev') return;
         const dir = fileURLToPath(EXPERIMENTS_DIR);
+        if (!existsSync(dir)) return;
         injectRoute({ pattern: '/experiments', entrypoint: `${dir}index.astro` });
         for (const slug of experimentSlugs(readdirSync(dir))) {
           injectRoute({ pattern: `/experiments/${slug}`, entrypoint: `${dir}${slug}.astro` });
