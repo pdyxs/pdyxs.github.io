@@ -133,12 +133,6 @@ credits:
     group: "Level Design"
     note: ""
     listed: map
-  - name: "Paul Sztajer"
-    person: "me"
-    role: "Lead Writer"
-    group: "Additional Writing"
-    note: ""
-    listed: map
   - name: "Chloe Paul"
     person: "chloe-paul"
     role: "Writers"
