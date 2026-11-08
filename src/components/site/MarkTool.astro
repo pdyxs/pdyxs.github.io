@@ -39,6 +39,12 @@ const descId = `site-mark-tool-desc-${tool.id}`;
     <circle class="site-mark-bauble-hit" r={tool.radius}></circle>
     <circle class="site-mark-bauble-body" r={tool.radius}></circle>
     <g class="site-mark-icon" transform={`scale(${tool.radius})`} set:html={MARK_ICONS[tool.icon] ?? ''} />
+    {/* One per state, for a tool whose look follows a setting: the mark marks
+        the current one (`data-current`) and sets the bauble's `data-state`,
+        and from then on only that one shows. */}
+    {Object.entries(tool.icons ?? {}).map(([state, icon]) => (
+      <g class="site-mark-icon" data-icon-state={state} transform={`scale(${tool.radius})`} set:html={MARK_ICONS[icon] ?? ''} />
+    ))}
   </g>
   {tool.children?.map((child) => <Astro.self tool={child} parent={tool.id} />)}
 </g>

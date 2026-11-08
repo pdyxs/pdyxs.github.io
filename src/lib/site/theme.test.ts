@@ -1,7 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { resolveTheme, getActiveButton, THEME_CHANGE_EVENT } from '@site/theme';
+import { resolveTheme, getActiveButton, nextPreference, THEME_CHANGE_EVENT } from '@site/theme';
+
+describe('nextPreference', () => {
+  it('steps system → light → dark → system', () => {
+    expect(nextPreference(null)).toBe('light');
+    expect(nextPreference('system')).toBe('light');
+    expect(nextPreference('light')).toBe('dark');
+    expect(nextPreference('dark')).toBe('system');
+  });
+});
 
 describe('resolveTheme', () => {
   it('returns light when preference is light, system dark', () => {

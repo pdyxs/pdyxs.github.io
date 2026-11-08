@@ -13,6 +13,7 @@ import {
   toolLength,
   validateTools,
   visibleTools,
+  spreadPivots,
   type ToolRegistries,
 } from '@site/mark/tools';
 import { PROOF_BEHAVIOURS, PROOF_TOOLS } from '../../../experiments/mark-tools-proof';
@@ -117,6 +118,8 @@ describe('validateTools', () => {
 
   it('passes a sound tree', () => {
     expect(validateTools(TREE, reg)).toEqual([]);
+    expect(validateTools([tool('s', { thread: 0, icons: { on: 'palette' } })], reg)).toEqual([]);
+    expect(validateTools([tool('s', { thread: 0, icons: { on: 'nope' } })], reg)).toEqual(['"s": no icon "nope" for state "on"']);
   });
 
   it('catches threads out of range, missing or on a child', () => {
@@ -166,5 +169,24 @@ describe('MARK_ICONS', () => {
         expect(['site-mark-icon-ink', 'site-mark-icon-paper'], name).toContain(cls);
       }
     }
+  });
+});
+
+describe('spreadPivots', () => {
+  it('spreads crossings that bunch up, in anchor order, about their centre', () => {
+    // palette crosses at 201 (anchor right), theme at 198 (anchor left).
+    const [palette, theme] = spreadPivots([201, 198], [0.15, -0.64], 46);
+    expect(palette - theme).toBeCloseTo(46);
+    expect((palette + theme) / 2).toBeCloseTo(199.5);
+  });
+
+  it('keeps the anchors’ order even where the crossings are the other way round', () => {
+    const [a, b] = spreadPivots([100, 110], [1, -1], 46);
+    expect(a - b).toBeCloseTo(46);
+  });
+
+  it('leaves crossings already far enough apart alone', () => {
+    expect(spreadPivots([0, 100, 200], [0, 1, 2], 46)).toEqual([0, 100, 200]);
+    expect(spreadPivots([5], [0])).toEqual([5]);
   });
 });

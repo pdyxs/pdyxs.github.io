@@ -119,6 +119,10 @@
     // Set initial active button state
     var initialPref = localStorage.getItem('theme');
     updateActiveButton(getActiveButton(initialPref));
+    // And follow a setting changed elsewhere (the mark's theme bauble).
+    document.addEventListener('site:theme', function () {
+      updateActiveButton(getActiveButton(localStorage.getItem('theme')));
+    });
 
     toggle.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-theme-btn]');

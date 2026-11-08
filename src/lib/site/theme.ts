@@ -38,3 +38,15 @@ export const THEME_CHANGE_EVENT = 'site:theme';
 export interface ThemeChangeDetail {
   theme: ResolvedTheme;
 }
+
+/** The order a single control steps through the settings: following the OS, then light, then dark. */
+export const THEME_CYCLE: readonly ActiveButton[] = ['system', 'light', 'dark'];
+
+/**
+ * The setting after `preference`, for a control that toggles through them
+ * (the mark's theme bauble). Pure function.
+ */
+export function nextPreference(preference: ThemePreference): ActiveButton {
+  const i = THEME_CYCLE.indexOf(getActiveButton(preference));
+  return THEME_CYCLE[(i + 1) % THEME_CYCLE.length];
+}

@@ -19,6 +19,17 @@ export const MARK_ICONS: Record<string, string> = {
    * to the ring, which covers its edge. Ink upper left, paper lower right.
    */
   palette: '<path class="site-mark-icon-ink" d="M-1 0 A1 1 0 0 1 1 0 Z" transform="rotate(-45)"></path>',
+  /** The theme's three settings, as the footer's ThemeToggle draws them. Light: a sun. */
+  sun: '<circle class="site-mark-icon-ink" r="0.3"></circle>' +
+    '<rect class="site-mark-icon-ink" x="-0.07" y="-0.78" width="0.14" height="0.24" transform="rotate(0)"></rect><rect class="site-mark-icon-ink" x="-0.07" y="-0.78" width="0.14" height="0.24" transform="rotate(45)"></rect><rect class="site-mark-icon-ink" x="-0.07" y="-0.78" width="0.14" height="0.24" transform="rotate(90)"></rect><rect class="site-mark-icon-ink" x="-0.07" y="-0.78" width="0.14" height="0.24" transform="rotate(135)"></rect><rect class="site-mark-icon-ink" x="-0.07" y="-0.78" width="0.14" height="0.24" transform="rotate(180)"></rect><rect class="site-mark-icon-ink" x="-0.07" y="-0.78" width="0.14" height="0.24" transform="rotate(225)"></rect><rect class="site-mark-icon-ink" x="-0.07" y="-0.78" width="0.14" height="0.24" transform="rotate(270)"></rect><rect class="site-mark-icon-ink" x="-0.07" y="-0.78" width="0.14" height="0.24" transform="rotate(315)"></rect>',
+  /** Dark: a crescent moon, an ink disc with a paper one over it. */
+  moon: '<circle class="site-mark-icon-ink" r="0.52"></circle>' + '<circle class="site-mark-icon-paper" cx="0.24" cy="-0.2" r="0.44"></circle>',
+  /** System: a monitor. */
+  monitor:
+    '<rect class="site-mark-icon-ink" x="-0.55" y="-0.45" width="1.1" height="0.72"></rect>' +
+    '<rect class="site-mark-icon-paper" x="-0.43" y="-0.33" width="0.86" height="0.48"></rect>' +
+    '<rect class="site-mark-icon-ink" x="-0.07" y="0.27" width="0.14" height="0.18"></rect>' +
+    '<rect class="site-mark-icon-ink" x="-0.3" y="0.43" width="0.6" height="0.1"></rect>',
   /** Revert: an ×. */
   cross:
     '<rect class="site-mark-icon-ink" x="-0.55" y="-0.11" width="1.1" height="0.22" transform="rotate(45)"></rect>' +

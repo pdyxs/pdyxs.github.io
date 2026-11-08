@@ -32,8 +32,13 @@ export interface ToolConfig {
   string: number;
   /** The bauble's body radius, px. */
   radius: number;
-  /** Key into MARK_ICONS (src/data/mark-icons.ts). */
+  /** Key into MARK_ICONS (src/data/mark-icons.ts). With `icons`, what shows before the behaviour says which. */
   icon: string;
+  /**
+   * For a tool whose look follows a setting: its behaviour's `state()` to a
+   * key into MARK_ICONS. The bauble shows the one for the state it is in.
+   */
+  icons?: Readonly<Record<string, string>>;
   /** The bauble's accessible name. */
   label: string;
   /** Optional: more on how to use it (the keyboard path, say), as the bauble's accessible description. */
@@ -66,5 +71,16 @@ export const MARK_TOOLS: ToolConfig[] = [
         label: 'Revert colours',
       },
     ],
+  },
+  {
+    id: 'theme',
+    behaviour: 'theme',
+    // The x's foot: the leftmost thread.
+    thread: 3,
+    string: 80,
+    radius: 9.6,
+    icon: 'monitor',
+    icons: { system: 'monitor', light: 'sun', dark: 'moon' },
+    label: 'Theme: press for the next of system, light and dark',
   },
 ];

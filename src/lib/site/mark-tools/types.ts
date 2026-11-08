@@ -15,7 +15,12 @@ export interface ToolBehaviour {
   kind: 'drag' | 'press';
   /** Whether the bauble should be hanging right now; the mark drops/reels it on change. Absent: always. */
   shown?(): boolean;
-  /** Tell the mark when `shown()` may have changed. Returns an unsubscribe. */
+  /**
+   * Which of the tool's `icons` (its config) the bauble shows right now: a
+   * tool whose look follows a setting. Absent: its one `icon`, always.
+   */
+  state?(): string;
+  /** Tell the mark when `shown()` or `state()` may have changed. Returns an unsubscribe. */
   subscribe?(changed: () => void): () => void;
   /** A press tool's action: a click, or Enter/Space on the focused bauble. */
   press?(): void;

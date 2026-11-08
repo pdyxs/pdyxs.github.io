@@ -8,6 +8,7 @@
 import type { ToolBehaviour } from './types';
 import { palette } from './palette';
 import { paletteRevert } from './palette-revert';
+import { theme } from './theme';
 
 export type { ToolBehaviour, ViewportPoint } from './types';
 
@@ -15,6 +16,7 @@ export type { ToolBehaviour, ViewportPoint } from './types';
 export const BUILT_IN: Readonly<Record<string, ToolBehaviour>> = {
   palette,
   'palette-revert': paletteRevert,
+  theme,
 };
 
 const registry = new Map<string, ToolBehaviour>(Object.entries(BUILT_IN));

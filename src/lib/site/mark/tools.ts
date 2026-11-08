@@ -123,6 +123,9 @@ export function validateTools(tools: readonly ToolConfig[], reg: ToolRegistries)
       if (!(t.string > 0)) errors.push(`"${t.id}": string must be positive`);
       if (!(t.radius > 0)) errors.push(`"${t.id}": radius must be positive`);
       if (!reg.icons.includes(t.icon)) errors.push(`"${t.id}": no icon "${t.icon}"`);
+      for (const [state, icon] of Object.entries(t.icons ?? {})) {
+        if (!reg.icons.includes(icon)) errors.push(`"${t.id}": no icon "${icon}" for state "${state}"`);
+      }
       if (!reg.behaviours.includes(t.behaviour)) errors.push(`"${t.id}": no behaviour "${t.behaviour}"`);
       if (!t.label.trim()) errors.push(`"${t.id}": no label`);
       walk(t.children ?? [], false);
@@ -130,4 +133,34 @@ export function validateTools(tools: readonly ToolConfig[], reg: ToolRegistries)
   };
   walk(tools, true);
   return errors;
+}
+
+/**
+ * How far apart, px, hanging top-level tools' strings start: two
+ * --mark-hit-min (44px) targets meeting with 2px between, the rule the
+ * palette's revert keeps too.
+ */
+export const HANG_PIVOT_GAP = 46;
+
+/**
+ * The hanging pivots' x positions, spread so neighbours are at least `gap`
+ * apart. Hanging, every thread crosses the top edge within a dot's width of
+ * the dot (which hangs on that edge), so their own crossings would put every
+ * tool on top of the others. `xs[i]` is a crossing; `order[i]` ranks it left
+ * to right (its anchor's x, so a tool keeps the side its letter is on). The
+ * group stays centred where the crossings were; none moves when they are
+ * already far enough apart. Pure.
+ */
+export function spreadPivots(xs: readonly number[], order: readonly number[], gap: number = HANG_PIVOT_GAP): number[] {
+  const n = xs.length;
+  if (n < 2) return [...xs];
+  const idx = [...xs.keys()].sort((a, b) => order[a] - order[b] || xs[a] - xs[b]);
+  const sorted = idx.map((i) => xs[i]);
+  const placed = [...sorted];
+  for (let k = 1; k < n; k++) placed[k] = Math.max(placed[k], placed[k - 1] + gap);
+  const shift = (sorted.reduce((s, x) => s + x, 0) - placed.reduce((s, x) => s + x, 0)) / n;
+  const spread = sorted.every((x, k) => k === 0 || x - sorted[k - 1] >= gap);
+  const out = new Array<number>(n);
+  idx.forEach((i, k) => (out[i] = spread ? xs[i] : placed[k] + shift));
+  return out;
 }

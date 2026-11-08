@@ -282,6 +282,12 @@ const n = (v: number) => +v.toFixed(2);
   .site-mark-overlay :global(.site-mark-bauble:focus-visible .site-mark-bauble-body) {
     stroke-width: 4;
   }
+  /* A tool with a state (its config's `icons`): the plain icon until the
+     script has said which state, then only that state's. */
+  .site-mark-overlay :global(.site-mark-icon[data-icon-state]:not([data-current])),
+  .site-mark-overlay :global(.site-mark-bauble[data-state] > .site-mark-icon:not([data-icon-state])) {
+    display: none;
+  }
   .site-mark-overlay :global(.site-mark-icon-ink) {
     fill: var(--color-text);
   }
@@ -434,6 +440,7 @@ const n = (v: number) => +v.toFixed(2);
     focusFallback,
     focusOrder,
     isTug,
+    spreadPivots,
     tautThreads,
     toolLength,
     visibleTools,
@@ -1116,6 +1123,16 @@ const n = (v: number) => +v.toFixed(2);
     #drawTools(geoms: ReturnType<typeof poseThreads>, o: DOMRect, hanging: boolean) {
       const byId = new Map(this.#tools.map((t) => [t.id, t]));
       const f = (n: number) => n.toFixed(1);
+      // Hanging, the top-level tools' strings are spread along the top edge
+      // (spreadPivots): every top-level tool, open or not, so one reeling in
+      // doesn't move the rest.
+      const spread = new Map<string, number>();
+      if (hanging) {
+        const tops = this.#tools.filter((t) => t.parent === null && t.thread !== null && geoms[t.thread]);
+        const xs = tops.map((t) => toolPivot(geoms[t.thread!], true, -o.top).x);
+        const xsSpread = spreadPivots(xs, tops.map((t) => geoms[t.thread!].A.x));
+        tops.forEach((t, i) => spread.set(t.id, xsSpread[i]));
+      }
       for (const t of this.#tools) {
         t.at = null;
         t.pivot = null;
@@ -1125,6 +1142,8 @@ const n = (v: number) => +v.toFixed(2);
           const g = t.thread === null ? undefined : geoms[t.thread];
           if (!g) continue;
           pivot = toolPivot(g, hanging, -o.top);
+          const x = spread.get(t.id);
+          if (x !== undefined) pivot = { x, y: pivot.y };
         } else {
           const p = byId.get(t.parent);
           if (!p?.at) continue;
@@ -1255,6 +1274,7 @@ const n = (v: number) => +v.toFixed(2);
         this.#visible = visible;
         this.#pulled = new Set(this.#tools.filter((t) => t.parent === null && visible.has(t.id)).map((t) => t.id));
         this.#watch();
+        this.#syncStates();
         for (const t of this.#tools) if (visible.has(t.id)) this.#hangOut(t, reduced);
         this.#hit.setAttribute('aria-expanded', 'true');
         if (fromKeyboard) this.#focusTool(focusOrder(this.#tools, visible)[0] ?? null);
@@ -1326,6 +1346,7 @@ const n = (v: number) => +v.toFixed(2);
      */
     #onShownChanged = () => {
       if (!this.#ts.want || this.#tug) return;
+      this.#syncStates();
       const before = this.#visible;
       const now = this.#resolveVisible();
       this.#visible = now;
@@ -1340,6 +1361,23 @@ const n = (v: number) => +v.toFixed(2);
       }
       this.#wake();
     };
+
+    /**
+     * Show each stateful tool's icon for the state its behaviour is in, and
+     * name the state for assistive tech after the configured label.
+     */
+    #syncStates() {
+      for (const t of this.#tools) {
+        const b = this.#behaviour(t);
+        if (!b?.state) continue;
+        const state = b.state();
+        t.bauble.dataset.state = state;
+        for (const icon of t.bauble.querySelectorAll<SVGGElement>(':scope > .site-mark-icon[data-icon-state]')) {
+          icon.toggleAttribute('data-current', icon.dataset.iconState === state);
+        }
+        t.bauble.setAttribute('aria-label', `${t.label} (now ${state})`);
+      }
+    }
 
     /** Focus a tool's bauble, or the dot for null. */
     #focusTool(id: string | null) {

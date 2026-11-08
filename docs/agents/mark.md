@@ -194,7 +194,8 @@ Three parts, each changeable without the other two:
 interface ToolBehaviour {
   kind: 'drag' | 'press';                         // decides the pointer wiring
   shown?(): boolean;                              // hanging right now? absent: always
-  subscribe?(changed: () => void): () => void;    // when shown() may have changed
+  state?(): string;                               // which of the config's `icons` shows; absent: `icon`
+  subscribe?(changed: () => void): () => void;    // when shown() or state() may have changed
   press?(): void;                                 // click, or Enter/Space on the bauble
   dragStart?(p: ViewportPoint): void;             // pointer captured on the bauble
   dragMove?(p: ViewportPoint): void;
@@ -301,6 +302,26 @@ a new hook on `ToolBehaviour`, not an import.
   A drag tool's keyboard path is its own, in `key()`: the palette's arrows move
   a virtual pick point, Enter keeps, Escape reverts, and focus leaving mid-pick
   reverts.
+
+## Stateful tools, and where tools hang
+
+A tool whose look follows a setting (the `theme` tool: system, light, dark)
+gives its config an `icons` map, state → icon, and its behaviour a `state()`.
+MarkTool renders one `.site-mark-icon[data-icon-state]` per state beside the
+plain `icon`; on open and on every `subscribe` callback the mark sets the
+bauble's `data-state`, marks the matching icon `data-current` (only it shows),
+and appends the state to its `aria-label`. `validateTools` checks every icon
+in the map exists. The footer ThemeToggle listens for `site:theme` too, so the
+two controls agree; both store the setting in localStorage `theme`
+(`theme-dom.ts` for code that can import).
+
+Hanging, every thread crosses the top edge within a dot's width of the dot, so
+top-level tools' own pivots would land on top of each other. `spreadPivots`
+(`mark/tools.ts`) spaces them `HANG_PIVOT_GAP` (46px: two `--mark-hit-min`
+targets with 2px between) apart, left to right by their threads' anchors,
+centred where the crossings were. Every configured top-level tool takes part,
+open or not, so one reeling in moves nothing. In the title the pivots are the
+anchors themselves, already apart.
 
 ## The title over the mark
 
