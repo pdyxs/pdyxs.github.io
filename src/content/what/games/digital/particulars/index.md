@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: Particulars
 description: A minimalist meditation on the chaos of life, the universe and sub-atomic particle physics
 image: 5-1b.jpg
@@ -66,15 +66,394 @@ meta:
   - label: Published by
     values:
       - Surprise Attack
-  - label: Roles
-    values:
-      - Producer, Lead Designer, Programmer, Writer
   - label: Accolades
     values:
       - Winner, Best Narrative, Freeplay Awards 2013
       - Winner, Best Audio Design, Freeplay Awards 2013
       - Winner, Sydney Indie Showcase, iFest 2013
       - Finalist, Best Audio Design, Australian Game Development Awards, 2013
+credits:
+  - name: "Paul Sztajer"
+    person: "me"
+    role: "Producer"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Saul Alexander"
+    person: "saul-alexander"
+    role: "Creative Director"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Bridie Connell"
+    person: "bridie-connell"
+    role: "Starring"
+    group: ""
+    note: "as Alison Scott"
+    listed: map
+  - name: "Belinda Sculley"
+    person: "belinda-sculley"
+    role: "Starring"
+    group: ""
+    note: "as Dr Phillipa Grey"
+    listed: map
+  - name: "Carlo Ritchie"
+    person: "carlo-ritchie"
+    role: "Starring"
+    group: ""
+    note: "as Robert Scott"
+    listed: map
+  - name: "Nick Starte"
+    person: "nick-starte"
+    role: "Starring"
+    group: ""
+    note: "as John Patel"
+    listed: map
+  - name: "Noni Hollands"
+    person: "noni-hollands"
+    role: "Starring"
+    group: ""
+    note: "as Gabriela Vasquez"
+    listed: map
+  - name: "Paul Sztajer"
+    person: "me"
+    role: "Lead Designer"
+    group: "Level Design"
+    note: ""
+    listed: map
+  - name: "Tim Stobo"
+    person: "tim-stobo"
+    role: "Designers"
+    group: "Level Design"
+    note: ""
+    listed: map
+  - name: "Declan Dovell"
+    person: "declan-dovell"
+    role: "Designers"
+    group: "Level Design"
+    note: ""
+    listed: map
+  - name: "Paul Sztajer"
+    person: "me"
+    role: "Lead Writer"
+    group: "Additional Writing"
+    note: ""
+    listed: map
+  - name: "Chloe Paul"
+    person: "chloe-paul"
+    role: "Writers"
+    group: "Additional Writing"
+    note: ""
+    listed: map
+  - name: "Thomas Bowker"
+    person: "thomas-bowker"
+    role: "Programming"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Aidan Boneham"
+    person: "aidan-boneham"
+    role: "Programming"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Alexander Cetinski"
+    person: "alexander-cetinski"
+    role: "Programming"
+    group: ""
+    note: ""
+    listed: map
+  - name: "David Bray"
+    person: "david-bray"
+    role: "Programming"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Christopher Ackad"
+    person: "christopher-ackad"
+    role: "Programming"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Peter Bentley"
+    person: "peter-bentley"
+    role: "Gameplay Art"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Vincent Pham"
+    person: "vincent-pham"
+    role: "Gameplay Art"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Amelia (Mia) Myers"
+    person: "amelia-myers"
+    role: "Art"
+    group: "Animatics"
+    note: ""
+    listed: map
+  - name: "Thomas Dicker"
+    person: "tom-dicker"
+    role: "Animation"
+    group: "Animatics"
+    note: ""
+    listed: map
+  - name: "Jennifer Mills"
+    person: "jennifer-mills"
+    role: "Concepts & Storyboarding"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Elise Mitchell"
+    person: "elise-mitchell"
+    role: "Concepts & Storyboarding"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Dane Armour"
+    person: "dane-armour"
+    role: "Concepts & Storyboarding"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Louise Fisher"
+    person: "louise-fisher"
+    role: "Concepts & Storyboarding"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Kristy Brodie"
+    person: "kristy-brodie"
+    role: "Concepts & Storyboarding"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Tim Kadwell"
+    person: "tim-kadwell"
+    role: "Concepts & Storyboarding"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Paul Nunes"
+    person: "paul-nunes"
+    role: "Sound Design"
+    group: "SFX"
+    note: ""
+    listed: map
+  - name: "Bryce Halliday"
+    person: "bryce-halliday"
+    role: "Voice-over Production"
+    group: "SFX"
+    note: ""
+    listed: map
+  - name: "Angus O'Sullivan"
+    person: "angus-osullivan"
+    role: "Composed and recorded by"
+    group: "Music"
+    note: ""
+    listed: map
+  - name: "Daniel Baker"
+    person: "dan-baker"
+    role: "Additional music"
+    group: "Music"
+    note: ""
+    listed: map
+  - name: "Geri Green"
+    person: "geri-green"
+    role: "Additional music"
+    group: "Music"
+    note: ""
+    listed: map
+  - name: "Chris Rollans"
+    person: "chris-rollans"
+    role: "Mixed by"
+    group: "Music"
+    note: ""
+    listed: map
+  - name: "David Muratore"
+    person: "david-muratore"
+    role: "Music and Lyrics by"
+    group: "Music: \"Small\""
+    note: ""
+    listed: map
+  - name: "David Muratore"
+    person: "david-muratore"
+    role: "Produced by"
+    group: "Music: \"Small\""
+    note: ""
+    listed: map
+  - name: "Anurag Dey"
+    person: "anurag-dey"
+    role: "Production Assistance"
+    group: "Additional Assistance"
+    note: ""
+    listed: map
+  - name: "David Molloy"
+    person: "david-molloy"
+    role: "Promotional Video"
+    group: "Additional Assistance"
+    note: ""
+    listed: map
+  - name: "Lex Suurland"
+    role: "Product Management"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "James Kozanecki"
+    role: "PR & Community"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "Stephen Heller"
+    role: "PR & Community"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "Rae Johnston"
+    role: "PR & Community"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "Liam Esler"
+    role: "Producer"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "Fiona Murray"
+    role: "Finance"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "Chris Wright"
+    role: "Directors"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "Travis Plane"
+    role: "Directors"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "Christina Chen"
+    role: "Directors"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "Aaron Bernetti"
+    role: "Directors"
+    group: "Published by"
+    note: ""
+    listed: listing
+  - name: "Angeline and Indigo"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Dan Graf"
+    person: "dan-graf"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Adam Chalmers"
+    person: "adam-chalmers"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Andrew Bittman"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Chana Sztajer"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Chris Ackard"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Damien Lee"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Dan Keserovic"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Dan Toose"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "David Callan"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Dean Wood"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Fergus MacPherson"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Jack Chesworth"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Jack Gillespie"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Jordan D'Arcy"
+    person: "jordan-darcy"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Morgan Lean"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Olivia Barlow"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Rona Barugahare"
+    person: "rona-barugahare"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "The IGDA Sydney community for their warmth and (drunken) mirth"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "The Academy of Interactive Entertainment (Sydney) for their continued support"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
+  - name: "Epiphany Games and Flat Earth Games for making us feel at home"
+    role: ""
+    group: "Special thanks"
+    note: ""
+    listed: listing
 ---
 Particulars is a game based on the science of sub-atomic particle Physics. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
 
