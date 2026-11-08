@@ -3,6 +3,7 @@ import {
   chordPoint,
   toChord,
   poseThreads,
+  spreadRig,
   threadPathData,
   tauten,
   toolPivot,
@@ -66,6 +67,32 @@ describe('poseThreads', () => {
   it('draws a cubic from anchor to dot', () => {
     const d = threadPathData(poseThreads(MARK_RIG, { ...base, p: 0 })[0]);
     expect(d).toMatch(/^M\S+ \S+ C\S+ \S+ \S+ \S+ \S+ \S+$/);
+  });
+});
+
+describe('spreadRig', () => {
+  it('moves each anchor away from the dot along x, and nothing else', () => {
+    const out = spreadRig(MARK_RIG, 0.05);
+    out.threads.forEach((t, i) => {
+      const was = MARK_RIG.threads[i];
+      expect(t.anchor.x).toBeCloseTo(was.anchor.x + Math.sign(was.anchor.x) * 0.05);
+      expect(t.anchor.y).toBe(was.anchor.y);
+      expect(t.attach).toEqual(was.attach);
+      expect(t.rest).toEqual(was.rest);
+      expect(t.hang).toEqual(was.hang);
+    });
+  });
+
+  it('drops every anchor by `drop`', () => {
+    const out = spreadRig(MARK_RIG, 0, 0.03);
+    out.threads.forEach((t, i) => {
+      expect(t.anchor.x).toBe(MARK_RIG.threads[i].anchor.x);
+      expect(t.anchor.y).toBeCloseTo(MARK_RIG.threads[i].anchor.y + 0.03);
+    });
+  });
+
+  it('is the rig itself at no spread', () => {
+    expect(spreadRig(MARK_RIG, 0)).toBe(MARK_RIG);
   });
 });
 

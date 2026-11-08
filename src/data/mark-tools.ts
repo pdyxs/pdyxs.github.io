@@ -49,7 +49,7 @@ export const MARK_TOOLS: ToolConfig[] = [
     behaviour: 'palette',
     thread: 1,
     string: 80,
-    radius: 12,
+    radius: 9.6,
     icon: 'palette',
     label: 'Colours: drag across the page to pick them',
     description: 'Or use the arrow keys to move through the colours (Shift for bigger steps), Enter to keep them, Escape to put them back.',
@@ -57,11 +57,11 @@ export const MARK_TOOLS: ToolConfig[] = [
       {
         id: 'palette-revert',
         behaviour: 'palette-revert',
-        // Bauble centres 12 + 34 = 46px apart: the two --mark-hit-min (44px)
-        // targets meet without overlapping. Shorter and the revert's (on top)
-        // takes presses meant for the palette.
-        string: 34,
-        radius: 8,
+        // Bauble centres 9.6 + 36.4 = 46px apart: the two --mark-hit-min
+        // (44px) targets meet without overlapping. Shorter and the revert's
+        // (on top) takes presses meant for the palette.
+        string: 36.4,
+        radius: 6.4,
         icon: 'cross',
         label: 'Revert colours',
       },

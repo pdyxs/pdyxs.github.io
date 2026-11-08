@@ -58,7 +58,8 @@ describe('the overlay as the server draws it', () => {
     const div = dom(await render(SuspendedMark));
     const live = div.querySelector('.site-mark-overlay')!;
     expect(live.querySelectorAll('.site-mark-threads path')).toHaveLength(MARK_RIG.threads.length);
-    for (const p of live.querySelectorAll('path')) expect(p.hasAttribute('d')).toBe(false);
+    // The threads, not every path: a tool's icon is static markup (mark-icons.ts).
+    for (const p of live.querySelectorAll('.site-mark-threads path')) expect(p.hasAttribute('d')).toBe(false);
     expect(live.querySelector('.site-mark-dot')!.hasAttribute('width')).toBe(false);
     expect(div.querySelector('.site-mark-hang-probe')).not.toBeNull();
   });

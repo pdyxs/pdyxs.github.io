@@ -60,6 +60,25 @@ export function poseThreads(rig: MarkRig, pose: Pose): ThreadGeometry[] {
   });
 }
 
+/**
+ * The rig with its anchors moved `d` em further from the dot along x (left of
+ * it leftwards, right of it rightwards) and `drop` em down. It keeps the
+ * threads tied to the letters when the title's dot is drawn bigger
+ * (`--mark-title-dot-scale`): the gap around it widens by `d` a side (the
+ * slot's `margin-inline`), and its centre, which the anchors are measured
+ * from, rises by `drop` as it grows up off the baseline.
+ */
+export function spreadRig(rig: MarkRig, d: number, drop = 0): MarkRig {
+  if (d === 0 && drop === 0) return rig;
+  return {
+    ...rig,
+    threads: rig.threads.map((t) => ({
+      ...t,
+      anchor: { x: t.anchor.x + Math.sign(t.anchor.x) * d, y: t.anchor.y + drop },
+    })),
+  };
+}
+
 /** Threads are never drawn thinner than this, px. */
 export const MIN_STROKE = 1.2;
 

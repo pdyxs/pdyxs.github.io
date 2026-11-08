@@ -334,13 +334,13 @@ describe('titleExitKeyframes', () => {
     expect(title.every((k) => k.easing === 'linear' && k.transformOrigin === '260px 30px')).toBe(true);
     expect(subtitle.every((k) => k.transformOrigin === undefined)).toBe(true);
     expect(title[0].transform).toBe('translate(0px, 0px) scale(1)');
-    expect(title[4].transform).toBe('translate(200px, -200px) scale(3)');
+    expect(title[4].transform).toBe('translate(200px, -200px) scale(2.25)');
     expect(subtitle[4].transform).toBe('translate(200px, -200px)');
   });
 
   it('return keyframes run from the end state to the start', () => {
     const { title } = titleExitKeyframes(start, viewport, { direction: 'return', samples: 3 });
-    expect(title[0].transform).toBe('translate(200px, -200px) scale(3)');
+    expect(title[0].transform).toBe('translate(200px, -200px) scale(2.25)');
     expect(title[2].transform).toBe('translate(0px, 0px) scale(1)');
   });
 

@@ -32,9 +32,9 @@ const flat = (gs: ThreadGeometry[]) => gs.flatMap((g) => [g.A, g.c1, g.c2, g.B])
 
 describe('the hang size, and where it comes from', () => {
   it("is the title's em grown by the exit, and that em times the full stop's ink", () => {
-    expect(hangFromTitle(54)).toEqual({ em: 162, size: 162 * HANG_DOT_INK });
-    expect(hangFromTitle(36).em).toBe(108);
-    expect(hangFromTitle(36).size).toBeCloseTo(10.26, 6);
+    expect(hangFromTitle(72)).toEqual({ em: 162, size: 162 * HANG_DOT_INK });
+    expect(hangFromTitle(48).em).toBe(108);
+    expect(hangFromTitle(48).size).toBeCloseTo(10.26, 6);
   });
 
   it("is the Chromium-measured full stop's ink width", () => {
@@ -50,7 +50,7 @@ describe('the hang size, and where it comes from', () => {
     // The single source is the CSS (the browser resolves it and the script
     // reads it back); these are its TS twins and must not drift from it.
     const tokens = css('../../../styles/tokens.css');
-    expect(tokens).toMatch(/--page-title-size:\s*clamp\(2rem, 5vw, 3rem\);/);
+    expect(tokens).toMatch(/--page-title-size:\s*clamp\(2\.6667rem, 6\.6667vw, 4rem\);/);
     const em = tokens.match(/--mark-hang-em:\s*calc\(var\(--page-title-size\) \* ([\d.]+)\);/);
     const size = tokens.match(/--mark-hang-size:\s*calc\(var\(--mark-hang-em\) \* ([\d.]+)\);/);
     expect(Number(em?.[1])).toBe(TITLE_EXIT_SCALE);

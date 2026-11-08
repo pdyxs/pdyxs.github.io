@@ -245,7 +245,7 @@ export function cubicBezier(x1: number, y1: number, x2: number, y2: number): (x:
 /** How long the header takes to leave (and to come back), ms. */
 export const TITLE_EXIT_MS = 420;
 /** How much the title has grown once it has left: the dot's hanging size, × its size in the title. */
-export const TITLE_EXIT_SCALE = 3;
+export const TITLE_EXIT_SCALE = 2.25;
 /**
  * Leaving starts at once and eases out as the letters clear the top edge, so
  * the title leads the stack's ease-in-out transition rather than trailing it

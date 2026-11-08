@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FALLBACK_DOT_INK, dotInSlot, inkBounds, inkEm, plausibleDotInk } from '@site/mark/measure';
+import { FALLBACK_DOT_INK, dotInSlot, dotLift, inkBounds, inkEm, plausibleDotInk } from '@site/mark/measure';
 
 /** An RGBA buffer with the given pixels set to alpha `a`. */
 function buffer(width: number, height: number, inked: [number, number, number?][]) {
@@ -52,6 +52,17 @@ describe('plausibleDotInk', () => {
 });
 
 describe('dotInSlot', () => {
+  it('grows by `scale` about the ink’s centre line, still standing on the ink’s foot', () => {
+    const one = dotInSlot(FALLBACK_DOT_INK, 54, 61);
+    const two = dotInSlot(FALLBACK_DOT_INK, 54, 61, 2);
+    expect(two.size).toBeCloseTo(one.size * 2);
+    expect(two.centre.x).toBeCloseTo(one.centre.x);
+    const inkH = (FALLBACK_DOT_INK.bottom - FALLBACK_DOT_INK.top) * 54;
+    expect(two.centre.y + inkH).toBeCloseTo(61 + FALLBACK_DOT_INK.bottom * 54);
+    expect(one.centre.y - two.centre.y).toBeCloseTo(dotLift(FALLBACK_DOT_INK, 2) * 54);
+    expect(dotLift(FALLBACK_DOT_INK, 1)).toBe(0);
+  });
+
   it('sizes the dot by the ink width, at the font size', () => {
     expect(dotInSlot(FALLBACK_DOT_INK, 54, 61).size).toBeCloseTo(5.13, 2);
   });

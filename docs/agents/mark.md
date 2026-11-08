@@ -144,7 +144,7 @@ The hanging mark has no title to measure, so its size has **one source**, in
 
 - `--page-title-size`: `.page-title`'s font-size, a token so the hang can be
   sized on a page with no title.
-- `--mark-hang-em`: `--page-title-size × 3`, the title's em grown by the exit
+- `--mark-hang-em`: `--page-title-size × 2.25`, the title's em grown by the exit
   (`TITLE_EXIT_SCALE`, `motion.ts`).
 - `--mark-hang-size`: `--mark-hang-em × 0.095`, the full stop's ink width
   (`HANG_DOT_INK`, `hang.ts`).

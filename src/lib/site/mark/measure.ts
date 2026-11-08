@@ -96,14 +96,22 @@ export interface SlotDot {
 /**
  * The dot for a slot laid out at `fontPx` whose baseline is `baseline` px below
  * the top of its box. The dot is square (the rig attaches threads to a square),
- * sized by the ink's width.
+ * sized by the ink's width × `scale` (`--mark-title-dot-scale`): grown about
+ * the ink's centre line, and standing where the ink stands, so a bigger dot
+ * still sits on the baseline rather than hanging through it.
  */
-export function dotInSlot(ink: InkEm, fontPx: number, baseline: number): SlotDot {
+/** How far, em, `dotInSlot` raises the dot's centre by drawing it `scale` times the ink. */
+export function dotLift(ink: InkEm, scale: number): number {
+  return ((scale - 1) * (ink.bottom - ink.top)) / 2;
+}
+
+export function dotInSlot(ink: InkEm, fontPx: number, baseline: number, scale = 1): SlotDot {
+  const inkH = (ink.bottom - ink.top) * fontPx;
   return {
-    size: (ink.right - ink.left) * fontPx,
+    size: (ink.right - ink.left) * fontPx * scale,
     centre: {
       x: ((ink.left + ink.right) / 2) * fontPx,
-      y: baseline + ((ink.top + ink.bottom) / 2) * fontPx,
+      y: baseline + ink.bottom * fontPx - (inkH * scale) / 2,
     },
   };
 }

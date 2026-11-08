@@ -103,8 +103,15 @@
   --z-mark: 900;
   --mark-hit-min: 44px;
   /* The page-mode title's font-size (.page-title, card-chrome.css). A token
-     because the hanging mark is sized from it, on pages with no title. */
-  --page-title-size: clamp(2rem, 5vw, 3rem);
+     because the hanging mark is sized from it, on pages with no title.
+     4/3 of the original clamp(2rem, 5vw, 3rem); TITLE_EXIT_SCALE came down by
+     the same ratio (3 → 2.25), so the hanging mark kept its size. */
+  --page-title-size: clamp(2.6667rem, 6.6667vw, 4rem);
+  /* How many times the full stop's ink the mark draws the title's dot. The
+     title's gap around it widens to match (.page-title-mark's margin,
+     SuspendedMark.astro), and the script reads both back. Page mode only: the
+     hanging mark is --mark-hang-size, whatever this is. */
+  --mark-title-dot-scale: 2;
   /* The mark hanging at the top of the screen, after the title has left or
      with no title at all (a cold-loaded card, a page with no stack). Its em is
      the title's, grown by the exit (TITLE_EXIT_SCALE, mark/motion.ts), and the
@@ -112,7 +119,7 @@
      mark/hang.ts). The SSR pose is sized by these and the script reads them
      back, so the two can't disagree; mark/hang.test.ts pins the two factors to
      their TS twins. */
-  --mark-hang-em:   calc(var(--page-title-size) * 3);
+  --mark-hang-em:   calc(var(--page-title-size) * 2.25);
   --mark-hang-size: calc(var(--mark-hang-em) * 0.095);
 
   --space-xs:     0.375rem;
