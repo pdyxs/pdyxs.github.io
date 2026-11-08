@@ -153,6 +153,18 @@ const n = (v: number) => +v.toFixed(2);
     overflow: visible;
     pointer-events: none;
     z-index: var(--z-mark);
+    /* For the baubles: a touch drag on one must not pan the page. Chrome
+       ignores touch-action on SVG shapes, so the bauble's own `none` did
+       nothing and the drag was cancelled on its first move; it is honoured
+       on the <svg>, a CSS box. The page scrolls as before: with
+       pointer-events: none, the baubles are all the overlay ever receives. */
+    touch-action: none;
+  }
+  /* While a bauble is dragged, no overscroll gesture on the page: in the
+     browsers that start pull-to-refresh from overscroll, a downward drag would
+     otherwise reload. Set and cleared by the script with the drag. */
+  :global(html[data-mark-dragging]) {
+    overscroll-behavior: none;
   }
   site-mark[data-overlay='doc'] .site-mark-overlay,
   site-mark[data-overlay='doc'] .site-mark-hit {
@@ -679,6 +691,7 @@ const n = (v: number) => +v.toFixed(2);
       this.#endRun();
       this.#unmask?.();
       this.#unmask = null;
+      document.documentElement.removeAttribute('data-mark-dragging');
       this.#ro.disconnect();
       cancelAnimationFrame(this.#frame);
       this.#frame = 0;
@@ -1440,6 +1453,7 @@ const n = (v: number) => +v.toFixed(2);
         e.preventDefault();
         el.setPointerCapture(e.pointerId);
         el.setAttribute('data-dragging', '');
+        document.documentElement.toggleAttribute('data-mark-dragging', true);
         t.dragId = e.pointerId;
         t.pointer = point(e);
         // Carried by the drag, what hangs below swings freely again.
@@ -1447,6 +1461,15 @@ const n = (v: number) => +v.toFixed(2);
         b.dragStart?.(point(e));
         this.#wake();
       });
+      // A touch on a drag bauble is the drag's, never the page's: cancelling
+      // it is what stops a downward drag from being taken for pull-to-refresh
+      // (touch-action alone isn't enough in every browser). Non-passive, or
+      // preventDefault is ignored.
+      const claimTouch = (e: TouchEvent) => {
+        if (this.#behaviour(t)?.kind === 'drag' && t.el.hasAttribute('data-open')) e.preventDefault();
+      };
+      el.addEventListener('touchstart', claimTouch, { passive: false });
+      el.addEventListener('touchmove', claimTouch, { passive: false });
       el.addEventListener('pointermove', (e) => {
         if (e.pointerId !== t.dragId) return;
         t.pointer = point(e);
@@ -1491,6 +1514,7 @@ const n = (v: number) => +v.toFixed(2);
       t.dragId = null;
       t.pointer = null;
       t.bauble.removeAttribute('data-dragging');
+      if (!this.#tools.some((x) => x.dragId !== null)) document.documentElement.removeAttribute('data-mark-dragging');
       if (id !== null && t.bauble.hasPointerCapture(id)) t.bauble.releasePointerCapture(id);
       this.#behaviour(t)?.dragEnd?.(at, cancelled);
       for (const x of [t, ...this.#hangingFrom(t)]) x.returning = true;
