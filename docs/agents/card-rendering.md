@@ -330,12 +330,22 @@ always the light one: a scraper has no theme.
 
 Three things follow:
 
-- **The stills are committed, and the build never regenerates them.** Re-run
-  the generator yourself after changing a header-media component, or the
-  committed picture is of the old one. The run is incremental — each entry
+- **The stills are committed, and the build never regenerates them** — but
+  the build *box* does. `astro-build.service` runs
+  `~/server-project/scripts/pdyxs-header-previews-sync` before each build
+  (every 10 minutes): it runs the generator against the running preview server
+  and commits `public/previews` and `header-previews.generated.ts` to `dev`
+  as `previews: auto-generate …` (skipped off `dev`, or mid-merge/rebase). On
+  a machine without that timer, re-run the generator yourself after changing a
+  header-media component, or the committed picture is of the old one.
+  `header-previews.test.ts` fails when a card that needs a still has none. The run is incremental — each entry
   carries a hash of the whole `src/components/header-media/` tree plus the
   capture route, so an unchanged card launches no browser. `--force`
   re-shoots everything, `--card <uid>` limits it to one.
+- **Only cards with no `image:` get a still.** A card with its own `image:`
+  is skipped, and its still is pruned: `needsPreview()` in
+  `scripts/lib/header-previews.mjs` is the one definition, shared by the
+  generator and the test.
 - **The preview is a *fallback*.** `resolveThumb` reaches it only after
   `image:` has failed to resolve, so a card with both a header image and a
   header-media island keeps showing the image.
