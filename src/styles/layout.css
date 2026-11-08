@@ -160,12 +160,34 @@
   animation-duration: var(--stack-vt-ms);
 }
 
-/* Home → card morph: the page-mode title and divider slide into the pushed
-   card's header (issue #24). Names are injected/cleared by CardStack.svelte. */
-::view-transition-group(home-title),
-::view-transition-group(home-divider) {
-  z-index: 1;
+/* Page ↔ card: the line under the page title (.page-header-rule) grows into
+   the card's .card-header, and shrinks back into it on a close to home. The
+   default group morph does the growing, line box ↔ header box. No z-index:
+   the title and subtitle pass over it. They leave (and come back) on their
+   own, named and animated by the suspended mark; their pseudo rules, and the
+   live `site-mark` overlay's, are with the mark in SuspendedMark.astro.
+
+   Only the header's image is stretched to the box. By default an image keeps
+   its aspect ratio, so while the box is still line-thin the header would spill
+   out below it; stretched, it reads as the line thickening into the header.
+   The line's image keeps its aspect — stretched, it would be a solid bar. The
+   header is the NEW image going to a card and the OLD one coming back, so the
+   rule needs the direction: a View Transition type, or html[data-vt-type]
+   where types aren't supported (src/lib/stack/layout/typed-view-transition.ts).
+   Two rules, not one list: a browser that can't parse
+   :active-view-transition-type() would drop the whole list. */
+::view-transition-group(page-rule) {
   animation-duration: var(--stack-vt-ms);
   animation-timing-function: ease-in-out;
+}
+
+html:active-view-transition-type(page-to-card)::view-transition-new(page-rule),
+html:active-view-transition-type(card-to-page)::view-transition-old(page-rule) {
+  block-size: 100%;
+}
+
+html[data-vt-type='page-to-card']::view-transition-new(page-rule),
+html[data-vt-type='card-to-page']::view-transition-old(page-rule) {
+  block-size: 100%;
 }
 

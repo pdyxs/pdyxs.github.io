@@ -89,13 +89,14 @@ export function parseNameStatus(raw: string): DiffEntry[] {
 }
 
 /**
- * Paths that must never exist on `main`: throwaway experiment routes
- * (docs/agents/workflow.md → Experiments). They are built on `dev` and on
- * build.pdyxs.wtf for looking at, and the production site has no use for them
- * — and they import content `main` withholds, which fails the production build.
- * Never taken from `dev`, and stripped from `main` if already there.
+ * Paths that must never exist on `main`: throwaway experiment pages
+ * (docs/agents/workflow.md → Experiments). They are served only under
+ * `astro dev`, the production site has no use for them, and they may import
+ * content `main` withholds, which would fail the type check there. Never taken
+ * from `dev`, and stripped from `main` if already there. `src/pages/experiments/`
+ * is where they used to live, kept so any left on `main` are still stripped.
  */
-const MAIN_NEVER = ['src/pages/experiments/'];
+const MAIN_NEVER = ['src/experiments/', 'src/pages/experiments/'];
 
 /** Paths under src/content that are never promoted, whatever else is true. */
 const CONTENT_NEVER = ['src/content/.trash/', 'src/content/.obsidian/'];

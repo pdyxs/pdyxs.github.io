@@ -29,7 +29,7 @@
 // the shared lensFilterStore (src/stores/lens-filter-store.ts) — see that
 // store's header comment.
 import { getLensDefinition } from '@browse/lenses/lens-registry';
-import { deriveLensChrome } from '@browse/lenses/lens-chrome';
+import { deriveLensChrome, splitTitleMark } from '@browse/lenses/lens-chrome';
 import { emptyFilterState } from '@dimensions';
 import type { FilterState } from '@dimensions';
 import { LENS_BODY_LOADERS, DEFAULT_BODY_LOADER } from '@browse/lenses/lens-components';
@@ -59,6 +59,10 @@ const chrome = lens ? deriveLensChrome(lens, filterState) : null;
 // appears in that dimension's panel, but is still the sole stack anchor.
 const isHome = lens?.id === 'home';
 
+// The title's full stop is the suspended mark's slot (SuspendedMark.astro): a
+// real, visible period until the mark has drawn over it.
+const titleMark = chrome ? splitTitleMark(chrome.pageTitle) : null;
+
 let BodyComponent: any = null;
 
 if (lens) {
@@ -82,12 +86,18 @@ if (lens) {
       </div>
     </div>
     <header class="page-header">
-      <h1 class="page-title"><a href="/" class="page-title-link">{chrome.pageTitle}</a></h1>
+      <h1 class="page-title"><a href="/" class="page-title-link">{titleMark
+        ? <Fragment>{titleMark.before}<span class="page-title-mark">{titleMark.mark}</span>{titleMark.after}</Fragment>
+        : chrome.pageTitle}</a></h1>
       {/* The SITE's subtitle, not the lens's — page mode is the root of the
           stack, so its header says what the site is. The lens names itself in
           card mode (and, once it is behind another card, in its spine). Its
           footnote goes with that name, so it isn't rendered here either. */}
       {chrome.pageSubtitle && <p class="page-subtitle">{chrome.pageSubtitle}</p>}
+      {/* The line under the title and subtitle. It is an element of its own,
+          not the header's border, so it alone can carry the `page-rule` view
+          transition name and grow into the next card's header. */}
+      <div class="page-header-rule"></div>
     </header>
     {/* 1px IntersectionObserver target for the sticky active header (slice #110). */}
     <div class="card-header-sentinel"></div>

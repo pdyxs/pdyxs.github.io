@@ -165,7 +165,9 @@ src/lib/
 │   ├──        results/ the browse pool, ranking, cards, reveal
 │   └──        home/    the home lens's slot grid and day-seeded selection
 ├── render/             renderers and what a card body composes: images, embeds, actions
-└── site/               whole-site output: seo, sitemap, rss, redirects, promotion, audit
+└── site/               whole-site output: seo, sitemap, rss, redirects, promotion, audit, theme, palette
+    ├──        mark/    the suspended mark's pure decisions (see mark.md)
+    └──        mark-tools/ the mark's tool behaviours and their registry
 ```
 
 ```
@@ -178,7 +180,7 @@ src/components/
 ├── card-renderers/   registered in COLLECTION_RENDERERS / NAV_RENDERERS, plus the series pieces
 ├── lens-renderers/   registered in LENS_BODY_LOADERS
 ├── header-media/     bespoke masthead renderers
-└── site/             page chrome (ThemeToggle)
+└── site/             page chrome (ThemeToggle, SuspendedMark, MarkTool)
 ```
 
 **Two import idioms live here, and the split is forced rather than chosen.**
@@ -221,11 +223,13 @@ committed images.
 
 ## Experiments live on dev-only routes
 
-`/experiment` should create throwaway pages under `src/pages/experiments/` with synthetic fixtures (e.g. 10 fake cards for an overflow experiment). Don't prototype by mutating production components and reverting.
+`/experiment` should create throwaway pages under `src/experiments/` with synthetic fixtures (e.g. 10 fake cards for an overflow experiment). Don't prototype by mutating production components and reverting.
 
-**They never reach `main`.** Promotion skips anything under `src/pages/experiments/` and strips it from `main` if present (`MAIN_NEVER` in `src/lib/site/promotion.ts`, pinned by `promotion.test.ts`), so production never builds them — and an experiment may freely import content `main` withholds. They still build on `dev`, `preview.` and `build.pdyxs.wtf`.
+They are served at `/experiments/<name>` (index at `/experiments`, which lists them with the first `//` comment of each page's frontmatter as its blurb) by `scripts/experiments-integration.mjs`, which injects the routes **only under `astro dev`** — nothing in `src/experiments/` reaches a production build. The folder is scanned at server start, so a *new* experiment needs `systemctl --user restart astro-preview.service`; edits to existing ones hot-reload.
 
-Note: Astro excludes directories starting with `_` from routing, so `_experiments` does **not** work — use `experiments` (no underscore).
+They sit outside `src/pages/` on purpose: a file in `pages/` is always built, and Astro excludes `_`-prefixed directories from routing, so neither `pages/experiments` nor `pages/_experiments` can be dev-only.
+
+**They never reach `main`.** Promotion skips anything under `src/experiments/` (and the old `src/pages/experiments/`) and strips it from `main` if present (`MAIN_NEVER` in `src/lib/site/promotion.ts`, pinned by `promotion.test.ts`), so an experiment may freely import content `main` withholds.
 
 ## The build server (`build.pdyxs.wtf`)
 

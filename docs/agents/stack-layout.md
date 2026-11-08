@@ -406,6 +406,14 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
 - `.stack-card`, `.stack-card--active`, `.stack-card--collapsed`, `.stack-card--page`
 - `.stack-card-spine`, `.stack-card-spine-inner`, `.stack-card-spine-title`
 - `.card-header`, `.card-header-sentinel`, `.card-header--stuck`
+- `.page-header-rule` (the line under the page-mode title and subtitle — its own element, not
+  `.page-header`'s border, so CardStack can name it `page-rule` and morph it into `.card-header`;
+  it spans the header's box through `--page-header-inset-inline`, which `site-footer.css` matches)
+- `.page-title-mark` (the full stop's slot in the page-mode title, `LensStackCard.astro`; the
+  suspended mark finds the title through `.stack-card--page .page-title-mark` and nothing else, and
+  `html[data-mark-ready]` makes the real period transparent). `.page-title` and `.page-subtitle` under
+  `.stack-card--page > .page-header` are what the mark names `page-title` / `page-subtitle` — see
+  [mark.md](mark.md)
 - `.stack-card--revealing`, `#card-stack.stack-motion`
 - `.body-wrapper`, `.body-wrapper.open`
 - `.stack-card-body`, `.stack-card-body-inner`
@@ -445,6 +453,20 @@ These class names are a CSS/layout contract — renaming any of them is a CardSt
   deliberately carries **no rule at all**: everything `brief` changes is either
   an element `BROWSE_CARD_VARIANTS` does not render or a number it hands to
   `--browse-card-desc-lines` / `--browse-card-min-height`.
+- The suspended mark (outside `#card-stack`, so renaming one is a `SuspendedMark.astro` /
+  `MarkTool.astro` refactor, not a CardStack one; what each is for is in [mark.md](mark.md)):
+  `site-mark` (the element), `.site-mark-overlay`, `.site-mark-threads`, `.site-mark-dot`,
+  `.site-mark-hit`, `.site-mark-hang`, `.site-mark-hang-probe`, `.site-mark-probe`,
+  `.site-mark-probe-text`, `.site-mark-probe-base`, `.site-mark-tools` (`#site-mark-tools`),
+  `.site-mark-tool`, `.site-mark-tool-string`, `.site-mark-bauble`, `.site-mark-bauble-hit`,
+  `.site-mark-bauble-body`, `.site-mark-tool-desc`, `.site-mark-icon`, `.site-mark-icon-ink`,
+  `.site-mark-icon-paper`. State: `site-mark[data-mode="page|card"]`, `site-mark[data-overlay="doc"]`,
+  `.site-mark-tool[data-open]` and its config attributes (`data-tool`, `data-behaviour`,
+  `data-thread`, `data-parent`, `data-string`, `data-radius`, written by `MarkTool.astro`),
+  `.site-mark-bauble[data-kind="drag|press"]`, `.site-mark-bauble[data-dragging]`; on `<html>`,
+  `data-mark-ready`, `data-mark-vt="title|mark"`, `data-presentation` and `data-cold-presentation`
+  (`page|card`). `.site-mark-hit` must stay before `.site-mark-overlay` in source order: that is the
+  Tab order dot → tools.
 
 Deleted with the geometry swap (issue #109), and not to be reintroduced:
 `.fan-corner`, `.active-card-col`, `.stack-overflow*`, `data-side`,

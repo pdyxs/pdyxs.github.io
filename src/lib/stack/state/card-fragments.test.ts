@@ -24,6 +24,7 @@ import {
   urlToUid,
   withSlotUid,
 } from '@stack/state/card-fragments';
+import { SITE_TITLE } from '@browse/lenses/lens-chrome';
 
 /** A rendered `.stack-card`, as the server would produce one. */
 function fragment(uid: string, opts: { title?: string; body?: string; width?: string; hash?: string } = {}) {
@@ -107,6 +108,21 @@ describe('the placeholder fragment', () => {
     // spine a collapsed card occludes nothing (issue #109).
     expect(card.querySelector('.stack-card-spine .stack-card-spine-inner .stack-card-spine-title')?.textContent)
       .toBe('A Title');
+  });
+
+  it('gives a lens the page-mode header, rule included', () => {
+    // Closing down to a lens restored from a placeholder flips it into page
+    // mode, and the rule is what the card → page view transition morphs into.
+    const el = document.createElement('div');
+    el.innerHTML = buildPlaceholderHtml('lens/newest', 'Newest');
+    expect(el.querySelector('.page-header .page-title')).not.toBeNull();
+    expect(el.querySelector('.page-header > .page-header-rule:last-child')).not.toBeNull();
+    // The title carries the suspended mark's slot, exactly as LensStackCard renders it.
+    expect(el.querySelector('.page-title .page-title-mark')?.textContent).toBe('.');
+    expect(el.querySelector('.page-title')?.textContent).toBe(SITE_TITLE);
+
+    el.innerHTML = buildPlaceholderHtml('what/x', 'A Title');
+    expect(el.querySelector('.page-header')).toBeNull();
   });
 
   it('escapes a title so a quote or bracket cannot break out of the markup', () => {
