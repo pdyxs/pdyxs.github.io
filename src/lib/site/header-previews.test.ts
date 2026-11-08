@@ -39,7 +39,7 @@ describe('missingPreviews', () => {
   });
 
   it('reports a target whose still file is gone for either theme', () => {
-    expect(missingPreviews(targets, { a: {}, b: {} }, (uid, theme) => !(uid === 'a' && theme === 'dark'))).toEqual(['a']);
+    expect(missingPreviews(targets, { a: {}, b: {} }, (uid: string, theme: string) => !(uid === 'a' && theme === 'dark'))).toEqual(['a']);
   });
 });
 
