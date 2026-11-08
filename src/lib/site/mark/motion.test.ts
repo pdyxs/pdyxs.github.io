@@ -271,7 +271,7 @@ describe('cubicBezier', () => {
     expect(cubicBezier(0.25, 0.1, 0.25, 1)(0.5)).toBeCloseTo(0.8024, 3);
   });
 
-  it('both exit easings are monotonic; leaving starts slow, returning starts fast', () => {
+  it('both exit easings are monotonic, and both start fast', () => {
     for (const ease of [EASE_LEAVE, EASE_RETURN]) {
       let prev = -Infinity;
       for (let i = 0; i <= 200; i++) {
@@ -280,7 +280,7 @@ describe('cubicBezier', () => {
         prev = y;
       }
     }
-    expect(EASE_LEAVE(0.25)).toBeLessThan(0.25);
+    expect(EASE_LEAVE(0.25)).toBeGreaterThan(0.25);
     expect(EASE_RETURN(0.25)).toBeGreaterThan(0.25);
   });
 });

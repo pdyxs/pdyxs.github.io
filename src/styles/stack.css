@@ -5,6 +5,7 @@
   max-width: var(--max-width);
   margin: 0 auto;
   padding: var(--space-lg) var(--space-md);
+  padding-top: var(--stack-top-clearance);
   display: flex;
   flex-direction: column;
   gap: 0;

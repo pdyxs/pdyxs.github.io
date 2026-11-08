@@ -22,6 +22,7 @@ holds now.
 | `src/lib/site/mark/motion.ts` | the dot's spring and the catch at the edge (`stepDot`), the pull → release → rest machine (`setWant`, `lapseTug`), `poseBlend`, `titleExit` / `titleExitKeyframes`, every motion constant | pure |
 | `src/lib/site/mark/measure.ts` | the full stop's ink box from a canvas pixel scan, in em, with a plausibility check and a Chromium-measured fallback | pure |
 | `src/lib/site/mark/exit.ts` | `slotSource`: where the dot is read from at any moment (the live title, the exit's trajectory, the hang); `caughtDot` | pure |
+| `src/lib/site/mark/title-mask.ts` | the card title cut out of the mark: `readTitleWords` (DOM read), `maskGlyphs` (pure), `renderMaskGlyphs` (applier), `watchTitleMask` (when to re-read) | pure + DOM |
 | `src/lib/site/mark/hang.ts` | the hanging pose with no title (`hangPose`, and `hangMarkup` for the server's copy), `HANG_DOT_INK`, `HANG_DEPTH` | pure |
 | `src/lib/site/mark/tools.ts` | the generic tool decisions: `flattenTools`, `visibleTools`, `isTug`, `tautThreads`, `toolLength`, `childPivot`, `focusOrder`, `focusFallback`, `validateTools` | pure |
 | `src/lib/site/mark-tools/` | the behaviours: `types.ts` (`ToolBehaviour`), `index.ts` (the registry), one file per behaviour | effect |
@@ -300,6 +301,22 @@ a new hook on `ToolBehaviour`, not an import.
   A drag tool's keyboard path is its own, in `key()`: the palette's arrows move
   a virtual pick point, Enter keeps, Escape reverts, and focus leaving mid-pick
   reverts.
+
+## The title over the mark
+
+In card mode the active card's title (`TITLE_SELECTOR`, `.stack-card--active >
+.card-header .card-header-title`) reads over the threads, the dot and the tool
+strings; the baubles stay on top. z-index can't do it: the sticky header is a
+stacking context, and on desktop so is every card, so the title and the
+header's dither always stack as one. Instead the overlay holds a luminance mask
+(`#site-mark-title-mask`: `.site-mark-title-mask-keep`, a white rect, and
+`.site-mark-title-mask-cut`, black stroked `<text>`s) that the threads, the dot
+and each `.site-mark-tool-string` reference. `watchTitleMask` draws one `<text>`
+per word of the title, in its computed font, on its baseline, stroked by its
+`-webkit-text-stroke` width and fitted to its width (`textLength`). It re-reads
+on scroll, resize, and any class or child change in `#card-stack`, every frame
+for `SETTLE_MS` after; it only reads the stack. The mark starts it on entering
+card mode and stops it (clearing the glyphs) on leaving.
 
 ## Dither safety
 

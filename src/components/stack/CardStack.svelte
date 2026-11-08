@@ -392,10 +392,14 @@
    * breakpoint-varying value the applier needs, and the only one in the island.
    */
   function scrollPeek(): number {
-    const raw = getComputedStyle(document.documentElement)
-      .getPropertyValue('--stack-scroll-peek');
-    const px = parseFloat(raw);
-    return Number.isFinite(px) ? px : 0;
+    const root = getComputedStyle(document.documentElement);
+    const px = (name: string) => {
+      const n = parseFloat(root.getPropertyValue(name));
+      return Number.isFinite(n) ? n : 0;
+    };
+    // Plus the mark's clearance (tokens.css), which the stack's top padding
+    // also reserves: the header lands below the hanging dot, not under it.
+    return px('--stack-scroll-peek') + px('--stack-top-clearance');
   }
 
   /**

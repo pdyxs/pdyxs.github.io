@@ -13,8 +13,12 @@
 // the radius. Draw a line as a thin rect or a path outline.
 
 export const MARK_ICONS: Record<string, string> = {
-  /** The palette: an ink core in the ring (the experiment's look). */
-  palette: '<circle class="site-mark-icon-ink" r="0.39"></circle>',
+  /**
+   * The palette: the two colours it sets, as two half-discs split on a slant.
+   * The body is already paper, so only the ink half is drawn: radius 1, out
+   * to the ring, which covers its edge. Ink upper left, paper lower right.
+   */
+  palette: '<path class="site-mark-icon-ink" d="M-1 0 A1 1 0 0 1 1 0 Z" transform="rotate(-45)"></path>',
   /** Revert: an ×. */
   cross:
     '<rect class="site-mark-icon-ink" x="-0.55" y="-0.11" width="1.1" height="0.22" transform="rotate(45)"></rect>' +

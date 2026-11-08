@@ -25,7 +25,8 @@ const descId = `site-mark-tool-desc-${tool.id}`;
   data-string={tool.string}
   data-radius={tool.radius}
 >
-  <line class="site-mark-tool-string"></line>
+  {/* Cut by the card title like the threads (SuspendedMark.astro); the bauble is not. */}
+  <line class="site-mark-tool-string" mask="url(#site-mark-title-mask)"></line>
   <g
     class="site-mark-bauble"
     role="button"

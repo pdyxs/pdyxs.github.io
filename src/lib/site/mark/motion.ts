@@ -246,8 +246,13 @@ export function cubicBezier(x1: number, y1: number, x2: number, y2: number): (x:
 export const TITLE_EXIT_MS = 420;
 /** How much the title has grown once it has left: the dot's hanging size, × its size in the title. */
 export const TITLE_EXIT_SCALE = 3;
-/** Leaving accelerates away; returning arrives fast and eases in to rest. */
-export const EASE_LEAVE = cubicBezier(0.5, 0, 0.75, 0);
+/**
+ * Leaving starts at once and eases out as the letters clear the top edge, so
+ * the title leads the stack's ease-in-out transition rather than trailing it
+ * (an ease-in here had moved 7% at the halfway point); returning arrives fast
+ * and eases in to rest.
+ */
+export const EASE_LEAVE = cubicBezier(0.3, 0.5, 0.6, 1);
 export const EASE_RETURN = cubicBezier(0.25, 1, 0.5, 1);
 
 export interface TitleStart {

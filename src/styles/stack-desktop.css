@@ -55,7 +55,7 @@
     align-items: flex-start;
     max-width: none;
     margin: 0;
-    padding: 0 0 var(--space-lg);
+    padding: var(--stack-top-clearance) 0 var(--space-lg);
     /* The fans run off both edges on a narrow viewport. `clip`, not `hidden`:
        `hidden` would make this a scroll container and silently re-parent every
        `position: sticky` descendant (the spines, the lens filter bar) to a box
@@ -154,7 +154,7 @@
      nested `<astro-island>`s inside the active card (the lens filter panel,
      the browse results) with it — they never hydrate.
 
-     `inset` mirrors #card-stack's own `padding: 0 0 var(--space-lg)` so this
+     `inset` mirrors #card-stack's own `padding: var(--stack-top-clearance) 0 var(--space-lg)` so this
      layer's content box is #card-stack's, and the flex trio mirrors the
      centring #card-stack does for `.card-stack-inner`. `align-items: stretch`
      is what gives the inner box the active card's height without measuring it:
@@ -194,7 +194,7 @@
   .stack-skeleton {
     display: flex;
     position: absolute;
-    inset: 0 0 var(--space-lg);
+    inset: var(--stack-top-clearance) 0 var(--space-lg);
     justify-content: center;
     align-items: stretch;
     pointer-events: none;

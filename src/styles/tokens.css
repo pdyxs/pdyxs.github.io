@@ -149,6 +149,14 @@
      header, so the peek has to be a visible slice of one rather than a hairline;
      the desktop block cuts it down to the staircase's own scale. */
   --stack-scroll-peek: 28px;
+  /* Room above the stack for the suspended mark, which hangs centred on the
+     viewport's top edge (mark.md, "The hang"): without it the dot and its
+     loops sit on the active card's top border and read as hanging from the
+     card. #card-stack's top padding includes it on both breakpoints, and so
+     does the scroll target (`scrollPeek()` in CardStack.svelte adds it to the
+     peek), or a navigation would scroll it straight back off the screen. px,
+     not rem: the island reads it back with parseFloat. */
+  --stack-top-clearance: 32px;
   /* DEBUG KNOB. Multiplies every stack duration below, so the whole transition
      can be slowed down as one and watched. Ships at 1 — the durations here are
      the real ones. The two JS slack timeouts that pair with them scale by this

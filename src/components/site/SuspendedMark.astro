@@ -96,10 +96,18 @@ const n = (v: number) => +v.toFixed(2);
   {/* With tools, the overlay holds their baubles, so only the threads and the
       dot are hidden from assistive tech; with none, all of it is. */}
   <svg class="site-mark-overlay" aria-hidden={hasTools ? undefined : 'true'} focusable="false">
-    <g class="site-mark-threads" aria-hidden={hasTools ? 'true' : undefined}>
+    {/* The active card's title, cut out of the threads and the dot so it reads
+        over them (src/lib/site/mark/title-mask.ts). Empty, it hides nothing. */}
+    <defs>
+      <mask id="site-mark-title-mask" class="site-mark-title-mask" maskUnits="userSpaceOnUse" x="-100000" y="-100000" width="200000" height="200000">
+        <rect class="site-mark-title-mask-keep" x="-100000" y="-100000" width="200000" height="200000"></rect>
+        <g class="site-mark-title-mask-cut"></g>
+      </mask>
+    </defs>
+    <g class="site-mark-threads" mask="url(#site-mark-title-mask)" aria-hidden={hasTools ? 'true' : undefined}>
       {MARK_RIG.threads.map(() => <path></path>)}
     </g>
-    <rect class="site-mark-dot" aria-hidden={hasTools ? 'true' : undefined}></rect>
+    <rect class="site-mark-dot" mask="url(#site-mark-title-mask)" aria-hidden={hasTools ? 'true' : undefined}></rect>
     {hasTools && (
       <g class="site-mark-tools" id="site-mark-tools" role="group" aria-label="Tools">
         {tools.map((tool) => <MarkTool tool={tool} />)}
@@ -154,6 +162,18 @@ const n = (v: number) => +v.toFixed(2);
   }
   .site-mark-dot {
     fill: var(--color-text);
+  }
+
+  /* A luminance mask, so these are not colours anyone sees: white keeps the
+     mark, black cuts it. They stay literal because a palette colour would
+     change what the mask hides with the palette. */
+  .site-mark-title-mask-keep {
+    fill: white;
+  }
+  .site-mark-title-mask-cut :global(text) {
+    fill: black;
+    stroke: black;
+    paint-order: stroke fill;
   }
 
   /* The server's hanging pose. Shown only on a page that loads in card mode,
@@ -393,6 +413,7 @@ const n = (v: number) => +v.toFixed(2);
     type Viewport,
   } from '@site/mark/motion';
   import { caughtDot, exitTime, slotSource } from '@site/mark/exit';
+  import { watchTitleMask } from '@site/mark/title-mask';
   import { HANG_DEPTH, anchorSlot, grownDot, hangSlot, type HangMetrics } from '@site/mark/hang';
   import { FALLBACK_DOT_INK, dotInSlot, inkBounds, inkEm, plausibleDotInk, type InkEm, type SlotDot } from '@site/mark/measure';
   import { PRESENTATION_EVENT, coldPresentation, currentPresentation, type Presentation, type PresentationDetail } from '@site/presentation-event';
@@ -585,6 +606,9 @@ const n = (v: number) => +v.toFixed(2);
     #frame = 0;
     #last = 0;
     #ro = new ResizeObserver(() => this.#relayout());
+    /** The mask's glyph group, and the watch keeping it on the card title (card mode only). */
+    #maskCut!: SVGGElement;
+    #unmask: (() => void) | null = null;
 
     connectedCallback() {
       // The live overlay's, not the server's hanging copy (.site-mark-hang),
@@ -596,6 +620,7 @@ const n = (v: number) => +v.toFixed(2);
       this.#probeText = this.querySelector('.site-mark-probe-text')!;
       this.#probeBase = this.querySelector('.site-mark-probe-base')!;
       this.#hangProbe = this.querySelector('.site-mark-hang-probe')!;
+      this.#maskCut = this.#overlay.querySelector('.site-mark-title-mask-cut')!;
       this.#group = this.#overlay.querySelector('.site-mark-tools');
       this.#tools = [...this.#overlay.querySelectorAll<SVGGElement>('.site-mark-tool')].map(readTool);
       for (const t of this.#tools) this.#wireTool(t);
@@ -629,6 +654,8 @@ const n = (v: number) => +v.toFixed(2);
       this.#hit.removeEventListener('click', this.#onHit);
       this.#unwatch();
       this.#endRun();
+      this.#unmask?.();
+      this.#unmask = null;
       this.#ro.disconnect();
       cancelAnimationFrame(this.#frame);
       this.#frame = 0;
@@ -667,6 +694,13 @@ const n = (v: number) => +v.toFixed(2);
     #setMode(mode: Presentation) {
       this.#mode = mode;
       this.dataset.mode = mode;
+      // The card title reads over the mark only in card mode: in page mode
+      // the dot is the title's own full stop.
+      if (mode === 'card') this.#unmask ??= watchTitleMask(this.#maskCut, this.#overlay);
+      else {
+        this.#unmask?.();
+        this.#unmask = null;
+      }
     }
 
     /** At rest in the title the overlay is document-positioned; anything else is on the viewport. */
