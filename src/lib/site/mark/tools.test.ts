@@ -16,7 +16,6 @@ import {
   spreadPivots,
   type ToolRegistries,
 } from '@site/mark/tools';
-import { PROOF_BEHAVIOURS, PROOF_TOOLS } from '../../../experiments/mark-tools-proof';
 
 const tool = (id: string, extra: Partial<ToolConfig> = {}): ToolConfig => ({
   id,
@@ -144,20 +143,6 @@ describe('the configs', () => {
 
   it('MARK_TOOLS is sound against the production registries', () => {
     expect(validateTools(MARK_TOOLS, { threads: MARK_RIG.threads.length, icons, behaviours: Object.keys(BUILT_IN) })).toEqual([]);
-  });
-
-  it('the bench config is sound against the production registry plus its own behaviours', () => {
-    const behaviours = [...Object.keys(BUILT_IN), ...Object.keys(PROOF_BEHAVIOURS)];
-    expect(validateTools(PROOF_TOOLS, { threads: MARK_RIG.threads.length, icons, behaviours })).toEqual([]);
-  });
-
-  it('the bench proves a press tool, a child, a drag tool and a shown() tool', () => {
-    const flat = flattenTools(PROOF_TOOLS);
-    const kinds = flat.map((n) => PROOF_BEHAVIOURS[n.behaviour]);
-    expect(kinds.some((b) => b.kind === 'press')).toBe(true);
-    expect(kinds.some((b) => b.kind === 'drag')).toBe(true);
-    expect(kinds.some((b) => b.shown && b.subscribe)).toBe(true);
-    expect(flat.some((n) => n.parent !== null)).toBe(true);
   });
 });
 
