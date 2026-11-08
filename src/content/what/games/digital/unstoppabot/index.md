@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Unstoppabot
 description: A hybrid of an infinitely running bot and a puzzle game, complemented with sarcastic wit
 images:
@@ -21,76 +21,76 @@ meta:
     values:
       - SeeThrough Studios
 credits:
-  - name: "Saul Alexander"
-    person: "saul-alexander"
-    role: "Creative Director"
-    group: "Production"
+  - name: Saul Alexander
+    person: saul-alexander
+    role: Creative Director
+    group: Production
     note: ""
     listed: map
-  - name: "Tom Dicker"
-    person: "tom-dicker"
-    role: "Video Producer"
-    group: "Production"
+  - name: Tom Dicker
+    person: tom-dicker
+    role: Video Producer
+    group: Production
     note: ""
     listed: map
-  - name: "Nick Kolan"
-    person: "nick-kolan"
-    role: "Game Designer"
-    group: "Design"
+  - name: Nick Kolan
+    person: nick-kolan
+    role: Game Designer
+    group: Design
     note: ""
     listed: map
-  - name: "Paul Sztajer"
-    person: "me"
-    role: "Lead Programmer"
-    group: "Programming"
+  - name: Paul Sztajer
+    person: me
+    role: Lead Programmer
+    group: Programming
     note: ""
     listed: map
-  - name: "Thomas Bowker"
-    person: "thomas-bowker"
+  - name: Thomas Bowker
+    person: thomas-bowker
     role: ""
-    group: "Programming"
+    group: Programming
     note: ""
     listed: map
-  - name: "David Kilford"
-    person: "david-kilford"
+  - name: David Kilford
+    person: david-kilford
     role: ""
-    group: "Programming"
+    group: Programming
     note: ""
     listed: map
-  - name: "Kristy Pearce"
-    person: "kristy-pearce"
+  - name: Kristy Pearce
+    person: kristy-pearce
     role: ""
-    group: "Art"
+    group: Art
     note: ""
     listed: map
-  - name: "Eloise Bonner"
-    person: "eloise-bonner"
+  - name: Eloise Bonner
+    person: eloise-bonner
     role: ""
-    group: "Art"
+    group: Art
     note: ""
     listed: map
-  - name: "Louise Fisher"
-    person: "louise-fisher"
+  - name: Louise Fisher
+    person: louise-fisher
     role: ""
-    group: "Art"
+    group: Art
     note: ""
     listed: map
-  - name: "Dan Baker"
-    person: "dan-baker"
-    role: "Music Producer"
-    group: "Music"
+  - name: Dan Baker
+    person: dan-baker
+    role: Music Producer
+    group: Music
     note: ""
     listed: map
-  - name: "Angus O'Sullivan"
-    person: "angus-osullivan"
-    role: "Sound Effects"
-    group: "Sound"
+  - name: Angus O'Sullivan
+    person: angus-osullivan
+    role: Sound Effects
+    group: Sound
     note: ""
     listed: map
-  - name: "the Academy of Interactive Entertainment"
+  - name: the Academy of Interactive Entertainment
     person: ""
-    role: "Special thanks"
-    group: "Thanks"
+    role: Special thanks
+    group: Thanks
     note: ""
     listed: listing
 ---

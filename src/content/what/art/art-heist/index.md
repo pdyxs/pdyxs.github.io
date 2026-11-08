@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Art Heist
 description: Make a plan. Steal a painting. Don't get caught.
 tags:
@@ -35,238 +35,238 @@ meta:
 series: Art Heist Projects
 order: 2
 credits:
-  - name: "Jim Fishwick"
-    person: "jim-fishwick"
-    role: "Director"
+  - name: Jim Fishwick
+    person: jim-fishwick
+    role: Director
     group: ""
     note: ""
     listed: map
-  - name: "Talia Meyerowitz-Katz"
-    person: "talia-meyerowitz-katz"
-    role: "Producer"
+  - name: Talia Meyerowitz-Katz
+    person: talia-meyerowitz-katz
+    role: Producer
     group: ""
     note: ""
     listed: map
-  - name: "Paul Sztajer"
-    person: "me"
-    role: "Game design"
+  - name: Paul Sztajer
+    person: me
+    role: Game design
     group: ""
     note: ""
     listed: map
-  - name: "Aleisa Jelbart"
-    person: "aleisa-jelbart"
-    role: "Production design"
+  - name: Aleisa Jelbart
+    person: aleisa-jelbart
+    role: Production design
     group: ""
     note: ""
     listed: map
-  - name: "Robert Boddington"
-    person: "robert-boddington"
-    role: "Set design"
+  - name: Robert Boddington
+    person: robert-boddington
+    role: Set design
     group: ""
     note: ""
     listed: map
-  - name: "Bryce Halliday"
-    person: "bryce-halliday"
-    role: "Sound design"
+  - name: Bryce Halliday
+    person: bryce-halliday
+    role: Sound design
     group: ""
     note: ""
     listed: map
-  - name: "Chris Howell"
-    person: "chris-howell"
-    role: "Tech wizardry"
+  - name: Chris Howell
+    person: chris-howell
+    role: Tech wizardry
     group: ""
     note: ""
     listed: map
-  - name: "Paul Sztajer"
-    person: "me"
-    role: "Concept"
+  - name: Paul Sztajer
+    person: me
+    role: Concept
     group: ""
     note: ""
     listed: map
-  - name: "Amy Withnall"
-    person: "amy-withnall"
-    role: "Concept"
+  - name: Amy Withnall
+    person: amy-withnall
+    role: Concept
     group: ""
     note: ""
     listed: map
-  - name: "Tom Dicker"
-    person: "tom-dicker"
-    role: "Concept"
+  - name: Tom Dicker
+    person: tom-dicker
+    role: Concept
     group: ""
     note: ""
     listed: map
-  - name: "Rona Barugahare"
-    person: "rona-barugahare"
-    role: "Concept"
+  - name: Rona Barugahare
+    person: rona-barugahare
+    role: Concept
     group: ""
     note: ""
     listed: map
-  - name: "Adrien Stark"
-    person: "adrien-stark"
+  - name: Adrien Stark
+    person: adrien-stark
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Alistair Magee"
-    person: "alistair-magee"
+  - name: Alistair Magee
+    person: alistair-magee
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Amanzi Lawrence"
-    person: "amanzi-lawrence"
+  - name: Amanzi Lawrence
+    person: amanzi-lawrence
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Rebecca Day"
-    person: "rebecca-day"
+  - name: Rebecca Day
+    person: rebecca-day
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Chloe Lethlean Higson"
-    person: "chloe-lethlean-higson"
+  - name: Chloe Lethlean Higson
+    person: chloe-lethlean-higson
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Damon Steff"
-    person: "damon-steff"
+  - name: Damon Steff
+    person: damon-steff
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Emilia Higgs"
-    person: "emilia-higgs"
+  - name: Emilia Higgs
+    person: emilia-higgs
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Harriet Hope-Streeter"
-    person: "harriet-hope-streeter"
+  - name: Harriet Hope-Streeter
+    person: harriet-hope-streeter
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Jack Ballhausen"
-    person: "jack-ballhausen"
+  - name: Jack Ballhausen
+    person: jack-ballhausen
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Jade Fuda"
-    person: "jade-fuda"
+  - name: Jade Fuda
+    person: jade-fuda
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Jeromaia Detto"
-    person: "jeromaia-detto"
+  - name: Jeromaia Detto
+    person: jeromaia-detto
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Jim Fishwick"
-    person: "jim-fishwick"
+  - name: Jim Fishwick
+    person: jim-fishwick
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Julian Hollis"
-    person: "julian-hollis"
+  - name: Julian Hollis
+    person: julian-hollis
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Kay Pengelly"
-    person: "kay-pengelly"
+  - name: Kay Pengelly
+    person: kay-pengelly
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Kendra Murphy"
-    person: "kendra-murphy"
+  - name: Kendra Murphy
+    person: kendra-murphy
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Kirsty McGuire"
-    person: "kirsty-mcguire"
+  - name: Kirsty McGuire
+    person: kirsty-mcguire
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Kurt Pimblett"
-    person: "kurt-pimblett"
+  - name: Kurt Pimblett
+    person: kurt-pimblett
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Liviu Monsted"
-    person: "liviu-monsted"
+  - name: Liviu Monsted
+    person: liviu-monsted
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Nathan Farrow"
-    person: "nathan-farrow"
+  - name: Nathan Farrow
+    person: nathan-farrow
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Riordan Berry"
-    person: "riordan-berry"
+  - name: Riordan Berry
+    person: riordan-berry
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Seymour Nixen"
-    person: "seymour-nixen"
+  - name: Seymour Nixen
+    person: seymour-nixen
     role: ""
-    group: "Cast"
+    group: Cast
     note: ""
     listed: listing
-  - name: "Alli Burness"
-    person: "alli-burness"
+  - name: Alli Burness
+    person: alli-burness
     role: ""
-    group: "Special thanks"
+    group: Special thanks
     note: ""
     listed: listing
-  - name: "Sweet Potato"
-    person: "sweet-potato"
+  - name: Sweet Potato
+    person: sweet-potato
     role: ""
-    group: "Special thanks"
+    group: Special thanks
     note: ""
     listed: listing
-  - name: "the team at Giant Dwarf"
+  - name: the team at Giant Dwarf
     person: ""
     role: ""
-    group: "Special thanks"
+    group: Special thanks
     note: ""
     listed: listing
-  - name: "Phil Boddington"
-    person: "phil-boddington"
+  - name: Phil Boddington
+    person: phil-boddington
     role: ""
-    group: "Special thanks"
+    group: Special thanks
     note: ""
     listed: listing
-  - name: "Steph Ryan"
-    person: "steph-ryan"
+  - name: Steph Ryan
+    person: steph-ryan
     role: ""
-    group: "Special thanks"
+    group: Special thanks
     note: ""
     listed: listing
-  - name: "Sam Wade"
-    person: "sam-wade"
+  - name: Sam Wade
+    person: sam-wade
     role: ""
-    group: "Special thanks"
+    group: Special thanks
     note: ""
     listed: listing
-  - name: "the Pozible backers"
+  - name: the Pozible backers
     person: ""
     role: ""
-    group: "Special thanks"
+    group: Special thanks
     note: ""
     listed: listing
 ---

@@ -7,36 +7,36 @@ tags:
 series: Art Heist Projects
 order: 1
 image: 2016-02-13 10.36.46 Cover photos.jpg
-inspected: false
+inspected: true
 credits:
-  - name: "Paul Sztajer"
-    person: "me"
-    role: "Made by"
+  - name: Paul Sztajer
+    person: me
+    role: Made by
     group: ""
     note: ""
     listed: map
-  - name: "Tom Dicker"
-    person: "tom-dicker"
-    role: "Made by"
+  - name: Tom Dicker
+    person: tom-dicker
+    role: Made by
     group: ""
     note: ""
     listed: map
-  - name: "Rona Barugahare"
-    person: "rona-barugahare"
-    role: "Made by"
+  - name: Rona Barugahare
+    person: rona-barugahare
+    role: Made by
     group: ""
     note: ""
     listed: map
-  - name: "Amy Withnall"
-    person: "amy-withnall"
-    role: "Made by"
+  - name: Amy Withnall
+    person: amy-withnall
+    role: Made by
     group: ""
     note: ""
     listed: map
-  - name: "Jim Fishwick"
-    person: "jim-fishwick"
+  - name: Jim Fishwick
+    person: jim-fishwick
     role: ""
-    group: "Special thanks"
+    group: Special thanks
     note: ""
     listed: listing
 ---

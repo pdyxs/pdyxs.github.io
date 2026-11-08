@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Qistigram
 description: A concept for quantum-powered Instagram stories
 tags:
@@ -30,32 +30,32 @@ meta:
       - Unity, Python (Qiskit framework)
 priority: -2
 credits:
-  - name: "Paul Sztajer"
-    person: "me"
+  - name: Paul Sztajer
+    person: me
     role: ""
     group: ""
     note: ""
     listed: map
-  - name: "Libby Heaney"
-    person: "libby-heaney"
+  - name: Libby Heaney
+    person: libby-heaney
     role: ""
     group: ""
     note: ""
     listed: map
-  - name: "Jessii Mai"
-    person: "jessii-mai"
+  - name: Jessii Mai
+    person: jessii-mai
     role: ""
     group: ""
     note: ""
     listed: map
-  - name: "Oday Darwich"
-    person: "oday-darwich"
+  - name: Oday Darwich
+    person: oday-darwich
     role: ""
     group: ""
     note: ""
     listed: map
-  - name: "Ana Fernandez"
-    person: "ana-fernandez"
+  - name: Ana Fernandez
+    person: ana-fernandez
     role: ""
     group: ""
     note: ""

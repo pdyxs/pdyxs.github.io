@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 solo: true
 title: Particulars (2010)
 description: The original Flash version of Particulars (2010)

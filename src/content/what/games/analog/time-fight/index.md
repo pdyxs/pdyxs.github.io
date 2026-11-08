@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 title: Time Fight
 description: A board game where players' turns move through time in different directions, colliding and colluding with their own past and future moves
 tags:
@@ -14,39 +14,39 @@ images:
   - 03(1).jpg
   - freeplay_poster_2.jpg
 credits:
-  - name: "Paul Sztajer"
-    person: "me"
-    role: "Made by"
+  - name: Paul Sztajer
+    person: me
+    role: Made by
     group: ""
     note: ""
     listed: map
-  - name: "Tom Dicker"
-    person: "tom-dicker"
-    role: "Made by"
+  - name: Tom Dicker
+    person: tom-dicker
+    role: Made by
     group: ""
     note: ""
     listed: map
-  - name: "Rona Barugahare"
-    person: "rona-barugahare"
-    role: "Made by"
+  - name: Rona Barugahare
+    person: rona-barugahare
+    role: Made by
     group: ""
     note: ""
     listed: map
-  - name: "Vicente Araullo-Peters"
-    person: "vicente-araullo-peters"
-    role: "Made by"
+  - name: Vicente Araullo-Peters
+    person: vicente-araullo-peters
+    role: Made by
     group: ""
     note: ""
     listed: map
-  - name: "Paul Sztajer"
-    person: "me"
-    role: "Lead design"
+  - name: Paul Sztajer
+    person: me
+    role: Lead design
     group: ""
     note: ""
     listed: map
-  - name: "Tom Dicker"
-    person: "tom-dicker"
-    role: "Art"
+  - name: Tom Dicker
+    person: tom-dicker
+    role: Art
     group: ""
     note: ""
     listed: map

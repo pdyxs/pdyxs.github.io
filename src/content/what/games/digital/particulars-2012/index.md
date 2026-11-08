@@ -1,5 +1,5 @@
 ---
-inspected: false
+inspected: true
 solo: true
 title: Particulars (2012 rewrite)
 description: The 2012 version of Particulars
