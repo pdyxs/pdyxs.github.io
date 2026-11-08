@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { teamSizeBucket, creditIdentity, madeByLine, creditListing, creditsView, type Credit } from '@content/credits/credits';
+import { findCreditNameDrift, teamSizeBucket, creditIdentity, madeByLine, creditListing, creditsView, type Credit } from '@content/credits/credits';
 
 const credit = (over: Partial<Credit> & { name: string }): Credit => ({ listed: 'map', ...over });
 
@@ -130,5 +130,61 @@ describe('teamSizeBucket', () => {
 
   it('uses the credits bucket when solo contradicts them', () => {
     expect(teamSizeBucket(people(2), true)).toBe('small');
+  });
+});
+
+describe('findCreditNameDrift', () => {
+  const card = (uid: string, ...credits: Credit[]) => ({ uid, credits });
+
+  it('flags the same name under two person slugs', () => {
+    const findings = findCreditNameDrift([
+      card('a', credit({ name: 'Tom Dicker', person: 'tom-dicker' })),
+      card('b', credit({ name: 'Tom Dicker', person: 'tom-dickers' })),
+    ]);
+    expect(findings).toEqual([{ kind: 'same-name-different-person', names: ['Tom Dicker'], uids: ['a', 'b'] }]);
+  });
+
+  it('does not flag the same identity on two cards', () => {
+    expect(
+      findCreditNameDrift([
+        card('a', credit({ name: 'Tom Dicker', person: 'tom-dicker' })),
+        card('b', credit({ name: 'Tom Dicker', person: 'tom-dicker' })),
+      ]),
+    ).toEqual([]);
+  });
+
+  it('flags Withnall vs Whitnall under two slugs as a near-duplicate', () => {
+    const findings = findCreditNameDrift([
+      card('a', credit({ name: 'Amy Withnall', person: 'amy-withnall' })),
+      card('b', credit({ name: 'Amy Whitnall', person: 'amy-whitnall' })),
+    ]);
+    expect(findings).toEqual([{ kind: 'near-duplicate', names: ['Amy Whitnall', 'Amy Withnall'], uids: ['a', 'b'] }]);
+  });
+
+  it('does not flag near names that share one identity', () => {
+    expect(
+      findCreditNameDrift([
+        card('a', credit({ name: 'Amy Withnall', person: 'amy-withnall' })),
+        card('b', credit({ name: 'Amy Whitnall', person: 'amy-withnall' })),
+      ]),
+    ).toEqual([]);
+  });
+
+  it('does not flag Paul Swe vs Paul Sztajer (distance above 2)', () => {
+    expect(
+      findCreditNameDrift([
+        card('a', credit({ name: 'Paul Sztajer', person: 'me' })),
+        card('b', credit({ name: 'Paul Swe', person: 'paul-swe' })),
+      ]),
+    ).toEqual([]);
+  });
+
+  it('does not flag an allowlisted pair, in either order or case', () => {
+    const cards = [
+      card('a', credit({ name: 'Val', person: 'val' })),
+      card('b', credit({ name: 'Max', person: 'max' })),
+    ];
+    expect(findCreditNameDrift(cards, [])).toHaveLength(1);
+    expect(findCreditNameDrift(cards, [['max', 'VAL']])).toEqual([]);
   });
 });

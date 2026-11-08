@@ -140,3 +140,80 @@ export function creditsView(credits: Credit[] | undefined): CreditsView | undefi
   if ('names' in line && line.names.length === 0) return undefined;
   return { line, listing: creditListing(credits) };
 }
+
+export type CreditNameDrift = {
+  kind: 'same-name-different-person' | 'near-duplicate';
+  names: string[];
+  uids: string[];
+};
+
+/**
+ * Name pairs confirmed to be different people despite looking alike, so the
+ * near-duplicate check stays quiet about them. Each pair is matched
+ * case-insensitively and in either order.
+ */
+export const KNOWN_DISTINCT: readonly (readonly [string, string])[] = [
+  // Flatland's special thanks: "Val, Jono and Max (patience)" are three people; the short first names are 2 edits apart.
+  ['Val', 'Max'],
+];
+
+/**
+ * Identity drift across cards. With no person records the `person` slug is the
+ * only identity, so a typo splits one person in two (same name under two
+ * identities) or merges two people.
+ */
+export function findCreditNameDrift(
+  cards: { uid: string; credits: Credit[] }[],
+  knownDistinct: readonly (readonly [string, string])[] = KNOWN_DISTINCT,
+): CreditNameDrift[] {
+  const byName = new Map<string, { name: string; identities: Set<string>; uids: Set<string> }>();
+  for (const { uid, credits } of cards) {
+    for (const c of credits) {
+      const key = c.name.toLowerCase();
+      const entry = byName.get(key) ?? { name: c.name, identities: new Set(), uids: new Set() };
+      entry.identities.add(creditIdentity(c));
+      entry.uids.add(uid);
+      byName.set(key, entry);
+    }
+  }
+  const findings: CreditNameDrift[] = [];
+  for (const e of byName.values()) {
+    if (e.identities.size > 1) {
+      findings.push({ kind: 'same-name-different-person', names: [e.name], uids: [...e.uids].sort() });
+    }
+  }
+  const allowed = new Set(knownDistinct.map(pairKey));
+  const entries = [...byName.entries()];
+  for (let i = 0; i < entries.length; i++) {
+    for (let j = i + 1; j < entries.length; j++) {
+      const [ka, a] = entries[i];
+      const [kb, b] = entries[j];
+      if ([...a.identities].some(id => b.identities.has(id))) continue;
+      if (allowed.has(pairKey([ka, kb])) || editDistance(ka, kb) > 2) continue;
+      findings.push({
+        kind: 'near-duplicate',
+        names: [a.name, b.name].sort(),
+        uids: [...new Set([...a.uids, ...b.uids])].sort(),
+      });
+    }
+  }
+  return findings;
+}
+
+/** Order- and case-insensitive key for a name pair. */
+function pairKey(pair: readonly [string, string]): string {
+  return pair.map(n => n.toLowerCase()).sort().join('\u0000');
+}
+
+/** Levenshtein distance. */
+function editDistance(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = row;
+  }
+  return prev[b.length];
+}

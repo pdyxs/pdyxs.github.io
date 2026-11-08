@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: "Houston, we have a #$!?"
 description: A hybrid digital/analog game made at Global Game Jam Sydney 2015
 tags:
@@ -20,6 +20,37 @@ quotes: []
 images:
   - https://www.youtube.com/embed/hGbso0glYrQ
 headerMedia: flash-game
+credits:
+  - name: "John Kane"
+    person: "john-kane"
+    role: "Made by"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Paul Sztajer"
+    person: "me"
+    role: "Made by"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Tim Grants"
+    person: "tim-grants"
+    role: "With assistance from"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Sally Kellaway"
+    person: "sally-kellaway"
+    role: "With assistance from"
+    group: ""
+    note: ""
+    listed: map
+  - name: "Robert Snars"
+    person: "robert-snars"
+    role: "With assistance from"
+    group: ""
+    note: ""
+    listed: map
 ---
 > *Major Thompson is on an alien craft that he cannot understand. Ground Control have the manuals to help him get there. Together, can they land the ship, without it crashing?*
 
