@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildCreditsGraph } from './credits-graph';
-import { layoutCreditsGraph, labelHalfSize } from './credits-layout';
+import { layoutCreditsGraph, layoutExpansion, labelHalfSize } from './credits-layout';
+import { computeCreditsIndex } from './credits-index';
 import type { Credit } from './credits';
 
 const credit = (over: Partial<Credit> & { name: string }): Credit => ({ listed: 'map', ...over });
@@ -67,5 +68,72 @@ describe('layoutCreditsGraph', () => {
         expect(hit, `${e.from} -> ${e.to} through ${n.label}`).toBe(false);
       }
     }
+  });
+});
+
+describe('layoutExpansion', () => {
+  const titles = ['Time Fight', 'Art Heist', 'Art Heist (Exhibition)', 'Flatland', 'A Rather Long Project Title', 'Six'];
+  const mkIndex = (who: string[]) => computeCreditsIndex([
+    { uid: 'g/unstoppabot', title: 'Unstoppabot', credits: unstoppabot },
+    ...titles.map((t, i) => ({
+      uid: `g/p${i}`, title: t,
+      credits: who.map(w => credit(unstoppabot.find(c => c.name === w)!.person ? { ...unstoppabot.find(c => c.name === w)!, role: 'Art' } : { name: w, role: 'Art' })),
+    })),
+  ]);
+  const people = ['Paul Sztajer', 'Nick Kolan', 'Ana Lee'];
+  const built = buildCreditsGraph(unstoppabot, { uid: 'g/unstoppabot', index: mkIndex(people) });
+  const opening = layoutCreditsGraph(built);
+  const nick = 'person:nick', me = 'person:me';
+  const expansion = built.expansions![me];
+  const laidOut = layoutExpansion(opening, expansion);
+  const at = (id: string) => [...opening.nodes, ...laidOut.nodes].find(n => n.id === id)!;
+  const r = (id: string) => { const c = at('card'); return Math.hypot(at(id).x - c.x, at(id).y - c.y); };
+
+  it('returns only the new nodes, positioned, with their edges, and leaves the opening untouched', () => {
+    const before = JSON.stringify(opening);
+    const out = layoutExpansion(opening, expansion);
+    expect(JSON.stringify(opening)).toBe(before);
+    expect(out.nodes.map(n => n.id)).toEqual(expansion.nodes.map(n => n.id));
+    expect(out.edges).toEqual(expansion.edges);
+    expect(out.nodes.every(n => Number.isFinite(n.x) && Number.isFinite(n.y))).toBe(true);
+  });
+
+  it('puts every project radially beyond the person', () => {
+    for (const n of laidOut.nodes) expect(r(n.id), n.label).toBeGreaterThan(r(me) + 40);
+  });
+
+  it('is deterministic', () => {
+    expect(JSON.stringify(layoutExpansion(opening, expansion))).toBe(JSON.stringify(laidOut));
+  });
+
+  it('keeps clear of everything on screen, and of every edge', () => {
+    const all = [...opening.nodes, ...laidOut.nodes];
+    for (const n of laidOut.nodes) {
+      for (const m of all) {
+        if (m === n) continue;
+        const a = labelHalfSize(n), b = labelHalfSize(m);
+        expect(Math.abs(n.x - m.x) >= a.w + b.w || Math.abs(n.y - m.y) >= a.h + b.h, `${n.label} / ${m.label}`).toBe(true);
+      }
+    }
+    const edges = [...opening.edges, ...laidOut.edges];
+    for (const e of edges) {
+      const a = at(e.from), b = at(e.to);
+      for (const n of all) {
+        if (n.id === e.from || n.id === e.to) continue;
+        const h = labelHalfSize(n);
+        let hit = false;
+        for (let t = 0; t <= 1 && !hit; t += 0.01) {
+          hit = Math.abs(a.x + (b.x - a.x) * t - n.x) < h.w && Math.abs(a.y + (b.y - a.y) * t - n.y) < h.h;
+        }
+        expect(hit, `${e.from} -> ${e.to} through ${n.label}`).toBe(false);
+      }
+    }
+  });
+
+  it('depends only on the opening: another person gets the same result however many others were laid out', () => {
+    const nickEx = built.expansions![nick];
+    const alone = layoutExpansion(opening, nickEx);
+    layoutExpansion(opening, expansion);
+    expect(JSON.stringify(layoutExpansion(opening, nickEx))).toBe(JSON.stringify(alone));
   });
 });

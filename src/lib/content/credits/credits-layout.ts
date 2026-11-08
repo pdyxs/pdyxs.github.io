@@ -14,7 +14,8 @@
 import type { CreditsGraph, CreditsNode, CreditsEdge } from './credits-graph';
 
 export type PositionedNode = CreditsNode & { x: number; y: number };
-export type PositionedGraph = { nodes: PositionedNode[]; edges: CreditsEdge[] };
+/** `expansions` (keyed by person node id) are laid out against this graph by `layoutExpansion`; they hold only the new nodes and edges. */
+export type PositionedGraph = { nodes: PositionedNode[]; edges: CreditsEdge[]; expansions?: Record<string, PositionedGraph> };
 
 /** Label-box half sizes, estimated from the character count. The dot sits inside the box. */
 export function labelHalfSize(node: Pick<CreditsNode, 'kind' | 'label'>): { w: number; h: number } {
@@ -208,11 +209,154 @@ export function layoutCreditsGraph(graph: CreditsGraph): PositionedGraph {
   }
 
   const round = (n: number) => Math.round(n * 100) / 100;
-  return {
+  const opening: PositionedGraph = {
     nodes: graph.nodes.map(n => ({ ...n, x: round(pos.get(n.id)!.x), y: round(pos.get(n.id)!.y) })),
     edges: graph.edges,
   };
+  if (!graph.expansions) return opening;
+  return {
+    ...opening,
+    expansions: Object.fromEntries(Object.entries(graph.expansions).map(([id, ex]) => [id, layoutExpansion(opening, ex)])),
+  };
 }
+
+const PROJECT_DISTANCE = 130; // how far past the person a project is seeded
+const FAN_SPACING = 120; // arc length each project wants on its ring
+const SETTLE_PASSES = 400;
+
+/**
+ * Lay out one person's expansion against the frozen opening layout: nothing in
+ * `opening` moves, and the result holds only the new nodes (positioned) and
+ * their edges. Each project ends up radially further from the card than the
+ * person, clear of every label box and every edge already on screen. It reads
+ * only `opening` and `expansion`, so it never depends on click order.
+ */
+export function layoutExpansion(opening: PositionedGraph, expansion: CreditsGraph): PositionedGraph {
+  if (!expansion.nodes.length) return { nodes: [], edges: expansion.edges };
+  const card = opening.nodes.find(n => n.kind === 'card')!;
+  const person = opening.nodes.find(n => n.id === expansion.edges[0].from)!;
+  const rad = (p: P) => Math.hypot(p.x - card.x, p.y - card.y) || 1;
+  const baseAngle = Math.atan2(person.y - card.y, person.x - card.x);
+  const rPerson = rad(person);
+
+  const frozen = new Map<string, P & { w: number; h: number }>(opening.nodes.map(n => [n.id, { x: n.x, y: n.y, ...labelHalfSize(n) }]));
+  const fresh = expansion.nodes;
+  const half = new Map(fresh.map(n => [n.id, labelHalfSize(n)]));
+  const pos = new Map<string, P>();
+  const n = fresh.length;
+  const r0 = rPerson + PROJECT_DISTANCE;
+  const step = Math.min(FAN_SPACING / r0, (1.6 * Math.PI) / n);
+  fresh.forEach((node, i) => {
+    const a = baseAngle + (i - (n - 1) / 2) * step;
+    pos.set(node.id, { x: card.x + Math.cos(a) * r0, y: card.y + Math.sin(a) * r0 });
+  });
+  const seed = new Map([...pos].map(([id, p]) => [id, { ...p }]));
+
+  const point = (id: string): P => pos.get(id) ?? frozen.get(id)!;
+  const edges = [...opening.edges, ...expansion.edges];
+  const others = (id: string) => [...frozen.keys(), ...fresh.map(f => f.id)].filter(o => o !== id);
+  const outward = (p: P, amt: number): P => {
+    const r = rad(p);
+    return { x: ((p.x - card.x) / r) * amt, y: ((p.y - card.y) / r) * amt };
+  };
+
+  for (let it = 0; it < STEPS; it++) {
+    const cool = Math.max(0.15, 1 - it / STEPS);
+    const moves = new Map<string, P>();
+    for (const node of fresh) {
+      const p = pos.get(node.id)!, hs = half.get(node.id)!;
+      const f = outward(p, 0.8);
+      const toward = (to: P, k: number) => { f.x += (to.x - p.x) * k; f.y += (to.y - p.y) * k; };
+      toward(seed.get(node.id)!, 0.01);
+      const deficit = rPerson + RADIAL_MARGIN * 1.5 - rad(p);
+      if (deficit > 0) { const o = outward(p, deficit * 0.5); f.x += o.x; f.y += o.y; }
+      const dPerson = Math.hypot(p.x - person.x, p.y - person.y) || 1;
+      toward(person, (dPerson - PROJECT_DISTANCE) * 0.06 / dPerson);
+      for (const oid of others(node.id)) {
+        const q = point(oid);
+        const dx = p.x - q.x, dy = p.y - q.y, d2 = Math.max(dx * dx + dy * dy, 1), d = Math.sqrt(d2);
+        if (d < 240) { f.x += (dx / d) * (5200 / d2) * 10; f.y += (dy / d) * (5200 / d2) * 10; }
+      }
+      for (const e of edges) {
+        if (e.from === node.id || e.to === node.id) continue;
+        const a = point(e.from), b = point(e.to);
+        const ex = b.x - a.x, ey = b.y - a.y, len2 = ex * ex + ey * ey || 1;
+        const t = ((p.x - a.x) * ex + (p.y - a.y) * ey) / len2;
+        if (t < 0.05 || t > 0.95) continue;
+        const rx = p.x - (a.x + ex * t), ry = p.y - (a.y + ey * t), rd = Math.hypot(rx, ry) || 1;
+        const clear = EDGE_CLEAR + hs.h;
+        if (rd < clear) { f.x += (rx / rd) * (clear - rd) * 0.5; f.y += (ry / rd) * (clear - rd) * 0.5; }
+      }
+      moves.set(node.id, f);
+    }
+    for (const [id, v] of moves) {
+      const p = pos.get(id)!;
+      p.x += Math.max(-10, Math.min(10, v.x)) * cool;
+      p.y += Math.max(-10, Math.min(10, v.y)) * cool;
+    }
+  }
+
+  for (let pass = 0; pass < SETTLE_PASSES; pass++) {
+    let moved = false;
+    for (const node of fresh) { // radially beyond the person
+      const p = pos.get(node.id)!, r = rad(p), need = rPerson + RADIAL_MARGIN;
+      if (r < need) {
+        p.x = card.x + ((p.x - card.x) / r) * need;
+        p.y = card.y + ((p.y - card.y) / r) * need;
+        moved = true;
+      }
+    }
+    for (let i = 0; i < n; i++) { // no overlapping label boxes: frozen ones never move
+      const a = fresh[i], pa = pos.get(a.id)!, ha = half.get(a.id)!;
+      for (const [oid, q] of [...frozen, ...fresh.slice(i + 1).map(f => [f.id, pos.get(f.id)!] as const)]) {
+        const hb = frozen.get(oid) ?? half.get(oid)!;
+        const dx = pa.x - q.x, dy = pa.y - q.y;
+        const ox = ha.w + hb.w + GAP - Math.abs(dx), oy = ha.h + hb.h + GAP - Math.abs(dy);
+        if (ox <= 0 || oy <= 0) continue;
+        const shared = !frozen.has(oid); // two new nodes split the move
+        const k = shared ? 0.5 : 1;
+        const mover = pos.get(oid);
+        if (ox < oy) { pa.x += Math.sign(dx || 1) * ox * k; if (mover) mover.x -= Math.sign(dx || 1) * ox * (1 - k); }
+        else { pa.y += Math.sign(dy || 1) * oy * k; if (mover) mover.y -= Math.sign(dy || 1) * oy * (1 - k); }
+        moved = true;
+      }
+    }
+    for (const node of fresh) { // an edge that is not the node's own must not run through its box
+      const p = pos.get(node.id)!, hs = half.get(node.id)!;
+      for (const e of edges) {
+        if (e.from === node.id || e.to === node.id) continue;
+        const a = point(e.from), b = point(e.to);
+        if (!segmentHitsBox(a, b, p, hs.w + GAP, hs.h + GAP)) continue;
+        const ex = b.x - a.x, ey = b.y - a.y, len = Math.hypot(ex, ey) || 1;
+        const side = Math.sign((p.x - a.x) * -ey + (p.y - a.y) * ex) || 1;
+        const nx = (-ey / len) * side, ny = (ex / len) * side;
+        const amt = Math.abs(nx) * (hs.w + GAP) + Math.abs(ny) * (hs.h + GAP) + 1 - Math.abs((p.x - a.x) * nx + (p.y - a.y) * ny);
+        if (amt > 0) { p.x += nx * amt; p.y += ny * amt; moved = true; }
+      }
+    }
+    for (const e of expansion.edges) { // and a new edge must not run through a frozen box: swing the project round the person
+      const p = pos.get(e.to)!;
+      for (const [fid, q] of frozen) {
+        if (fid === e.from) continue;
+        if (!segmentHitsBox(person, p, q, q.w + GAP, q.h + GAP)) continue;
+        const side = Math.sign((p.x - person.x) * (q.y - person.y) - (p.y - person.y) * (q.x - person.x)) || 1;
+        const da = -side * 0.06, cos = Math.cos(da), sin = Math.sin(da);
+        const dx = p.x - person.x, dy = p.y - person.y;
+        p.x = person.x + dx * cos - dy * sin;
+        p.y = person.y + dx * sin + dy * cos;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+
+  const round = (v: number) => Math.round(v * 100) / 100;
+  return {
+    nodes: fresh.map(f => ({ ...f, x: round(pos.get(f.id)!.x), y: round(pos.get(f.id)!.y) })),
+    edges: expansion.edges,
+  };
+}
+
 
 /** Whether the segment a-b passes through the box centred at c with the given half sizes (sampled; the boxes are small). */
 function segmentHitsBox(a: P, b: P, c: P, hw: number, hh: number): boolean {

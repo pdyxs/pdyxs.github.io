@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { computeCreditsIndex } from './credits-index';
 import { buildCreditsGraph } from './credits-graph';
 import type { Credit } from './credits';
 
@@ -64,5 +65,31 @@ describe('buildCreditsGraph', () => {
   it('has no duplicate edges', () => {
     const g = buildCreditsGraph([credit({ name: 'A', role: 'R' }), credit({ name: 'A', role: 'R' })]);
     expect(g.edges).toHaveLength(2);
+  });
+});
+
+describe('buildCreditsGraph expansions', () => {
+  const index = computeCreditsIndex([
+    { uid: 'g/here', title: 'Here', credits: [credit({ name: 'Tom', person: 'tom', role: 'Art' }), credit({ name: 'Solo', role: 'Art' }), credit({ name: 'Jim', role: 'Art' }), credit({ name: 'Vo', group: 'Cast' })] },
+    { uid: 'g/there', title: 'There', credits: [credit({ name: 'Tom', person: 'tom', role: 'Code' }), credit({ name: 'Tom', person: 'tom', role: 'Concept' }), credit({ name: 'Jim', listed: 'listing', role: 'Thanks' }), credit({ name: 'Vo', group: 'Chorus' })] },
+  ]);
+  const here = [credit({ name: 'Tom', person: 'tom', role: 'Art' }), credit({ name: 'Solo', role: 'Art' }), credit({ name: 'Jim', role: 'Art' }), credit({ name: 'Vo', group: 'Cast' })];
+  const g = buildCreditsGraph(here, { uid: 'g/here', index });
+
+  it('offers a person their other cards, joined straight to them and labelled with their roles', () => {
+    expect(Object.keys(g.expansions!).sort()).toEqual(['name:Vo', 'person:tom']);
+    const ex = g.expansions!['person:tom'];
+    expect(ex.nodes).toEqual([{ id: 'project:person:tom\u0000g/there', kind: 'project', label: 'There', uid: 'g/there' }]);
+    expect(ex.edges).toEqual([{ from: 'person:tom', to: ex.nodes[0].id, label: 'Code, Concept' }]);
+  });
+
+  it('labels a role-less appearance with the group; never offers this card or a listing-only appearance', () => {
+    expect(g.expansions!['name:Vo'].edges[0].label).toBe('Chorus');
+    expect(g.expansions!['name:Jim']).toBeUndefined();
+    expect(g.expansions!['name:Solo']).toBeUndefined();
+  });
+
+  it('has no expansions without an index', () => {
+    expect(buildCreditsGraph(here).expansions).toBeUndefined();
   });
 });

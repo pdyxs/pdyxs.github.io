@@ -5,7 +5,15 @@
   import type { PositionedGraph } from '@content/credits/credits-layout';
   import { VIEW, connectedIds, frameSelection, type Camera } from './credits-camera';
 
-  let { graph, selected = $bindable('card') }: { graph: PositionedGraph; selected?: string } = $props();
+  let { graph: opening, selected = $bindable('card') }: { graph: PositionedGraph; selected?: string } = $props();
+
+  // What is on screen: the opening graph, plus the selected person's other
+  // projects while they are selected. Nothing else is ever added, so the
+  // picture depends on the selection alone, not on the order of clicks.
+  const graph = $derived.by<PositionedGraph>(() => {
+    const more = opening.expansions?.[selected];
+    return more ? { nodes: [...opening.nodes, ...more.nodes], edges: [...opening.edges, ...more.edges] } : opening;
+  });
 
   let svg: SVGSVGElement;
   let cam = $state<Camera>({ cx: 0, cy: 0, s: 1 });
@@ -139,8 +147,26 @@
   >
     {#each graph.edges as e (e.from + '>' + e.to)}
       <line class="credits-edge" class:is-faded={!edgeLit(e.from, e.to)} x1={at(e.from).x} y1={at(e.from).y} x2={at(e.to).x} y2={at(e.to).y} />
+      {#if e.label}
+        <text class="credits-edge-label" text-anchor="middle" x={(at(e.from).x + at(e.to).x) / 2} y={(at(e.from).y + at(e.to).y) / 2 - 4}>{e.label}</text>
+      {/if}
     {/each}
     {#each graph.nodes as n (n.id)}
+      {#if n.kind === 'project'}
+        <!-- The same markup a masthead tag chip has: CardStack's delegated click handler pushes it. This island never touches the stack. -->
+        <a
+          class="credits-node"
+          data-kind="project"
+          data-id={n.id}
+          href="/card/{n.uid}"
+          data-push-card={n.uid}
+          style="transform: translate({n.x}px, {n.y}px)"
+        >
+          <rect class="credits-hit" x={-halfWidth(n.label)} y="-26" width={halfWidth(n.label) * 2} height="52" />
+          <rect class="credits-shape" x="-8" y="-6" width="16" height="12" rx="2" />
+          <text class="credits-label" text-anchor="middle" y="-14">{n.label}</text>
+        </a>
+      {:else}
       <g
         class="credits-node"
         class:is-selected={n.id === selected}
@@ -168,6 +194,7 @@
           <text class="credits-label" text-anchor="middle" y="-14">{n.label}</text>
         {/if}
       </g>
+      {/if}
     {/each}
   </g>
 </svg>
@@ -185,6 +212,15 @@
   .credits-world { transition: transform 0.7s cubic-bezier(0.3, 0, 0.2, 1); }
   .credits-world.is-live { transition: none; }
   .credits-edge { stroke: var(--color-text); stroke-width: 1; }
+  .credits-edge-label {
+    font-size: 11px;
+    font-style: italic;
+    fill: var(--color-text);
+    paint-order: stroke;
+    stroke: var(--color-bg);
+    stroke-width: 4px;
+    pointer-events: none;
+  }
   .credits-edge.is-faded { stroke-width: 0.5; stroke-dasharray: var(--credits-faded-dash); }
   .credits-node { cursor: pointer; outline: none; transition: transform 0.6s cubic-bezier(0.3, 0, 0.2, 1); }
   .credits-hit {
@@ -196,6 +232,7 @@
   }
   .credits-shape { fill: var(--color-text); stroke: var(--color-text); stroke-width: 2; }
   .credits-node[data-kind='card'] .credits-shape,
+  .credits-node[data-kind='project'] .credits-shape,
   .credits-node[data-kind='role'] .credits-shape { fill: var(--color-bg); stroke-width: 1.5; }
   .credits-node[data-kind='card'] .credits-label { fill: var(--color-text); }
   .credits-label {
@@ -215,6 +252,7 @@
     stroke-dasharray: var(--credits-faded-dash);
   }
   .credits-node.is-faded .credits-label { font-weight: 300; }
+  .credits-node[data-kind='project'] .credits-label { text-decoration: underline; }
   .credits-node:focus-visible .credits-label { text-decoration: underline; }
   @media (hover: hover) { .credits-node:hover .credits-label { text-decoration: underline; } }
   @media (prefers-reduced-motion: reduce) {

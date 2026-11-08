@@ -173,6 +173,25 @@ describe('delegated click → push', () => {
     expect(hasBeenRead(CARD_B)).toBe(true);
   });
 
+  it('pushes from an <a data-push-card> inside an SVG (the credits map\'s project nodes)', async () => {
+    mountStack({ activeUid: CARD_A, activeHtml: fragment(CARD_A) });
+    await settle();
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const link = document.createElementNS('http://www.w3.org/2000/svg', 'a');
+    link.setAttribute('href', `/card/${CARD_B}`);
+    link.setAttribute('data-push-card', CARD_B);
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    link.appendChild(text);
+    svg.appendChild(link);
+    document.querySelector('.stack-card-body-inner')!.appendChild(svg);
+    text.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await settle();
+
+    expect(get(stackStore).entries.map(e => e.key)).toEqual([CARD_A, CARD_B]);
+    expect(get(stackStore).activeSlot).toBe(CARD_B);
+  });
+
   it('stacks a double-clicked link ONCE, not twice (#112)', async () => {
     // `pushCard` awaits (a fetch, a view transition, a tick) before it mutates
     // the store, so a second click during that window used to run against the
