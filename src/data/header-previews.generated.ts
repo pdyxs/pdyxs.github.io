@@ -6,7 +6,6 @@
 export type HeaderPreview = { light: string; dark: string; hash: string };
 
 export const HEADER_PREVIEWS: Record<string, HeaderPreview> = {
-  "what/games/analog/houston-we-have-a": {"light":"/previews/what/games/analog/houston-we-have-a/light.png","dark":"/previews/what/games/analog/houston-we-have-a/dark.png","hash":"54f3983f53be12f3"},
   "what/games/digital/star-nav": {"light":"/previews/what/games/digital/star-nav/light.png","dark":"/previews/what/games/digital/star-nav/dark.png","hash":"54f3983f53be12f3"},
   "what/games/digital/tiny-world-the-musical-the-game": {"light":"/previews/what/games/digital/tiny-world-the-musical-the-game/light.png","dark":"/previews/what/games/digital/tiny-world-the-musical-the-game/dark.png","hash":"54f3983f53be12f3"},
   "what/toys/star-navigation": {"light":"/previews/what/toys/star-navigation/light.png","dark":"/previews/what/toys/star-navigation/dark.png","hash":"54f3983f53be12f3"},
