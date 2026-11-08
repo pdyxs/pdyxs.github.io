@@ -47,6 +47,29 @@ export function madeByLine(credits: Credit[]): MadeByLine {
   return people.length <= 3 ? { names: people.map(p => p.name) } : { count: people.length };
 }
 
+/** The site owner's person slug. Matched by slug, never by display name. */
+export const OWNER_PERSON = 'me';
+
+/** Distinct map-listed people other than the site owner. */
+export function otherPeople(credits: Credit[]): Credit[] {
+  return mapPeople(credits).filter(c => c.person !== OWNER_PERSON);
+}
+
+export type TeamSize = 'none' | 'small' | 'large';
+
+/**
+ * The team-size bucket for the Collaborators filter. A card with credits is
+ * bucketed by how many others they name (0 none, 1-4 small, 5+ large); one
+ * without is `none` only if flagged `solo`, else `undefined` (unknown, not solo).
+ * `solo` alongside credits naming others is a contradiction the audit reports;
+ * the credits win here.
+ */
+export function teamSizeBucket(credits: Credit[] | undefined, solo: boolean | undefined): TeamSize | undefined {
+  if (!credits) return solo ? 'none' : undefined;
+  const n = otherPeople(credits).length;
+  return n === 0 ? 'none' : n <= 4 ? 'small' : 'large';
+}
+
 export type CreditListingEntry = { name: string; note?: string };
 export type CreditListingRow = { role?: string; entries: CreditListingEntry[] };
 export type CreditListingSection = { heading?: string; rows: CreditListingRow[] };

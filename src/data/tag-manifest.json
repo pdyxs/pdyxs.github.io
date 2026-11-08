@@ -2094,5 +2094,17 @@
   {
     "uid": "what:games/digital/enemies",
     "code": "8r"
+  },
+  {
+    "uid": "who:collaborators/large",
+    "code": "8s"
+  },
+  {
+    "uid": "who:collaborators/none",
+    "code": "8t"
+  },
+  {
+    "uid": "who:collaborators/small",
+    "code": "8u"
   }
 ]

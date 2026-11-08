@@ -123,6 +123,9 @@ const content = defineCollection({
         priority: z.number().optional(),
         // Opt-in credits block (see `credit` above). Absent stays undefined.
         credits: z.array(credit).nullish().transform((v) => v ?? undefined),
+        // Solo work on a card with no `credits:` block: `who:collaborators/none`.
+        // Neither this nor credits means no size tag. See teamSizeBucket().
+        solo: z.boolean().optional(),
         // ── generated-tag overrides ──
         // Derivation control. `location:`/`era:` used to live here as "derive
         // this instead" knobs; issue #116 retired both, so redirecting a

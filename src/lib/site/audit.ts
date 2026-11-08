@@ -14,6 +14,8 @@
 // docs/agents/testing.md. AuditLensBody.astro is the thin gatherer/renderer
 // around it.
 
+import { otherPeople, type Credit } from '../content/credits/credits.ts';
+
 export type AuditFindingType =
   | 'dead-image-host'
   | 'missing-title'
@@ -22,6 +24,7 @@ export type AuditFindingType =
   | 'unresolved-local-image'
   | 'orphaned-old-url'
   | 'inert-derivation-control'
+  | 'solo-with-credits'
   | 'not-inspected'
   | 'awaiting-code';
 
@@ -79,6 +82,9 @@ export interface AuditCard {
    * so they cannot disagree.
    */
   inertDerivationControls?: readonly string[];
+  /** Frontmatter `solo: true` and the normalised `credits:` block, for `solo-with-credits`. */
+  solo?: boolean;
+  credits?: Credit[];
 }
 
 /** One card caught by one finding, with the offending values that caught it. */
@@ -266,6 +272,12 @@ const FINDING_SPECS: readonly FindingSpec[] = [
       const inert = card.inertDerivationControls ?? [];
       return inert.length > 0 ? [...inert] : undefined;
     },
+  },
+  {
+    type: 'solo-with-credits',
+    label: 'Solo, but credits name someone else',
+    hint: '`solo: true` contradicts credits naming anyone other than me. Drop `solo`, or the credits. The credits decide the team-size filter meanwhile.',
+    detect: card => (card.solo === true && otherPeople(card.credits ?? []).length > 0 ? [] : undefined),
   },
   {
     type: 'missing-title',

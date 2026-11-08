@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { creditIdentity, madeByLine, creditListing, creditsView, type Credit } from '@content/credits/credits';
+import { teamSizeBucket, creditIdentity, madeByLine, creditListing, creditsView, type Credit } from '@content/credits/credits';
 
 const credit = (over: Partial<Credit> & { name: string }): Credit => ({ listed: 'map', ...over });
 
@@ -95,5 +95,40 @@ describe('creditsView', () => {
       line: { names: ['Nick'] },
       listing: [{ rows: [{ role: 'Designer', entries: [{ name: 'Nick' }] }] }],
     });
+  });
+});
+
+describe('teamSizeBucket', () => {
+  const people = (n: number): Credit[] => Array.from({ length: n }, (_, i) => credit({ name: `P${i}`, person: `p${i}` }));
+
+  it.each([[0, 'none'], [1, 'small'], [4, 'small'], [5, 'large']])('%i other people is %s', (n, bucket) => {
+    expect(teamSizeBucket(people(n), false)).toBe(bucket);
+  });
+
+  it('is undefined with neither credits nor solo', () => {
+    expect(teamSizeBucket(undefined, false)).toBeUndefined();
+  });
+
+  it('is none for solo with no credits', () => {
+    expect(teamSizeBucket(undefined, true)).toBe('none');
+  });
+
+  it('excludes me by slug, but not a name that merely looks like me', () => {
+    expect(teamSizeBucket([credit({ name: 'Paul', person: 'me' })], false)).toBe('none');
+    expect(teamSizeBucket([credit({ name: 'Paul Swe' })], false)).toBe('small');
+  });
+
+  it('ignores listing-only credits', () => {
+    expect(teamSizeBucket([credit({ name: 'A', listed: 'listing' })], false)).toBe('none');
+  });
+
+  it('counts a repeated identity once', () => {
+    const c = [credit({ name: 'A', person: 'a' }), credit({ name: 'A again', person: 'a' }), credit({ name: 'B' }), credit({ name: 'B' })];
+    expect(teamSizeBucket(c, false)).toBe('small');
+    expect(teamSizeBucket([...c, ...people(3)], false)).toBe('large');
+  });
+
+  it('uses the credits bucket when solo contradicts them', () => {
+    expect(teamSizeBucket(people(2), true)).toBe('small');
   });
 });

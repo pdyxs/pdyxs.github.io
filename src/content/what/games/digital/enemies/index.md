@@ -1,5 +1,6 @@
 ---
-inspected: true
+inspected: false
+solo: true
 title: The Enemy Of My Enemy Is My Heat-Seeking Missile
 description: "Enemies: Flash game (2010)"
 tags: []

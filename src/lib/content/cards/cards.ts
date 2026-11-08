@@ -69,6 +69,8 @@ export type CardFrontmatter = {
   seriesPreview?: 'strip' | 'dots' | 'none';
   /** Authored `credits:` block — normalised into `ResolvedCard.credits`. */
   credits?: RawCredit[];
+  /** Solo work on a card with no credits module — see teamSizeBucket(). */
+  solo?: boolean;
   [key: string]: unknown;
 };
 
@@ -135,6 +137,8 @@ function generationInputs(
     overrides,
     exclude,
     actions: resolveActions(data as ActionSource),
+    credits: normaliseCredits(data.credits),
+    solo: data.solo,
   });
 
   // A re-enable that undid no exclusion did nothing, and the author should be

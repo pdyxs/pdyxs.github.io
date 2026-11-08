@@ -4,7 +4,8 @@ date: 2011-08-19
 tags: []
 series: Flatland Projects
 order: 1
-inspected: true
+inspected: false
+solo: true
 image: title.png
 headerMedia: flash-game
 ---

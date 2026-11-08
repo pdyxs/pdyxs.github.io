@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generatedTagsForCard, generatorDerivations, generatorFrontmatterKeys, allGeneratedFilterValues, declaredGeneratedFilterValues, generatedDisplayName, generatedSortOrder, generatedGroup } from '@content/tags/filter-generators';
+import { generateTagsForCard, generatedTagsForCard, generatorDerivations, generatorFrontmatterKeys, allGeneratedFilterValues, declaredGeneratedFilterValues, generatedDisplayName, generatedSortOrder, generatedGroup } from '@content/tags/filter-generators';
 import { parseExcludeTags } from '@content/tags/exclude-tags';
 import { TRAVEL_LOG } from '@data/travel-log';
 
@@ -132,7 +132,7 @@ describe('generatorDerivations', () => {
 
   it('is the whole legal `generated/*` namespace', () => {
     expect([...generatorDerivations()].sort()).toEqual(
-      ['buyable', 'difficulty', 'era', 'location', 'playable'],
+      ['buyable', 'collaborators', 'difficulty', 'era', 'location', 'playable'],
     );
   });
 });
@@ -162,7 +162,7 @@ describe('allGeneratedFilterValues', () => {
 
   it('emits only dimension:value forms, across every generator', () => {
     for (const value of allGeneratedFilterValues()) {
-      expect(value).toMatch(/^(where|when|what|why):.+/);
+      expect(value).toMatch(/^(where|when|what|why|who):.+/);
     }
   });
 
@@ -296,5 +296,45 @@ describe('puzzle difficulty generator', () => {
     expect(generatedGroup('what:puzzles/level-4')).toBe('Difficulty');
     expect(generatedGroup('what:puzzles/timeline')).toBeUndefined();
     expect(generatedGroup('when:seethrough/2013/06')).toBeUndefined();
+  });
+});
+
+describe('collaborators generator', () => {
+  const who = (tags: string[]) => tags.filter(t => t.startsWith('who:collaborators/'));
+  const credit = (name: string, extra: object = {}) => ({ name, listed: 'map' as const, ...extra });
+  const team = (n: number) => Array.from({ length: n }, (_, i) => credit(`P${i}`, { person: `p${i}` }));
+
+  it.each([[0, 'none'], [1, 'small'], [4, 'small'], [5, 'large']])('%i others -> who:collaborators/%s', (n, bucket) => {
+    expect(who(generatedTagsForCard([], { credits: team(n) }))).toEqual([`who:collaborators/${bucket}`]);
+  });
+
+  it('solo with no credits is none; neither gives no tag', () => {
+    expect(who(generatedTagsForCard([], { solo: true }))).toEqual(['who:collaborators/none']);
+    expect(who(generatedTagsForCard([], {}))).toEqual([]);
+  });
+
+  it('excludes me by slug and listing credits, and dedupes', () => {
+    const credits = [credit('Paul', { person: 'me' }), credit('X', { listed: 'listing' }), credit('A'), credit('A')];
+    expect(who(generatedTagsForCard([], { credits }))).toEqual(['who:collaborators/small']);
+  });
+
+  it('does not duplicate an authored tag', () => {
+    const tags = generatedTagsForCard(['who:collaborators/small'], { credits: team(2) });
+    expect(who(tags)).toEqual(['who:collaborators/small']);
+  });
+
+  it('generated/collaborators suppresses it, and an unused suppression is inert', () => {
+    const exclude = EXCLUDE(['generated/collaborators']);
+    expect(who(generatedTagsForCard([], { credits: team(2), exclude }))).toEqual([]);
+    expect(generateTagsForCard([], { credits: team(2), exclude }).inert).toEqual([]);
+    expect(generateTagsForCard([], { exclude }).inert).toEqual(['generated/collaborators']);
+  });
+
+  it('declares its three values for the manifest, with labels, section and order', () => {
+    const values = ['none', 'small', 'large'].map(b => `who:collaborators/${b}`);
+    for (const v of values) expect(allGeneratedFilterValues()).toContain(v);
+    expect(values.map(generatedDisplayName)).toEqual(['Solo', 'Small team (1–4)', 'Large team (5+)']);
+    expect(values.map(generatedGroup)).toEqual(['Team size', 'Team size', 'Team size']);
+    expect(values.map(generatedSortOrder)).toEqual([0, 1, 2]);
   });
 });
