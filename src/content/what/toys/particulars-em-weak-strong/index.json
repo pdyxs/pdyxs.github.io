@@ -8,6 +8,7 @@
     "weak": true,
     "strong": true
   },
+  "pickups": true,
   "player": {
     "x": 0,
     "y": 0,
@@ -108,6 +109,74 @@
           "telegraph": 0.5
         }
       ]
+    },
+    {
+      "id": "pair",
+      "entries": [
+        {
+          "spawn": "electron",
+          "position": {
+            "x": -7,
+            "y": 11
+          },
+          "velocity": {
+            "magnitude": 5,
+            "angle": 0
+          },
+          "telegraph": 0.5
+        },
+        {
+          "spawn": {
+            "type": "electron",
+            "parity": -1
+          },
+          "position": {
+            "x": 7,
+            "y": 11
+          },
+          "velocity": {
+            "magnitude": 5,
+            "angle": 180
+          },
+          "telegraph": 0.5
+        }
+      ]
+    },
+    {
+      "id": "quarks",
+      "entries": [
+        {
+          "spawn": {
+            "type": "up",
+            "colour": "red"
+          },
+          "position": {
+            "x": -6,
+            "y": -12
+          },
+          "velocity": {
+            "magnitude": 4,
+            "angle": 0
+          },
+          "telegraph": 0.5
+        },
+        {
+          "spawn": {
+            "type": "up",
+            "colour": "red",
+            "parity": -1
+          },
+          "position": {
+            "x": 6,
+            "y": -12
+          },
+          "velocity": {
+            "magnitude": 4,
+            "angle": 180
+          },
+          "telegraph": 0.5
+        }
+      ]
     }
   ],
   "triggers": [
@@ -152,6 +221,26 @@
       ]
     },
     {
+      "kind": "page-button",
+      "button": "pair",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "pair"
+        }
+      ]
+    },
+    {
+      "kind": "page-button",
+      "button": "quarks",
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "quarks"
+        }
+      ]
+    },
+    {
       "kind": "time",
       "at": 1,
       "every": 7,
@@ -160,6 +249,18 @@
         {
           "kind": "spawn",
           "wave": "trio"
+        }
+      ]
+    },
+    {
+      "kind": "time",
+      "at": 5,
+      "every": 7,
+      "repeats": 5,
+      "actions": [
+        {
+          "kind": "spawn",
+          "wave": "pair"
         }
       ]
     }

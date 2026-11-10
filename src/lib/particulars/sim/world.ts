@@ -2,12 +2,15 @@ import { World as PlanckWorld, Circle, Box, Vec2 } from 'planck';
 import type { Body } from 'planck';
 import { wallPieces, wallResponse } from './walls';
 import { resolveParticle } from '../scenario/expand';
-import type { Scenario, ParticleSpec, SpawnSpec, WallMode } from '../scenario/types';
+import type { ForceName, ForceSwitches, Scenario, ParticleSpec, SpawnSpec, WallMode } from '../scenario/types';
 import { dueSpawns, initialSchedule } from './scheduler';
 import type { ScheduleState } from './scheduler';
 import type { Vec } from '../input/steer';
 import type { Intent } from '../input/bindings';
 import type { Snapshot } from './snapshot';
+import { explosionDone, explosionPush, explosionRadius, maxRadius } from './explosions';
+import type { ExplosionShape } from './explosions';
+import { stepPickup } from './pickups';
 
 import { forces } from './forces';
 import type { ForcedParticle } from './forces';
@@ -40,6 +43,8 @@ import {
   NEUTRINO_EXTRA_LIFE_SECONDS,
   NEUTRINO_SPEED,
   PARTICLE_FRICTION,
+  PICKUP_LIFETIME_SECONDS,
+  PLAYER_EXPLOSION_COOLDOWN_SECONDS,
   PARTICLE_RESTITUTION,
   PLAYER_FORCE_COEFFICIENT_BY_TYPE,
   POSITION_ITERATIONS,
@@ -99,6 +104,18 @@ interface Entity {
   lastVelocity: Vec;
 }
 
+/** An explosion as the world keeps it: its shape at birth, and the tick it began. */
+interface Explosion extends Omit<ExplosionShape, 'age'> {
+  id: number;
+  startTick: number;
+}
+interface Pickup {
+  id: number;
+  x: number;
+  y: number;
+  age: number;
+}
+
 export class World {
   private readonly world = new PlanckWorld({ gravity: new Vec2(0, 0) });
   private readonly player: Entity;
@@ -114,10 +131,19 @@ export class World {
   private readonly spawned: Entity[] = [];
   private nextId = 0;
   private events: WorldEvent[] = [];
+  /** Which forces are on now. Starts as the scenario authored them; `setForce` changes it. */
+  private forceSwitches: ForceSwitches;
+  private explosions: Explosion[] = [];
+  private pickups: Pickup[] = [];
+  private nextEffectId = 0;
+  private collected = 0;
+  /** The tick the player can next set off an explosion. */
+  private explodeReadyTick = 0;
 
   constructor(scenario: Scenario) {
     this.scenario = scenario;
     this.walls = { ...scenario.walls };
+    this.forceSwitches = resolveSwitches(scenario.forces);
 
     const ground = this.world.createBody();
     for (const s of wallSlabs(scenario.walls.width, scenario.walls.height, WALL_THICKNESS)) {
@@ -253,15 +279,31 @@ export class World {
   }
 
   private switches() {
-    return { weak: resolveSwitches(this.scenario.forces).weak };
+    return { weak: this.forceSwitches.weak };
+  }
+
+  /** Turn a force on or off from now on. Particles already mid-decay or mid-change finish as they were. */
+  setForce(name: ForceName, on: boolean): void {
+    this.forceSwitches = { ...this.forceSwitches, [name]: on };
+  }
+
+  /** Start an explosion at (x, y) from something of `size`; `initial` is the radius it opens at. */
+  private explode(x: number, y: number, size: number, initial: number, byPlayer: boolean): void {
+    this.explosions.push({ id: this.nextEffectId++, x, y, initial, size, startTick: this.tick });
+    this.events.push({ tick: this.tick, kind: 'exploded', x, y, byPlayer });
   }
 
   /** Apply one rule outcome to the bodies and say so as an event. */
   private apply(o: Outcome, steerVec: Vec): void {
     if (o.kind === 'annihilate') {
-      const [a, b] = o.ids.map((id) => this.entity(id)!.particle);
+      const [ea, eb] = o.ids.map((id) => this.entity(id)!);
+      const [a, b] = [ea.particle, eb.particle];
+      const [pa, pb] = [ea.body.getPosition(), eb.body.getPosition()];
+      const mid = { x: (pa.x + pb.x) / 2, y: (pa.y + pb.y) / 2 };
       o.ids.forEach((id) => this.remove(id));
       this.events.push({ tick: this.tick, kind: 'annihilated', a: spec(a), b: spec(b), playerDied: o.ids.includes(PLAYER_ID) });
+      this.explode(mid.x, mid.y, SIZE_BY_TYPE[a.type], 0, false);
+      if (this.scenario.pickups) this.pickups.push({ id: this.nextEffectId++, ...mid, age: 0 });
       return;
     }
     if (o.kind === 'boson-decay') {
@@ -450,8 +492,15 @@ export class World {
       }
     }
     for (const intent of intents) {
-      if (intent.kind !== 'change') continue; // 'explode' has no rule yet
       if (!this.playerAlive) break;
+      if (intent.kind === 'explode') {
+        if (this.tick < this.explodeReadyTick) continue;
+        this.explodeReadyTick = this.tick + Math.round(PLAYER_EXPLOSION_COOLDOWN_SECONDS / FIXED_DT);
+        const at = this.player.body.getPosition();
+        const size = SIZE_BY_TYPE[this.player.particle.type];
+        this.explode(at.x, at.y, size, size, true);
+        continue;
+      }
       for (const o of change(this.participant(this.player), this.switches())) this.apply(o, steerVec);
     }
     for (const e of this.entities()) {
@@ -466,6 +515,14 @@ export class World {
       return { ...p, lifeTime: e.lifeTicks * FIXED_DT, immune: e.immune };
     });
     const felt = forces({ particles: forced, blackHoles: snap.blackHoles }, snap.forces);
+    for (const x of this.explosions) {
+      const shape = { ...x, age: (this.tick - x.startTick) * FIXED_DT };
+      bodies.forEach((e, i) => {
+        if (!e.live || e === this.player || isNeutrino(e.particle)) return;
+        const push = explosionPush(shape, e.body.getPosition());
+        felt[i] = { x: felt[i].x + push.x, y: felt[i].y + push.y };
+      });
+    }
     bodies.forEach((e, i) => {
       if (e.live) e.body.applyForceToCenter(new Vec2(felt[i].x, felt[i].y), true);
     });
@@ -485,6 +542,23 @@ export class World {
     this.resolveTouches(steerVec);
     this.expireNeutrinos();
     this.decayDue(steerVec);
+    this.advanceEffects();
+  }
+
+  /** Age explosions out and move pickups toward the player, collecting or expiring them. */
+  private advanceEffects(): void {
+    this.explosions = this.explosions.filter((x) => !explosionDone({ ...x, age: (this.tick - x.startTick) * FIXED_DT }));
+    const p = this.player.body.getPosition();
+    const player = this.playerAlive ? { x: p.x, y: p.y, radius: this.radiusNow(this.player) } : null;
+    const kept: Pickup[] = [];
+    for (const pk of this.pickups) {
+      const next = stepPickup(pk, player);
+      if (next.collected) {
+        this.collected++;
+        this.events.push({ tick: this.tick, kind: 'pickedUp', collected: this.collected });
+      } else if (!next.expired) kept.push({ id: pk.id, x: next.x, y: next.y, age: next.age });
+    }
+    this.pickups = kept;
   }
 
   /** A neutrino lives until half a second after it should have hit the bounds. */
@@ -507,7 +581,14 @@ export class World {
       tick: this.tick,
       walls: { ...this.walls },
       player: { x: p.x, y: p.y, radius: this.radiusNow(this.player), ...this.player.particle, alive: this.playerAlive },
-      forces: resolveSwitches(this.scenario.forces),
+      forces: { ...this.forceSwitches },
+      explosions: this.explosions.map((x) => {
+        const shape = { ...x, age: (this.tick - x.startTick) * FIXED_DT };
+        return { id: x.id, x: x.x, y: x.y, radius: explosionRadius(shape), maxRadius: maxRadius(x) };
+      }),
+      pickupsEnabled: this.scenario.pickups === true,
+      pickups: this.pickups.map((k) => ({ id: k.id, x: k.x, y: k.y, life: 1 - k.age / PICKUP_LIFETIME_SECONDS })),
+      collected: this.collected,
       blackHoles: (this.scenario.blackHoles ?? []).map((h) => ({
         ...h,
         radius: blackHoleRadius(h.mass, BLACK_HOLE_DENSITY),

@@ -237,3 +237,37 @@ describe('Toy page commands', () => {
     other.remove();
   });
 });
+
+describe('Toy force checkboxes', () => {
+  const UID = 'what/toys/particulars-forces';
+  const label = (box: HTMLElement, force: string) => box.querySelector(`.forces text[data-force="${force}"]`)!;
+
+  it('show the toy\'s switches, and toggling one switches that force for its card only', async () => {
+    const card = document.createElement('article');
+    card.setAttribute('data-uid', UID);
+    card.innerHTML = '<input type="checkbox" data-particulars-force="em"><input type="checkbox" data-particulars-force="weak">';
+    document.body.appendChild(card);
+    const [em, weak] = [...card.querySelectorAll('input')];
+
+    const box = document.createElement('div');
+    document.body.appendChild(box);
+    const toy = mount(Toy as any, { target: box, props: { entryId: UID, scenario: { ...SCENARIO, forces: { em: true } } } });
+    flushSync();
+    expect([em.checked, weak.checked]).toEqual([true, false]); // the checkboxes take the toy's state
+
+    weak.checked = true;
+    weak.dispatchEvent(new Event('change', { bubbles: true }));
+    await wait(100);
+    expect(label(box, 'weak').getAttribute('data-on')).toBe('true');
+    expect(label(box, 'em').getAttribute('data-on')).toBe('true');
+
+    em.checked = false;
+    em.dispatchEvent(new Event('change', { bubbles: true }));
+    await wait(100);
+    expect(label(box, 'em').getAttribute('data-on')).toBe('false');
+
+    unmount(toy);
+    box.remove();
+    card.remove();
+  });
+});

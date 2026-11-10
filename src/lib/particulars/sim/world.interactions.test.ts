@@ -159,6 +159,7 @@ describe('annihilation', () => {
     expect(snap.particles).toEqual([]);
     expect(world.drainEvents()).toMatchObject([
       { kind: 'annihilated', playerDied: false, a: { type: 'electron' }, b: { type: 'electron' } },
+      { kind: 'exploded', byPlayer: false },
     ]);
   });
 
@@ -176,7 +177,7 @@ describe('annihilation', () => {
     const snap = run(world, 120);
     expect(snap.player.alive).toBe(false);
     expect(snap.particles).toEqual([]);
-    expect(world.drainEvents()).toMatchObject([{ kind: 'annihilated', playerDied: true }]);
+    expect(world.drainEvents()).toMatchObject([{ kind: 'annihilated', playerDied: true }, { kind: 'exploded' }]);
     const at = { x: snap.player.x, y: snap.player.y };
     world.step({ x: 1, y: 0 }, CHANGE); // still steps, still ignores the dead
     expect(world.snapshot().player).toMatchObject({ ...at, alive: false });

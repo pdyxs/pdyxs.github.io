@@ -11,7 +11,7 @@
   import { clientToWorld, pressKind } from '../../../lib/particulars/input/pointer';
   import { intentFor, inputEventForKey } from '../../../lib/particulars/input/bindings';
   import type { InputEvent, Intent } from '../../../lib/particulars/input/bindings';
-  import { listenCommands } from '../../../lib/particulars/input/command';
+  import { announceForces, listenCommands, listenForceCommands } from '../../../lib/particulars/input/command';
   import { installPageButtons } from './page-buttons';
   import { glyphFor } from './glyph';
   import { arcPath } from './wall-path';
@@ -46,6 +46,8 @@
   let pending: Intent[] = [];
   // Page buttons pressed since the last step (Commands addressed to this card's uid).
   let pressedButtons: string[] = [];
+  // Force switches asked for since the last step; applied before it.
+  let pendingForces: { force: ForceName; on: boolean }[] = [];
 
   function fire(event: InputEvent) {
     const intent = intentFor(event, world.snapshot().forces);
@@ -108,6 +110,11 @@
       last = now;
       acc = due.remainder;
       for (let i = 0; i < due.steps; i++) {
+        if (pendingForces.length > 0) {
+          for (const f of pendingForces) world.setForce(f.force, f.on);
+          pendingForces = [];
+          announceForces(window, { uid: entryId, forces: world.snapshot().forces });
+        }
         const s = world.snapshot().player;
         world.step(steer({ pointers: [...heldPointers.values()], keys: [...heldKeys] }, s), pending, pressedButtons);
         pending = [];
@@ -122,9 +129,12 @@
     window.addEventListener('keyup', onKeyUp);
     window.addEventListener('blur', releaseAll);
     const stopCommands = listenCommands(window, entryId, (c) => pressedButtons.push(c.button));
+    const stopForceCommands = listenForceCommands(window, entryId, (c) => pendingForces.push({ force: c.force, on: c.on }));
     const releasePageButtons = installPageButtons();
+    announceForces(window, { uid: entryId, forces: world.snapshot().forces });
     return () => {
       stopCommands();
+      stopForceCommands();
       releasePageButtons();
       cancelAnimationFrame(raf);
       window.removeEventListener('keydown', onKeyDown);
@@ -170,6 +180,14 @@
   {/each}
   {#each snapshot.blackHoles as h, i (i)}
     <circle class="black-hole" data-active={snapshot.forces.gravity} cx={h.x} cy={h.y} r={h.radius} />
+  {/each}
+  {#each snapshot.explosions as x (x.id)}
+    <circle class="explosion" cx={x.x} cy={x.y} r={x.radius} />
+  {/each}
+  {#each snapshot.pickups as k (k.id)}
+    <g class="pickup" transform="translate({k.x} {k.y})" data-fading={k.life < 0.3}>
+      <polygon points="0,-0.35 0.35,0 0,0.35 -0.35,0" />
+    </g>
   {/each}
   {#each snapshot.particles as p (p.id)}
     {@const glyph = glyphFor(p.type)}
@@ -218,6 +236,13 @@
         data-on={snapshot.forces[f.name]}>{f.label} {snapshot.forces[f.name] ? 'on' : 'off'}</text
       >
     {/each}
+    {#if snapshot.pickupsEnabled}
+      <text
+        x={-snapshot.walls.width / 2 + 0.4 + FORCE_LABELS.length * FORCE_LABEL_SPACING}
+        y={-snapshot.walls.height / 2 + 0.9}
+        data-pickups={snapshot.collected}>pickups {snapshot.collected}</text
+      >
+    {/if}
   </g>
 </svg>
 
@@ -269,6 +294,21 @@
   }
   .black-hole[data-active='true'] {
     fill: var(--color-text);
+  }
+  /* An explosion is a ring that grows out and is gone; a pickup is a small outlined diamond that blinks as it runs out. */
+  .explosion {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-width: 0.08;
+    stroke-dasharray: 0.3 0.2;
+  }
+  .pickup polygon {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-width: 0.1;
+  }
+  .pickup[data-fading='true'] polygon {
+    stroke-dasharray: 0.15 0.15;
   }
   .player .shape {
     fill: var(--color-text);

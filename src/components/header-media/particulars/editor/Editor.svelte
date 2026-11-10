@@ -200,6 +200,10 @@
               {f}
             </label>
           {/each}
+          <label class="inline">
+            <input type="checkbox" data-field="pickups" checked={scenario.pickups ?? false} onchange={(e) => edit({ kind: 'set', path: ['pickups'], value: e.currentTarget.checked })} />
+            pickups
+          </label>
         </fieldset>
 
         <fieldset>

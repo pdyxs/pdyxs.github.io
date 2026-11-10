@@ -119,6 +119,8 @@ export interface Scenario {
   player: { x: number; y: number; particle?: ParticleDef };
   /** Which forces are on. Omitted forces are off. */
   forces?: Partial<ForceSwitches>;
+  /** An optional extra: annihilations drop pickups the player collects. Omitted, there are none. */
+  pickups?: boolean;
   blackHoles?: BlackHoleDef[];
   /** Interior walls; the outer box is `walls` and always blocks everything. */
   barriers?: WallDef[];

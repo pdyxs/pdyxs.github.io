@@ -223,6 +223,7 @@ export function validate(json: unknown): ValidationResult {
     }
   }
   if (json.forces !== undefined) checkForces(json.forces, errors);
+  if (json.pickups !== undefined && typeof json.pickups !== 'boolean') errors.push('pickups must be true or false');
   if (json.blackHoles !== undefined) checkBlackHoles(json.blackHoles, errors);
   if (json.barriers !== undefined) checkBarriers(json.barriers, errors);
   const waveIds = json.waves !== undefined ? checkWaves(json.waves, formations, errors) : new Set<string>();

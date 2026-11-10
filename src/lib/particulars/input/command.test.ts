@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { parseCommand, dispatchCommand, listenCommands, COMMAND_EVENT } from './command';
+import { parseCommand, dispatchCommand, listenCommands, COMMAND_EVENT, parseForceCommand, dispatchForceCommand, listenForceCommands, announceForces, listenForces, parseForcesState } from './command';
 
 describe('parseCommand', () => {
   it('accepts a uid and a button name', () => {
@@ -38,5 +38,35 @@ describe('dispatch and listen', () => {
 
   it('dispatching with no listener is harmless', () => {
     expect(() => dispatchCommand(new EventTarget(), { uid: 'a', button: 'b' })).not.toThrow();
+  });
+});
+
+describe('force commands', () => {
+  it('parse a uid, a known force and an on/off', () => {
+    expect(parseForceCommand({ uid: 'a', force: 'em', on: true })).toEqual({ uid: 'a', force: 'em', on: true });
+    for (const bad of [null, {}, { uid: 'a', force: 'magic', on: true }, { uid: 'a', force: 'em' }, { uid: '', force: 'em', on: true }]) {
+      expect(parseForceCommand(bad)).toBeNull();
+    }
+  });
+
+  it('reach the listener for their uid only', () => {
+    const target = new EventTarget();
+    const mine = vi.fn();
+    const other = vi.fn();
+    listenForceCommands(target, 'a/one', mine);
+    listenForceCommands(target, 'a/two', other);
+    dispatchForceCommand(target, { uid: 'a/one', force: 'weak', on: false });
+    expect(mine).toHaveBeenCalledWith({ uid: 'a/one', force: 'weak', on: false });
+    expect(other).not.toHaveBeenCalled();
+  });
+
+  it('announced forces carry the whole state and ignore partial ones', () => {
+    const target = new EventTarget();
+    const fn = vi.fn();
+    listenForces(target, fn);
+    const forces = { strong: true, weak: false, em: true, gravity: false };
+    announceForces(target, { uid: 'a', forces });
+    expect(fn).toHaveBeenCalledWith({ uid: 'a', forces });
+    expect(parseForcesState({ uid: 'a', forces: { em: true } })).toBeNull();
   });
 });

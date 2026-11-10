@@ -6,9 +6,16 @@ tags: []
 inspected: false
 headerMedia: particulars
 ---
-Electromagnetism, the weak force and the strong force are all on. Charge, colour and decay all act at once: a decaying coloured quark sheds a W, and the strong and electromagnetic forces pull the pieces in different directions. Your particle is a red down quark. Steer with the arrow keys, WASD, or by holding a pointer.
+Electromagnetism, the weak force and the strong force are all on. Charge, colour and decay all act at once: a decaying coloured quark sheds a W, and the strong and electromagnetic forces pull the pieces in different directions. Your particle is a red down quark. Steer with the arrow keys, WASD, or by holding a pointer. When a particle meets its antiparticle they annihilate in an explosion that shoves everything nearby, and leaves a pickup that drifts to you. An electron and a positron arrive head-on every few seconds.
+
+Forces:
+<label><input type="checkbox" data-particulars-force="em"> electromagnetism</label>
+<label><input type="checkbox" data-particulars-force="weak"> weak</label>
+<label><input type="checkbox" data-particulars-force="strong"> strong</label>
 
 <button type="button" data-particulars-button="top">Send a green top quark</button>
 <button type="button" data-particulars-button="muon">Send a muon</button>
 <button type="button" data-particulars-button="trio">Send a red-green-blue trio</button>
 <button type="button" data-particulars-button="electron">Send an electron</button>
+<button type="button" data-particulars-button="pair">Send an electron and a positron</button>
+<button type="button" data-particulars-button="quarks">Send an up quark and its antiquark</button>

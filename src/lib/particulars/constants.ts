@@ -112,3 +112,27 @@ export const NEUTRINO_EXTRA_LIFE_SECONDS = 0.5;
 export const W_TURN_DEGREES_PER_SECOND = 360;
 /** The mass a W body starts at while it grows to full size. */
 export const GROWING_BOSON_START_MASS = 1;
+
+/**
+ * Explosions, from Explosion.cs. The push on a particle inside one is
+ * EXPLOSION_STRENGTH * dt / sqrt(radius), away from the centre. The radius grows
+ * as sqrt(time) from the exploder's size to size * EXPLOSION_RADIUS_MULT over
+ * EXPLOSION_SECONDS, then the explosion is gone. Neutrinos and the player are not pushed.
+ */
+export const EXPLOSION_STRENGTH = 130;
+export const EXPLOSION_RADIUS_MULT = 8;
+export const EXPLOSION_SECONDS = 1;
+/** The player can set off an explosion this often (PlayerExplosionController.cooldown). */
+export const PLAYER_EXPLOSION_COOLDOWN_SECONDS = 1;
+
+/**
+ * Pickups (an optional extra a scenario switches on), from Pickup.cs and
+ * GameplayConstants: an annihilation drops one; it drifts toward the player at
+ * PICKUP_SPEED, or PICKUP_NEAR_SPEED inside PICKUP_NEAR_RADIUS, is collected
+ * within PICKUP_RADIUS of the player's edge, and fades away after PICKUP_LIFETIME_SECONDS.
+ */
+export const PICKUP_SPEED = 1;
+export const PICKUP_NEAR_SPEED = 5;
+export const PICKUP_NEAR_RADIUS = 3;
+export const PICKUP_RADIUS = 0.5;
+export const PICKUP_LIFETIME_SECONDS = 5;

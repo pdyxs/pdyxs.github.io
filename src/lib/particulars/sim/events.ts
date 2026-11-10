@@ -8,6 +8,8 @@ export type WorldEvent =
   | { tick: number; kind: 'annihilated'; a: ParticleSpec; b: ParticleSpec; playerDied: boolean }
   | { tick: number; kind: 'absorbed' | 'decayed' | 'changed'; from: ParticleSpec; to: ParticleSpec; isPlayer: boolean }
   | { tick: number; kind: 'bosonDecayed'; boson: ParticleSpec }
+  | { tick: number; kind: 'exploded'; x: number; y: number; byPlayer: boolean }
+  | { tick: number; kind: 'pickedUp'; collected: number }
   | DestroyedEvent;
 
 /** A wall in destroy mode killed a particle (or the player). */
