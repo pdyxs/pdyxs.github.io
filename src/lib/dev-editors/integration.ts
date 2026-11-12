@@ -59,7 +59,7 @@ function apiPlugin(editors: readonly EditorDefinition<any>[]) {
             method: req.method ?? 'GET',
             path: url.pathname,
             query: Object.fromEntries(url.searchParams),
-            body: req.method === 'PUT' ? await readBody(req) : undefined,
+            body: req.method === 'PUT' || req.method === 'POST' ? await readBody(req) : undefined,
           });
         } catch (err) {
           out = { status: 400, body: { error: err instanceof Error ? err.message : 'bad request' } };

@@ -11,12 +11,22 @@
 
   let name = $state('');
   let Editor = $state<any>(null);
-  let cards = $state<{ dir: string }[]>([]);
+  let cards = $state<{ dir: string; valid: boolean }[]>([]);
+  let folders = $state<string[]>([]);
+  let showAll = $state(false);
   let dir = $state('');
   let data = $state<unknown>(null);
   let status = $state('');
+  let newFolder = $state('');
+  let newTitle = $state('');
 
   const file = (d: string) => `${d}/index.json`;
+  const post = (path: string, body: unknown) =>
+    fetch(`${API}/${editorId}/${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+
+  async function loadCards() {
+    cards = await (await fetch(`${API}/${editorId}/cards${showAll ? '?all=1' : ''}`)).json();
+  }
 
   onMount(async () => {
     const editors: { id: string; name: string; component: string }[] = await (await fetch(`${API}/editors`)).json();
@@ -32,21 +42,58 @@
       return;
     }
     Editor = (await load()).default;
-    cards = await (await fetch(`${API}/${editorId}/cards`)).json();
+    await loadCards();
+    folders = await (await fetch(`${API}/folders`)).json();
+    newFolder = folders[0] ?? '';
   });
 
+  async function toggleAll(checked: boolean) {
+    showAll = checked;
+    await loadCards();
+  }
+
+  /** Make the card renderable (asking about any conflict), then load it. */
   async function choose(next: string) {
-    dir = next;
+    dir = '';
     data = null;
     status = '';
     if (!next) return;
-    const res = await fetch(`${API}/${editorId}/read?path=${encodeURIComponent(file(next))}`);
-    const body = await res.json();
+    const query = `open?path=${encodeURIComponent(next)}`;
+    let res = await post(query, {});
+    let body = await res.json();
+    if (res.status === 409) {
+      const lines = (body.conflicts as { property: string; old: string; new: string }[]).map((c) => `${c.property}: ${c.old} -> ${c.new}`);
+      if (!confirm(`This card conflicts with the ${name} editor. Replace?\n${lines.join('\n')}`)) {
+        status = 'not opened; nothing was changed';
+        return;
+      }
+      res = await post(query, { confirm: true });
+      body = await res.json();
+    }
     if (!res.ok) {
-      status = body.error ?? 'could not load';
+      status = body.error ?? 'could not open';
       return;
     }
-    data = body.data;
+    const read = await fetch(`${API}/${editorId}/read?path=${encodeURIComponent(file(next))}`);
+    const envelope = await read.json();
+    if (!read.ok) {
+      status = envelope.error ?? 'could not load';
+      return;
+    }
+    dir = next;
+    data = envelope.data;
+    await loadCards();
+  }
+
+  async function create() {
+    const res = await post('create', { parent: newFolder, title: newTitle });
+    const body = await res.json();
+    if (!res.ok) {
+      status = body.error ?? 'could not create';
+      return;
+    }
+    newTitle = '';
+    await choose(body.dir);
   }
 
   async function save() {
@@ -64,16 +111,42 @@
 <h1>{name} editor</h1>
 <label>
   Card
-  <select value={dir} onchange={(e) => choose(e.currentTarget.value)}>
+  <select class="cards" value={dir} onchange={(e) => choose(e.currentTarget.value)}>
     <option value="">Pick a card…</option>
     {#each cards as card (card.dir)}
-      <option value={card.dir}>{card.dir}</option>
+      <option value={card.dir}>{card.dir}{card.valid ? '' : ' (not set up for this editor)'}</option>
     {/each}
   </select>
 </label>
+<label>
+  <input type="checkbox" class="show-all" checked={showAll} onchange={(e) => toggleAll(e.currentTarget.checked)} />
+  Show all cards
+</label>
 
+<fieldset>
+  <legend>New card</legend>
+  <label>
+    Folder
+    <select class="new-folder" value={newFolder} onchange={(e) => (newFolder = e.currentTarget.value)}>
+      {#each folders as folder (folder)}
+        <option value={folder}>{folder}</option>
+      {/each}
+    </select>
+  </label>
+  <label>
+    Title
+    <input type="text" class="new-title" value={newTitle} oninput={(e) => (newTitle = e.currentTarget.value)} />
+  </label>
+  <button class="create" onclick={create}>Create</button>
+</fieldset>
+
+{#if dir}
+  <p><a class="page-link" href={`/card/${dir}`} target="_blank" rel="noopener">View this card on the site</a></p>
+{/if}
 {#if Editor && data !== null}
-  <Editor {data} readOnly={false} onChange={(next: unknown) => (data = next)} />
+  <div class="editor-pane">
+    <Editor {data} readOnly={false} onChange={(next: unknown) => (data = next)} />
+  </div>
   <button class="save" onclick={save}>Save</button>
 {/if}
 <p role="status">{status}</p>
