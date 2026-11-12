@@ -8,6 +8,7 @@ import { rehypeVideoEmbeds } from './src/lib/render/video-embeds.ts';
 import { devReloadPlugin } from './scripts/dev-reload-plugin.mjs';
 import { experimentsIntegration } from './scripts/experiments-integration.mjs';
 import { devEditors } from './src/lib/dev-editors/integration.ts';
+import { devInspect } from './src/lib/dev-inspect/integration.ts';
 import { demoEditor } from './src/lib/dev-editors/demo/definition.ts';
 import { ruffleAssetsPlugin } from './scripts/ruffle-assets-plugin.mjs';
 
@@ -15,8 +16,9 @@ import { ruffleAssetsPlugin } from './scripts/ruffle-assets-plugin.mjs';
 export default defineConfig({
   site: 'https://pdyxs.wtf',
   // Dev-only editors (src/lib/dev-editors): definitions are handed in here, the
-  // composition root; the standard never imports an editor.
-  integrations: [svelte(), experimentsIntegration(), devEditors({ editors: [demoEditor] })],
+  // composition root; the standard never imports an editor. devInspect
+  // (src/lib/dev-inspect) is the dev-only "mark inspected" endpoint.
+  integrations: [svelte(), experimentsIntegration(), devEditors({ editors: [demoEditor] }), devInspect()],
   // Old Jekyll permalinks (issue #70). The map is generated from the retired
   // site on `master` by scripts/generate-redirects.mjs (a prebuild step), never
   // hand-edited. In a static build Astro emits one meta-refresh HTML page per

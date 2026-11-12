@@ -91,6 +91,7 @@ const seriesDateBar = card.dateBar && entry?.data?.series
   data-uid={card.uid}
   data-content-hash={card.contentHash}
   data-width={card.width}
+  data-inspected={import.meta.env.DEV ? String(entry?.data?.inspected === true) : undefined}
 >
   {/* The spine sits outside the nav-renderer branch deliberately: a nav
       renderer owns the *header and body* of the card, not the `.stack-card`

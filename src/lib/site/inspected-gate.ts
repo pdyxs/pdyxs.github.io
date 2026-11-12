@@ -18,19 +18,32 @@ export function uninspectedCards(cards: readonly InspectableCard[]): string[] {
   return cards.filter(c => c.inspected !== true).map(c => c.uid);
 }
 
+function setInspected(raw: string, value: boolean): string {
+  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
+  if (!match) return `---\ninspected: ${value}\n---\n${raw}`;
+  const lines = match[1].split('\n');
+  const idx = lines.findIndex(l => /^inspected\s*:/.test(l));
+  if (idx === -1) lines.unshift(`inspected: ${value}`);
+  else lines[idx] = `inspected: ${value}`;
+  return raw.slice(0, match.index) + `---\n${lines.join('\n')}\n---` + raw.slice(match.index + match[0].length);
+}
+
 /**
  * Sets `inspected: false` on a card's raw source, textually. A gray-matter
  * round-trip would rewrite the whole frontmatter block (quoting, comments,
  * key order); this touches one line. Rollback's step 2 (§7).
  */
 export function setInspectedFalse(raw: string): string {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
-  if (!match) return `---\ninspected: false\n---\n${raw}`;
-  const lines = match[1].split('\n');
-  const idx = lines.findIndex(l => /^inspected\s*:/.test(l));
-  if (idx === -1) lines.unshift('inspected: false');
-  else lines[idx] = 'inspected: false';
-  return raw.slice(0, match.index) + `---\n${lines.join('\n')}\n---` + raw.slice(match.index + match[0].length);
+  return setInspected(raw, false);
+}
+
+/**
+ * Sets `inspected: true`, the same one-line textual edit. Ticking is Paul's own
+ * act (the dev-only "mark inspected" button), exempt from the "tools set
+ * `inspected: false`" rule.
+ */
+export function setInspectedTrue(raw: string): string {
+  return setInspected(raw, true);
 }
 
 /** The card file a uid (`what/projects/foo`) lives at; throws on anything that is not a card uid. */

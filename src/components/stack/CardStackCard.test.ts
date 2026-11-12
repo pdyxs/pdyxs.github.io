@@ -88,6 +88,33 @@ describe("CardStackCard", () => {
         );
     });
 
+    // Dev-only (issue #233): the "mark inspected" island reads this. Under
+    // vitest import.meta.env.DEV is true; the build strips the attribute.
+    it("exposes an unknown or unticked card as data-inspected=false in dev", async () => {
+        const container = await makeContainer();
+        const html = await container.renderToString(CardStackCard, {
+            props: { card: card({ uid: "what/posts/no-such-card" }) },
+        });
+
+        expect(
+            dom(html).querySelector(".stack-card")?.getAttribute("data-inspected"),
+        ).toBe("false");
+    });
+
+    it("exposes a card whose file says `inspected: true` as data-inspected=true in dev", async () => {
+        const uid = "what/art/the-path";
+        const src = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), `../../content/${uid}/index.md`), "utf8");
+        expect(src).toMatch(/^inspected: true$/m);
+        const container = await makeContainer();
+        const html = await container.renderToString(CardStackCard, {
+            props: { card: card({ uid }) },
+        });
+
+        expect(
+            dom(html).querySelector(".stack-card")?.getAttribute("data-inspected"),
+        ).toBe("true");
+    });
+
     it("carries the resolved width as a data-width attribute", async () => {
         const container = await makeContainer();
         const html = await container.renderToString(CardStackCard, {

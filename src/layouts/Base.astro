@@ -309,6 +309,10 @@ const jsonLd = [
         <span><a href="/">pdyxs.wtf</a> · <a href="/rss.xml">RSS</a></span>
       </footer>
     </div>
+    {/* Dev-only "mark inspected" island (src/lib/dev-inspect). Loaded by path
+        from Vite's dev server, not through a client directive, so a production
+        build neither bundles the island nor emits this tag. */}
+    {import.meta.env.DEV && <script is:inline type="module">import('/src/lib/dev-inspect/mount.ts');</script>}
     <script>
       // The palette's page-wide effects (palette-dom.ts): another tab's picks,
       // and the favicon, recoloured to the palette and the theme.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { uninspectedCards, setInspectedFalse, cardFileForUid, planRollbackStep } from './inspected-gate.ts';
+import { uninspectedCards, setInspectedFalse, setInspectedTrue, cardFileForUid, planRollbackStep } from './inspected-gate.ts';
 
 describe('uninspectedCards', () => {
   it('finds nothing when every card is inspected', () => {
@@ -36,6 +36,30 @@ describe('setInspectedFalse', () => {
 
   it('adds frontmatter when there is none', () => {
     expect(setInspectedFalse('body')).toBe('---\ninspected: false\n---\nbody');
+  });
+});
+
+describe('setInspectedTrue', () => {
+  it('flips an un-ticked flag, changing exactly that line', () => {
+    const raw = '---\ntitle: "X"\ninspected: false\n# note\n---\nbody\n';
+    expect(setInspectedTrue(raw)).toBe('---\ntitle: "X"\ninspected: true\n# note\n---\nbody\n');
+  });
+
+  it('adds the key when absent', () => {
+    expect(setInspectedTrue('---\ntitle: X\n---\nbody')).toBe('---\ninspected: true\ntitle: X\n---\nbody');
+  });
+
+  it('is a no-op when already true', () => {
+    const raw = '---\ninspected: true\n---\nbody';
+    expect(setInspectedTrue(raw)).toBe(raw);
+  });
+
+  it('replaces a non-boolean value, which does not count as inspected', () => {
+    expect(setInspectedTrue('---\ninspected: "true"\n---\nb')).toBe('---\ninspected: true\n---\nb');
+  });
+
+  it('adds frontmatter when there is none', () => {
+    expect(setInspectedTrue('body')).toBe('---\ninspected: true\n---\nbody');
   });
 });
 
