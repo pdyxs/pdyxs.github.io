@@ -7,12 +7,19 @@ import { rehypeExternalLinks } from './src/lib/render/external-links.ts';
 import { rehypeVideoEmbeds } from './src/lib/render/video-embeds.ts';
 import { particularsEditor } from './src/lib/particulars/editor/integration.ts';
 import { devReloadPlugin } from './scripts/dev-reload-plugin.mjs';
+import { experimentsIntegration } from './scripts/experiments-integration.mjs';
+import { devEditors } from './src/lib/dev-editors/integration.ts';
+import { devInspect } from './src/lib/dev-inspect/integration.ts';
+import { demoEditor } from './src/lib/dev-editors/demo/definition.ts';
+import { ruffleAssetsPlugin } from './scripts/ruffle-assets-plugin.mjs';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://pdyxs.wtf',
-  // The Particulars editor adds its route and write endpoint only under `astro dev`.
-  integrations: [svelte(), particularsEditor()],
+  // Dev-only editors (src/lib/dev-editors): definitions are handed in here, the
+  // composition root; the standard never imports an editor. devInspect
+  // (src/lib/dev-inspect) is the dev-only "mark inspected" endpoint.
+  integrations: [svelte(), experimentsIntegration(), devEditors({ editors: [demoEditor] }), devInspect(), particularsEditor()],
   // Old Jekyll permalinks (issue #70). The map is generated from the retired
   // site on `master` by scripts/generate-redirects.mjs (a prebuild step), never
   // hand-edited. In a static build Astro emits one meta-refresh HTML page per
@@ -50,7 +57,7 @@ export default defineConfig({
     // 504 "Outdated Optimize Dep": the toy never hydrates (issue #188, and
     // config.test.ts).
     optimizeDeps: {
-      include: ['planck'],
+      include: ['planck', '@ruffle-rs/ruffle'],
     },
     server: {
       allowedHosts: ['preview.pdyxs.wtf'],
@@ -75,7 +82,7 @@ export default defineConfig({
     // Dev only: content YAML (`_config.yaml`, `*.tag.yaml`, `*.lens.yaml`) is
     // read by fs / consumed by a pre* generator, so nothing in the module graph
     // changes when it does. See scripts/dev-reload-plugin.mjs.
-    plugins: [devReloadPlugin()],
+    plugins: [devReloadPlugin(), ruffleAssetsPlugin()],
     build: {
       // Any location can be pushed onto the stack from any other, and a
       // pushed location arrives as a fetched HTML fragment injected into

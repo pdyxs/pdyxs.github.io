@@ -1,0 +1,124 @@
+---
+import Base from '../layouts/Base.astro';
+// Throwaway: Pace edit list + intervention sheet + period sheet. B&W.
+---
+<Base title="Pace edit sheets">
+  <main style="max-width:44rem;margin:2rem auto;padding:0 1rem;font-family:system-ui;color:#000">
+    <h1>Pace: edit sheets (prototype)</h1>
+    <p>Tap a period header to edit it, tap a row to edit. Drag the ⠿ handle to reorder within a period. In the sheet, "Appears in" chips attach it to periods; each attached period gets its own days and its own Baseline/Reminded. "Archive" removes all periods; archived items sit at the bottom and come back by attaching a period.</p>
+    <div id="ph" class="ph"></div>
+  </main>
+  <style is:global>
+    .ph{width:360px;border:2px solid #000;background:#fff;padding:12px;font-size:16px;position:relative;min-height:520px}
+    .ph button{border:1.5px solid #000;background:#fff;font:inherit;font-size:14px;padding:3px 9px;cursor:pointer}
+    .ph button.on{background:#000;color:#fff}
+    .hd{display:flex;justify-content:space-between;font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;margin:14px 0 0;border-bottom:2px solid #000;padding:4px 0;cursor:pointer}
+    .row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #000;cursor:pointer}
+    .row .n{flex:1} .row small{display:block;font-size:13px}
+    .add{margin-top:6px;border-style:dashed!important}
+    .sheet{position:absolute;inset:0;background:#fff;padding:12px;overflow:auto}
+    .sheet label{display:block;font-size:13px;font-weight:700;margin:12px 0 4px;text-transform:uppercase}
+    .sheet input{font:inherit;border:1.5px solid #000;padding:4px;width:100%;box-sizing:border-box}
+    .chips{display:flex;gap:6px;flex-wrap:wrap}
+    .att{border:1.5px solid #000;padding:6px;margin-top:6px}
+    .grip{cursor:grab;padding:0 4px;touch-action:none}.row.over{border-top:3px solid #000}.row.drag{opacity:.4}
+  </style>
+  <script is:inline>
+    const D = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    let periods = [
+      { id: 'e', name: 'Early', from: '06:00', to: '12:00' },
+      { id: 'm', name: 'Morning', from: '07:30', to: '12:00' },
+      { id: 'a', name: 'Arvo', from: '14:00', to: '18:00' },
+      { id: 'v', name: 'Evening', from: '21:00', to: '23:59' },
+    ];
+    const all = [0,1,2,3,4,5,6];
+    let items = [
+      { id: 1, name: 'PEA-LUT', dose: { t: 'text', v: '' }, att: [{ p: 'e', days: all, kind: 'reminded' }, { p: 'v', days: all, kind: 'reminded' }] },
+      { id: 2, name: 'Physio', dose: { t: 'text', v: 'Bicep curls' }, att: [{ p: 'e', days: [0], kind: 'reminded' }] },
+      { id: 3, name: 'Morning pills', dose: { t: 'text', v: 'LDN, Famatodine' }, att: [{ p: 'm', days: all, kind: 'baseline' }] },
+      { id: 5, name: 'Magnesium', dose: { t: 'amt', n: '200', unit: 'mg' }, att: [] },
+      { id: 4, name: 'Ivabradine', dose: { t: 'amt', n: '5', unit: 'mg' }, att: [{ p: 'm', days: all, kind: 'baseline' }, { p: 'a', days: all, kind: 'reminded' }] },
+    ];
+    let sheet = null, nid = 10;
+    const ph = document.getElementById('ph');
+    const daysText = (d) => d.length === 7 ? 'Daily' : d.length === 5 && !d.includes(5) && !d.includes(6) ? 'Weekdays' : d.map((x) => D[x]).join(' ');
+    const doseText = (d) => d.t === 'amt' ? (d.n ? d.n + ' ' + d.unit : '') : d.v;
+    const pname = (id) => periods.find((p) => p.id === id)?.name;
+    function render() {
+      let h = '';
+      for (const p of periods) {
+        h += `<div class="hd" data-p="${p.id}"><span>${p.name} ${p.from}-${p.to === '23:59' ? 'eod' : p.to}</span><span>✎</span></div>`;
+        for (const i of items) for (const a of i.att.filter((a) => a.p === p.id)) {
+          h += `<div class="row" data-i="${i.id}" data-rp="${p.id}"><span class="grip" title="drag to reorder">⠿</span><span class="n">${i.name}<small>${doseText(i.dose) ? doseText(i.dose) + ' · ' : ''}${daysText(a.days)}${i.att.length > 1 ? ' · also ' + i.att.filter((x) => x !== a).map((x) => pname(x.p)).join(', ') : ''}</small></span><span style="font-size:13px">${a.kind === 'baseline' ? '◉ baseline' : '○ reminded'}</span></div>`;
+        }
+        h += `<button class="add" data-n="${p.id}">+ intervention</button>`;
+      }
+      h += `<div><button class="add" data-np style="margin-top:16px">+ period</button></div>`;
+      const arch = items.filter((i) => !i.att.length);
+      h += `<div class="hd" style="cursor:default;margin-top:24px"><span>Archived (${arch.length})</span></div>` + arch.map((i) => `<div class="row" data-i="${i.id}"><span class="n">${i.name}<small>not in any period</small></span></div>`).join('');
+      if (sheet) h += sheetHtml();
+      ph.innerHTML = h; wire();
+    }
+    function sheetHtml() {
+      if (sheet.type === 'p') {
+        const p = sheet.d;
+        return `<div class="sheet"><b>${sheet.isNew ? 'New period' : 'Edit period'}</b>
+          <label>Name</label><input id="f-name" value="${p.name}">
+          <label>Window</label><div style="display:flex;gap:8px"><input id="f-from" value="${p.from}"><input id="f-to" value="${p.to}"></div>
+          <p style="font-size:13px">${sheet.isNew ? '' : items.filter((i) => i.att.some((a) => a.p === p.id)).length + ' interventions use this period. '}</p>
+          <div style="display:flex;gap:8px;margin-top:16px"><button id="save">Save</button><button id="cancel">Cancel</button>${sheet.isNew ? '' : '<button id="del">Delete period</button>'}</div></div>`;
+      }
+      const i = sheet.d;
+      let h = `<div class="sheet"><b>${sheet.isNew ? 'New intervention' : 'Edit intervention'}</b>
+        <label>Name</label><input id="f-name" value="${i.name}">
+        <label>Dose / detail</label><div class="chips"><button data-dt="text" class="${i.dose.t === 'text' ? 'on' : ''}">Text</button><button data-dt="amt" class="${i.dose.t === 'amt' ? 'on' : ''}">Amount + unit</button></div>
+        ${i.dose.t === 'text' ? `<input id="f-dtext" value="${i.dose.v}" placeholder="e.g. Bicep curls, 4kg 3x6">` : `<div style="display:flex;gap:8px;margin-top:6px"><input id="f-dn" inputmode="decimal" value="${i.dose.n}" placeholder="2" style="width:30%"><input id="f-du" list="units" value="${i.dose.unit}" placeholder="pills, mg…"><datalist id="units"><option>pills</option><option>mg</option><option>g</option><option>ml</option><option>mcg</option></datalist></div>`}
+        <label>Appears in</label><div class="chips">${periods.map((p) => `<button data-ap="${p.id}" class="${i.att.some((a) => a.p === p.id) ? 'on' : ''}">${p.name}</button>`).join('')}</div>`;
+      for (const a of i.att) {
+        h += `<div class="att"><b style="font-size:13px">${pname(a.p)} · ${daysText(a.days)}</b><div class="chips" style="margin-top:4px"><button data-kp="${a.p}" data-k="baseline" class="${a.kind === 'baseline' ? 'on' : ''}">Baseline</button><button data-kp="${a.p}" data-k="reminded" class="${a.kind === 'reminded' ? 'on' : ''}">Reminded</button></div><div class="chips" style="margin-top:6px">${D.map((d, k) => `<button data-dp="${a.p}" data-d="${k}" class="${a.days.includes(k) ? 'on' : ''}">${d[0]}</button>`).join('')}</div></div>`;
+      }
+      h += `<div style="display:flex;gap:8px;margin-top:16px"><button id="save">Save</button><button id="cancel">Cancel</button>${sheet.isNew || !i.att.length ? '' : '<button id="del">Archive</button>'}</div>${i.att.length ? '' : '<p style="font-size:13px">Archived: attach a period above to bring it back.</p>'}</div>`;
+      return h;
+    }
+    function wire() {
+      const $ = (s) => ph.querySelectorAll(s);
+      const sync = () => { const n = document.getElementById('f-name'); if (n) sheet.d.name = n.value; const dt = document.getElementById('f-dtext'); if (dt) sheet.d.dose.v = dt.value; const dn = document.getElementById('f-dn'); if (dn) { sheet.d.dose.n = dn.value; sheet.d.dose.unit = document.getElementById('f-du').value; } const f = document.getElementById('f-from'); if (f) { sheet.d.from = f.value; sheet.d.to = document.getElementById('f-to').value; } };
+      $('[data-p]').forEach((e) => e.onclick = () => { sheet = { type: 'p', d: { ...periods.find((p) => p.id === e.dataset.p) } }; render(); });
+      $('[data-np]').forEach((e) => e.onclick = () => { sheet = { type: 'p', isNew: true, d: { id: 'p' + nid++, name: '', from: '09:00', to: '12:00' } }; render(); });
+      $('[data-i]').forEach((e) => e.onclick = () => { const i = items.find((x) => x.id == e.dataset.i); sheet = { type: 'i', d: JSON.parse(JSON.stringify(i)) }; render(); });
+      $('[data-n]').forEach((e) => e.onclick = () => { sheet = { type: 'i', isNew: true, d: { id: nid++, name: '', dose: { t: 'amt', n: '', unit: '' }, att: [{ p: e.dataset.n, days: [...all], kind: 'reminded' }] } }; render(); });
+      $('.row[data-rp] .grip').forEach((g) => {
+        const row = g.closest('.row');
+        g.onclick = (ev) => ev.stopPropagation();
+        g.onpointerdown = (ev) => {
+          ev.preventDefault(); ev.stopPropagation(); g.setPointerCapture(ev.pointerId); row.classList.add('drag');
+          let target = null;
+          const clear = () => ph.querySelectorAll('.over').forEach((x) => x.classList.remove('over'));
+          g.onpointermove = (m) => {
+            clear(); target = null;
+            const el = document.elementFromPoint(m.clientX, m.clientY)?.closest('.row[data-rp]');
+            if (el && el !== row && el.dataset.rp === row.dataset.rp) { target = el; el.classList.add('over'); }
+          };
+          g.onpointerup = g.onpointercancel = () => {
+            g.onpointermove = g.onpointerup = g.onpointercancel = null;
+            if (target) {
+              const from = items.findIndex((x) => x.id == row.dataset.i), mv = items.splice(from, 1)[0];
+              items.splice(items.findIndex((x) => x.id == target.dataset.i), 0, mv);
+            }
+            render();
+          };
+        };
+      });
+      if (!sheet) return;
+      $('[data-dt]').forEach((e) => e.onclick = () => { sync(); const d = sheet.d.dose, t = e.dataset.dt; if (d.t !== t) sheet.d.dose = t === 'amt' ? { t, n: '', unit: '' } : { t, v: '' }; render(); });
+      $('[data-k]').forEach((e) => e.onclick = () => { sync(); sheet.d.att.find((x) => x.p === e.dataset.kp).kind = e.dataset.k; render(); });
+      $('[data-ap]').forEach((e) => e.onclick = () => { sync(); const a = sheet.d.att, k = a.findIndex((x) => x.p === e.dataset.ap); k >= 0 ? a.splice(k, 1) : a.push({ p: e.dataset.ap, days: [...all], kind: 'reminded' }); render(); });
+      $('[data-dp]').forEach((e) => e.onclick = () => { sync(); const a = sheet.d.att.find((x) => x.p === e.dataset.dp), d = +e.dataset.d; a.days = a.days.includes(d) ? a.days.filter((x) => x !== d) : [...a.days, d].sort(); render(); });
+      document.getElementById('cancel').onclick = () => { sheet = null; render(); };
+      document.getElementById('save').onclick = () => { sync(); const list = sheet.type === 'p' ? periods : items, k = list.findIndex((x) => x.id === sheet.d.id); k >= 0 ? list[k] = sheet.d : list.push(sheet.d); sheet = null; render(); };
+      const del = document.getElementById('del');
+      if (del) del.onclick = () => { if (sheet.type === 'p') { periods = periods.filter((p) => p.id !== sheet.d.id); items.forEach((i) => i.att = i.att.filter((a) => a.p !== sheet.d.id)); } else { const it = items.find((i) => i.id === sheet.d.id); it.att = []; } sheet = null; render(); };
+    }
+    render();
+  </script>
+</Base>

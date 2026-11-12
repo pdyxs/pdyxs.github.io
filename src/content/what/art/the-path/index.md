@@ -32,6 +32,7 @@ meta:
     values:
       - Art Heist, 2016
       - Art Attacks the Little Guy, 2016
+solo: true
 ---
 The Path is a visualisation of the draft publication of the [Open Tree of Life](http://opentreeoflife.org), a database of 2.3 million species and their genetic origins published in September 2015.
 

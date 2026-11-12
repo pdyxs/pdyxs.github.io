@@ -366,4 +366,34 @@ describe('GenericRenderer', () => {
     div.innerHTML = html;
     expect(div.querySelector('.generic-related')).toBeNull();
   });
+
+  describe('credits section', () => {
+    const credits = { line: { names: ['Nick Kolan'] }, listing: [{ rows: [{ role: 'Designer', entries: [{ name: 'Nick Kolan' }] }] }] };
+
+    it('renders the section immediately before .card-prose, after the meta rows', async () => {
+      const container = await makeContainer();
+      const html = await container.renderToString(GenericRenderer, {
+        props: { entry: fakeEntry({ description: 'body text', medium: 'Game' }), Content: undefined, credits },
+      });
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      expect(div.textContent).toContain('made by Nick Kolan');
+      const prose = div.querySelector('.card-prose')!;
+      expect(prose.previousElementSibling?.matches('astro-island')).toBe(true);
+      expect(prose.previousElementSibling!.querySelector('.credits')).not.toBeNull();
+      const meta = div.querySelector('.generic-meta')!;
+      expect(meta.compareDocumentPosition(prose.previousElementSibling!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('renders no section and no wrapper for a card without credits', async () => {
+      const container = await makeContainer();
+      const html = await container.renderToString(GenericRenderer, {
+        props: { entry: fakeEntry({ description: 'body text' }), Content: undefined },
+      });
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      expect(div.querySelector('.credits')).toBeNull();
+      expect(html).not.toContain('credits');
+    });
+  });
 });

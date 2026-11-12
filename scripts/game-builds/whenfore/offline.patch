@@ -1,0 +1,62 @@
+--- a/whenfore/src/whenfore.mxml
++++ b/whenfore/src/whenfore.mxml
+@@ -167,21 +167,47 @@
+ 			
+ 			
+ 			//Utility functions
++			// OFFLINE BUILD: pdyxs.org/whenfor/ (the PHP+MySQL server in php_sql_server/) is gone.
++			// This answers the same five requests in memory, in the same XML the PHP scripts printed.
++			// WhEngine is already single-player, so the server only ever stored decisions.
++			private var fakeDecisions:Object = {};
++			private var fakeTurn:int = 0;
++			
+ 			protected function makeServerRequest(targetFile:String, variables:URLVariables, callback:Function):void
+ 			{
+-				// AS3  
+-				// Create a Request Loader  
+-				var loader : URLLoader = new URLLoader();  
+-				var request : URLRequest = new URLRequest(DB_SERVER_URL + targetFile);  
+-				
+-				// pass the post data  
+-				//request.method = URLRequestMethod.POST;
+-				request.method = URLRequestMethod.GET;
+-				request.data = variables;  
++				var response:String = "";
++				if (targetFile == "getUserDetails.php")
++				{
++					response = "<userDetails><currentPlayer id='1' name='" + variables.userName + "' />"
++						+ "<battles><battle id='1'>"
++						+ "<player id='1' name='" + variables.userName + "' characterID='1' characterName='Romeo' sequence='1' />"
++						+ "</battle></battles></userDetails>";
++				}
++				else if (targetFile == "createBattle.php")
++				{
++					response = "1";
++				}
++				else if (targetFile == "postDecision.php")
++				{
++					fakeTurn++;
++					fakeDecisions[String(variables.scene)] = {choice: (variables.choice == "true" || variables.choice == 1) ? 1 : 0, turn: fakeTurn};
++					response = "1";
++				}
++				else if (targetFile == "getDecisions.php" && fakeTurn > 0)
++				{
++					response = "<decisionset battle_id = '" + variables.battle_ID + "' user_id = '" + variables.user_ID + "'>";
++					for (var scene:String in fakeDecisions)
++					{
++						var d:Object = fakeDecisions[scene];
++						response += "<decision scene='" + scene + "' choice='" + d.choice + "' lastDecision='" + (d.turn == fakeTurn) + "' turn='" + d.turn + "' player='1' />";
++					}
++					response += "</decisionset>";
++				}
+ 				
+-				// Add Handlers  
+-				loader.addEventListener(Event.COMPLETE, callback);  
+-				loader.load(request);
++				var loader : URLLoader = new URLLoader();
++				loader.data = response;
++				loader.addEventListener(Event.COMPLETE, callback);
++				loader.dispatchEvent(new Event(Event.COMPLETE));
+ 			}
+ 			
+ 			private function printDebug(event:Event):void

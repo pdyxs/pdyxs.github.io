@@ -1,8 +1,13 @@
 /* ── Reset ─────────────────────────────────────────────────────── */
 
+/* No page-wide colour transition. A theme or palette change has to land on
+   every surface in the same frame: the dithers are background images, which
+   can't transition, and any component that sets its own `transition` (the
+   card header) drops this one, so a 150ms fade here left solid fills fading
+   beside surfaces that had already switched, and their seams showed as
+   borders mid-change. */
 *, *::before, *::after {
   box-sizing: border-box;
-  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
 }
 
 html {

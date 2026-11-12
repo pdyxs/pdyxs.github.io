@@ -1,0 +1,8 @@
+{
+  "editor": "demo",
+  "version": "1.0.0",
+  "data": {
+    "text": "Hello from the demo editor",
+    "count": 3
+  }
+}

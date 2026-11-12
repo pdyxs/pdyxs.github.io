@@ -1,0 +1,88 @@
+---
+import Base from '../layouts/Base.astro';
+
+// Throwaway: Pace app prototypes for (1) Today's interventions and (2) editing the list + order.
+// Pure B&W for e-ink. Same data shape as Interventions.md (windows, groups).
+const items = [
+  { name: 'PEA-LUT', group: 'Early', from: '06:00', to: '12:00', kind: 'reminded', detail: '' },
+  { name: 'Physio', group: 'Early', from: '06:00', to: '23:59', kind: 'reminded', detail: 'Bicep curls (4kg, 3x6)' },
+  { name: 'Morning pills', group: 'Morning', from: '07:30', to: '12:00', kind: 'baseline', detail: 'LDN 10mg, Famatodine, Claratyne' },
+  { name: 'Powders', group: 'Morning', from: '07:30', to: '12:00', kind: 'baseline', detail: 'Probiotics, Salt, Creatine 5g' },
+  { name: 'Brekky Ive', group: 'Morning', from: '08:00', to: '14:00', kind: 'reminded', detail: 'Ivabradine' },
+  { name: 'Compression', group: 'Day', from: '08:30', to: '23:59', kind: 'baseline', detail: 'Tights / Socks' },
+  { name: 'Arvo Ive', group: 'Arvo', from: '14:00', to: '18:00', kind: 'reminded', detail: 'Ivabradine' },
+  { name: 'Evening pills', group: 'Evening', from: '21:00', to: '23:59', kind: 'reminded', detail: 'PEA-LUT, Famatodine' },
+];
+---
+<Base title="Pace interventions">
+  <main style="max-width:44rem;margin:2rem auto;padding:0 1rem;font-family:system-ui;color:#000">
+    <h1>Pace app: interventions (prototype)</h1>
+    <p>Two screens. Scrub the clock for Today; edit the list and watch Today change. Baseline = counts as done unless you mark a miss.</p>
+    <label>Time <input id="t" type="range" min="360" max="1380" step="15" value="600" style="width:60%"> <b id="tl"></b></label>
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;margin-top:1rem;align-items:flex-start">
+      <section><h3>1. Today</h3><div id="today" class="ph"></div></section>
+      <section><h3>2. Edit interventions</h3><div id="edit" class="ph"></div></section>
+    </div>
+  </main>
+  <style is:global>
+    .ph{width:340px;border:2px solid #000;background:#fff;padding:12px;font-size:16px}
+    .row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #000}
+    .row .n{flex:1} .row small{display:block;font-weight:400;font-size:13px}
+    .ph button{border:1.5px solid #000;background:#fff;font:inherit;font-size:14px;padding:2px 8px;cursor:pointer}
+    .hd{font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;margin:10px 0 0}
+  </style>
+  <script is:inline define:vars={{ items }}>
+    let list = items.map((i) => ({ ...i }));
+    const ticked = new Set(), missed = new Set();
+    const m = (s) => { const [h, mi] = s.split(':').map(Number); return h * 60 + mi; };
+    const fmt = (n) => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
+    const end = (s) => s === '23:59' ? 'eod' : s;
+    const svg = (inner) => `<svg width="26" height="26" viewBox="0 0 26 26">${inner}</svg>`;
+    const dot = (i, now) => {
+      const c = (x) => `<circle cx="13" cy="13" r="11" ${x}/>`;
+      if (i.kind === 'baseline') {
+        if (missed.has(i.name)) return svg(c('fill="#fff" stroke="#000" stroke-width="2" stroke-dasharray="3 3"'));
+        return svg(c('fill="#000" stroke="#000" stroke-width="2" stroke-dasharray="3 3"'));
+      }
+      if (ticked.has(i.name)) return svg(c('fill="#000"'));
+      if (now > m(i.to)) return svg(c('fill="#fff" stroke="#000" stroke-width="2"') + '<text x="13" y="19" text-anchor="middle" font-size="18" font-weight="700">!</text>');
+      return svg(c(`fill="#fff" stroke="#000" stroke-width="${now >= m(i.from) ? 4 : 1.5}"`));
+    };
+    function render() {
+      const now = +document.getElementById('t').value;
+      document.getElementById('tl').textContent = fmt(now);
+      const groups = [...new Set(list.map((i) => i.group))];
+      const next = list.find((i) => i.kind === 'reminded' && !ticked.has(i.name) && now >= m(i.from));
+      let h = `<div style="font-size:22px;font-weight:700;min-height:28px">${next ? 'Next: ' + next.name : 'All caught up'}</div>`;
+      for (const g of groups) {
+        h += `<div class="hd">${g}</div>`;
+        for (const i of list.filter((x) => x.group === g)) {
+          const act = i.kind === 'baseline' ? (missed.has(i.name) ? 'Undo' : 'Missed') : (ticked.has(i.name) ? 'Undo' : 'Done');
+          h += `<div class="row"><span>${dot(i, now)}</span><span class="n">${i.name}<small>${i.detail} · ${i.from}-${end(i.to)}</small></span><button data-a="${i.name}">${act}</button></div>`;
+        }
+      }
+      document.getElementById('today').innerHTML = h;
+      let e = '';
+      for (const g of groups) {
+        e += `<div class="hd">${g}</div>`;
+        for (const i of list.filter((x) => x.group === g)) {
+          e += `<div class="row"><span style="display:flex;flex-direction:column"><button data-u="${i.name}">▲</button><button data-d="${i.name}">▼</button></span>
+            <span class="n">${i.name}<small>${i.from}-${end(i.to)} · Daily</small></span>
+            <button data-k="${i.name}">${i.kind === 'baseline' ? 'Baseline' : 'Reminded'}</button></div>`;
+        }
+      }
+      e += `<p style="font-size:13px;margin:10px 0 0">Order sets which reminder shows as "Next" when several are due. Tap Baseline/Reminded to switch.</p>`;
+      document.getElementById('edit').innerHTML = e;
+      const by = (n) => list.findIndex((x) => x.name === n);
+      document.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => {
+        const i = list[by(b.dataset.a)], s = i.kind === 'baseline' ? missed : ticked;
+        s.has(i.name) ? s.delete(i.name) : s.add(i.name); render(); });
+      document.querySelectorAll('[data-k]').forEach((b) => b.onclick = () => { const i = list[by(b.dataset.k)]; i.kind = i.kind === 'baseline' ? 'reminded' : 'baseline'; render(); });
+      const mv = (n, d) => { const k = by(n), g = list[k].group, t = list.map((x, j) => [x, j]).filter(([x, j]) => x.group === g && j !== k && (d < 0 ? j < k : j > k)); if (!t.length) return; const j = d < 0 ? t[t.length - 1][1] : t[0][1]; [list[k], list[j]] = [list[j], list[k]]; render(); };
+      document.querySelectorAll('[data-u]').forEach((b) => b.onclick = () => mv(b.dataset.u, -1));
+      document.querySelectorAll('[data-d]').forEach((b) => b.onclick = () => mv(b.dataset.d, 1));
+    }
+    document.getElementById('t').oninput = render;
+    render();
+  </script>
+</Base>

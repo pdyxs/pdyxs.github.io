@@ -15,6 +15,8 @@ inspected: true
 # Optional fields for this folder — uncomment the ones you need.
 # description:  # string
 # priority:     # number
+# credits:      # list of { name, person?, role?, group?, note?, listed? }
+# solo:         # true | false
 # excludeTags:  # list of strings
 # awaitsCode:   # true | false
 # image:        # string

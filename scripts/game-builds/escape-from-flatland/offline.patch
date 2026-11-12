@@ -1,0 +1,42 @@
+--- a/src/Escape.mxml	2026-10-25 16:55:46.438007338 +1100
++++ b/src/Escape.mxml	2026-10-25 16:55:46.439152216 +1100
+@@ -21,7 +21,7 @@
+ 	</fx:Declarations>
+ 	<fx:Script>
+ 		<![CDATA[
+-			import com.adobe.serialization.json.JSON;
++			// OFFLINE BUILD: as3corelib JSON import dropped; native JSON used below.
+ 			import com.facebook.graph.Facebook;
+ 			import com.facebook.graph.data.FacebookSession;
+ 			import com.greensock.TimelineMax;
+@@ -158,10 +158,8 @@
+ 			
+ 			protected function gotoSigninScreen(event:MouseEvent):void
+ 			{
+-				if (fbsession == null)
+-					currentState = "Login";
+-				else
+-					playGame(event);
++				// OFFLINE BUILD: Facebook sign-in is gone, so skip the Login screen.
++				playGame(event);
+ 			}
+ 			
+ 			protected function playGame(event:MouseEvent):void
+@@ -228,7 +226,7 @@
+ 				if (loader.data)
+ 				{
+ 					friends = new Vector.<Friend>();
+-					var friendsO:Object = JSON.decode(loader.data as String);
++					var friendsO:Object = JSON.parse(loader.data as String);
+ 					for each (var friend:Object in friendsO.data)
+ 					{
+ 						var f:Friend = new Friend(friend.id, fullFriendsDict[friend.id], friend.level);
+@@ -478,7 +476,7 @@
+ 				 text="Please wait a moment, while our Three-Dimensional magic makes this game possible..."
+ 				 textAlign="center"/>
+ 	</s:VGroup>
+-	<s:Label id="fbsigninButton" includeIn="LevelSelect,Menu" right="5" top="5" backgroundAlpha="0.3"
++	<s:Label id="fbsigninButton" includeIn="LevelSelect,Menu" visible="false" right="5" top="5" backgroundAlpha="0.3"
+ 			 backgroundColor="#6F5C5C" click="signIn(event, currentState)" fontFamily="Georgia"
+ 			 fontSize="15" paddingBottom="3" paddingLeft="7" paddingRight="7" paddingTop="7"
+ 			 text="Sign in with Facebook"/>

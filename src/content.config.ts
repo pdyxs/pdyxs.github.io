@@ -2,6 +2,7 @@ import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 import { ACTION_KINDS } from "@content/cards/card-actions";
+import { CREDIT_LISTED } from "@content/credits/credits";
 import { CONTENT_GLOB_PATTERN } from "@content/folders/content-glob";
 import { normaliseAuthoredTags } from "@content/tags/five-w";
 
@@ -52,6 +53,21 @@ const quote = z.object({
 const metaRow = z.object({
     label: z.string(),
     values: z.array(z.string()).nullable().default([]).transform((v) => v ?? []),
+});
+
+// One credit on a card's `credits:` block. Like `metaRow`, deliberately ONE
+// shape (every entry the same six keys) so Metadata Menu can edit it as an
+// Object List. `person` is a bare slug (`me` is Paul), optional strings may be
+// left empty (credits.ts normalises that away), and an unknown `listed` fails
+// the build. Unlike the list fields above, the block itself has no `.default([])`:
+// an absent `credits:` must stay distinct from an empty one.
+const credit = z.object({
+    name: z.string(),
+    person: z.string().nullish(),
+    role: z.string().nullish(),
+    group: z.string().nullish(),
+    note: z.string().nullish(),
+    listed: z.enum(CREDIT_LISTED).default("map"),
 });
 
 // ─── Unified content collection ───────────────────────────────────────────────
@@ -105,6 +121,11 @@ const content = defineCollection({
         // Zod strips unknown keys, so `priorty:` would be silently ignored —
         // src/lib/content/cards/priority-frontmatter.test.ts fails the build instead.
         priority: z.number().optional(),
+        // Opt-in credits block (see `credit` above). Absent stays undefined.
+        credits: z.array(credit).nullish().transform((v) => v ?? undefined),
+        // Solo work on a card with no `credits:` block: `who:collaborators/none`.
+        // Neither this nor credits means no size tag. See teamSizeBucket().
+        solo: z.boolean().optional(),
         // ── generated-tag overrides ──
         // Derivation control. `location:`/`era:` used to live here as "derive
         // this instead" knobs; issue #116 retired both, so redirecting a
@@ -157,16 +178,20 @@ const content = defineCollection({
         // that, which is why `viewable: always` became `tags: [why/viewable]`
         // and why `location:`/`era:` could be retired outright.
         excludeTags: z.array(z.string()).nullable().optional().transform((v) => v ?? undefined),
-        // Manual "a human has read this card end to end" flag. Obsidian's
+        // The publish gate: `true` means "a human has read this card end to
+        // end, and it may go live now". Obsidian's
         // Properties view only renders a checkbox for a key that actually
         // exists in the file — scripts/backfill-inspected.mjs stamps it onto
         // any card that lacks it (idempotent, safe to re-run). Absence counts
-        // the same as `false` everywhere this is read.
+        // the same as `false` everywhere this is read: the audit lens, the
+        // `why:uninspected` facet, the promotion script and the `main`-only CI
+        // assertion (scripts/assert-inspected.mjs) share that one definition.
         //
-        // Not a one-off: any automated edit to a card's frontmatter or body —
+        // Any automated edit to a card's frontmatter or body —
         // a script, a generator, an AI agent — must reset this to `false` as
         // part of that edit (see docs/agents/workflow.md,
-        // "`inspected` is a permanent editorial flag"). It also drives the dev-only
+        // "`inspected` is the publish gate"; the promotion script clearing
+        // `awaitsCode` is the one stated exception). It also drives the dev-only
         // `why:uninspected` filter (src/lib/content/tags/uninspected-facet.ts), and the
         // `not-inspected` finding on the dev-only audit lens (src/lib/site/audit.ts).
         inspected: z.boolean().optional(),

@@ -1,0 +1,11 @@
+--- a/src/Main.mxml
++++ b/src/Main.mxml
+@@ -73,7 +73,7 @@
+ 	<s:Image includeIn="Menu" x="0" y="0" source="@Embed('../assets/img/mainscreen.png')" click="currentState = 'play'"/>
+ 	<s:BorderContainer x="655" y="10" width="135" height="55" borderColor="#000000"
+ 					   borderWeight="6" click.Menu="currentState='credits'" click="currentState='Menu'">
+-		<s:Label x="10" y="10" width="103" height="23" fontFamily="Georgia"
++		<s:Label x="10" y="6" width="103" height="32" fontFamily="Georgia"
+ 				 fontSize="26" text.Menu="Credits" text="Back" textAlign="center" verticalAlign="middle"/>
+ 	</s:BorderContainer>
+ 	<s:BorderContainer id="lossText" visible="false" includeIn="play" bottom="30" width="650" height="110" borderColor="#000000"

@@ -46,6 +46,7 @@ images:
   - 5-5b.jpg
   - comic-e.jpg
 medium: Video Game
+series: Particulars
 meta:
   - label: Topic
     values:
@@ -65,15 +66,673 @@ meta:
   - label: Published by
     values:
       - Surprise Attack
-  - label: Roles
-    values:
-      - Producer, Lead Designer, Programmer, Writer
   - label: Accolades
     values:
       - Winner, Best Narrative, Freeplay Awards 2013
       - Winner, Best Audio Design, Freeplay Awards 2013
       - Winner, Sydney Indie Showcase, iFest 2013
       - Finalist, Best Audio Design, Australian Game Development Awards, 2013
+credits:
+  - name: Paul Sztajer
+    person: me
+    role: Producer
+    group: Production
+    note: ""
+    listed: map
+  - name: Saul Alexander
+    person: saul-alexander
+    role: Creative Director
+    group: Production
+    note: ""
+    listed: map
+  - name: Anurag Dey
+    person: anurag-dey
+    role: Production Assistance
+    group: Production
+    note: ""
+    listed: map
+  - name: David Molloy
+    person: david-molloy
+    role: Promotional Video
+    group: Production
+    note: ""
+    listed: map
+  - name: Paul Sztajer
+    person: me
+    role: Lead Designer
+    group: Design
+    note: ""
+    listed: map
+  - name: Tim Stobo
+    person: tim-stobo
+    role: Designers
+    group: Design
+    note: ""
+    listed: map
+  - name: Saul Alexander
+    person: saul-alexander
+    role: Designers
+    group: Design
+    note: ""
+    listed: map
+  - name: Declan Dovell
+    person: declan-dovell
+    role: Designers
+    group: Design
+    note: ""
+    listed: map
+  - name: Saul Alexander
+    person: saul-alexander
+    role: Lead Writer
+    group: Writing
+    note: ""
+    listed: map
+  - name: Chloe Paul
+    person: chloe-paul
+    role: Writers
+    group: Writing
+    note: ""
+    listed: map
+  - name: Paul Sztajer
+    person: me
+    role: Writers
+    group: Writing
+    note: ""
+    listed: map
+  - name: Alexander Cetinski
+    person: alexander-cetinski
+    role: ""
+    group: Programming
+    note: ""
+    listed: map
+  - name: Aidan Boneham
+    person: aidan-boneham
+    role: ""
+    group: Programming
+    note: ""
+    listed: map
+  - name: Christopher Ackad
+    person: christopher-ackad
+    role: ""
+    group: Programming
+    note: ""
+    listed: map
+  - name: David Bray
+    person: david-bray
+    role: ""
+    group: Programming
+    note: ""
+    listed: map
+  - name: Declan Dovell
+    person: declan-dovell
+    role: ""
+    group: Programming
+    note: ""
+    listed: map
+  - name: Paul Sztajer
+    person: me
+    role: ""
+    group: Programming
+    note: ""
+    listed: map
+  - name: Thomas Bowker
+    person: thomas-bowker
+    role: ""
+    group: Programming
+    note: ""
+    listed: map
+  - name: Peter Bentley
+    person: peter-bentley
+    role: Gameplay Art
+    group: Art
+    note: ""
+    listed: map
+  - name: Vincent Pham
+    person: vincent-pham
+    role: Gameplay Art
+    group: Art
+    note: ""
+    listed: map
+  - name: Kristy Brodie
+    person: kristy-brodie
+    role: Concepts & Storyboarding
+    group: Art
+    note: ""
+    listed: map
+  - name: Jennifer Mills
+    person: jennifer-mills
+    role: Concepts & Storyboarding
+    group: Art
+    note: ""
+    listed: map
+  - name: Vincent Pham
+    person: vincent-pham
+    role: Concepts & Storyboarding
+    group: Art
+    note: ""
+    listed: map
+  - name: Tim Kadwell
+    person: tim-kadwell
+    role: Concepts & Storyboarding
+    group: Art
+    note: ""
+    listed: map
+  - name: Elise Mitchell
+    person: elise-mitchell
+    role: Concepts & Storyboarding
+    group: Art
+    note: ""
+    listed: map
+  - name: Dane Armour
+    person: dane-armour
+    role: Concepts & Storyboarding
+    group: Art
+    note: ""
+    listed: map
+  - name: Louise Fisher
+    person: louise-fisher
+    role: Concepts & Storyboarding
+    group: Art
+    note: ""
+    listed: map
+  - name: Amelia (Mia) Myers
+    person: amelia-myers
+    role: Animatics Art
+    group: Art
+    note: ""
+    listed: map
+  - name: Thomas Dicker
+    person: tom-dicker
+    role: Animatics Animation
+    group: Art
+    note: ""
+    listed: map
+  - name: Bridie Connell
+    person: bridie-connell
+    role: Starring
+    group: Cast
+    note: as Alison Scott
+    listed: map
+  - name: Belinda Sculley
+    person: belinda-sculley
+    role: Starring
+    group: Cast
+    note: as Dr Phillipa Grey
+    listed: map
+  - name: Carlo Ritchie
+    person: carlo-ritchie
+    role: Starring
+    group: Cast
+    note: as Robert Scott
+    listed: map
+  - name: Nick Starte
+    person: nick-starte
+    role: Starring
+    group: Cast
+    note: as John Patel
+    listed: map
+  - name: Noni Hollands
+    person: noni-hollands
+    role: Starring
+    group: Cast
+    note: as Gabriela Vasquez
+    listed: map
+  - name: Amelia (Mia) Myers
+    person: amelia-myers
+    role: Additional Voices
+    group: Cast
+    note: ""
+    listed: map
+  - name: Bryce Halliday
+    person: bryce-halliday
+    role: Additional Voices
+    group: Cast
+    note: ""
+    listed: map
+  - name: Chloe Paul
+    person: chloe-paul
+    role: Additional Voices
+    group: Cast
+    note: ""
+    listed: map
+  - name: Elise Mitchell
+    person: elise-mitchell
+    role: Additional Voices
+    group: Cast
+    note: ""
+    listed: map
+  - name: Saul Alexander
+    person: saul-alexander
+    role: Additional Voices
+    group: Cast
+    note: ""
+    listed: map
+  - name: Angus O'Sullivan
+    person: angus-osullivan
+    role: Composer
+    group: Music
+    note: ""
+    listed: map
+  - name: Daniel Baker
+    person: dan-baker
+    role: Additional Music
+    group: Music
+    note: ""
+    listed: map
+  - name: Geri Green
+    person: geri-green
+    role: Additional Music
+    group: Music
+    note: ""
+    listed: map
+  - name: Chris Rollans
+    person: chris-rollans
+    role: Mixing
+    group: Music
+    note: ""
+    listed: map
+  - name: Bryce Halliday
+    person: bryce-halliday
+    role: '"Small" — Music & Lyrics'
+    group: Music
+    note: ""
+    listed: map
+  - name: Bryce Halliday
+    person: bryce-halliday
+    role: '"Small" — Producers'
+    group: Music
+    note: ""
+    listed: map
+  - name: David Muratore
+    person: david-muratore
+    role: '"Small" — Producers'
+    group: Music
+    note: ""
+    listed: map
+  - name: Paul Nunes
+    person: paul-nunes
+    role: Sound Design
+    group: Sound
+    note: ""
+    listed: map
+  - name: Bryce Halliday
+    person: bryce-halliday
+    role: Voice-over Production
+    group: Sound
+    note: ""
+    listed: map
+  - name: Lex Suurland
+    person: lex-suurland
+    role: Product Management
+    group: Published by
+    note: ""
+    listed: listing
+  - name: James Kozanecki
+    person: james-kozanecki
+    role: PR & Community
+    group: Published by
+    note: ""
+    listed: listing
+  - name: Stephen Heller
+    person: stephen-heller
+    role: PR & Community
+    group: Published by
+    note: ""
+    listed: listing
+  - name: Rae Johnston
+    person: rae-johnston
+    role: PR & Community
+    group: Published by
+    note: ""
+    listed: listing
+  - name: Liam Esler
+    person: liam-esler
+    role: Producer
+    group: Published by
+    note: ""
+    listed: listing
+  - name: Fiona Murray
+    person: fiona-murray
+    role: Finance
+    group: Published by
+    note: ""
+    listed: listing
+  - name: Chris Wright
+    person: chris-wright
+    role: Directors
+    group: Published by
+    note: ""
+    listed: listing
+  - name: Travis Plane
+    person: travis-plane
+    role: Directors
+    group: Published by
+    note: ""
+    listed: listing
+  - name: Christina Chen
+    person: christina-chen
+    role: Directors
+    group: Published by
+    note: ""
+    listed: listing
+  - name: Aaron Bernetti
+    person: aaron-bernetti
+    role: Directors
+    group: Published by
+    note: ""
+    listed: listing
+  - name: Angeline and Indigo
+    person: ""
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Dan Graf
+    person: dan-graf
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Adam Chalmers
+    person: adam-chalmers
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Andrew Bittman
+    person: andrew-bittman
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Chana Sztajer
+    person: chana-sztajer
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Chris Ackard
+    person: christopher-ackad
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Damien Lee
+    person: damien-lee
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Dan Keserovic
+    person: dan-keserovic
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Dan Toose
+    person: dan-toose
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: David Callan
+    person: david-callan
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Dean Wood
+    person: dean-wood
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Fergus MacPherson
+    person: fergus-macpherson
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Jack Chesworth
+    person: jack-chesworth
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Jack Gillespie
+    person: jack-gillespie
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Jordan D'Arcy
+    person: jordan-darcy
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Morgan Lean
+    person: morgan-lean
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Olivia Barlow
+    person: olivia-barlow
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Rona Barugahare
+    person: rona-barugahare
+    role: Very special thanks
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: The IGDA Sydney community
+    person: ""
+    role: Very special thanks
+    group: Thanks
+    note: for their warmth and (drunken) mirth
+    listed: listing
+  - name: The Academy of Interactive Entertainment (Sydney)
+    person: ""
+    role: Very special thanks
+    group: Thanks
+    note: for their continued support
+    listed: listing
+  - name: Epiphany Games and Flat Earth Games
+    person: ""
+    role: Very special thanks
+    group: Thanks
+    note: for making us feel at home
+    listed: listing
+  - name: Alexandre Delaisement
+    person: alexandre-delaisement
+    role: Devotee Backers
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Chris J.
+    person: chris-j
+    role: Devotee Backers
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Brooklyn Cofield
+    person: brooklyn-cofield
+    role: Devotee Backers
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Scott Hayward
+    person: scott-hayward
+    role: Devotee Backers
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Zuhur Abdo
+    person: zuhur-abdo
+    role: Devotee Backers
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Michael (Wiccy) Cantrell
+    person: michael-wiccy-cantrell
+    role: Devotee Backers
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Alexander Scott
+    person: alexander-scott
+    role: Devotee Backers
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: Zander King
+    person: zander-king
+    role: Devotee Backers
+    group: Thanks
+    note: ""
+    listed: listing
+  - name: David Nolan
+    person: david-nolan
+    role: Early supporters
+    group: Thanks
+    note: triggered the Big Bang
+    listed: listing
+  - name: Martijn Mannaerts
+    person: martijn-mannaerts
+    role: Early supporters
+    group: Thanks
+    note: has an Electromagnetic personality
+    listed: listing
+  - name: Norman 'Zeals' Yan
+    person: norman-zeals-yan
+    role: Early supporters
+    group: Thanks
+    note: is our centre of Gravity
+    listed: listing
+  - name: Jakub Koziol
+    person: jakub-koziol
+    role: Early supporters
+    group: Thanks
+    note: keeps us Strong
+    listed: listing
+  - name: Alex Pilcher
+    person: alex-pilcher
+    role: Early supporters
+    group: Thanks
+    note: never showed Weak-ness
+    listed: listing
+  - name: Christopher Jimenez
+    person: christopher-jimenez
+    role: Early supporters
+    group: Thanks
+    note: picked us Up
+    listed: listing
+  - name: Tim O'Keefe
+    person: tim-okeefe
+    role: Early supporters
+    group: Thanks
+    note: never let us Down
+    listed: listing
+  - name: Shekhar N Gyanwali
+    person: shekhar-n-gyanwali
+    role: Early supporters
+    group: Thanks
+    note: kept us from going Strange
+    listed: listing
+  - name: James Marshall
+    person: james-marshall
+    role: Early supporters
+    group: Thanks
+    note: Charmed us
+    listed: listing
+  - name: Josh Bush
+    person: josh-bush
+    role: Early supporters
+    group: Thanks
+    note: took us over the Top
+    listed: listing
+  - name: James Dove
+    person: james-dove
+    role: Early supporters
+    group: Thanks
+    note: kept us from hitting rock Bottom
+    listed: listing
+  - name: Nicolas Tiago
+    person: nicolas-tiago
+    role: Early supporters
+    group: Thanks
+    note: won the Electron ("election", geddit?)
+    listed: listing
+  - name: Rikard Johansson
+    person: rikard-johansson
+    role: Early supporters
+    group: Thanks
+    note: remembered to Photon it
+    listed: listing
+  - name: James Harrison Brown
+    person: james-harrison-brown
+    role: Early supporters
+    group: Thanks
+    note: got his Muon
+    listed: listing
+  - name: Sean Carley
+    person: sean-carley
+    role: Early supporters
+    group: Thanks
+    note: never kow-Taus
+    listed: listing
+  - name: Matthew Lewis
+    person: matthew-lewis
+    role: Early supporters
+    group: Thanks
+    note: is the W-boson of the SS Particulars
+    listed: listing
+  - name: Ryan Keyes
+    person: ryan-keyes
+    role: Early supporters
+    group: Thanks
+    note: is the Z-boson of the same (they're good at sharing)
+    listed: listing
+  - name: Rohan Currie
+    person: rohan-currie
+    role: Early supporters
+    group: Thanks
+    note: has a fabulous Gluon moustache
+    listed: listing
+  - name: Dan Graf
+    person: dan-graf
+    role: Early supporters
+    group: Thanks
+    note: made a pet of the rare Higgs-opotomus
+    listed: listing
+  - name: Gideon Meyerowitz-Katz
+    person: gideon-meyerowitz-katz
+    role: Early supporters
+    group: Thanks
+    note: is Neutrino, like Switzerland
+    listed: listing
+  - name: Dean Rather
+    person: dean-rather
+    role: Early supporters
+    group: Thanks
+    note: is ... um, a Muon Neutrino (sorry, I've got nothing!)
+    listed: listing
+  - name: Ethan Cobb
+    person: ethan-cobb
+    role: Early supporters
+    group: Thanks
+    note: is a Tau likeNeutrino (move along please, nothing to see here!)
+    listed: listing
+  - name: Nick Grundy
+    person: nick-grundy
+    role: Early supporters
+    group: Thanks
+    note: will still be here when all matter in the universe has decayed to nothing...
+    listed: listing
 ---
 Particulars is a game based on the science of sub-atomic particle Physics. You play as a quark, and have to navigate the forces of the sub-atomic world as they push and pull at you.
 

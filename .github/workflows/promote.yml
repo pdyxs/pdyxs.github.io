@@ -168,5 +168,6 @@ jobs:
       pages: write
       id-token: write
     uses: ./.github/workflows/build.yml
+    secrets: inherit
     with:
       ref: main

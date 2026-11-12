@@ -121,6 +121,7 @@ export function parseSchemaFields(source: string): SchemaField[] {
 function hintFor(expr: string): string {
   if (/^z\.array\(action\)/.test(expr)) return 'list of { text, url }';
   if (/^z\.array\(quote\)/.test(expr)) return 'list of { quote, by?, in? }';
+  if (/^z\.array\(credit\)/.test(expr)) return 'list of { name, person?, role?, group?, note?, listed? }';
   if (/^z\.array\(z\.string\(\)\)/.test(expr)) return 'list of strings';
   if (/^z\.coerce\.date\(\)/.test(expr)) return 'date (YYYY-MM-DD)';
   if (/^z\.number\(\)/.test(expr)) return 'number';
@@ -231,7 +232,7 @@ const SLUGIFY_JS =
  *
  * `inspected: true` is prefilled rather than offered as a suggestion — a card
  * Paul writes himself through this scaffold needs no confirmation of his own
- * words. See "`inspected` is a permanent editorial flag" in
+ * words. See "`inspected` is the publish gate" in
  * docs/agents/workflow.md for the automated-edit rule this is the counterpart
  * to.
  */

@@ -6,6 +6,8 @@
 export type HeaderPreview = { light: string; dark: string; hash: string };
 
 export const HEADER_PREVIEWS: Record<string, HeaderPreview> = {
-  "what/art/lino-printing": {"light":"/previews/what/art/lino-printing/light.png","dark":"/previews/what/art/lino-printing/dark.png","hash":"a98206dfd82b2568"},
-  "what/toys/star-navigation": {"light":"/previews/what/toys/star-navigation/light.png","dark":"/previews/what/toys/star-navigation/dark.png","hash":"a98206dfd82b2568"},
+  "what/games/digital/star-nav": {"light":"/previews/what/games/digital/star-nav/light.png","dark":"/previews/what/games/digital/star-nav/dark.png","hash":"5c8b8196580bd3a6"},
+  "what/games/digital/tiny-world-the-musical-the-game": {"light":"/previews/what/games/digital/tiny-world-the-musical-the-game/light.png","dark":"/previews/what/games/digital/tiny-world-the-musical-the-game/dark.png","hash":"5c8b8196580bd3a6"},
+  "what/toys/dev-editor-demo": {"light":"/previews/what/toys/dev-editor-demo/light.png","dark":"/previews/what/toys/dev-editor-demo/dark.png","hash":"5c8b8196580bd3a6"},
+  "what/toys/star-navigation": {"light":"/previews/what/toys/star-navigation/light.png","dark":"/previews/what/toys/star-navigation/dark.png","hash":"5c8b8196580bd3a6"},
 };

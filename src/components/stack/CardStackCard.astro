@@ -22,6 +22,7 @@ import { resolveCardRenderer, resolveNavRenderer } from '@render/location-resolv
 import type { TagDisplay } from '@content/tags/tag-display';
 import { resolveSeriesCards } from '@render/series-cards';
 import { computeSeriesDateBar } from '@content/cards/series';
+import type { CreditsView } from '@content/credits/credits-view';
 import CardHeader from '@components/stack/CardHeader.astro';
 import { SOLO_BUTTON, CLOSE_BUTTON } from '@render/header-icons';
 
@@ -34,12 +35,14 @@ interface Props {
   relatedCards?: BrowseCardData[];
   /** Cards this one points at via its own card-backed tags (see computeSubjectCardsIndex) — the "This is about" section. */
   subjectCards?: BrowseCardData[];
+  /** The card's credits (line, listing, laid-out graph), built once per build by buildCreditsViews in the route's getStaticPaths. Absent: no section. */
+  credits?: CreditsView;
 }
 
 // Cast is load-bearing: Astro's props-type extraction falls back to
 // Record<string, any> for a Props interface with a Record<…> member (tagDisplay),
 // leaving Astro.props untyped — `as Props` restores the real prop types.
-const { card, tagDisplay = {}, relatedCards = [], subjectCards = [] } = Astro.props as Props;
+const { card, tagDisplay = {}, relatedCards = [], subjectCards = [], credits } = Astro.props as Props;
 
 // Entry lookup is IO, not resolution: the renderers take the raw entry for its
 // frontmatter, and a NavComponent takes the full collection as sibling
@@ -65,6 +68,7 @@ const NavComponent = resolveNavRenderer(card.navRenderer);
 // same array without the images/description a 'strip' tile needs) is the
 // caller's business, not this resolution's — the whole array is fetched
 // either way and it's cheap.
+
 const seriesCards = entry?.data?.series && card.seriesPreview !== 'none'
   ? await resolveSeriesCards(entry as any, allEntries as any, {
       isDev: import.meta.env.DEV,
@@ -87,6 +91,7 @@ const seriesDateBar = card.dateBar && entry?.data?.series
   data-uid={card.uid}
   data-content-hash={card.contentHash}
   data-width={card.width}
+  data-inspected={import.meta.env.DEV ? String(entry?.data?.inspected === true) : undefined}
 >
   {/* The spine sits outside the nav-renderer branch deliberately: a nav
       renderer owns the *header and body* of the card, not the `.stack-card`
@@ -109,7 +114,7 @@ const seriesDateBar = card.dateBar && entry?.data?.series
       date={card.date}
       {tagDisplay}
     >
-      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
+      <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {credits} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
     </NavComponent>
   ) : (
     <>
@@ -129,7 +134,7 @@ const seriesDateBar = card.dateBar && entry?.data?.series
       <div class="body-wrapper open">
         <div class="stack-card-body">
           <div class="stack-card-body-inner">
-            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
+            <Renderer {entry} {Content} {tagDisplay} {relatedCards} {subjectCards} {credits} {seriesCards} {seriesDateBar} seriesPreview={card.seriesPreview} cardTags={card.tags} date={card.date} dateLabel={card.dateLabel} gallery={card.gallery} collapsedContainer={card.collapsedContainer} />
           </div>
         </div>
       </div>
