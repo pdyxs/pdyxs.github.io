@@ -82,4 +82,32 @@ describe('createContentGit', () => {
     expect(res).toEqual({ ok: true });
     expect(git('log', '-1', '--format=%s').trim()).toBe('m');
   });
+
+  describe('log and show', () => {
+    const J = () => path.join(A(), 'index.json');
+    const commitJson = (text: string, msg: string) => {
+      put('src/content/what/a/index.json', text);
+      git('add', '-A');
+      git('commit', '-q', '-m', msg);
+      return git('rev-parse', 'HEAD').trim();
+    };
+
+    it('log lists commits touching the file newest first with ISO committer dates; show reads the file as of each', () => {
+      const c1 = commitJson('v1\n', 'one');
+      put('code.ts', 'x2\n');
+      git('commit', '-q', '-am', 'unrelated');
+      const c2 = commitJson('v2\n', 'two');
+      const log = adapter().log(J());
+      expect(log.map((l) => l.commit)).toEqual([c2, c1]);
+      expect(log[0].date).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/);
+      expect(adapter().show(c1, J())).toBe('v1\n');
+      expect(adapter().show(c2, J())).toBe('v2\n');
+    });
+
+    it('log is empty for a file never committed, show is null where the file did not exist', () => {
+      const first = git('rev-parse', 'HEAD').trim();
+      expect(adapter().log(J())).toEqual([]);
+      expect(adapter().show(first, J())).toBeNull();
+    });
+  });
 });

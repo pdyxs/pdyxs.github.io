@@ -43,7 +43,26 @@ export function createContentGit({ cwd, retryDelayMs = 500, sleep = blockingSlee
     }
   };
 
+  const rel = (file: string) => path.relative(cwd, file).split(path.sep).join('/');
+
   return {
+    log(file) {
+      const out = run('log', '--format=%H%x09%cI', '--', rel(file));
+      return out
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => {
+          const [commit, date] = line.split('\t');
+          return { commit, date };
+        });
+    },
+    show(commit, file) {
+      try {
+        return run('show', `${commit}:${rel(file)}`);
+      } catch {
+        return null;
+      }
+    },
     inProgress() {
       const dir = gitDir();
       return MARKERS.find(([marker]) => existsSync(path.join(dir, marker)))?.[1] ?? null;

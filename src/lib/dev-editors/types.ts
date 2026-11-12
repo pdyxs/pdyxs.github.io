@@ -37,10 +37,14 @@ export interface ContentFs {
   list(): string[];
 }
 
-/** Git operations the version bump needs, run in the checkout the dev server runs in. */
+/** Git operations the version bump and version history need, run in the checkout the dev server runs in. */
 export interface ContentGit {
   /** A description of the merge, rebase or cherry-pick in progress, or null. */
   inProgress(): string | null;
   /** Stage everything under `paths` and commit only those paths. Retries once if the index is locked. */
   commitPaths(paths: string[], message: string): { ok: true } | { ok: false; error: string };
+  /** Commits touching the absolute `file`, newest first. `date` is the committer date, ISO 8601. */
+  log(file: string): { commit: string; date: string }[];
+  /** The absolute `file` as of `commit`, or null if it did not exist there. */
+  show(commit: string, file: string): string | null;
 }

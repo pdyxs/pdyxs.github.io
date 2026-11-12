@@ -27,6 +27,18 @@ function fakeApi({ conflicts, bumpFails }: FakeOptions = {}) {
       return ok({ ok: true, dir: new URL(url, 'http://x').searchParams.get('path') });
     }
     if (url.includes('/demo/create')) return ok({ ok: true, dir: 'what/projects/fresh' });
+    if (url.includes('/demo/history')) {
+      return ok([
+        { version: '2.0.0', commit: 'c4', date: '2026-04-01T00:00:00Z' },
+        { version: '1.1.0', commit: 'c3', date: '2026-03-01T00:00:00Z' },
+        { version: '1.0.0', commit: 'c2', date: '2026-02-01T00:00:00Z' },
+      ]);
+    }
+    if (url.includes('/demo/at')) {
+      const commit = new URL(url, 'http://x').searchParams.get('commit');
+      const old = { c2: ['1.0.0', 'second 1.0.0'], c3: ['1.1.0', 'one-one'], c4: ['2.0.0', 'two'] }[commit as string]!;
+      return ok({ editor: 'demo', version: old[0], data: { text: old[1], count: 0 } });
+    }
     if (url.includes('/demo/read')) return ok(stored);
     if (url.includes('/demo/write')) return ok({ ok: true });
     if (url.includes('/demo/bump')) {
@@ -180,5 +192,78 @@ describe('EditorShell', () => {
     flushSync();
     expect(target.querySelector('[role=status]')!.textContent).toContain('a merge is in progress');
     expect(target.querySelector('.version')!.textContent).toContain('1.0.0');
+  });
+
+  describe('version history', () => {
+    const pickVersion = async (target: HTMLElement, commit: string) => {
+      const select = target.querySelector<HTMLSelectElement>('select.version-picker')!;
+      select.value = commit;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      await settle();
+      flushSync();
+    };
+    const pickerOptions = (target: HTMLElement) =>
+      [...target.querySelectorAll<HTMLOptionElement>('select.version-picker option')].map((o) => [o.value, o.textContent!.trim()]);
+
+    it('lists every committed version newest first, after the working file', async () => {
+      fakeApi();
+      const target = await mountShell();
+      expect(target.querySelector('select.version-picker')).toBeNull();
+      await pick(target, 'what/a');
+      expect(pickerOptions(target).map(([v]) => v)).toEqual(['', 'c4', 'c3', 'c2']);
+      expect(pickerOptions(target).slice(1).map(([, label]) => label)).toEqual([
+        expect.stringContaining('2.0.0'),
+        expect.stringContaining('1.1.0'),
+        expect.stringContaining('1.0.0'),
+      ]);
+    });
+
+    it('picking a version shows its data through the editor, read-only, with no save or bump', async () => {
+      const calls = fakeApi();
+      const target = await mountShell();
+      await pick(target, 'what/a');
+      await pickVersion(target, 'c2');
+
+      const at = calls.find((c) => c.url.includes('/demo/at'))!;
+      expect(at.url).toContain('path=what%2Fa');
+      expect(at.url).toContain('commit=c2');
+      const inputs = [...target.querySelectorAll<HTMLInputElement>('.editor-pane input')];
+      expect(inputs[0].value).toBe('second 1.0.0');
+      expect(inputs.every((i) => i.disabled)).toBe(true);
+      expect(target.querySelector('button.save')).toBeNull();
+      expect([...target.querySelectorAll<HTMLButtonElement>('.bump-major, .bump-minor, .bump-patch')].every((b) => b.disabled)).toBe(true);
+      expect(target.querySelector('.version')!.textContent).toContain('1.0.0');
+
+      target.querySelectorAll<HTMLButtonElement>('.bump-major, .bump-minor, .bump-patch').forEach((b) => b.click());
+      await settle();
+      expect(calls.some((c) => c.method === 'PUT' || c.url.includes('/demo/bump'))).toBe(false);
+    });
+
+    it('back to current returns to the editable working file', async () => {
+      fakeApi();
+      const target = await mountShell();
+      await pick(target, 'what/a');
+      expect(target.querySelector('button.back-to-current')).toBeNull();
+      await pickVersion(target, 'c3');
+      target.querySelector<HTMLButtonElement>('button.back-to-current')!.click();
+      await settle();
+      flushSync();
+      const inputs = [...target.querySelectorAll<HTMLInputElement>('.editor-pane input')];
+      expect(inputs[0].value).toBe('hi');
+      expect(inputs.some((i) => i.disabled)).toBe(false);
+      expect(target.querySelector('button.save')).not.toBeNull();
+      expect(target.querySelector('button.back-to-current')).toBeNull();
+      expect(target.querySelector<HTMLSelectElement>('select.version-picker')!.value).toBe('');
+    });
+
+    it('re-reads the history after a bump, so the committed version appears', async () => {
+      const calls = fakeApi();
+      const target = await mountShell();
+      await pick(target, 'what/a');
+      const before = calls.filter((c) => c.url.includes('/demo/history')).length;
+      target.querySelector<HTMLButtonElement>('.bump-minor')!.click();
+      await settle();
+      expect(calls.filter((c) => c.url.includes('/demo/history')).length).toBe(before + 1);
+    });
   });
 });

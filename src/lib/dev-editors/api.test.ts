@@ -234,6 +234,8 @@ describe('bump', () => {
     const git: ContentGit = {
       inProgress: () => { log.push('inProgress'); return opts.inProgress ?? null; },
       commitPaths: (paths, message) => { log.push(`commit ${paths.join(',')} | ${message}`); return opts.commit?.(paths, message) ?? { ok: true }; },
+      log: () => [],
+      show: () => null,
     };
     const fsLog: ContentFs = { ...f.fs, write: (file, text) => { log.push(`write ${file}`); f.fs.write(file, text); } };
     const api = createDevEditorsApi({ editors: [demo], fs: fsLog, contentRoot: ROOT, git });
@@ -276,5 +278,68 @@ describe('bump', () => {
     const { api, files } = bumpSetup();
     expect(api.handle({ method: 'POST', path: '/demo/bump', query: { path: 'what/a', kind: 'major' } }).body).toEqual({ ok: true, version: '2.0.0' });
     expect(JSON.parse(files[`${A}/index.json`]).version).toBe('2.0.0');
+  });
+});
+
+describe('version history', () => {
+  const A = `${ROOT}/what/a`;
+  const at = (version: string, n: number) => JSON.stringify({ editor: 'demo', version, data: { n } });
+
+  function historySetup() {
+    // newest first, as git log returns them; 1.0.0 was committed twice
+    const commits = [
+      { commit: 'c4', date: '2026-04-01T00:00:00Z', text: at('2.0.0', 4) },
+      { commit: 'c3', date: '2026-03-01T00:00:00Z', text: at('1.1.0', 3) },
+      { commit: 'c2', date: '2026-02-01T00:00:00Z', text: at('1.0.0', 2) },
+      { commit: 'c1', date: '2026-01-01T00:00:00Z', text: at('1.0.0', 1) },
+    ];
+    const calls: string[] = [];
+    const git: ContentGit = {
+      inProgress: () => null,
+      commitPaths: () => ({ ok: true }),
+      log: (file) => { calls.push(`log ${file}`); return commits.map(({ commit, date }) => ({ commit, date })); },
+      show: (commit, file) => { calls.push(`show ${commit} ${file}`); return commits.find((c) => c.commit === commit)?.text ?? null; },
+    };
+    const f = fakeFs({ [`${A}/index.md`]: MD, [`${A}/index.json`]: env(9, '2.0.1') });
+    return { api: createDevEditorsApi({ editors: [demo], fs: f.fs, contentRoot: ROOT, git }), calls };
+  }
+
+  it('history lists one entry per committed version, newest first, latest commit each', () => {
+    const { api, calls } = historySetup();
+    expect(api.history('demo', 'what/a')).toEqual({
+      status: 200,
+      body: [
+        { version: '2.0.0', commit: 'c4', date: '2026-04-01T00:00:00Z' },
+        { version: '1.1.0', commit: 'c3', date: '2026-03-01T00:00:00Z' },
+        { version: '1.0.0', commit: 'c2', date: '2026-02-01T00:00:00Z' },
+      ],
+    });
+    expect(calls).toContain(`log ${A}/index.json`);
+  });
+
+  it('at returns the envelope as of a commit that is in the history', () => {
+    const { api } = historySetup();
+    expect(api.at('demo', 'what/a', 'c2')).toEqual({ status: 200, body: { editor: 'demo', version: '1.0.0', data: { n: 2 } } });
+  });
+
+  it('at refuses a commit that is not in the history, so no arbitrary revision is shown', () => {
+    const { api, calls } = historySetup();
+    expect(api.at('demo', 'what/a', 'HEAD~5').status).toBe(404);
+    expect(calls.some((c) => c.startsWith('show'))).toBe(false);
+  });
+
+  it('answers 404 for an unknown editor, 400 for a path outside the content root, 501 with no git', () => {
+    const { api } = historySetup();
+    expect(api.history('nope', 'what/a').status).toBe(404);
+    expect(api.history('demo', '../x').status).toBe(400);
+    expect(api.at('demo', 'what/a', '').status).toBe(400);
+    const noGit = setup({});
+    expect(noGit.api.history('demo', 'what/a').status).toBe(501);
+  });
+
+  it('routes GET /<id>/history and /<id>/at', () => {
+    const { api } = historySetup();
+    expect((api.handle({ method: 'GET', path: '/demo/history', query: { path: 'what/a' } }).body as unknown[]).length).toBe(3);
+    expect(api.handle({ method: 'GET', path: '/demo/at', query: { path: 'what/a', commit: 'c3' } }).status).toBe(200);
   });
 });

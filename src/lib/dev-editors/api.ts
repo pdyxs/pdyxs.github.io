@@ -9,6 +9,7 @@ import { resolveCardFile } from './paths.ts';
 import { parseEnvelope, validateEnvelope, newEnvelope, STARTING_VERSION } from './envelope.ts';
 import { applyFrontmatterPlan, frontmatterPlan } from './frontmatter-plan.ts';
 import { newCardFiles, selectorEntries, slugify } from './selector.ts';
+import { versionHistory } from './history.ts';
 import { bump, BUMP_KINDS, type BumpKind } from './bump.ts';
 import type { ApiResponse, ContentFs, ContentGit, EditorDefinition, Envelope } from './types.ts';
 
@@ -64,6 +65,15 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
     return typeof owner === 'string' && owner !== editor.id
       ? { kind: 'other' as const, description: `editor "${owner}"` }
       : { kind: 'broken' as const, description: 'an index.json whose data is invalid for this editor' };
+  };
+
+  /** The git port and the commits touching a card's index.json, newest first. */
+  const committed = (editorId: string, dir: string) => {
+    if (!find(editorId)) return { ok: false as const, response: json(404, { error: `no editor "${editorId}"` }) };
+    if (!git) return { ok: false as const, response: json(501, { error: 'no git available for version history' }) };
+    const target = jsonTarget(`${dir}/index.json`);
+    if (!target.ok) return { ok: false as const, response: json(400, { error: target.error }) };
+    return { ok: true as const, git, file: target.file, commits: git.log(target.file) };
   };
 
   const api = {
@@ -206,6 +216,30 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
       fs.write(mdTarget.file, setInspectedFalse(md));
       return json(200, { ok: true, version });
     },
+
+    /** Every version the card's index.json has been committed with, newest first. */
+    history(editorId: string, dir: string): ApiResponse {
+      const found = committed(editorId, dir);
+      if (!found.ok) return found.response;
+      const snapshots = found.commits.flatMap(({ commit, date }) => {
+        const text = found.git.show(commit, found.file);
+        return text === null ? [] : [{ commit, date, text }];
+      });
+      return json(200, versionHistory(snapshots));
+    },
+
+    /** The envelope as of a commit from the file's log. Other revisions are refused. */
+    at(editorId: string, dir: string, commit: string): ApiResponse {
+      if (commit === '') return json(400, { error: 'commit is required' });
+      const found = committed(editorId, dir);
+      if (!found.ok) return found.response;
+      if (!found.commits.some((c) => c.commit === commit)) return json(404, { error: 'no such commit for this card' });
+      const text = found.git.show(commit, found.file);
+      if (text === null) return json(404, { error: 'no index.json at that commit' });
+      const parsed = parseEnvelope(text);
+      if (!parsed.ok) return json(422, { error: parsed.error });
+      return json(200, parsed.envelope);
+    },
   };
 
   return {
@@ -219,6 +253,8 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
       if (method === 'POST' && action === 'create') return api.create(id, body);
       if (method === 'GET' && action === 'read') return api.read(id, query.path ?? '');
       if (method === 'POST' && action === 'bump') return api.bump(id, query.path ?? '', query.kind as BumpKind);
+      if (method === 'GET' && action === 'history') return api.history(id, query.path ?? '');
+      if (method === 'GET' && action === 'at') return api.at(id, query.path ?? '', query.commit ?? '');
       if (method === 'PUT' && action === 'write') return api.write(id, query.path ?? '', body);
       return json(404, { error: 'unknown endpoint' });
     },

@@ -17,6 +17,10 @@
   let dir = $state('');
   let data = $state<unknown>(null);
   let version = $state('');
+  let history = $state<{ version: string; commit: string; date: string }[]>([]);
+  /** The commit being viewed read-only, or '' for the working file. */
+  let viewing = $state('');
+  let current = $state<{ data: unknown; version: string } | null>(null);
   let status = $state('');
   let newFolder = $state('');
   let newTitle = $state('');
@@ -58,6 +62,9 @@
     dir = '';
     data = null;
     version = '';
+    history = [];
+    viewing = '';
+    current = null;
     status = '';
     if (!next) return;
     const query = `open?path=${encodeURIComponent(next)}`;
@@ -85,7 +92,32 @@
     dir = next;
     data = envelope.data;
     version = envelope.version;
-    await loadCards();
+    await Promise.all([loadCards(), loadHistory()]);
+  }
+
+  async function loadHistory() {
+    const res = await fetch(`${API}/${editorId}/history?path=${encodeURIComponent(dir)}`);
+    history = res.ok ? await res.json() : [];
+  }
+
+  /** Show a committed version read-only; '' returns to the working file. */
+  async function view(commit: string) {
+    if (commit === '') {
+      if (current) ({ data, version } = current);
+      current = null;
+      viewing = '';
+      return;
+    }
+    const res = await fetch(`${API}/${editorId}/at?path=${encodeURIComponent(dir)}&commit=${encodeURIComponent(commit)}`);
+    const envelope = await res.json();
+    if (!res.ok) {
+      status = envelope.error ?? 'could not load that version';
+      return;
+    }
+    current ??= { data, version };
+    viewing = commit;
+    data = envelope.data;
+    version = envelope.version;
   }
 
   async function create() {
@@ -100,6 +132,7 @@
   }
 
   async function save() {
+    if (viewing) return;
     status = 'saving…';
     const res = await fetch(`${API}/${editorId}/write?path=${encodeURIComponent(file(dir))}`, {
       method: 'PUT',
@@ -111,6 +144,7 @@
   }
 
   async function bump(kind: 'major' | 'minor' | 'patch') {
+    if (viewing) return;
     status = 'committing the outgoing version…';
     const res = await post(`bump?path=${encodeURIComponent(dir)}&kind=${kind}`, {});
     const body = await res.json();
@@ -120,6 +154,7 @@
     }
     version = body.version;
     status = `bumped to ${body.version} (card flagged inspected: false)`;
+    await loadHistory();
   }
 </script>
 
@@ -161,15 +196,28 @@
 {#if dir && version}
   <div class="version-bar">
     <span class="version">Version {version}</span>
-    <button class="bump-major" onclick={() => bump('major')}>new major</button>
-    <button class="bump-minor" onclick={() => bump('minor')}>new minor</button>
-    <button class="bump-patch" onclick={() => bump('patch')}>new patch</button>
+    <button class="bump-major" disabled={viewing !== ''} onclick={() => bump('major')}>new major</button>
+    <button class="bump-minor" disabled={viewing !== ''} onclick={() => bump('minor')}>new minor</button>
+    <button class="bump-patch" disabled={viewing !== ''} onclick={() => bump('patch')}>new patch</button>
+    {#if history.length > 0}
+      <select class="version-picker" value={viewing} onchange={(e) => view(e.currentTarget.value)}>
+        <option value="">Current (working file)</option>
+        {#each history as entry (entry.commit)}
+          <option value={entry.commit}>{entry.version} ({entry.date.slice(0, 10)})</option>
+        {/each}
+      </select>
+    {/if}
+    {#if viewing}
+      <button class="back-to-current" onclick={() => view('')}>back to current</button>
+    {/if}
   </div>
 {/if}
 {#if Editor && data !== null}
   <div class="editor-pane">
-    <Editor {data} readOnly={false} onChange={(next: unknown) => (data = next)} />
+    <Editor {data} readOnly={viewing !== ''} onChange={(next: unknown) => (data = next)} />
   </div>
-  <button class="save" onclick={save}>Save</button>
+  {#if !viewing}
+    <button class="save" onclick={save}>Save</button>
+  {/if}
 {/if}
 <p role="status">{status}</p>
