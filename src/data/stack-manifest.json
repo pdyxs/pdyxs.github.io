@@ -1807,7 +1807,31 @@
   },
   {
     "uid": "what/toys/dev-editor-demo",
-    "code": "5S",
-    "title": "Dev editor demo"
+    "code": "5S"
+  },
+  {
+    "uid": "what/toys/particulars",
+    "code": "5T",
+    "title": "Particulars"
+  },
+  {
+    "uid": "what/toys/particulars-em",
+    "code": "5U",
+    "title": "Particulars: electromagnetism only"
+  },
+  {
+    "uid": "what/toys/particulars-em-weak",
+    "code": "5V",
+    "title": "Particulars: electromagnetism + weak force"
+  },
+  {
+    "uid": "what/toys/particulars-em-weak-strong",
+    "code": "5W",
+    "title": "Particulars: electromagnetism + weak + strong"
+  },
+  {
+    "uid": "what/toys/particulars-strong",
+    "code": "5X",
+    "title": "Particulars: strong force only"
   }
 ]

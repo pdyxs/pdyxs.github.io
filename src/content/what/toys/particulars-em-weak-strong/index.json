@@ -1,268 +1,272 @@
 {
-  "walls": {
-    "width": 64,
-    "height": 36
-  },
-  "forces": {
-    "em": true,
-    "weak": true,
-    "strong": true
-  },
-  "pickups": true,
-  "player": {
-    "x": 0,
-    "y": 0,
-    "particle": {
-      "type": "down",
-      "colour": "red"
-    }
-  },
-  "formations": {
-    "trio": {
-      "kind": "line",
-      "count": 3,
-      "distance": 2,
-      "contents": [
-        {
-          "type": "up",
-          "colour": "red"
-        },
-        {
-          "type": "up",
-          "colour": "green"
-        },
-        {
-          "type": "down",
-          "colour": "blue"
-        }
-      ]
-    }
-  },
-  "waves": [
-    {
-      "id": "top",
-      "entries": [
-        {
-          "spawn": {
-            "type": "top",
-            "colour": "green"
-          },
-          "position": {
-            "x": 26,
-            "y": 0
-          },
-          "velocity": {
-            "magnitude": 8,
-            "angle": 180
-          },
-          "telegraph": 0.5
-        }
-      ]
+  "editor": "particulars",
+  "version": "1.0.0",
+  "data": {
+    "walls": {
+      "width": 64,
+      "height": 36
     },
-    {
-      "id": "muon",
-      "entries": [
-        {
-          "spawn": "muon",
-          "position": {
-            "x": 0,
-            "y": -13
-          },
-          "velocity": {
-            "magnitude": 8,
-            "angle": 90
-          },
-          "telegraph": 0.5
-        }
-      ]
+    "forces": {
+      "em": true,
+      "weak": true,
+      "strong": true
     },
-    {
-      "id": "trio",
-      "entries": [
-        {
-          "spawn": "trio",
-          "position": {
-            "x": 26,
-            "y": -8
-          },
-          "velocity": {
-            "magnitude": 8,
-            "angle": 180
-          },
-          "telegraph": 1.5
-        }
-      ]
+    "pickups": true,
+    "player": {
+      "x": 0,
+      "y": 0,
+      "particle": {
+        "type": "down",
+        "colour": "red"
+      }
     },
-    {
-      "id": "electron",
-      "entries": [
-        {
-          "spawn": "electron",
-          "position": {
-            "x": -26,
-            "y": 0
-          },
-          "velocity": {
-            "magnitude": 8,
-            "angle": 0
-          },
-          "telegraph": 0.5
-        }
-      ]
-    },
-    {
-      "id": "pair",
-      "entries": [
-        {
-          "spawn": "electron",
-          "position": {
-            "x": -7,
-            "y": 11
-          },
-          "velocity": {
-            "magnitude": 5,
-            "angle": 0
-          },
-          "telegraph": 0.5
-        },
-        {
-          "spawn": {
-            "type": "electron",
-            "parity": -1
-          },
-          "position": {
-            "x": 7,
-            "y": 11
-          },
-          "velocity": {
-            "magnitude": 5,
-            "angle": 180
-          },
-          "telegraph": 0.5
-        }
-      ]
-    },
-    {
-      "id": "quarks",
-      "entries": [
-        {
-          "spawn": {
+    "formations": {
+      "trio": {
+        "kind": "line",
+        "count": 3,
+        "distance": 2,
+        "contents": [
+          {
             "type": "up",
             "colour": "red"
           },
-          "position": {
-            "x": -6,
-            "y": -12
-          },
-          "velocity": {
-            "magnitude": 4,
-            "angle": 0
-          },
-          "telegraph": 0.5
-        },
-        {
-          "spawn": {
+          {
             "type": "up",
-            "colour": "red",
-            "parity": -1
+            "colour": "green"
           },
-          "position": {
-            "x": 6,
-            "y": -12
+          {
+            "type": "down",
+            "colour": "blue"
+          }
+        ]
+      }
+    },
+    "waves": [
+      {
+        "id": "top",
+        "entries": [
+          {
+            "spawn": {
+              "type": "top",
+              "colour": "green"
+            },
+            "position": {
+              "x": 26,
+              "y": 0
+            },
+            "velocity": {
+              "magnitude": 8,
+              "angle": 180
+            },
+            "telegraph": 0.5
+          }
+        ]
+      },
+      {
+        "id": "muon",
+        "entries": [
+          {
+            "spawn": "muon",
+            "position": {
+              "x": 0,
+              "y": -13
+            },
+            "velocity": {
+              "magnitude": 8,
+              "angle": 90
+            },
+            "telegraph": 0.5
+          }
+        ]
+      },
+      {
+        "id": "trio",
+        "entries": [
+          {
+            "spawn": "trio",
+            "position": {
+              "x": 26,
+              "y": -8
+            },
+            "velocity": {
+              "magnitude": 8,
+              "angle": 180
+            },
+            "telegraph": 1.5
+          }
+        ]
+      },
+      {
+        "id": "electron",
+        "entries": [
+          {
+            "spawn": "electron",
+            "position": {
+              "x": -26,
+              "y": 0
+            },
+            "velocity": {
+              "magnitude": 8,
+              "angle": 0
+            },
+            "telegraph": 0.5
+          }
+        ]
+      },
+      {
+        "id": "pair",
+        "entries": [
+          {
+            "spawn": "electron",
+            "position": {
+              "x": -7,
+              "y": 11
+            },
+            "velocity": {
+              "magnitude": 5,
+              "angle": 0
+            },
+            "telegraph": 0.5
           },
-          "velocity": {
-            "magnitude": 4,
-            "angle": 180
+          {
+            "spawn": {
+              "type": "electron",
+              "parity": -1
+            },
+            "position": {
+              "x": 7,
+              "y": 11
+            },
+            "velocity": {
+              "magnitude": 5,
+              "angle": 180
+            },
+            "telegraph": 0.5
+          }
+        ]
+      },
+      {
+        "id": "quarks",
+        "entries": [
+          {
+            "spawn": {
+              "type": "up",
+              "colour": "red"
+            },
+            "position": {
+              "x": -6,
+              "y": -12
+            },
+            "velocity": {
+              "magnitude": 4,
+              "angle": 0
+            },
+            "telegraph": 0.5
           },
-          "telegraph": 0.5
-        }
-      ]
-    }
-  ],
-  "triggers": [
-    {
-      "kind": "page-button",
-      "button": "top",
-      "actions": [
-        {
-          "kind": "spawn",
-          "wave": "top"
-        }
-      ]
-    },
-    {
-      "kind": "page-button",
-      "button": "muon",
-      "actions": [
-        {
-          "kind": "spawn",
-          "wave": "muon"
-        }
-      ]
-    },
-    {
-      "kind": "page-button",
-      "button": "trio",
-      "actions": [
-        {
-          "kind": "spawn",
-          "wave": "trio"
-        }
-      ]
-    },
-    {
-      "kind": "page-button",
-      "button": "electron",
-      "actions": [
-        {
-          "kind": "spawn",
-          "wave": "electron"
-        }
-      ]
-    },
-    {
-      "kind": "page-button",
-      "button": "pair",
-      "actions": [
-        {
-          "kind": "spawn",
-          "wave": "pair"
-        }
-      ]
-    },
-    {
-      "kind": "page-button",
-      "button": "quarks",
-      "actions": [
-        {
-          "kind": "spawn",
-          "wave": "quarks"
-        }
-      ]
-    },
-    {
-      "kind": "time",
-      "at": 1,
-      "every": 7,
-      "repeats": 5,
-      "actions": [
-        {
-          "kind": "spawn",
-          "wave": "trio"
-        }
-      ]
-    },
-    {
-      "kind": "time",
-      "at": 5,
-      "every": 7,
-      "repeats": 5,
-      "actions": [
-        {
-          "kind": "spawn",
-          "wave": "pair"
-        }
-      ]
-    }
-  ]
+          {
+            "spawn": {
+              "type": "up",
+              "colour": "red",
+              "parity": -1
+            },
+            "position": {
+              "x": 6,
+              "y": -12
+            },
+            "velocity": {
+              "magnitude": 4,
+              "angle": 180
+            },
+            "telegraph": 0.5
+          }
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "kind": "page-button",
+        "button": "top",
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "top"
+          }
+        ]
+      },
+      {
+        "kind": "page-button",
+        "button": "muon",
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "muon"
+          }
+        ]
+      },
+      {
+        "kind": "page-button",
+        "button": "trio",
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "trio"
+          }
+        ]
+      },
+      {
+        "kind": "page-button",
+        "button": "electron",
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "electron"
+          }
+        ]
+      },
+      {
+        "kind": "page-button",
+        "button": "pair",
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "pair"
+          }
+        ]
+      },
+      {
+        "kind": "page-button",
+        "button": "quarks",
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "quarks"
+          }
+        ]
+      },
+      {
+        "kind": "time",
+        "at": 1,
+        "every": 7,
+        "repeats": 5,
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "trio"
+          }
+        ]
+      },
+      {
+        "kind": "time",
+        "at": 5,
+        "every": 7,
+        "repeats": 5,
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "pair"
+          }
+        ]
+      }
+    ]
+  }
 }

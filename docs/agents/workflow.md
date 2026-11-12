@@ -236,16 +236,17 @@ They sit outside `src/pages/` on purpose: a file in `pages/` is always built, an
 
 **They never reach `main`.** Promotion skips anything under `src/experiments/` (and the old `src/pages/experiments/`) and strips it from `main` if present (`MAIN_NEVER` in `src/lib/site/promotion.ts`, pinned by `promotion.test.ts`), so an experiment may freely import content `main` withholds.
 
-## The Particulars editor is dev-only by construction
+## The Particulars editor is a dev-editors definition
 
-`/dev/particulars` edits a card's `index.json` through a form and writes it back
-to the content vault. It is added by the `particularsEditor()` integration
-(`src/lib/particulars/editor/integration.ts`), which injects the route
-(`src/dev-pages/`, deliberately outside `src/pages`) and the `/__particulars/*`
-endpoint **only when the Astro command is `dev`** — a build contains neither.
-The endpoint writes nothing but `index.json` inside a card folder under a
-content root (`paths.ts`), and only a scenario that passes `validate()`. Scenario
-edits are pure reducers in `editor/edit.ts`; the form never builds a scenario.
+Particulars is registered with the dev-editors standard (`src/lib/dev-editors/`)
+as `particularsDefinition` (`src/lib/particulars/definition.ts`: `validate`,
+`blank`, `frontmatter`, and the editor island path), handed to `devEditors()` in
+`astro.config.mjs`. `/dev/editors/particulars` lists, edits and saves the cards;
+the standard owns the route, endpoint, path guard, atomic write, card picker,
+new-card scaffold, bumps and history, and is dev-only. A Particulars
+`index.json` is an envelope `{ editor: "particulars", version, data }`; the toy
+reads `.data`. Scenario edits are pure reducers in `editor/edit.ts`; the form
+never builds a scenario.
 
 ## The build server (`build.pdyxs.wtf`)
 

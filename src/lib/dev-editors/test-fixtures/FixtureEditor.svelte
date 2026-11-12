@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DemoData } from './definition.ts';
+  type DemoData = { text: string; count: number };
 
   let { data, readOnly, onChange }: { data: DemoData; readOnly: boolean; onChange: (next: DemoData) => void } = $props();
 </script>

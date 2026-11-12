@@ -2,7 +2,6 @@ import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import SeriesNavRenderer from '@components/card-renderers/SeriesNavRenderer.astro';
 import FlashGame from '@components/header-media/FlashGame.astro';
 import FlatlandGame from '@components/header-media/FlatlandGame.astro';
-import DevEditorDemo from '@components/header-media/DevEditorDemo.astro';
 import LinoCanvas from '@components/header-media/LinoCanvas.astro';
 import Particulars from '@components/header-media/Particulars.astro';
 import StarSystemPrototype from '@components/star-nav/snapshots/2026-09-23-prototype/StarSystem.astro';
@@ -78,10 +77,8 @@ export const HEADER_MEDIA_RENDERERS: Record<string, AstroComponentFactory> = {
     'star-system': StarSystemPrototype,
     // Living: the star-nav project's current build. See src/components/star-nav/.
     'star-nav': StarNav,
-    // Particulars: steerable physics toy; scenario is index.json beside the card.
+    // Particulars: steerable physics toy; scenario is the `.data` of the enveloped index.json beside the card.
     particulars: Particulars,
-    // Throwaway: renders the dev-editors demo card's index.json. Deleted with the demo editor.
-    'dev-editor-demo': DevEditorDemo,
 };
 
 /**

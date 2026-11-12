@@ -1,43 +1,168 @@
 {
-  "walls": { "width": 24, "height": 12 },
-  "player": { "x": 0, "y": 0 },
-  "barriers": [
-    { "shape": "rect", "mode": "all", "x": 0, "y": -3, "width": 3, "height": 0.4 },
-    { "shape": "arc", "mode": "positive", "x": -7, "y": 0, "radius": 2.5, "thickness": 0.4, "start": -90, "sweep": 180 },
-    { "shape": "arc", "mode": "negative", "x": 7, "y": 0, "radius": 2.5, "thickness": 0.4, "start": 90, "sweep": 180 },
-    { "shape": "rect", "mode": "destroy", "x": 0, "y": 5.4, "width": 6, "height": 0.4 }
-  ],
-  "formations": {
-    "pair": {
-      "kind": "circle",
-      "count": 4,
-      "radius": 1,
-      "contents": ["electron", { "type": "electron", "parity": -1 }]
+  "editor": "particulars",
+  "version": "1.0.0",
+  "data": {
+    "walls": {
+      "width": 24,
+      "height": 12
     },
-    "quarks": {
-      "kind": "line",
-      "count": 3,
-      "distance": 1.2,
-      "contents": [
-        { "type": "up", "colour": "red" },
-        { "type": "down", "colour": "green" },
-        { "type": "strange", "colour": "blue" }
-      ]
-    }
-  },
-  "waves": [
-    {
-      "id": "ring-in",
-      "entries": [
-        { "spawn": "pair", "position": { "x": -9, "y": 0 }, "velocity": { "magnitude": 2.5, "angle": 0 }, "telegraph": 1 },
-        { "spawn": "quarks", "position": { "x": 9, "y": -3 }, "angle": 90, "velocity": { "magnitude": 2, "angle": 180 }, "telegraph": 1.5 }
-      ]
+    "player": {
+      "x": 0,
+      "y": 0
     },
-    { "id": "one-electron", "entries": [{ "spawn": "electron", "position": { "x": 0, "y": -4 }, "velocity": { "magnitude": 2, "angle": 90 }, "telegraph": 0.5 }] }
-  ],
-  "triggers": [
-    { "kind": "page-button", "button": "formation", "actions": [{ "kind": "spawn", "wave": "ring-in" }] },
-    { "kind": "page-button", "button": "electron", "actions": [{ "kind": "spawn", "wave": "one-electron" }] },
-    { "kind": "time", "at": 1, "every": 6, "repeats": 5, "actions": [{ "kind": "spawn", "wave": "ring-in" }] }
-  ]
+    "barriers": [
+      {
+        "shape": "rect",
+        "mode": "all",
+        "x": 0,
+        "y": -3,
+        "width": 3,
+        "height": 0.4
+      },
+      {
+        "shape": "arc",
+        "mode": "positive",
+        "x": -7,
+        "y": 0,
+        "radius": 2.5,
+        "thickness": 0.4,
+        "start": -90,
+        "sweep": 180
+      },
+      {
+        "shape": "arc",
+        "mode": "negative",
+        "x": 7,
+        "y": 0,
+        "radius": 2.5,
+        "thickness": 0.4,
+        "start": 90,
+        "sweep": 180
+      },
+      {
+        "shape": "rect",
+        "mode": "destroy",
+        "x": 0,
+        "y": 5.4,
+        "width": 6,
+        "height": 0.4
+      }
+    ],
+    "formations": {
+      "pair": {
+        "kind": "circle",
+        "count": 4,
+        "radius": 1,
+        "contents": [
+          "electron",
+          {
+            "type": "electron",
+            "parity": -1
+          }
+        ]
+      },
+      "quarks": {
+        "kind": "line",
+        "count": 3,
+        "distance": 1.2,
+        "contents": [
+          {
+            "type": "up",
+            "colour": "red"
+          },
+          {
+            "type": "down",
+            "colour": "green"
+          },
+          {
+            "type": "strange",
+            "colour": "blue"
+          }
+        ]
+      }
+    },
+    "waves": [
+      {
+        "id": "ring-in",
+        "entries": [
+          {
+            "spawn": "pair",
+            "position": {
+              "x": -9,
+              "y": 0
+            },
+            "velocity": {
+              "magnitude": 2.5,
+              "angle": 0
+            },
+            "telegraph": 1
+          },
+          {
+            "spawn": "quarks",
+            "position": {
+              "x": 9,
+              "y": -3
+            },
+            "angle": 90,
+            "velocity": {
+              "magnitude": 2,
+              "angle": 180
+            },
+            "telegraph": 1.5
+          }
+        ]
+      },
+      {
+        "id": "one-electron",
+        "entries": [
+          {
+            "spawn": "electron",
+            "position": {
+              "x": 0,
+              "y": -4
+            },
+            "velocity": {
+              "magnitude": 2,
+              "angle": 90
+            },
+            "telegraph": 0.5
+          }
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "kind": "page-button",
+        "button": "formation",
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "ring-in"
+          }
+        ]
+      },
+      {
+        "kind": "page-button",
+        "button": "electron",
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "one-electron"
+          }
+        ]
+      },
+      {
+        "kind": "time",
+        "at": 1,
+        "every": 6,
+        "repeats": 5,
+        "actions": [
+          {
+            "kind": "spawn",
+            "wave": "ring-in"
+          }
+        ]
+      }
+    ]
+  }
 }

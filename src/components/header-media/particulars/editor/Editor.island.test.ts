@@ -1,8 +1,8 @@
-// Client-mount test for the dev-only Particulars editor: pick a card, edit a
-// wave in the form, and see the write endpoint and the live preview follow.
+// Client-mount test for the Particulars editor island: edit a wave in the form
+// and see onChange and the live preview follow. (The shell owns card choice and save.)
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
-import Editor from './Editor.svelte';
+import Harness from './EditorHarness.test-support.svelte';
 
 const SCENARIO = {
   walls: { width: 20, height: 10 },
@@ -23,41 +23,35 @@ const SCENARIO = {
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let target: HTMLElement;
 let component: ReturnType<typeof mount>;
-let calls: { url: string; method: string; body?: any }[];
+let changes: any[];
+
+function mountEditor(readOnly = false) {
+  component = mount(Harness as any, { target, props: { initial: SCENARIO, readOnly, changed: (n: any) => changes.push(n) } });
+}
 
 beforeEach(() => {
-  calls = [];
-  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
-    const method = init?.method ?? 'GET';
-    calls.push({ url, method, body: init?.body ? JSON.parse(init.body as string) : undefined });
-    const body = url.includes('/cards') ? [{ dir: 'what/toys/a', hasScenario: true }] : url.includes('/scenario') && method === 'GET' ? SCENARIO : { ok: true };
-    return new Response(JSON.stringify(body), { status: 200 });
-  });
+  // These tests read the SVG glyphs; the bodies layer would replace them.
+  window.history.replaceState(null, '', '/?pv-bodies=off');
+  changes = [];
   target = document.createElement('div');
   document.body.appendChild(target);
-  component = mount(Editor as any, { target, props: { saveDelayMs: 10 } });
 });
 afterEach(() => {
   unmount(component);
   target.remove();
-  vi.unstubAllGlobals();
 });
 
 async function pickCard() {
-  await wait(20);
-  const select = target.querySelector('select.card-picker') as HTMLSelectElement;
-  select.value = 'what/toys/a';
-  select.dispatchEvent(new Event('change', { bubbles: true }));
-  await wait(20);
+  mountEditor();
   flushSync();
 }
 
 describe('Editor', () => {
-  it('lists cards, loads the picked scenario into the form and previews it', async () => {
+  it('loads the scenario into the form and previews it', async () => {
     await pickCard();
     const id = target.querySelector('input[data-field="waves.0.id"]') as HTMLInputElement;
     expect(id.value).toBe('ring');
-    expect(target.querySelector('svg.level-view')!.getAttribute('data-entry')).toBe('what/toys/a');
+    expect(target.querySelector('svg.level-view')!.getAttribute('data-entry')).toBe('dev-editor');
   });
 
   it('shows the trigger time that fires each wave', async () => {
@@ -66,38 +60,29 @@ describe('Editor', () => {
     expect(at.value).toBe('2');
   });
 
-  it('editing a wave writes the scenario to the card and not before', async () => {
+  it('editing a wave reports the changed scenario through onChange, and not before', async () => {
     await pickCard();
-    expect(calls.some((c) => c.method === 'PUT')).toBe(false);
+    expect(changes).toEqual([]);
     const telegraph = target.querySelector('input[data-field="waves.0.entries.0.telegraph"]') as HTMLInputElement;
     telegraph.value = '3';
     telegraph.dispatchEvent(new Event('input', { bubbles: true }));
-    await wait(60);
-    const put = calls.find((c) => c.method === 'PUT')!;
-    expect(put.url).toContain('path=what%2Ftoys%2Fa%2Findex.json');
-    expect(put.body.waves[0].entries[0].telegraph).toBe(3);
+    expect(changes.at(-1).waves[0].entries[0].telegraph).toBe(3);
   });
 
-  it('an invalid scenario is reported and never written', async () => {
+  it('an invalid scenario is reported in the form', async () => {
     await pickCard();
     const w = target.querySelector('input[data-field="walls.width"]') as HTMLInputElement;
     w.value = '-4';
     w.dispatchEvent(new Event('input', { bubbles: true }));
-    await wait(60);
-    expect(calls.some((c) => c.method === 'PUT')).toBe(false);
+    flushSync();
     expect(target.querySelector('.errors')!.textContent).toContain('walls');
   });
 
-  it('creating a card posts its folder and title, then opens it', async () => {
-    await wait(20);
-    (target.querySelector('input[data-field="new.dir"]') as HTMLInputElement).value = 'what/toys/fresh';
-    (target.querySelector('input[data-field="new.dir"]') as HTMLInputElement).dispatchEvent(new Event('input', { bubbles: true }));
-    (target.querySelector('input[data-field="new.title"]') as HTMLInputElement).value = 'Fresh';
-    (target.querySelector('input[data-field="new.title"]') as HTMLInputElement).dispatchEvent(new Event('input', { bubbles: true }));
-    (target.querySelector('button.create') as HTMLButtonElement).click();
-    await wait(40);
-    const post = calls.find((c) => c.method === 'POST')!;
-    expect(post.body).toEqual({ dir: 'what/toys/fresh', title: 'Fresh' });
+  it('read-only disables the form and ignores edits', async () => {
+    mountEditor(true);
+    flushSync();
+    const w = target.querySelector('input[data-field="walls.width"]') as HTMLInputElement;
+    expect((w.closest('fieldset.read-only') as HTMLFieldSetElement).disabled).toBe(true);
   });
 
   describe('level view', () => {
@@ -128,9 +113,7 @@ describe('Editor', () => {
       dragHandle('row:spacing', { x: 1, y: 0 });
       // the handle sat on the last slot (x = 1 + 2); at x = 4 it is 3 from the centre over a half-extent of 2
       expect(JSON.parse((target.querySelector('textarea[data-field="formations.row"]') as HTMLTextAreaElement).value).distance).toBe(1.5);
-      await wait(60);
-      const put = calls.filter((c) => c.method === 'PUT').at(-1)!;
-      expect(put.body.formations.row.distance).toBe(1.5);
+      expect(changes.at(-1).formations.row.distance).toBe(1.5);
     });
 
     it('dragging the centre handle moves the entry position fields', async () => {
@@ -180,7 +163,7 @@ describe('Editor', () => {
       await pickCard();
       await runWaves(['rows']);
       const toy = target.querySelector('svg.particulars') as SVGElement;
-      expect(toy.getAttribute('data-entry')).toBe('what/toys/a');
+      expect(toy.getAttribute('data-entry')).toBe('dev-editor');
       // 5 particles from the one chosen wave; the ring wave (timed, 1 electron) has not been spawned
       expect(toy.querySelectorAll('.particle').length).toBe(5);
     });
