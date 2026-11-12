@@ -6,10 +6,11 @@ const settle = () => new Promise((r) => setTimeout(r, 80));
 
 interface FakeOptions {
   /** Conflicts the first (unconfirmed) open answers with. */
+  bumpFails?: boolean;
   conflicts?: { property: string; old: string; new: string }[];
 }
 
-function fakeApi({ conflicts }: FakeOptions = {}) {
+function fakeApi({ conflicts, bumpFails }: FakeOptions = {}) {
   const calls: { method: string; url: string; body?: any }[] = [];
   const stored = { editor: 'demo', version: '1.0.0', data: { text: 'hi', count: 1 } };
   globalThis.fetch = vi.fn(async (url: string, init?: RequestInit) => {
@@ -28,6 +29,12 @@ function fakeApi({ conflicts }: FakeOptions = {}) {
     if (url.includes('/demo/create')) return ok({ ok: true, dir: 'what/projects/fresh' });
     if (url.includes('/demo/read')) return ok(stored);
     if (url.includes('/demo/write')) return ok({ ok: true });
+    if (url.includes('/demo/bump')) {
+      const kind = new URL(url, 'http://x').searchParams.get('kind');
+      if (bumpFails) return { ok: false, status: 409, json: async () => ({ error: 'a merge is in progress' }) } as Response;
+      stored.version = kind === 'minor' ? '1.1.0' : kind === 'major' ? '2.0.0' : '1.0.1';
+      return ok({ ok: true, version: stored.version });
+    }
     throw new Error(url);
   }) as any;
   return calls;
@@ -138,5 +145,40 @@ describe('EditorShell', () => {
     flushSync();
     expect(calls.find((c) => c.url.includes('/create'))!.body).toEqual({ parent: 'what/projects', title: 'Fresh' });
     expect(target.querySelector<HTMLAnchorElement>('a.page-link')!.getAttribute('href')).toBe('/card/what/projects/fresh');
+  });
+
+  it('shows the version with major, minor and patch buttons, no version field', async () => {
+    fakeApi();
+    const target = await mountShell();
+    expect(target.querySelector('.version-bar')).toBeNull();
+    await pick(target, 'what/a');
+    expect(target.querySelector('.version')!.textContent).toContain('1.0.0');
+    expect([...target.querySelectorAll('.version-bar button')].map((b) => b.textContent!.trim())).toEqual(['new major', 'new minor', 'new patch']);
+    expect(target.querySelector('.version-bar input')).toBeNull();
+  });
+
+  it('pressing new minor posts the bump and shows the new version', async () => {
+    const calls = fakeApi();
+    const target = await mountShell();
+    await pick(target, 'what/a');
+    target.querySelector<HTMLButtonElement>('.bump-minor')!.click();
+    await settle();
+    flushSync();
+    const bumpCall = calls.find((c) => c.url.includes('/demo/bump'))!;
+    expect(bumpCall.method).toBe('POST');
+    expect(bumpCall.url).toContain('path=what%2Fa');
+    expect(bumpCall.url).toContain('kind=minor');
+    expect(target.querySelector('.version')!.textContent).toContain('1.1.0');
+  });
+
+  it('a refused bump shows the message and keeps the version', async () => {
+    fakeApi({ bumpFails: true });
+    const target = await mountShell();
+    await pick(target, 'what/a');
+    target.querySelector<HTMLButtonElement>('.bump-patch')!.click();
+    await settle();
+    flushSync();
+    expect(target.querySelector('[role=status]')!.textContent).toContain('a merge is in progress');
+    expect(target.querySelector('.version')!.textContent).toContain('1.0.0');
   });
 });

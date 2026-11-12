@@ -2,17 +2,20 @@
 // access through an injected `ContentFs`. The Vite middleware (integration.ts)
 // only adapts HTTP and the real filesystem to this.
 
+import path from 'node:path';
 import { FIVE_W_DIMENSIONS } from '../content/tags/five-w.ts';
 import { setInspectedFalse } from '../site/inspected-gate.ts';
 import { resolveCardFile } from './paths.ts';
 import { parseEnvelope, validateEnvelope, newEnvelope, STARTING_VERSION } from './envelope.ts';
 import { applyFrontmatterPlan, frontmatterPlan } from './frontmatter-plan.ts';
 import { newCardFiles, selectorEntries, slugify } from './selector.ts';
-import type { ApiResponse, ContentFs, EditorDefinition, Envelope } from './types.ts';
+import { bump, BUMP_KINDS, type BumpKind } from './bump.ts';
+import type { ApiResponse, ContentFs, ContentGit, EditorDefinition, Envelope } from './types.ts';
 
 export interface DevEditorsApiDeps {
   editors: readonly EditorDefinition<any>[];
   fs: ContentFs;
+  git?: ContentGit;
   contentRoot: string;
   /** Today as `YYYY-MM-DD`; injected so the clock stays out of the logic. */
   today?: () => string;
@@ -31,7 +34,7 @@ export interface ApiRequest {
   body?: unknown;
 }
 
-export function createDevEditorsApi({ editors, fs, contentRoot, today = () => new Date().toISOString().slice(0, 10) }: DevEditorsApiDeps) {
+export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () => new Date().toISOString().slice(0, 10) }: DevEditorsApiDeps) {
   const find = (id: string) => editors.find((e) => e.id === id);
 
   /** The index.json beside a card, guarded. */
@@ -171,6 +174,38 @@ export function createDevEditorsApi({ editors, fs, contentRoot, today = () => ne
       fs.write(mdFile, setInspectedFalse(md));
       return json(200, { ok: true });
     },
+
+    /**
+     * Commit the card's directory as the outgoing version, then write the
+     * bumped version (a save, so `inspected: false`). Order: refuse, commit, write.
+     */
+    bump(editorId: string, dir: string, kind: BumpKind): ApiResponse {
+      const editor = find(editorId);
+      if (!editor) return json(404, { error: `no editor "${editorId}"` });
+      if (!BUMP_KINDS.includes(kind)) return json(400, { error: `kind must be one of ${BUMP_KINDS.join(', ')}` });
+      if (!git) return json(501, { error: 'no git available for version bumps' });
+      const mdTarget = resolveCardFile(contentRoot, `${dir}/index.md`);
+      if (!mdTarget.ok) return json(400, { error: mdTarget.error });
+      const jsonFile = withJson(mdTarget.file);
+      const md = fs.read(mdTarget.file);
+      const text = fs.read(jsonFile);
+      if (md === null || text === null) return json(404, { error: 'no card with an index.json here' });
+      const parsed = parseEnvelope(text);
+      if (!parsed.ok) return json(422, { error: parsed.error });
+      const errors = validateEnvelope(editor, parsed.envelope);
+      if (errors.length > 0) return json(400, { errors });
+      const envelope = parsed.envelope as Envelope;
+
+      const busy = git.inProgress();
+      if (busy !== null) return json(409, { error: `${busy} is in progress in the checkout; finish or abort it first` });
+      const committed = git.commitPaths([path.dirname(mdTarget.file)], `content: ${editor.id} ${dir} v${envelope.version}`);
+      if (!committed.ok) return json(500, { error: `commit failed: ${committed.error}` });
+
+      const version = bump(envelope.version, kind);
+      fs.write(jsonFile, asJson({ ...envelope, version }));
+      fs.write(mdTarget.file, setInspectedFalse(md));
+      return json(200, { ok: true, version });
+    },
   };
 
   return {
@@ -183,6 +218,7 @@ export function createDevEditorsApi({ editors, fs, contentRoot, today = () => ne
       if (method === 'POST' && action === 'open') return api.open(id, query.path ?? '', body);
       if (method === 'POST' && action === 'create') return api.create(id, body);
       if (method === 'GET' && action === 'read') return api.read(id, query.path ?? '');
+      if (method === 'POST' && action === 'bump') return api.bump(id, query.path ?? '', query.kind as BumpKind);
       if (method === 'PUT' && action === 'write') return api.write(id, query.path ?? '', body);
       return json(404, { error: 'unknown endpoint' });
     },

@@ -16,6 +16,7 @@
   let showAll = $state(false);
   let dir = $state('');
   let data = $state<unknown>(null);
+  let version = $state('');
   let status = $state('');
   let newFolder = $state('');
   let newTitle = $state('');
@@ -56,6 +57,7 @@
   async function choose(next: string) {
     dir = '';
     data = null;
+    version = '';
     status = '';
     if (!next) return;
     const query = `open?path=${encodeURIComponent(next)}`;
@@ -82,6 +84,7 @@
     }
     dir = next;
     data = envelope.data;
+    version = envelope.version;
     await loadCards();
   }
 
@@ -105,6 +108,18 @@
     });
     const body = await res.json();
     status = res.ok ? 'saved (card flagged inspected: false)' : (body.errors ?? [body.error]).join('; ');
+  }
+
+  async function bump(kind: 'major' | 'minor' | 'patch') {
+    status = 'committing the outgoing version…';
+    const res = await post(`bump?path=${encodeURIComponent(dir)}&kind=${kind}`, {});
+    const body = await res.json();
+    if (!res.ok) {
+      status = (body.errors ?? [body.error]).join('; ');
+      return;
+    }
+    version = body.version;
+    status = `bumped to ${body.version} (card flagged inspected: false)`;
   }
 </script>
 
@@ -142,6 +157,14 @@
 
 {#if dir}
   <p><a class="page-link" href={`/card/${dir}`} target="_blank" rel="noopener">View this card on the site</a></p>
+{/if}
+{#if dir && version}
+  <div class="version-bar">
+    <span class="version">Version {version}</span>
+    <button class="bump-major" onclick={() => bump('major')}>new major</button>
+    <button class="bump-minor" onclick={() => bump('minor')}>new minor</button>
+    <button class="bump-patch" onclick={() => bump('patch')}>new patch</button>
+  </div>
 {/if}
 {#if Editor && data !== null}
   <div class="editor-pane">

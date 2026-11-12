@@ -36,3 +36,11 @@ export interface ContentFs {
   /** Every file under the content root, as posix paths relative to it. */
   list(): string[];
 }
+
+/** Git operations the version bump needs, run in the checkout the dev server runs in. */
+export interface ContentGit {
+  /** A description of the merge, rebase or cherry-pick in progress, or null. */
+  inProgress(): string | null;
+  /** Stage everything under `paths` and commit only those paths. Retries once if the index is locked. */
+  commitPaths(paths: string[], message: string): { ok: true } | { ok: false; error: string };
+}

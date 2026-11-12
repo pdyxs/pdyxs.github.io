@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createDevEditorsApi } from './api.ts';
-import type { ContentFs, EditorDefinition } from './types.ts';
+import type { ContentFs, ContentGit, EditorDefinition } from './types.ts';
 
 const ROOT = '/c';
 const demo: EditorDefinition<{ n: number }> = {
@@ -222,5 +222,59 @@ describe('create', () => {
     const { api } = make();
     expect(api.handle({ method: 'POST', path: '/demo/create', body: { parent: 'what', title: 'Z' } }).status).toBe(200);
     expect(api.handle({ method: 'GET', path: '/folders' }).status).toBe(200);
+  });
+});
+
+describe('bump', () => {
+  const A = `${ROOT}/what/a`;
+
+  function bumpSetup(opts: { inProgress?: string | null; commit?: (paths: string[], message: string) => { ok: true } | { ok: false; error: string } } = {}) {
+    const f = fakeFs({ [`${A}/index.md`]: MD, [`${A}/index.json`]: env(1, '1.2.3') });
+    const log: string[] = [];
+    const git: ContentGit = {
+      inProgress: () => { log.push('inProgress'); return opts.inProgress ?? null; },
+      commitPaths: (paths, message) => { log.push(`commit ${paths.join(',')} | ${message}`); return opts.commit?.(paths, message) ?? { ok: true }; },
+    };
+    const fsLog: ContentFs = { ...f.fs, write: (file, text) => { log.push(`write ${file}`); f.fs.write(file, text); } };
+    const api = createDevEditorsApi({ editors: [demo], fs: fsLog, contentRoot: ROOT, git });
+    return { api, files: f.files, log };
+  }
+
+  it('commits only the card dir as the outgoing version, then writes the new version and flags inspected: false', () => {
+    const { api, files, log } = bumpSetup();
+    expect(api.bump('demo', 'what/a', 'minor')).toEqual({ status: 200, body: { ok: true, version: '1.3.0' } });
+    expect(log).toEqual(['inProgress', `commit ${A} | content: demo what/a v1.2.3`, `write ${A}/index.json`, `write ${A}/index.md`]);
+    expect(JSON.parse(files[`${A}/index.json`])).toEqual({ editor: 'demo', version: '1.3.0', data: { n: 1 } });
+    expect(files[`${A}/index.md`]).toContain('inspected: false');
+  });
+
+  it('refuses with the reason when a merge, rebase or cherry-pick is in progress, changing nothing', () => {
+    const { api, log } = bumpSetup({ inProgress: 'a merge' });
+    const res = api.bump('demo', 'what/a', 'minor');
+    expect(res.status).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('a merge');
+    expect(log).toEqual(['inProgress']);
+  });
+
+  it('reports a failed commit and does not write the new version', () => {
+    const { api, log } = bumpSetup({ commit: () => ({ ok: false, error: 'index.lock exists' }) });
+    const res = api.bump('demo', 'what/a', 'patch');
+    expect(res.status).toBe(500);
+    expect(JSON.stringify(res.body)).toContain('index.lock exists');
+    expect(log.some((l) => l.startsWith('write'))).toBe(false);
+  });
+
+  it('rejects an unknown kind or editor and a card without a valid envelope, touching nothing', () => {
+    const { api, log } = bumpSetup();
+    expect(api.bump('demo', 'what/a', 'huge' as any).status).toBe(400);
+    expect(api.bump('nope', 'what/a', 'minor').status).toBe(404);
+    expect(api.bump('demo', 'what/zzz', 'minor').status).toBe(404);
+    expect(log).toEqual([]);
+  });
+
+  it('routes POST /<id>/bump?path=<card dir>&kind=<kind>', () => {
+    const { api, files } = bumpSetup();
+    expect(api.handle({ method: 'POST', path: '/demo/bump', query: { path: 'what/a', kind: 'major' } }).body).toEqual({ ok: true, version: '2.0.0' });
+    expect(JSON.parse(files[`${A}/index.json`]).version).toBe('2.0.0');
   });
 });

@@ -9,6 +9,7 @@
 import { mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { createDevEditorsApi } from './api.ts';
+import { createContentGit } from './git.ts';
 import type { ContentFs, EditorDefinition } from './types.ts';
 
 export const EDITORS_ROUTE = '/dev/editors';
@@ -50,7 +51,7 @@ function apiPlugin(editors: readonly EditorDefinition<any>[]) {
     apply: 'serve' as const,
     configureServer(server: any) {
       const contentRoot = path.resolve(server.config.root, 'src', 'content');
-      const api = createDevEditorsApi({ editors, fs: nodeFs(contentRoot), contentRoot });
+      const api = createDevEditorsApi({ editors, fs: nodeFs(contentRoot), git: createContentGit({ cwd: server.config.root }), contentRoot });
       server.middlewares.use(EDITORS_API, async (req: any, res: any) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
         let out: { status: number; body: unknown };
