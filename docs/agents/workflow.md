@@ -82,13 +82,18 @@ read the flag:
   enforcement.
 
 **The rule this drives:** any script, generator or AI agent that changes a
-card's frontmatter **or** body — not Paul editing directly in Obsidian — must
+card's frontmatter, body **or data file** (`index.json`, the dev editors'
+envelope beside `index.md`) — not Paul editing directly in Obsidian — must
 set `inspected: false` on that card's frontmatter as part of the same change.
 An automated edit is exactly the kind of change nobody has personally read
 yet, so it must not reach production, and it belongs on the worklist the flag
 already drives. Set it even if the card was previously ticked `true` — an
 automated change is new content a human hasn't seen, regardless of what was
 reviewed before it. Without it, a machine edit publishes itself.
+
+The dev editors (`src/lib/dev-editors/`, `astro dev` only) do this in their api:
+every save of a card's `index.json` sets `inspected: false` in the same request,
+via `setInspectedFalse`.
 
 Exceptions, all stated, none implied:
 

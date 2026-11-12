@@ -1,0 +1,14 @@
+---
+// Dev-only: injected once per registered editor by the devEditors integration
+// (src/lib/dev-editors/integration.ts), outside src/pages so a production
+// build never discovers it. The editor id is the last path segment.
+import Base from '../layouts/Base.astro';
+import EditorShell from '../lib/dev-editors/EditorShell.svelte';
+
+const editorId = Astro.url.pathname.replace(/\/+$/, '').split('/').pop() ?? '';
+---
+<Base title="Dev editor">
+  <main>
+    <EditorShell editorId={editorId} client:only="svelte" />
+  </main>
+</Base>

@@ -1,0 +1,22 @@
+---
+// Dev-only: lists the registered editors. See editor.astro.
+import Base from '../layouts/Base.astro';
+---
+<Base title="Dev editors">
+  <main>
+    <h1>Dev editors</h1>
+    <ul id="editors"></ul>
+    <script>
+      const list = document.getElementById('editors')!;
+      const editors: { id: string; name: string }[] = await (await fetch('/__dev-editors/editors')).json();
+      for (const e of editors) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `/dev/editors/${e.id}`;
+        a.textContent = e.name;
+        li.append(a);
+        list.append(li);
+      }
+    </script>
+  </main>
+</Base>

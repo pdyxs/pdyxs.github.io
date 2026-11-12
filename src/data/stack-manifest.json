@@ -1804,5 +1804,10 @@
   {
     "uid": "what/games/digital/houston-we-have-a",
     "code": "5R"
+  },
+  {
+    "uid": "what/toys/dev-editor-demo",
+    "code": "5S",
+    "title": "Dev editor demo"
   }
 ]
