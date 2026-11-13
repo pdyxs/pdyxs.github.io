@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Dump the old crdbrd.design Firebase data (Firestore + Storage) to a local folder.
+set -euo pipefail
+
+here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+repo="$(dirname "$here")"
+out="$HOME/crdbrd-dump"
+pass=()
+
+usage() {
+  cat <<USAGE
+Usage: scripts/crdbrd-dump [--game <id>] [--out <dir>] [--bucket <name>]
+
+Copies every game (or one) from the old crdbrd.design Firebase project:
+one JSON file per Firestore document, mirroring the collection path
+(subcollections included), the Storage files under images/<gameId>/, and a
+manifest.json (counts, game names, dump time).
+
+Options:
+  --game <id>      Dump only games/<id> instead of every game.
+  --out <dir>      Output directory. Default: ~/crdbrd-dump/
+                   Must be outside this repo; the script refuses otherwise.
+  --bucket <name>  Storage bucket. Default: <project_id>.appspot.com
+  --help           Show this help.
+
+Credentials: a Firebase service-account key (JSON), kept in GNOME Keyring and
+never in a file. Store it once (the command prompts for the key; paste the JSON):
+
+  secret-tool store --label="crdbrd Firebase service account" \\
+    service crdbrd-firebase username service-account
+
+The launcher reads it with secret-tool and hands it to node through an
+environment variable for that one process only. It is never written to disk
+or printed.
+USAGE
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --help|-h) usage; exit 0 ;;
+    --out) [ $# -ge 2 ] || { echo "--out needs a value" >&2; exit 2; }; out="$2"; shift 2 ;;
+    --game|--bucket) [ $# -ge 2 ] || { echo "$1 needs a value" >&2; exit 2; }; pass+=("$1" "$2"); shift 2 ;;
+    *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+out="$(realpath -m -- "$out")"
+case "$out/" in
+  "$repo"/*) echo "Refusing to dump inside the repo ($repo): $out" >&2; exit 2 ;;
+esac
+
+if ! key="$(secret-tool lookup service crdbrd-firebase username service-account)" || [ -z "$key" ]; then
+  cat >&2 <<MSG
+No Firebase key found in the keyring. Store it (paste the service-account JSON when prompted):
+
+  secret-tool store --label="crdbrd Firebase service account" service crdbrd-firebase username service-account
+MSG
+  exit 1
+fi
+
+cd "$repo"
+CRDBRD_FIREBASE_KEY="$key" exec node scripts/crdbrd-dump.mjs --out "$out" "${pass[@]}"
