@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { selectorEntries, newCardFiles, slugify } from './selector.ts';
+import { searchCards, selectorEntries, newCardFiles, slugify } from './selector.ts';
 
 const cards = [
   { dir: 'what/b', valid: false },
@@ -32,5 +32,16 @@ describe('newCardFiles', () => {
     const files = newCardFiles({ title: 'A "Title"', isoDate: '2026-11-12', frontmatter: { headerMedia: 'demo' }, envelope: { editor: 'demo', version: '1.0.0', data: { n: 0 } } });
     expect(files.indexMd).toBe('---\ntitle: "A \\"Title\\""\ndate: 2026-11-12\ninspected: false\nheaderMedia: demo\n---\n');
     expect(JSON.parse(files.indexJson)).toEqual({ editor: 'demo', version: '1.0.0', data: { n: 0 } });
+  });
+});
+
+describe('searchCards', () => {
+  const cards = [{ dir: 'what/toys/dev-editor-demo' }, { dir: 'what/games/flatland' }, { dir: 'who/paul' }];
+  it('matches every term anywhere in the dir, ignoring case, in order', () => {
+    expect(searchCards(cards, '')).toEqual(cards);
+    expect(searchCards(cards, 'WHAT')).toEqual(cards.slice(0, 2));
+    expect(searchCards(cards, 'flat what')).toEqual([cards[1]]);
+    expect(searchCards(cards, 'demo toys')).toEqual([cards[0]]);
+    expect(searchCards(cards, 'nothing')).toEqual([]);
   });
 });

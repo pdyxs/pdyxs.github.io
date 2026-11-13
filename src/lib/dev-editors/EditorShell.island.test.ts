@@ -61,16 +61,30 @@ async function mountShell() {
   return target;
 }
 
+/** Focus the card search so its list opens. */
+function openCardList(target: HTMLElement) {
+  target.querySelector<HTMLInputElement>('input.card-search')!.dispatchEvent(new FocusEvent('focus'));
+  flushSync();
+}
+
 async function pick(target: HTMLElement, dir: string) {
-  const select = target.querySelector<HTMLSelectElement>('select.cards')!;
-  select.value = dir;
-  select.dispatchEvent(new Event('change', { bubbles: true }));
+  openCardList(target);
+  target.querySelector<HTMLElement>(`.card-list [data-dir="${dir}"]`)!.click();
   await settle();
   flushSync();
 }
 
+/** Open the new-version line, so the major/minor/patch buttons exist. */
+function openBump(target: HTMLElement) {
+  target.querySelector<HTMLButtonElement>('button.new-version')!.click();
+  flushSync();
+}
+
 let component: ReturnType<typeof mount>;
-afterEach(() => unmount(component));
+afterEach(() => {
+  unmount(component);
+  history.replaceState(null, '', '/');
+});
 
 describe('EditorShell', () => {
   it('picks a card, edits through the editor island, and saves { data }', async () => {
@@ -94,10 +108,45 @@ describe('EditorShell', () => {
     expect(put.body).toEqual({ data: { text: 'bye', count: 7 } });
   });
 
+  it('opening a card puts it in the URL, mirroring its site path', async () => {
+    fakeApi();
+    const target = await mountShell();
+    await pick(target, 'what/a');
+    expect(location.pathname).toBe('/dev/editors/demo/what/a');
+  });
+
+  it('a card in the URL opens on load, so a reload keeps it open', async () => {
+    const calls = fakeApi();
+    history.replaceState(null, '', '/dev/editors/demo/what/a');
+    const target = await mountShell();
+    await settle();
+    flushSync();
+    expect(calls.some((c) => c.url.includes('/demo/read') && c.url.includes('what%2Fa'))).toBe(true);
+    expect(target.querySelector<HTMLAnchorElement>('a.page-link')!.getAttribute('href')).toBe('/card/what/a');
+  });
+
+  it('a version bump saves unsaved edits first, so the commit includes them', async () => {
+    const calls = fakeApi();
+    const target = await mountShell();
+    await pick(target, 'what/a');
+    const input = target.querySelector<HTMLInputElement>('.editor-pane input')!;
+    input.value = 'edited';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    openBump(target);
+    target.querySelector<HTMLButtonElement>('.bump-patch')!.click();
+    await settle();
+    const order = calls.filter((c) => c.method === 'PUT' || c.url.includes('/demo/bump')).map((c) => c.method);
+    expect(order).toEqual(['PUT', 'POST']);
+  });
+
   it('shows only valid cards by default and every card with "show all"', async () => {
     fakeApi();
     const target = await mountShell();
-    const options = () => [...target.querySelectorAll('select.cards option')].map((o) => (o as HTMLOptionElement).value).filter(Boolean);
+    const options = () => {
+      openCardList(target);
+      return [...target.querySelectorAll<HTMLElement>('.card-list [data-dir]')].map((o) => o.dataset.dir);
+    };
     expect(options()).toEqual(['what/a']);
     const box = target.querySelector<HTMLInputElement>('input.show-all')!;
     box.checked = true;
@@ -107,9 +156,28 @@ describe('EditorShell', () => {
     expect(options()).toEqual(['what/a', 'what/b']);
   });
 
+  it('typing in the card search narrows the list, and Enter opens the highlighted card', async () => {
+    fakeApi();
+    const target = await mountShell();
+    const box = target.querySelector<HTMLInputElement>('input.show-all')!;
+    box.checked = true;
+    box.dispatchEvent(new Event('change', { bubbles: true }));
+    await settle();
+    openCardList(target);
+    const search = target.querySelector<HTMLInputElement>('input.card-search')!;
+    search.value = 'b';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    expect([...target.querySelectorAll<HTMLElement>('.card-list [data-dir]')].map((o) => o.dataset.dir)).toEqual(['what/b']);
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await settle();
+    flushSync();
+    expect(target.querySelector<HTMLAnchorElement>('a.page-link')!.getAttribute('href')).toBe('/card/what/b');
+  });
+
   it('on a conflict asks naming the property; no leaves the card unopened', async () => {
     const calls = fakeApi({ conflicts: [{ property: 'headerMedia', old: 'flash-game', new: 'demo' }] });
-    const ask = vi.fn(() => false);
+    const ask = vi.fn((_message: string) => false);
     vi.stubGlobal('confirm', ask);
     const target = await mountShell();
     await pick(target, 'what/a');
@@ -159,20 +227,40 @@ describe('EditorShell', () => {
     expect(target.querySelector<HTMLAnchorElement>('a.page-link')!.getAttribute('href')).toBe('/card/what/projects/fresh');
   });
 
-  it('shows the version with major, minor and patch buttons, no version field', async () => {
+  it('shows the version, + and Restore; + toggles a line of major, minor and patch with their versions', async () => {
     fakeApi();
     const target = await mountShell();
     expect(target.querySelector('.version-bar')).toBeNull();
     await pick(target, 'what/a');
     expect(target.querySelector('.version')!.textContent).toContain('1.0.0');
-    expect([...target.querySelectorAll('.version-bar button')].map((b) => b.textContent!.trim())).toEqual(['new major', 'new minor', 'new patch']);
-    expect(target.querySelector('.version-bar input')).toBeNull();
+    expect([...target.querySelectorAll('.version-bar button')].map((b) => b.textContent!.trim())).toEqual(['+', 'Restore']);
+    expect(target.querySelector('.bump-line')).toBeNull();
+    openBump(target);
+    expect([...target.querySelectorAll('.bump-line button')].map((b) => b.textContent!.replace(/\s+/g, ' ').trim())).toEqual([
+      'major 2.0.0',
+      'minor 1.1.0',
+      'patch 1.0.1',
+    ]);
+    openBump(target);
+    expect(target.querySelector('.bump-line')).toBeNull();
+  });
+
+  it('+ and Restore swap the line below between them', async () => {
+    fakeApi();
+    const target = await mountShell();
+    await pick(target, 'what/a');
+    openBump(target);
+    target.querySelector<HTMLButtonElement>('button.restore-toggle')!.click();
+    flushSync();
+    expect(target.querySelector('.bump-line')).toBeNull();
+    expect(target.querySelector('.restore-line')).not.toBeNull();
   });
 
   it('pressing new minor posts the bump and shows the new version', async () => {
     const calls = fakeApi();
     const target = await mountShell();
     await pick(target, 'what/a');
+    openBump(target);
     target.querySelector<HTMLButtonElement>('.bump-minor')!.click();
     await settle();
     flushSync();
@@ -187,6 +275,7 @@ describe('EditorShell', () => {
     fakeApi({ bumpFails: true });
     const target = await mountShell();
     await pick(target, 'what/a');
+    openBump(target);
     target.querySelector<HTMLButtonElement>('.bump-patch')!.click();
     await settle();
     flushSync();
@@ -195,7 +284,12 @@ describe('EditorShell', () => {
   });
 
   describe('version history', () => {
+    const openRestore = (target: HTMLElement) => {
+      target.querySelector<HTMLButtonElement>('button.restore-toggle')!.click();
+      flushSync();
+    };
     const pickVersion = async (target: HTMLElement, commit: string) => {
+      if (!target.querySelector('select.version-picker')) openRestore(target);
       const select = target.querySelector<HTMLSelectElement>('select.version-picker')!;
       select.value = commit;
       select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -208,8 +302,9 @@ describe('EditorShell', () => {
     it('lists every committed version newest first, after the working file', async () => {
       fakeApi();
       const target = await mountShell();
-      expect(target.querySelector('select.version-picker')).toBeNull();
       await pick(target, 'what/a');
+      expect(target.querySelector('select.version-picker')).toBeNull();
+      openRestore(target);
       expect(pickerOptions(target).map(([v]) => v)).toEqual(['', 'c4', 'c3', 'c2']);
       expect(pickerOptions(target).slice(1).map(([, label]) => label)).toEqual([
         expect.stringContaining('2.0.0'),
@@ -231,11 +326,8 @@ describe('EditorShell', () => {
       expect(inputs[0].value).toBe('second 1.0.0');
       expect(inputs.every((i) => i.disabled)).toBe(true);
       expect(target.querySelector('button.save')).toBeNull();
-      expect([...target.querySelectorAll<HTMLButtonElement>('.bump-major, .bump-minor, .bump-patch')].every((b) => b.disabled)).toBe(true);
+      expect(target.querySelector('.bump-line')).toBeNull();
       expect(target.querySelector('.version')!.textContent).toContain('1.0.0');
-
-      target.querySelectorAll<HTMLButtonElement>('.bump-major, .bump-minor, .bump-patch').forEach((b) => b.click());
-      await settle();
       expect(calls.some((c) => c.method === 'PUT' || c.url.includes('/demo/bump'))).toBe(false);
     });
 
@@ -256,12 +348,42 @@ describe('EditorShell', () => {
       expect(target.querySelector<HTMLSelectElement>('select.version-picker')!.value).toBe('');
     });
 
+    it('Restore copies the viewed version into the editable working file as unsaved changes', async () => {
+      const calls = fakeApi();
+      const target = await mountShell();
+      await pick(target, 'what/a');
+      await pickVersion(target, 'c3');
+      target.querySelector<HTMLButtonElement>('button.restore')!.click();
+      flushSync();
+      const inputs = [...target.querySelectorAll<HTMLInputElement>('.editor-pane input')];
+      expect(inputs[0].value).toBe('one-one');
+      expect(inputs.some((i) => i.disabled)).toBe(false);
+      expect(target.querySelector('[role=status]')!.textContent).toContain('Unsaved');
+      expect(calls.some((c) => c.method === 'PUT')).toBe(false);
+      target.querySelector<HTMLButtonElement>('button.save')!.click();
+      await settle();
+      expect(calls.find((c) => c.method === 'PUT')!.body.data.text).toBe('one-one');
+    });
+
+    it('closing Restore returns to the working file', async () => {
+      fakeApi();
+      const target = await mountShell();
+      await pick(target, 'what/a');
+      await pickVersion(target, 'c3');
+      target.querySelector<HTMLButtonElement>('button.restore-toggle')!.click();
+      await settle();
+      flushSync();
+      expect(target.querySelector<HTMLInputElement>('.editor-pane input')!.value).toBe('hi');
+      expect(target.querySelector('.ed-readonly')).toBeNull();
+    });
+
     it('re-reads the history after a bump, so the committed version appears', async () => {
       const calls = fakeApi();
       const target = await mountShell();
       await pick(target, 'what/a');
       const before = calls.filter((c) => c.url.includes('/demo/history')).length;
-      target.querySelector<HTMLButtonElement>('.bump-minor')!.click();
+      openBump(target);
+    target.querySelector<HTMLButtonElement>('.bump-minor')!.click();
       await settle();
       expect(calls.filter((c) => c.url.includes('/demo/history')).length).toBe(before + 1);
     });

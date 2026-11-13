@@ -10,9 +10,10 @@ import { mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 
 import path from 'node:path';
 import { createDevEditorsApi } from './api.ts';
 import { createContentGit } from './git.ts';
+import { EDITORS_ROUTE, parseEditorPath } from './routes.ts';
 import type { ContentFs, EditorDefinition } from './types.ts';
 
-export const EDITORS_ROUTE = '/dev/editors';
+export { EDITORS_ROUTE };
 /** Api prefix; the editor shell talks to `/__dev-editors/<id>/*`. */
 export const EDITORS_API = '/__dev-editors';
 
@@ -51,6 +52,16 @@ function apiPlugin(editors: readonly EditorDefinition<any>[]) {
     apply: 'serve' as const,
     configureServer(server: any) {
       const contentRoot = path.resolve(server.config.root, 'src', 'content');
+      // A card in the path (`/dev/editors/<id>/<card dir>`) is served by the
+      // editor's own page; the shell reads the card back out of the URL. Connect
+      // strips the mount prefix from req.url and restores it on next().
+      const ids = editors.map((e) => e.id);
+      server.middlewares.use(EDITORS_ROUTE, (req: any, _res: any, next: () => void) => {
+        const url = new URL(req.url ?? '/', 'http://localhost');
+        const parsed = parseEditorPath(EDITORS_ROUTE + url.pathname, ids);
+        if (parsed && parsed.dir !== '') req.url = `/${parsed.editorId}${url.search}`;
+        next();
+      });
       const api = createDevEditorsApi({ editors, fs: nodeFs(contentRoot), git: createContentGit({ cwd: server.config.root }), contentRoot });
       server.middlewares.use(EDITORS_API, async (req: any, res: any) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
