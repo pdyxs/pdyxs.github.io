@@ -54,10 +54,67 @@ export interface Component {
   values: Record<string, Value>;
 }
 
+/**
+ * A layer property: a literal today. The union exists so a bound variant
+ * (`{ kind: 'bound', ... }`) can be added later without touching layer shapes.
+ */
+export type Prop<T> = { kind: 'literal'; value: T };
+
+/** Millimetres, relative to the cut line's top-left corner. */
+export interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export type ImageFit = 'contain' | 'cover' | 'stretch';
+export type TextAlign = 'left' | 'center' | 'right';
+
+interface LayerBase extends Box {
+  id: string;
+}
+export interface ImageLayer extends LayerBase {
+  type: 'image';
+  file: Prop<string | null>;
+  fit: Prop<ImageFit>;
+}
+export interface TextLayer extends LayerBase {
+  type: 'text';
+  text: Prop<string>;
+  /** Font size in mm. */
+  size: Prop<number>;
+  colour: Prop<string>;
+  align: Prop<TextAlign>;
+}
+export interface ShapeLayer extends LayerBase {
+  type: 'shape';
+  shape: 'rect' | 'ellipse';
+  fill: Prop<string | null>;
+  stroke: Prop<string | null>;
+  /** Stroke width in mm. */
+  strokeWidth: Prop<number>;
+}
+/** Layer order is draw order, first drawn first (at the back). Holds data only, no UI state. */
+export type Layer = ImageLayer | TextLayer | ShapeLayer;
+export type LayerType = Layer['type'];
+
+/** Only a rectangle for now; `radius` rounds its corners (mm). */
+export interface Outline {
+  kind: 'rectangle';
+  radius?: number;
+}
+
 /** A group of components sharing a design (a deck, player mats, a board). */
 export interface ComponentSet {
   id: string;
   name: string;
+  /** Physical size of the cut line in mm. Absent in older games; read through `geometryOf`. */
+  size?: { width: number; height: number };
+  /** Bleed past the cut line in mm. */
+  bleed?: number;
+  outline?: Outline;
+  template?: Layer[];
   /** Plain text shown later by the rulebook / print-and-play when the piece can be swapped. */
   substitute: string;
   properties: Property[];

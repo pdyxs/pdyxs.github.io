@@ -1,4 +1,4 @@
-import type { Component, ComponentSet, Concept, Entity, Game, Property, Value } from './types.ts';
+import type { Component, ComponentSet, Concept, Entity, Game, Layer, Outline, Property, Value } from './types.ts';
 
 /** Every concept in the game, depth-first, parents before children. */
 export function allConcepts(game: Game): Concept[] {
@@ -72,3 +72,13 @@ export function setPath(game: Game, id: string): ComponentSet[] {
 
 /** Every property in the game, whoever holds it. */
 export const allProperties = (game: Game): Property[] => [...game.properties, ...allConcepts(game).flatMap((c) => c.properties), ...allSets(game).flatMap((s) => s.properties)];
+
+/** Defaults for a set that has no geometry yet: a poker card, no bleed. */
+export const DEFAULT_SIZE = { width: 63.5, height: 88.9 };
+
+/** A set's physical geometry with defaults filled in, so older games read as a plain card. */
+export function geometryOf(set: Pick<ComponentSet, 'size' | 'bleed' | 'outline'>): { size: { width: number; height: number }; bleed: number; outline: Outline } {
+  return { size: set.size ?? DEFAULT_SIZE, bleed: set.bleed ?? 0, outline: set.outline ?? { kind: 'rectangle' } };
+}
+
+export const templateOf = (set: ComponentSet): Layer[] => set.template ?? [];
