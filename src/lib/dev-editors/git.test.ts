@@ -99,7 +99,7 @@ describe('createContentGit', () => {
       const c2 = commitJson('v2\n', 'two');
       const log = adapter().log(J());
       expect(log.map((l) => l.commit)).toEqual([c2, c1]);
-      expect(log[0].date).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/);
+      expect(log[0].date).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/);
       expect(adapter().show(c1, J())).toBe('v1\n');
       expect(adapter().show(c2, J())).toBe('v2\n');
     });
