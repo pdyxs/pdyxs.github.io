@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "//": "astro check only needs to cover .astro files; .ts/.svelte are checked by svelte-check (tsconfig.svelte-check.json). Checking everything here costs ~10 GB. Do not include svelte-check-types (see tsconfig.json).",
+  "include": [".astro/types.d.ts", "src/**/*.astro"],
+  "exclude": ["dist", "svelte-check-types"]
+}

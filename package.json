@@ -12,7 +12,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check": "astro check && svelte-check --tsconfig ./tsconfig.svelte-check.json",
+    "check": "astro check --tsconfig ./tsconfig.astro-check.json && svelte-check --tsconfig ./tsconfig.svelte-check.json",
     "generate:lenses": "node scripts/generate-lens-registry.mjs",
     "generate:lens-icons": "node scripts/generate-lens-icons.mjs",
     "generate:dither": "node scripts/gen-dither.mjs",
