@@ -53,6 +53,9 @@
 
 <h3>Design</h3>
 <div class="set-geometry">
+  {#if set.size === undefined}
+    <p class="set-size-unset" role="status">Size not set: previewing a placeholder of {geometry.size.width} × {geometry.size.height} mm. Enter the real size below.</p>
+  {/if}
   <label>Shape
     <select class="set-outline-kind" value={outline.kind} disabled={readOnly} onchange={(e) => onChange(setOutline(game, set.id, startOutline(e.currentTarget.value as Outline['kind'])))}>
       <option value="rectangle">rectangle</option><option value="circle">circle</option><option value="hexagon">hexagon</option><option value="custom">custom path</option>

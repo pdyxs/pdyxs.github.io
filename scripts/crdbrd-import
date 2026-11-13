@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Import one game from a crdbrd-dump folder into a card folder as crdbrd data.
+set -euo pipefail
+
+here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+repo="$(dirname "$here")"
+
+usage() {
+  cat <<USAGE
+Usage: scripts/crdbrd-import <dumpDir> <gameId> <cardDir> [--force]
+
+Reads game <gameId> from <dumpDir> (written by scripts/crdbrd-dump), maps it to
+crdbrd game data, copies its images into <cardDir> and writes <cardDir>/index.json
+in the dev-editors envelope (editor "crdbrd"). <cardDir> must be an existing card
+folder (it has an index.md); index.md is not touched.
+
+Mapping warnings (anything that could not be placed) are printed at the end.
+Sets get no size: the editor flags each until you enter the real one.
+
+Options:
+  --force   Overwrite an existing index.json. Without it the script refuses.
+  --help    Show this help.
+
+Find <gameId> in <dumpDir>/manifest.json.
+USAGE
+}
+
+for a in "$@"; do
+  case "$a" in
+    --help|-h) usage; exit 0 ;;
+  esac
+done
+
+cd "$repo"
+exec node scripts/crdbrd-import.mjs "$@"

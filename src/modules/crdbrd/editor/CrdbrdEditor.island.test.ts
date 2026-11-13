@@ -494,6 +494,14 @@ describe('CrdbrdEditor: set design', () => {
     expect(q(target, '.set-preview .cut-line')).not.toBeNull();
   });
 
+  it('flags a set whose size was never set (an imported one) until a size is entered', () => {
+    const { target } = setup(withSet());
+    openSet(target);
+    expect(q(target, '.set-size-unset').textContent).toMatch(/63\.5.*88\.9/);
+    type(q<HTMLInputElement>(target, 'input.set-width'), '50');
+    expect(target.querySelector('.set-size-unset')).toBeNull();
+  });
+
   it('switches the outline to a circle, hexagon or custom path and previews each', () => {
     const { target, changes } = setup(withSet());
     openSet(target);
