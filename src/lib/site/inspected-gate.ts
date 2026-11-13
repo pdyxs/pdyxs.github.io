@@ -29,6 +29,17 @@ function setInspected(raw: string, value: boolean): string {
 }
 
 /**
+ * Whether a card's raw source says `inspected: true`, read textually like the
+ * setters below. Absent, or any other value, is not inspected — the same rule
+ * as `uninspectedCards`.
+ */
+export function isInspected(raw: string): boolean {
+  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
+  if (!match) return false;
+  return match[1].split('\n').some(l => /^inspected\s*:\s*true\s*(#.*)?\r?$/.test(l));
+}
+
+/**
  * Sets `inspected: false` on a card's raw source, textually. A gray-matter
  * round-trip would rewrite the whole frontmatter block (quoting, comments,
  * key order); this touches one line. Rollback's step 2 (§7).

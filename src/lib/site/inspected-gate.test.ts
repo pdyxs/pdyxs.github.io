@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { uninspectedCards, setInspectedFalse, setInspectedTrue, cardFileForUid, planRollbackStep } from './inspected-gate.ts';
+import { isInspected, uninspectedCards, setInspectedFalse, setInspectedTrue, cardFileForUid, planRollbackStep } from './inspected-gate.ts';
 
 describe('uninspectedCards', () => {
   it('finds nothing when every card is inspected', () => {
@@ -87,5 +87,16 @@ describe('planRollbackStep', () => {
 
   it('removes a card the last change introduced', () => {
     expect(planRollbackStep({ onMain: true, addedByLastChange: true })).toBe('remove');
+  });
+});
+
+describe('isInspected', () => {
+  it('is true only for an exact `inspected: true` in the frontmatter', () => {
+    expect(isInspected('---\ntitle: a\ninspected: true\n---\nbody')).toBe(true);
+    expect(isInspected('---\ninspected: true # ticked\n---\n')).toBe(true);
+    expect(isInspected('---\ninspected: false\n---\n')).toBe(false);
+    expect(isInspected('---\ntitle: a\n---\ninspected: true\n')).toBe(false);
+    expect(isInspected('no frontmatter')).toBe(false);
+    expect(isInspected(setInspectedTrue(setInspectedFalse('---\ntitle: a\n---\n')))).toBe(true);
   });
 });

@@ -4,7 +4,7 @@
 
 import path from 'node:path';
 import { FIVE_W_DIMENSIONS } from '../content/tags/five-w.ts';
-import { setInspectedFalse } from '../site/inspected-gate.ts';
+import { isInspected, setInspectedFalse } from '../site/inspected-gate.ts';
 import { resolveCardFile } from './paths.ts';
 import { parseEnvelope, validateEnvelope, newEnvelope, STARTING_VERSION } from './envelope.ts';
 import { applyFrontmatterPlan, frontmatterPlan } from './frontmatter-plan.ts';
@@ -67,6 +67,14 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
       : { kind: 'broken' as const, description: 'an index.json whose data is invalid for this editor' };
   };
 
+  /**
+   * Rewriting an unchanged index.md still makes the content layer reload every
+   * open page, so a save that changes only index.json leaves it alone.
+   */
+  const writeIfChanged = (file: string, before: string, after: string) => {
+    if (after !== before) fs.write(file, after);
+  };
+
   /** The git port and the commits touching a card's index.json, newest first. */
   const committed = (editorId: string, dir: string) => {
     if (!find(editorId)) return { ok: false as const, response: json(404, { error: `no editor "${editorId}"` }) };
@@ -79,6 +87,16 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
   const api = {
     editors(): ApiResponse {
       return json(200, editors.map(({ id, name, component }) => ({ id, name, component })));
+    },
+
+    /** The registered editor a card's index.json names, or null: what a card page's "open in editor" button needs. */
+    editorFor(dir: string): ApiResponse {
+      const target = jsonTarget(`${dir}/index.json`);
+      if (!target.ok) return json(200, { editor: null });
+      const text = fs.read(target.file);
+      const parsed = text === null ? null : parseEnvelope(text);
+      const owner = parsed?.ok ? (parsed.envelope as { editor?: unknown } | null)?.editor : undefined;
+      return json(200, { editor: typeof owner === 'string' && find(owner) ? owner : null });
     },
 
     /** Every card (a folder with an index.md), with whether its index.json is valid for the editor. */
@@ -125,7 +143,7 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
       if (state.kind !== 'valid') fs.write(jsonFile, asJson(newEnvelope(editor)));
       const nextMd = applyFrontmatterPlan(md, editor.frontmatter, plan);
       if (nextMd !== md) fs.write(mdTarget.file, nextMd);
-      return json(200, { ok: true, dir });
+      return json(200, { ok: true, dir, inspected: isInspected(nextMd) });
     },
 
     create(editorId: string, body: unknown): ApiResponse {
@@ -181,8 +199,9 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
       if (errors.length > 0) return json(400, { errors });
 
       fs.write(target.file, asJson(envelope));
-      fs.write(mdFile, setInspectedFalse(md));
-      return json(200, { ok: true });
+      const nextMd = setInspectedFalse(md);
+      writeIfChanged(mdFile, md, nextMd);
+      return json(200, { ok: true, inspected: isInspected(nextMd) });
     },
 
     /**
@@ -213,8 +232,9 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
 
       const version = bump(envelope.version, kind);
       fs.write(jsonFile, asJson({ ...envelope, version }));
-      fs.write(mdTarget.file, setInspectedFalse(md));
-      return json(200, { ok: true, version });
+      const nextMd = setInspectedFalse(md);
+      writeIfChanged(mdTarget.file, md, nextMd);
+      return json(200, { ok: true, version, inspected: isInspected(nextMd) });
     },
 
     /** Every version the card's index.json has been committed with, newest first. */
@@ -248,6 +268,7 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
       const [, id, action] = path.split('/');
       if (method === 'GET' && path === '/editors') return api.editors();
       if (method === 'GET' && path === '/folders') return api.folders();
+      if (method === 'GET' && path === '/editor-for') return api.editorFor(query.dir ?? '');
       if (method === 'GET' && action === 'cards') return api.cards(id, { showAll: query.all === '1' });
       if (method === 'POST' && action === 'open') return api.open(id, query.path ?? '', body);
       if (method === 'POST' && action === 'create') return api.create(id, body);

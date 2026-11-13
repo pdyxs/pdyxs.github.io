@@ -6,6 +6,12 @@
 
 export const EDITORS_ROUTE = '/dev/editors';
 
+/** Custom HMR event the dev server sends when a card's index.json changes. Payload `{ dir }`. */
+export const DATA_CHANGED_EVENT = 'dev-editors:data-changed';
+
+/** Whether a page is an editor page, which must not reload when the card data it is saving changes. */
+export const isEditorPage = (pathname: string) => pathname === EDITORS_ROUTE || pathname.startsWith(`${EDITORS_ROUTE}/`);
+
 export function editorUrl(editorId: string, dir = ''): string {
   return dir ? `${EDITORS_ROUTE}/${editorId}/${dir}` : `${EDITORS_ROUTE}/${editorId}`;
 }

@@ -10,10 +10,10 @@ import { mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 
 import path from 'node:path';
 import { createDevEditorsApi } from './api.ts';
 import { createContentGit } from './git.ts';
-import { EDITORS_ROUTE, parseEditorPath } from './routes.ts';
+import { DATA_CHANGED_EVENT, EDITORS_ROUTE, parseEditorPath } from './routes.ts';
 import type { ContentFs, EditorDefinition } from './types.ts';
 
-export { EDITORS_ROUTE };
+export { DATA_CHANGED_EVENT, EDITORS_ROUTE };
 /** Api prefix; the editor shell talks to `/__dev-editors/<id>/*`. */
 export const EDITORS_API = '/__dev-editors';
 
@@ -46,12 +46,44 @@ async function readBody(req: AsyncIterable<Buffer | string>): Promise<unknown> {
   return text ? JSON.parse(text) : undefined;
 }
 
+/** The card dir whose index.json `file` is, or null. Pure. */
+export function cardDataDir(contentRoot: string, file: string): string | null {
+  const rel = path.relative(contentRoot, file).split(path.sep).join('/');
+  if (rel.startsWith('..') || path.isAbsolute(rel) || !rel.endsWith('/index.json')) return null;
+  return rel.slice(0, -'/index.json'.length);
+}
+
 function apiPlugin(editors: readonly EditorDefinition<any>[]) {
+  let contentRoot = '';
   return {
     name: 'pdyxs:dev-editors-api',
     apply: 'serve' as const,
+    // A card's index.json is read by server-rendered code (a renderer's
+    // import.meta.glob), and Astro answers any server-only module change by
+    // reloading every open page — the editor included, mid-edit. So it is
+    // handled here first: the stale server modules are invalidated as Astro
+    // would, and the pages hear a custom event instead. Card pages reload on
+    // it (dev-client.ts); editor pages, the ones saving, do not.
+    hotUpdate: {
+      order: 'pre' as const,
+      handler(this: any, { file, modules, timestamp, server }: any) {
+        const dir = contentRoot ? cardDataDir(contentRoot, file) : null;
+        if (dir === null) return;
+        const invalidated = new Set<any>();
+        for (const mod of modules) this.environment.moduleGraph.invalidateModule(mod, invalidated, timestamp, true);
+        const evaluated = this.environment.runner?.evaluatedModules;
+        if (evaluated) {
+          for (const mod of invalidated) {
+            const ran = mod.id ? evaluated.getModuleById(mod.id) : undefined;
+            if (ran) evaluated.invalidateModule(ran);
+          }
+        }
+        if (this.environment.name === 'client') server.ws.send({ type: 'custom', event: DATA_CHANGED_EVENT, data: { dir } });
+        return [];
+      },
+    },
     configureServer(server: any) {
-      const contentRoot = path.resolve(server.config.root, 'src', 'content');
+      contentRoot = path.resolve(server.config.root, 'src', 'content');
       // A card in the path (`/dev/editors/<id>/<card dir>`) is served by the
       // editor's own page; the shell reads the card back out of the URL. Connect
       // strips the mount prefix from req.url and restores it on next().
