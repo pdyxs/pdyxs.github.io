@@ -3,6 +3,9 @@ import type { ComponentSet, Concept, Game, Property, Value } from './types.ts';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
+const LAYER_TYPES = ['image', 'text', 'shape'];
+const isPositive = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0;
+
 /** A bare filename in the card folder: not a URL, not a path. */
 const isFilename = (v: unknown): v is string => typeof v === 'string' && v !== '' && !/[\\/:]/.test(v);
 
@@ -64,6 +67,20 @@ export function validate(game: unknown): string[] {
     claim(s.id);
     s.properties.forEach(checkProperty);
     for (const k of s.components) claim(k.id);
+    const size = s.size as unknown;
+    if (size !== undefined && !(isObject(size) && isPositive(size.width) && isPositive(size.height))) errors.push(`set "${s.id}" has an invalid size`);
+    if (s.bleed !== undefined && !(typeof s.bleed === 'number' && Number.isFinite(s.bleed) && s.bleed >= 0)) errors.push(`set "${s.id}" has an invalid bleed`);
+    const template = s.template as unknown;
+    if (template === undefined) continue;
+    if (!Array.isArray(template)) {
+      errors.push(`set "${s.id}" template must be an array`);
+      continue;
+    }
+    for (const layer of template as Record<string, unknown>[]) {
+      claim(String(layer?.id));
+      if (!LAYER_TYPES.includes(layer?.type as string)) errors.push(`layer "${layer?.id}" has an unknown type`);
+      else if (!(Number.isFinite(layer.x) && Number.isFinite(layer.y) && isPositive(layer.width) && isPositive(layer.height))) errors.push(`layer "${layer.id}" has an invalid box`);
+    }
   }
   const checkValues = (owner: string, values: Record<string, Value>, allowed?: Property[]) => {
     for (const [pid, v] of Object.entries(values)) {

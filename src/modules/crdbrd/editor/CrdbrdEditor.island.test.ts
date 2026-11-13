@@ -469,3 +469,69 @@ describe('CrdbrdEditor: image properties', () => {
     });
   });
 });
+
+describe('CrdbrdEditor: set design', () => {
+  const withSet = () => addSet(blank(), { id: 's', name: 'Deck' });
+  const openSet = (target: HTMLElement) => follow(q(target, '.set-row .set-link'));
+  const selectValue = (el: HTMLSelectElement, value: string) => {
+    el.value = value;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+  };
+
+  it('edits size, bleed and corner radius, and previews the card with cut line and bleed', () => {
+    const { target, changes } = setup(withSet());
+    openSet(target);
+    expect(q(target, '.set-preview svg').getAttribute('viewBox')).toBe('0 0 63.5 88.9');
+    type(q<HTMLInputElement>(target, 'input.set-width'), '50');
+    type(q<HTMLInputElement>(target, 'input.set-height'), '70');
+    type(q<HTMLInputElement>(target, 'input.set-bleed'), '3');
+    type(q<HTMLInputElement>(target, 'input.set-radius'), '4');
+    expect(changes.at(-1)!.sets![0]).toMatchObject({ size: { width: 50, height: 70 }, bleed: 3, outline: { kind: 'rectangle', radius: 4 } });
+    expect(q(target, '.set-preview svg').getAttribute('viewBox')).toBe('-3 -3 56 76');
+    expect(q(target, '.set-preview .cut-line')).not.toBeNull();
+  });
+
+  it('adds layers of each type, edits them, reorders and removes them, and draws them in the preview', () => {
+    const { target, changes } = setup(withSet());
+    openSet(target);
+    selectValue(q<HTMLSelectElement>(target, 'select.add-layer-type'), 'text');
+    click(q(target, 'button.add-layer'));
+    selectValue(q<HTMLSelectElement>(target, 'select.add-layer-type'), 'image');
+    click(q(target, 'button.add-layer'));
+    expect(changes.at(-1)!.sets![0].template!.map((l) => l.type)).toEqual(['text', 'image']);
+    expect(qa(target, '.layer-row')).toHaveLength(2);
+    expect(q(target, '.set-preview text')).not.toBeNull();
+    expect(q(target, '.set-preview .gap')).not.toBeNull();
+
+    type(q<HTMLInputElement>(target, '.layer-row:nth-child(1) input.layer-text'), 'Hi');
+    expect((changes.at(-1)!.sets![0].template![0] as any).text.value).toBe('Hi');
+    expect(q(target, '.set-preview text').textContent).toContain('Hi');
+
+    type(q<HTMLInputElement>(target, '.layer-row:nth-child(1) input.layer-x'), '7');
+    expect(changes.at(-1)!.sets![0].template![0].x).toBe(7);
+
+    click(q(target, '.layer-row:nth-child(1) button.layer-down'));
+    expect(changes.at(-1)!.sets![0].template!.map((l) => l.type)).toEqual(['image', 'text']);
+
+    click(q(target, '.layer-row:nth-child(1) button.remove-layer'));
+    expect(changes.at(-1)!.sets![0].template!.map((l) => l.type)).toEqual(['text']);
+  });
+
+  it('adds a shape and edits its kind and fill', () => {
+    const { target, changes } = setup(withSet());
+    openSet(target);
+    click(q(target, 'button.add-layer'));
+    expect(changes.at(-1)!.sets![0].template![0].type).toBe('shape');
+    selectValue(q<HTMLSelectElement>(target, '.layer-row select.layer-shape'), 'ellipse');
+    type(q<HTMLInputElement>(target, '.layer-row input.layer-fill'), '#00ff00');
+    expect(changes.at(-1)!.sets![0].template![0]).toMatchObject({ shape: 'ellipse', fill: { value: '#00ff00' } });
+    expect(q(target, '.set-preview ellipse')).not.toBeNull();
+  });
+
+  it('previews the first expanded instance (the layout comes from the set, an instance is always present)', () => {
+    const { target } = setup(addComponent(withSet(), { set: 's', id: 'k', name: 'Card' }));
+    openSet(target);
+    expect(q(target, '.set-preview svg')).not.toBeNull();
+  });
+});

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { blank } from './game.ts';
 import { validate } from './validate.ts';
-import { addConcept, addEntity, addProperty, setEntityValue, addSet, addComponent, addPer, setComponentValue } from './ops.ts';
+import type { Game } from './types.ts';
+import { addConcept, addEntity, addProperty, setEntityValue, addSet, addComponent, addPer, setComponentValue, addLayer } from './ops.ts';
 
 describe('validate', () => {
   it('accepts a blank game and an edited one', () => {
@@ -84,5 +85,24 @@ describe('validate: sets and components', () => {
     g = setComponentValue(g, 'k2', 'p', 'many');
     g = setComponentValue(g, 'k2', 'ghost', 1);
     expect(validate(g)).toEqual(['component "k2" value for "p" does not fit its type', 'component "k2" has a value for unknown property "ghost"']);
+  });
+});
+
+describe('validate: set geometry and templates', () => {
+  const withLayer = () => addLayer(addSet(blank(), { id: 's', name: 'Deck' }), { set: 's', id: 'l', type: 'shape' });
+  const patchSet = (g: Game, patch: Record<string, unknown>) => ({ ...g, sets: [{ ...g.sets![0], ...patch }] });
+
+  it('accepts a set with geometry and layers', () => {
+    expect(validate(patchSet(withLayer(), { size: { width: 50, height: 70 }, bleed: 3 }))).toEqual([]);
+  });
+
+  it('rejects a bad size, bleed, unknown layer type, bad box and duplicate layer id', () => {
+    const g = withLayer();
+    expect(validate(patchSet(g, { size: { width: 0, height: 5 } }))).toEqual(['set "s" has an invalid size']);
+    expect(validate(patchSet(g, { bleed: -1 }))).toEqual(['set "s" has an invalid bleed']);
+    expect(validate(patchSet(g, { template: 'x' }))).toEqual(['set "s" template must be an array']);
+    expect(validate(patchSet(g, { template: [{ ...g.sets![0].template![0], type: 'blob' }] }))).toEqual(['layer "l" has an unknown type']);
+    expect(validate(patchSet(g, { template: [{ ...g.sets![0].template![0], width: -1 }] }))).toEqual(['layer "l" has an invalid box']);
+    expect(validate(patchSet(g, { template: [g.sets![0].template![0], g.sets![0].template![0]] }))).toEqual(['duplicate id "l"']);
   });
 });
