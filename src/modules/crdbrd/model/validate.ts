@@ -1,6 +1,7 @@
+import { accepts, findSource, LAYER_PROPS } from './bindings.ts';
 import { keyEntities } from './image.ts';
 import { outlineProblem } from './path.ts';
-import type { ComponentSet, Concept, Game, Property, Value } from './types.ts';
+import type { Binding, LayerType, ComponentSet, Concept, Game, Property, Value } from './types.ts';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -85,6 +86,12 @@ export function validate(game: unknown): string[] {
       claim(String(layer?.id));
       if (!LAYER_TYPES.includes(layer?.type as string)) errors.push(`layer "${layer?.id}" has an unknown type`);
       else if (!(Number.isFinite(layer.x) && Number.isFinite(layer.y) && isPositive(layer.width) && isPositive(layer.height))) errors.push(`layer "${layer.id}" has an invalid box`);
+      else for (const [key, spec] of Object.entries(LAYER_PROPS[layer.type as LayerType])) {
+        const prop = layer[key];
+        if (!isObject(prop) || prop.kind !== 'bound') continue;
+        const source = findSource(g, s.id, prop.source as Binding);
+        if (!source || !accepts(spec.want, source.type)) errors.push(`layer "${layer.id}" prop "${key}" is bound to a source that no longer exists or does not fit`);
+      }
     }
   }
   const checkValues = (owner: string, values: Record<string, Value>, allowed?: Property[]) => {

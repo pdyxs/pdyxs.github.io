@@ -13,11 +13,17 @@
   import ComponentRow from './ComponentRow.svelte';
   import LayerRow from './LayerRow.svelte';
   import SetPreview from './SetPreview.svelte';
+  import { instanceLabel } from './instance-label.ts';
 
   let { game, set, readOnly, onChange, editorId, dir }: { game: Game; set: ComponentSet; readOnly: boolean; onChange: (next: Game) => void; editorId: string; dir: string } = $props();
 
   // expand is the one place instances are computed; the page only counts them.
-  const total = $derived(expand(game, set.id).length);
+  const instances = $derived(expand(game, set.id));
+  const total = $derived(instances.length);
+  // Where you are in the design, not part of the game: which piece the preview shows and which layer is selected.
+  let instanceIndex = $state(0);
+  let selectedLayer = $state<string | null>(null);
+  const instance = $derived(instances[Math.min(instanceIndex, instances.length - 1)]);
   const geometry = $derived(geometryOf(set));
   const layers = $derived(templateOf(set));
   let newLayerType = $state<LayerType>('shape');
@@ -84,7 +90,7 @@
   <div class="layers">
     <ul class="layer-list">
       {#each layers as layer (layer.id)}
-        <LayerRow {game} {layer} {readOnly} {onChange} {editorId} {dir} />
+        <LayerRow {game} setId={set.id} {layer} selected={layer.id === selectedLayer} {readOnly} {onChange} onSelect={(id) => (selectedLayer = id)} {editorId} {dir} />
       {/each}
     </ul>
     <select class="add-layer-type" value={newLayerType} onchange={(e) => (newLayerType = e.currentTarget.value as LayerType)} disabled={readOnly} aria-label="Layer type">
@@ -92,7 +98,12 @@
     </select>
     <button type="button" class="add-layer" disabled={readOnly} onclick={() => onChange(addLayer(game, { set: set.id, id: newId(), type: newLayerType }))}>Add layer</button>
   </div>
-  <SetPreview {game} {set} {editorId} {dir} />
+  <div class="preview-pane">
+    <select class="instance-picker" value={String(instance ? instances.indexOf(instance) : 0)} disabled={instances.length === 0} aria-label="Preview instance" onchange={(e) => (instanceIndex = parseInt(e.currentTarget.value, 10))}>
+      {#each instances as inst, i (i)}<option value={String(i)}>{instanceLabel(game, inst)}</option>{/each}
+    </select>
+    <SetPreview {game} {set} {instance} highlight={selectedLayer} onSelect={(id) => (selectedLayer = id)} {editorId} {dir} />
+  </div>
 </div>
 
 <h3>Properties</h3>

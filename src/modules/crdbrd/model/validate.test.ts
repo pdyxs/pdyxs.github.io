@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { blank } from './game.ts';
 import { validate } from './validate.ts';
 import type { Game } from './types.ts';
-import { addConcept, addEntity, addProperty, setEntityValue, addSet, addComponent, addPer, setComponentValue, addLayer } from './ops.ts';
+import { addConcept, addEntity, addProperty, setEntityValue, addSet, addComponent, addPer, setComponentValue, addLayer, bindLayerProp, removeProperty, removeConcept } from './ops.ts';
 
 describe('validate', () => {
   it('accepts a blank game and an edited one', () => {
@@ -114,5 +114,30 @@ describe('validate: set geometry and templates', () => {
     expect(validate(patchSet(g, { template: [{ ...g.sets![0].template![0], type: 'blob' }] }))).toEqual(['layer "l" has an unknown type']);
     expect(validate(patchSet(g, { template: [{ ...g.sets![0].template![0], width: -1 }] }))).toEqual(['layer "l" has an invalid box']);
     expect(validate(patchSet(g, { template: [g.sets![0].template![0], g.sets![0].template![0]] }))).toEqual(['duplicate id "l"']);
+  });
+});
+
+describe('validate: bound layer props', () => {
+  function bound() {
+    let g = addConcept(blank(), { id: 'pl', name: 'Player' });
+    g = addProperty(g, { owner: 'pl', id: 'col', name: 'Colour', type: { kind: 'colour' } });
+    g = addSet(g, { id: 's', name: 'Deck' });
+    g = addProperty(g, { owner: 's', id: 'title', name: 'Title' });
+    g = addComponent(g, { set: 's', id: 'k', name: 'Card' });
+    g = addPer(g, 'k', 'pl');
+    g = addLayer(g, { set: 's', id: 'sh', type: 'shape' });
+    g = addLayer(g, { set: 's', id: 'tx', type: 'text' });
+    g = bindLayerProp(g, 'sh', 'fill', { kind: 'entity', concept: 'pl', property: 'col' });
+    return bindLayerProp(g, 'tx', 'text', { kind: 'component', property: 'title' });
+  }
+
+  it('accepts bindings that resolve to something of the right type', () => {
+    expect(validate(bound())).toEqual([]);
+  });
+
+  it('reports a binding whose property, concept or per-link is gone, or whose type does not fit', () => {
+    expect(validate(removeProperty(bound(), 'title'))).toEqual(['layer "tx" prop "text" is bound to a source that no longer exists or does not fit']);
+    expect(validate(removeConcept(bound(), 'pl'))).toEqual(['layer "sh" prop "fill" is bound to a source that no longer exists or does not fit']);
+    expect(validate(bindLayerProp(bound(), 'sh', 'fill', { kind: 'component', property: 'title' }))).toHaveLength(1);
   });
 });

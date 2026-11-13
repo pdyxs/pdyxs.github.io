@@ -3,7 +3,8 @@ import { mount, unmount, flushSync } from 'svelte';
 import CrdbrdEditor from './CrdbrdEditor.svelte';
 import { blank } from '../model/game.ts';
 import type { Game } from '../model/types.ts';
-import { addConcept, addEntity, addProperty, addSet, addComponent, setComponentCount, addPer, setImageVariesBy, setImageSlot, setEntityValue } from '../model/ops.ts';
+import { addConcept, addEntity, addProperty, addSet, addComponent, setComponentCount, addPer, setImageVariesBy, setImageSlot, setEntityValue, addLayer, removeProperty } from '../model/ops.ts';
+import { validate } from '../model/validate.ts';
 import { reactiveProps } from './reactive-props.svelte.ts';
 
 /** Mount the island the way the shell does: `data` in, whole new game out through onChange. */
@@ -337,7 +338,8 @@ describe('CrdbrdEditor: component sets', () => {
   it('offers no editing when read-only', () => {
     location.hash = '#/sets/s';
     const { target } = setup(addComponent(withSet(), { set: 's', id: 'k', name: 'Card' }), true);
-    expect(qa(target, 'input, button, select, textarea').every((e) => (e as HTMLInputElement).disabled)).toBe(true);
+    // The instance picker only changes what the preview shows, so it stays usable.
+    expect(qa(target, 'input, button, select:not(.instance-picker), textarea').every((e) => (e as HTMLInputElement).disabled)).toBe(true);
   });
 
   it('opens on a set page from the hash, and falls back when the set is gone', () => {
@@ -560,5 +562,87 @@ describe('CrdbrdEditor: set design', () => {
     const { target } = setup(addComponent(withSet(), { set: 's', id: 'k', name: 'Card' }));
     openSet(target);
     expect(q(target, '.set-preview svg')).not.toBeNull();
+  });
+});
+
+describe('CrdbrdEditor: template editor', () => {
+  const selectValue = (el: HTMLSelectElement, value: string) => {
+    el.value = value;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+  };
+  /** Pick a source in a bind select by its label. */
+  const bindTo = (select: HTMLSelectElement, label: string) => selectValue(select, [...select.options].find((o) => o.textContent!.trim() === label)!.value);
+  const openSet = (target: HTMLElement) => follow(q(target, '.set-row .set-link'));
+
+  function designed() {
+    let g = addConcept(blank(), { id: 'pl', name: 'Player' });
+    g = addProperty(g, { owner: 'pl', id: 'col', name: 'Colour', type: { kind: 'colour' } });
+    g = addEntity(g, { concept: 'pl', id: 'red', name: 'Red' });
+    g = addEntity(g, { concept: 'pl', id: 'blue', name: 'Blue' });
+    g = setEntityValue(g, 'red', 'col', '#ff0000');
+    g = setEntityValue(g, 'blue', 'col', '#0000ff');
+    g = addSet(g, { id: 's', name: 'Deck' });
+    g = addProperty(g, { owner: 's', id: 'title', name: 'Title' });
+    g = addComponent(g, { set: 's', id: 'k', name: 'Card' });
+    g = addPer(g, 'k', 'pl');
+    g = addLayer(g, { set: 's', id: 'sh', type: 'shape' });
+    g = addLayer(g, { set: 's', id: 'tx', type: 'text' });
+    return g;
+  }
+
+  it('binds a shape fill to a per-concept colour and a text to a component property, and the instance picker flips the values', () => {
+    const { target, changes } = setup(designed());
+    openSet(target);
+    bindTo(q<HTMLSelectElement>(target, '.layer-row:nth-child(1) .layer-prop-fill select.bind-source'), 'Player: Colour');
+    bindTo(q<HTMLSelectElement>(target, '.layer-row:nth-child(2) .layer-prop-text select.bind-source'), 'Title');
+    expect((changes.at(-1)!.sets![0].template![0] as any).fill).toEqual({ kind: 'bound', source: { kind: 'entity', concept: 'pl', property: 'col' } });
+    expect(target.querySelector('.layer-row:nth-child(1) input.layer-fill')).toBeNull();
+    expect(q(target, '.set-preview rect[fill="#ff0000"]')).not.toBeNull();
+    expect(q(target, '.set-preview text').textContent).toContain('(Card)');
+
+    const picker = q<HTMLSelectElement>(target, 'select.instance-picker');
+    expect([...picker.options].map((o) => o.textContent!.trim())).toEqual(['Card (Red)', 'Card (Blue)']);
+    selectValue(picker, '1');
+    expect(q(target, '.set-preview rect[fill="#0000ff"]')).not.toBeNull();
+    expect(target.querySelector('.set-preview rect[fill="#ff0000"]')).toBeNull();
+
+    bindTo(q<HTMLSelectElement>(target, '.layer-row:nth-child(1) .layer-prop-fill select.bind-source'), '(literal)');
+    expect((changes.at(-1)!.sets![0].template![0] as any).fill.kind).toBe('literal');
+    expect(q(target, '.layer-row:nth-child(1) input.layer-fill')).not.toBeNull();
+  });
+
+  it('offers only sources of a fitting type', () => {
+    const { target } = setup(designed());
+    openSet(target);
+    const labels = (sel: string) => [...q<HTMLSelectElement>(target, sel).options].map((o) => o.textContent!.trim());
+    expect(labels('.layer-row:nth-child(1) .layer-prop-fill select.bind-source')).toEqual(['(literal)', 'Player: Colour']);
+    expect(labels('.layer-row:nth-child(2) .layer-prop-text select.bind-source')).toEqual(['(literal)', 'Title']);
+    expect(labels('.layer-row:nth-child(2) .layer-prop-size select.bind-source')).toEqual(['(literal)']);
+  });
+
+  it('selects a layer from a click in the preview and highlights a layer chosen in the form', () => {
+    const { target } = setup(designed());
+    openSet(target);
+    expect(target.querySelector('.layer-row.selected')).toBeNull();
+    expect(target.querySelector('.set-preview .highlight')).toBeNull();
+    q(target, '.set-preview .hit[data-layer="tx"]').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    flushSync();
+    expect(qa(target, '.layer-row.selected').map((r) => r.querySelector('.layer-type')!.textContent)).toEqual(['text']);
+    expect(q(target, '.set-preview .highlight')).not.toBeNull();
+    click(q(target, '.layer-row:nth-child(1)'));
+    expect(qa(target, '.layer-row.selected').map((r) => r.querySelector('.layer-type')!.textContent)).toEqual(['shape']);
+  });
+
+  it('shows a binding whose property or concept was removed as broken in the form, a gap in the preview, and reports it in validate', () => {
+    const { target, props } = setup(designed());
+    openSet(target);
+    bindTo(q<HTMLSelectElement>(target, '.layer-row:nth-child(1) .layer-prop-fill select.bind-source'), 'Player: Colour');
+    expect(target.querySelector('.binding-broken')).toBeNull();
+    props.data = removeProperty(props.data, 'col');
+    flushSync();
+    expect(q(target, '.layer-row:nth-child(1) .layer-prop-fill .binding-broken')).not.toBeNull();
+    expect(q(target, '.set-preview .gap')).not.toBeNull();
+    expect(validate(props.data)).toHaveLength(1);
   });
 });

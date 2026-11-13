@@ -2,7 +2,8 @@
 // mm with everything decided. No Svelte, no DOM. Origin is the cut line's
 // top-left; the page (cut line plus bleed) therefore starts at -bleed.
 
-import type { Game, ImageFit, Layer, TextLayer, ComponentSet } from '../model/types.ts';
+import type { Game, ImageFit, Layer, TextAlign, TextLayer, ComponentSet } from '../model/types.ts';
+import { readLayerProps } from '../model/bindings.ts';
 import type { Instance } from '../model/expand.ts';
 import { outline } from './outline.ts';
 
@@ -34,9 +35,6 @@ export type Item =
   | (ItemBase & { kind: 'gap'; reason: string })
   | (ItemBase & { kind: 'text'; anchor: 'start' | 'middle' | 'end'; lines: { text: string; x: number; y: number }[]; size: number; colour: string });
 
-/** A literal prop's value. The one place that will learn to read bound props. */
-const read = <T>(prop: { kind: 'literal'; value: T }): T => prop.value;
-
 /**
  * A box whose edge sits on or past the cut line is drawn out to the bleed edge,
  * so a full-bleed design survives trimming. The far edges are compared with the
@@ -51,31 +49,34 @@ export function extendToBleed(box: Rect, size: { width: number; height: number }
 }
 
 /** Lines of text placed in mm: first baseline one font size below the box top, then a line height of the font size. */
-function textLines(layer: TextLayer) {
-  const align = read(layer.align);
-  const size = read(layer.size);
+function textLines(layer: TextLayer, v: Record<string, unknown>) {
+  const align = v.align as TextAlign;
+  const size = v.size as number;
   const x = align === 'left' ? layer.x : align === 'right' ? layer.x + layer.width : layer.x + layer.width / 2;
-  const lines = read(layer.text).split('\n').map((text, i) => ({ text, x, y: layer.y + size * (i + 1) }));
-  return { anchor: (align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle') as 'start' | 'middle' | 'end', lines, size, colour: read(layer.colour) };
+  const lines = (v.text as string).split('\n').map((text, i) => ({ text, x, y: layer.y + size * (i + 1) }));
+  return { anchor: (align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle') as 'start' | 'middle' | 'end', lines, size, colour: v.colour as string };
 }
 
-function resolveLayer(layer: Layer, size: { width: number; height: number }, bleed: number): Item {
+function resolveLayer(layer: Layer, size: { width: number; height: number }, bleed: number, instance: Instance, game: Game): Item {
   const { id } = layer;
   // Text keeps its box: its alignment is measured from the box edges.
   const { x, y, width, height } = layer.type === 'text' ? layer : extendToBleed(layer, size, bleed);
+  const props = readLayerProps(game, instance, layer);
+  if ('gap' in props) return { kind: 'gap', id, x, y, width, height, reason: props.gap };
+  const v = props.values;
   switch (layer.type) {
     case 'shape':
-      return { kind: 'shape', id, shape: layer.shape, x, y, width, height, fill: read(layer.fill), stroke: read(layer.stroke), strokeWidth: read(layer.strokeWidth) };
+      return { kind: 'shape', id, shape: layer.shape, x, y, width, height, fill: v.fill as string | null, stroke: v.stroke as string | null, strokeWidth: v.strokeWidth as number };
     case 'text':
-      return { kind: 'text', id, x, y, width, height, ...textLines(layer) };
+      return { kind: 'text', id, x, y, width, height, ...textLines(layer, v) };
     case 'image': {
-      const file = read(layer.file);
-      return file ? { kind: 'image', id, x, y, width, height, file, fit: read(layer.fit) } : { kind: 'gap', id, x, y, width, height, reason: 'no image set' };
+      const file = v.file as string | null;
+      return file ? { kind: 'image', id, x, y, width, height, file, fit: v.fit as ImageFit } : { kind: 'gap', id, x, y, width, height, reason: 'no image set' };
     }
   }
 }
 
-export function resolve(template: Template, _instance: Instance, _game: Game): Scene {
+export function resolve(template: Template, instance: Instance, game: Game): Scene {
   const { cutPath, size, bleed } = outline(template);
-  return { size, bleed, page: { x: -bleed, y: -bleed, width: size.width + 2 * bleed, height: size.height + 2 * bleed }, cutPath, bleedMask: { path: cutPath, strokeWidth: bleed * 2, lineJoin: 'round' }, items: (template.template ?? []).map((l) => resolveLayer(l, size, bleed)) };
+  return { size, bleed, page: { x: -bleed, y: -bleed, width: size.width + 2 * bleed, height: size.height + 2 * bleed }, cutPath, bleedMask: { path: cutPath, strokeWidth: bleed * 2, lineJoin: 'round' }, items: (template.template ?? []).map((l) => resolveLayer(l, size, bleed, instance, game)) };
 }

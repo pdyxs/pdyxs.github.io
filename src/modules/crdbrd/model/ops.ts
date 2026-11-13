@@ -1,7 +1,7 @@
 // Pure edit ops: each takes the whole game and returns a new whole game.
 // Ids come from the caller, so ops stay deterministic.
 
-import type { Box, ImageSlots, Layer, Outline, LayerType, Prop, Component, ComponentSet, Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
+import type { Binding, Box, ImageSlots, Layer, Outline, LayerType, Prop, Component, ComponentSet, Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
 import { bindingKey, keyEntities } from './image.ts';
 import { outlineProblem } from './path.ts';
 import { allConcepts, allProperties, allSets, geometryOf, setsOf, templateOf } from './query.ts';
@@ -357,8 +357,23 @@ export function setLayerBox(game: Game, id: string, box: Partial<Box>): Game {
 export function setLayerProp(game: Game, id: string, key: string, value: unknown): Game {
   const target = allSets(game).flatMap(templateOf).find((l) => l.id === id) as Record<string, unknown> | undefined;
   const current = target?.[key] as { kind?: string } | undefined;
-  if (current?.kind !== 'literal') return game;
+  if (!current?.kind) return game;
   return mapLayer(game, id, (l) => ({ ...l, [key]: lit(value) }) as Layer);
+}
+
+/** Bind a layer prop to a model source; a name the layer does not have is ignored. */
+export function bindLayerProp(game: Game, id: string, key: string, source: Binding): Game {
+  const target = allSets(game).flatMap(templateOf).find((l) => l.id === id) as Record<string, unknown> | undefined;
+  if (!(target?.[key] as { kind?: string } | undefined)?.kind) return game;
+  return mapLayer(game, id, (l) => ({ ...l, [key]: { kind: 'bound', source } }) as Layer);
+}
+
+/** Turn a bound prop back into a literal, at the value a new layer of that type starts with. */
+export function unbindLayerProp(game: Game, id: string, key: string): Game {
+  const target = allSets(game).flatMap(templateOf).find((l) => l.id === id);
+  const fresh = target && (newLayer(target.type, id, target) as unknown as Record<string, unknown>)[key];
+  if (!fresh) return game;
+  return mapLayer(game, id, (l) => ({ ...l, [key]: fresh }) as Layer);
 }
 
 export function setShapeKind(game: Game, id: string, shape: 'rect' | 'ellipse'): Game {

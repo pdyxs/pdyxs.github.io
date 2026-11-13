@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { blank } from './game.ts';
 import { addSet } from './ops.ts';
-import { setSetSize, setSetBleed, setOutlineRadius, setOutline, addLayer, removeLayer, moveLayer, setLayerBox, setLayerProp, setShapeKind } from './ops.ts';
+import { setSetSize, setSetBleed, setOutlineRadius, setOutline, addLayer, removeLayer, moveLayer, setLayerBox, setLayerProp, setShapeKind, bindLayerProp, unbindLayerProp } from './ops.ts';
 import { findSet, geometryOf, templateOf } from './query.ts';
 
 const base = () => addSet(blank(), { id: 's', name: 'Deck' });
@@ -95,5 +95,24 @@ describe('setOutline', () => {
     const g = base();
     expect(setOutline(g, 's', { kind: 'rectangle', radius: -1 })).toBe(g);
     expect(setOutline(g, 's', { kind: 'hexagon', orientation: 'sideways' as never, measure: 'flat-to-flat' })).toBe(g);
+  });
+});
+
+describe('binding a layer prop', () => {
+  const g0 = () => addLayer(addLayer(base(), { set: 's', id: 'a', type: 'shape' }), { set: 's', id: 't', type: 'text' });
+  const layer = (g: ReturnType<typeof base>, id: string) => templateOf(findSet(g, 's')!).find((l) => l.id === id)!;
+  const source = { kind: 'entity', concept: 'pl', property: 'col' } as const;
+
+  it('binds a prop to a source and unbinds it back to the default literal', () => {
+    const bound = bindLayerProp(g0(), 'a', 'fill', source);
+    expect(layer(bound, 'a')).toMatchObject({ fill: { kind: 'bound', source } });
+    expect(layer(unbindLayerProp(bound, 'a', 'fill'), 'a')).toMatchObject({ fill: { kind: 'literal', value: '#cccccc' } });
+  });
+
+  it('ignores a prop the layer does not have, and lets a literal edit replace a binding', () => {
+    const g = g0();
+    expect(bindLayerProp(g, 'a', 'text', source)).toBe(g);
+    expect(unbindLayerProp(g, 'a', 'text')).toBe(g);
+    expect(layer(setLayerProp(bindLayerProp(g, 'a', 'fill', source), 'a', 'fill', '#00ff00'), 'a')).toMatchObject({ fill: { kind: 'literal', value: '#00ff00' } });
   });
 });

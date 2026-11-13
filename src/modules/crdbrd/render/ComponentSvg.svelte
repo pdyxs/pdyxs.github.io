@@ -3,7 +3,11 @@
   // size is just CSS. No decisions here; the scene arrives resolved.
   import type { Scene } from './resolve.ts';
 
-  let { scene, imageUrl, maskId = 'crdbrd-bleed-mask' }: { scene: Scene; imageUrl: (file: string) => string; maskId?: string } = $props();
+  // `highlight` is a layer id to outline, `onselect` hears a click on a layer; selection itself lives with the caller.
+  let { scene, imageUrl, maskId = 'crdbrd-bleed-mask', highlight = null, onselect }: {
+    scene: Scene; imageUrl: (file: string) => string; maskId?: string; highlight?: string | null; onselect?: (layerId: string) => void;
+  } = $props();
+  const marked = $derived(scene.items.find((i) => i.id === highlight));
 
   // The SVG attribute each fit name stands for; a lookup, not a decision.
   const fitToAspect = { contain: 'xMidYMid meet', cover: 'xMidYMid slice', stretch: 'none' } as const;
@@ -41,5 +45,16 @@
       {/if}
     {/each}
   </g>
-  <path class="cut-line" d={scene.cutPath} fill="none" stroke="#e00" stroke-width="0.2" stroke-dasharray="1 0.6" />
+  {#if marked}
+    <rect class="highlight" x={marked.x} y={marked.y} width={marked.width} height={marked.height} fill="none" stroke="#06f" stroke-width="0.5" pointer-events="none" />
+  {/if}
+  <path class="cut-line" d={scene.cutPath} fill="none" stroke="#e00" stroke-width="0.2" stroke-dasharray="1 0.6" pointer-events="none" />
+  <!-- One invisible target per item, in draw order, so the topmost layer under the pointer takes the click. -->
+  <g class="hits">
+    {#each scene.items as item (item.id)}
+      <!-- Pointer-only on purpose: the layer list in the form is the keyboard route to the same selection. -->
+      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+      <rect class="hit" data-layer={item.id} x={item.x} y={item.y} width={item.width} height={item.height} fill="transparent" onclick={() => onselect?.(item.id)} />
+    {/each}
+  </g>
 </svg>

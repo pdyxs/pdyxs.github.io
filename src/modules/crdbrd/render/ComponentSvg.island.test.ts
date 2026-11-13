@@ -102,3 +102,36 @@ describe('ComponentSvg: images and gaps', () => {
     expect(gap.querySelector('title')!.textContent).toBe('no image set');
   });
 });
+
+describe('ComponentSvg: selection', () => {
+  const two: Scene['items'] = [
+    { kind: 'shape', id: 'back', shape: 'rect', x: 0, y: 0, width: 60, height: 80, fill: '#eee', stroke: null, strokeWidth: 0 },
+    { kind: 'gap', id: 'front', x: 10, y: 10, width: 20, height: 20, reason: 'x' },
+  ];
+  function renderSelectable(highlight?: string | null) {
+    const target = document.createElement('div');
+    document.body.appendChild(target);
+    const picked: string[] = [];
+    mounted = mount(ComponentSvg as any, { target, props: { scene: scene(two), imageUrl: (f: string) => f, maskId: 'm', highlight, onselect: (id: string) => picked.push(id) } });
+    flushSync();
+    return { target, picked };
+  }
+
+  it('emits select with the layer id when a layer is clicked, one hit target per item, the later drawn on top', () => {
+    const { target, picked } = renderSelectable();
+    const hits = [...target.querySelectorAll<SVGElement>('.hits .hit')];
+    expect(hits.map((h) => h.getAttribute('data-layer'))).toEqual(['back', 'front']);
+    expect([hits[1].getAttribute('x'), hits[1].getAttribute('width')]).toEqual(['10', '20']);
+    hits[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    hits[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(picked).toEqual(['front', 'back']);
+  });
+
+  it('outlines the highlighted layer and nothing otherwise, without taking clicks', () => {
+    expect(renderSelectable().target.querySelector('.highlight')).toBeNull();
+    unmount(mounted);
+    const mark = renderSelectable('front').target.querySelector('.highlight')!;
+    expect([mark.getAttribute('x'), mark.getAttribute('y'), mark.getAttribute('width')]).toEqual(['10', '10', '20']);
+    expect(mark.getAttribute('pointer-events')).toBe('none');
+  });
+});

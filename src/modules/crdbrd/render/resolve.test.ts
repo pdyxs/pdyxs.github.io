@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { resolve } from './resolve.ts';
 import { blank } from '../model/game.ts';
-import type { Instance } from '../model/expand.ts';
+import { expand, type Instance } from '../model/expand.ts';
+import { addConcept, addEntity, addProperty, addSet, addComponent, addPer, setEntityValue, setComponentValue, removeProperty } from '../model/ops.ts';
 import type { ComponentSet, Layer } from '../model/types.ts';
 
 const instance: Instance = { component: 'k', index: 0, bound: {}, values: {} };
@@ -98,5 +99,54 @@ describe('resolve: bleed extension', () => {
   it('does not stretch text, whose alignment depends on its box', () => {
     const scene = resolve(set({ template: [text({ x: 0, width: 60 })] }), instance, game);
     expect(scene.items[0]).toMatchObject({ x: 0, width: 60 });
+  });
+});
+
+describe('resolve: bound props', () => {
+  function bound() {
+    let g = addConcept(blank(), { id: 'pl', name: 'Player' });
+    g = addProperty(g, { owner: 'pl', id: 'col', name: 'Colour', type: { kind: 'colour' } });
+    g = addEntity(g, { concept: 'pl', id: 'red', name: 'Red' });
+    g = addEntity(g, { concept: 'pl', id: 'blue', name: 'Blue' });
+    g = setEntityValue(g, 'red', 'col', '#ff0000');
+    g = setEntityValue(g, 'blue', 'col', '#0000ff');
+    g = addSet(g, { id: 's', name: 'Deck' });
+    g = addProperty(g, { owner: 's', id: 'title', name: 'Title' });
+    g = addComponent(g, { set: 's', id: 'k', name: 'Card' });
+    g = setComponentValue(g, 'k', 'title', 'Zap');
+    g = addPer(g, 'k', 'pl');
+    return g;
+  }
+  const fillBound: Layer = shape({ fill: { kind: 'bound', source: { kind: 'entity', concept: 'pl', property: 'col' } } });
+  const textBound: Layer = text({ text: { kind: 'bound', source: { kind: 'component', property: 'title' } } });
+
+  it('resolves a shape fill from the bound entity and a text from a component property, per instance', () => {
+    const g = bound();
+    const t = set({ template: [fillBound, textBound] });
+    const [red, blue] = expand(g, 's');
+    expect(resolve(t, red, g).items).toMatchObject([{ kind: 'shape', id: 'l1', fill: '#ff0000' }, { kind: 'text', id: 't1', lines: [{ text: 'Zap' }] }]);
+    expect(resolve(t, blue, g).items[0]).toMatchObject({ kind: 'shape', fill: '#0000ff' });
+  });
+
+  it('makes a layer whose binding cannot resolve a marked gap with the layer id and box, and keeps the others', () => {
+    const g = removeProperty(bound(), 'col');
+    const [red] = expand(g, 's');
+    const scene = resolve(set({ template: [fillBound, textBound] }), red, g);
+    expect(scene.items[0]).toMatchObject({ kind: 'gap', id: 'l1', x: 10, y: 10, width: 20, height: 30, reason: expect.stringContaining('fill') });
+    expect(scene.items[1]).toMatchObject({ kind: 'text' });
+  });
+
+  it('gaps a bound enum prop whose value is not an allowed option', () => {
+    const g = setComponentValue(bound(), 'k', 'title', 'sideways');
+    const [red] = expand(g, 's');
+    const scene = resolve(set({ template: [text({ align: { kind: 'bound', source: { kind: 'component', property: 'title' } } })] }), red, g);
+    expect(scene.items[0]).toMatchObject({ kind: 'gap', id: 't1' });
+  });
+
+  it('binds an image layer file', () => {
+    let g = addProperty(bound(), { owner: 's', id: 'art', name: 'Art', type: { kind: 'image' } });
+    g = setComponentValue(g, 'k', 'art', 'a.png');
+    const layer: Layer = { id: 'i1', type: 'image', x: 0, y: 0, width: 5, height: 5, file: { kind: 'bound', source: { kind: 'component', property: 'art' } }, fit: { kind: 'literal', value: 'cover' } };
+    expect(resolve(set({ template: [layer] }), expand(g, 's')[0], g).items[0]).toMatchObject({ kind: 'image', file: 'a.png' });
   });
 });

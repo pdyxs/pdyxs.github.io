@@ -55,10 +55,20 @@ export interface Component {
 }
 
 /**
- * A layer property: a literal today. The union exists so a bound variant
- * (`{ kind: 'bound', ... }`) can be added later without touching layer shapes.
+ * Where a bound layer prop reads its value. Stored by id only; what each one
+ * means in the current game is decided by `bindableSources` and `resolveBinding`
+ * (bindings.ts), so a binding whose target was deleted simply stops resolving.
  */
-export type Prop<T> = { kind: 'literal'; value: T };
+export type Binding =
+  /** A property of the set, read from the instance's component. */
+  | { kind: 'component'; property: string }
+  /** A property of the entity the instance is bound to for a per-concept. */
+  | { kind: 'entity'; concept: string; property: string }
+  /** A property of the entity a reference-typed set property points at. */
+  | { kind: 'reference'; via: string; property: string };
+
+/** A layer property: a literal, or bound to the model. */
+export type Prop<T> = { kind: 'literal'; value: T } | { kind: 'bound'; source: Binding };
 
 /** Millimetres, relative to the cut line's top-left corner. */
 export interface Box {
