@@ -36,3 +36,15 @@ export function newCardFiles(input: {
   ];
   return { indexMd: `---\n${lines.join('\n')}\n---\n`, indexJson: JSON.stringify(input.envelope, null, 2) + '\n' };
 }
+
+/**
+ * The cards a search matches: every whitespace-separated term appears in the
+ * dir, ignoring case. An empty query matches all. Order is kept.
+ */
+export function searchCards<C extends { dir: string }>(cards: readonly C[], query: string): C[] {
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  return cards.filter((c) => {
+    const dir = c.dir.toLowerCase();
+    return terms.every((t) => dir.includes(t));
+  });
+}
