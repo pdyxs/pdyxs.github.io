@@ -86,8 +86,6 @@
 {/snippet}
 
 <div class="editor">
-  <h1>Particulars editor</h1>
-
   {#if errors.length > 0}
     <ul class="errors">
       {#each errors as err (err)}<li>{err}</li>{/each}
@@ -248,9 +246,7 @@
 </div>
 
 <style>
-  .editor {
-    padding: var(--space-md);
-  }
+  /* The shell supplies the page, the title and the outer spacing. */
   .columns {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -276,6 +272,13 @@
   fieldset {
     margin-block: var(--space-sm);
     border: var(--border-width) solid var(--color-border);
+  }
+  /* The wrapper that disables the whole form when viewing history: no box of its own. */
+  fieldset.read-only {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
   }
   label {
     display: inline-flex;
