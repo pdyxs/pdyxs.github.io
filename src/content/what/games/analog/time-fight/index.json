@@ -1,0 +1,152 @@
+{
+  "editor": "crdbrd",
+  "version": "1.0.0",
+  "data": {
+    "name": "Time Fight",
+    "properties": [
+      {
+        "id": "IbfRWPrKI4DnJv6TJby7",
+        "name": "Colour",
+        "type": {
+          "kind": "colour"
+        }
+      },
+      {
+        "id": "YEJaxwHTmNApy3VqvJdQ",
+        "name": "test",
+        "type": {
+          "kind": "number",
+          "min": 2,
+          "max": 10
+        }
+      }
+    ],
+    "values": {
+      "IbfRWPrKI4DnJv6TJby7": "#e09191",
+      "YEJaxwHTmNApy3VqvJdQ": 6
+    },
+    "concepts": [
+      {
+        "id": "IQA21GKLXbSgvsWaHkZK",
+        "name": "Movement Type",
+        "count": 2,
+        "properties": [
+          {
+            "id": "38E5MUEGKsZQqtaBKpmY",
+            "name": "Icon",
+            "type": {
+              "kind": "image"
+            }
+          },
+          {
+            "id": "vR5Ty15wv1fmGnaFhFCV",
+            "name": "Player",
+            "type": {
+              "kind": "reference",
+              "concept": "pcVy2SkM1WzAZqlmZd59"
+            }
+          }
+        ],
+        "entities": [
+          {
+            "id": "EHi5TMnmqZSWjuIsmoRU",
+            "name": "test",
+            "values": {
+              "38E5MUEGKsZQqtaBKpmY": "817495a4-6e12-4630-b759-9ac663a678ad.jpg",
+              "vR5Ty15wv1fmGnaFhFCV": "MeA3W8QwzgC8TpJOOgTD"
+            }
+          },
+          {
+            "id": "aVyNEB5aJYHorAGLdspX",
+            "name": "Hello",
+            "values": {
+              "38E5MUEGKsZQqtaBKpmY": "dd197b80-4349-41bf-87f7-745aa7fd5175.jpg",
+              "vR5Ty15wv1fmGnaFhFCV": "QZtz8sPFSIW78CNbUYyu"
+            }
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "pcVy2SkM1WzAZqlmZd59",
+        "name": "Player",
+        "count": 4,
+        "properties": [
+          {
+            "id": "Z7kuc2LH4hhunTsFUaQM",
+            "name": "Colour",
+            "type": {
+              "kind": "colour"
+            }
+          },
+          {
+            "id": "dp8uS9ZuC9GNuLR621H8",
+            "name": "Special Power",
+            "type": {
+              "kind": "text"
+            }
+          }
+        ],
+        "entities": [
+          {
+            "id": "MeA3W8QwzgC8TpJOOgTD",
+            "name": "Player 3",
+            "values": {
+              "Z7kuc2LH4hhunTsFUaQM": "#79ffa9"
+            }
+          },
+          {
+            "id": "QZtz8sPFSIW78CNbUYyu",
+            "name": "Player 2",
+            "values": {
+              "Z7kuc2LH4hhunTsFUaQM": "#5c0524"
+            }
+          },
+          {
+            "id": "V9jroL4ymDO6jyOofcmr",
+            "name": "Player 1",
+            "values": {
+              "Z7kuc2LH4hhunTsFUaQM": "#ff2626"
+            }
+          },
+          {
+            "id": "omeWWgB2HIfNVJd61bvB",
+            "name": "Player 4",
+            "values": {
+              "Z7kuc2LH4hhunTsFUaQM": "#437d4e"
+            }
+          }
+        ],
+        "children": []
+      }
+    ],
+    "sets": [
+      {
+        "id": "FVDL5BA3T76TyjBRl7Jg",
+        "name": "test set",
+        "substitute": "",
+        "properties": [
+          {
+            "id": "N4uqLL90URXIyS9TuLTH",
+            "name": "Test",
+            "type": {
+              "kind": "number",
+              "min": 0,
+              "max": 10
+            }
+          }
+        ],
+        "components": [
+          {
+            "id": "NYpvvsP98XI00hm0PBEJ",
+            "name": "Specification 1",
+            "count": 1,
+            "per": [],
+            "values": {}
+          }
+        ],
+        "children": []
+      }
+    ]
+  }
+}

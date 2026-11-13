@@ -1,0 +1,233 @@
+{
+  "editor": "crdbrd",
+  "version": "1.0.0",
+  "data": {
+    "name": "Teppanyaki",
+    "properties": [],
+    "values": {},
+    "concepts": [
+      {
+        "id": "32oYNbUaeGHmcINIDOwU",
+        "name": "Difficulty Setting",
+        "count": 3,
+        "properties": [
+          {
+            "id": "9EtIhQ352iVutfFhgVDY",
+            "name": "Points",
+            "type": {
+              "kind": "number",
+              "min": 2,
+              "max": 4
+            }
+          },
+          {
+            "id": "uadSwyBarZXXIZuI4Q6f",
+            "name": "Colour",
+            "type": {
+              "kind": "colour"
+            }
+          }
+        ],
+        "entities": [
+          {
+            "id": "6RtVo83QVHzZ9d1c6oJ4",
+            "name": "Medium",
+            "values": {}
+          },
+          {
+            "id": "BlVSCBzGdPxQvIbGaeki",
+            "name": "Hard",
+            "values": {}
+          },
+          {
+            "id": "eH1yF08I5Ae6ywNx3ZXU",
+            "name": "Easy",
+            "values": {}
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "43FTN2fp3ddH5oVGXMKz",
+        "name": "Food",
+        "count": 10,
+        "properties": [
+          {
+            "id": "0EVG6z18kFCddjgE2jKw",
+            "name": "Is Prepared With",
+            "type": {
+              "kind": "reference",
+              "concept": "ucSYAcl2SFJimOtiS2xo"
+            }
+          },
+          {
+            "id": "5Kj1R3LcZ5o3EKLGXU42",
+            "name": "Icon",
+            "type": {
+              "kind": "image"
+            }
+          }
+        ],
+        "entities": [
+          {
+            "id": "0GsOxrzYXCamzOvulGSV",
+            "name": "Beef",
+            "values": {
+              "0EVG6z18kFCddjgE2jKw": "OPSB4yDRR95WEJkN5Sj7"
+            }
+          },
+          {
+            "id": "9AQI82CS0paqkOilBwXY",
+            "name": "Noodles",
+            "values": {}
+          },
+          {
+            "id": "De41djdnl5zTDQptRmbl",
+            "name": "Cabbage",
+            "values": {}
+          },
+          {
+            "id": "IAirJ1k3C7JIflUjpgJT",
+            "name": "Shrimp",
+            "values": {}
+          },
+          {
+            "id": "LKZ490F4H0ayZNKn28WC",
+            "name": "Tofu",
+            "values": {}
+          },
+          {
+            "id": "O6ZANMKVfPlDpHaYu777",
+            "name": "Oil",
+            "values": {}
+          },
+          {
+            "id": "XIr33y17VDpgxC46i3YB",
+            "name": "Onion",
+            "values": {}
+          },
+          {
+            "id": "XoL1PJtYbXrsnRGgNnpL",
+            "name": "Rice",
+            "values": {}
+          },
+          {
+            "id": "eorL5G4rwHQEv2neCTLS",
+            "name": "Egg",
+            "values": {}
+          },
+          {
+            "id": "sJYcwlP1B9UVChNaM7nr",
+            "name": "Chilli",
+            "values": {}
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "DxfCMcjzmPBDoSGa7wQ6",
+        "name": "Meal",
+        "count": 1,
+        "properties": [
+          {
+            "id": "4LV015v6kBjQCS2AEdlH",
+            "name": "Difficulty",
+            "type": {
+              "kind": "reference",
+              "concept": "32oYNbUaeGHmcINIDOwU"
+            }
+          }
+        ],
+        "entities": [
+          {
+            "id": "fvwh0tiu3diFJnzLSTNj",
+            "name": "Test2",
+            "values": {}
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "Lri8YWkgFmT9kSahYYjw",
+        "name": "Card Type",
+        "count": 0,
+        "properties": [
+          {
+            "id": "jipmO1Y77goNNdHS3Tjx",
+            "name": "Colour",
+            "type": {
+              "kind": "colour"
+            }
+          }
+        ],
+        "entities": [],
+        "children": []
+      },
+      {
+        "id": "kWFBCnNR4JMrIS8TiizD",
+        "name": "test",
+        "count": 0,
+        "properties": [],
+        "entities": [],
+        "children": []
+      },
+      {
+        "id": "ucSYAcl2SFJimOtiS2xo",
+        "name": "Utensil",
+        "count": 6,
+        "properties": [
+          {
+            "id": "kTDd2Jn93sSN7aYJxcd3",
+            "name": "Icon",
+            "type": {
+              "kind": "image"
+            }
+          }
+        ],
+        "entities": [
+          {
+            "id": "76WEpzX5rKEdVWDKuW1v",
+            "name": "Knife",
+            "values": {}
+          },
+          {
+            "id": "OPSB4yDRR95WEJkN5Sj7",
+            "name": "Spatula",
+            "values": {}
+          },
+          {
+            "id": "YQeIoq30XvY81TpTxAfH",
+            "name": "Tongs",
+            "values": {}
+          },
+          {
+            "id": "qgIvExLxPxdQ8vwnH2Jn",
+            "name": "Hand",
+            "values": {}
+          },
+          {
+            "id": "vqFPbcPjuSoFgVQgAmFy",
+            "name": "Bowl",
+            "values": {}
+          },
+          {
+            "id": "zEuorFXmP1OdetN3DNL1",
+            "name": "Lighter",
+            "values": {}
+          }
+        ],
+        "children": []
+      }
+    ],
+    "sets": [
+      {
+        "id": "lK8tCnMaCUUqbYTvHLI5",
+        "name": "blah",
+        "substitute": "",
+        "properties": [],
+        "components": [],
+        "children": []
+      }
+    ]
+  }
+}

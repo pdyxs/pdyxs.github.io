@@ -1,5 +1,5 @@
 ---
-inspected: true
+inspected: false
 title: Teppanyaki
 description: A fast, real-time cooking card game where you assemble meals and throw them across the table for other players to catch.
 date: 2021-05-31
