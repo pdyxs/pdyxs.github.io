@@ -2,7 +2,7 @@
 // mm with everything decided. No Svelte, no DOM. Origin is the cut line's
 // top-left; the page (cut line plus bleed) therefore starts at -bleed.
 
-import type { Game, ImageFit, Layer, ComponentSet } from '../model/types.ts';
+import type { Game, ImageFit, Layer, TextLayer, ComponentSet } from '../model/types.ts';
 import type { Instance } from '../model/expand.ts';
 import { outline } from './outline.ts';
 
@@ -30,7 +30,7 @@ export type Item =
   | (ItemBase & { kind: 'shape'; shape: 'rect' | 'ellipse'; fill: string | null; stroke: string | null; strokeWidth: number })
   | (ItemBase & { kind: 'image'; file: string; fit: ImageFit })
   | (ItemBase & { kind: 'gap'; reason: string })
-  | (ItemBase & { kind: 'text'; lines: string[]; size: number; colour: string; align: 'left' | 'center' | 'right' });
+  | (ItemBase & { kind: 'text'; anchor: 'start' | 'middle' | 'end'; lines: { text: string; x: number; y: number }[]; size: number; colour: string });
 
 /** A literal prop's value. The one place that will learn to read bound props. */
 const read = <T>(prop: { kind: 'literal'; value: T }): T => prop.value;
@@ -48,6 +48,15 @@ export function extendToBleed(box: Rect, size: { width: number; height: number }
   return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
+/** Lines of text placed in mm: first baseline one font size below the box top, then a line height of the font size. */
+function textLines(layer: TextLayer) {
+  const align = read(layer.align);
+  const size = read(layer.size);
+  const x = align === 'left' ? layer.x : align === 'right' ? layer.x + layer.width : layer.x + layer.width / 2;
+  const lines = read(layer.text).split('\n').map((text, i) => ({ text, x, y: layer.y + size * (i + 1) }));
+  return { anchor: (align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle') as 'start' | 'middle' | 'end', lines, size, colour: read(layer.colour) };
+}
+
 function resolveLayer(layer: Layer, size: { width: number; height: number }, bleed: number): Item {
   const { id } = layer;
   // Text keeps its box: its alignment is measured from the box edges.
@@ -56,7 +65,7 @@ function resolveLayer(layer: Layer, size: { width: number; height: number }, ble
     case 'shape':
       return { kind: 'shape', id, shape: layer.shape, x, y, width, height, fill: read(layer.fill), stroke: read(layer.stroke), strokeWidth: read(layer.strokeWidth) };
     case 'text':
-      return { kind: 'text', id, x, y, width, height, lines: read(layer.text).split('\n'), size: read(layer.size), colour: read(layer.colour), align: read(layer.align) };
+      return { kind: 'text', id, x, y, width, height, ...textLines(layer) };
     case 'image': {
       const file = read(layer.file);
       return file ? { kind: 'image', id, x, y, width, height, file, fit: read(layer.fit) } : { kind: 'gap', id, x, y, width, height, reason: 'no image set' };

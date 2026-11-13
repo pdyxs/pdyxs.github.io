@@ -46,7 +46,7 @@ describe('resolve: text layers', () => {
   it('emits a text item, split into lines', () => {
     const scene = resolve(set({ template: [text()] }), instance, game);
     expect(scene.items).toEqual([
-      { kind: 'text', id: 't1', x: 5, y: 6, width: 40, height: 10, lines: ['Hello', 'there'], size: 4, colour: '#111111', align: 'center' },
+      { kind: 'text', id: 't1', x: 5, y: 6, width: 40, height: 10, anchor: 'middle', lines: [{ text: 'Hello', x: 25, y: 10 }, { text: 'there', x: 25, y: 14 }], size: 4, colour: '#111111' },
     ]);
   });
 });

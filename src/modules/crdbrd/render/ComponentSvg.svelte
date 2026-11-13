@@ -1,0 +1,33 @@
+<script lang="ts">
+  // The only view of a Scene: draws it as SVG with a viewBox in mm, so display
+  // size is just CSS. No decisions here; the scene arrives resolved.
+  import type { Scene } from './resolve.ts';
+
+  let { scene, imageUrl, maskId = 'crdbrd-bleed-mask' }: { scene: Scene; imageUrl: (file: string) => string; maskId?: string } = $props();
+</script>
+
+<svg class="component-svg" viewBox="{scene.page.x} {scene.page.y} {scene.page.width} {scene.page.height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id={maskId} maskUnits="userSpaceOnUse" x={scene.page.x} y={scene.page.y} width={scene.page.width} height={scene.page.height}>
+      <path d={scene.cutPath} fill="#fff" stroke="#fff" stroke-width={scene.bleed * 2} stroke-linejoin="round" />
+    </mask>
+  </defs>
+  <rect class="bleed-area" x={scene.page.x} y={scene.page.y} width={scene.page.width} height={scene.page.height} fill="#fdd" />
+  <path class="card-face" d={scene.cutPath} fill="#fff" />
+  <g class="items" mask="url(#{maskId})">
+    {#each scene.items as item (item.id)}
+      {#if item.kind === 'shape'}
+        {#if item.shape === 'rect'}
+          <rect x={item.x} y={item.y} width={item.width} height={item.height} fill={item.fill ?? 'none'} stroke={item.stroke ?? 'none'} stroke-width={item.strokeWidth} />
+        {:else}
+          <ellipse cx={item.x + item.width / 2} cy={item.y + item.height / 2} rx={item.width / 2} ry={item.height / 2} fill={item.fill ?? 'none'} stroke={item.stroke ?? 'none'} stroke-width={item.strokeWidth} />
+        {/if}
+      {:else if item.kind === 'text'}
+        <text font-size={item.size} fill={item.colour} text-anchor={item.anchor} font-family="sans-serif">
+          {#each item.lines as line, i (i)}<tspan x={line.x} y={line.y}>{line.text}</tspan>{/each}
+        </text>
+      {/if}
+    {/each}
+  </g>
+  <path class="cut-line" d={scene.cutPath} fill="none" stroke="#e00" stroke-width="0.2" stroke-dasharray="1 0.6" />
+</svg>
