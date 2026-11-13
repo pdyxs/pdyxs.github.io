@@ -238,6 +238,11 @@ export function syncTitles(html: string, cardEl: Element | null | undefined): vo
   const to = cardEl.querySelector('.card-header-title');
   if (from && to) to.innerHTML = from.innerHTML;
 
+  // Dev-only data-inspected (#233/#235): lives on the shell root, which a
+  // placeholder mounts without, and the "mark inspected" button reads it.
+  const inspected = incoming.getAttribute('data-inspected');
+  if (inspected !== null) cardEl.setAttribute('data-inspected', inspected);
+
   const spineFrom = incoming.querySelector('.stack-card-spine-title');
   const spineTo = cardEl.querySelector('.stack-card-spine-title');
   if (spineFrom && spineTo) spineTo.textContent = spineFrom.textContent;

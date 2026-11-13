@@ -259,6 +259,19 @@ describe('replaceBody (the placeholder → real content swap)', () => {
     expect(card.querySelector('.card-header-title')?.textContent?.trim()).toBe('Fog');
   });
 
+  it('copies the real fragment\'s dev-only data-inspected onto the kept card (#235)', () => {
+    // The placeholder shell is permanent and carries no data-inspected; the
+    // dev "mark inspected" button reads it off the live card.
+    const fragments = createCardFragments();
+    fragments.seedPlaceholder('what/a', 'Fog');
+    const card = mountedPlaceholder('what/a', 'Fog');
+    const real = fragment('what/a', { title: 'Fog' }).replace('<div class="stack-card"', '<div class="stack-card" data-inspected="false"');
+
+    fragments.replaceBody('what/a', real, card);
+
+    expect(card.getAttribute('data-inspected')).toBe('false');
+  });
+
   it('copies the real titles onto the kept header and spine (#105)', () => {
     // The placeholder's shell is permanent — only the body is swapped — so a
     // title guessed at seed time is the title that location shows for the rest
