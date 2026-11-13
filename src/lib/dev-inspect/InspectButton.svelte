@@ -52,11 +52,9 @@
 {/if}
 
 <style>
+  /* Placed by the dev dock (src/lib/site/dev-dock.ts); last, so at the bottom. */
   .inspect-button {
-    position: fixed;
-    right: var(--space-md);
-    bottom: var(--space-md);
-    z-index: 1000;
+    order: 2;
     padding: 0.5rem 0.9rem;
     font: inherit;
     color: var(--color-selected-fg);

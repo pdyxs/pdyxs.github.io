@@ -10,7 +10,8 @@
   import { searchCards } from './selector.ts';
   import { bump as bumpVersion, BUMP_KINDS, type BumpKind } from './bump.ts';
 
-  let { editorId }: { editorId: string } = $props();
+  // `autosaveMs`: how long edits sit idle before they are saved.
+  let { editorId, autosaveMs = 800 }: { editorId: string; autosaveMs?: number } = $props();
 
   const API = '/__dev-editors';
   const loaders = import.meta.glob('/src/**/*.svelte') as Record<string, () => Promise<{ default: any }>>;
@@ -41,6 +42,11 @@
   let newFolder = $state('');
   let newTitle = $state('');
 
+  /** The data of the last save attempted, so a refused save is not retried until the data changes. */
+  let attempted = $state('');
+  /** The card's `inspected` flag as the server last reported it (open, save, bump); null before. */
+  let inspected = $state<boolean | null>(null);
+
   const dirty = $derived(dir !== '' && !viewing && data !== null && JSON.stringify(data) !== saved);
   const matches = $derived(searchCards(cards, query));
   const viewingEntry = $derived(history.find((h) => h.commit === viewing));
@@ -61,6 +67,15 @@
   async function loadCards() {
     cards = await (await fetch(`${API}/${editorId}/cards${showAll ? '?all=1' : ''}`)).json();
   }
+
+  // Autosave: once edits have sat idle for `autosaveMs`. Saving a card's
+  // index.json does not reload this page (integration.ts), so typing carries on.
+  $effect(() => {
+    if (!dirty || busy) return;
+    if (JSON.stringify(data) === attempted) return;
+    const timer = setTimeout(save, autosaveMs);
+    return () => clearTimeout(timer);
+  });
 
   onMount(() => {
     const onPop = () => {
@@ -159,7 +174,7 @@
     view('');
     data = restored;
     tool = '';
-    status = `Restored ${from}; save to keep it.`;
+    status = `Restored ${from}.`;
   }
 
   async function toggleAll(checked: boolean) {
@@ -176,11 +191,12 @@
     viewing = '';
     current = null;
     tool = '';
+    inspected = null;
   }
 
   /** Make the card renderable (asking about any conflict), then load it. */
   async function choose(next: string, { fromUrl = false } = {}) {
-    if (dirty && !confirm(`Discard unsaved changes to ${dir}?`)) {
+    if (dirty && !(await save()) && !confirm(`Discard unsaved changes to ${dir}?`)) {
       // Leave the picker (and, after Back, the address bar) on the open card.
       if (fromUrl) syncUrl(dir);
       return;
@@ -216,6 +232,7 @@
       return;
     }
     dir = next;
+    inspected = body.inspected ?? null;
     data = envelope.data;
     saved = JSON.stringify(envelope.data);
     version = envelope.version;
@@ -266,6 +283,7 @@
     busy = true;
     status = 'Saving…';
     const snapshot = JSON.stringify(data);
+    attempted = snapshot;
     const res = await fetch(`${API}/${editorId}/write?path=${encodeURIComponent(file(dir))}`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
@@ -278,7 +296,8 @@
       return false;
     }
     saved = snapshot;
-    status = 'Saved. Card flagged inspected: false.';
+    inspected = body.inspected ?? null;
+    status = `Saved at ${new Date().toLocaleTimeString()}.`;
     return true;
   }
 
@@ -296,6 +315,7 @@
       return;
     }
     version = body.version;
+    inspected = body.inspected ?? null;
     tool = '';
     status = `Committed; now on ${body.version}. Card flagged inspected: false.`;
     await loadHistory();
@@ -385,7 +405,14 @@
     <section class="ed-panel ed-card">
       <div class="ed-row">
         <code class="ed-path">{dir}</code>
-        <a class="page-link" href={`/card/${dir}`} target="_blank" rel="noopener">View on site ↗</a>
+        <span class="ed-card-links">
+          {#if inspected === false}
+            <span class="inspect-state needs-inspecting">Needs inspecting</span>
+          {:else if inspected}
+            <span class="inspect-state">Inspected ✓</span>
+          {/if}
+          <a class="page-link" href={`/card/${dir}`} target="_blank" rel="noopener">View on site ↗</a>
+        </span>
       </div>
       {#if version}
         <div class="version-bar ed-row">
@@ -431,9 +458,9 @@
   {/if}
 
   <footer class="ed-foot" hidden={!dir && !status}>
-    <p role="status" class="ed-status">{dirty && !busy ? 'Unsaved changes.' : status}</p>
+    <p role="status" class="ed-status">{dirty && !busy && JSON.stringify(data) !== attempted ? 'Editing… saves when you pause.' : status}</p>
     {#if dir && !viewing}
-      <button type="button" class="save ed-primary" disabled={busy} onclick={save}>Save{dirty ? ' •' : ''}</button>
+      <button type="button" class="save ed-primary" disabled={busy || !dirty} onclick={save}>{dirty ? 'Save now' : 'Saved'}</button>
     {/if}
   </footer>
 </div>
@@ -536,6 +563,12 @@
   .ed-card .ed-row { align-items: center; justify-content: space-between; }
   .ed-card :is(.version-bar, .ed-sub) { justify-content: flex-start; }
   .ed-path { font-family: var(--font-mono); font-size: 0.9375rem; overflow-wrap: anywhere; background: none; border: 0; padding: 0; }
+  .ed-card-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+  .inspect-state { font-size: 0.875rem; font-weight: 600; }
+  .needs-inspecting {
+    padding: 0.125rem var(--space-xs);
+    border: var(--border-width) dashed var(--color-border);
+  }
   .version {
     font-family: var(--font-mono);
     font-weight: 700;

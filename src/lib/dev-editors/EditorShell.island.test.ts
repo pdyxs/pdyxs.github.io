@@ -24,7 +24,7 @@ function fakeApi({ conflicts, bumpFails }: FakeOptions = {}) {
     if (url.endsWith('/folders')) return ok(['what', 'what/projects']);
     if (url.includes('/demo/open')) {
       if (conflicts && !body?.confirm) return { ok: false, status: 409, json: async () => ({ conflicts }) } as Response;
-      return ok({ ok: true, dir: new URL(url, 'http://x').searchParams.get('path') });
+      return ok({ ok: true, dir: new URL(url, 'http://x').searchParams.get('path'), inspected: true });
     }
     if (url.includes('/demo/create')) return ok({ ok: true, dir: 'what/projects/fresh' });
     if (url.includes('/demo/history')) {
@@ -40,22 +40,23 @@ function fakeApi({ conflicts, bumpFails }: FakeOptions = {}) {
       return ok({ editor: 'demo', version: old[0], data: { text: old[1], count: 0 } });
     }
     if (url.includes('/demo/read')) return ok(stored);
-    if (url.includes('/demo/write')) return ok({ ok: true });
+    if (url.includes('/demo/write')) return ok({ ok: true, inspected: false });
     if (url.includes('/demo/bump')) {
       const kind = new URL(url, 'http://x').searchParams.get('kind');
       if (bumpFails) return { ok: false, status: 409, json: async () => ({ error: 'a merge is in progress' }) } as Response;
       stored.version = kind === 'minor' ? '1.1.0' : kind === 'major' ? '2.0.0' : '1.0.1';
-      return ok({ ok: true, version: stored.version });
+      return ok({ ok: true, version: stored.version, inspected: false });
     }
     throw new Error(url);
   }) as any;
   return calls;
 }
 
-async function mountShell() {
+async function mountShell(props: { autosaveMs?: number } = {}) {
   const target = document.createElement('div');
   document.body.appendChild(target);
-  component = mount(EditorShell as any, { target, props: { editorId: 'demo' } });
+  // Autosave is off (an hour) unless a test turns it on, so saves happen only where a test asks.
+  component = mount(EditorShell as any, { target, props: { editorId: 'demo', autosaveMs: 3_600_000, ...props } });
   await settle();
   flushSync();
   return target;
@@ -123,6 +124,41 @@ describe('EditorShell', () => {
     flushSync();
     expect(calls.some((c) => c.url.includes('/demo/read') && c.url.includes('what%2Fa'))).toBe(true);
     expect(target.querySelector<HTMLAnchorElement>('a.page-link')!.getAttribute('href')).toBe('/card/what/a');
+  });
+
+  it('shows the card\'s inspected state beside its site link, following each save', async () => {
+    fakeApi();
+    const target = await mountShell();
+    await pick(target, 'what/a');
+    const state = () => target.querySelector('.inspect-state')!.textContent!.trim();
+    expect(state()).toContain('Inspected');
+
+    const input = target.querySelector<HTMLInputElement>('.editor-pane input')!;
+    input.value = 'edit';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    target.querySelector<HTMLButtonElement>('button.save')!.click();
+    await settle();
+    flushSync();
+    expect(state()).toBe('Needs inspecting');
+    expect(target.querySelector('button.mark-inspected')).toBeNull();
+  });
+
+  it('autosaves once edits sit idle, without a Save press', async () => {
+    const calls = fakeApi();
+    const target = await mountShell({ autosaveMs: 20 });
+    await pick(target, 'what/a');
+    const input = target.querySelector<HTMLInputElement>('.editor-pane input')!;
+    input.value = 'typed';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    expect(calls.some((c) => c.method === 'PUT')).toBe(false);
+    await settle();
+    flushSync();
+    const puts = calls.filter((c) => c.method === 'PUT');
+    expect(puts).toHaveLength(1);
+    expect(puts[0].body).toEqual({ data: { text: 'typed', count: 1 } });
+    expect(target.querySelector('[role=status]')!.textContent).toContain('Saved');
   });
 
   it('a version bump saves unsaved edits first, so the commit includes them', async () => {
@@ -358,7 +394,7 @@ describe('EditorShell', () => {
       const inputs = [...target.querySelectorAll<HTMLInputElement>('.editor-pane input')];
       expect(inputs[0].value).toBe('one-one');
       expect(inputs.some((i) => i.disabled)).toBe(false);
-      expect(target.querySelector('[role=status]')!.textContent).toContain('Unsaved');
+      expect(target.querySelector('[role=status]')!.textContent).toContain('Editing');
       expect(calls.some((c) => c.method === 'PUT')).toBe(false);
       target.querySelector<HTMLButtonElement>('button.save')!.click();
       await settle();

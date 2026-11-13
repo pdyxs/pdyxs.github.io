@@ -30,6 +30,26 @@ function setup(files: Record<string, string>) {
 }
 
 describe('createDevEditorsApi', () => {
+  it('a save leaves an index.md that is already inspected: false untouched, so the page is not reloaded', () => {
+    const md = MD.replace('inspected: true', 'inspected: false');
+    const { api, writes } = setup({ [`${ROOT}/what/a/index.md`]: md, [`${ROOT}/what/a/index.json`]: env(1) });
+    api.write('demo', 'what/a/index.json', { data: { n: 2 } });
+    expect(writes).toEqual([`${ROOT}/what/a/index.json`]);
+  });
+
+  it('names the registered editor a card belongs to, else null', () => {
+    const { api } = setup({
+      [`${ROOT}/what/a/index.md`]: MD, [`${ROOT}/what/a/index.json`]: env(1),
+      [`${ROOT}/what/d/index.md`]: MD, [`${ROOT}/what/d/index.json`]: env(1, '1.0.0', 'other'),
+      [`${ROOT}/what/e/index.md`]: MD, [`${ROOT}/what/e/index.json`]: '{bad',
+    });
+    expect(api.handle({ method: 'GET', path: '/editor-for', query: { dir: 'what/a' } }).body).toEqual({ editor: 'demo' });
+    expect(api.editorFor('what/d').body).toEqual({ editor: null });
+    expect(api.editorFor('what/e').body).toEqual({ editor: null });
+    expect(api.editorFor('what/none').body).toEqual({ editor: null });
+    expect(api.editorFor('../etc').body).toEqual({ editor: null });
+  });
+
   it('lists only cards whose index.json is a valid envelope for the editor', () => {
     const { api } = setup({
       [`${ROOT}/what/a/index.md`]: MD, [`${ROOT}/what/a/index.json`]: env(1),
@@ -56,7 +76,7 @@ describe('createDevEditorsApi', () => {
     const { api, files } = setup({
       [`${ROOT}/what/a/index.md`]: MD, [`${ROOT}/what/a/index.json`]: env(1, '1.2.0'),
     });
-    expect(api.write('demo', 'what/a/index.json', { data: { n: 5 } })).toEqual({ status: 200, body: { ok: true } });
+    expect(api.write('demo', 'what/a/index.json', { data: { n: 5 } })).toEqual({ status: 200, body: { ok: true, inspected: false } });
     expect(JSON.parse(files[`${ROOT}/what/a/index.json`])).toEqual({ editor: 'demo', version: '1.2.0', data: { n: 5 } });
     expect(files[`${ROOT}/what/a/index.md`]).toBe('---\ntitle: "Demo" # keep\ninspected: false\nheaderMedia: demo\n---\nbody\n');
   });
@@ -120,7 +140,7 @@ describe('open', () => {
 
   it('writes missing properties with inspected false and a blank index.json, together', () => {
     const { api, files, writes } = setup({ [`${A}/index.md`]: BARE });
-    expect(api.open('demo', 'what/a', {})).toEqual({ status: 200, body: { ok: true, dir: 'what/a' } });
+    expect(api.open('demo', 'what/a', {})).toEqual({ status: 200, body: { ok: true, dir: 'what/a', inspected: false } });
     expect(files[`${A}/index.md`]).toBe('---\ninspected: false\ntitle: "Demo"\nheaderMedia: demo\n---\nbody\n');
     expect(JSON.parse(files[`${A}/index.json`])).toEqual({ editor: 'demo', version: '1.0.0', data: { n: 0 } });
     expect(writes).toHaveLength(2);
@@ -128,7 +148,7 @@ describe('open', () => {
 
   it('writes nothing when the card already matches and has a valid index.json', () => {
     const { api, writes } = setup({ [`${A}/index.md`]: MD, [`${A}/index.json`]: env(1) });
-    expect(api.open('demo', 'what/a', {})).toEqual({ status: 200, body: { ok: true, dir: 'what/a' } });
+    expect(api.open('demo', 'what/a', {})).toEqual({ status: 200, body: { ok: true, dir: 'what/a', inspected: true } });
     expect(writes).toEqual([]);
   });
 
@@ -244,7 +264,7 @@ describe('bump', () => {
 
   it('commits only the card dir as the outgoing version, then writes the new version and flags inspected: false', () => {
     const { api, files, log } = bumpSetup();
-    expect(api.bump('demo', 'what/a', 'minor')).toEqual({ status: 200, body: { ok: true, version: '1.3.0' } });
+    expect(api.bump('demo', 'what/a', 'minor')).toEqual({ status: 200, body: { ok: true, version: '1.3.0', inspected: false } });
     expect(log).toEqual(['inProgress', `commit ${A} | content: demo what/a v1.2.3`, `write ${A}/index.json`, `write ${A}/index.md`]);
     expect(JSON.parse(files[`${A}/index.json`])).toEqual({ editor: 'demo', version: '1.3.0', data: { n: 1 } });
     expect(files[`${A}/index.md`]).toContain('inspected: false');
@@ -276,7 +296,7 @@ describe('bump', () => {
 
   it('routes POST /<id>/bump?path=<card dir>&kind=<kind>', () => {
     const { api, files } = bumpSetup();
-    expect(api.handle({ method: 'POST', path: '/demo/bump', query: { path: 'what/a', kind: 'major' } }).body).toEqual({ ok: true, version: '2.0.0' });
+    expect(api.handle({ method: 'POST', path: '/demo/bump', query: { path: 'what/a', kind: 'major' } }).body).toEqual({ ok: true, version: '2.0.0', inspected: false });
     expect(JSON.parse(files[`${A}/index.json`]).version).toBe('2.0.0');
   });
 });
