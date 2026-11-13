@@ -25,3 +25,13 @@ describe('hash route', () => {
     }
   });
 });
+
+describe('hash route: sets', () => {
+  it('parses and writes set and component-set pages', () => {
+    expect(parseRoute('#/sets/s1')).toEqual({ page: 'set', set: 's1' });
+    expect(routeHash({ page: 'set', set: 'a b' })).toBe('#/sets/a%20b');
+    expect(parseRoute(routeHash({ page: 'set', set: 'a/b c' }))).toEqual({ page: 'set', set: 'a/b c' });
+    expect(parseRoute('#/sets')).toEqual({ page: 'game' });
+    expect(parseRoute('#/sets/s1/x')).toEqual({ page: 'game' });
+  });
+});

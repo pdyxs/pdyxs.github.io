@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { blank } from './game.ts';
-import { addConcept, renameConcept, removeConcept, addProperty, renameProperty, setPropertyType, removeProperty, addEntity, renameEntity, removeEntity, setEntityValue, setGameValue, renameGame } from './ops.ts';
-import { findConcept, valueOf } from './query.ts';
+import { addConcept, renameConcept, removeConcept, addProperty, renameProperty, setPropertyType, removeProperty, addEntity, renameEntity, removeEntity, setEntityValue, setGameValue, renameGame, addSet, renameSet, removeSet, setSubstitute, addComponent, renameComponent, removeComponent, setComponentCount, addPer, removePer, setComponentValue } from './ops.ts';
+import { findConcept, valueOf, findSet, findComponent, setPath } from './query.ts';
 import type { Game } from './types.ts';
 
 describe('concept ops', () => {
@@ -170,4 +170,87 @@ describe('nesting', () => {
 
 it('renames the game', () => {
   expect(renameGame(blank(), 'Chess').name).toBe('Chess');
+});
+
+describe('set and component ops', () => {
+  const withSet = () => addSet(blank(), { id: 's', name: 'Deck' });
+
+  it('adds, nests, renames and removes sets without mutating', () => {
+    const g0 = blank();
+    let g = addSet(g0, { id: 's', name: 'Deck' });
+    expect(g0.sets).toEqual([]);
+    expect(g.sets![0]).toEqual({ id: 's', name: 'Deck', substitute: '', properties: [], components: [], children: [] });
+    g = addSet(g, { id: 't', name: 'Halves', parent: 's' });
+    g = renameSet(g, 't', 'Card halves');
+    expect(findSet(g, 't')?.name).toBe('Card halves');
+    expect(setPath(g, 't').map((s) => s.id)).toEqual(['s', 't']);
+    g = removeSet(g, 's');
+    expect(g.sets).toEqual([]);
+  });
+
+  it('works on games saved before sets existed', () => {
+    const { sets, ...old } = blank();
+    expect(addSet(old, { id: 's', name: 'Deck' }).sets).toHaveLength(1);
+    expect(removeConcept(old, 'x')).toEqual(old);
+  });
+
+  it('stores the substitute description', () => {
+    const g = setSubstitute(withSet(), 's', 'a wooden cube');
+    expect(findSet(g, 's')?.substitute).toBe('a wooden cube');
+  });
+
+  it('adds, edits and removes components', () => {
+    let g = addComponent(withSet(), { set: 's', id: 'k', name: 'Card' });
+    expect(findComponent(g, 'k')).toEqual({ id: 'k', name: 'Card', count: 1, per: [], values: {} });
+    g = setComponentCount(g, 'k', 4.7);
+    expect(findComponent(g, 'k')?.count).toBe(4);
+    g = setComponentCount(g, 'k', -3);
+    expect(findComponent(g, 'k')?.count).toBe(0);
+    g = renameComponent(g, 'k', 'Big card');
+    expect(findComponent(g, 'k')?.name).toBe('Big card');
+    g = removeComponent(g, 'k');
+    expect(findSet(g, 's')?.components).toEqual([]);
+  });
+
+  it('adds set properties and component values; retyping drops values; removing drops them too', () => {
+    let g = addComponent(withSet(), { set: 's', id: 'k', name: 'Card' });
+    g = addProperty(g, { owner: 's', id: 'p', name: 'Cost', type: { kind: 'number', min: 0, max: 9 } });
+    g = setComponentValue(g, 'k', 'p', 3);
+    expect(findComponent(g, 'k')?.values).toEqual({ p: 3 });
+    expect(findSet(g, 's')?.properties).toHaveLength(1);
+    g = renameProperty(g, 'p', 'Price');
+    expect(findSet(g, 's')?.properties[0].name).toBe('Price');
+    expect(findComponent(setPropertyType(g, 'p', { kind: 'text' }), 'k')?.values).toEqual({});
+    g = removeProperty(g, 'p');
+    expect(findSet(g, 's')?.properties).toEqual([]);
+    expect(findComponent(g, 'k')?.values).toEqual({});
+  });
+
+  it('adds a per-concept once and removes it', () => {
+    let g = addComponent(addConcept(withSet(), { id: 'c', name: 'Player' }), { set: 's', id: 'k', name: 'Card' });
+    g = addPer(addPer(g, 'k', 'c'), 'k', 'c');
+    expect(findComponent(g, 'k')?.per).toEqual(['c']);
+    expect(findComponent(removePer(g, 'k', 'c'), 'k')?.per).toEqual([]);
+  });
+
+  it('removing a concept removes it, nested ones too, from every per-list', () => {
+    let g = addConcept(withSet(), { id: 'c', name: 'Player' });
+    g = addConcept(g, { id: 'd', name: 'Colour', parent: 'c' });
+    g = addConcept(g, { id: 'e', name: 'Other' });
+    g = addComponent(g, { set: 's', id: 'k', name: 'Card' });
+    for (const id of ['c', 'd', 'e']) g = addPer(g, 'k', id);
+    expect(findComponent(removeConcept(g, 'c'), 'k')?.per).toEqual(['e']);
+  });
+
+  it('removing an entity clears component references to it; removing a concept strips set reference properties', () => {
+    let g = addConcept(withSet(), { id: 'c', name: 'Player' });
+    g = addEntity(g, { concept: 'c', id: 'e', name: 'Red' });
+    g = addProperty(g, { owner: 's', id: 'r', name: 'Owner', type: { kind: 'reference', concept: 'c' } });
+    g = addComponent(g, { set: 's', id: 'k', name: 'Card' });
+    g = setComponentValue(g, 'k', 'r', 'e');
+    expect(findComponent(removeEntity(g, 'e'), 'k')?.values).toEqual({});
+    const gone = removeConcept(g, 'c');
+    expect(findSet(gone, 's')?.properties).toEqual([]);
+    expect(findComponent(gone, 'k')?.values).toEqual({});
+  });
 });

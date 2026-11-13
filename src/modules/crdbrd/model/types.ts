@@ -34,9 +34,34 @@ export interface Concept {
   children: Concept[];
 }
 
+/** One entry in a set: how many, optionally per entity of each listed concept, with its own values. */
+export interface Component {
+  id: string;
+  name: string;
+  /** Instances per binding (or in total when `per` is empty). */
+  count: number;
+  /** Concept ids; one instance group is made for every combination of their entities. */
+  per: string[];
+  /** Explicit values by the set's property ids; a missing one falls back to the type's default. */
+  values: Record<string, Value>;
+}
+
+/** A group of components sharing a design (a deck, player mats, a board). */
+export interface ComponentSet {
+  id: string;
+  name: string;
+  /** Plain text shown later by the rulebook / print-and-play when the piece can be swapped. */
+  substitute: string;
+  properties: Property[];
+  components: Component[];
+  children: ComponentSet[];
+}
+
 export interface Game {
   name: string;
   properties: Property[];
   values: Record<string, Value>;
   concepts: Concept[];
+  /** Absent in games saved before sets existed; read it through `setsOf`. */
+  sets?: ComponentSet[];
 }

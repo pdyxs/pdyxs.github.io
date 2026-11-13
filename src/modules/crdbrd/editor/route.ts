@@ -4,6 +4,7 @@
 export type Route =
   | { page: 'game' }
   | { page: 'concept'; concept: string }
+  | { page: 'set'; set: string }
   | { page: 'entity'; concept: string; entity: string };
 
 const GAME: Route = { page: 'game' };
@@ -14,6 +15,7 @@ export function parseRoute(hash: string): Route {
     const [a, concept, b, entity, ...rest] = parts.map(decodeURIComponent);
     if (rest.length) return GAME;
     if (a === 'concepts' && concept && parts.length === 2) return { page: 'concept', concept };
+    if (a === 'sets' && concept && parts.length === 2) return { page: 'set', set: concept };
     if (a === 'concepts' && concept && b === 'entities' && entity) return { page: 'entity', concept, entity };
   } catch {
     // malformed escape
@@ -26,6 +28,7 @@ export function routeHash(route: Route): string {
   switch (route.page) {
     case 'game': return '#/';
     case 'concept': return `#/concepts/${e(route.concept)}`;
+    case 'set': return `#/sets/${e(route.set)}`;
     case 'entity': return `#/concepts/${e(route.concept)}/entities/${e(route.entity)}`;
   }
 }

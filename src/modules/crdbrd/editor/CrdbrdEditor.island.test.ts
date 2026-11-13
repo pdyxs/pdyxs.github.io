@@ -3,7 +3,7 @@ import { mount, unmount, flushSync } from 'svelte';
 import CrdbrdEditor from './CrdbrdEditor.svelte';
 import { blank } from '../model/game.ts';
 import type { Game } from '../model/types.ts';
-import { addConcept, addEntity, addProperty } from '../model/ops.ts';
+import { addConcept, addEntity, addProperty, addSet, addComponent, setComponentCount, addPer } from '../model/ops.ts';
 import { reactiveProps } from './reactive-props.svelte.ts';
 
 /** Mount the island the way the shell does: `data` in, whole new game out through onChange. */
@@ -247,5 +247,102 @@ describe('CrdbrdEditor: routing', () => {
     dispatchEvent(new Event('hashchange'));
     flushSync();
     expect(q<HTMLInputElement>(target, 'input.concept-name').value).toBe('Players');
+  });
+});
+
+describe('CrdbrdEditor: component sets', () => {
+  const withSet = () => addSet(blank(), { id: 's', name: 'Deck' });
+  const openSet = (target: HTMLElement) => follow(q(target, '.set-row .set-link'));
+
+  it('adds a set from the game page, opens it, renames it and removes it', () => {
+    const { target, changes } = setup();
+    addNamed(target, 'form.add-set', 'Deck');
+    expect(changes.at(-1)!.sets!.map((s) => s.name)).toEqual(['Deck']);
+    openSet(target);
+    type(q<HTMLInputElement>(target, 'input.set-name'), 'Main deck');
+    expect(changes.at(-1)!.sets![0].name).toBe('Main deck');
+    follow(q(target, '.crumbs a'));
+    click(q(target, '.set-row button.remove'));
+    expect(changes.at(-1)!.sets).toEqual([]);
+  });
+
+  it('adds a literal-count component to a set and edits its count', () => {
+    const { target, changes } = setup(withSet());
+    openSet(target);
+    addNamed(target, 'form.add-component', 'Card');
+    expect(changes.at(-1)!.sets![0].components.map((c) => [c.name, c.count])).toEqual([['Card', 1]]);
+    type(q<HTMLInputElement>(target, '.component-row input.component-count'), '12');
+    expect(changes.at(-1)!.sets![0].components[0].count).toBe(12);
+    expect(q(target, '.instance-total').textContent).toContain('12');
+    click(q(target, '.component-row button.remove-component'));
+    expect(changes.at(-1)!.sets![0].components).toEqual([]);
+    expect(q(target, '.instance-total').textContent).toContain('0');
+  });
+
+  it('defines set properties and a component\'s values for them', () => {
+    const { target, changes } = setup(addComponent(withSet(), { set: 's', id: 'k', name: 'Card' }));
+    openSet(target);
+    addNamed(target, 'form.add-property', 'Cost');
+    const p = changes.at(-1)!.sets![0].properties[0];
+    expect(p.name).toBe('Cost');
+    type(q<HTMLInputElement>(target, '.component-row .value-row input'), 'free');
+    expect(changes.at(-1)!.sets![0].components[0].values).toEqual({ [p.id]: 'free' });
+  });
+
+  it('adds per-concepts and shows the total instance count from expand', () => {
+    let g = addConcept(withSet(), { id: 'pl', name: 'Player' });
+    for (const id of ['a', 'b', 'c']) g = addEntity(g, { concept: 'pl', id, name: id });
+    g = addComponent(g, { set: 's', id: 'k', name: 'Card' });
+    g = setComponentCount(g, 'k', 2);
+    const { target, changes } = setup(g);
+    openSet(target);
+    expect(q(target, '.instance-total').textContent).toContain('2');
+    const pick = q<HTMLSelectElement>(target, '.component-row select.add-per');
+    pick.value = 'pl';
+    pick.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+    expect(changes.at(-1)!.sets![0].components[0].per).toEqual(['pl']);
+    expect(q(target, '.instance-total').textContent).toContain('6');
+    expect(qa(target, '.per-chip').map((e) => e.textContent!.trim())).toEqual(['Player Remove']);
+    click(q(target, '.per-chip button'));
+    expect(changes.at(-1)!.sets![0].components[0].per).toEqual([]);
+  });
+
+  it('removing a concept drops it from the visible per-lists', () => {
+    let g = addComponent(addConcept(withSet(), { id: 'pl', name: 'Player' }), { set: 's', id: 'k', name: 'Card' });
+    g = addPer(g, 'k', 'pl');
+    const { target, changes } = setup(g);
+    click(q(target, '.concept-row button.remove'));
+    expect(changes.at(-1)!.sets![0].components[0].per).toEqual([]);
+  });
+
+  it('nests sets, reachable from the parent with a way back', () => {
+    const { target, changes } = setup(withSet());
+    openSet(target);
+    addNamed(target, 'form.add-child-set', 'Halves');
+    expect(changes.at(-1)!.sets![0].children.map((c) => c.name)).toEqual(['Halves']);
+    follow(q(target, '.child-set-row .set-link'));
+    expect(q<HTMLInputElement>(target, 'input.set-name').value).toBe('Halves');
+    expect(qa(target, '.crumbs a').map((a) => a.textContent!.trim())).toEqual(['Game', 'Deck']);
+    click(q(target, '.crumbs a:nth-child(2)'));
+  });
+
+  it('edits and persists the substitute description', () => {
+    const { target, changes } = setup(withSet());
+    openSet(target);
+    type(q<HTMLInputElement>(target, 'textarea.set-substitute'), 'a wooden cube in the player colour');
+    expect(changes.at(-1)!.sets![0].substitute).toBe('a wooden cube in the player colour');
+  });
+
+  it('offers no editing when read-only', () => {
+    location.hash = '#/sets/s';
+    const { target } = setup(addComponent(withSet(), { set: 's', id: 'k', name: 'Card' }), true);
+    expect(qa(target, 'input, button, select, textarea').every((e) => (e as HTMLInputElement).disabled)).toBe(true);
+  });
+
+  it('opens on a set page from the hash, and falls back when the set is gone', () => {
+    location.hash = '#/sets/s';
+    const { target } = setup(withSet());
+    expect(q<HTMLInputElement>(target, 'input.set-name').value).toBe('Deck');
   });
 });

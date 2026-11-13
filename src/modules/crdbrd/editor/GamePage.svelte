@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Game } from '../model/types.ts';
-  import { addConcept, removeConcept, renameGame, setGameValue } from '../model/ops.ts';
+  import { addConcept, addSet, removeSet, removeConcept, renameGame, setGameValue } from '../model/ops.ts';
+  import { setsOf } from '../model/query.ts';
   import { routeHash } from './route.ts';
   import { newId } from './ids.ts';
   import AddForm from './AddForm.svelte';
@@ -26,6 +27,17 @@
   {/each}
 </ul>
 <AddForm kind="add-concept" label="New concept" disabled={readOnly} onAdd={(name) => onChange(addConcept(game, { id: newId(), name }))} />
+
+<h3>Component sets</h3>
+<ul class="sets">
+  {#each setsOf(game) as set (set.id)}
+    <li class="set-row">
+      <a class="set-link" href={routeHash({ page: 'set', set: set.id })}>{set.name}</a>
+      <button type="button" class="remove" disabled={readOnly} onclick={() => onChange(removeSet(game, set.id))}>Remove</button>
+    </li>
+  {/each}
+</ul>
+<AddForm kind="add-set" label="New component set" disabled={readOnly} onAdd={(name) => onChange(addSet(game, { id: newId(), name }))} />
 
 <h3>Properties</h3>
 <PropertyList {game} properties={game.properties} {readOnly} {onChange} />

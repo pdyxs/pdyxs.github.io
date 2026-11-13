@@ -1,4 +1,4 @@
-import type { Concept, Game, Property, Value } from './types.ts';
+import type { ComponentSet, Concept, Game, Property, Value } from './types.ts';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -20,12 +20,17 @@ export function validate(game: unknown): string[] {
   if (!Array.isArray(game.properties)) errors.push('properties must be an array');
   if (!isObject(game.values)) errors.push('values must be an object');
   if (!Array.isArray(game.concepts)) errors.push('concepts must be an array');
+  if (game.sets !== undefined && !Array.isArray(game.sets)) errors.push('sets must be an array');
   if (errors.length) return errors;
 
   const g = game as unknown as Game;
   const concepts: Concept[] = [];
   const walk = (list: Concept[]) => list.forEach((c) => { concepts.push(c); walk(c.children ?? []); });
   walk(g.concepts);
+
+  const sets: ComponentSet[] = [];
+  const walkSets = (list: ComponentSet[]) => list.forEach((s) => { sets.push(s); walkSets(s.children ?? []); });
+  walkSets(g.sets ?? []);
 
   const seen = new Set<string>();
   const claim = (id: string) => {
@@ -47,14 +52,26 @@ export function validate(game: unknown): string[] {
     c.properties.forEach(checkProperty);
     c.entities.forEach((e) => claim(e.id));
   }
-  const checkValues = (owner: string, values: Record<string, Value>) => {
+  for (const s of sets) {
+    claim(s.id);
+    s.properties.forEach(checkProperty);
+    for (const k of s.components) claim(k.id);
+  }
+  const checkValues = (owner: string, values: Record<string, Value>, allowed?: Property[]) => {
     for (const [pid, v] of Object.entries(values)) {
-      const p = props.get(pid);
+      const p = allowed ? allowed.find((q) => q.id === pid) : props.get(pid);
       if (!p) errors.push(`${owner} has a value for unknown property "${pid}"`);
       else if (!fits(p.type, v)) errors.push(`${owner} value for "${pid}" does not fit its type`);
     }
   };
   checkValues('game', g.values);
   for (const c of concepts) for (const e of c.entities) checkValues(`entity "${e.id}"`, e.values);
+  for (const s of sets) {
+    for (const k of s.components) {
+      if (!Number.isInteger(k.count) || k.count < 0) errors.push(`component "${k.id}" has an invalid count`);
+      for (const c of k.per) if (!conceptIds.has(c)) errors.push(`component "${k.id}" is per missing concept "${c}"`);
+      checkValues(`component "${k.id}"`, k.values, s.properties);
+    }
+  }
   return errors;
 }

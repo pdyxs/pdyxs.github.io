@@ -1,8 +1,8 @@
 // Pure edit ops: each takes the whole game and returns a new whole game.
 // Ids come from the caller, so ops stay deterministic.
 
-import type { Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
-import { allConcepts } from './query.ts';
+import type { Component, ComponentSet, Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
+import { allConcepts, allSets, setsOf } from './query.ts';
 
 /** Rebuild the concept tree, replacing each concept by `fn(concept)`; `fn` returns null to drop it. */
 function mapConcepts(list: Concept[], fn: (c: Concept) => Concept | null): Concept[] {
@@ -13,6 +13,22 @@ function mapConcepts(list: Concept[], fn: (c: Concept) => Concept | null): Conce
   }
   return out;
 }
+
+/** Rebuild the set tree, replacing each set by `fn(set)`; `fn` returns null to drop it. */
+function mapSets(list: ComponentSet[], fn: (s: ComponentSet) => ComponentSet | null): ComponentSet[] {
+  const out: ComponentSet[] = [];
+  for (const s of list) {
+    const next = fn(s);
+    if (next) out.push({ ...next, children: mapSets(next.children, fn) });
+  }
+  return out;
+}
+
+const withSets = (game: Game, sets: ComponentSet[]): Game => ({ ...game, sets });
+const mapAllSets = (game: Game, fn: (s: ComponentSet) => ComponentSet | null): Game => (game.sets ? withSets(game, mapSets(game.sets, fn)) : game);
+
+/** Every property in the game, whoever holds it. */
+const allProperties = (game: Game): Property[] => [...game.properties, ...allConcepts(game).flatMap((c) => c.properties), ...allSets(game).flatMap((s) => s.properties)];
 
 const withConcepts = (game: Game, concepts: Concept[]): Game => ({ ...game, concepts });
 
@@ -30,12 +46,13 @@ export function removeConcept(game: Game, id: string): Game {
   const doomed = allConcepts(game).find((c) => c.id === id);
   const gone = new Set(doomed ? allConcepts({ ...game, concepts: [doomed] }).map((c) => c.id) : []);
   const next = withConcepts(game, mapConcepts(game.concepts, (c) => (c.id === id ? null : c)));
-  return stripProperties(next, (p) => p.type.kind === 'reference' && gone.has(p.type.concept));
+  const stripped = stripProperties(next, (p) => p.type.kind === 'reference' && gone.has(p.type.concept));
+  return mapAllSets(stripped, (set) => ({ ...set, components: set.components.map((c) => ({ ...c, per: c.per.filter((id) => !gone.has(id)) })) }));
 }
 
 /** Drop every property matching `doomed`, from the game and every concept, along with its values. */
 function stripProperties(game: Game, doomed: (p: Property) => boolean): Game {
-  const ids = new Set([...game.properties, ...allConcepts(game).flatMap((c) => c.properties)].filter(doomed).map((p) => p.id));
+  const ids = new Set(allProperties(game).filter(doomed).map((p) => p.id));
   if (ids.size === 0) return game;
   const keep = (list: Property[]) => list.filter((p) => !ids.has(p.id));
   const keepValues = (values: Game['values']) => Object.fromEntries(Object.entries(values).filter(([k]) => !ids.has(k)));
@@ -48,6 +65,13 @@ function stripProperties(game: Game, doomed: (p: Property) => boolean): Game {
       properties: keep(c.properties),
       entities: c.entities.map((e) => ({ ...e, values: keepValues(e.values) })),
     })),
+    ...(game.sets && {
+      sets: mapSets(game.sets, (s) => ({
+        ...s,
+        properties: keep(s.properties),
+        components: s.components.map((c) => ({ ...c, values: keepValues(c.values) })),
+      })),
+    }),
   };
 }
 
@@ -58,13 +82,17 @@ function mapProperty(game: Game, id: string, fn: (p: Property) => Property): Gam
     ...game,
     properties: map(game.properties),
     concepts: mapConcepts(game.concepts, (c) => ({ ...c, properties: map(c.properties) })),
+    ...(game.sets && { sets: mapSets(game.sets, (s) => ({ ...s, properties: map(s.properties) })) }),
   };
 }
 
-/** Add a property to concept `owner`, or to the game when there is no owner. */
+/** Add a property to concept or set `owner`, or to the game when there is no owner. */
 export function addProperty(game: Game, args: { id: string; name: string; type?: PropertyType; owner?: string }): Game {
   const property: Property = { id: args.id, name: args.name, type: args.type ?? { kind: 'text' } };
   if (!args.owner) return { ...game, properties: [...game.properties, property] };
+  if (allSets(game).some((s) => s.id === args.owner)) {
+    return mapAllSets(game, (s) => (s.id === args.owner ? { ...s, properties: [...s.properties, property] } : s));
+  }
   return withConcepts(game, mapConcepts(game.concepts, (c) => (c.id === args.owner ? { ...c, properties: [...c.properties, property] } : c)));
 }
 
@@ -83,6 +111,7 @@ function dropValues(game: Game, drop: (propertyId: string) => boolean): Game {
     ...game,
     values: keep(game.values),
     concepts: mapConcepts(game.concepts, (c) => ({ ...c, entities: c.entities.map((e) => ({ ...e, values: keep(e.values) })) })),
+    ...(game.sets && { sets: mapSets(game.sets, (s) => ({ ...s, components: s.components.map((c) => ({ ...c, values: keep(c.values) })) })) }),
   };
 }
 
@@ -117,12 +146,13 @@ export function setGameValue(game: Game, property: string, value: Value): Game {
 
 /** Drop stored values that point at any of `targets` (entity ids). */
 function clearReferences(game: Game, targets: Set<string>): Game {
-  const refs = new Set([...game.properties, ...allConcepts(game).flatMap((c) => c.properties)].filter((p) => p.type.kind === 'reference').map((p) => p.id));
+  const refs = new Set(allProperties(game).filter((p) => p.type.kind === 'reference').map((p) => p.id));
   const keepRefs = (values: Game['values']) => Object.fromEntries(Object.entries(values).filter(([k, v]) => !(refs.has(k) && typeof v === 'string' && targets.has(v))));
   return {
     ...game,
     values: keepRefs(game.values),
     concepts: mapConcepts(game.concepts, (c) => ({ ...c, entities: c.entities.map((e) => ({ ...e, values: keepRefs(e.values) })) })),
+    ...(game.sets && { sets: mapSets(game.sets, (s) => ({ ...s, components: s.components.map((c) => ({ ...c, values: keepRefs(c.values) })) })) }),
   };
 }
 
@@ -132,4 +162,60 @@ export function removeProperty(game: Game, id: string): Game {
 
 export function renameGame(game: Game, name: string): Game {
   return { ...game, name };
+}
+
+// ---- component sets and components ----
+
+export function addSet(game: Game, args: { id: string; name: string; parent?: string }): Game {
+  const set: ComponentSet = { id: args.id, name: args.name, substitute: '', properties: [], components: [], children: [] };
+  if (!args.parent) return withSets(game, [...setsOf(game), set]);
+  return mapAllSets(game, (s) => (s.id === args.parent ? { ...s, children: [...s.children, set] } : s));
+}
+
+export function renameSet(game: Game, id: string, name: string): Game {
+  return mapAllSets(game, (s) => (s.id === id ? { ...s, name } : s));
+}
+
+export function setSubstitute(game: Game, id: string, substitute: string): Game {
+  return mapAllSets(game, (s) => (s.id === id ? { ...s, substitute } : s));
+}
+
+export function removeSet(game: Game, id: string): Game {
+  return mapAllSets(game, (s) => (s.id === id ? null : s));
+}
+
+export function addComponent(game: Game, args: { set: string; id: string; name: string }): Game {
+  const component: Component = { id: args.id, name: args.name, count: 1, per: [], values: {} };
+  return mapAllSets(game, (s) => (s.id === args.set ? { ...s, components: [...s.components, component] } : s));
+}
+
+function mapComponent(game: Game, id: string, fn: (c: Component) => Component | null): Game {
+  return mapAllSets(game, (s) => ({ ...s, components: s.components.flatMap((c) => (c.id === id ? fn(c) ?? [] : [c])) }));
+}
+
+export function renameComponent(game: Game, id: string, name: string): Game {
+  return mapComponent(game, id, (c) => ({ ...c, name }));
+}
+
+export function removeComponent(game: Game, id: string): Game {
+  return mapComponent(game, id, () => null);
+}
+
+/** Counts are whole numbers, never negative. */
+export function setComponentCount(game: Game, id: string, count: number): Game {
+  const whole = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
+  return mapComponent(game, id, (c) => ({ ...c, count: whole }));
+}
+
+/** Add `concept` to the component's per-list; a concept already there stays once. */
+export function addPer(game: Game, component: string, concept: string): Game {
+  return mapComponent(game, component, (c) => (c.per.includes(concept) ? c : { ...c, per: [...c.per, concept] }));
+}
+
+export function removePer(game: Game, component: string, concept: string): Game {
+  return mapComponent(game, component, (c) => ({ ...c, per: c.per.filter((id) => id !== concept) }));
+}
+
+export function setComponentValue(game: Game, component: string, property: string, value: Value): Game {
+  return mapComponent(game, component, (c) => ({ ...c, values: { ...c.values, [property]: value } }));
 }

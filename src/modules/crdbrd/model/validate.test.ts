@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { blank } from './game.ts';
 import { validate } from './validate.ts';
-import { addConcept, addEntity, addProperty, setEntityValue } from './ops.ts';
+import { addConcept, addEntity, addProperty, setEntityValue, addSet, addComponent, addPer, setComponentValue } from './ops.ts';
 
 describe('validate', () => {
   it('accepts a blank game and an edited one', () => {
@@ -43,5 +43,46 @@ describe('validate', () => {
     g = setEntityValue(g, 'e', 'p', 3);
     g = setEntityValue(g, 'e', 'ghost', 1);
     expect(validate(g)).toEqual(['entity "e" value for "p" does not fit its type', 'entity "e" has a value for unknown property "ghost"']);
+  });
+});
+
+describe('validate: sets and components', () => {
+  const sound = () => {
+    let g = addConcept(blank(), { id: 'c', name: 'Player' });
+    g = addSet(g, { id: 's', name: 'Deck' });
+    g = addSet(g, { id: 't', name: 'Halves', parent: 's' });
+    g = addProperty(g, { owner: 's', id: 'p', name: 'Cost', type: { kind: 'number', min: 0, max: 9 } });
+    g = addComponent(g, { set: 't', id: 'k', name: 'Card' });
+    return g;
+  };
+
+  it('accepts sound sets, and games with no sets key at all', () => {
+    expect(validate(sound())).toEqual([]);
+    const { sets, ...old } = blank();
+    expect(validate(old)).toEqual([]);
+  });
+
+  it('rejects a malformed sets list', () => {
+    expect(validate({ ...blank(), sets: 'x' })).toEqual(['sets must be an array']);
+  });
+
+  it('rejects duplicate ids across sets, components and properties', () => {
+    const g = addComponent(sound(), { set: 's', id: 's', name: 'Clash' });
+    expect(validate(g)).toEqual(['duplicate id "s"']);
+  });
+
+  it('rejects a bad count and a per-concept that does not exist', () => {
+    let g = sound();
+    g = { ...g, sets: [{ ...g.sets![0], children: [{ ...g.sets![0].children[0], components: [{ ...g.sets![0].children[0].components[0], count: -1 }] }] }] };
+    g = addPer(g, 'k', 'ghost');
+    expect(validate(g)).toEqual(['component "k" has an invalid count', 'component "k" is per missing concept "ghost"']);
+  });
+
+  it('rejects component values that are unknown or the wrong type', () => {
+    let g = sound();
+    g = addComponent(g, { set: 's', id: 'k2', name: 'Other' });
+    g = setComponentValue(g, 'k2', 'p', 'many');
+    g = setComponentValue(g, 'k2', 'ghost', 1);
+    expect(validate(g)).toEqual(['component "k2" value for "p" does not fit its type', 'component "k2" has a value for unknown property "ghost"']);
   });
 });
