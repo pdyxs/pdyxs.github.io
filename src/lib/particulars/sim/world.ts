@@ -139,6 +139,7 @@ export class World {
   private collected = 0;
   /** The tick the player can next set off an explosion. */
   private explodeReadyTick = 0;
+  private lastSteer: Vec = { x: 0, y: 0 };
 
   constructor(scenario: Scenario) {
     this.scenario = scenario;
@@ -481,6 +482,7 @@ export class World {
 
   /** Advance exactly one fixed step under the given steer vector; `buttons` are page buttons pressed since the last. */
   step(steerVec: Vec, intents: Intent[] = [], buttons: string[] = []): void {
+    this.lastSteer = { x: steerVec.x, y: steerVec.y };
     const due = dueSpawns(this.scenario, this.tick * FIXED_DT, this.schedule, buttons);
     this.schedule = due.state;
     for (const s of due.spawns) this.spawn(s);
@@ -577,10 +579,14 @@ export class World {
 
   snapshot(): Snapshot {
     const p = this.player.body.getPosition();
+    const pv = this.player.body.getLinearVelocity();
     return {
       tick: this.tick,
       walls: { ...this.walls },
-      player: { x: p.x, y: p.y, radius: this.radiusNow(this.player), ...this.player.particle, alive: this.playerAlive },
+      player: {
+        x: p.x, y: p.y, radius: this.radiusNow(this.player), ...this.player.particle, alive: this.playerAlive,
+        vx: pv.x, vy: pv.y, steer: { ...this.lastSteer },
+      },
       forces: { ...this.forceSwitches },
       explosions: this.explosions.map((x) => {
         const shape = { ...x, age: (this.tick - x.startTick) * FIXED_DT };
@@ -596,7 +602,8 @@ export class World {
       barriers: (this.scenario.barriers ?? []).map((b) => ({ ...b })),
       particles: this.spawned.map((s) => {
         const pos = s.body.getPosition();
-        return { id: s.id, ...s.particle, x: pos.x, y: pos.y, radius: this.radiusNow(s), live: s.live };
+        const v = s.body.getLinearVelocity();
+        return { id: s.id, ...s.particle, x: pos.x, y: pos.y, radius: this.radiusNow(s), live: s.live, vx: v.x, vy: v.y };
       }),
     };
   }

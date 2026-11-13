@@ -1,0 +1,53 @@
+---
+import Base from '../../layouts/Base.astro';
+import Toy from '../../components/header-media/particulars/Toy.svelte';
+import { scenarioFor } from '../../lib/particulars/scenario/select';
+import { LAYERS } from '../../components/header-media/particulars/render/layers';
+
+// Experiment: the four Particulars visual layers ported from the Unity original
+// (charge lighting, trails, blobs, layered bodies). Pick a scenario and a variant
+// per layer; the page reloads with `?pv-<layer>=<variant>` which the toy reads.
+// Throwaway /experiments route.
+
+const files = import.meta.glob('/src/content/**/index.json', { eager: true, import: 'default' });
+const SCENARIOS = [
+  'what/toys/particulars-em-weak-strong',
+  'what/toys/particulars-em',
+  'what/toys/particulars-strong',
+  'what/toys/particulars-em-weak',
+  'what/toys/particulars',
+];
+const picked = Astro.url.searchParams.get('scenario');
+const entryId = picked && SCENARIOS.includes(picked) ? picked : SCENARIOS[0];
+const scenario = scenarioFor(files, entryId);
+const current = (id: string, d: string) => Astro.url.searchParams.get(`pv-${id}`) ?? d;
+---
+
+<Base title="Particulars visuals experiment">
+  <main class="wrap">
+    <h1>Particulars visuals</h1>
+    <form method="get" class="controls">
+      <label>scenario
+        <select name="scenario" onchange="this.form.submit()">
+          {SCENARIOS.map((s) => <option value={s} selected={s === entryId}>{s.split('/').pop()}</option>)}
+        </select>
+      </label>
+      {LAYERS.map((d) => (
+        <label>{d.id}
+          <select name={`pv-${d.id}`} onchange="this.form.submit()">
+            {['off', ...d.variants].map((v) => <option value={v} selected={v === current(d.id, d.defaultVariant)}>{v}{v === d.defaultVariant ? ' (default)' : ''}</option>)}
+          </select>
+        </label>
+      ))}
+    </form>
+    <p class="note">This page is server-rendered on demand in dev: if the selects do nothing, append the params to the URL yourself.</p>
+    <Toy {entryId} {scenario} client:only="svelte" />
+  </main>
+</Base>
+
+<style>
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+  .controls label { display: flex; gap: 0.4rem; align-items: center; }
+  .note { font-size: 0.85em; }
+</style>

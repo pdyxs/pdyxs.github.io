@@ -11,6 +11,8 @@ let target: HTMLElement;
 let component: ReturnType<typeof mount>;
 
 beforeEach(() => {
+  // These tests read the SVG glyphs; the bodies layer would replace them.
+  window.history.replaceState(null, '', '/?pv-bodies=off');
   target = document.createElement('div');
   document.body.appendChild(target);
   component = mount(Toy as any, { target, props: { entryId: 'what/toys/particulars', scenario: SCENARIO } });

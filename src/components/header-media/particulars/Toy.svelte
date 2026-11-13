@@ -15,9 +15,22 @@
   import { installPageButtons } from './page-buttons';
   import { glyphFor } from './glyph';
   import { arcPath } from './wall-path';
+  import { LAYERS } from './render/layers';
+  import { chooseVariants } from './render/options';
+  import { projectionFor } from './render/projection';
+  import type { Layer, Theme } from './render/types';
   import { FIXED_DT, FORCE_LABEL_SPACING, MAX_STEPS_PER_FRAME, VIEW_MARGIN } from '../../../lib/particulars/constants';
 
-  let { scenario, entryId }: { scenario: Scenario; entryId: string } = $props();
+  let {
+    scenario,
+    entryId,
+    variants: fixedVariants,
+  }: {
+    scenario: Scenario;
+    entryId: string;
+    /** Pin layer variants (experiments). Unset layers fall back to `?pv-<id>=` / defaults. */
+    variants?: Record<string, string>;
+  } = $props();
 
   // svelte-ignore state_referenced_locally -- the scenario is fixed for the lifetime of a mount
   const world = new World(scenario);
@@ -39,6 +52,17 @@
   ];
 
   let svg: SVGSVGElement;
+  // Visual layers: each owns a canvas stacked under (z < 0) or over (z > 0) the SVG.
+  // Variants come from `?pv-<id>=` so experiments can compare options; chosen once per mount.
+  const stacked = [...LAYERS].sort((a, b) => a.z - b.z);
+  // Every layer starts off: the server render (and a page without JS) shows the plain SVG;
+  // the chosen layers come on at mount.
+  let variants = $state<Record<string, string>>(Object.fromEntries(LAYERS.map((d) => [d.id, 'off'])));
+  const activeUnder = $derived(stacked.filter((d) => d.z < 0 && variants[d.id] !== 'off'));
+  const activeOver = $derived(stacked.filter((d) => d.z >= 0 && variants[d.id] !== 'off'));
+  const hideGlyphs = $derived(LAYERS.some((d) => d.replacesGlyphs && variants[d.id] !== 'off'));
+  const onBackdrop = $derived(LAYERS.some((d) => d.paintsBackground && variants[d.id] !== 'off'));
+  const canvases: Record<string, HTMLCanvasElement> = $state({});
   // Held input, in world units. Plain data, not reactive: only the loop reads it.
   const heldKeys = new Set<string>();
   const heldPointers = new Map<number, Vec>();
@@ -103,9 +127,15 @@
   onMount(() => {
     let raf = 0;
     let last = performance.now();
+    const born = last;
     let acc = 0;
+    variants = { ...chooseVariants(LAYERS, window.location.search), ...fixedVariants };
+    let layers: { id: string; layer: Layer; canvas: HTMLCanvasElement }[] = [];
+    let sized = '';
+    let projection = projectionFor(view, 1, 1, 1);
 
     function frame(now: number) {
+      const dt = Math.min(0.1, (now - last) / 1000);
       const due = stepsDue(acc, (now - last) / 1000, FIXED_DT, MAX_STEPS_PER_FRAME);
       last = now;
       acc = due.remainder;
@@ -121,7 +151,34 @@
         pressedButtons = [];
       }
       if (due.steps > 0) snapshot = world.snapshot();
+      drawLayers(dt, (now - born) / 1000, due.steps > 0);
       raf = requestAnimationFrame(frame);
+    }
+
+    function drawLayers(dt: number, time: number, stepped: boolean) {
+      // Layers are created lazily, once their canvases exist (after variants are chosen).
+      if (layers.length === 0) {
+        layers = [...activeUnder, ...activeOver].flatMap((d) => {
+          const canvas = canvases[d.id];
+          return canvas ? [{ id: d.id, canvas, layer: d.create(canvas, variants[d.id]) }] : [];
+        });
+        if (layers.length === 0) return;
+      }
+      const r = svg.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const key = `${r.width}x${r.height}@${dpr}`;
+      if (key !== sized) {
+        sized = key;
+        projection = projectionFor(view, r.width, r.height, dpr);
+        for (const l of layers) {
+          l.canvas.width = projection.width;
+          l.canvas.height = projection.height;
+          l.layer.resize?.(projection);
+        }
+      }
+      const theme: Theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      const info = { snapshot, view, projection, dt, time, stepped, theme };
+      for (const l of layers) l.layer.frame(info);
     }
     raf = requestAnimationFrame(frame);
 
@@ -137,6 +194,7 @@
       stopForceCommands();
       releasePageButtons();
       cancelAnimationFrame(raf);
+      for (const l of layers) l.layer.destroy();
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', releaseAll);
@@ -144,10 +202,15 @@
   });
 </script>
 
+<div class="particulars-stack" data-backdrop={onBackdrop}>
+{#each activeUnder as d (d.id)}
+  <canvas class="layer" data-layer={d.id} data-variant={variants[d.id]} bind:this={canvases[d.id]} aria-hidden="true"></canvas>
+{/each}
 <svg
   bind:this={svg}
   class="particulars"
   data-entry={entryId}
+  data-hide-glyphs={hideGlyphs}
   viewBox="{view.x} {view.y} {view.width} {view.height}"
   role="img"
   aria-label="A particle in a walled box. Steer it with the arrow keys, WASD, or by holding a pointer. Space, or a tap on the particle, uses its action."
@@ -189,7 +252,7 @@
       <polygon points="0,-0.35 0.35,0 0,0.35 -0.35,0" />
     </g>
   {/each}
-  {#each snapshot.particles as p (p.id)}
+  {#each hideGlyphs ? [] : snapshot.particles as p (p.id)}
     {@const glyph = glyphFor(p.type)}
     <g
       class="particle"
@@ -210,7 +273,7 @@
       {/if}
     </g>
   {/each}
-  {#if snapshot.player.alive}
+  {#if snapshot.player.alive && !hideGlyphs}
     {@const glyph = glyphFor(snapshot.player.type)}
     <g
       class="player"
@@ -245,9 +308,34 @@
     {/if}
   </g>
 </svg>
+{#each activeOver as d (d.id)}
+  <canvas class="layer" data-layer={d.id} data-variant={variants[d.id]} bind:this={canvases[d.id]} aria-hidden="true"></canvas>
+{/each}
+</div>
 
 <style>
+  /* The stack is exactly the SVG's box; every layer canvas covers it and lets input through to the SVG. */
+  .particulars-stack {
+    position: relative;
+    --particulars-ink: var(--color-text);
+  }
+  /* On the game's level background the SVG draws in the original's near-white (WallView) in
+     dark mode, and in a soft graphite on the light background. */
+  .particulars-stack[data-backdrop='true'] {
+    --particulars-ink: #3a3c3b;
+  }
+  :global(html[data-theme='dark']) .particulars-stack[data-backdrop='true'] {
+    --particulars-ink: #e9e9e4;
+  }
+  .layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
   .particulars {
+    position: relative;
     display: block;
     width: 100%;
     max-height: 70vh;
@@ -256,17 +344,17 @@
   }
   .walls {
     fill: none;
-    stroke: var(--color-text);
+    stroke: var(--particulars-ink);
     stroke-width: 0.15;
   }
   /* Wall mode is the outline: all is solid, positive long dashes, negative dots, destroy fine and heavy. */
   .barrier {
     fill: none;
-    stroke: var(--color-text);
+    stroke: var(--particulars-ink);
     stroke-width: 0.12;
   }
   .barrier[data-mode='all'] {
-    fill: var(--color-text);
+    fill: var(--particulars-ink);
   }
   .barrier[data-mode='positive'] {
     stroke-dasharray: 0.4 0.15;
@@ -281,7 +369,7 @@
   }
   .forces text {
     font-size: 0.6px;
-    fill: var(--color-text);
+    fill: var(--particulars-ink);
   }
   .forces text[data-on='false'] {
     text-decoration: line-through;
@@ -289,30 +377,30 @@
   /* A black hole is an outline while dormant and solid once gravity pulls. */
   .black-hole {
     fill: none;
-    stroke: var(--color-text);
+    stroke: var(--particulars-ink);
     stroke-width: 0.1;
   }
   .black-hole[data-active='true'] {
-    fill: var(--color-text);
+    fill: var(--particulars-ink);
   }
   /* An explosion is a ring that grows out and is gone; a pickup is a small outlined diamond that blinks as it runs out. */
   .explosion {
     fill: none;
-    stroke: var(--color-text);
+    stroke: var(--particulars-ink);
     stroke-width: 0.08;
     stroke-dasharray: 0.3 0.2;
   }
   .pickup polygon {
     fill: none;
-    stroke: var(--color-text);
+    stroke: var(--particulars-ink);
     stroke-width: 0.1;
   }
   .pickup[data-fading='true'] polygon {
     stroke-dasharray: 0.15 0.15;
   }
   .player .shape {
-    fill: var(--color-text);
-    stroke: var(--color-text);
+    fill: var(--particulars-ink);
+    stroke: var(--particulars-ink);
     stroke-width: 0.1;
   }
   .player[data-parity='-1'] .shape {
@@ -321,9 +409,9 @@
   /* Parity: matter is solid, antimatter is an outline. Colour (strong force) is
      the outline's dash pattern, because the palette has no spare hues. */
   .particle .shape {
-    stroke: var(--color-text);
+    stroke: var(--particulars-ink);
     stroke-width: 0.1;
-    fill: var(--color-text);
+    fill: var(--particulars-ink);
   }
   .particle[data-parity='-1'] .shape {
     fill: none;
@@ -341,12 +429,12 @@
   /* The collider: a thin ring at the body's actual radius, whatever glyph is drawn inside it. */
   .bounds {
     fill: none;
-    stroke: var(--color-text);
+    stroke: var(--particulars-ink);
     stroke-width: 0.04;
   }
   .telegraph {
     fill: none;
-    stroke: var(--color-text);
+    stroke: var(--particulars-ink);
     stroke-width: 0.06;
     stroke-dasharray: 0.15 0.15;
   }

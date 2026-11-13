@@ -10,6 +10,9 @@ export interface ParticleSnapshot {
   y: number;
   radius: number;
   live: boolean;
+  /** Linear velocity, world units per second. For views (trails, lean); the sim never reads it back. */
+  vx: number;
+  vy: number;
 }
 
 /** A gravity source as the view and forces() see it. */
@@ -42,7 +45,12 @@ export interface Snapshot {
   tick: number;
   walls: { width: number; height: number };
   /** `alive` goes false when the player is annihilated; the body then stays where it died. */
-  player: { x: number; y: number; radius: number; type: ParticleKind; colour: ParticleColour; parity: Parity; alive: boolean };
+  player: {
+    x: number; y: number; radius: number; type: ParticleKind; colour: ParticleColour; parity: Parity; alive: boolean;
+    vx: number; vy: number;
+    /** The steering vector applied on the last step (length 0..1): what the player is asking for, for the view to lean on. */
+    steer: { x: number; y: number };
+  };
   particles: ParticleSnapshot[];
   blackHoles: BlackHoleSnapshot[];
   /** Interior walls, as authored: static for the whole run. */

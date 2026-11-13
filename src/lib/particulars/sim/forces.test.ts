@@ -7,7 +7,7 @@ import { massOf } from '../constants';
 
 const OFF: ForceSwitches = { strong: false, weak: false, em: false, gravity: false };
 const particle = (over: Partial<ParticleSnapshot>): ParticleSnapshot => ({
-  id: 0, type: 'electron', colour: 'white', parity: 1, x: 0, y: 0, radius: 0.35, live: true, ...over,
+  id: 0, type: 'electron', colour: 'white', parity: 1, x: 0, y: 0, radius: 0.35, live: true, vx: 0, vy: 0, ...over,
 });
 const input = (particles: ParticleSnapshot[], blackHoles: ForceInput['blackHoles'] = []): ForceInput => ({
   particles,
