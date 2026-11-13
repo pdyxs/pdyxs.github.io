@@ -1,9 +1,9 @@
 // Pure edit ops: each takes the whole game and returns a new whole game.
 // Ids come from the caller, so ops stay deterministic.
 
-import type { ImageSlots, Component, ComponentSet, Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
+import type { Box, ImageSlots, Layer, LayerType, Prop, Component, ComponentSet, Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
 import { bindingKey, keyEntities } from './image.ts';
-import { allConcepts, allProperties, allSets, setsOf } from './query.ts';
+import { allConcepts, allProperties, allSets, geometryOf, setsOf, templateOf } from './query.ts';
 
 /** Rebuild the concept tree, replacing each concept by `fn(concept)`; `fn` returns null to drop it. */
 function mapConcepts(list: Concept[], fn: (c: Concept) => Concept | null): Concept[] {
@@ -266,4 +266,94 @@ export function removePer(game: Game, component: string, concept: string): Game 
 
 export function setComponentValue(game: Game, component: string, property: string, value: Value): Game {
   return mapComponent(game, component, (c) => ({ ...c, values: { ...c.values, [property]: value } }));
+}
+
+// ---- set geometry ----
+
+const positive = (n: number) => Number.isFinite(n) && n > 0;
+const nonNegative = (n: number) => Number.isFinite(n) && n >= 0;
+
+/** A size must be positive on both sides; anything else leaves the set as it was. */
+export function setSetSize(game: Game, id: string, size: { width: number; height: number }): Game {
+  if (!positive(size.width) || !positive(size.height)) return game;
+  return mapAllSets(game, (s) => (s.id === id ? { ...s, size: { width: size.width, height: size.height } } : s));
+}
+
+export function setSetBleed(game: Game, id: string, bleed: number): Game {
+  if (!nonNegative(bleed)) return game;
+  return mapAllSets(game, (s) => (s.id === id ? { ...s, bleed } : s));
+}
+
+export function setOutlineRadius(game: Game, id: string, radius: number): Game {
+  if (!nonNegative(radius)) return game;
+  return mapAllSets(game, (s) => (s.id === id ? { ...s, outline: { kind: 'rectangle', radius } } : s));
+}
+
+// ---- template layers ----
+
+const lit = <T>(value: T): Prop<T> => ({ kind: 'literal', value });
+
+function newLayer(type: LayerType, id: string, box: Box): Layer {
+  switch (type) {
+    case 'shape':
+      return { id, type, ...box, shape: 'rect', fill: lit('#cccccc'), stroke: lit(null), strokeWidth: lit(0.3) };
+    case 'text':
+      return { id, type, ...box, text: lit('Text'), size: lit(4), colour: lit('#000000'), align: lit('left') };
+    case 'image':
+      return { id, type, ...box, file: lit(null), fit: lit('cover') };
+  }
+}
+
+function mapLayers(game: Game, fn: (layers: Layer[]) => Layer[], setId?: string): Game {
+  return mapAllSets(game, (s) => (setId === undefined || s.id === setId ? { ...s, template: fn(templateOf(s)) } : s));
+}
+
+/** Add a layer covering the whole card; it goes on top of the draw order. */
+export function addLayer(game: Game, args: { set: string; id: string; type: LayerType }): Game {
+  const set = allSets(game).find((s) => s.id === args.set);
+  if (!set) return game;
+  const { size } = geometryOf(set);
+  return mapLayers(game, (layers) => [...layers, newLayer(args.type, args.id, { x: 0, y: 0, width: size.width, height: size.height })], args.set);
+}
+
+export function removeLayer(game: Game, id: string): Game {
+  return mapLayers(game, (layers) => layers.filter((l) => l.id !== id));
+}
+
+/** Move a layer by `delta` places in the draw order (negative is toward the back); the ends hold. */
+export function moveLayer(game: Game, id: string, delta: number): Game {
+  return mapLayers(game, (layers) => {
+    const from = layers.findIndex((l) => l.id === id);
+    const to = from + Math.sign(delta);
+    if (from < 0 || to < 0 || to >= layers.length) return layers;
+    const next = [...layers];
+    [next[from], next[to]] = [next[to], next[from]];
+    return next;
+  });
+}
+
+function mapLayer(game: Game, id: string, fn: (l: Layer) => Layer): Game {
+  return mapLayers(game, (layers) => layers.map((l) => (l.id === id ? fn(l) : l)));
+}
+
+/** Edit a layer's position or size in mm; a value that is not finite, or a size that is not positive, is ignored. */
+export function setLayerBox(game: Game, id: string, box: Partial<Box>): Game {
+  const ok = (key: keyof Box, v: number | undefined): v is number => v !== undefined && Number.isFinite(v) && (key === 'x' || key === 'y' || v > 0);
+  return mapLayer(game, id, (l) => {
+    const next = { ...l };
+    for (const key of ['x', 'y', 'width', 'height'] as const) if (ok(key, box[key])) next[key] = box[key]!;
+    return next;
+  });
+}
+
+/** Set a layer's literal prop (`fill`, `text`, `file`, ...); a name the layer does not have is ignored. */
+export function setLayerProp(game: Game, id: string, key: string, value: unknown): Game {
+  const target = allSets(game).flatMap(templateOf).find((l) => l.id === id) as Record<string, unknown> | undefined;
+  const current = target?.[key] as { kind?: string } | undefined;
+  if (current?.kind !== 'literal') return game;
+  return mapLayer(game, id, (l) => ({ ...l, [key]: lit(value) }) as Layer);
+}
+
+export function setShapeKind(game: Game, id: string, shape: 'rect' | 'ellipse'): Game {
+  return mapLayer(game, id, (l) => (l.type === 'shape' ? { ...l, shape } : l));
 }
