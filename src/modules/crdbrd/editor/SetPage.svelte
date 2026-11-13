@@ -8,7 +8,7 @@
   import PropertyList from './PropertyList.svelte';
   import ComponentRow from './ComponentRow.svelte';
 
-  let { game, set, readOnly, onChange }: { game: Game; set: ComponentSet; readOnly: boolean; onChange: (next: Game) => void } = $props();
+  let { game, set, readOnly, onChange, editorId, dir }: { game: Game; set: ComponentSet; readOnly: boolean; onChange: (next: Game) => void; editorId: string; dir: string } = $props();
 
   // expand is the one place instances are computed; the page only counts them.
   const total = $derived(expand(game, set.id).length);
@@ -31,7 +31,7 @@
 <p class="instance-total">Total instances: {total}</p>
 <ul class="components">
   {#each set.components as component (component.id)}
-    <ComponentRow {game} {set} {component} {readOnly} {onChange} />
+    <ComponentRow {game} {set} {component} {readOnly} {onChange} {editorId} {dir} />
   {/each}
 </ul>
 <AddForm kind="add-component" label="New component" disabled={readOnly} onAdd={(name) => onChange(addComponent(game, { set: set.id, id: newId(), name }))} />

@@ -1,8 +1,9 @@
 // Pure edit ops: each takes the whole game and returns a new whole game.
 // Ids come from the caller, so ops stay deterministic.
 
-import type { Component, ComponentSet, Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
-import { allConcepts, allSets, setsOf } from './query.ts';
+import type { ImageSlots, Component, ComponentSet, Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
+import { bindingKey, keyEntities } from './image.ts';
+import { allConcepts, allProperties, allSets, setsOf } from './query.ts';
 
 /** Rebuild the concept tree, replacing each concept by `fn(concept)`; `fn` returns null to drop it. */
 function mapConcepts(list: Concept[], fn: (c: Concept) => Concept | null): Concept[] {
@@ -27,9 +28,6 @@ function mapSets(list: ComponentSet[], fn: (s: ComponentSet) => ComponentSet | n
 const withSets = (game: Game, sets: ComponentSet[]): Game => ({ ...game, sets });
 const mapAllSets = (game: Game, fn: (s: ComponentSet) => ComponentSet | null): Game => (game.sets ? withSets(game, mapSets(game.sets, fn)) : game);
 
-/** Every property in the game, whoever holds it. */
-const allProperties = (game: Game): Property[] => [...game.properties, ...allConcepts(game).flatMap((c) => c.properties), ...allSets(game).flatMap((s) => s.properties)];
-
 const withConcepts = (game: Game, concepts: Concept[]): Game => ({ ...game, concepts });
 
 export function addConcept(game: Game, args: { id: string; name: string; parent?: string }): Game {
@@ -47,7 +45,8 @@ export function removeConcept(game: Game, id: string): Game {
   const gone = new Set(doomed ? allConcepts({ ...game, concepts: [doomed] }).map((c) => c.id) : []);
   const next = withConcepts(game, mapConcepts(game.concepts, (c) => (c.id === id ? null : c)));
   const stripped = stripProperties(next, (p) => p.type.kind === 'reference' && gone.has(p.type.concept));
-  return mapAllSets(stripped, (set) => ({ ...set, components: set.components.map((c) => ({ ...c, per: c.per.filter((id) => !gone.has(id)) })) }));
+  const unvaried = [...gone].reduce((g, concept) => dropVariesBy(g, concept), stripped);
+  return mapAllSets(unvaried, (set) => ({ ...set, components: set.components.map((c) => ({ ...c, per: c.per.filter((id) => !gone.has(id)) })) }));
 }
 
 /** Drop every property matching `doomed`, from the game and every concept, along with its values. */
@@ -133,7 +132,8 @@ export function renameEntity(game: Game, id: string, name: string): Game {
 
 /** Removing an entity also clears every stored reference to it. */
 export function removeEntity(game: Game, id: string): Game {
-  return clearReferences(mapEntity(game, id, () => null), new Set([id]));
+  const targets = new Set([id]);
+  return clearSlots(clearReferences(mapEntity(game, id, () => null), targets), targets);
 }
 
 export function setEntityValue(game: Game, entity: string, property: string, value: Value): Game {
@@ -153,6 +153,54 @@ function clearReferences(game: Game, targets: Set<string>): Game {
     values: keepRefs(game.values),
     concepts: mapConcepts(game.concepts, (c) => ({ ...c, entities: c.entities.map((e) => ({ ...e, values: keepRefs(e.values) })) })),
     ...(game.sets && { sets: mapSets(game.sets, (s) => ({ ...s, components: s.components.map((c) => ({ ...c, values: keepRefs(c.values) })) })) }),
+  };
+}
+
+/** Stop every image property varying by `concept`, clearing its values (they were keyed by that concept). */
+function dropVariesBy(game: Game, concept: string): Game {
+  const varying = allProperties(game).filter((p) => p.type.kind === 'image' && p.type.variesBy === concept);
+  return varying.reduce((g, p) => setImageVariesBy(g, p.id, null), game);
+}
+
+/**
+ * Declare that image property `id` varies by `concept` (or by nothing, with
+ * null). A different declaration clears the stored values: plain filenames and
+ * slots keyed for another concept do not carry over, and none is left orphaned.
+ */
+export function setImageVariesBy(game: Game, id: string, concept: string | null): Game {
+  const property = allProperties(game).find((p) => p.id === id);
+  if (!property || property.type.kind !== 'image' || (property.type.variesBy ?? null) === concept) return game;
+  return setPropertyType(game, id, concept ? { kind: 'image', variesBy: concept } : { kind: 'image' });
+}
+
+/** Set (or with null clear) the image `entity` holds for `property` when `bound` is the entity of the varies-by concept. */
+export function setImageSlot(game: Game, entity: string, property: string, bound: string, file: string | null): Game {
+  const concept = allProperties(game).find((p) => p.id === property)?.type;
+  if (!concept || concept.kind !== 'image' || !concept.variesBy) return game;
+  const key = bindingKey({ [concept.variesBy]: bound });
+  return mapEntity(game, entity, (e) => {
+    const slots = { ...(typeof e.values[property] === 'object' && e.values[property] !== null ? (e.values[property] as ImageSlots) : {}) };
+    if (file === null) delete slots[key];
+    else slots[key] = file;
+    const { [property]: _old, ...rest } = e.values;
+    return { ...e, values: Object.keys(slots).length ? { ...rest, [property]: slots } : rest };
+  });
+}
+
+/** Drop the slots of every varying image that name any of `targets` (entity ids). */
+function clearSlots(game: Game, targets: Set<string>): Game {
+  const varying = new Set(allProperties(game).filter((p) => p.type.kind === 'image' && p.type.variesBy).map((p) => p.id));
+  const prune = (values: Game['values']): Game['values'] =>
+    Object.fromEntries(
+      Object.entries(values).flatMap(([k, v]) => {
+        if (!varying.has(k) || typeof v !== 'object' || v === null) return [[k, v]];
+        const kept = Object.fromEntries(Object.entries(v).filter(([key]) => !keyEntities(key).some((id) => targets.has(id))));
+        return Object.keys(kept).length ? [[k, kept]] : [];
+      }),
+    );
+  return {
+    ...game,
+    concepts: mapConcepts(game.concepts, (c) => ({ ...c, entities: c.entities.map((e) => ({ ...e, values: prune(e.values) })) })),
   };
 }
 

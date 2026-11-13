@@ -1,9 +1,16 @@
+import { keyEntities } from './image.ts';
 import type { ComponentSet, Concept, Game, Property, Value } from './types.ts';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
+/** A bare filename in the card folder: not a URL, not a path. */
+const isFilename = (v: unknown): v is string => typeof v === 'string' && v !== '' && !/[\\/:]/.test(v);
+
 function fits(type: Property['type'], v: Value | undefined): boolean {
   switch (type.kind) {
+    case 'image':
+      if (type.variesBy) return isObject(v) && Object.values(v).every(isFilename);
+      return v === null || isFilename(v);
     case 'number': return typeof v === 'number' && Number.isFinite(v);
     case 'text':
     case 'colour': return typeof v === 'string';
@@ -43,6 +50,7 @@ export function validate(game: unknown): string[] {
     claim(p.id);
     props.set(p.id, p);
     if (p.type.kind === 'number' && p.type.min > p.type.max) errors.push(`property "${p.id}" has min above max`);
+    if (p.type.kind === 'image' && p.type.variesBy && !conceptIds.has(p.type.variesBy)) errors.push(`property "${p.id}" varies by missing concept "${p.type.variesBy}"`);
     if (p.type.kind === 'reference' && !conceptIds.has(p.type.concept)) errors.push(`property "${p.id}" references missing concept "${p.type.concept}"`);
   };
 
@@ -62,6 +70,10 @@ export function validate(game: unknown): string[] {
       const p = allowed ? allowed.find((q) => q.id === pid) : props.get(pid);
       if (!p) errors.push(`${owner} has a value for unknown property "${pid}"`);
       else if (!fits(p.type, v)) errors.push(`${owner} value for "${pid}" does not fit its type`);
+      else if (p.type.kind === 'image' && p.type.variesBy && isObject(v)) {
+        const entities = new Set(concepts.find((c) => c.id === (p.type as { variesBy: string }).variesBy)?.entities.map((e) => e.id));
+        for (const key of Object.keys(v)) for (const id of keyEntities(key)) if (!entities.has(id)) errors.push(`${owner} has an image for missing entity "${id}" in "${pid}"`);
+      }
     }
   };
   checkValues('game', g.values);

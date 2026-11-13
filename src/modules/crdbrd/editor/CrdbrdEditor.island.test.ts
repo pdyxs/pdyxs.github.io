@@ -1,17 +1,17 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import CrdbrdEditor from './CrdbrdEditor.svelte';
 import { blank } from '../model/game.ts';
 import type { Game } from '../model/types.ts';
-import { addConcept, addEntity, addProperty, addSet, addComponent, setComponentCount, addPer } from '../model/ops.ts';
+import { addConcept, addEntity, addProperty, addSet, addComponent, setComponentCount, addPer, setImageVariesBy, setImageSlot, setEntityValue } from '../model/ops.ts';
 import { reactiveProps } from './reactive-props.svelte.ts';
 
 /** Mount the island the way the shell does: `data` in, whole new game out through onChange. */
-function setup(initial: Game = blank(), readOnly = false) {
+function setup(initial: Game = blank(), readOnly = false, extra: Record<string, unknown> = {}) {
   const target = document.createElement('div');
   document.body.appendChild(target);
   const changes: Game[] = [];
-  const props = reactiveProps({ data: initial, readOnly, onChange: (next: Game) => { props.data = next; changes.push(next); } });
+  const props = reactiveProps({ data: initial, readOnly, onChange: (next: Game) => { props.data = next; changes.push(next); }, ...extra });
   mounted = mount(CrdbrdEditor as any, { target, props });
   flushSync();
   return { target, props, changes };
@@ -344,5 +344,128 @@ describe('CrdbrdEditor: component sets', () => {
     location.hash = '#/sets/s';
     const { target } = setup(withSet());
     expect(q<HTMLInputElement>(target, 'input.set-name').value).toBe('Deck');
+  });
+});
+
+describe('CrdbrdEditor: image properties', () => {
+  const card = { editorId: 'crdbrd', dir: 'games/duel' };
+  const settle = async () => { await new Promise((r) => setTimeout(r, 0)); flushSync(); };
+  const calls: { url: string; method: string; body?: any }[] = [];
+  function fakeAssets(files: string[], upload: { status: number; body: unknown } = { status: 200, body: { filename: 'up.png' } }) {
+    calls.length = 0;
+    vi.stubGlobal('fetch', async (url: string, init?: { method?: string; body?: string }) => {
+      calls.push({ url, method: init?.method ?? 'GET', body: init?.body && JSON.parse(init.body) });
+      if (init?.method === 'POST') return { ok: upload.status < 400, status: upload.status, json: async () => upload.body };
+      return { ok: true, status: 200, json: async () => files };
+    });
+  }
+  afterEach(() => vi.unstubAllGlobals());
+
+  const fighters = () => {
+    let g = addConcept(blank(), { id: 'f', name: 'Fighters' });
+    g = addEntity(g, { concept: 'f', id: 'knight', name: 'Knight' });
+    return addProperty(g, { owner: 'f', id: 'art', name: 'Art', type: { kind: 'image' } });
+  };
+  const openKnight = (t: HTMLElement) => { openConcept(t); follow(q(t, '.entity-link')); };
+
+  it('offers image as a property type', () => {
+    const { target, changes } = setup(addProperty(withConcept(), { owner: 'c', id: 'p', name: 'Art' }), false, card);
+    openConcept(target);
+    const select = q<HTMLSelectElement>(target, '.property-row select.prop-type');
+    select.value = 'image';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+    expect(changes.at(-1)!.concepts[0].properties[0].type).toEqual({ kind: 'image' });
+  });
+
+  it('shows the stored image as a thumbnail through the asset url', async () => {
+    fakeAssets(['knight.png']);
+    const { target } = setup(setEntityValue(fighters(), 'knight', 'art', 'knight.png'), false, card);
+    openKnight(target);
+    await settle();
+    expect(q<HTMLImageElement>(target, '.value-row[data-prop="art"] img.thumb').getAttribute('src')).toBe('/__dev-editors/crdbrd/asset?path=games%2Fduel&name=knight.png');
+  });
+
+  it('uploads a file and stores only its filename', async () => {
+    fakeAssets([]);
+    const { target, changes } = setup(fighters(), false, card);
+    openKnight(target);
+    const input = q<HTMLInputElement>(target, '.value-row[data-prop="art"] input[type="file"]');
+    Object.defineProperty(input, 'files', { value: [new File([new Uint8Array([1, 2])], 'up.png')] });
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await settle();
+    expect(calls.find((c) => c.method === 'POST')!.body.filename).toBe('up.png');
+    expect(changes.at(-1)!.concepts[0].entities[0].values.art).toBe('up.png');
+  });
+
+  it('reports an upload that would overwrite instead of storing it', async () => {
+    fakeAssets([], { status: 409, body: { error: 'exists' } });
+    const { target, changes } = setup(fighters(), false, card);
+    openKnight(target);
+    const input = q<HTMLInputElement>(target, '.value-row[data-prop="art"] input[type="file"]');
+    Object.defineProperty(input, 'files', { value: [new File([new Uint8Array([1])], 'up.png')] });
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await settle();
+    expect(changes).toHaveLength(0);
+    expect(q(target, '.image-error').textContent).toContain('already exists');
+  });
+
+  it('chooses an existing image, and clears it', async () => {
+    fakeAssets(['a.png', 'b.png']);
+    const { target, changes } = setup(fighters(), false, card);
+    openKnight(target);
+    await settle();
+    const choose = q<HTMLSelectElement>(target, '.value-row[data-prop="art"] select.image-choose');
+    expect([...choose.options].map((o) => o.value)).toEqual(['', 'a.png', 'b.png']);
+    choose.value = 'b.png';
+    choose.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+    expect(changes.at(-1)!.concepts[0].entities[0].values.art).toBe('b.png');
+    const again = q<HTMLSelectElement>(target, '.value-row[data-prop="art"] select.image-choose');
+    again.value = '';
+    again.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+    expect(changes.at(-1)!.concepts[0].entities[0].values.art).toBeNull();
+  });
+
+  describe('varies by', () => {
+    const duel = () => {
+      let g = addConcept(fighters(), { id: 'p', name: 'Players' });
+      g = addEntity(g, { concept: 'p', id: 'red', name: 'Red' });
+      return addEntity(g, { concept: 'p', id: 'blue', name: 'Blue' });
+    };
+
+    it('declares varies-by on a concept property, choosing among the other concepts', () => {
+      const { target, changes } = setup(duel(), false, card);
+      follow(qa(target, '.concept-link')[0]);
+      const pick = q<HTMLSelectElement>(target, '.property-row select.prop-varies-by');
+      expect([...pick.options].map((o) => o.value)).toEqual(['', 'p']);
+      pick.value = 'p';
+      pick.dispatchEvent(new Event('change', { bubbles: true }));
+      flushSync();
+      expect(changes.at(-1)!.concepts[0].properties[0].type).toEqual({ kind: 'image', variesBy: 'p' });
+    });
+
+    it('does not offer varies-by on a game-level property', () => {
+      const { target } = setup(addProperty(blank(), { id: 'x', name: 'X', type: { kind: 'image' } }), false, card);
+      expect(target.querySelector('.prop-varies-by')).toBeNull();
+    });
+
+    it('shows one slot per entity of the other concept and fills one', async () => {
+      fakeAssets(['k-red.png']);
+      const g = setImageSlot(setImageVariesBy(duel(), 'art', 'p'), 'knight', 'art', 'red', 'k-red.png');
+      const { target, changes } = setup(g, false, card);
+      openKnight(target);
+      await settle();
+      const slots = qa(target, '.value-row[data-prop="art"] .image-slot');
+      expect(slots.map((s) => s.querySelector('.slot-label')!.textContent)).toEqual(['Red', 'Blue']);
+      expect(slots[0].querySelector('img.thumb')).not.toBeNull();
+      expect(slots[1].querySelector('img.thumb')).toBeNull();
+      const choose = slots[1].querySelector<HTMLSelectElement>('select.image-choose')!;
+      choose.value = 'k-red.png';
+      choose.dispatchEvent(new Event('change', { bubbles: true }));
+      flushSync();
+      expect(changes.at(-1)!.concepts[0].entities[0].values.art).toEqual({ 'p=red': 'k-red.png', 'p=blue': 'k-red.png' });
+    });
   });
 });

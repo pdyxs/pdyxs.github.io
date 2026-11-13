@@ -1,15 +1,23 @@
 // The crdbrd game model (the 2018 model, kept as is). Pure data: no card or
 // site concepts live here, so the format could one day be its own tool.
 
-/** Image comes in a later issue; the union leaves room for it. */
 export type PropertyType =
   | { kind: 'number'; min: number; max: number }
   | { kind: 'text' }
   | { kind: 'colour' }
   | { kind: 'boolean' }
-  | { kind: 'reference'; concept: string };
+  | { kind: 'reference'; concept: string }
+  /** `variesBy`: the concept whose entities each get their own image (see image.ts). Only concept properties vary. */
+  | { kind: 'image'; variesBy?: string };
 
-export type Value = number | string | boolean | null;
+/**
+ * An image value is a filename (never a URL). A varies-by image is instead a
+ * record of filenames keyed by binding key (`bindingKey` in image.ts), not by
+ * bare entity id, so varying by several concepts later needs no migration.
+ */
+export type ImageSlots = Record<string, string>;
+
+export type Value = number | string | boolean | null | ImageSlots;
 
 export interface Property {
   id: string;

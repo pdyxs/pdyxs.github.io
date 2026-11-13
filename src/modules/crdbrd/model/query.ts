@@ -20,7 +20,8 @@ export function valueOf(entity: Pick<Entity, 'name' | 'values'>, property: Prope
     case 'text': return `(${entity.name})`;
     case 'colour': return '#000000';
     case 'boolean': return false;
-    case 'reference': return null;
+    case 'reference':
+    case 'image': return null;
   }
 }
 
@@ -68,3 +69,6 @@ export function setPath(game: Game, id: string): ComponentSet[] {
   };
   return walk(setsOf(game), []);
 }
+
+/** Every property in the game, whoever holds it. */
+export const allProperties = (game: Game): Property[] => [...game.properties, ...allConcepts(game).flatMap((c) => c.properties), ...allSets(game).flatMap((s) => s.properties)];

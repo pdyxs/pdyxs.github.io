@@ -453,7 +453,7 @@
 
   {#if Editor && data !== null}
     <section class="editor-pane" class:ed-pane-readonly={viewing !== ''}>
-      <Editor {data} readOnly={viewing !== ''} onChange={(next: unknown) => (data = next)} />
+      <Editor {data} {editorId} {dir} readOnly={viewing !== ''} onChange={(next: unknown) => (data = next)} />
     </section>
   {/if}
 

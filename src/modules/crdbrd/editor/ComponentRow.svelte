@@ -4,8 +4,8 @@
   import { allConcepts, findConcept } from '../model/query.ts';
   import ValueRows from './ValueRows.svelte';
 
-  let { game, set, component, readOnly, onChange }: {
-    game: Game; set: ComponentSet; component: Component; readOnly: boolean; onChange: (next: Game) => void;
+  let { game, set, component, readOnly, onChange, editorId, dir }: {
+    game: Game; set: ComponentSet; component: Component; readOnly: boolean; onChange: (next: Game) => void; editorId: string; dir: string;
   } = $props();
 
   const available = $derived(allConcepts(game).filter((c) => !component.per.includes(c.id)));
@@ -26,5 +26,5 @@
     {#each available as c (c.id)}<option value={c.id}>{c.name}</option>{/each}
   </select>
   <button type="button" class="remove-component" disabled={readOnly} onclick={() => onChange(removeComponent(game, component.id))}>Remove</button>
-  <ValueRows {game} properties={set.properties} owner={component} {readOnly} onSet={(p, v) => onChange(setComponentValue(game, component.id, p, v))} />
+  <ValueRows {game} properties={set.properties} owner={component} {readOnly} {editorId} {dir} onSet={(p, v) => onChange(setComponentValue(game, component.id, p, v))} />
 </li>

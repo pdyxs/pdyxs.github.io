@@ -8,7 +8,7 @@
   import PropertyList from './PropertyList.svelte';
   import ValueRows from './ValueRows.svelte';
 
-  let { game, readOnly, onChange }: { game: Game; readOnly: boolean; onChange: (next: Game) => void } = $props();
+  let { game, readOnly, onChange, editorId, dir }: { game: Game; readOnly: boolean; onChange: (next: Game) => void; editorId: string; dir: string } = $props();
 </script>
 
 <h2>Game</h2>
@@ -44,5 +44,5 @@
 
 <h3>Values</h3>
 <div class="game-values">
-  <ValueRows {game} properties={game.properties} owner={game} {readOnly} onSet={(p, v) => onChange(setGameValue(game, p, v))} />
+  <ValueRows {game} properties={game.properties} owner={game} {readOnly} {editorId} {dir} onSet={(p, v) => onChange(setGameValue(game, p, v))} />
 </div>

@@ -109,6 +109,13 @@ describe('EditorShell', () => {
     expect(put.body).toEqual({ data: { text: 'bye', count: 7 } });
   });
 
+  it('tells the editor island which editor and card it is showing', async () => {
+    fakeApi();
+    const target = await mountShell();
+    await pick(target, 'what/a');
+    expect(target.querySelector('.editor-pane .where')!.textContent).toBe('demo:what/a');
+  });
+
   it('opening a card puts it in the URL, mirroring its site path', async () => {
     fakeApi();
     const target = await mountShell();

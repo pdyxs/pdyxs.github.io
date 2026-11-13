@@ -11,7 +11,7 @@
   import SetPage from './SetPage.svelte';
   import EntityPage from './EntityPage.svelte';
 
-  let { data, readOnly, onChange }: { data: Game; readOnly: boolean; onChange: (next: Game) => void } = $props();
+  let { data, readOnly, onChange, editorId = 'crdbrd', dir = '' }: { data: Game; readOnly: boolean; onChange: (next: Game) => void; editorId?: string; dir?: string } = $props();
 
   let hash = $state(location.hash);
   const route = $derived(parseRoute(hash));
@@ -50,12 +50,12 @@
     {/if}
   </nav>
   {#if view.page === 'game'}
-    <GamePage game={data} {readOnly} {onChange} />
+    <GamePage game={data} {readOnly} {onChange} {editorId} {dir} />
   {:else if view.page === 'set'}
-    <SetPage game={data} set={view.set} {readOnly} {onChange} />
+    <SetPage game={data} set={view.set} {readOnly} {onChange} {editorId} {dir} />
   {:else if view.page === 'concept'}
     <ConceptPage game={data} concept={view.concept} {readOnly} {onChange} />
   {:else}
-    <EntityPage game={data} concept={view.concept} entity={view.entity} {readOnly} {onChange} />
+    <EntityPage game={data} concept={view.concept} entity={view.entity} {readOnly} {onChange} {editorId} {dir} />
   {/if}
 </div>
