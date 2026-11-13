@@ -1,8 +1,10 @@
 <script lang="ts">
-  import type { ComponentSet, Game } from '../model/types.ts';
-  import { addComponent, addLayer, addSet, removeSet, renameSet, setOutlineRadius, setSetBleed, setSetSize, setSubstitute } from '../model/ops.ts';
+  import type { ComponentSet, Game, Outline } from '../model/types.ts';
+  import { addComponent, addLayer, addSet, removeSet, renameSet, setOutline, setOutlineRadius, setSetBleed, setSetSize, setSubstitute } from '../model/ops.ts';
   import { expand } from '../model/expand.ts';
   import { geometryOf, templateOf } from '../model/query.ts';
+  import { outlineProblem } from '../model/path.ts';
+  import { outline as cutOutline } from '../render/outline.ts';
   import type { LayerType } from '../model/types.ts';
   import { routeHash } from './route.ts';
   import { newId } from './ids.ts';
@@ -19,6 +21,17 @@
   const geometry = $derived(geometryOf(set));
   const layers = $derived(templateOf(set));
   let newLayerType = $state<LayerType>('shape');
+  const outline = $derived(geometry.outline);
+  const pathProblem = $derived(outlineProblem(outline) === 'path');
+  // The starting point for each kind; a custom path starts as the current cut line, which is valid.
+  const startOutline = (kind: Outline['kind']): Outline => {
+    switch (kind) {
+      case 'circle': return { kind };
+      case 'hexagon': return { kind, orientation: 'pointy', measure: 'flat-to-flat' };
+      case 'custom': return { kind, path: cutOutline(set).cutPath };
+      default: return { kind: 'rectangle' };
+    }
+  };
   const num = (e: Event & { currentTarget: HTMLInputElement }) => parseFloat(e.currentTarget.value);
 </script>
 
@@ -34,10 +47,38 @@
 
 <h3>Design</h3>
 <div class="set-geometry">
-  <label>Width (mm) <input class="set-width" type="number" step="any" min="0" value={geometry.size.width} disabled={readOnly} oninput={(e) => onChange(setSetSize(game, set.id, { ...geometry.size, width: num(e) }))} /></label>
-  <label>Height (mm) <input class="set-height" type="number" step="any" min="0" value={geometry.size.height} disabled={readOnly} oninput={(e) => onChange(setSetSize(game, set.id, { ...geometry.size, height: num(e) }))} /></label>
+  <label>Shape
+    <select class="set-outline-kind" value={outline.kind} disabled={readOnly} onchange={(e) => onChange(setOutline(game, set.id, startOutline(e.currentTarget.value as Outline['kind'])))}>
+      <option value="rectangle">rectangle</option><option value="circle">circle</option><option value="hexagon">hexagon</option><option value="custom">custom path</option>
+    </select>
+  </label>
+  {#if outline.kind === 'hexagon'}
+    <label>Orientation
+      <select class="hex-orientation" value={outline.orientation} disabled={readOnly} onchange={(e) => onChange(setOutline(game, set.id, { ...outline, orientation: e.currentTarget.value as 'pointy' | 'flat' }))}>
+        <option value="pointy">pointy top</option><option value="flat">flat top</option>
+      </select>
+    </label>
+    <label>Width means
+      <select class="hex-measure" value={outline.measure} disabled={readOnly} onchange={(e) => onChange(setOutline(game, set.id, { ...outline, measure: e.currentTarget.value as 'flat-to-flat' | 'point-to-point' }))}>
+        <option value="flat-to-flat">flat-to-flat</option><option value="point-to-point">point-to-point</option>
+      </select>
+    </label>
+    <p class="set-measure-note">The width below is the {outline.measure} distance; the hexagon is regular, so the other side follows.</p>
+  {/if}
+  <label>{outline.kind === 'circle' ? 'Diameter' : outline.kind === 'hexagon' ? `Width, ${outline.measure}` : 'Width'} (mm) <input class="set-width" type="number" step="any" min="0" value={geometry.size.width} disabled={readOnly} oninput={(e) => onChange(setSetSize(game, set.id, { ...geometry.size, width: num(e) }))} /></label>
+  {#if outline.kind === 'rectangle' || outline.kind === 'custom'}
+    <label>Height (mm) <input class="set-height" type="number" step="any" min="0" value={geometry.size.height} disabled={readOnly} oninput={(e) => onChange(setSetSize(game, set.id, { ...geometry.size, height: num(e) }))} /></label>
+  {/if}
   <label>Bleed (mm) <input class="set-bleed" type="number" step="any" min="0" value={geometry.bleed} disabled={readOnly} oninput={(e) => onChange(setSetBleed(game, set.id, num(e)))} /></label>
-  <label>Corner radius (mm) <input class="set-radius" type="number" step="any" min="0" value={geometry.outline.radius ?? 0} disabled={readOnly} oninput={(e) => onChange(setOutlineRadius(game, set.id, num(e)))} /></label>
+  {#if outline.kind === 'rectangle'}
+    <label>Corner radius (mm) <input class="set-radius" type="number" step="any" min="0" value={outline.radius ?? 0} disabled={readOnly} oninput={(e) => onChange(setOutlineRadius(game, set.id, num(e)))} /></label>
+  {/if}
+  {#if outline.kind === 'custom'}
+    <label>Path (SVG path data, mm, inside the width and height)
+      <textarea class="set-path" value={outline.path} disabled={readOnly} oninput={(e) => onChange(setOutline(game, set.id, { kind: 'custom', path: e.currentTarget.value }))}></textarea>
+    </label>
+    {#if pathProblem}<p class="outline-error" role="alert">This path is not valid SVG path data; the preview shows a rectangle until it is fixed.</p>{/if}
+  {/if}
 </div>
 <div class="set-design">
   <div class="layers">

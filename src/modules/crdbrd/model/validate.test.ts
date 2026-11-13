@@ -96,6 +96,16 @@ describe('validate: set geometry and templates', () => {
     expect(validate(patchSet(withLayer(), { size: { width: 50, height: 70 }, bleed: 3 }))).toEqual([]);
   });
 
+  it('accepts every outline shape and reports an invalid custom path or outline as a set error', () => {
+    const g = withLayer();
+    expect(validate(patchSet(g, { outline: { kind: 'circle' } }))).toEqual([]);
+    expect(validate(patchSet(g, { outline: { kind: 'hexagon', orientation: 'pointy', measure: 'flat-to-flat' } }))).toEqual([]);
+    expect(validate(patchSet(g, { outline: { kind: 'custom', path: 'M0 0L10 0L5 8Z' } }))).toEqual([]);
+    expect(validate(patchSet(g, { outline: { kind: 'custom', path: 'M0 0 nonsense' } }))).toEqual(['set "s" has an invalid outline path']);
+    expect(validate(patchSet(g, { outline: { kind: 'blob' } }))).toEqual(['set "s" has an invalid outline']);
+    expect(validate(patchSet(g, { outline: { kind: 'rectangle', radius: -2 } }))).toEqual(['set "s" has an invalid outline']);
+  });
+
   it('rejects a bad size, bleed, unknown layer type, bad box and duplicate layer id', () => {
     const g = withLayer();
     expect(validate(patchSet(g, { size: { width: 0, height: 5 } }))).toEqual(['set "s" has an invalid size']);

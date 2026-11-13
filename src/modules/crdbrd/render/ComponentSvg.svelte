@@ -12,7 +12,7 @@
 <svg class="component-svg" viewBox="{scene.page.x} {scene.page.y} {scene.page.width} {scene.page.height}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <mask id={maskId} maskUnits="userSpaceOnUse" x={scene.page.x} y={scene.page.y} width={scene.page.width} height={scene.page.height}>
-      <path d={scene.cutPath} fill="#fff" stroke="#fff" stroke-width={scene.bleed * 2} stroke-linejoin="round" />
+      <path d={scene.bleedMask.path} fill="#fff" stroke="#fff" stroke-width={scene.bleedMask.strokeWidth} stroke-linejoin={scene.bleedMask.lineJoin} />
     </mask>
   </defs>
   <rect class="bleed-area" x={scene.page.x} y={scene.page.y} width={scene.page.width} height={scene.page.height} fill="#fdd" />

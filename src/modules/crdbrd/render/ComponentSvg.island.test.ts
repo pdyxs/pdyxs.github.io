@@ -10,7 +10,7 @@ afterEach(() => {
 });
 
 const scene = (items: Scene['items'] = []): Scene => ({
-  size: { width: 60, height: 80 }, bleed: 3, page: { x: -3, y: -3, width: 66, height: 86 }, cutPath: 'M0 0H60V80H0Z', items,
+  size: { width: 60, height: 80 }, bleed: 3, page: { x: -3, y: -3, width: 66, height: 86 }, cutPath: 'M0 0H60V80H0Z', bleedMask: { path: 'M0 0H60V80H0Z', strokeWidth: 6, lineJoin: 'round' }, items,
 });
 
 function render(s: Scene, imageUrl = (f: string) => `/img/${f}`) {

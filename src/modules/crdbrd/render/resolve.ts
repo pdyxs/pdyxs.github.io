@@ -15,6 +15,8 @@ export interface Scene {
   /** The whole printed area: cut line plus bleed on every side. */
   page: { x: number; y: number; width: number; height: number };
   cutPath: string;
+  /** What the view clips the template to: the cut path filled, plus a stroke of 2 x bleed, which offsets any shape outward exactly. */
+  bleedMask: { path: string; strokeWidth: number; lineJoin: 'round' };
   items: Item[];
 }
 
@@ -75,5 +77,5 @@ function resolveLayer(layer: Layer, size: { width: number; height: number }, ble
 
 export function resolve(template: Template, _instance: Instance, _game: Game): Scene {
   const { cutPath, size, bleed } = outline(template);
-  return { size, bleed, page: { x: -bleed, y: -bleed, width: size.width + 2 * bleed, height: size.height + 2 * bleed }, cutPath, items: (template.template ?? []).map((l) => resolveLayer(l, size, bleed)) };
+  return { size, bleed, page: { x: -bleed, y: -bleed, width: size.width + 2 * bleed, height: size.height + 2 * bleed }, cutPath, bleedMask: { path: cutPath, strokeWidth: bleed * 2, lineJoin: 'round' }, items: (template.template ?? []).map((l) => resolveLayer(l, size, bleed)) };
 }

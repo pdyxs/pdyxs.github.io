@@ -1,4 +1,5 @@
 import { keyEntities } from './image.ts';
+import { outlineProblem } from './path.ts';
 import type { ComponentSet, Concept, Game, Property, Value } from './types.ts';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -70,6 +71,10 @@ export function validate(game: unknown): string[] {
     const size = s.size as unknown;
     if (size !== undefined && !(isObject(size) && isPositive(size.width) && isPositive(size.height))) errors.push(`set "${s.id}" has an invalid size`);
     if (s.bleed !== undefined && !(typeof s.bleed === 'number' && Number.isFinite(s.bleed) && s.bleed >= 0)) errors.push(`set "${s.id}" has an invalid bleed`);
+    if (s.outline !== undefined) {
+      const problem = outlineProblem(s.outline);
+      if (problem) errors.push(`set "${s.id}" has an invalid outline${problem === 'path' ? ' path' : ''}`);
+    }
     const template = s.template as unknown;
     if (template === undefined) continue;
     if (!Array.isArray(template)) {

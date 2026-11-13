@@ -1,8 +1,9 @@
 // Pure edit ops: each takes the whole game and returns a new whole game.
 // Ids come from the caller, so ops stay deterministic.
 
-import type { Box, ImageSlots, Layer, LayerType, Prop, Component, ComponentSet, Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
+import type { Box, ImageSlots, Layer, Outline, LayerType, Prop, Component, ComponentSet, Concept, Entity, Game, Property, PropertyType, Value } from './types.ts';
 import { bindingKey, keyEntities } from './image.ts';
+import { outlineProblem } from './path.ts';
 import { allConcepts, allProperties, allSets, geometryOf, setsOf, templateOf } from './query.ts';
 
 /** Rebuild the concept tree, replacing each concept by `fn(concept)`; `fn` returns null to drop it. */
@@ -282,6 +283,12 @@ export function setSetSize(game: Game, id: string, size: { width: number; height
 export function setSetBleed(game: Game, id: string, bleed: number): Game {
   if (!nonNegative(bleed)) return game;
   return mapAllSets(game, (s) => (s.id === id ? { ...s, bleed } : s));
+}
+
+/** Any outline shape. A malformed custom path is kept (the user is mid-edit) and reported by `validate`; a malformed shape is refused. */
+export function setOutline(game: Game, id: string, outline: Outline): Game {
+  if (outlineProblem(outline) === 'outline') return game;
+  return mapAllSets(game, (s) => (s.id === id ? { ...s, outline } : s));
 }
 
 export function setOutlineRadius(game: Game, id: string, radius: number): Game {

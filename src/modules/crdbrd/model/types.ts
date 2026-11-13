@@ -99,11 +99,17 @@ export interface ShapeLayer extends LayerBase {
 export type Layer = ImageLayer | TextLayer | ShapeLayer;
 export type LayerType = Layer['type'];
 
-/** Only a rectangle for now; `radius` rounds its corners (mm). */
-export interface Outline {
-  kind: 'rectangle';
-  radius?: number;
-}
+/**
+ * The cut shape of a set. `size` on the set is the shape's bounding box, except
+ * where noted: a circle's diameter is the width; a hexagon's width is its
+ * `measure` (the other side follows from the regular shape); a custom path is
+ * drawn in mm inside the set's size.
+ */
+export type Outline =
+  | { kind: 'rectangle'; radius?: number }
+  | { kind: 'circle' }
+  | { kind: 'hexagon'; orientation: 'pointy' | 'flat'; measure: 'flat-to-flat' | 'point-to-point' }
+  | { kind: 'custom'; path: string };
 
 /** A group of components sharing a design (a deck, player mats, a board). */
 export interface ComponentSet {

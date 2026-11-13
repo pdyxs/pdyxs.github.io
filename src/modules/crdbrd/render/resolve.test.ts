@@ -19,6 +19,14 @@ describe('resolve: an empty card', () => {
   });
 });
 
+describe('resolve: bleed mask', () => {
+  it('is the cut path filled and stroked at twice the bleed with round joins, whatever the shape', () => {
+    const scene = resolve(set({ outline: { kind: 'circle' } }), instance, game);
+    expect(scene.bleedMask).toEqual({ path: scene.cutPath, strokeWidth: 6, lineJoin: 'round' });
+    expect(scene.page).toEqual({ x: -3, y: -3, width: 66, height: 66 });
+  });
+});
+
 const shape = (over: Partial<Extract<Layer, { type: 'shape' }>> = {}): Layer => ({
   id: 'l1', type: 'shape', shape: 'rect', x: 10, y: 10, width: 20, height: 30,
   fill: { kind: 'literal', value: '#ff0000' }, stroke: { kind: 'literal', value: null }, strokeWidth: { kind: 'literal', value: 0.5 },

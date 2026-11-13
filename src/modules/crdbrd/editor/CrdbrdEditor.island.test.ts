@@ -492,6 +492,33 @@ describe('CrdbrdEditor: set design', () => {
     expect(q(target, '.set-preview .cut-line')).not.toBeNull();
   });
 
+  it('switches the outline to a circle, hexagon or custom path and previews each', () => {
+    const { target, changes } = setup(withSet());
+    openSet(target);
+    type(q<HTMLInputElement>(target, 'input.set-width'), '40');
+    type(q<HTMLInputElement>(target, 'input.set-bleed'), '2');
+    selectValue(q<HTMLSelectElement>(target, 'select.set-outline-kind'), 'circle');
+    expect(changes.at(-1)!.sets![0].outline).toEqual({ kind: 'circle' });
+    expect(q(target, '.set-preview svg').getAttribute('viewBox')).toBe('-2 -2 44 44');
+    expect(target.querySelector('input.set-height')).toBeNull();
+
+    selectValue(q<HTMLSelectElement>(target, 'select.set-outline-kind'), 'hexagon');
+    expect(changes.at(-1)!.sets![0].outline).toEqual({ kind: 'hexagon', orientation: 'pointy', measure: 'flat-to-flat' });
+    expect(q(target, '.set-measure-note').textContent).toContain('flat-to-flat');
+    selectValue(q<HTMLSelectElement>(target, 'select.hex-measure'), 'point-to-point');
+    selectValue(q<HTMLSelectElement>(target, 'select.hex-orientation'), 'flat');
+    expect(changes.at(-1)!.sets![0].outline).toEqual({ kind: 'hexagon', orientation: 'flat', measure: 'point-to-point' });
+    expect(q(target, '.set-preview svg').getAttribute('viewBox')).toBe('-2 -2 44 38.641');
+
+    selectValue(q<HTMLSelectElement>(target, 'select.set-outline-kind'), 'custom');
+    expect(changes.at(-1)!.sets![0].outline).toMatchObject({ kind: 'custom' });
+    expect(target.querySelector('.outline-error')).toBeNull();
+    type(q<HTMLInputElement>(target, 'textarea.set-path'), 'M0 0 nonsense');
+    expect(changes.at(-1)!.sets![0].outline).toEqual({ kind: 'custom', path: 'M0 0 nonsense' });
+    expect(q(target, '.outline-error').textContent).toContain('path');
+    expect(q(target, '.set-preview svg .cut-line')).not.toBeNull();
+  });
+
   it('adds layers of each type, edits them, reorders and removes them, and draws them in the preview', () => {
     const { target, changes } = setup(withSet());
     openSet(target);

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { blank } from './game.ts';
 import { addSet } from './ops.ts';
-import { setSetSize, setSetBleed, setOutlineRadius, addLayer, removeLayer, moveLayer, setLayerBox, setLayerProp, setShapeKind } from './ops.ts';
+import { setSetSize, setSetBleed, setOutlineRadius, setOutline, addLayer, removeLayer, moveLayer, setLayerBox, setLayerProp, setShapeKind } from './ops.ts';
 import { findSet, geometryOf, templateOf } from './query.ts';
 
 const base = () => addSet(blank(), { id: 's', name: 'Deck' });
@@ -78,5 +78,22 @@ describe('layer reordering and editing', () => {
     const g0 = three();
     expect(setLayerProp(g0, 'a', 'text', 'x')).toBe(g0);
     expect(templateOf(findSet(setShapeKind(g0, 'a', 'ellipse'), 's')!)[0]).toMatchObject({ shape: 'ellipse' });
+  });
+});
+
+describe('setOutline', () => {
+  it('sets any outline shape and keeps it in the geometry', () => {
+    let g = setOutline(base(), 's', { kind: 'hexagon', orientation: 'flat', measure: 'point-to-point' });
+    expect(geometryOf(findSet(g, 's')!).outline).toEqual({ kind: 'hexagon', orientation: 'flat', measure: 'point-to-point' });
+    g = setOutline(g, 's', { kind: 'circle' });
+    expect(geometryOf(findSet(g, 's')!).outline).toEqual({ kind: 'circle' });
+    g = setOutline(g, 's', { kind: 'custom', path: 'bad' });
+    expect(geometryOf(findSet(g, 's')!).outline).toEqual({ kind: 'custom', path: 'bad' });
+  });
+
+  it('refuses a negative radius or an unknown hexagon option', () => {
+    const g = base();
+    expect(setOutline(g, 's', { kind: 'rectangle', radius: -1 })).toBe(g);
+    expect(setOutline(g, 's', { kind: 'hexagon', orientation: 'sideways' as never, measure: 'flat-to-flat' })).toBe(g);
   });
 });
