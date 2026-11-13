@@ -18,7 +18,7 @@ function fakeApi({ conflicts, bumpFails }: FakeOptions = {}) {
     const body = init?.body ? JSON.parse(init.body as string) : undefined;
     calls.push({ method, url, body });
     const ok = (b: unknown) => ({ ok: true, status: 200, json: async () => b }) as Response;
-    if (url.endsWith('/editors')) return ok([{ id: 'demo', name: 'Demo', component: '/src/lib/dev-editors/demo/DemoEditor.svelte' }]);
+    if (url.endsWith('/editors')) return ok([{ id: 'demo', name: 'Demo', component: '/src/lib/dev-editors/testing/TestEditor.svelte' }]);
     if (url.includes('/demo/cards?all=1')) return ok([{ dir: 'what/a', valid: true }, { dir: 'what/b', valid: false }]);
     if (url.includes('/demo/cards')) return ok([{ dir: 'what/a', valid: true }]);
     if (url.endsWith('/folders')) return ok(['what', 'what/projects']);

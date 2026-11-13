@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { DemoData } from './definition.ts';
-
-  let { data, readOnly, onChange }: { data: DemoData; readOnly: boolean; onChange: (next: DemoData) => void } = $props();
+  // Test fixture: the minimal editor island EditorShell.island.test.ts mounts through the shell.
+  type Data = { text: string; count: number };
+  let { data, readOnly, onChange }: { data: Data; readOnly: boolean; onChange: (next: Data) => void } = $props();
 </script>
 
 <label>
