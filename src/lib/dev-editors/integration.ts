@@ -11,7 +11,7 @@ import path from 'node:path';
 import { createDevEditorsApi } from './api.ts';
 import { createContentGit } from './git.ts';
 import { DATA_CHANGED_EVENT, EDITORS_ROUTE, parseEditorPath } from './routes.ts';
-import type { ContentFs, EditorDefinition } from './types.ts';
+import type { ApiResponse, ContentFs, EditorDefinition } from './types.ts';
 
 export { DATA_CHANGED_EVENT, EDITORS_ROUTE };
 /** Api prefix; the editor shell talks to `/__dev-editors/<id>/*`. */
@@ -34,6 +34,19 @@ function nodeFs(contentRoot: string): ContentFs {
       mkdirSync(path.dirname(file), { recursive: true });
       const tmp = `${file}.tmp`;
       writeFileSync(tmp, text);
+      renameSync(tmp, file);
+    },
+    readBytes(file) {
+      try {
+        return readFileSync(file);
+      } catch {
+        return null;
+      }
+    },
+    writeBytes(file, bytes) {
+      mkdirSync(path.dirname(file), { recursive: true });
+      const tmp = `${file}.tmp`;
+      writeFileSync(tmp, bytes);
       renameSync(tmp, file);
     },
     list: () => walk(contentRoot),
@@ -97,7 +110,7 @@ function apiPlugin(editors: readonly EditorDefinition<any>[]) {
       const api = createDevEditorsApi({ editors, fs: nodeFs(contentRoot), git: createContentGit({ cwd: server.config.root }), contentRoot });
       server.middlewares.use(EDITORS_API, async (req: any, res: any) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
-        let out: { status: number; body: unknown };
+        let out: ApiResponse;
         try {
           out = api.handle({
             method: req.method ?? 'GET',
@@ -109,6 +122,15 @@ function apiPlugin(editors: readonly EditorDefinition<any>[]) {
           out = { status: 400, body: { error: err instanceof Error ? err.message : 'bad request' } };
         }
         res.statusCode = out.status;
+        if (out.raw) {
+          res.setHeader('content-type', out.raw.contentType);
+          // An svg served same-origin can carry script; sandbox it so it only ever renders as an image.
+          res.setHeader('content-security-policy', "sandbox; default-src 'none'; style-src 'unsafe-inline'");
+          res.setHeader('x-content-type-options', 'nosniff');
+          res.setHeader('cache-control', 'no-cache');
+          res.end(Buffer.from(out.raw.bytes));
+          return;
+        }
         res.setHeader('content-type', 'application/json');
         res.end(JSON.stringify(out.body));
       });

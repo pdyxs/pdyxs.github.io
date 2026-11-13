@@ -14,3 +14,6 @@ mount(OpenInEditorButton, { target: devDock() });
 import.meta.hot?.on(DATA_CHANGED_EVENT, () => {
   if (!isEditorPage(location.pathname)) location.reload();
 });
+
+// For editors: list, upload and show a card's images (never build api paths yourself).
+export { assetUrl, listAssets, uploadAsset } from './asset-client.ts';

@@ -25,6 +25,8 @@ export interface Envelope<Data = unknown> {
 export interface ApiResponse {
   status: number;
   body: unknown;
+  /** Set instead of a JSON `body` when the response is a file's bytes. */
+  raw?: { bytes: Uint8Array; contentType: string };
 }
 
 /** The content filesystem the api works over. Paths are absolute. */
@@ -33,6 +35,10 @@ export interface ContentFs {
   read(file: string): string | null;
   /** Atomic: write `<file>.tmp`, then rename. */
   write(file: string, text: string): void;
+  /** File bytes, or null if absent. */
+  readBytes(file: string): Uint8Array | null;
+  /** Atomic: write `<file>.tmp`, then rename. */
+  writeBytes(file: string, bytes: Uint8Array): void;
   /** Every file under the content root, as posix paths relative to it. */
   list(): string[];
 }

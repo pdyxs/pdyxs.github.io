@@ -17,6 +17,8 @@ function fakeFs(files: Record<string, string>) {
   const fs: ContentFs = {
     read: (f) => files[f] ?? null,
     write: (f, t) => { files[f] = t; writes.push(f); },
+    readBytes: (f) => (f in files ? Buffer.from(files[f], 'latin1') : null),
+    writeBytes: (f, b) => { files[f] = Buffer.from(b).toString('latin1'); writes.push(f); },
     list: () => Object.keys(files).filter((f) => f.startsWith(ROOT + '/')).map((f) => f.slice(ROOT.length + 1)),
   };
   return { fs, files, writes };
@@ -361,5 +363,81 @@ describe('version history', () => {
     const { api } = historySetup();
     expect((api.handle({ method: 'GET', path: '/demo/history', query: { path: 'what/a' } }).body as unknown[]).length).toBe(3);
     expect(api.handle({ method: 'GET', path: '/demo/at', query: { path: 'what/a', commit: 'c3' } }).status).toBe(200);
+  });
+});
+
+describe('card assets', () => {
+  const b64 = (s: string) => Buffer.from(s, 'latin1').toString('base64');
+  const card = { [`${ROOT}/what/a/index.md`]: MD, [`${ROOT}/what/a/index.json`]: env(1) };
+
+  it('lists the images directly in a card folder, sorted, and nothing else', () => {
+    const { api } = setup({
+      ...card,
+      [`${ROOT}/what/a/b.png`]: 'x', [`${ROOT}/what/a/a.JPG`]: 'x', [`${ROOT}/what/a/notes.txt`]: 'x', [`${ROOT}/what/a/_h.png`]: 'x',
+      [`${ROOT}/what/a/sub/deep.png`]: 'x', [`${ROOT}/what/other/z.png`]: 'x',
+    });
+    expect(api.assets('demo', 'what/a')).toEqual({ status: 200, body: ['a.JPG', 'b.png'] });
+    expect(api.handle({ method: 'GET', path: '/demo/assets', query: { path: 'what/a' } }).body).toEqual(['a.JPG', 'b.png']);
+  });
+
+  it('refuses listing for an unknown editor, a non-card folder or a bad path', () => {
+    const { api } = setup({ ...card, [`${ROOT}/what/a/sub/deep.png`]: 'x' });
+    expect(api.assets('nope', 'what/a').status).toBe(404);
+    expect(api.assets('demo', 'what/zzz').status).toBe(404);
+    expect(api.assets('demo', 'what/a/sub').status).toBe(404);
+    expect(api.assets('demo', '../a').status).toBe(400);
+    expect(api.assets('demo', 'what').status).toBe(400);
+  });
+
+  it('uploads base64 bytes into the card folder', () => {
+    const { api, files } = setup(card);
+    const res = api.uploadAsset('demo', 'what/a', { filename: 'pic.png', data: b64('\x89PNG\x00\xff') });
+    expect(res).toEqual({ status: 200, body: { ok: true, filename: 'pic.png' } });
+    expect(files[`${ROOT}/what/a/pic.png`]).toBe('\x89PNG\x00\xff');
+    expect(api.handle({ method: 'POST', path: '/demo/asset', query: { path: 'what/a' }, body: { filename: 'p2.png', data: b64('1') } }).status).toBe(200);
+  });
+
+  it('refuses bad uploads and writes nothing', () => {
+    const { api, writes } = setup({ ...card, [`${ROOT}/what/a/sub/deep.png`]: 'x' });
+    const bad = (dir: string, body: unknown) => api.uploadAsset('demo', dir, body).status;
+    expect(bad('what/a', { filename: 'x.txt', data: b64('1') })).toBe(400);
+    expect(bad('what/a', { filename: 'index.json', data: b64('1') })).toBe(400);
+    expect(bad('what/a', { filename: 'index.md', data: b64('1') })).toBe(400);
+    expect(bad('what/a', { filename: 'sub/x.png', data: b64('1') })).toBe(400);
+    expect(bad('what/a', { filename: '../x.png', data: b64('1') })).toBe(400);
+    expect(bad('what/a', { filename: '_x.png', data: b64('1') })).toBe(400);
+    expect(bad('what/a', { filename: 'x.png' })).toBe(400);
+    expect(bad('what/a', { filename: 'x.png', data: 5 })).toBe(400);
+    expect(bad('what/a', { filename: 'x.png', data: '!!not base64!!' })).toBe(400);
+    expect(bad('what/a', undefined)).toBe(400);
+    expect(bad('what/a/sub', { filename: 'x.png', data: b64('1') })).toBe(404);
+    expect(bad('what/none', { filename: 'x.png', data: b64('1') })).toBe(404);
+    expect(bad('../x', { filename: 'x.png', data: b64('1') })).toBe(400);
+    expect(api.uploadAsset('nope', 'what/a', { filename: 'x.png', data: b64('1') }).status).toBe(404);
+    expect(writes).toEqual([]);
+  });
+
+  it('refuses to overwrite unless the request says overwrite: true', () => {
+    const { api, files } = setup({ ...card, [`${ROOT}/what/a/pic.png`]: 'old' });
+    const body = { filename: 'pic.png', data: b64('new') };
+    expect(api.uploadAsset('demo', 'what/a', body).status).toBe(409);
+    expect(api.uploadAsset('demo', 'what/a', { ...body, overwrite: 'yes' }).status).toBe(409);
+    expect(files[`${ROOT}/what/a/pic.png`]).toBe('old');
+    expect(api.uploadAsset('demo', 'what/a', { ...body, overwrite: true }).status).toBe(200);
+    expect(files[`${ROOT}/what/a/pic.png`]).toBe('new');
+  });
+
+  it('serves an image with its content type, 404 otherwise', () => {
+    const { api } = setup({ ...card, [`${ROOT}/what/a/pic.svg`]: '<svg/>', [`${ROOT}/what/a/n.txt`]: 'x' });
+    const res = api.asset('demo', 'what/a', 'pic.svg');
+    expect(res.status).toBe(200);
+    expect(res.raw?.contentType).toBe('image/svg+xml');
+    expect(Buffer.from(res.raw!.bytes).toString()).toBe('<svg/>');
+    expect(api.handle({ method: 'GET', path: '/demo/asset', query: { path: 'what/a', name: 'pic.svg' } }).raw?.contentType).toBe('image/svg+xml');
+    expect(api.asset('demo', 'what/a', 'missing.png').status).toBe(404);
+    expect(api.asset('demo', 'what/a', 'n.txt').status).toBe(400);
+    expect(api.asset('demo', 'what/a', '../index.json').status).toBe(400);
+    expect(api.asset('demo', 'what/a', 'index.json').status).toBe(400);
+    expect(api.asset('nope', 'what/a', 'pic.svg').status).toBe(404);
   });
 });

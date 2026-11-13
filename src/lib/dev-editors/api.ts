@@ -5,7 +5,7 @@
 import path from 'node:path';
 import { FIVE_W_DIMENSIONS } from '../content/tags/five-w.ts';
 import { isInspected, setInspectedFalse } from '../site/inspected-gate.ts';
-import { resolveCardFile } from './paths.ts';
+import { assetContentType, resolveCardAsset, resolveCardFile } from './paths.ts';
 import { parseEnvelope, validateEnvelope, newEnvelope, STARTING_VERSION } from './envelope.ts';
 import { applyFrontmatterPlan, frontmatterPlan } from './frontmatter-plan.ts';
 import { newCardFiles, selectorEntries, slugify } from './selector.ts';
@@ -82,6 +82,16 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
     const target = jsonTarget(`${dir}/index.json`);
     if (!target.ok) return { ok: false as const, response: json(400, { error: target.error }) };
     return { ok: true as const, git, file: target.file, commits: git.log(target.file) };
+  };
+
+  /** A guarded image path in a card's own folder (the folder must hold an index.md, so assets are flat beside it). */
+  const assetTarget = (editorId: string, dir: string, filename: unknown) => {
+    if (!find(editorId)) return { ok: false as const, response: json(404, { error: `no editor "${editorId}"` }) };
+    if (typeof filename !== 'string' || filename.includes('/')) return { ok: false as const, response: json(400, { error: 'filename must be a plain file name' }) };
+    const target = resolveCardAsset(contentRoot, `${dir}/${filename}`);
+    if (!target.ok) return { ok: false as const, response: json(400, { error: target.error }) };
+    if (fs.read(path.join(path.dirname(target.file), 'index.md')) === null) return { ok: false as const, response: json(404, { error: 'no card (index.md) here' }) };
+    return target;
   };
 
   const api = {
@@ -237,6 +247,41 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
       return json(200, { ok: true, version, inspected: isInspected(nextMd) });
     },
 
+    /** The image filenames directly in a card's folder, sorted. */
+    assets(editorId: string, dir: string): ApiResponse {
+      if (!find(editorId)) return json(404, { error: `no editor "${editorId}"` });
+      const md = resolveCardFile(contentRoot, `${dir}/index.md`);
+      if (!md.ok) return json(400, { error: md.error });
+      if (fs.read(md.file) === null) return json(404, { error: 'no card (index.md) here' });
+      const names = fs
+        .list()
+        .filter((f) => f.startsWith(`${dir}/`) && !f.slice(dir.length + 1).includes('/'))
+        .map((f) => f.slice(dir.length + 1))
+        .filter((name) => resolveCardAsset(contentRoot, `${dir}/${name}`).ok)
+        .sort();
+      return json(200, names);
+    },
+
+    /** Store `body.data` (base64) as `body.filename` in the card folder. Refuses to replace a file unless `body.overwrite === true`. Atomic; does not commit. */
+    uploadAsset(editorId: string, dir: string, body: unknown): ApiResponse {
+      const { filename, data, overwrite } = (typeof body === 'object' && body !== null ? body : {}) as { filename?: unknown; data?: unknown; overwrite?: unknown };
+      if (typeof data !== 'string' || !/^[A-Za-z0-9+/]*={0,2}$/.test(data) || data.length % 4 !== 0) return json(400, { error: 'body must be { filename, data (base64), overwrite? }' });
+      const target = assetTarget(editorId, dir, filename);
+      if (!target.ok) return target.response;
+      if (overwrite !== true && fs.readBytes(target.file) !== null) return json(409, { error: `${filename} already exists; send overwrite: true to replace it` });
+      fs.writeBytes(target.file, Buffer.from(data, 'base64'));
+      return json(200, { ok: true, filename });
+    },
+
+    /** An image's bytes and content type. */
+    asset(editorId: string, dir: string, filename: string): ApiResponse {
+      const target = assetTarget(editorId, dir, filename);
+      if (!target.ok) return target.response;
+      const bytes = fs.readBytes(target.file);
+      if (bytes === null) return json(404, { error: 'no such asset' });
+      return { status: 200, body: null, raw: { bytes, contentType: assetContentType(filename)! } };
+    },
+
     /** Every version the card's index.json has been committed with, newest first. */
     history(editorId: string, dir: string): ApiResponse {
       const found = committed(editorId, dir);
@@ -274,6 +319,9 @@ export function createDevEditorsApi({ editors, fs, git, contentRoot, today = () 
       if (method === 'POST' && action === 'create') return api.create(id, body);
       if (method === 'GET' && action === 'read') return api.read(id, query.path ?? '');
       if (method === 'POST' && action === 'bump') return api.bump(id, query.path ?? '', query.kind as BumpKind);
+      if (method === 'GET' && action === 'assets') return api.assets(id, query.path ?? '');
+      if (method === 'POST' && action === 'asset') return api.uploadAsset(id, query.path ?? '', body);
+      if (method === 'GET' && action === 'asset') return api.asset(id, query.path ?? '', query.name ?? '');
       if (method === 'GET' && action === 'history') return api.history(id, query.path ?? '');
       if (method === 'GET' && action === 'at') return api.at(id, query.path ?? '', query.commit ?? '');
       if (method === 'PUT' && action === 'write') return api.write(id, query.path ?? '', body);

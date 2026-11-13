@@ -95,6 +95,16 @@ The dev editors (`src/lib/dev-editors/`, `astro dev` only) do this in their api:
 every save of a card's `index.json` sets `inspected: false` in the same request,
 via `setInspectedFalse`.
 
+**Card assets** (images for an editor's properties): images sit flat in the card
+folder beside `index.md` (`.png .jpg .jpeg .webp .gif .svg`). The api lists,
+uploads (base64 JSON, atomic, 409 unless `overwrite: true`) and serves them under
+`/__dev-editors/<id>/assets|asset`, guarded by `resolveCardAsset` in `paths.ts`
+(and the folder must hold an `index.md`). Under `astro dev` nothing else serves
+`src/content` images, so editors call `assetUrl`, `listAssets` and `uploadAsset`
+from `dev-client.ts`, and store only the filename in `index.json`, never a URL.
+An upload does not commit and does not touch `inspected` (the editor's next save
+does); a version bump commits the whole card folder, assets included.
+
 Exceptions, all stated, none implied:
 
 - `content: auto-sync` commits that carry Paul's own edits from Obsidian mobile
