@@ -425,7 +425,7 @@
   {/if}
 
   {#if Editor && data !== null}
-    <section class="ed-panel editor-pane" class:ed-pane-readonly={viewing !== ''}>
+    <section class="editor-pane" class:ed-pane-readonly={viewing !== ''}>
       <Editor {data} readOnly={viewing !== ''} onChange={(next: unknown) => (data = next)} />
     </section>
   {/if}
@@ -440,7 +440,8 @@
 
 <style>
   .ed {
-    max-width: 52rem;
+    /* Wide: an editor may lay out a form beside a live preview. */
+    max-width: 80rem;
     margin: 0 auto;
     padding: var(--space-xl) var(--space-md) 0;
     display: grid;
@@ -559,7 +560,9 @@
     font-weight: 600;
   }
   .ed-readonly span { background: var(--color-bg); padding: 0 var(--space-xs); }
-  .ed-pane-readonly { border-style: dashed; }
+  /* The editor draws its own structure; the shell only marks a read-only view. */
+  .editor-pane { display: grid; gap: var(--space-md); }
+  .ed-pane-readonly { outline: var(--border-width) dashed var(--color-border); outline-offset: var(--space-sm); }
 
   .ed-foot {
     position: sticky;
@@ -604,7 +607,7 @@
   .ed .ed-primary { background: var(--color-selected-bg); color: var(--color-selected-fg); }
   .ed .ed-primary:hover:not(:disabled) { background: var(--color-selected-bg-hover); }
 
-  /* An editor's own label/field pairs stack, label above. */
-  .editor-pane :global(label) { display: grid; gap: 0.25rem; font-weight: 600; font-size: 0.875rem; }
-  .editor-pane { gap: var(--space-md); }
+  /* An editor's label/field pairs stack, label above. `:where` keeps this at
+     zero specificity, so any rule an editor writes for its own labels wins. */
+  :where(.editor-pane) :global(:where(label)) { display: grid; gap: 0.25rem; font-weight: 600; font-size: 0.875rem; }
 </style>
