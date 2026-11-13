@@ -80,3 +80,25 @@ describe('ComponentSvg: text', () => {
     expect(render(scene([text('right')])).querySelector('tspan')!.getAttribute('x')).toBe('50');
   });
 });
+
+describe('ComponentSvg: images and gaps', () => {
+  it('draws an image with its href from the url helper and fit as preserveAspectRatio', () => {
+    const t = render(scene([
+      { kind: 'image', id: 'i', x: 1, y: 2, width: 30, height: 40, file: 'a b.png', fit: 'cover' },
+      { kind: 'image', id: 'j', x: 1, y: 2, width: 30, height: 40, file: 'c.png', fit: 'contain' },
+      { kind: 'image', id: 'k', x: 1, y: 2, width: 30, height: 40, file: 'd.png', fit: 'stretch' },
+    ]), (f) => `/asset?name=${encodeURIComponent(f)}`);
+    const images = [...t.querySelectorAll('g.items image')];
+    expect(images.map((i) => i.getAttribute('href'))).toEqual(['/asset?name=a%20b.png', '/asset?name=c.png', '/asset?name=d.png']);
+    expect(images.map((i) => i.getAttribute('preserveAspectRatio'))).toEqual(['xMidYMid slice', 'xMidYMid meet', 'none']);
+    expect([images[0].getAttribute('x'), images[0].getAttribute('width')]).toEqual(['1', '30']);
+  });
+
+  it('draws a gap as a visible placeholder with its reason, not an image', () => {
+    const t = render(scene([{ kind: 'gap', id: 'g', x: 1, y: 2, width: 30, height: 40, reason: 'no image set' }]));
+    expect(t.querySelector('g.items image')).toBeNull();
+    const gap = t.querySelector('g.items .gap')!;
+    expect(gap.querySelector('rect')!.getAttribute('width')).toBe('30');
+    expect(gap.querySelector('title')!.textContent).toBe('no image set');
+  });
+});
