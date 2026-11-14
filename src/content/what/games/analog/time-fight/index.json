@@ -158,6 +158,13 @@
             "type": {
               "kind": "image"
             }
+          },
+          {
+            "id": "67cb8a0ce4de",
+            "name": "Colour",
+            "type": {
+              "kind": "colour"
+            }
           }
         ],
         "entities": [
@@ -165,36 +172,74 @@
             "id": "c53c4458b3cd",
             "name": "Strength",
             "values": {
-              "5699ebbb194e": "strength.svg"
+              "5699ebbb194e": "strength.svg",
+              "67cb8a0ce4de": "#ff0000"
             }
           },
           {
             "id": "dc16fcfbb893",
             "name": "Speed",
-            "values": {}
+            "values": {
+              "5699ebbb194e": "speed.svg",
+              "67cb8a0ce4de": "#aaff00"
+            }
           },
           {
             "id": "e600ef054fb7",
-            "name": "New entity",
-            "values": {}
+            "name": "Toughness",
+            "values": {
+              "5699ebbb194e": "toughness.svg",
+              "67cb8a0ce4de": "#00b4f0"
+            }
           }
         ],
+        "children": []
+      },
+      {
+        "id": "b5063d336894",
+        "name": "Combat Action",
+        "count": 1,
+        "properties": [
+          {
+            "id": "5066bd1a72f8",
+            "name": "Attribute",
+            "type": {
+              "kind": "reference",
+              "concept": "0edcede8c287"
+            }
+          },
+          {
+            "id": "ce73adac03da",
+            "name": "Movement",
+            "type": {
+              "kind": "reference",
+              "concept": "IQA21GKLXbSgvsWaHkZK"
+            }
+          }
+        ],
+        "entities": [],
         "children": []
       }
     ],
     "sets": [
       {
         "id": "FVDL5BA3T76TyjBRl7Jg",
-        "name": "test set",
+        "name": "Combat Cards",
         "substitute": "",
         "properties": [
           {
             "id": "N4uqLL90URXIyS9TuLTH",
-            "name": "Test",
+            "name": "Name",
             "type": {
-              "kind": "number",
-              "min": 0,
-              "max": 10
+              "kind": "text"
+            }
+          },
+          {
+            "id": "c8fd7aab85b8",
+            "name": "Attribute",
+            "type": {
+              "kind": "reference",
+              "concept": "0edcede8c287"
             }
           }
         ],
@@ -207,7 +252,11 @@
             "values": {}
           }
         ],
-        "children": []
+        "children": [],
+        "size": {
+          "width": 44,
+          "height": 63
+        }
       }
     ]
   }
