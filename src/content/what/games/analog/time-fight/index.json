@@ -44,14 +44,21 @@
             "id": "EHi5TMnmqZSWjuIsmoRU",
             "name": "Still",
             "values": {
-              "38E5MUEGKsZQqtaBKpmY": null
+              "38E5MUEGKsZQqtaBKpmY": "movement-still.svg"
             }
           },
           {
             "id": "aVyNEB5aJYHorAGLdspX",
-            "name": "Hello",
+            "name": "Normal",
             "values": {
-              "38E5MUEGKsZQqtaBKpmY": "dd197b80-4349-41bf-87f7-745aa7fd5175.jpg"
+              "38E5MUEGKsZQqtaBKpmY": "movement-normal.svg"
+            }
+          },
+          {
+            "id": "eb41bcdd4adf",
+            "name": "All",
+            "values": {
+              "38E5MUEGKsZQqtaBKpmY": "movement-all.svg"
             }
           }
         ],
@@ -67,13 +74,6 @@
             "name": "Colour",
             "type": {
               "kind": "colour"
-            }
-          },
-          {
-            "id": "dp8uS9ZuC9GNuLR621H8",
-            "name": "Special Power",
-            "type": {
-              "kind": "text"
             }
           }
         ],
