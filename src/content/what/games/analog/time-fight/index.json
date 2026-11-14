@@ -37,31 +37,21 @@
             "type": {
               "kind": "image"
             }
-          },
-          {
-            "id": "vR5Ty15wv1fmGnaFhFCV",
-            "name": "Player",
-            "type": {
-              "kind": "reference",
-              "concept": "pcVy2SkM1WzAZqlmZd59"
-            }
           }
         ],
         "entities": [
           {
             "id": "EHi5TMnmqZSWjuIsmoRU",
-            "name": "test",
+            "name": "Still",
             "values": {
-              "38E5MUEGKsZQqtaBKpmY": "817495a4-6e12-4630-b759-9ac663a678ad.jpg",
-              "vR5Ty15wv1fmGnaFhFCV": "MeA3W8QwzgC8TpJOOgTD"
+              "38E5MUEGKsZQqtaBKpmY": null
             }
           },
           {
             "id": "aVyNEB5aJYHorAGLdspX",
             "name": "Hello",
             "values": {
-              "38E5MUEGKsZQqtaBKpmY": "dd197b80-4349-41bf-87f7-745aa7fd5175.jpg",
-              "vR5Ty15wv1fmGnaFhFCV": "QZtz8sPFSIW78CNbUYyu"
+              "38E5MUEGKsZQqtaBKpmY": "dd197b80-4349-41bf-87f7-745aa7fd5175.jpg"
             }
           }
         ],
