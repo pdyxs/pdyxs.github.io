@@ -3,28 +3,8 @@
   "version": "1.0.0",
   "data": {
     "name": "Time Fight",
-    "properties": [
-      {
-        "id": "IbfRWPrKI4DnJv6TJby7",
-        "name": "Colour",
-        "type": {
-          "kind": "colour"
-        }
-      },
-      {
-        "id": "YEJaxwHTmNApy3VqvJdQ",
-        "name": "test",
-        "type": {
-          "kind": "number",
-          "min": 2,
-          "max": 10
-        }
-      }
-    ],
-    "values": {
-      "IbfRWPrKI4DnJv6TJby7": "#e09191",
-      "YEJaxwHTmNApy3VqvJdQ": 6
-    },
+    "properties": [],
+    "values": {},
     "concepts": [
       {
         "id": "IQA21GKLXbSgvsWaHkZK",
@@ -241,22 +221,147 @@
               "kind": "reference",
               "concept": "0edcede8c287"
             }
+          },
+          {
+            "id": "4b1890d1780d",
+            "name": "Movement",
+            "type": {
+              "kind": "reference",
+              "concept": "IQA21GKLXbSgvsWaHkZK"
+            }
           }
         ],
         "components": [
           {
             "id": "NYpvvsP98XI00hm0PBEJ",
-            "name": "Specification 1",
+            "name": "Strike",
             "count": 1,
             "per": [],
-            "values": {}
+            "values": {
+              "c8fd7aab85b8": "c53c4458b3cd",
+              "N4uqLL90URXIyS9TuLTH": "Strike",
+              "4b1890d1780d": "EHi5TMnmqZSWjuIsmoRU"
+            }
+          },
+          {
+            "id": "1fa072a4e3a7",
+            "name": "Strike +",
+            "count": 1,
+            "per": [],
+            "values": {
+              "N4uqLL90URXIyS9TuLTH": "Strike",
+              "c8fd7aab85b8": "c53c4458b3cd",
+              "4b1890d1780d": "aVyNEB5aJYHorAGLdspX"
+            }
           }
         ],
         "children": [],
         "size": {
           "width": 44,
           "height": 63
-        }
+        },
+        "template": [
+          {
+            "id": "579c7242f871",
+            "type": "shape",
+            "x": 3,
+            "y": 3,
+            "width": 38,
+            "height": 57,
+            "shape": "rect",
+            "fill": {
+              "kind": "bound",
+              "source": {
+                "kind": "reference",
+                "via": "c8fd7aab85b8",
+                "property": "67cb8a0ce4de"
+              }
+            },
+            "stroke": {
+              "kind": "literal",
+              "value": null
+            },
+            "strokeWidth": {
+              "kind": "literal",
+              "value": 0.3
+            }
+          },
+          {
+            "id": "45d2ac1865ae",
+            "type": "image",
+            "x": 12,
+            "y": 10,
+            "width": 20,
+            "height": 20,
+            "file": {
+              "kind": "bound",
+              "source": {
+                "kind": "reference",
+                "via": "c8fd7aab85b8",
+                "property": "5699ebbb194e"
+              }
+            },
+            "fit": {
+              "kind": "literal",
+              "value": "contain"
+            },
+            "tint": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          {
+            "id": "ce8528aa1b1c",
+            "type": "text",
+            "x": 0,
+            "y": 40,
+            "width": 44,
+            "height": 5,
+            "text": {
+              "kind": "bound",
+              "source": {
+                "kind": "component",
+                "property": "N4uqLL90URXIyS9TuLTH"
+              }
+            },
+            "size": {
+              "kind": "literal",
+              "value": 4
+            },
+            "colour": {
+              "kind": "literal",
+              "value": "#ffffff"
+            },
+            "align": {
+              "kind": "literal",
+              "value": "center"
+            }
+          },
+          {
+            "id": "279f02a187cd",
+            "type": "image",
+            "x": 18,
+            "y": 48,
+            "width": 8,
+            "height": 8,
+            "file": {
+              "kind": "bound",
+              "source": {
+                "kind": "reference",
+                "via": "4b1890d1780d",
+                "property": "38E5MUEGKsZQqtaBKpmY"
+              }
+            },
+            "fit": {
+              "kind": "literal",
+              "value": "cover"
+            },
+            "tint": {
+              "kind": "literal",
+              "value": null
+            }
+          }
+        ]
       }
     ]
   }
