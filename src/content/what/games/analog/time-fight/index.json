@@ -109,12 +109,41 @@
         ],
         "children": [
           {
-            "id": "1ca4a6b80df4",
+            "id": "77ec08899d8a",
             "name": "Fighter",
             "count": 1,
-            "properties": [],
+            "properties": [
+              {
+                "id": "b4ba98f3757c",
+                "name": "Number",
+                "type": {
+                  "kind": "number",
+                  "min": 1,
+                  "max": 3
+                }
+              }
+            ],
             "entities": [],
-            "children": []
+            "children": [
+              {
+                "id": "624fe85bffc2",
+                "name": "Time Trail",
+                "count": 1,
+                "properties": [
+                  {
+                    "id": "578eab2cf9d8",
+                    "name": "Time",
+                    "type": {
+                      "kind": "number",
+                      "min": 1,
+                      "max": 12
+                    }
+                  }
+                ],
+                "entities": [],
+                "children": []
+              }
+            ]
           }
         ]
       }
