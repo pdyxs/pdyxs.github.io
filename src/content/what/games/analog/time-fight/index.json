@@ -179,24 +179,7 @@
         "id": "b5063d336894",
         "name": "Combat Action",
         "count": 1,
-        "properties": [
-          {
-            "id": "5066bd1a72f8",
-            "name": "Attribute",
-            "type": {
-              "kind": "reference",
-              "concept": "0edcede8c287"
-            }
-          },
-          {
-            "id": "ce73adac03da",
-            "name": "Movement",
-            "type": {
-              "kind": "reference",
-              "concept": "IQA21GKLXbSgvsWaHkZK"
-            }
-          }
-        ],
+        "properties": [],
         "entities": [],
         "children": []
       }
@@ -209,7 +192,7 @@
         "properties": [
           {
             "id": "N4uqLL90URXIyS9TuLTH",
-            "name": "Name",
+            "name": "Action",
             "type": {
               "kind": "text"
             }
@@ -235,7 +218,7 @@
           {
             "id": "NYpvvsP98XI00hm0PBEJ",
             "name": "Strike",
-            "count": 1,
+            "count": 6,
             "per": [],
             "values": {
               "c8fd7aab85b8": "c53c4458b3cd",
@@ -246,12 +229,89 @@
           {
             "id": "1fa072a4e3a7",
             "name": "Strike +",
-            "count": 1,
+            "count": 3,
             "per": [],
             "values": {
               "N4uqLL90URXIyS9TuLTH": "Strike",
               "c8fd7aab85b8": "c53c4458b3cd",
               "4b1890d1780d": "aVyNEB5aJYHorAGLdspX"
+            }
+          },
+          {
+            "id": "b38f93e98050",
+            "name": "Strike/Parry",
+            "count": 3,
+            "per": [],
+            "values": {
+              "c8fd7aab85b8": "c53c4458b3cd",
+              "4b1890d1780d": "EHi5TMnmqZSWjuIsmoRU",
+              "N4uqLL90URXIyS9TuLTH": "Strike/Parry"
+            }
+          },
+          {
+            "id": "6bedb0eb66f3",
+            "name": "Defend",
+            "count": 6,
+            "per": [],
+            "values": {
+              "N4uqLL90URXIyS9TuLTH": "Defend",
+              "c8fd7aab85b8": "e600ef054fb7",
+              "4b1890d1780d": "aVyNEB5aJYHorAGLdspX"
+            }
+          },
+          {
+            "id": "767909926a34",
+            "name": "Defend +",
+            "count": 3,
+            "per": [],
+            "values": {
+              "N4uqLL90URXIyS9TuLTH": "Defend +",
+              "c8fd7aab85b8": "e600ef054fb7",
+              "4b1890d1780d": "eb41bcdd4adf"
+            }
+          },
+          {
+            "id": "8de226c515f5",
+            "name": "Defend/Charge",
+            "count": 3,
+            "per": [],
+            "values": {
+              "N4uqLL90URXIyS9TuLTH": "Defend/Charge",
+              "c8fd7aab85b8": "e600ef054fb7",
+              "4b1890d1780d": "aVyNEB5aJYHorAGLdspX"
+            }
+          },
+          {
+            "id": "dd1baadcfd3c",
+            "name": "Sprint",
+            "count": 6,
+            "per": [],
+            "values": {
+              "N4uqLL90URXIyS9TuLTH": "Sprint",
+              "c8fd7aab85b8": "dc16fcfbb893",
+              "4b1890d1780d": "eb41bcdd4adf"
+            }
+          },
+          {
+            "id": "15fd47a2721b",
+            "name": "Sprint/Evade",
+            "count": 3,
+            "per": [],
+            "values": {
+              "N4uqLL90URXIyS9TuLTH": "Sprint/Evade",
+              "c8fd7aab85b8": "dc16fcfbb893",
+              "4b1890d1780d": "eb41bcdd4adf"
+            }
+          },
+          {
+            "id": "e404fa375a1b",
+            "name": "Sprint/Redirect",
+            "count": 3,
+            "per": [],
+            "values": {
+              "N4uqLL90URXIyS9TuLTH": "Sprint/Redirect",
+              "c8fd7aab85b8": "dc16fcfbb893",
+              "4b1890d1780d": "eb41bcdd4adf"
             }
           }
         ],
@@ -283,7 +343,7 @@
             },
             "strokeWidth": {
               "kind": "literal",
-              "value": 0.3
+              "value": 0
             }
           },
           {
