@@ -146,6 +146,40 @@
             ]
           }
         ]
+      },
+      {
+        "id": "0edcede8c287",
+        "name": "Attribute",
+        "count": 1,
+        "properties": [
+          {
+            "id": "5699ebbb194e",
+            "name": "Icon",
+            "type": {
+              "kind": "image"
+            }
+          }
+        ],
+        "entities": [
+          {
+            "id": "c53c4458b3cd",
+            "name": "Strength",
+            "values": {
+              "5699ebbb194e": "strength.svg"
+            }
+          },
+          {
+            "id": "dc16fcfbb893",
+            "name": "Speed",
+            "values": {}
+          },
+          {
+            "id": "e600ef054fb7",
+            "name": "New entity",
+            "values": {}
+          }
+        ],
+        "children": []
       }
     ],
     "sets": [
