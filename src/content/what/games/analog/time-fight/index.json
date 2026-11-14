@@ -107,7 +107,16 @@
             }
           }
         ],
-        "children": []
+        "children": [
+          {
+            "id": "1ca4a6b80df4",
+            "name": "Fighter",
+            "count": 1,
+            "properties": [],
+            "entities": [],
+            "children": []
+          }
+        ]
       }
     ],
     "sets": [
